@@ -1,0 +1,166 @@
+// Copyright 2019 DeepMap, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package middleware
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/testutil"
+)
+
+var testSchema = `openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: TestServer
+servers:
+  - url: http://deepmap.ai
+paths:
+  /resource:
+    get:
+      operationId: getResource
+      parameters:
+        - name: id
+          in: query
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+      responses:
+        '200':
+            content:
+              application/json:
+                schema:
+                  properties:
+                    name:
+                      type: string
+                    id:
+                      type: integer
+    post:
+      operationId: createResource
+      responses:
+        '204':
+          description: No content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+`
+
+func doGet(t *testing.T, e *echo.Echo, url string) *httptest.ResponseRecorder {
+	response := testutil.NewRequest().Get(url).WithAcceptJson().Go(t, e)
+	return response.Recorder
+}
+
+func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httptest.ResponseRecorder {
+	response := testutil.NewRequest().Post(url).WithJsonBody(jsonBody).Go(t, e)
+	return response.Recorder
+}
+
+func TestOapiRequestValidator(t *testing.T) {
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromYAMLData([]byte(testSchema))
+	assert.NoError(t, err, "Error initializing swagger")
+
+	// Create a new echo router
+	e := echo.New()
+
+	// Install our OpenApi based request validator
+	e.Use(OapiRequestValidator(swagger))
+
+	called := false
+
+	// Install a request handler for /resource. We want to make sure it doesn't
+	// get called.
+	e.GET("/resource", func(c echo.Context) error {
+		called = true
+		return nil
+	})
+	// Let's send the request to the wrong server, this should fail validation
+	{
+		rec := doGet(t, e, "http://not.deepmap.ai/resource")
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+	}
+
+	// Let's send a good request, it should pass
+	{
+		rec := doGet(t, e, "http://deepmap.ai/resource")
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.True(t, called, "Handler should have been called")
+		called = false
+	}
+
+	// Send an out-of-spec parameter
+	// TODO(marcin): limit checking for numbers is not yet working in
+	//   kin-openapi, they only check the string type. I either need to do
+	//   this myself, or patch their code.
+	//{
+	//	rec := doGet(t, e, "http://deepmap.ai/resource?id=500")
+	//	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	//	assert.False(t, called, "Handler should not have been called")
+	//	called = false
+	//}
+
+	// Send a bad parameter type
+	// TODO(marcin): type checking is currently not yet working in kin-openapi
+	//{
+	//	rec := doGet(t, e, "http://deepmap.ai/resource?id=foo")
+	//	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	//	assert.False(t, called, "Handler should not have been called")
+	//    called = false
+	//}
+
+	// Add a handler for the POST message
+	e.POST("/resource", func(c echo.Context) error {
+		called = true
+		return c.NoContent(http.StatusNoContent)
+	})
+
+	called = false
+	// Send a good request body
+	{
+		body := struct {
+			Name string `json:"name"`
+		}{
+			Name: "Marcin",
+		}
+		rec := doPost(t, e, "http://deepmap.ai/resource", body)
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.True(t, called, "Handler should have been called")
+		called = false
+	}
+
+	// Send a malformed body
+	{
+		body := struct {
+			Name int `json:"name"`
+		}{
+			Name: 7,
+		}
+		rec := doPost(t, e, "http://deepmap.ai/resource", body)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+}

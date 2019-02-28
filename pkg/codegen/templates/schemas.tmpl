@@ -1,0 +1,4 @@
+{{range .Types}}
+// Type definition for component schema "{{.JsonTypeName}}"
+type {{.TypeName}} {{.TypeDef}}
+{{end}}

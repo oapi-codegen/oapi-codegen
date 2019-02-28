@@ -1,0 +1,24 @@
+{{range .}}
+
+{{if .Params}}
+// Parameters object for {{.OperationId}}
+type {{.OperationId}}Params struct {
+{{range .Params}}
+    {{.GoName}} {{if not .Required}}*{{end}}{{.TypeDef}} {{.JsonTag}}{{end}}
+}
+{{end}}
+
+{{if .HasBody}}
+{{if .GetBodyDefinition.CustomType}}
+// Request body for {{.OperationId}} for application/json ContentType
+type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
+{{end}}
+{{end}}
+
+{{end}}
+
+type ServerInterface interface {
+{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{end}}
+}

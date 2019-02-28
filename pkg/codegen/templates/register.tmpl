@@ -1,0 +1,7 @@
+func RegisterHandlers(router codegen.EchoRouter, si ServerInterface) {
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{end}}
+}

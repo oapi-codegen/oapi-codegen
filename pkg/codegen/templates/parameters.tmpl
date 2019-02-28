@@ -1,0 +1,4 @@
+{{range .Types}}
+// Type definition for component parameter "{{.JsonTypeName}}"
+type {{.TypeName}} {{.TypeDef}}
+{{end}}

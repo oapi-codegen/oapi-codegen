@@ -1,0 +1,4 @@
+{{range .Types}}
+// Type definition for component requestBodies "{{.JsonTypeName}}"
+type {{.TypeName}} {{.TypeDef}}
+{{end}}
