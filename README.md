@@ -2,9 +2,15 @@ OpenAPI Server Code Generator
 -----------------------------
 
 This package contains a set of utilities for generating Go boilerplate code for
-servers based on 
+services based on 
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
-API definitions. We have chosen to use the [Echo](https://github.com/labstack/echo) as
+API definitions. When working with microservices, it's important to have an API
+contract which servers and clients both imprement to minimize the chances of
+incompatibilities. It's tedious to generate Go models which precisely correspond to
+OpenAPI specifications, so let our code generator do that work for you, so that
+you can focus on implementing the business logic for your service. 
+
+We have chosen to use [Echo](https://github.com/labstack/echo) as
 our HTTP routing engine, due to its speed and simplicity for the generated
 stubs.
 
@@ -24,7 +30,7 @@ into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
     go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-    oapi-codegen.go petstore-expanded.yaml  > petstore.go
+    oapi-codegen petstore-expanded.yaml  > petstore.go
 
 Let's go through that `petstore.go` file to show you everything which was generated.
 
@@ -71,14 +77,14 @@ server.
 
 ```
 type ServerInterface interface {
-//  (GET /pets)
-FindPets(ctx echo.Context, params FindPetsParams) error
-//  (POST /pets)
-AddPet(ctx echo.Context) error
-//  (DELETE /pets/{id})
-DeletePet(ctx echo.Context, id int64) error
-//  (GET /pets/{id})
-FindPetById(ctx echo.Context, id int64) error
+    //  (GET /pets)
+    FindPets(ctx echo.Context, params FindPetsParams) error
+    //  (POST /pets)
+    AddPet(ctx echo.Context) error
+    //  (DELETE /pets/{id})
+    DeletePet(ctx echo.Context, id int64) error
+    //  (GET /pets/{id})
+    FindPetById(ctx echo.Context, id int64) error
 }
 ```
 
@@ -97,7 +103,7 @@ takes as input `FindPetsParams`, which is defined as follows:
  ```
 // Parameters object for FindPets
 type FindPetsParams struct {
-	Tags  []string `json:"tags,omitempty"`
+	Tags  *[]string `json:"tags,omitempty"`
 	Limit *int32   `json:"limit,omitempty"`
 }
 ```
@@ -110,7 +116,7 @@ If you changed the OpenAPI specification to make the parameter required, the
 `FindPetsParams` structure will contain the type by value:
 ```
 type FindPetsParams struct {
-	Tags  []string `json:"tags,omitempty"`
+	Tags  *[]string `json:"tags,omitempty"`
 	Limit int32   `json:"limit"`
 }
 ```
