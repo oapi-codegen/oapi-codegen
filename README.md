@@ -30,9 +30,10 @@ into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
     go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-    oapi-codegen petstore-expanded.yaml  > petstore.go
+    oapi-codegen petstore-expanded.yaml  > petstore.gen.go
 
-Let's go through that `petstore.go` file to show you everything which was generated.
+Let's go through that `petstore.gen.go` file to show you everything which was
+generated.
 
 
 ## Generated Server Boilerplate
@@ -142,7 +143,7 @@ parameters off the `Echo` request context, and unmarshals them into Go objects.
 You would register the generated handlers as follows:
 ```
 func SetupHandler() {
-    var myApi PetStoreImpl  // This implementes the pet store interface
+    var myApi PetStoreImpl  // This implements the pet store interface
     e := echo.New()
     petstore.RegisterHandlers(e, &myApi)
     ...
