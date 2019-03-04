@@ -177,6 +177,10 @@ need it. We've not yet implemented several things:
  
 - `patternProperties` isn't yet supported and will exit with an error. This too
  should be possible to implement.
+ 
+- Parameter handling is primitive right now, complex types are not yet supported.
+ OpenAPI 3 allows for very complex parameter definitions, and it will be useful
+ to support this for at least query args in the future.
 
 ## Making changes to code generation
 
