@@ -20,8 +20,8 @@ import (
     "net/http"
     "testing"
 
-    "github.com/deepmap/oapi-codegen/v2/examples/petestore-expanded/api"
-    "github.com/deepmap/oapi-codegen/v2/pkg/testutil"
+    "github.com/deepmap/oapi-codegen/examples/petestore-expanded/api"
+    "github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 func TestPetStore(t *testing.T) {

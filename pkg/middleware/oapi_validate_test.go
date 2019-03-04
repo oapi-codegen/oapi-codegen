@@ -23,7 +23,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/testutil"
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 var testSchema = `openapi: "3.0.0"

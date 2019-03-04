@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/petestore-expanded/api"
+	"github.com/deepmap/oapi-codegen/examples/petestore-expanded/api"
 )
 
 type PetStore struct {

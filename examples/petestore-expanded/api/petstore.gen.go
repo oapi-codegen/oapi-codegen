@@ -3,7 +3,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/labstack/echo/v4"
 	"net/http"
 )

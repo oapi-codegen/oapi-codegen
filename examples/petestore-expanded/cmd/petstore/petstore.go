@@ -9,15 +9,15 @@ import (
     "flag"
     "fmt"
 
-    "github.com/deepmap/oapi-codegen/v2/pkg/util"
+    "github.com/deepmap/oapi-codegen/pkg/util"
     "os"
 
     "github.com/labstack/echo/v4"
     echomiddleware "github.com/labstack/echo/v4/middleware"
 
-    "github.com/deepmap/oapi-codegen/v2/examples/petestore-expanded/api"
-    "github.com/deepmap/oapi-codegen/v2/examples/petestore-expanded/internal"
-    "github.com/deepmap/oapi-codegen/v2/pkg/middleware"
+    "github.com/deepmap/oapi-codegen/examples/petestore-expanded/api"
+    "github.com/deepmap/oapi-codegen/examples/petestore-expanded/internal"
+    "github.com/deepmap/oapi-codegen/pkg/middleware"
 )
 
 func main() {

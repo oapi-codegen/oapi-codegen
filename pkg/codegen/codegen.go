@@ -25,7 +25,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen/templates"
+	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 )
 
 // This describes a Schema, a type definition.
@@ -302,7 +302,7 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 	// Imports needed for the generated code to compile
 	imports := []string{
 		"github.com/labstack/echo/v4",
-		"github.com/deepmap/oapi-codegen/v2/pkg/codegen",
+		"github.com/deepmap/oapi-codegen/pkg/codegen",
 		"net/http",
 		"fmt",
 	}
