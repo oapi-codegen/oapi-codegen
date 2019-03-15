@@ -299,12 +299,15 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		return "", fmt.Errorf("error generating Go types for component request bodies: %s", err)
 	}
 
+	handlersOut, err := GeneratePathHandlers(t, swagger)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
+	}
+
 	// Imports needed for the generated code to compile
 	imports := []string{
 		"github.com/labstack/echo/v4",
 		"github.com/deepmap/oapi-codegen/pkg/codegen",
-		"net/http",
-		"fmt",
 	}
 
 	var buf bytes.Buffer
@@ -312,9 +315,15 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 
 	// Now that we've generated the types, we know whether we reference time.Time,
 	// so add that to import list, and generate all the imports.
-	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut} {
+	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut, handlersOut} {
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
+		}
+		if strings.Contains(str, "http.") {
+			imports = append(imports, "net/http")
+		}
+		if strings.Contains(str, "fmt.") {
+			imports = append(imports, "fmt")
 		}
 	}
 
@@ -348,10 +357,6 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		return "", fmt.Errorf("error writing request body definitions: %s", err)
 	}
 
-	handlersOut, err := GeneratePathHandlers(t, swagger)
-	if err != nil {
-		return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
-	}
 	_, err = w.WriteString(handlersOut)
 	if err != nil {
 		return "", fmt.Errorf("error writing path handlers: %s", err)
