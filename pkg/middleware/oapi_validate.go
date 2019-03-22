@@ -72,37 +72,31 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router)
 		case *openapi3filter.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			ctx.Logger().Errorf("error finding request route for %s: %s",
-				req.URL.String(), e.Reason)
 			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			ctx.Logger().Errorf("error finding route %s: %s", req.URL.String(), err)
 			return echo.NewHTTPError(http.StatusInternalServerError,
-				"error validating request")
+				fmt.Sprintf("error validating route: %s", err.Error()))
 		}
 	}
 
 	err = openapi3filter.ValidateRequest(context.Background(),
 		&openapi3filter.RequestValidationInput{
-			Request:     req,
-			PathParams:  pathParams,
-			Route:       route,
+			Request:    req,
+			PathParams: pathParams,
+			Route:      route,
 		})
 	if err != nil {
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
-			ctx.Logger().Errorf("request validation failed for %s: %s",
-				req.URL.String(), e.Reason)
 			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			ctx.Logger().Errorf("error validating request for %s: %s", req.URL.String(), err)
 			return echo.NewHTTPError(http.StatusInternalServerError,
-				"error validating request")
+				fmt.Sprintf("error validating request: %s", err))
 		}
 	}
 	return nil
