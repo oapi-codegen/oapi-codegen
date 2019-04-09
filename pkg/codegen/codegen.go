@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"go/format"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -304,9 +305,18 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
 	}
 
+	inlinedSpec, err := GenerateInlinedSpec(t, swagger)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
+	}
+
 	// Imports needed for the generated code to compile
 	imports := []string{
+		"bytes",
+		"compress/gzip",
+		"encoding/base64",
 		"github.com/labstack/echo/v4",
+		"github.com/getkin/kin-openapi/openapi3",
 		"github.com/deepmap/oapi-codegen/pkg/codegen",
 	}
 
@@ -360,6 +370,11 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 	_, err = w.WriteString(handlersOut)
 	if err != nil {
 		return "", fmt.Errorf("error writing path handlers: %s", err)
+	}
+
+	_, err = w.WriteString(inlinedSpec)
+	if err != nil {
+		return "", fmt.Errorf("error writing inlined spec: %s", err)
 	}
 
 	err = w.Flush()
@@ -568,6 +583,8 @@ func GenerateImports(t *template.Template, imports []string, packageName string)
 	if len(imports) == 0 {
 		return "", nil
 	}
+
+	sort.Strings(imports)
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)

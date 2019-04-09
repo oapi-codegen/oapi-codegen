@@ -9,6 +9,33 @@ import (
 {{range .Imports}} "{{.}}"
 {{end}})
 `,
+	"inline.tmpl": `// Base64 encoded, gzipped, json marshaled Swagger object
+const swaggerSpec = "{{.}}"
+
+// Returns the Swagger specification corresponding to the generated code
+// in this file.
+func GetSwagger() (*openapi3.Swagger, error) {
+    zipped, err := base64.StdEncoding.DecodeString(swaggerSpec)
+    if err != nil {
+        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+    }
+    zr, err := gzip.NewReader(bytes.NewReader(zipped))
+    if err != nil {
+        return nil, fmt.Errorf("error decompressing spec: %s", err)
+    }
+    var buf bytes.Buffer
+    _, err = buf.ReadFrom(zr)
+    if err != nil {
+        return nil, fmt.Errorf("error decompressing spec: %s", err)
+    }
+
+    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
+    if err != nil {
+        return nil, fmt.Errorf("error loading Swagger: %s", err)
+    }
+    return swagger, nil
+}
+`,
 	"parameters.tmpl": `{{range .Types}}
 // Type definition for component parameter "{{.JsonTypeName}}"
 type {{.TypeName}} {{.TypeDef}}
@@ -20,7 +47,8 @@ type {{.TypeName}} {{.TypeDef}}
     }
 {{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
-}`,
+}
+`,
 	"request-bodies.tmpl": `{{range .Types}}
 // Type definition for component requestBodies "{{.JsonTypeName}}"
 type {{.TypeName}} {{.TypeDef}}
@@ -138,7 +166,8 @@ var {{.GoName}} {{.TypeDef}}
     err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
     return err
 }
-{{end}}`,
+{{end}}
+`,
 }
 
 // Parse parses declared templates.

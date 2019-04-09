@@ -8,13 +8,10 @@ package main
 import (
     "flag"
     "fmt"
-
-    "github.com/deepmap/oapi-codegen/pkg/util"
     "os"
 
     "github.com/labstack/echo/v4"
     echomiddleware "github.com/labstack/echo/v4/middleware"
-
     "github.com/deepmap/oapi-codegen/examples/petestore-expanded/api"
     "github.com/deepmap/oapi-codegen/examples/petestore-expanded/internal"
     "github.com/deepmap/oapi-codegen/pkg/middleware"
@@ -22,15 +19,17 @@ import (
 
 func main() {
     var port = flag.Int("port", 8080, "Port for test HTTP server")
-    var specPath = flag.String("spec", "../../api/petstore-expanded.yaml",
-        "Path to OpenAPI specification for this server")
     flag.Parse()
 
-    swagger, err := util.LoadSwagger(*specPath)
+    swagger, err := api.GetSwagger()
     if err != nil {
         fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
         os.Exit(1)
     }
+
+    // Clear out the servers array in the swagger spec, that skips validating
+    // that server names match. We don't know how this thing will be run.
+    swagger.Servers = nil
 
     // Create an instance of our handler which satisfies the generated interface
     petStore := internal.NewPetStore()
