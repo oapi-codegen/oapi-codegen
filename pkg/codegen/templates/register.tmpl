@@ -1,4 +1,4 @@
-func RegisterHandlers(router codegen.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }

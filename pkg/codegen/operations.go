@@ -30,6 +30,7 @@ type ParameterDefinition struct {
 	Reference string // Swagger reference if present
 	In        string // Where the parameter is defined - path, header, cookie, query
 	Required  bool   // Is this a required parameter?
+	Spec      *openapi3.Parameter
 }
 
 // Generate the JSON annotation to map GoType to json type name. If Parameter
@@ -41,6 +42,62 @@ func (pd *ParameterDefinition) JsonTag() string {
 	} else {
 		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
 	}
+}
+
+func (pd *ParameterDefinition) IsJson() bool {
+	p := pd.Spec
+	if len(p.Content) == 1 {
+		_, found := p.Content["application/json"]
+		return found
+	}
+	return false
+}
+
+func (pd *ParameterDefinition) IsPassThrough() bool {
+	p := pd.Spec
+	if len(p.Content) > 1 {
+		return true
+	}
+	if len(p.Content) == 1 {
+		return !pd.IsJson()
+	}
+	return false
+}
+
+func (pd *ParameterDefinition) IsStyled() bool {
+	p := pd.Spec
+	return p.Schema != nil
+}
+
+func (pd *ParameterDefinition) Style() string {
+	style := pd.Spec.Style
+	if style == "" {
+		in := pd.Spec.In
+		switch in {
+		case "path", "header":
+			return "simple"
+		case "query", "cookie":
+			return "form"
+		default:
+			panic("unknown parameter format")
+		}
+	}
+	return style
+}
+
+func (pd *ParameterDefinition) Explode() bool {
+	if pd.Spec.Explode == nil {
+		in := pd.Spec.In
+		switch in {
+		case "path", "header":
+			return false
+		case "query", "cookie":
+			return true
+		default:
+			panic("unknown parameter format")
+		}
+	}
+	return *pd.Spec.Explode
 }
 
 // This function walks the given parameters dictionary, and generates the above
@@ -67,12 +124,13 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 				Reference: paramOrRef.Ref,
 				In:        param.In,
 				Required:  param.Required,
+				Spec:      param,
 			}
 			outParams = append(outParams, pd)
 		} else {
 			// Inline parameter definition. We'll generate the full Go type
 			// definition.
-			goType, err := schemaToGoType(param.Schema, true)
+			goType, err := paramToGoType(param)
 			if err != nil {
 				return nil, fmt.Errorf("error generating type for param (%s): %s",
 					param.Name, err)
@@ -84,6 +142,7 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 				Reference: paramOrRef.Ref,
 				In:        param.In,
 				Required:  param.Required,
+				Spec:      param,
 			}
 			outParams = append(outParams, pd)
 		}
@@ -102,6 +161,7 @@ type OperationDefinition struct {
 	Summary      string                 // Summary string from Swagger, used to generate a comment
 	Method       string                 // GET, POST, DELETE, etc.
 	Path         string                 // The Swagger path for the operation, like /resource/{id}
+	Spec         *openapi3.Operation
 }
 
 // Returns the list of all parameters except Path parameters. Path parameters
@@ -109,6 +169,14 @@ type OperationDefinition struct {
 func (o *OperationDefinition) Params() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
 	result = append(result, o.CookieParams...)
+	return result
+}
+
+// Returns all parameters
+func (o *OperationDefinition) AllParams() []ParameterDefinition {
+	result := append(o.QueryParams, o.HeaderParams...)
+	result = append(result, o.CookieParams...)
+	result = append(result, o.PathParams...)
 	return result
 }
 
@@ -195,6 +263,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 				Summary:      op.Summary,
 				Method:       opName,
 				Path:         pathName,
+				Spec:         op,
 			}
 
 			// Does request have a body payload?

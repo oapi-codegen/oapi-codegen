@@ -2,13 +2,13 @@ OpenAPI Server Code Generator
 -----------------------------
 
 This package contains a set of utilities for generating Go boilerplate code for
-services based on 
+services based on
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
 API definitions. When working with microservices, it's important to have an API
 contract which servers and clients both imprement to minimize the chances of
 incompatibilities. It's tedious to generate Go models which precisely correspond to
 OpenAPI specifications, so let our code generator do that work for you, so that
-you can focus on implementing the business logic for your service. 
+you can focus on implementing the business logic for your service.
 
 We have chosen to use [Echo](https://github.com/labstack/echo) as
 our HTTP routing engine, due to its speed and simplicity for the generated
@@ -161,27 +161,25 @@ need it. We've not yet implemented several things:
           oneOf:
             - $ref: '#/components/schemas/Cat'
             - $ref: '#/components/schemas/Dog'
-    
+
     will result in a Go type of `interface{}`. It will be up to you
     to validate whether it conforms to `Cat` and/or `Dog`, depending on the
     keyword. It's not clear if we can do anything much better here given the
     limits of Go typing.
-    
+
     `allOf` is supported, by taking the union of all the fields in all the
     component schemas. This is the most useful of these operations, and is
     commonly used to merge objects with an identifier, as in the
     `petstore-expanded` example.
-    
+
 - `additionalProperties` isn't supported, and will exit with an error. This
  should be possible to support in the future via a `map[string]interface{}` or
  `map[string]string`.
- 
+
 - `patternProperties` isn't yet supported and will exit with an error. This too
  should be possible to implement.
- 
-- Parameter handling is primitive right now, complex types are not yet supported.
- OpenAPI 3 allows for very complex parameter definitions, and it will be useful
- to support this for at least query args in the future.
+
+- Cookie parameters are not yet supported.
 
 ## Making changes to code generation
 
@@ -196,7 +194,7 @@ All this command does is inline the files ending in `.tmpl` into the specified
 Go file. This command is found here:
 
     go get github.com/cyberdelia/templates
-    
+
 You can also run `go generate`, since we've set up those hooks.
 
 

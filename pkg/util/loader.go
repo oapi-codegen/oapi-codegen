@@ -1,6 +1,7 @@
 package util
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -20,9 +21,10 @@ func LoadSwagger(filePath string) (*openapi3.Swagger, error) {
 	ext = strings.ToLower(ext)
 	switch ext {
 	case ".yaml", ".yml":
-		swagger, err = openapi3.NewSwaggerLoader().LoadSwaggerFromYAMLData(data)
-	case ".json":
 		swagger, err = openapi3.NewSwaggerLoader().LoadSwaggerFromData(data)
+	case ".json":
+		swagger = &openapi3.Swagger{}
+		err = json.Unmarshal(data, swagger)
 	default:
 		return nil, fmt.Errorf("%s is not a supported extension, use .yaml, .yml or .json", ext)
 	}

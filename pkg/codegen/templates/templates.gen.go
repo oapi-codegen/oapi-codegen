@@ -44,7 +44,7 @@ func GetSwagger() (*openapi3.Swagger, error) {
 type {{.TypeName}} {{.TypeDef}}
 {{end}}
 `,
-	"register.tmpl": `func RegisterHandlers(router codegen.EchoRouter, si ServerInterface) {
+	"register.tmpl": `func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }
@@ -96,15 +96,26 @@ type ServerInterface interface {
     Handler ServerInterface
 }
 
-{{range .}}// Wrapper for {{.OperationId}}
+{{range .}}{{$opid := .OperationId}}// Wrapper for {{$opid}}
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{.GoName}} {{.TypeDef}}
-    err = codegen.BindStringToObject(ctx.Param("{{.ParamName}}"), &{{.GoName}})
+{{if .IsPassThrough}}
+    {{.GoName}} = ctx.Param("{{.ParamName}}")
+{{end}}
+{{if .IsJson}}
+    err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{.GoName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+    }
+{{end}}
+{{if .IsStyled}}
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{.GoName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
+{{end}}
 {{end}}
 
 {{if .RequiresParamObject}}
@@ -112,56 +123,53 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     // context.
     var params {{.OperationId}}Params
 {{range .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
-var {{.GoName}} {{.TypeDef}}
-{{if .Required}}
-    err = codegen.BindStringToObject(ctx.QueryParam("{{.ParamName}}"), &{{.GoName}})
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
-    }
-    params.{{.GoName}} = {{.GoName}}
+{{if .IsJson}}if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
+        var {{.GoName}} {{.TypeDef}}
+        err = json.Unmarshal([]byte(ctx.QueryParam("{{.ParamName}}")), &{{.GoName}})
+        if err != nil {
+            return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        }
+        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        }{{if .Required}} else {
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+        }{{end}}
 {{else}}
-    if ctx.QueryParam("{{.ParamName}}") != "" {
-        err = codegen.BindStringToObject(ctx.QueryParam("{{.ParamName}}"), &{{.GoName}})
+    {
+        err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
+
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
-        params.{{.GoName}} = &{{.GoName}}
-    }{{end}}
+    }
 {{end}}
+
+{{end}}
+
 {{if .HeaderParams}}
     headers := ctx.Request().Header
 {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
-    var {{.GoName}} {{.TypeDef}}
-    {
-        valueList, found := headers["{{.ParamName}}"]
-{{if .Required}}
-        if !found {
-            // This should never happen, as Swagger would catch it during
-            // validation, but just in case...
-            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found"))
-        }
-{{end}}
+    if valueList, found := headers["{{.ParamName}}"]; found {
+        var {{.GoName}} {{.TypeDef}}
         n := len(valueList)
         if n != 1 {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n))
         }
-{{if .Required}}
-        err = codegen.BindStringToObject(ctx.Param("{{.ParamName}}"), &{{.GoName}})
+{{if .IsJson}}
+        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        if err != nil {
+            return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        }
+{{else}}
+        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
-        params.{{.GoName}} = {{.GoName}}
-{{else}}
-        if found {
-            err = codegen.BindStringToObject(ctx.Param("{{.ParamName}}"), &{{.GoName}})
-            if err != nil {
-                return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
-            }
-            params.{{.GoName}} = &{{.GoName}}
-        }
 {{end}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
-    }
+    } {{if .Required}}else {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found"))
+    }{{end}}
 {{end}}
 {{end}}
 {{end}}
@@ -191,3 +199,4 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
+

@@ -79,7 +79,7 @@ func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httpt
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromYAMLData([]byte(testSchema))
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
 	assert.NoError(t, err, "Error initializing swagger")
 
 	// Create a new echo router
@@ -112,24 +112,20 @@ func TestOapiRequestValidator(t *testing.T) {
 	}
 
 	// Send an out-of-spec parameter
-	// TODO(marcin): limit checking for numbers is not yet working in
-	//   kin-openapi, they only check the string type. I either need to do
-	//   this myself, or patch their code.
-	//{
-	//	rec := doGet(t, e, "http://deepmap.ai/resource?id=500")
-	//	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	//	assert.False(t, called, "Handler should not have been called")
-	//	called = false
-	//}
+	{
+		rec := doGet(t, e, "http://deepmap.ai/resource?id=500")
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
 
 	// Send a bad parameter type
-	// TODO(marcin): type checking is currently not yet working in kin-openapi
-	//{
-	//	rec := doGet(t, e, "http://deepmap.ai/resource?id=foo")
-	//	assert.Equal(t, http.StatusBadRequest, rec.Code)
-	//	assert.False(t, called, "Handler should not have been called")
-	//    called = false
-	//}
+	{
+		rec := doGet(t, e, "http://deepmap.ai/resource?id=foo")
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
 
 	// Add a handler for the POST message
 	e.POST("/resource", func(c echo.Context) error {

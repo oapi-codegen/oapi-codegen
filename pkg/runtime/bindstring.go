@@ -11,15 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package codegen
+package runtime
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
-	"strings"
+	"time"
 )
 
 // This function takes a string, and attempts to assign it to the destination
@@ -46,6 +45,16 @@ func BindStringToObject(src string, dst interface{}) error {
 		return errors.New("destination is not settable")
 	}
 
+	// Time won't work with the generic switch below, so handle it separately.
+	if dstTime, ok := dst.(*time.Time); ok {
+		parsedTime, err := time.Parse(time.RFC3339Nano, src)
+		if err != nil {
+			return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
+		}
+		*dstTime = parsedTime
+		return nil
+	}
+
 	switch t.Kind() {
 	case reflect.Int, reflect.Int32, reflect.Int64:
 		var val int64
@@ -68,27 +77,6 @@ func BindStringToObject(src string, dst interface{}) error {
 		if err == nil {
 			v.SetBool(val)
 		}
-	case reflect.Struct:
-		err = json.Unmarshal([]byte(src), dst)
-	case reflect.Slice:
-		// For slices, we assume a form-type input array, meaning a comma
-		// separated string. We split the string on comma to get a bunch of
-		// string parts.
-		// TODO: Parameterize the format, since Swagger supports several
-		//       parameter array formats.
-		parts := strings.Split(src, ",")
-		// This generates a slice of the correct element type and length to
-		// hold all the parts.
-		newArray := reflect.MakeSlice(t, len(parts), len(parts))
-		// For all the parts, just call ourselves recursively, binding each
-		// individual element from its source string.
-		for i, p := range parts {
-			err = BindStringToObject(p, newArray.Index(i).Addr().Interface())
-			if err != nil {
-				return fmt.Errorf("error setting array element: %s", err)
-			}
-		}
-		v.Set(newArray)
 	default:
 		// We've got a bunch of types unimplemented, don't fail silently.
 		err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())

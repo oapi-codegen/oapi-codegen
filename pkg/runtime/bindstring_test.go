@@ -1,8 +1,10 @@
-package codegen
+package runtime
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBindStringToObject(t *testing.T) {
@@ -61,30 +63,17 @@ func TestBindStringToObject(t *testing.T) {
 	assert.NoError(t, BindStringToObject("5", &st))
 	assert.Equal(t, SomeType(5), st)
 
-	// Check whether we can do JSON unmarshalling into an object
-	var jsonDst struct {
-		Name  string `json:"name"`
-		Value int32  `json:"value"`
-	}
-	encoded := `{ "name": "bob", "value": 3}`
-	assert.NoError(t, BindStringToObject(encoded, &jsonDst))
-	assert.Equal(t, "bob", jsonDst.Name)
-	assert.Equal(t, int32(3), jsonDst.Value)
+	// Check time binding
+	now := time.Now().UTC()
+	strTime := now.Format(time.RFC3339Nano)
+	var parsedTime time.Time
+	assert.NoError(t, BindStringToObject(strTime, &parsedTime))
+	parsedTime = parsedTime.UTC()
+	assert.EqualValues(t, now, parsedTime)
 
-	// Type mismatch
-	encoded = `{ "name": "bob", "value": 3.2}`
-	assert.Error(t, BindStringToObject(encoded, &jsonDst))
-
-	// See if we can split a comma delimited string into an array.
-	var stringArray []string
-	assert.NoError(t, BindStringToObject("foo,bar,baz", &stringArray))
-	assert.Equal(t, []string{"foo", "bar", "baz"}, stringArray)
-
-	// Check it for numbers
-	var intArray []int
-	assert.NoError(t, BindStringToObject("5,6,7", &intArray))
-	assert.Equal(t, []int{5, 6, 7}, intArray)
-
-	// Let's put a float in there, it should error out
-	assert.Error(t, BindStringToObject("5,6.1,7", &intArray))
+	now = now.Truncate(time.Second)
+	strTime = now.Format(time.RFC3339)
+	assert.NoError(t, BindStringToObject(strTime, &parsedTime))
+	parsedTime = parsedTime.UTC()
+	assert.EqualValues(t, now, parsedTime)
 }
