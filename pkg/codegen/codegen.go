@@ -315,6 +315,7 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		"bytes",
 		"compress/gzip",
 		"encoding/base64",
+		"fmt",
 		"github.com/labstack/echo/v4",
 		"github.com/getkin/kin-openapi/openapi3",
 		"github.com/deepmap/oapi-codegen/pkg/codegen",
@@ -325,15 +326,13 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 
 	// Now that we've generated the types, we know whether we reference time.Time,
 	// so add that to import list, and generate all the imports.
-	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut, handlersOut} {
+	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut,
+		handlersOut, inlinedSpec} {
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
 		if strings.Contains(str, "http.") {
 			imports = append(imports, "net/http")
-		}
-		if strings.Contains(str, "fmt.") {
-			imports = append(imports, "fmt")
 		}
 	}
 
