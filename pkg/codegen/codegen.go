@@ -319,6 +319,7 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		"github.com/labstack/echo/v4",
 		"github.com/getkin/kin-openapi/openapi3",
 		"github.com/deepmap/oapi-codegen/pkg/codegen",
+		"strings",
 	}
 
 	var buf bytes.Buffer
