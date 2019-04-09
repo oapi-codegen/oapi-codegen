@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 package api
+
 // This directory contains the OpenAPI 3.0 specification which defines our
 // server. The file petstore.gen.go is automatically generated from the schema
 

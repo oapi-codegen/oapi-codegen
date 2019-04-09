@@ -14,9 +14,9 @@
 package codegen
 
 import (
-    "fmt"
-    "strings"
-    "text/template"
+	"fmt"
+	"strings"
+	"text/template"
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -24,15 +24,15 @@ import (
 // ", foo int, bar string, baz float32". The preceding comma is there to save
 // a lot of work in the template engine.
 func genParamArgs(params []ParameterDefinition) string {
-    if len(params) == 0 {
-        return ""
-    }
-    parts := make([]string, len(params))
-    for i, p := range params {
-        paramName := LowercaseFirstCharacter(ToCamelCase(p.ParamName))
-        parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef)
-    }
-    return ", " + strings.Join(parts, ", ")
+	if len(params) == 0 {
+		return ""
+	}
+	parts := make([]string, len(params))
+	for i, p := range params {
+		paramName := LowercaseFirstCharacter(ToCamelCase(p.ParamName))
+		parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef)
+	}
+	return ", " + strings.Join(parts, ", ")
 }
 
 // This function is much like the one above, except it only produces the
@@ -40,36 +40,36 @@ func genParamArgs(params []ParameterDefinition) string {
 // from the same input as above:
 // ", int, string, float32".
 func genParamTypes(params []ParameterDefinition) string {
-    if len(params) == 0 {
-        return ""
-    }
-    parts := make([]string, len(params))
-    for i, p := range params {
-        parts[i] = fmt.Sprintf(p.TypeDef)
-    }
-    return ", " + strings.Join(parts, ", ")
+	if len(params) == 0 {
+		return ""
+	}
+	parts := make([]string, len(params))
+	for i, p := range params {
+		parts[i] = fmt.Sprintf(p.TypeDef)
+	}
+	return ", " + strings.Join(parts, ", ")
 }
 
 // This is another variation of the function above which generates only the
 // parameter names:
 // ", foo, bar, baz"
 func genParamNames(params []ParameterDefinition) string {
-    if len(params) == 0 {
-        return ""
-    }
-    parts := make([]string, len(params))
-    for i, p := range params {
-        parts[i] = fmt.Sprintf(p.GoName)
-    }
-    return ", " + strings.Join(parts, ", ")
+	if len(params) == 0 {
+		return ""
+	}
+	parts := make([]string, len(params))
+	for i, p := range params {
+		parts[i] = fmt.Sprintf(p.GoName)
+	}
+	return ", " + strings.Join(parts, ", ")
 }
 
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
-    "genParamArgs": genParamArgs,
-    "genParamTypes": genParamTypes,
-    "genParamNames": genParamNames,
-    "swaggerUriToEchoUri": SwaggerUriToEchoUri,
-    "lcFirst": LowercaseFirstCharacter,
+	"genParamArgs":        genParamArgs,
+	"genParamTypes":       genParamTypes,
+	"genParamNames":       genParamNames,
+	"swaggerUriToEchoUri": SwaggerUriToEchoUri,
+	"lcFirst":             LowercaseFirstCharacter,
 }

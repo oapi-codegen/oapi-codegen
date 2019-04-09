@@ -13,7 +13,7 @@ import (
 
 // This generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (string, error)  {
+func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (string, error) {
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
 	if err != nil {
@@ -39,7 +39,7 @@ func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (strin
 	// Generate inline code.
 	buf.Reset()
 	w := bufio.NewWriter(&buf)
-	err = t.ExecuteTemplate(w,"inline.tmpl", str)
+	err = t.ExecuteTemplate(w, "inline.tmpl", str)
 	if err != nil {
 		return "", fmt.Errorf("error generating inlined spec: %s", err)
 	}

@@ -202,8 +202,8 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 				bodyOrRef := op.RequestBody
 				body := bodyOrRef.Value
 				if bodyOrRef.Ref != "" {
-				    // If it's a reference to an existing type, our job is easy,
-				    // just use that.
+					// If it's a reference to an existing type, our job is easy,
+					// just use that.
 					bodyType, err := RefPathToGoType(bodyOrRef.Ref)
 					if err != nil {
 						return "", fmt.Errorf("error dereferencing type %s for request body: %s",

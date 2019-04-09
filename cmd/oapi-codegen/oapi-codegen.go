@@ -20,8 +20,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
+	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
 func main() {
