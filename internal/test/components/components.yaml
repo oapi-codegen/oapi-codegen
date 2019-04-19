@@ -1,0 +1,56 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+components:
+  schemas:
+    SchemaObject:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
+  responses:
+    ResponseObject:
+      description: A simple response object
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+  parameters:
+    ParameterObject:
+      description: a parameter
+      in: query
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+  requestBodies:
+    RequestBody:
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string

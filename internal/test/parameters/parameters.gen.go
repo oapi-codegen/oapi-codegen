@@ -536,9 +536,11 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 }
 
 func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
+
 	router.GET("/contentObject/:param", wrapper.GetContentObject)
 	router.GET("/header", wrapper.GetHeader)
 	router.GET("/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)

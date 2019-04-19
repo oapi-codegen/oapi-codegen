@@ -76,7 +76,6 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		"compress/gzip",
 		"encoding/base64",
 		"fmt",
-		"github.com/labstack/echo/v4",
 		"github.com/getkin/kin-openapi/openapi3",
 		"github.com/deepmap/oapi-codegen/pkg/runtime",
 		"strings",
@@ -85,8 +84,7 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	// Now that we've generated the types, we know whether we reference time.Time,
-	// so add that to import list, and generate all the imports.
+	// Based on module prefixes, figure out which optional imports are required.
 	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut,
 		handlersOut, inlinedSpec} {
 		if strings.Contains(str, "time.Time") {
@@ -100,6 +98,9 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		}
 		if strings.Contains(str, "json.") {
 			imports = append(imports, "encoding/json")
+		}
+		if strings.Contains(str, "echo.") {
+			imports = append(imports, "github.com/labstack/echo/v4")
 		}
 	}
 
@@ -207,7 +208,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			})
 		} else {
 			// The parameter is defined inline
-			goType, err := schemaToGoType(paramOrRef.Value.Schema, true)
+			goType, err := paramToGoType(paramOrRef.Value)
 			if err != nil {
 				return "", fmt.Errorf("error generating Go type for schema in parameter %s: %s",
 					paramName, err)

@@ -128,9 +128,11 @@ func (w *ServerInterfaceWrapper) FindPetById(ctx echo.Context) error {
 }
 
 func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
+
 	router.GET("/pets", wrapper.FindPets)
 	router.POST("/pets", wrapper.AddPet)
 	router.DELETE("/pets/:id", wrapper.DeletePet)

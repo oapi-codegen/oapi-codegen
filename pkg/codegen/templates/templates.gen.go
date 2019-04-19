@@ -45,9 +45,11 @@ type {{.TypeName}} {{.TypeDef}}
 {{end}}
 `,
 	"register.tmpl": `func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+{{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }
+{{end}}
 {{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
