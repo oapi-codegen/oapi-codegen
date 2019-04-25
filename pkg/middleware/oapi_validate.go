@@ -59,9 +59,6 @@ func OapiRequestValidator(swagger *openapi3.Swagger) echo.MiddlewareFunc {
 
 // This function is called from the middleware above and actually does the work
 // of validating a request.
-// TODO(marcin): kin-openapi, which we use for swagger validation, currently only
-//   validates string parameters, and assumes that the rest are valid. I need to
-//   handle param validation myself, or fix their code.
 func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router) error {
 	req := ctx.Request()
 	route, pathParams, err := router.FindRoute(req.Method, req.URL)
