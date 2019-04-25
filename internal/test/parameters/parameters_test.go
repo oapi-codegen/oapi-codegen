@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/labstack/echo/v4"
@@ -20,6 +21,9 @@ type testServer struct {
 	complexObject *ComplexObject
 	passThrough   *string
 	primitive     *int32
+	cookieParams  *GetCookieParams
+	queryParams   *GetQueryFormParams
+	headerParams  *GetHeaderParams
 }
 
 func (t *testServer) reset() {
@@ -28,6 +32,9 @@ func (t *testServer) reset() {
 	t.complexObject = nil
 	t.passThrough = nil
 	t.primitive = nil
+	t.cookieParams = nil
+	t.queryParams = nil
+	t.headerParams = nil
 }
 
 //  (GET /contentObject/{param})
@@ -122,6 +129,7 @@ func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 
 //  (GET /queryForm)
 func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) error {
+	t.queryParams = &params
 	if params.Ea != nil {
 		t.array = *params.Ea
 	}
@@ -148,6 +156,7 @@ func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) e
 
 //  (GET /header)
 func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
+	t.headerParams = &params
 	if params.XPrimitive != nil {
 		t.primitive = params.XPrimitive
 	}
@@ -168,6 +177,33 @@ func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 	}
 	if params.XComplexObject != nil {
 		t.complexObject = params.XComplexObject
+	}
+	return nil
+}
+
+//  (GET /cookie)
+func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
+	t.cookieParams = &params
+	if params.Ea != nil {
+		t.array = *params.Ea
+	}
+	if params.A != nil {
+		t.array = *params.A
+	}
+	if params.Eo != nil {
+		t.object = params.Eo
+	}
+	if params.O != nil {
+		t.object = params.O
+	}
+	if params.P != nil {
+		t.primitive = params.P
+	}
+	if params.Ep != nil {
+		t.primitive = params.Ep
+	}
+	if params.Co != nil {
+		t.complexObject = params.Co
 	}
 	return nil
 }
@@ -290,7 +326,6 @@ func TestParameterBinding(t *testing.T) {
 	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
 	ts.reset()
 
-
 	// ---------------------- Test Form Query Parameters ----------------------
 	//  (GET /queryForm)
 
@@ -382,5 +417,230 @@ func TestParameterBinding(t *testing.T) {
 		string(marshaledComplexObject)).Get("/header").Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
+	ts.reset()
+
+	// ------------------------- Test Cookie Parameters ------------------------
+	result = testutil.NewRequest().WithCookieNameValue("p", "5").Get("/cookie").Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	result = testutil.NewRequest().WithCookieNameValue("ep", "5").Get("/cookie").Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	result = testutil.NewRequest().WithCookieNameValue("a", "3,4,5").Get("/cookie").Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	result = testutil.NewRequest().WithCookieNameValue(
+		"o", "role,admin,firstName,Alex").Get("/cookie").Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+}
+
+func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder {
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	assert.Equal(t, code, rec.Code)
+	return rec
+}
+
+func TestClientPathParams(t *testing.T) {
+	var ts testServer
+	e := echo.New()
+	e.Use(middleware.Logger())
+	RegisterHandlers(e, &ts)
+	server := "http://example.com"
+
+	expectedObject := Object{
+		FirstName: "Alex",
+		Role:      "admin",
+	}
+
+	expectedComplexObject := ComplexObject{
+		Object: expectedObject,
+		Id:     "12345",
+	}
+
+	expectedArray := []int32{3, 4, 5}
+
+	var expectedPrimitive int32 = 5
+
+	req, err := NewGetPassThroughRequest(server, "some string")
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	require.NotNil(t, ts.passThrough)
+	assert.Equal(t, "some string", *ts.passThrough)
+	ts.reset()
+
+	req, err = NewGetContentObjectRequest(server, expectedComplexObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
+	ts.reset()
+
+	// Label style
+	req, err = NewGetLabelExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetLabelNoExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetLabelExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	req, err = NewGetLabelNoExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	// Matrix style
+	req, err = NewGetMatrixExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetMatrixNoExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetMatrixExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	req, err = NewGetMatrixNoExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	// Simple style
+	req, err = NewGetSimpleExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetSimpleNoExplodeArrayRequest(server, expectedArray)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, expectedArray, ts.array)
+	ts.reset()
+
+	req, err = NewGetSimpleExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	req, err = NewGetSimpleNoExplodeObjectRequest(server, expectedObject)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedObject, ts.object)
+	ts.reset()
+
+	req, err = NewGetSimplePrimitiveRequest(server, expectedPrimitive)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+}
+
+func TestClientQueryParams(t *testing.T) {
+	var ts testServer
+	e := echo.New()
+	e.Use(middleware.Logger())
+	RegisterHandlers(e, &ts)
+	server := "http://example.com"
+
+	expectedObject1 := Object{
+		FirstName: "Alex",
+		Role:      "admin",
+	}
+	expectedObject2 := Object{
+		FirstName: "Marcin",
+		Role:      "annoyed_at_swagger",
+	}
+
+	expectedComplexObject := ComplexObject{
+		Object: expectedObject2,
+		Id:     "12345",
+	}
+
+	expectedArray1 := []int32{3, 4, 5}
+	expectedArray2 := []int32{6, 7, 8}
+
+	var expectedPrimitive1 int32 = 5
+	var expectedPrimitive2 int32 = 100
+
+	// Check query params
+	qParams := GetQueryFormParams{
+		Ea: &expectedArray1,
+		A:  &expectedArray2,
+		Eo: &expectedObject1,
+		O:  &expectedObject2,
+		Ep: &expectedPrimitive1,
+		P:  &expectedPrimitive2,
+		Co: &expectedComplexObject,
+	}
+
+	req, err := NewGetQueryFormRequest(server, &qParams)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	require.NotNil(t, ts.queryParams)
+	assert.EqualValues(t, qParams, *ts.queryParams)
+	ts.reset()
+
+	// Check cookie params
+	cParams := GetCookieParams{
+		Ea: &expectedArray1,
+		A:  &expectedArray2,
+		Eo: &expectedObject1,
+		O:  &expectedObject2,
+		Ep: &expectedPrimitive1,
+		P:  &expectedPrimitive2,
+		Co: &expectedComplexObject,
+	}
+	req, err = NewGetCookieRequest(server, &cParams)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	require.NotNil(t, ts.cookieParams)
+	assert.EqualValues(t, cParams, *ts.cookieParams)
+	ts.reset()
+
+	// Check Header parameters
+	hParams := GetHeaderParams{
+		XArrayExploded:     &expectedArray1,
+		XArray:             &expectedArray2,
+		XObjectExploded:    &expectedObject1,
+		XObject:            &expectedObject2,
+		XPrimitiveExploded: &expectedPrimitive1,
+		XPrimitive:         &expectedPrimitive2,
+		XComplexObject:     &expectedComplexObject,
+	}
+	req, err = NewGetHeaderRequest(server, &hParams)
+	assert.NoError(t, err)
+	doRequest(t, e, http.StatusOK, req)
+	require.NotNil(t, ts.headerParams)
+	assert.EqualValues(t, hParams, *ts.headerParams)
 	ts.reset()
 }

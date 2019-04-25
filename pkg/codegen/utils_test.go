@@ -168,3 +168,16 @@ func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg*}/foo"))
 }
+
+func TestOrderedParamsFromUri(t *testing.T) {
+	result := OrderedParamsFromUri("/path/{param1}/{.param2}/{;param3*}/foo")
+	assert.EqualValues(t, []string{"param1", "param2", "param3"}, result)
+
+	result = OrderedParamsFromUri("/path/foo")
+	assert.EqualValues(t, []string{}, result)
+}
+
+func TestReplacePathParamsWithStr(t *testing.T) {
+	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
+	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+}

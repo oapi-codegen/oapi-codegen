@@ -362,6 +362,64 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
+  /cookie:
+    get:
+      operationId: getCookie
+      parameters:
+        - name: p
+          description: primitive
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: integer
+        - name: ep
+          description: primitive
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: integer
+        - name: ea
+          description: exploded array
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: a
+          description: array
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+        - name: eo
+          description: exploded object
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: o
+          description: object
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: co
+          description: complex object
+          in: cookie
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
 components:
   schemas:
     Object:

@@ -45,16 +45,6 @@ func BindStringToObject(src string, dst interface{}) error {
 		return errors.New("destination is not settable")
 	}
 
-	// Time won't work with the generic switch below, so handle it separately.
-	if dstTime, ok := dst.(*time.Time); ok {
-		parsedTime, err := time.Parse(time.RFC3339Nano, src)
-		if err != nil {
-			return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
-		}
-		*dstTime = parsedTime
-		return nil
-	}
-
 	switch t.Kind() {
 	case reflect.Int, reflect.Int32, reflect.Int64:
 		var val int64
@@ -77,6 +67,17 @@ func BindStringToObject(src string, dst interface{}) error {
 		if err == nil {
 			v.SetBool(val)
 		}
+	case reflect.Struct:
+		// Time is a special case of a struct that we handle
+		if dstTime, ok := dst.(*time.Time); ok {
+			parsedTime, err := time.Parse(time.RFC3339Nano, src)
+			if err != nil {
+				return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
+			}
+			*dstTime = parsedTime
+			return nil
+		}
+		fallthrough
 	default:
 		// We've got a bunch of types unimplemented, don't fail silently.
 		err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())

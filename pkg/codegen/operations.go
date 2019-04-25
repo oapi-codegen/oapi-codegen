@@ -100,6 +100,17 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+type ParameterDefinitions []ParameterDefinition
+
+func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
+	for _, param := range p {
+		if param.ParamName == name {
+			return &param
+		}
+	}
+	return nil
+}
+
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
@@ -187,9 +198,35 @@ func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
 }
 
-// Called by template engine to determine whether to generate a body definition
+// Called by template engine to determine whether to generate a body definition.
+// This is true if the Operation has a body marshalled as application/json
 func (o *OperationDefinition) HasBody() bool {
 	return o.Body != nil
+}
+
+// This returns whether the operation has any kind of body specified
+func (o *OperationDefinition) HasAnyBody() bool {
+	return o.Spec.RequestBody != nil
+}
+
+// This decides whether we need to generate the second, generic form of a
+// function with a body implementation. This is described in the top level
+// README.
+func (o *OperationDefinition) GenerateGenericForm() bool {
+	return !o.HasBody() || o.HasGenericBody()
+}
+
+// This returns whether we have any non-json body
+func (o *OperationDefinition) HasGenericBody() bool {
+	if o.Spec.RequestBody == nil {
+		return false
+	}
+	for k := range o.Spec.RequestBody.Value.Content {
+		if k != "application/json" {
+			return true
+		}
+	}
+	return false
 }
 
 // Called by the template engine to get the body definition
@@ -221,14 +258,14 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (string, error) {
 	var operations []OperationDefinition
 
-	for _, pathName := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[pathName]
+	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
+		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters)
 		if err != nil {
 			return "", fmt.Errorf("error describing global parameters for %s: %s",
-				pathName, err)
+				requestPath, err)
 		}
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
@@ -241,28 +278,30 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 			localParams, err := DescribeParameters(op.Parameters)
 			if err != nil {
 				return "", fmt.Errorf("error describing global parameters for %s/%s: %s",
-					opName, pathName, err)
+					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
 			allParams := append(globalParams, localParams...)
 
-			// We don't know how to extract parameters from cookies yet, so we'll
-			// return an error until we do. This looks like it should be possible
-			// to fish out from cookie data via Echo.
-			if len(FilterParameterDefinitionByType(allParams, "cookie")) != 0 {
-				return "", fmt.Errorf("cookie parameters are not yet supported")
+			// Order the path parameters to match the order as specified in
+			// the path, not in the swagger spec, and validate that the parameter
+			// names match, as downstream code depends on that.
+			pathParams := FilterParameterDefinitionByType(allParams, "path")
+			pathParams, err = SortParamsByPath(requestPath, pathParams)
+			if err != nil {
+				return "", err
 			}
 
 			opDef := OperationDefinition{
-				PathParams:   FilterParameterDefinitionByType(allParams, "path"),
+				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
 				OperationId:  ToCamelCase(op.OperationID),
 				Summary:      op.Summary,
 				Method:       opName,
-				Path:         pathName,
+				Path:         requestPath,
 				Spec:         op,
 			}
 
@@ -311,6 +350,11 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)
 	}
 
+	client, err := GenerateClient(t, operations)
+	if err != nil {
+		return "", fmt.Errorf("Error generating API client: %s", err)
+	}
+
 	wrappers, err := GenerateWrappers(t, operations)
 	if err != nil {
 		return "", fmt.Errorf("Error generating handler wrappers: %s", err)
@@ -320,7 +364,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 	if err != nil {
 		return "", fmt.Errorf("Error generating handler registration: %s", err)
 	}
-	return strings.Join([]string{si, wrappers, register}, "\n"), nil
+	return strings.Join([]string{si, client, wrappers, register}, "\n"), nil
 }
 
 // Uses the template engine to generate the server interface
@@ -373,6 +417,24 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 	err = w.Flush()
 	if err != nil {
 		return "", fmt.Errorf("error flushing output buffer for route registration: %s", err)
+	}
+	return buf.String(), nil
+}
+
+// Uses the template engine to generate the function which registers our wrappers
+// as Echo path handlers.
+func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "client.tmpl", ops)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating client bindings: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
 	}
 	return buf.String(), nil
 }

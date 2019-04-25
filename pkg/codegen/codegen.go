@@ -102,6 +102,15 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		if strings.Contains(str, "echo.") {
 			imports = append(imports, "github.com/labstack/echo/v4")
 		}
+		if strings.Contains(str, "io.") {
+			imports = append(imports, "io")
+		}
+		if strings.Contains(str, "url.") {
+			imports = append(imports, "net/url")
+		}
+		if strings.Contains(str, "context.") {
+			imports = append(imports, "context")
+		}
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)

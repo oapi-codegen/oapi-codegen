@@ -59,9 +59,14 @@ func genParamNames(params []ParameterDefinition) string {
 	}
 	parts := make([]string, len(params))
 	for i, p := range params {
-		parts[i] = fmt.Sprintf(p.GoName)
+		paramName := LowercaseFirstCharacter(ToCamelCase(p.ParamName))
+		parts[i] = paramName
 	}
 	return ", " + strings.Join(parts, ", ")
+}
+
+func genParamFmtString(path string) string {
+	return ReplacePathParamsWithStr(path)
 }
 
 // This function map is passed to the template engine, and we can call each
@@ -70,6 +75,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamArgs":        genParamArgs,
 	"genParamTypes":       genParamTypes,
 	"genParamNames":       genParamNames,
+	"genParamFmtString":   genParamFmtString,
 	"swaggerUriToEchoUri": SwaggerUriToEchoUri,
 	"lcFirst":             LowercaseFirstCharacter,
 }

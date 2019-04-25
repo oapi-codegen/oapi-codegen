@@ -28,6 +28,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -48,6 +49,7 @@ type RequestBuilder struct {
 	Headers map[string]string
 	Body    []byte
 	Error   error
+	Cookies []*http.Cookie
 }
 
 // Path operations
@@ -113,6 +115,16 @@ func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	return r.WithJsonContentType()
 }
 
+// Cookie operations
+func (r *RequestBuilder) WithCookie(c *http.Cookie) *RequestBuilder {
+	r.Cookies = append(r.Cookies, c)
+	return r
+}
+
+func (r *RequestBuilder) WithCookieNameValue(name, value string) *RequestBuilder {
+	return r.WithCookie(&http.Cookie{Name: name, Value: value})
+}
+
 // This function performs the request, it takes a pointer to a testing context
 // to print messages, and a pointer to an echo context for request handling.
 func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
@@ -130,6 +142,10 @@ func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 	for h, v := range r.Headers {
 		req.Header.Add(h, v)
 	}
+	for _, c := range r.Cookies {
+		req.AddCookie(c)
+	}
+
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
 

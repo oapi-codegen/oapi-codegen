@@ -15,12 +15,19 @@ package codegen
 
 import (
 	"errors"
+	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
 	"regexp"
 	"sort"
 	"strings"
 	"unicode"
 )
+
+var pathParamRE *regexp.Regexp
+
+func init() {
+	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+}
 
 // Uppercase the first character in a string. This assumes UTF-8, so we have
 // to be careful with unicode, don't treat it as a byte array.
@@ -173,7 +180,6 @@ func StringInArray(str string, array []string) bool {
 // supported
 // We only support flat components for now, so no components in a schema under
 // components.
-
 func RefPathToGoType(refPath string) (string, error) {
 	pathParts := strings.Split(refPath, "/")
 	if pathParts[0] != "#" {
@@ -196,12 +202,42 @@ func RefPathToGoType(refPath string) (string, error) {
 //   {;param*}
 //   {?param}
 //   {?param*}
-
 func SwaggerUriToEchoUri(uri string) string {
-	exp, err := regexp.Compile("{[.;?]?([^{}*]+)\\*?}")
-	// We don't use a dynamic regexp, so this should always succeed.
-	if err != nil {
-		panic(err)
+	return pathParamRE.ReplaceAllString(uri, ":$1")
+}
+
+// Returns the argument names, in order, in a given URI string, so for
+// /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
+func OrderedParamsFromUri(uri string) []string {
+	matches := pathParamRE.FindAllStringSubmatch(uri, -1)
+	result := make([]string, len(matches))
+	for i, m := range matches {
+		result[i] = m[1]
 	}
-	return exp.ReplaceAllString(uri, ":$1")
+	return result
+}
+
+// Replaces path parameters with %s
+func ReplacePathParamsWithStr(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, "%s")
+}
+
+// Reorders the given parameter definitions to match those in the path URI.
+func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
+	pathParams := OrderedParamsFromUri(path)
+	n := len(in)
+	if len(pathParams) != n {
+		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+			path, len(pathParams), n)
+	}
+	out := make([]ParameterDefinition, len(in))
+	for i, name := range pathParams {
+		p := ParameterDefinitions(in).FindByName(name)
+		if p == nil {
+			return nil, fmt.Errorf("path '%s' refers to parameter '%s', which doesn't exist in specification",
+				path, name)
+		}
+		out[i] = *p
+	}
+	return out, nil
 }

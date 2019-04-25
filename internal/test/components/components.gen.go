@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
+	"net/http"
 	"strings"
 )
 
@@ -31,6 +32,14 @@ type RequestBody struct {
 }
 
 type ServerInterface interface {
+}
+
+// A client which conforms to the OpenAPI3 specification for this service. The
+// server should be fully qualified with shema and server, ie,
+// https://deepmap.com.
+type Client struct {
+	Server string
+	Client http.Client
 }
 
 type ServerInterfaceWrapper struct {
@@ -75,4 +84,3 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
-

@@ -4,11 +4,14 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -50,6 +53,166 @@ type ServerInterface interface {
 	FindPetById(ctx echo.Context, id int64) error
 }
 
+// A client which conforms to the OpenAPI3 specification for this service. The
+// server should be fully qualified with shema and server, ie,
+// https://deepmap.com.
+type Client struct {
+	Server string
+	Client http.Client
+}
+
+// Request for FindPets
+func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
+	req, err := NewFindPetsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return c.Client.Do(req)
+}
+
+// Request for AddPet with JSON body
+func (c *Client) AddPet(ctx context.Context, body NewPet) (*http.Response, error) {
+	req, err := NewAddPetRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return c.Client.Do(req)
+}
+
+// Request for DeletePet
+func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error) {
+	req, err := NewDeletePetRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return c.Client.Do(req)
+}
+
+// Request for FindPetById
+func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {
+	req, err := NewFindPetByIdRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return c.Client.Do(req)
+}
+
+// Request generator for FindPets
+func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
+	var err error
+
+	queryUrl := fmt.Sprintf("%s/pets", server)
+
+	var queryStrings []string
+
+	var queryParam0 string
+	if params.Tags != nil {
+
+		queryParam0, err = runtime.StyleParam("form", true, "tags", *params.Tags)
+		if err != nil {
+			return nil, err
+		}
+
+		queryStrings = append(queryStrings, queryParam0)
+	}
+
+	var queryParam1 string
+	if params.Limit != nil {
+
+		queryParam1, err = runtime.StyleParam("form", true, "limit", *params.Limit)
+		if err != nil {
+			return nil, err
+		}
+
+		queryStrings = append(queryStrings, queryParam1)
+	}
+
+	if len(queryStrings) != 0 {
+		queryUrl += "?" + strings.Join(queryStrings, "&")
+	}
+
+	req, err := http.NewRequest("GET", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// Request generator for AddPet with JSON body
+func NewAddPetRequest(server string, body NewPet) (*http.Request, error) {
+	var bodyReader io.Reader
+
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+
+	return NewAddPetRequestWithBody(server, "application/json", bodyReader)
+}
+
+// Request generator for AddPet with non-JSON body
+func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl := fmt.Sprintf("%s/pets", server)
+
+	req, err := http.NewRequest("POST", queryUrl, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
+// Request generator for DeletePet
+func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+
+	req, err := http.NewRequest("DELETE", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// Request generator for FindPetById
+func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+
+	req, err := http.NewRequest("GET", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
@@ -62,23 +225,23 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	// context.
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
+	if paramValue := ctx.QueryParam("tags"); paramValue != "" {
 
-	{
-		err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
+	}
 
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
-		}
+	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
 	}
 
 	// ------------- Optional query parameter "limit" -------------
+	if paramValue := ctx.QueryParam("limit"); paramValue != "" {
 
-	{
-		err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	}
 
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
-		}
+	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -99,15 +262,15 @@ func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var Id int64
+	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &Id)
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.DeletePet(ctx, Id)
+	err = w.Handler.DeletePet(ctx, id)
 	return err
 }
 
@@ -115,15 +278,15 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) FindPetById(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
-	var Id int64
+	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &Id)
+	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.FindPetById(ctx, Id)
+	err = w.Handler.FindPetById(ctx, id)
 	return err
 }
 
@@ -195,4 +358,3 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
-
