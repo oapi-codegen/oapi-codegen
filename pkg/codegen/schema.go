@@ -59,7 +59,7 @@ func GenFieldsFromSchemaDescriptors(desc []SchemaDescriptor) []string {
 		if s.Required {
 			field += fmt.Sprintf(" `json:\"%s\"`", s.JsonName)
 		} else {
-			field += fmt.Sprintf(" `json,omitempty:\"%s\"`", s.JsonName)
+			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", s.JsonName)
 		}
 		fields = append(fields, field)
 	}

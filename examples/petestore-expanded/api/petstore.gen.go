@@ -25,7 +25,7 @@ type Error struct {
 // Type definition for component schema "NewPet"
 type NewPet struct {
 	Name string  `json:"name"`
-	Tag  *string `json,omitempty:"tag"`
+	Tag  *string `json:"tag,omitempty"`
 }
 
 // Type definition for component schema "Pet"
