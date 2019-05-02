@@ -27,6 +27,7 @@ func TestGenFieldsFromSchemaDescriptors(t *testing.T) {
 
 	if len(f) != 2 {
 		t.Error("Incorrect len")
+		return
 	}
 
 	for i, s := range f {
