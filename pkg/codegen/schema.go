@@ -171,12 +171,40 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 		return goType, nil
 	}
 
-	// Here, we handle several types of non-object schemas, and exit early if we
-	// can. Objects have a schema of empty string. See
-	// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes
+
+	// Schema type and format, eg. string / binary
 	t := schema.Type
 	f := schema.Format
-	if t != "" {
+
+	// Handle objects and empty schemas first as a special case
+	if t == "" || t == "object" {
+		var outType string
+		if len(schema.Properties) == 0 {
+			if t == "object" {
+				// We have an object with no properties. This is a generic object
+				// expressed as a map.
+				outType = "map[string]interface{}"
+			} else {  // t == ""
+				// If we don't even have the object designator, we're a completely
+				// generic type.
+				outType = "interface{}"
+			}
+		} else {
+			desc, err := DescribeSchemaProperties(schema)
+			if err != nil {
+				return "", err
+			}
+			outType = GenStructFromSchemaDescriptors(desc)
+		}
+
+		if !required {
+			outType = "*" + outType
+		}
+
+		return outType, nil
+	} else {
+		// Here, we handle several types of non-object schemas.
+		// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes
 		var result string
 		switch t {
 		case "array":
@@ -233,18 +261,6 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 		}
 		return result, nil
 	}
-
-	desc, err := DescribeSchemaProperties(schema)
-	if err != nil {
-		return "", err
-	}
-	outType := GenStructFromSchemaDescriptors(desc)
-
-	if !required {
-		outType = "*" + outType
-	}
-
-	return outType, nil
 }
 
 // This constructs a Go type for a parameter, looking at either the schema or
