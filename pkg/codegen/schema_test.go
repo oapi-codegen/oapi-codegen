@@ -1,6 +1,10 @@
 package codegen
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestGenFieldsFromSchemaDescriptors(t *testing.T) {
 	desc := []SchemaDescriptor{
@@ -25,14 +29,5 @@ func TestGenFieldsFromSchemaDescriptors(t *testing.T) {
 
 	f := GenFieldsFromSchemaDescriptors(desc)
 
-	if len(f) != 2 {
-		t.Error("Incorrect len")
-		return
-	}
-
-	for i, s := range f {
-		if s != res[i] {
-			t.Error("Incorrect result")
-		}
-	}
+	assert.Equal(t, res, f, "Incorrect result")
 }
