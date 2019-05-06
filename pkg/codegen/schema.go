@@ -10,11 +10,12 @@ import (
 
 // This describes a Schema, a type definition.
 type SchemaDescriptor struct {
-	Required bool   // Is the schema required? If not, we'll pass by pointer
-	GoType   string // The Go type needed to represent the json type.
-	GoName   string // The Go compatible type name for the type
-	JsonName string // The json type name for the type
-	IsRef    bool   // Is this schema a reference to predefined object?
+	Required                bool   // Is the schema required? If not, we'll pass by pointer
+	GoType                  string // The Go type needed to represent the json type.
+	GoName                  string // The Go compatible type name for the type
+	JsonName                string // The json type name for the type
+	IsRef                   bool   // Is this schema a reference to predefined object?
+	HasAdditionalProperties bool   // Are additional properties allowed?
 }
 
 // Walk the Properties field of the specified schema, generating SchemaDescriptors
@@ -171,7 +172,6 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 		return goType, nil
 	}
 
-
 	// Schema type and format, eg. string / binary
 	t := schema.Type
 	f := schema.Format
@@ -184,7 +184,7 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
 				outType = "map[string]interface{}"
-			} else {  // t == ""
+			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
 				outType = "interface{}"

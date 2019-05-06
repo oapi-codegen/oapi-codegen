@@ -78,4 +78,5 @@ var TemplateFunctions = template.FuncMap{
 	"genParamFmtString":   genParamFmtString,
 	"swaggerUriToEchoUri": SwaggerUriToEchoUri,
 	"lcFirst":             LowercaseFirstCharacter,
+	"camelCase":           ToCamelCase,
 }
