@@ -1,9 +1,7 @@
 module github.com/deepmap/oapi-codegen
 
-replace github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1 => github.com/mromaszewicz/kin-openapi v0.1.1-0.20190425182358-ad4036f6ef67
-
 require (
-	github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1
+	github.com/getkin/kin-openapi v0.1.1-0.20190507152207-d3180292eead
 	github.com/labstack/echo/v4 v4.0.0
 	github.com/mattn/go-colorable v0.1.1 // indirect
 	github.com/mattn/go-isatty v0.0.7 // indirect
