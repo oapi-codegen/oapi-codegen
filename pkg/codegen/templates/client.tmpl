@@ -43,7 +43,7 @@ func New{{$opid}}Request(server string{{genParamArgs .PathParams}}{{if .Requires
         }
         bodyReader = bytes.NewReader(buf)
     {{if not .GetBodyDefinition.Required}}}{{end}}
-        return New{{$opid}}RequestWithBody(server{{range $paramIdx, $param := .PathParams}}, {{.ParamName}}{{end}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, "application/json", bodyReader)
+        return New{{$opid}}RequestWithBody(server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, "application/json", bodyReader)
 }{{end}}{{/* end of .HasBody */}}
 // Request generator for {{$opid}}{{if .HasAnyBody}} with non-JSON body{{end}}
 func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
