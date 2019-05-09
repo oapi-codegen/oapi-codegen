@@ -24,9 +24,49 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
+// Generate is a flag for setting what code to generate.
+type Generate string
+
+const (
+	// All generates all code and is the default.
+	All Generate = "all"
+	// Server generates the types and server implementation.
+	Server Generate = "server"
+	// Client generates the types and the client implementation.
+	Client Generate = "client"
+	// Types generates the request, responses, and parameters structs.
+	Types Generate = "types"
+)
+
+func (g Generate) String() string {
+	if g == "" {
+		return string(All)
+	}
+	return string(g)
+}
+
+// Set checks for valid Generate options. Uses All by default.
+func (g Generate) Set(s string) error {
+	// default generate all
+	if s == "" {
+		g = All
+		return nil
+	}
+
+	g = Generate(s)
+	switch g {
+	case All, Server, Client, Types:
+		return nil
+	default:
+		return fmt.Errorf(`must be "all", "server", "client", or "types"`)
+	}
+}
+
 func main() {
 	var packageName string
+	var generate Generate
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
+	flag.Var(&generate, "generate", "The code to generate; valid options: all (default), server, client, types")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
