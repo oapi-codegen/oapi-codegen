@@ -242,13 +242,13 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 			}
 			result = "bool"
 		case "string":
+			// Special case string formats here.
 			switch f {
-			case "", "password":
-				result = "string"
 			case "date-time", "date":
 				result = "time.Time"
 			default:
-				return "", fmt.Errorf("invalid string format: %s", f)
+				// All unrecognized formats are simply a regular string.
+				result = "string"
 			}
 		default:
 			return "", fmt.Errorf("unhandled Schema type: %s", t)

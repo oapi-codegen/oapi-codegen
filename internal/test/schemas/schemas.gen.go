@@ -18,6 +18,9 @@ type AnyType1 interface{}
 // Type definition for component schema "AnyType2"
 type AnyType2 interface{}
 
+// Type definition for component schema "CustomStringType"
+type CustomStringType string
+
 // Type definition for component schema "GenericObject"
 type GenericObject map[string]interface{}
 
@@ -43,10 +46,10 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/zSNsU7EMBBEfyWaOvIl0LmjoqQgHaLwOXOKUWJb3r2TIsv/jpKDbnff25kKn7acIqMK",
-	"bIX4hZs7x7e4T3vmCFtb/7+9HGSm+BKyhhRhMS1BOlnSfZ27KzsXuxCV5eY8a0Pr8c7IEvzH9Ydej3/d",
-	"M2GRnofWWo8Qb+lEQdeDTRTtPlkeLOjxYJFn2WgGMxyhKTO6HGDxagYzooectsB+VdzLCotFNdvL5U9V",
-	"ipqZzJvLxgW07/YbAAD//0jAYSz+AAAA",
+	"H4sIAAAAAAAC/zSOMW/DIBCF/4r1ZkTidmOrOnTsEG9VB4LPNZUNiDtHihD/vYKk291933u6Ahf3FAMF",
+	"YZgCdivtto9v4T7dE40wpar/7aWRmdhln8THAINp9TzwGo9tHq402DD4IJQX66hUVIX3gyXuF8k+/LSO",
+	"VrHEvFuBgesQCtIJuGst9kGBsnef119y0jJPIz4OtVYFH5bYkZetsYlYhgvlG2Uo3Cjz48dRn/W5lcZE",
+	"wSYPg1d91iMUuNsM81Vw5A0Gq0gyp9NTFWLRM1HabdLWo37XvwAAAP//TwyLjzUBAAA=",
 }
 
 // Returns the Swagger specification corresponding to the generated code

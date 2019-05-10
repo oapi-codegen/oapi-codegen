@@ -11,4 +11,6 @@ components:
     AnyType1: {}
     AnyType2:
       description: This should be an interface{}
-
+    CustomStringType:
+      type: string
+      format: custom
