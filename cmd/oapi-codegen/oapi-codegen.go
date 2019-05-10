@@ -24,49 +24,61 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
-// Generate is a flag for setting what code to generate.
+// Generate are possible options to the generate flag.
 type Generate string
 
 const (
-	// All generates all code and is the default.
-	All Generate = "all"
 	// Server generates the types and server implementation.
 	Server Generate = "server"
 	// Client generates the types and the client implementation.
 	Client Generate = "client"
-	// Types generates the request, responses, and parameters structs.
-	Types Generate = "types"
 )
 
-func (g Generate) String() string {
-	if g == "" {
-		return string(All)
+// Generators is a flag for setting what code to generate. Acts like
+// a unique set of options.
+type Generators map[Generate]struct{}
+
+func (g Generators) String() string {
+	opts := []string{}
+	for k := range g {
+		opts = append(opts, string(k))
 	}
-	return string(g)
+	return strings.Join(opts, ",")
 }
 
 // Set checks for valid Generate options. Uses All by default.
-func (g Generate) Set(s string) error {
-	// default generate all
-	if s == "" {
-		g = All
+func (g Generators) Set(value string) error {
+	// by default generate both the server and the client
+	if value == "" {
+		g[Server] = struct{}{}
+		g[Client] = struct{}{}
 		return nil
 	}
 
-	g = Generate(s)
-	switch g {
-	case All, Server, Client, Types:
-		return nil
-	default:
-		return fmt.Errorf(`must be "all", "server", "client", or "types"`)
+	for _, s := range strings.Split(value, ",") {
+		gen := Generate(s)
+		// default generate all
+		if gen == "" {
+			g[Server] = struct{}{}
+			g[Client] = struct{}{}
+		}
+
+		switch gen {
+		case Server, Client:
+			g[gen] = struct{}{}
+		default:
+			return fmt.Errorf(`must be "client" or "server"`)
+		}
 	}
+
+	return nil
 }
 
 func main() {
 	var packageName string
-	var generate Generate
+	generators := make(Generators)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
-	flag.Var(&generate, "generate", "The code to generate; valid options: all (default), server, client, types")
+	flag.Var(generators, "generate", `Comma-separated list of code to generate; valid options: "client","server"  (default client,server) `)
 	flag.Parse()
 
 	if flag.NArg() < 1 {
