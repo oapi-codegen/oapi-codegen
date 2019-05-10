@@ -2,8 +2,31 @@ openapi: "3.0.1"
 info:
   version: 1.0.0
   title: Test Server
+  description: |
+    Test cases for various issues found over time. Please add a test case for
+    any bug fixed.
 servers:
   - url: http://openapitest.deepmap.ai
+paths:
+  /issues/9:
+    get:
+      operationId: Issue9
+      description: |
+        Client params type incorrectly included for request with body and
+        parameters.
+      parameters:
+        - name: foo
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Optional body
+        required: false
+        content:
+          application/json:
+            schema: {}
+
 components:
   schemas:
     GenericObject:

@@ -4,10 +4,14 @@ package schemas
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/labstack/echo/v4"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -24,7 +28,17 @@ type CustomStringType string
 // Type definition for component schema "GenericObject"
 type GenericObject map[string]interface{}
 
+// Parameters object for Issue9
+type Issue9Params struct {
+	Foo string `json:"foo"`
+}
+
+// Request body for Issue9 for application/json ContentType
+type Issue9RequestBody interface{}
+
 type ServerInterface interface {
+	//  (GET /issues/9)
+	Issue9(ctx echo.Context, params Issue9Params) error
 }
 
 // A client which conforms to the OpenAPI3 specification for this service. The
@@ -35,21 +49,108 @@ type Client struct {
 	Client http.Client
 }
 
+// Request for Issue9 with JSON body
+func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error) {
+	req, err := NewIssue9Request(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	return c.Client.Do(req)
+}
+
+// Request generator for Issue9 with JSON body
+func NewIssue9Request(server string, params *Issue9Params, body *Issue9RequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		buf, err := json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		bodyReader = bytes.NewReader(buf)
+	}
+	return NewIssue9RequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// Request generator for Issue9 with non-JSON body
+func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl := fmt.Sprintf("%s/issues/9", server)
+
+	var queryStrings []string
+
+	var queryParam0 string
+
+	queryParam0, err = runtime.StyleParam("form", true, "foo", params.Foo)
+	if err != nil {
+		return nil, err
+	}
+
+	queryStrings = append(queryStrings, queryParam0)
+
+	if len(queryStrings) != 0 {
+		queryUrl += "?" + strings.Join(queryStrings, "&")
+	}
+
+	req, err := http.NewRequest("GET", queryUrl, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+	return req, nil
+}
+
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// Wrapper for Issue9
+func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the
+	// context.
+	var params Issue9Params
+	// ------------- Required query parameter "foo" -------------
+	if paramValue := ctx.QueryParam("foo"); paramValue != "" {
+
+	} else {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument foo is required, but not found"))
+	}
+
+	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue9(ctx, params)
+	return err
+}
+
 func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+
+	router.GET("/issues/9", wrapper.Issue9)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/zSOMW/DIBCF/4r1ZkTidmOrOnTsEG9VB4LPNZUNiDtHihD/vYKk291933u6Ahf3FAMF",
-	"YZgCdivtto9v4T7dE40wpar/7aWRmdhln8THAINp9TzwGo9tHq402DD4IJQX66hUVIX3gyXuF8k+/LSO",
-	"VrHEvFuBgesQCtIJuGst9kGBsnef119y0jJPIz4OtVYFH5bYkZetsYlYhgvlG2Uo3Cjz48dRn/W5lcZE",
-	"wSYPg1d91iMUuNsM81Vw5A0Gq0gyp9NTFWLRM1HabdLWo37XvwAAAP//TwyLjzUBAAA=",
+	"H4sIAAAAAAAC/2xSsW7cMAz9FYGz4cu1U7y1GYpMKZBsvQw8iT4rsCWFpK41DP97IfmMNmg3SnyPfE9P",
+	"C9g4pRgoqEC3gNiBJqzllzC/zImO0C1rs58+lY4jseyT+higg5fBi5Eh5tGZMxkMxgcl7tHSssLawEMW",
+	"jdOzsg+XMqOM6CNPqNCBrU1oQGsHpMIK7RsFYm+fzm9ktXBuiLhdrOvagA99/I8iEjUWhcT0kc0V2ccs",
+	"xovkepWDM/FKbNRP1JrvI6GQQecMGt25hXoKGGZzzhfT+1/k2lMoQr2OtG95Jr4SQwNXYtm2H9u79q4Y",
+	"iIkCJg8dfG7v2iM0kFCH+raHTcvhvhwupP96eBg9BTUJGScxxbrxwUZmsjrOpR6zI1cNMr3nIuan18Gc",
+	"o5sNBncKlUtKLJvwmIixjH900MFjUXBfRe0w6H4s4Mv290w8QwMBp2K1jxEaKGs8k4NOOVNz+yt/JbNn",
+	"t75uYBL9Gt1cEDYGpVB9Ykqjt1XI4U2K2eXPqJrqx5d4qgWO1dkHGT2OQmulSM1hc5B5hA4G1dQdDrcQ",
+	"SqytI0oTphY9rK/r7wAAAP//9Cn8pfsCAAA=",
 }
 
 // Returns the Swagger specification corresponding to the generated code
