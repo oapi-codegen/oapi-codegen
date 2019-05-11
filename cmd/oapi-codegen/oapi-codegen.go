@@ -24,61 +24,13 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
-// Generate are possible options to the generate flag.
-type Generate string
-
-const (
-	// Server generates the types and server implementation.
-	Server Generate = "server"
-	// Client generates the types and the client implementation.
-	Client Generate = "client"
-)
-
-// Generators is a flag for setting what code to generate. Acts like
-// a unique set of options.
-type Generators map[Generate]struct{}
-
-func (g Generators) String() string {
-	opts := []string{}
-	for k := range g {
-		opts = append(opts, string(k))
-	}
-	return strings.Join(opts, ",")
-}
-
-// Set checks for valid Generate options. Uses All by default.
-func (g Generators) Set(value string) error {
-	// by default generate both the server and the client
-	if value == "" {
-		g[Server] = struct{}{}
-		g[Client] = struct{}{}
-		return nil
-	}
-
-	for _, s := range strings.Split(value, ",") {
-		gen := Generate(s)
-		// default generate all
-		if gen == "" {
-			g[Server] = struct{}{}
-			g[Client] = struct{}{}
-		}
-
-		switch gen {
-		case Server, Client:
-			g[gen] = struct{}{}
-		default:
-			return fmt.Errorf(`must be "client" or "server"`)
-		}
-	}
-
-	return nil
-}
-
 func main() {
-	var packageName string
-	generators := make(Generators)
+	var (
+		packageName string
+		generate    string
+	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
-	flag.Var(generators, "generate", `Comma-separated list of code to generate; valid options: "client","server"  (default client,server) `)
+	flag.StringVar(&generate, "generate", "client,server", `Comma-separated list of code to generate; valid options: "client", "server"  (default client,server)`)
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -96,16 +48,30 @@ func main() {
 		packageName = codegen.ToCamelCase(nameParts[0])
 	}
 
+	opts := codegen.Options{}
+	for _, g := range strings.Split(generate, ",") {
+		switch g {
+		case "client":
+			opts.GenerateClient = true
+		case "server":
+			opts.GenerateServer = true
+		default:
+			fmt.Printf("unknown generate option %s\n", g)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	}
+
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)
 	}
 
-	stubs, err := codegen.GenerateServer(swagger, packageName)
+	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error generating server stubs: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error generating code: %s\n", err)
 		os.Exit(1)
 	}
-	fmt.Println(stubs)
+	fmt.Println(code)
 }
