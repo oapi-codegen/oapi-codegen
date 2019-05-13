@@ -16,11 +16,12 @@ package codegen
 import (
 	"errors"
 	"fmt"
-	"github.com/getkin/kin-openapi/openapi3"
 	"regexp"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 var pathParamRE *regexp.Regexp
@@ -188,7 +189,7 @@ func RefPathToGoType(refPath string) (string, error) {
 	if len(pathParts) != 4 {
 		return "", errors.New("Parameter nesting is deeper than supported")
 	}
-	return ToCamelCase(pathParts[3]), nil
+	return GoName(pathParts[3]), nil
 }
 
 // This function converts a swagger style path URI with parameters to a

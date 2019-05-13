@@ -111,6 +111,18 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 	return nil
 }
 
+// GoName converts parameter names to CamelCase and for
+func GoName(name string) string {
+	if name == "id" {
+		return "ID"
+	}
+
+	name = ToCamelCase(name)
+	name = strings.ReplaceAll(name, "Url", "URL")
+	name = strings.ReplaceAll(name, "Cpu", "CPU")
+	return name
+}
+
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
@@ -130,7 +142,7 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 			}
 			pd := ParameterDefinition{
 				ParamName: param.Name,
-				GoName:    ToCamelCase(param.Name),
+				GoName:    GoName(param.Name),
 				TypeDef:   goType,
 				Reference: paramOrRef.Ref,
 				In:        param.In,
@@ -148,7 +160,7 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 			}
 			pd := ParameterDefinition{
 				ParamName: param.Name,
-				GoName:    ToCamelCase(param.Name),
+				GoName:    GoName(param.Name),
 				TypeDef:   goType,
 				Reference: paramOrRef.Ref,
 				In:        param.In,
@@ -302,6 +314,21 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				Method:       opName,
 				Path:         requestPath,
 				Spec:         op,
+			}
+
+			if opDef.OperationId == "" {
+				opDef.OperationId = strings.Title(strings.ToLower(opDef.Method))
+				for _, p := range strings.Split(opDef.Path, "/") {
+					if p == "" {
+						continue
+					}
+
+					if p[len(p)-1] == '}' {
+						p = "ID"
+					}
+
+					opDef.OperationId += strings.Title(p)
+				}
 			}
 
 			// Does request have a body payload?

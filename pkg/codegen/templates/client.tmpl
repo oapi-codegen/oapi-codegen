@@ -70,7 +70,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     }
     {{end}}
 {{end}}
-    queryUrl := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    queryURL := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
 {{if .QueryParams}}
     var queryStrings []string
 {{range $paramIdx, $param := .QueryParams}}
@@ -98,10 +98,10 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     {{if not .Required}}}{{end}}
 {{end}}
     if len(queryStrings) != 0 {
-        queryUrl += "?" + strings.Join(queryStrings, "&")
+        queryURL += "?" + strings.Join(queryStrings, "&")
     }
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasAnyBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryURL, {{if .HasAnyBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

@@ -30,7 +30,7 @@ func DescribeSchemaProperties(schema *openapi3.Schema) ([]SchemaDescriptor, erro
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for property '%s': %s", propName, err)
 		}
-		goFieldName := ToCamelCase(propName)
+		goFieldName := GoName(propName)
 		desc = append(desc, SchemaDescriptor{
 			Required: propRequired,
 			GoType:   propType,

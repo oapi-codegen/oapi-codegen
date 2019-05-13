@@ -216,7 +216,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 
 		types = append(types, TypeDefinition{
 			JsonTypeName: schemaName,
-			TypeName:     ToCamelCase(schemaName),
+			TypeName:     GoName(schemaName),
 			TypeDef:      typeDef,
 		})
 	}
@@ -244,7 +244,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			}
 			types = append(types, TypeDefinition{
 				JsonTypeName: paramName,
-				TypeName:     ToCamelCase(paramName),
+				TypeName:     GoName(paramName),
 				TypeDef:      goType,
 			})
 		} else {
@@ -256,7 +256,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			}
 			types = append(types, TypeDefinition{
 				JsonTypeName: paramName,
-				TypeName:     ToCamelCase(paramName),
+				TypeName:     GoName(paramName),
 				TypeDef:      goType,
 			})
 		}
@@ -285,7 +285,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 			types = append(types, TypeDefinition{
 				JsonTypeName: responseName,
-				TypeName:     ToCamelCase(responseName),
+				TypeName:     GoName(responseName),
 				TypeDef:      goType,
 			})
 		} else {
@@ -302,7 +302,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				types = append(types, TypeDefinition{
 					JsonTypeName: responseName,
-					TypeName:     ToCamelCase(responseName),
+					TypeName:     GoName(responseName),
 					TypeDef:      goType,
 				})
 			}
@@ -332,7 +332,7 @@ func GenerateTypesForRquestBodies(t *template.Template, bodies map[string]*opena
 			}
 			types = append(types, TypeDefinition{
 				JsonTypeName: bodyName,
-				TypeName:     ToCamelCase(bodyName),
+				TypeName:     GoName(bodyName),
 				TypeDef:      goType,
 			})
 		} else {
@@ -348,7 +348,7 @@ func GenerateTypesForRquestBodies(t *template.Template, bodies map[string]*opena
 				}
 				types = append(types, TypeDefinition{
 					JsonTypeName: bodyName,
-					TypeName:     ToCamelCase(bodyName),
+					TypeName:     GoName(bodyName),
 					TypeDef:      goType,
 				})
 			}
