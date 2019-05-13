@@ -1,4 +1,4 @@
-// A client which conforms to the OpenAPI3 specification for this service. The
+// Client which conforms to the OpenAPI3 specification for this service. The
 // server should be fully qualified with shema and server, ie,
 // https://deepmap.com.
 type Client struct {
@@ -8,7 +8,7 @@ type Client struct {
 
 {{range .}}{{$opid := .OperationId}}
 {{if .HasBody}}
-// Request for {{$opid}} with JSON body
+// {{$opid}} request with JSON body
 func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error){
     req, err := New{{$opid}}Request(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
     if err != nil {
@@ -18,8 +18,9 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
     return c.Client.Do(req)
 }
 {{end}}{{/* end of .HasBody */}}
+
 {{if .GenerateGenericForm}}
-// Request for {{$opid}}{{if .HasAnyBody}} with arbitrary body{{end}}
+// {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
 func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error){
     req, err := New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
     if err != nil {
@@ -33,7 +34,7 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
 
 {{range .}}{{$opid := .OperationId -}}
 {{if .HasBody}}
-// Request generator for {{$opid}} with JSON body
+// New{{$opid}}Request generates requests for {{$opid}} with JSON body
 func New{{$opid}}Request(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Request, error) {
     var bodyReader io.Reader
     {{if not .GetBodyDefinition.Required}}if body != nil { {{end}}
@@ -45,7 +46,8 @@ func New{{$opid}}Request(server string{{genParamArgs .PathParams}}{{if .Requires
     {{if not .GetBodyDefinition.Required}}}{{end}}
         return New{{$opid}}RequestWithBody(server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, "application/json", bodyReader)
 }{{end}}{{/* end of .HasBody */}}
-// Request generator for {{$opid}}{{if .HasAnyBody}} with non-JSON body{{end}}
+
+// New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasAnyBody}} with non-JSON body{{end}}
 func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}

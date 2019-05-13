@@ -4,7 +4,7 @@ var swaggerSpec = []string{
     "{{.}}",{{end}}
 }
 
-// Returns the Swagger specification corresponding to the generated code
+// GetSwagger returns the Swagger specification corresponding to the generated code
 // in this file.
 func GetSwagger() (*openapi3.Swagger, error) {
     zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))

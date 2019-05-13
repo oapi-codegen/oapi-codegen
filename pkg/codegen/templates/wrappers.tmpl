@@ -1,8 +1,9 @@
+// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// Wrapper for {{$opid}}
+{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
