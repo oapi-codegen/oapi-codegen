@@ -253,9 +253,8 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 	return out
 }
 
-// This function generates all the go code for the ServerInterface as well as
-// all the wrapper functions around our handlers.
-func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (string, error) {
+// OperationDefinitions returns all operations for a swagger definition.
+func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
@@ -264,7 +263,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters)
 		if err != nil {
-			return "", fmt.Errorf("error describing global parameters for %s: %s",
+			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
 		}
 
@@ -277,7 +276,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 			// we're iterating over.
 			localParams, err := DescribeParameters(op.Parameters)
 			if err != nil {
-				return "", fmt.Errorf("error describing global parameters for %s/%s: %s",
+				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
@@ -290,7 +289,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 			pathParams := FilterParameterDefinitionByType(allParams, "path")
 			pathParams, err = SortParamsByPath(requestPath, pathParams)
 			if err != nil {
-				return "", err
+				return nil, err
 			}
 
 			opDef := OperationDefinition{
@@ -314,7 +313,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 					// just use that.
 					bodyType, err := RefPathToGoType(bodyOrRef.Ref)
 					if err != nil {
-						return "", fmt.Errorf("error dereferencing type %s for request body: %s",
+						return nil, fmt.Errorf("error dereferencing type %s for request body: %s",
 							bodyOrRef.Ref, err)
 					}
 					opDef.Body = &RequestBodyDefinition{
@@ -329,7 +328,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 					if found {
 						bodyType, err := schemaToGoType(content.Schema, true)
 						if err != nil {
-							return "", fmt.Errorf("error generating request body type for operation %s: %s",
+							return nil, fmt.Errorf("error generating request body type for operation %s: %s",
 								op.OperationID, err)
 						}
 						opDef.Body = &RequestBodyDefinition{
@@ -340,19 +339,18 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 					}
 				}
 			}
-
 			operations = append(operations, opDef)
 		}
-
 	}
+	return operations, nil
+}
+
+// This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	si, err := GenerateServerInterface(t, operations)
 	if err != nil {
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)
-	}
-
-	client, err := GenerateClient(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating API client: %s", err)
 	}
 
 	wrappers, err := GenerateWrappers(t, operations)
@@ -364,7 +362,7 @@ func GeneratePathHandlers(t *template.Template, swagger *openapi3.Swagger) (stri
 	if err != nil {
 		return "", fmt.Errorf("Error generating handler registration: %s", err)
 	}
-	return strings.Join([]string{si, client, wrappers, register}, "\n"), nil
+	return strings.Join([]string{si, wrappers, register}, "\n"), nil
 }
 
 // Uses the template engine to generate the server interface

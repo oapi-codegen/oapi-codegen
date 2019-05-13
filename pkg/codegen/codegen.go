@@ -28,9 +28,16 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 )
 
+// Options defines the optional code to generate.
+type Options struct {
+	GenerateServer bool // GenerateServer specifies to gen server handler.
+	GenerateClient bool // GenerateClient specifies to gen client.
+}
+
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
-func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, error) {
+// opts defines
+func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
 	// This creates the golang templates text package
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
@@ -60,9 +67,25 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		return "", fmt.Errorf("error generating Go types for component request bodies: %s", err)
 	}
 
-	handlersOut, err := GeneratePathHandlers(t, swagger)
+	ops, err := OperationDefinitions(swagger)
 	if err != nil {
-		return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
+		return "", fmt.Errorf("error creating operation definitions: %v", err)
+	}
+
+	var serverOut string
+	if opts.GenerateServer {
+		serverOut, err = GenerateServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %s", err)
+		}
+	}
+
+	var clientOut string
+	if opts.GenerateClient {
+		clientOut, err = GenerateClient(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating client: %v", err)
+		}
 	}
 
 	inlinedSpec, err := GenerateInlinedSpec(t, swagger)
@@ -86,7 +109,7 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 
 	// Based on module prefixes, figure out which optional imports are required.
 	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut,
-		handlersOut, inlinedSpec} {
+		serverOut, clientOut, inlinedSpec} {
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
@@ -143,9 +166,18 @@ func GenerateServer(swagger *openapi3.Swagger, packageName string) (string, erro
 		return "", fmt.Errorf("error writing request body definitions: %s", err)
 	}
 
-	_, err = w.WriteString(handlersOut)
-	if err != nil {
-		return "", fmt.Errorf("error writing path handlers: %s", err)
+	if opts.GenerateClient {
+		_, err = w.WriteString(clientOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing client: %v", err)
+		}
+	}
+
+	if opts.GenerateServer {
+		_, err = w.WriteString(serverOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %s", err)
+		}
 	}
 
 	_, err = w.WriteString(inlinedSpec)

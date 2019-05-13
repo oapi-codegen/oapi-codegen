@@ -25,8 +25,12 @@ import (
 )
 
 func main() {
-	var packageName string
+	var (
+		packageName string
+		generate    string
+	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
+	flag.StringVar(&generate, "generate", "client,server", `Comma-separated list of code to generate; valid options: "client", "server"  (default client,server)`)
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -44,16 +48,30 @@ func main() {
 		packageName = codegen.ToCamelCase(nameParts[0])
 	}
 
+	opts := codegen.Options{}
+	for _, g := range strings.Split(generate, ",") {
+		switch g {
+		case "client":
+			opts.GenerateClient = true
+		case "server":
+			opts.GenerateServer = true
+		default:
+			fmt.Printf("unknown generate option %s\n", g)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	}
+
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)
 	}
 
-	stubs, err := codegen.GenerateServer(swagger, packageName)
+	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error generating server stubs: %s\n", err)
+		fmt.Fprintf(os.Stderr, "Error generating code: %s\n", err)
 		os.Exit(1)
 	}
-	fmt.Println(stubs)
+	fmt.Println(code)
 }
