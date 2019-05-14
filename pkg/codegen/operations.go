@@ -118,8 +118,8 @@ func GoName(name string) string {
 	}
 
 	name = ToCamelCase(name)
-	name = strings.ReplaceAll(name, "Url", "URL")
-	name = strings.ReplaceAll(name, "Cpu", "CPU")
+	name = strings.Replace(name, "Url", "URL", -1)
+	name = strings.Replace(name, "Cpu", "CPU", -1)
 	return name
 }
 
