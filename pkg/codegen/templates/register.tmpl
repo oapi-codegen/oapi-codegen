@@ -1,3 +1,4 @@
+// RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{

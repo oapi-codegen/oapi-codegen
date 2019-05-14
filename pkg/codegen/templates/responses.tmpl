@@ -1,4 +1,4 @@
 {{range .Types}}
-// Type definition for component response "{{.JsonTypeName}}"
+// {{.TypeName}} defines component response for {{.JsonTypeName}}.
 type {{.TypeName}} {{.TypeDef}}
 {{end}}
