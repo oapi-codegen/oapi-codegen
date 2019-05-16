@@ -197,4 +197,21 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("deepObject", true, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
+
+	// Misc tests
+	// Test type aliases
+	type StrType string
+	result, err = StyleParam("simple", false, "foo", StrType("test"))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "test", result)
+
+	type IntType int32
+	result, err = StyleParam("simple", false, "foo", IntType(7))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "7", result)
+
+	type FloatType float64
+	result, err = StyleParam("simple", false, "foo", FloatType(7.5))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "7.5", result)
 }

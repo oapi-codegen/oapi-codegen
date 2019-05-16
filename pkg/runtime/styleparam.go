@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -242,21 +243,26 @@ func stylePrimitive(style string, explode bool, paramName string, value interfac
 	return prefix + strVal, nil
 }
 
+// Converts a primitive value to a string. We need to do this based on the
+// Kind of an interface, not the Type to work with aliased types.
 func primitiveToString(value interface{}) (string, error) {
 	var output string
-	switch v := value.(type) {
-	case int, int32, int64:
-		output = fmt.Sprintf("%d", v)
-	case float32, float64:
-		output = fmt.Sprintf("%f", v)
-	case bool:
-		if v {
+	t := reflect.TypeOf(value)
+	v := reflect.ValueOf(value)
+	kind := t.Kind()
+	switch kind {
+	case reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
+		output = strconv.FormatInt(v.Int(), 10)
+	case reflect.Float32, reflect.Float64:
+		output = strconv.FormatFloat(v.Float(), 'f', -1, 64)
+	case reflect.Bool:
+		if v.Bool() {
 			output = "true"
 		} else {
 			output = "false"
 		}
-	case string:
-		output = v
+	case reflect.String:
+		output = reflect.ValueOf(value).String()
 	default:
 		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
 	}
