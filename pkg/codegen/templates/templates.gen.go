@@ -2,12 +2,17 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service. The
+var templates = map[string]string{"client.tmpl": `// A callback for making changes to generated http.Requests before calling out
+// to the service. This is a good place to add headers.
+type RequestEditor func(req *http.Request, ctx context.Context) error
+
+// Client which conforms to the OpenAPI3 specification for this service. The
 // server should be fully qualified with shema and server, ie,
 // https://deepmap.com.
 type Client struct {
     Server string
     Client http.Client
+    RequestEditor RequestEditor
 }
 
 {{range .}}{{$opid := .OperationId}}
@@ -19,6 +24,12 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
         return nil, err
     }
     req = req.WithContext(ctx)
+    if c.RequestEditor != nil {
+        err = c.RequestEditor(req, ctx)
+        if err != nil {
+            return nil, err
+        }
+    }
     return c.Client.Do(req)
 }
 {{end}}{{/* end of .HasBody */}}
@@ -31,6 +42,12 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
         return nil, err
     }
     req = req.WithContext(ctx)
+    if c.RequestEditor != nil {
+            err = c.RequestEditor(req, ctx)
+            if err != nil {
+                return nil, err
+            }
+        }
     return c.Client.Do(req)
 }
 {{end}}
@@ -74,7 +91,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     }
     {{end}}
 {{end}}
-    queryURL := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    queryUrl := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
 {{if .QueryParams}}
     var queryStrings []string
 {{range $paramIdx, $param := .QueryParams}}
@@ -102,10 +119,10 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     {{if not .Required}}}{{end}}
 {{end}}
     if len(queryStrings) != 0 {
-        queryURL += "?" + strings.Join(queryStrings, "&")
+        queryUrl += "?" + strings.Join(queryStrings, "&")
     }
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL, {{if .HasAnyBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasAnyBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

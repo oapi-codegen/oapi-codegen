@@ -1,9 +1,14 @@
+// A callback for making changes to generated http.Requests before calling out
+// to the service. This is a good place to add headers.
+type RequestEditor func(req *http.Request, ctx context.Context) error
+
 // Client which conforms to the OpenAPI3 specification for this service. The
 // server should be fully qualified with shema and server, ie,
 // https://deepmap.com.
 type Client struct {
     Server string
     Client http.Client
+    RequestEditor RequestEditor
 }
 
 {{range .}}{{$opid := .OperationId}}
@@ -15,6 +20,12 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
         return nil, err
     }
     req = req.WithContext(ctx)
+    if c.RequestEditor != nil {
+        err = c.RequestEditor(req, ctx)
+        if err != nil {
+            return nil, err
+        }
+    }
     return c.Client.Do(req)
 }
 {{end}}{{/* end of .HasBody */}}
@@ -27,6 +38,12 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
         return nil, err
     }
     req = req.WithContext(ctx)
+    if c.RequestEditor != nil {
+            err = c.RequestEditor(req, ctx)
+            if err != nil {
+                return nil, err
+            }
+        }
     return c.Client.Do(req)
 }
 {{end}}
