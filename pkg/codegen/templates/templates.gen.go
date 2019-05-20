@@ -308,8 +308,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 
 {{if .RequiresParamObject}}
-    // Parameter object where we will unmarshal all parameters from the
-    // context.
+    // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
 {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
@@ -425,4 +424,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-

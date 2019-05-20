@@ -1,3 +1,3 @@
 package templates
 
-//go:generate sh -c "templates -s . > templates.gen.go"
+//go:generate templates -s . -o templates.gen.go
