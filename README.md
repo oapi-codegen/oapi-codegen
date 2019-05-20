@@ -160,13 +160,20 @@ uses the same types and similar function signatures to your request handlers.
 Here's what we generate for the petstore:
 
 ```
-// A client which conforms to the OpenAPI3 specification for this service. The
-// server should be fully qualified with shema and server, ie,
-// https://deepmap.com.
+// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
+    // The endpoint of the server conforming to this interface, with scheme,
+    // https://api.deepmap.com for example.
     Server string
+
+    // HTTP client with any customized settings, such as certificate chains.
     Client http.Client
+
+    // A callback for modifying requests which are generated before sending over
+    // the network.
+    RequestEditor func(req *http.Request, ctx context.Context) error
 }
+
 
 // Request for FindPets
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {...}
@@ -203,9 +210,12 @@ more than one function for an operation with a request body.
         AddPetWithBody(ctx context.Context, contentType string, body io.Reader)
 
 The Client object above is fairly flexible, since you can pass in your own
-`http.Client`, but we can't foresee all possible usages, so those functions
-call through to a bunch of helper functions which create requests. In the
-case of the pet store, we have:
+`http.Client` and a request editing callback. You can use that callback to add
+headers. In our middleware stack, we annotate the context with additional
+information such as the request ID and function tracing information, and we
+use the callback to propagate that information into the request headers. Still, we
+can't foresee all possible usages, so those functions call through to helper 
+functions which create requests. In the case of the pet store, we have:
 
 ```
 // Request generator for FindPets

@@ -34,17 +34,18 @@ type RequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// A callback for making changes to generated http.Requests before calling out
-// to the service. This is a good place to add headers.
-type RequestEditor func(req *http.Request, ctx context.Context) error
-
-// Client which conforms to the OpenAPI3 specification for this service. The
-// server should be fully qualified with shema and server, ie,
-// https://deepmap.com.
+// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
-	Server        string
-	Client        http.Client
-	RequestEditor RequestEditor
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example.
+	Server string
+
+	// HTTP client with any customized settings, such as certificate chains.
+	Client http.Client
+
+	// A callback for modifying requests which are generated before sending over
+	// the network.
+	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
 // ServerInterface represents all server handlers.
