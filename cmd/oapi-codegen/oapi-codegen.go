@@ -64,13 +64,13 @@ func main() {
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error loading swagger spec\n: %s", err)
 		os.Exit(1)
 	}
 
 	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error generating code: %s\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "error generating code: %s\n", err)
 		os.Exit(1)
 	}
 	fmt.Println(code)

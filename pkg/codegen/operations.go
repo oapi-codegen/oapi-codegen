@@ -345,6 +345,23 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 	return operations, nil
 }
 
+// Uses the template engine to generate the server interface
+func GenerateTypesForParams(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "param-types.tmpl", ops)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating server interface: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
+	}
+	return buf.String(), nil
+}
+
 // This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateServer(t *template.Template, operations []OperationDefinition) (string, error) {
