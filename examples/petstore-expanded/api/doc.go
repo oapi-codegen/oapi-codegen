@@ -18,4 +18,4 @@ package api
 
 // Run oapi-codegen to regenerate the petstore server whenever someone does a
 // go generate
-//go:generate sh -c "oapi-codegen --package=api petstore-expanded.yaml > petstore.gen.go"
+//go:generate sh -c "go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api petstore-expanded.yaml > petstore.gen.go"

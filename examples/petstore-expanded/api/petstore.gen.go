@@ -38,18 +38,12 @@ type Pet struct {
 	Id int64 `json:"id"`
 }
 
-// Client which conforms to the OpenAPI3 specification for this service.
+// Client which conforms to the OpenAPI3 specification for this service. The
+// server should be fully qualified with shema and server, ie,
+// https://deepmap.com.
 type Client struct {
-	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
 	Server string
-
-	// HTTP client with any customized settings, such as certificate chains.
 	Client http.Client
-
-	// A callback for modifying requests which are generated before sending over
-	// the network.
-	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
 // FindPets request
@@ -59,12 +53,6 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Re
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return c.Client.Do(req)
 }
 
@@ -75,12 +63,6 @@ func (c *Client) AddPet(ctx context.Context, body NewPet) (*http.Response, error
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return c.Client.Do(req)
 }
 
@@ -91,12 +73,6 @@ func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return c.Client.Do(req)
 }
 
@@ -107,12 +83,6 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	return c.Client.Do(req)
 }
 
@@ -120,7 +90,7 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/pets", server)
+	queryURL := fmt.Sprintf("%s/pets", server)
 
 	var queryStrings []string
 
@@ -147,10 +117,10 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 	}
 
 	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
+		queryURL += "?" + strings.Join(queryStrings, "&")
 	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -175,9 +145,9 @@ func NewAddPetRequest(server string, body NewPet) (*http.Request, error) {
 func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/pets", server)
+	queryURL := fmt.Sprintf("%s/pets", server)
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryURL, body)
 	if err != nil {
 		return nil, err
 	}
@@ -197,9 +167,9 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+	queryURL := fmt.Sprintf("%s/pets/%s", server, pathParam0)
 
-	req, err := http.NewRequest("DELETE", queryUrl, nil)
+	req, err := http.NewRequest("DELETE", queryURL, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -218,9 +188,9 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+	queryURL := fmt.Sprintf("%s/pets/%s", server, pathParam0)
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		return nil, err
 	}

@@ -62,7 +62,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", fmt.Errorf("error generating Go types for component responses: %s", err)
 	}
 
-	bodiesOut, err := GenerateTypesForRquestBodies(t, swagger.Components.RequestBodies)
+	bodiesOut, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
 	if err != nil {
 		return "", fmt.Errorf("error generating Go types for component request bodies: %s", err)
 	}
@@ -70,6 +70,11 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	ops, err := OperationDefinitions(swagger)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %v", err)
+	}
+
+	paramsTypesOut, err := GenerateTypesForParams(t, ops)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go types for component request bodies: %s", err)
 	}
 
 	var serverOut string
@@ -109,7 +114,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Based on module prefixes, figure out which optional imports are required.
 	for _, str := range []string{schemasOut, paramsOut, responsesOut, bodiesOut,
-		serverOut, clientOut, inlinedSpec} {
+		serverOut, clientOut, inlinedSpec, paramsTypesOut} {
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
@@ -164,6 +169,11 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	_, err = w.WriteString(bodiesOut)
 	if err != nil {
 		return "", fmt.Errorf("error writing request body definitions: %s", err)
+	}
+
+	_, err = w.WriteString(paramsTypesOut)
+	if err != nil {
+		return "", fmt.Errorf("error writing parameter types definitions: %s", err)
 	}
 
 	if opts.GenerateClient {
@@ -319,7 +329,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 // Generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
-func GenerateTypesForRquestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) (string, error) {
+func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) (string, error) {
 	types := make([]TypeDefinition, 0)
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
 		bodyOrRef := bodies[bodyName]

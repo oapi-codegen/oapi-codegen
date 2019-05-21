@@ -30,6 +30,39 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// GetCookieParams defines parameters for GetCookie.
+type GetCookieParams struct {
+	P  *int32         `json:"p,omitempty"`
+	Ep *int32         `json:"ep,omitempty"`
+	Ea *[]int32       `json:"ea,omitempty"`
+	A  *[]int32       `json:"a,omitempty"`
+	Eo *Object        `json:"eo,omitempty"`
+	O  *Object        `json:"o,omitempty"`
+	Co *ComplexObject `json:"co,omitempty"`
+}
+
+// GetHeaderParams defines parameters for GetHeader.
+type GetHeaderParams struct {
+	XPrimitive         *int32         `json:"X-Primitive,omitempty"`
+	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty"`
+	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty"`
+	XArray             *[]int32       `json:"X-Array,omitempty"`
+	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty"`
+	XObject            *Object        `json:"X-Object,omitempty"`
+	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty"`
+}
+
+// GetQueryFormParams defines parameters for GetQueryForm.
+type GetQueryFormParams struct {
+	Ea *[]int32       `json:"ea,omitempty"`
+	A  *[]int32       `json:"a,omitempty"`
+	Eo *Object        `json:"eo,omitempty"`
+	O  *Object        `json:"o,omitempty"`
+	Ep *int32         `json:"ep,omitempty"`
+	P  *int32         `json:"p,omitempty"`
+	Co *ComplexObject `json:"co,omitempty"`
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -959,39 +992,6 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	return req, nil
 }
 
-// GetCookieParams defines parameters for GetCookie.
-type GetCookieParams struct {
-	P  *int32         `json:"p,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
-	Co *ComplexObject `json:"co,omitempty"`
-}
-
-// GetHeaderParams defines parameters for GetHeader.
-type GetHeaderParams struct {
-	XPrimitive         *int32         `json:"X-Primitive,omitempty"`
-	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty"`
-	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty"`
-	XArray             *[]int32       `json:"X-Array,omitempty"`
-	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty"`
-	XObject            *Object        `json:"X-Object,omitempty"`
-	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty"`
-}
-
-// GetQueryFormParams defines parameters for GetQueryForm.
-type GetQueryFormParams struct {
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	P  *int32         `json:"p,omitempty"`
-	Co *ComplexObject `json:"co,omitempty"`
-}
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	//  (GET /contentObject/{param})
@@ -1057,8 +1057,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 	var err error
 
-	// Parameter object where we will unmarshal all parameters from the
-	// context.
+	// Parameter object where we will unmarshal all parameters from the context
 	var params GetCookieParams
 
 	if cookie, err := ctx.Cookie("p"); err == nil {
@@ -1152,8 +1151,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 	var err error
 
-	// Parameter object where we will unmarshal all parameters from the
-	// context.
+	// Parameter object where we will unmarshal all parameters from the context
 	var params GetHeaderParams
 
 	headers := ctx.Request().Header
@@ -1413,8 +1411,7 @@ func (w *ServerInterfaceWrapper) GetPassThrough(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	var err error
 
-	// Parameter object where we will unmarshal all parameters from the
-	// context.
+	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQueryFormParams
 	// ------------- Optional query parameter "ea" -------------
 	if paramValue := ctx.QueryParam("ea"); paramValue != "" {
@@ -1646,4 +1643,3 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
-

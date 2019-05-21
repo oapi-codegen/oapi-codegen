@@ -224,6 +224,25 @@ func GetSwagger() (*openapi3.Swagger, error) {
     return swagger, nil
 }
 `,
+	"param-types.tmpl": `{{range .}}
+
+{{if .Params}}
+// {{.OperationId}}Params defines parameters for {{.OperationId}}.
+type {{.OperationId}}Params struct {
+{{range .Params}}
+    {{.GoName}} {{if not .Required}}*{{end}}{{.TypeDef}} {{.JsonTag}}{{end}}
+}
+{{end}}
+
+{{if .HasBody}}
+{{if .GetBodyDefinition.CustomType}}
+// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
+type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
+{{end}}
+{{end}}
+
+{{end}}
+`,
 	"parameters.tmpl": `{{range .Types}}
 // {{.TypeName}} defines component parameter for "{{.JsonTypeName}}"
 type {{.TypeName}} {{.TypeDef}}
@@ -255,26 +274,7 @@ type {{.TypeName}} {{.TypeDef}}
 type {{.TypeName}} {{.TypeDef}}
 {{end}}
 `,
-	"server-interface.tmpl": `{{range .}}
-
-{{if .Params}}
-// {{.OperationId}}Params defines parameters for {{.OperationId}}.
-type {{.OperationId}}Params struct {
-{{range .Params}}
-    {{.GoName}} {{if not .Required}}*{{end}}{{.TypeDef}} {{.JsonTag}}{{end}}
-}
-{{end}}
-
-{{if .HasBody}}
-{{if .GetBodyDefinition.CustomType}}
-// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
-type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
-{{end}}
-{{end}}
-
-{{end}}
-
-// ServerInterface represents all server handlers.
+	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
 {{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error

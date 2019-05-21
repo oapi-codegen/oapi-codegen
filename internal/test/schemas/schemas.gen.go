@@ -30,6 +30,14 @@ type CustomStringType string
 // GenericObject defines component schema for GenericObject.
 type GenericObject map[string]interface{}
 
+// Issue9Params defines parameters for Issue9.
+type Issue9Params struct {
+	Foo string `json:"foo"`
+}
+
+// Issue9RequestBody defines body for Issue9 for application/json ContentType.
+type Issue9RequestBody interface{}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -103,14 +111,6 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	return req, nil
 }
 
-// Issue9Params defines parameters for Issue9.
-type Issue9Params struct {
-	Foo string `json:"foo"`
-}
-
-// Issue9RequestBody defines body for Issue9 for application/json ContentType.
-type Issue9RequestBody interface{}
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	//  (GET /issues/9)
@@ -126,8 +126,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
 
-	// Parameter object where we will unmarshal all parameters from the
-	// context.
+	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
 	if paramValue := ctx.QueryParam("foo"); paramValue != "" {
@@ -193,4 +192,3 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
-
