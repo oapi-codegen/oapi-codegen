@@ -247,9 +247,12 @@ func stylePrimitive(style string, explode bool, paramName string, value interfac
 // Kind of an interface, not the Type to work with aliased types.
 func primitiveToString(value interface{}) (string, error) {
 	var output string
-	t := reflect.TypeOf(value)
-	v := reflect.ValueOf(value)
+
+	// Values may come in by pointer for optionals, so make sure to dereferene.
+	v := reflect.Indirect(reflect.ValueOf(value))
+	t := v.Type()
 	kind := t.Kind()
+
 	switch kind {
 	case reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
 		output = strconv.FormatInt(v.Int(), 10)
@@ -262,7 +265,7 @@ func primitiveToString(value interface{}) (string, error) {
 			output = "false"
 		}
 	case reflect.String:
-		output = reflect.ValueOf(value).String()
+		output = v.String()
 	default:
 		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
 	}
