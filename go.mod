@@ -1,12 +1,12 @@
 module github.com/deepmap/oapi-codegen
 
 require (
-	github.com/getkin/kin-openapi v0.1.1-0.20190507152207-d3180292eead
-	github.com/labstack/echo/v4 v4.0.0
-	github.com/mattn/go-colorable v0.1.1 // indirect
-	github.com/mattn/go-isatty v0.0.7 // indirect
+	github.com/getkin/kin-openapi v0.2.0
+	github.com/labstack/echo/v4 v4.1.5
+	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/valyala/fasttemplate v1.0.1 // indirect
-	golang.org/x/crypto v0.0.0-20190411191339-88737f569e3a // indirect
-	golang.org/x/sys v0.0.0-20190411185658-b44545bcd369 // indirect
+	golang.org/x/crypto v0.0.0-20190513172903-22d7a77e9e5f // indirect
+	golang.org/x/net v0.0.0-20190522155817-f3200d17e092 // indirect
+	golang.org/x/sys v0.0.0-20190524152521-dbbf3f1254d4 // indirect
+	golang.org/x/text v0.3.2 // indirect
 )
