@@ -214,4 +214,19 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("simple", false, "foo", FloatType(7.5))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7.5", result)
+
+	// Test that we handle optional fields
+	type TestObject2 struct {
+		FirstName *string `json:"firstName"`
+		Role      *string `json:"role"`
+	}
+	name := "Alex"
+	role := "admin"
+	object2 := TestObject2{
+		FirstName: &name,
+		Role:      &role,
+	}
+	result, err = StyleParam("simple", false, "id", object2)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 }
