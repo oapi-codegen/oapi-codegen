@@ -156,7 +156,6 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 		if str != "" {
 			fieldDict[fieldName] = str
 		}
-		fieldDict[fieldName] = str
 	}
 
 	var parts []string
