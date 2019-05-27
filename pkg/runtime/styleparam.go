@@ -153,6 +153,9 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 		if err != nil {
 			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
 		}
+		if str != "" {
+			fieldDict[fieldName] = str
+		}
 		fieldDict[fieldName] = str
 	}
 
@@ -250,6 +253,9 @@ func primitiveToString(value interface{}) (string, error) {
 
 	// Values may come in by pointer for optionals, so make sure to dereferene.
 	v := reflect.Indirect(reflect.ValueOf(value))
+	if !v.IsValid() {
+		return output, nil
+	}
 	t := v.Type()
 	kind := t.Kind()
 

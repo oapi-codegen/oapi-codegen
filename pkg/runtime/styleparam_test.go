@@ -218,6 +218,7 @@ func TestStyleParam(t *testing.T) {
 	// Test that we handle optional fields
 	type TestObject2 struct {
 		FirstName *string `json:"firstName"`
+		LastName  *string `json:"firstName,omitempty"`
 		Role      *string `json:"role"`
 	}
 	name := "Alex"
