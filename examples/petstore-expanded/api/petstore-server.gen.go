@@ -6,203 +6,14 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
-	"io"
 	"net/http"
 	"strings"
 )
-
-// Error defines component schema for Error.
-type Error struct {
-	Code    int32  `json:"code"`
-	Message string `json:"message"`
-}
-
-// NewPet defines component schema for NewPet.
-type NewPet struct {
-	Name string  `json:"name"`
-	Tag  *string `json:"tag,omitempty"`
-}
-
-// Pet defines component schema for Pet.
-type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet
-	// Embedded fields due to inline allOf schema
-	Id int64 `json:"id"`
-}
-
-// Client which conforms to the OpenAPI3 specification for this service. The
-// server should be fully qualified with shema and server, ie,
-// https://deepmap.com.
-type Client struct {
-	Server string
-	Client http.Client
-}
-
-// FindPets request
-func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
-	req, err := NewFindPetsRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return c.Client.Do(req)
-}
-
-// AddPet request with JSON body
-func (c *Client) AddPet(ctx context.Context, body NewPet) (*http.Response, error) {
-	req, err := NewAddPetRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return c.Client.Do(req)
-}
-
-// DeletePet request
-func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error) {
-	req, err := NewDeletePetRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return c.Client.Do(req)
-}
-
-// FindPetById request
-func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {
-	req, err := NewFindPetByIdRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	return c.Client.Do(req)
-}
-
-// NewFindPetsRequest generates requests for FindPets
-func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
-	var err error
-
-	queryURL := fmt.Sprintf("%s/pets", server)
-
-	var queryStrings []string
-
-	var queryParam0 string
-	if params.Tags != nil {
-
-		queryParam0, err = runtime.StyleParam("form", true, "tags", *params.Tags)
-		if err != nil {
-			return nil, err
-		}
-
-		queryStrings = append(queryStrings, queryParam0)
-	}
-
-	var queryParam1 string
-	if params.Limit != nil {
-
-		queryParam1, err = runtime.StyleParam("form", true, "limit", *params.Limit)
-		if err != nil {
-			return nil, err
-		}
-
-		queryStrings = append(queryStrings, queryParam1)
-	}
-
-	if len(queryStrings) != 0 {
-		queryURL += "?" + strings.Join(queryStrings, "&")
-	}
-
-	req, err := http.NewRequest("GET", queryURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewAddPetRequest generates requests for AddPet with JSON body
-func NewAddPetRequest(server string, body NewPet) (*http.Request, error) {
-	var bodyReader io.Reader
-
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-
-	return NewAddPetRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewAddPetRequestWithBody generates requests for AddPet with non-JSON body
-func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	queryURL := fmt.Sprintf("%s/pets", server)
-
-	req, err := http.NewRequest("POST", queryURL, body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-	return req, nil
-}
-
-// NewDeletePetRequest generates requests for DeletePet
-func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
-	if err != nil {
-		return nil, err
-	}
-
-	queryURL := fmt.Sprintf("%s/pets/%s", server, pathParam0)
-
-	req, err := http.NewRequest("DELETE", queryURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewFindPetByIdRequest generates requests for FindPetById
-func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
-	if err != nil {
-		return nil, err
-	}
-
-	queryURL := fmt.Sprintf("%s/pets/%s", server, pathParam0)
-
-	req, err := http.NewRequest("GET", queryURL, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	Tags  *[]string `json:"tags,omitempty"`
-	Limit *int32    `json:"limit,omitempty"`
-}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -225,8 +36,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	var err error
 
-	// Parameter object where we will unmarshal all parameters from the
-	// context.
+	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
 	if paramValue := ctx.QueryParam("tags"); paramValue != "" {

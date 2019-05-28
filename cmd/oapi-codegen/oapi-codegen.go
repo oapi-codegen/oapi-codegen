@@ -16,6 +16,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,13 +25,21 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
+func errExit(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+	os.Exit(1)
+}
+
 func main() {
 	var (
 		packageName string
 		generate    string
+		outputFile  string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
-	flag.StringVar(&generate, "generate", "client,server", `Comma-separated list of code to generate; valid options: "client", "server"  (default client,server)`)
+	flag.StringVar(&generate, "generate", "types,client,server,spec",
+		`Comma-separated list of code to generate; valid options: "types", client", "server", "spec"  (default types,client,server,"spec")`)
+	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -55,6 +64,10 @@ func main() {
 			opts.GenerateClient = true
 		case "server":
 			opts.GenerateServer = true
+		case "types":
+			opts.GenerateTypes = true
+		case "spec":
+			opts.EmbedSpec = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
@@ -64,14 +77,20 @@ func main() {
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error loading swagger spec\n: %s", err)
-		os.Exit(1)
+		errExit("error loading swagger spec\n: %s", err)
 	}
 
 	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "error generating code: %s\n", err)
-		os.Exit(1)
+		errExit("error generating code: %s\n", err)
 	}
-	fmt.Println(code)
+
+	if outputFile != "" {
+		err = ioutil.WriteFile(outputFile, []byte(code), 0644)
+		if err != nil {
+			errExit("error writing generated code to file: %s", err)
+		}
+	} else {
+		fmt.Println(code)
+	}
 }

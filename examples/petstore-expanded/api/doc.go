@@ -16,6 +16,7 @@ package api
 // This directory contains the OpenAPI 3.0 specification which defines our
 // server. The file petstore.gen.go is automatically generated from the schema
 
-// Run oapi-codegen to regenerate the petstore server whenever someone does a
-// go generate
-//go:generate sh -c "go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api petstore-expanded.yaml > petstore.gen.go"
+// Run oapi-codegen to regenerate the petstore boilerplate
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate client -o petstore-client.gen.go petstore-expanded.yaml

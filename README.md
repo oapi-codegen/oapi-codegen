@@ -256,6 +256,27 @@ There are some caveats to using this code.
  for anything other than trivial objects, they can marshal to arbitrary JSON
  structures. When you send them as cookie (`in: cookie`) arguments, we will
  URL encode them, since JSON delimiters aren't allowed in cookies.
+ 
+## Using `oapi-codegen`
+
+The default options for `oapi-codegen` will generate everything; client, server,
+type definitions and embedded swagger spec, but you can generate subsets of
+those via the `-generate` flag. It defaults to `types,client,server,spec`, but
+you can specify any combination of those.
+
+- `types`: generate all type definitions for all types in the OpenAPI spec. This
+ will be everything under `#components`, as well as request parameter, request
+ body, and response type objects.
+- `server`: generate the server boilerplate. `server` requires the types in the
+ same package to compile.
+- `client`: generate the client boilerplate. It, too, requires the types to be
+ present in its package.
+- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
+ is useful for creating runtime validators.
+ 
+So, for example, if you would like to produce only the server code, you could
+run `oapi-generate --generate types,server`. You could generate `types` and `server`
+into separate files, but both are required for the server code.  
 
 ## What's missing
 
