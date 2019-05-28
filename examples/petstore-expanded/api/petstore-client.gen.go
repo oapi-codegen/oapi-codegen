@@ -28,6 +28,22 @@ type Client struct {
 	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
+// The interface specification for the client above.
+type ClientInterface interface {
+
+	// FindPets request
+	FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error)
+
+	// AddPet request with JSON body
+	AddPet(ctx context.Context, body NewPet) (*http.Response, error)
+
+	// DeletePet request
+	DeletePet(ctx context.Context, id int64) (*http.Response, error)
+
+	// FindPetById request
+	FindPetById(ctx context.Context, id int64) (*http.Response, error)
+}
+
 // FindPets request
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
 	req, err := NewFindPetsRequest(c.Server, params)

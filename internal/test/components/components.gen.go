@@ -48,6 +48,10 @@ type Client struct {
 	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
+// The interface specification for the client above.
+type ClientInterface interface {
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 }
@@ -96,3 +100,4 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
+

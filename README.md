@@ -157,7 +157,27 @@ you're going to do those requests from your Go code, we also generate a client
 which is conformant with your schema to help in marshaling objects to JSON. It
 uses the same types and similar function signatures to your request handlers.
 
-Here's what we generate for the petstore:
+The interface for the pet store looks like this:
+
+```
+// The interface specification for the client above.
+type ClientInterface interface {
+
+	// FindPets request
+	FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error)
+
+	// AddPet request with JSON body
+	AddPet(ctx context.Context, body NewPet) (*http.Response, error)
+
+	// DeletePet request
+	DeletePet(ctx context.Context, id int64) (*http.Response, error)
+
+	// FindPetById request
+	FindPetById(ctx context.Context, id int64) (*http.Response, error)
+}
+```
+
+A Client object which implements the above interface is also generated:
 
 ```
 // Client which conforms to the OpenAPI3 specification for this service.
@@ -173,19 +193,6 @@ type Client struct {
     // the network.
     RequestEditor func(req *http.Request, ctx context.Context) error
 }
-
-
-// Request for FindPets
-func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {...}
-
-// Request for AddPet with JSON body
-func (c *Client) AddPet(ctx context.Context, body NewPet) (*http.Response, error) {...}
-
-// Request for DeletePet
-func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error) {...}
-
-// Request for FindPetById
-func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {...}
 ```
 
 Each operation in your OpenAPI spec will result in a client function which

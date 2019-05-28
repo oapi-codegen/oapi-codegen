@@ -77,6 +77,64 @@ type Client struct {
 	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
+// The interface specification for the client above.
+type ClientInterface interface {
+
+	// GetContentObject request
+	GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error)
+
+	// GetCookie request
+	GetCookie(ctx context.Context, params *GetCookieParams) (*http.Response, error)
+
+	// GetHeader request
+	GetHeader(ctx context.Context, params *GetHeaderParams) (*http.Response, error)
+
+	// GetLabelExplodeArray request
+	GetLabelExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+
+	// GetLabelExplodeObject request
+	GetLabelExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+
+	// GetLabelNoExplodeArray request
+	GetLabelNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+
+	// GetLabelNoExplodeObject request
+	GetLabelNoExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+
+	// GetMatrixExplodeArray request
+	GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.Response, error)
+
+	// GetMatrixExplodeObject request
+	GetMatrixExplodeObject(ctx context.Context, id Object) (*http.Response, error)
+
+	// GetMatrixNoExplodeArray request
+	GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http.Response, error)
+
+	// GetMatrixNoExplodeObject request
+	GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http.Response, error)
+
+	// GetPassThrough request
+	GetPassThrough(ctx context.Context, param string) (*http.Response, error)
+
+	// GetQueryForm request
+	GetQueryForm(ctx context.Context, params *GetQueryFormParams) (*http.Response, error)
+
+	// GetSimpleExplodeArray request
+	GetSimpleExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+
+	// GetSimpleExplodeObject request
+	GetSimpleExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+
+	// GetSimpleNoExplodeArray request
+	GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+
+	// GetSimpleNoExplodeObject request
+	GetSimpleNoExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+
+	// GetSimplePrimitive request
+	GetSimplePrimitive(ctx context.Context, param int32) (*http.Response, error)
+}
+
 // GetContentObject request
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error) {
 	req, err := NewGetContentObjectRequest(c.Server, param)
@@ -1643,3 +1701,4 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
+

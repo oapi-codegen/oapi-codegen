@@ -52,6 +52,12 @@ type Client struct {
 	RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
+// The interface specification for the client above.
+type ClientInterface interface {
+	// Issue9 request with JSON body
+	Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error)
+}
+
 // Issue9 request with JSON body
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
@@ -192,3 +198,4 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
+

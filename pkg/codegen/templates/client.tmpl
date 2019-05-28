@@ -12,6 +12,19 @@ type Client struct {
     RequestEditor func(req *http.Request, ctx context.Context) error
 }
 
+// The interface specification for the client above.
+type ClientInterface interface {
+{{range .}}{{$opid := .OperationId -}}
+{{- if .HasBody}}// {{$opid}} request with JSON body
+    {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error)
+{{- end}}
+{{if .GenerateGenericForm}}
+    // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
+    {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
+{{end}}
+{{end}}{{/* range .OperationId */}}
+}
+
 {{range .}}{{$opid := .OperationId}}
 {{if .HasBody}}
 // {{$opid}} request with JSON body
