@@ -229,4 +229,10 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("simple", false, "id", object2)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
+
+	// Nullable fields need to be excluded when null
+	object2.Role = nil
+	result, err = StyleParam("simple", false, "id", object2)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Alex", result)
 }
