@@ -149,6 +149,11 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 			}
 		}
 		f := v.Field(i)
+
+		// Unset optional fields will be nil pointers, skip over those.
+		if f.Type().Kind() == reflect.Ptr && f.IsNil() {
+			continue
+		}
 		str, err := primitiveToString(f.Interface())
 		if err != nil {
 			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
