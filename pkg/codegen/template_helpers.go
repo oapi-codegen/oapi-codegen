@@ -14,9 +14,20 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
+
+	"github.com/getkin/kin-openapi/openapi3"
+)
+
+var (
+	payloadPrefix    = "payload"
+	contentTypesJSON = []string{"application/json", "text/x-json"}
+	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
+	contentTypesXML  = []string{"text/xml", "application/xml"}
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -69,14 +80,246 @@ func genParamFmtString(path string) string {
 	return ReplacePathParamsWithStr(path)
 }
 
+// genResponsePayload generates the payload returned at the end of each client request function
+func genResponsePayload(operationID string) string {
+	var buffer = bytes.NewBufferString("")
+
+	// Here is where we build up a response:
+	fmt.Fprintf(buffer, "&%sResponse{\n", operationID)
+	fmt.Fprintf(buffer, "Body: bodyBytes,\n")
+	fmt.Fprintf(buffer, "HTTPResponse: rsp,\n")
+	fmt.Fprintf(buffer, "}")
+
+	return buffer.String()
+}
+
+// genResponseType generates type definitions for those that we can read
+func genResponseType(operationID string, responses openapi3.Responses) string {
+	var buffer = bytes.NewBufferString("")
+
+	// The header and standard struct attributes:
+	fmt.Fprintf(buffer, "// %sResponse is returned by Client.%s()\n", operationID, operationID)
+	fmt.Fprintf(buffer, "type %sResponse struct {\n", operationID)
+	fmt.Fprintf(buffer, "Body []byte\n")
+	fmt.Fprintf(buffer, "HTTPResponse *http.Response\n")
+
+	// Add an attribute for each possible response:
+	sortedResponsesKeys := SortedResponsesKeys(responses)
+	for _, responseName := range sortedResponsesKeys {
+		responseRef, ok := responses[responseName]
+		if !ok {
+			continue
+		}
+
+		// We can only generate a type if we have a value:
+		if responseRef.Value != nil {
+			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			for _, contentTypeName := range sortedContentKeys {
+				contentType, ok := responseRef.Value.Content[contentTypeName]
+				if !ok {
+					continue
+				}
+
+				// We can only generate a type if we have a schema:
+				if contentType.Schema != nil {
+
+					// Make sure that we actually have a go-type for this response:
+					goType, err := schemaToGoType(contentType.Schema, true)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
+						continue
+					}
+
+					// Generate different attribute names for different content-types:
+					switch {
+
+					// JSON:
+					case contains(contentTypesJSON, contentTypeName):
+						attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+
+					// YAML:
+					case contains(contentTypesYAML, contentTypeName):
+						attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+
+					// XML:
+					case contains(contentTypesXML, contentTypeName):
+						attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
+						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+					}
+				}
+			}
+		}
+	}
+	fmt.Fprintf(buffer, "}\n")
+
+	// Status() provides an easy way to get the Status:
+	fmt.Fprintf(buffer, "// Status returns HTTPResponse.Status\n")
+	fmt.Fprintf(buffer, "func (r *%sResponse) Status() string {\n", operationID)
+	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
+	fmt.Fprintf(buffer, "		return r.HTTPResponse.Status\n")
+	fmt.Fprintf(buffer, "	}\n")
+	fmt.Fprintf(buffer, "	return http.StatusText(0)\n")
+	fmt.Fprintf(buffer, "}\n")
+
+	// StatusCode() provides an easy way to get the StatusCode:
+	fmt.Fprintf(buffer, "// StatusCode returns HTTPResponse.StatusCode\n")
+	fmt.Fprintf(buffer, "func (r *%sResponse) StatusCode() int {\n", operationID)
+	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
+	fmt.Fprintf(buffer, "		return r.HTTPResponse.StatusCode\n")
+	fmt.Fprintf(buffer, "	}\n")
+	fmt.Fprintf(buffer, "	return 0\n")
+	fmt.Fprintf(buffer, "}\n")
+
+	return buffer.String()
+}
+
+// genResponseUnmarshal generates unmarshaling steps for structured response payloads
+func genResponseUnmarshal(operationID string, responses openapi3.Responses) string {
+	var buffer = bytes.NewBufferString("")
+	var mostSpecific = make(map[string]string)  // content-type and status-code
+	var lessSpecific = make(map[string]string)  // status-code only
+	var leastSpecific = make(map[string]string) // content-type only (default responses)
+
+	// Add a case for each possible response:
+	sortedResponsesKeys := SortedResponsesKeys(responses)
+	for _, responseName := range sortedResponsesKeys {
+		responseRef, ok := responses[responseName]
+		if !ok {
+			continue
+		}
+
+		// We can't do much without a value:
+		if responseRef.Value == nil {
+			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", operationID, responseName)
+			continue
+		}
+
+		// If there is no content-type then we have no unmarshaling to do:
+		if len(responseRef.Value.Content) == 0 {
+			caseAction := "break // No content-type"
+			if responseName == "default" {
+				caseClause := "default:"
+				leastSpecific[caseClause] = caseAction
+			} else {
+				caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
+				lessSpecific[caseClause] = caseAction
+			}
+			continue
+		}
+
+		// If we made it this far then we need to handle unmarshaling for each content-type:
+		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		for _, contentTypeName := range sortedContentKeys {
+			contentType, ok := responseRef.Value.Content[contentTypeName]
+			if !ok {
+				continue
+			}
+
+			// But we can only do this if we actually have a schema (otherwise there will be no struct to unmarshal into):
+			if contentType.Schema == nil {
+				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", operationID, responseName)
+				continue
+			}
+
+			// Make sure that we actually have a go-type for this response:
+			goType, err := schemaToGoType(contentType.Schema, true)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
+				continue
+			}
+
+			// Add content-types here (json / yaml / xml etc):
+			switch {
+
+			// JSON:
+			case contains(contentTypesJSON, contentTypeName):
+				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := json.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				if responseName == "default" {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"json\"):")
+					leastSpecific[caseClause] = caseAction
+				} else {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"json\") && rsp.StatusCode == %s:", responseName)
+					mostSpecific[caseClause] = caseAction
+				}
+
+			// YAML:
+			case contains(contentTypesYAML, contentTypeName):
+				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := yaml.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				if responseName == "default" {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"yaml\"):")
+					leastSpecific[caseClause] = caseAction
+				} else {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"yaml\") && rsp.StatusCode == %s:", responseName)
+					mostSpecific[caseClause] = caseAction
+				}
+
+			// XML:
+			case contains(contentTypesXML, contentTypeName):
+				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
+				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := xml.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				if responseName == "default" {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"xml\"):")
+					leastSpecific[caseClause] = caseAction
+				} else {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"xml\") && rsp.StatusCode == %s:", responseName)
+					mostSpecific[caseClause] = caseAction
+				}
+
+			// Everything else:
+			default:
+				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
+				if responseName == "default" {
+					caseClause := "default:"
+					leastSpecific[caseClause] = caseAction
+				} else {
+					caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
+					lessSpecific[caseClause] = caseAction
+				}
+			}
+		}
+	}
+
+	// Now build the switch statement in order of most-to-least specific:
+	fmt.Fprintf(buffer, "switch {\n")
+	for caseClause, caseAction := range mostSpecific {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	}
+	for caseClause, caseAction := range lessSpecific {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	}
+	for caseClause, caseAction := range leastSpecific {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	}
+	fmt.Fprintf(buffer, "}\n")
+
+	return buffer.String()
+}
+
+// contains tells us if a string is found in a slice of strings:
+func contains(strings []string, s string) bool {
+	for _, stringInSlice := range strings {
+		if s == stringInSlice {
+			return true
+		}
+	}
+	return false
+}
+
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
-	"genParamArgs":        genParamArgs,
-	"genParamTypes":       genParamTypes,
-	"genParamNames":       genParamNames,
-	"genParamFmtString":   genParamFmtString,
-	"swaggerUriToEchoUri": SwaggerUriToEchoUri,
-	"lcFirst":             LowercaseFirstCharacter,
-	"camelCase":           ToCamelCase,
+	"genParamArgs":         genParamArgs,
+	"genParamTypes":        genParamTypes,
+	"genParamNames":        genParamNames,
+	"genParamFmtString":    genParamFmtString,
+	"swaggerUriToEchoUri":  SwaggerUriToEchoUri,
+	"lcFirst":              LowercaseFirstCharacter,
+	"camelCase":            ToCamelCase,
+	"genResponsePayload":   genResponsePayload,
+	"genResponseType":      genResponseType,
+	"genResponseUnmarshal": genResponseUnmarshal,
 }
