@@ -1,3 +1,3 @@
 package templates
 
-//go:generate templates -s . -o templates.gen.go
+//go:generate go run github.com/cyberdelia/templates -s . -o templates.gen.go

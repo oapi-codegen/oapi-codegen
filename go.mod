@@ -1,6 +1,7 @@
 module github.com/deepmap/oapi-codegen
 
 require (
+	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/labstack/echo/v4 v4.1.5
 	github.com/mattn/go-colorable v0.1.2 // indirect
