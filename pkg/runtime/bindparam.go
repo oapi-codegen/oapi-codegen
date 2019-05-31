@@ -396,7 +396,6 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			fmt.Sprintf("style '%s' on parameter '%s' is invalid", style, paramName))
 
 	}
-	return nil
 }
 
 // This function reflects the destination structure, and pulls the value for

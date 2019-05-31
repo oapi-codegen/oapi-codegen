@@ -322,11 +322,12 @@ code, so that we don't have to deal with the location of the template files.
 When you update any of the files under the `templates/` directory, you will
 need to regenerate the template inlines:
 
-    go run github.com/cyberdelia/templates -s pkg/codegen/templates/ > pkg/codegen/templates/templates.gen.go
+    go generate ./pkg/codegen/templates
 
 All this command does is inline the files ending in `.tmpl` into the specified
 Go file.
 
-You can also run `go generate`, since we've set up those hooks.
+Afterwards you should run `go generate ./...`, and the templates will be updated
+ accordingly.
 
 
