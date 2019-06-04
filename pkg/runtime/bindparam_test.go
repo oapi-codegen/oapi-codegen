@@ -243,6 +243,7 @@ func TestBindQueryParameter(t *testing.T) {
 	queryParams := url.Values{
 		"id[firstName]": {"Alex"},
 		"id[role]": {"admin"},
+		"foo": {"bar"},
 	}
 
 	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
