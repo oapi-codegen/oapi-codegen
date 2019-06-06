@@ -388,7 +388,33 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			dv.Set(reflect.ValueOf(output))
 		}
 		return nil
-	case "spaceDelimited", "pipeDelimited", "deepObject":
+	case "deepObject":
+		// Loop through all queryParams and fill the objectMap with all key/value pairs having paramName as key
+		objectMap := map[string]string{}
+		for k, v := range queryParams {
+			if !strings.HasPrefix(k, paramName + "[") {
+				continue
+			}
+			split := strings.Split(k, "[")
+			if len(split) != 2 {
+				return echo.NewHTTPError(http.StatusBadRequest,
+					fmt.Sprintf("parameter '%s=%s' does not match deepObject style", k, v))
+			}
+
+			k = strings.TrimSuffix(split[1], "]")
+			objectMap[k] = v[0]
+		}
+
+		// Marshal and unmarshal the objectMap into dest
+		data, err := json.Marshal(objectMap)
+		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(data, dest); err != nil {
+			return err
+		}
+		return nil
+	case "spaceDelimited", "pipeDelimited":
 		return echo.NewHTTPError(http.StatusNotImplemented,
 			fmt.Sprintf("query arguments of style '%s' aren't yet supported", style))
 	default:
