@@ -21,13 +21,14 @@ import (
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/labstack/echo/v4"
 )
 
 var (
 	payloadPrefix    = "payload"
-	contentTypesJSON = []string{"application/json", "text/x-json"}
+	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
 	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML  = []string{"text/xml", "application/xml"}
+	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -136,17 +137,17 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 					// JSON:
 					case contains(contentTypesJSON, contentTypeName):
 						attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
 
 					// YAML:
 					case contains(contentTypesYAML, contentTypeName):
 						attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
 
 					// XML:
 					case contains(contentTypesXML, contentTypeName):
 						attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s %s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
 					}
 				}
 			}
@@ -236,36 +237,36 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			// JSON:
 			case contains(contentTypesJSON, contentTypeName):
 				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := json.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
 				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"json\"):")
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"json\") && rsp.StatusCode == %s:", responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
 					mostSpecific[caseClause] = caseAction
 				}
 
 			// YAML:
 			case contains(contentTypesYAML, contentTypeName):
 				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := yaml.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
 				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"yaml\"):")
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"yaml\") && rsp.StatusCode == %s:", responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
 					mostSpecific[caseClause] = caseAction
 				}
 
 			// XML:
 			case contains(contentTypesXML, contentTypeName):
 				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = %s{} \n if err := xml.Unmarshal(bodyBytes, &response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
 				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"xml\"):")
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"Content-type\"), \"xml\") && rsp.StatusCode == %s:", responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
 					mostSpecific[caseClause] = caseAction
 				}
 

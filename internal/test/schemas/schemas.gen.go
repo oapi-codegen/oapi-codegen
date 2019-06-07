@@ -14,6 +14,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -72,6 +73,71 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9R
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: http.Client{},
+			Server: server,
+		},
+	}
+}
+
+// Issue9Response is returned by Client.Issue9()
+type Issue9Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *Issue9Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *Issue9Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
+func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue9Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// Issue9 request with JSON body returning *Issue9Response
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*Issue9Response, error) {
+	rsp, err := c.Issue9(ctx, params, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue9Response(rsp)
 }
 
 // NewIssue9Request generates requests for Issue9 with JSON body

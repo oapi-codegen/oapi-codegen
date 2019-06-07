@@ -31,11 +31,10 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateServer              bool // GenerateServer specifies whether to generate server boilerplate
-	GenerateClient              bool // GenerateClient specifies whether to generate client boilerplate
-	GenerateClientWithResponses bool // GenerateClientWithResponses specifies whether to generate client boilerplate including responses (overrides GenerateClient)
-	GenerateTypes               bool // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec                   bool // Whether to embed the swagger spec in the generated code
+	GenerateServer bool // GenerateServer specifies whether to generate server boilerplate
+	GenerateClient bool // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes  bool // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec      bool // Whether to embed the swagger spec in the generated code
 }
 
 // Uses the Go templating engine to generate all of our server wrappers from
@@ -73,12 +72,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	var clientOut string
-	if opts.GenerateClientWithResponses {
-		clientOut, err = GenerateClientWithResponses(t, ops)
-		if err != nil {
-			return "", errors.Wrap(err, "error generating client")
-		}
-	} else if opts.GenerateClient {
+	if opts.GenerateClient {
 		clientOut, err = GenerateClient(t, ops)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client")
@@ -174,7 +168,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	}
 
-	if opts.GenerateClient || opts.GenerateClientWithResponses {
+	if opts.GenerateClient {
 		_, err = w.WriteString(clientOut)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing client")

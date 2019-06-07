@@ -1,7 +1,10 @@
 package codegen
 
 import (
+	"bytes"
 	"go/format"
+	"io/ioutil"
+	"net/http"
 	"testing"
 
 	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
@@ -48,15 +51,35 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.Len(t, problems, 0)
 }
 
+func TestExamplePetStoreParseFunction(t *testing.T) {
+
+	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
+
+	cannedResponse := &http.Response{
+		StatusCode: 200,
+		Body:       ioutil.NopCloser(bytes.NewReader(bodyBytes)),
+		Header:     http.Header{},
+	}
+	cannedResponse.Header.Add("Content-type", "application/json")
+
+	findPetByIDResponse, err := examplePetstore.ParseFindPetByIdResponse(cannedResponse)
+	assert.NoError(t, err)
+	assert.NotNil(t, findPetByIDResponse.JSON200)
+	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
+	assert.Equal(t, "testpet", findPetByIDResponse.JSON200.Name)
+	assert.NotNil(t, findPetByIDResponse.JSON200.Tag)
+	assert.Equal(t, "cat", *findPetByIDResponse.JSON200.Tag)
+}
+
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Options{
-		GenerateClientWithResponses: true,
-		GenerateServer:              true,
-		GenerateTypes:               true,
-		EmbedSpec:                   true,
+		GenerateClient: true,
+		GenerateServer: true,
+		GenerateTypes:  true,
+		EmbedSpec:      true,
 	}
 
 	// Get a spec from the test definition in this file:
@@ -75,11 +98,17 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package testswagger")
 
-	// Check that response structs are generated:
+	// Check that response structs are generated correctly:
 	assert.Contains(t, code, "type GetTestByNameResponse struct {")
 
-	// Check that the client method signatures return response structs:
-	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*GetTestByNameResponse, error) {")
+	// Check that the helper methods are generated correctly:
+	assert.Contains(t, code, "func (r *GetTestByNameResponse) Status() string {")
+	assert.Contains(t, code, "func (r *GetTestByNameResponse) StatusCode() int {")
+	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {")
+
+	// Check the client method signatures:
+	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*http.Response, error) {")
+	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*GetTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
@@ -135,12 +164,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Error'
-      security:
-      - petstore_auth:
-        - write:pets
-        - read:pets
-
-
 
 components:
   schemas:

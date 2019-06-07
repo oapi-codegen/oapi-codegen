@@ -2,235 +2,7 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{"client-with-responses.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
-type Client struct {
-    // The endpoint of the server conforming to this interface, with scheme,
-    // https://api.deepmap.com for example.
-    Server string
-
-    // HTTP client with any customized settings, such as certificate chains.
-    Client http.Client
-
-    // A callback for modifying requests which are generated before sending over
-    // the network.
-    RequestEditor func(req *http.Request, ctx context.Context) error
-}
-
-// ClientInterface is the interface specification for the client above.
-type ClientInterface interface {
-{{range .}}{{$opid := .OperationId -}}
-{{- if .HasBody}}// {{$opid}} request with JSON body
-    {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{$opid}}Response, error)
-{{- end}}
-{{if .GenerateGenericForm}}
-    // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
-    {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{$opid}}Response, error)
-{{end}}
-{{end}}{{/* range .OperationId */}}
-}
-
-{{range .}}{{$opid := .OperationId}}
-{{genResponseType $opid .Spec.Responses}}
-
-{{if .HasBody}}
-// {{$opid}} request with JSON body
-func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{$opid}}Response, error){
-    req, err := New{{$opid}}Request(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
-        if err != nil {
-            return nil, err
-        }
-    }
-
-    rsp, err := c.Client.Do(req)
-    if err != nil {
-        return nil, err
-    }
-
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    if err != nil {
-        return nil, err
-    }
-    
-    response := {{genResponsePayload $opid}}
-
-    {{genResponseUnmarshal $opid .Spec.Responses}}
-
-    return response, nil
-}
-{{end}}{{/* end of .HasBody */}}
-
-{{if .GenerateGenericForm}}
-// {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
-func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{$opid}}Response, error){
-    req, err := New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-            err = c.RequestEditor(req, ctx)
-            if err != nil {
-                return nil, err
-            }
-        }
-
-    rsp, err := c.Client.Do(req)
-    if err != nil {
-        return nil, err
-    }
-
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    if err != nil {
-        return nil, err
-    }
-    
-    response := {{genResponsePayload $opid}}
-
-    {{genResponseUnmarshal $opid .Spec.Responses}}
-
-    return response, nil
-}
-{{end}}
-{{end}}
-
-{{range .}}{{$opid := .OperationId -}}
-{{if .HasBody}}
-// New{{$opid}}Request generates requests for {{$opid}} with JSON body
-func New{{$opid}}Request(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Request, error) {
-    var bodyReader io.Reader
-    {{if not .GetBodyDefinition.Required}}if body != nil { {{end}}
-        buf, err := json.Marshal(body)
-        if err != nil {
-            return nil, err
-        }
-        bodyReader = bytes.NewReader(buf)
-    {{if not .GetBodyDefinition.Required}}}{{end}}
-        return New{{$opid}}RequestWithBody(server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, "application/json", bodyReader)
-}{{end}}{{/* end of .HasBody */}}
-
-// New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasAnyBody}} with non-JSON body{{end}}
-func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
-    var err error
-{{range $paramIdx, $param := .PathParams}}
-    var pathParam{{$paramIdx}} string
-    {{if .IsPassThrough}}
-    pathParam{{$paramIdx}} = {{.ParamName}}
-    {{end}}
-    {{if .IsJson}}
-    var pathParamBuf{{$paramIdx}} []byte
-    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.ParamName}})
-    if err != nil {
-        return nil, err
-    }
-    pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
-    {{end}}
-    {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.ParamName | camelCase | lcFirst }})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-{{end}}
-    queryURL := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
-{{if .QueryParams}}
-    var queryStrings []string
-{{range $paramIdx, $param := .QueryParams}}
-    var queryParam{{$paramIdx}} string
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    {{if .IsPassThrough}}
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var queryParamBuf{{$paramIdx}} []byte
-    queryParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + string(queryParamBuf{{$paramIdx}})
-
-    {{end}}
-    {{if .IsStyled}}
-    queryParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-    queryStrings = append(queryStrings, queryParam{{$paramIdx}})
-    {{if not .Required}}}{{end}}
-{{end}}
-    if len(queryStrings) != 0 {
-        queryURL += "?" + strings.Join(queryStrings, "&")
-    }
-{{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL, {{if .HasAnyBody}}body{{else}}nil{{end}})
-    if err != nil {
-        return nil, err
-    }
-
-{{range $paramIdx, $param := .HeaderParams}}
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    var headerParam{{$paramIdx}} string
-    {{if .IsPassThrough}}
-    headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var headerParamBuf{{$paramIdx}} []byte
-    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
-    {{end}}
-    {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-    req.Header.Add("{{.ParamName}}", headerParam{{$paramIdx}})
-    {{if not .Required}}}{{end}}
-{{end}}
-
-{{range $paramIdx, $param := .CookieParams}}
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    var cookieParam{{$paramIdx}} string
-    {{if .IsPassThrough}}
-    cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var cookieParamBuf{{$paramIdx}} []byte
-    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
-    {{end}}
-    {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-    cookie{{$paramIdx}} := &http.Cookie{
-        Name:"{{.ParamName}}",
-        Value:cookieParam{{$paramIdx}},
-    }
-    req.AddCookie(cookie{{$paramIdx}})
-    {{if not .Required}}}{{end}}
-{{end}}
-    {{if .HasAnyBody}}req.Header.Add("Content-Type", contentType){{end}}
-    return req, nil
-}
-
-{{end}}{{/* Range */}}
-`,
-	"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
+var templates = map[string]string{"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
     // The endpoint of the server conforming to this interface, with scheme,
     // https://api.deepmap.com for example.
@@ -249,14 +21,15 @@ type ClientInterface interface {
 {{range .}}{{$opid := .OperationId -}}
 {{- if .HasBody}}// {{$opid}} request with JSON body
     {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error)
-{{- end}}
+{{- end}}{{/* if .HasBody */}}
 {{if .GenerateGenericForm}}
     // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
     {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
-{{end}}
-{{end}}{{/* range .OperationId */}}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
 }
 
+{{/* Generate client methods */}}
 {{range .}}{{$opid := .OperationId}}
 {{if .HasBody}}
 // {{$opid}} request with JSON body
@@ -274,7 +47,7 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
     }
     return c.Client.Do(req)
 }
-{{end}}{{/* end of .HasBody */}}
+{{end}}{{/* if .HasBody */}}
 
 {{if .GenerateGenericForm}}
 // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
@@ -292,9 +65,69 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
         }
     return c.Client.Do(req)
 }
-{{end}}
-{{end}}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
 
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+    ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: http.Client{},
+            Server: server,
+        },
+    }
+}
+
+{{/* Generate parse functions for responses*/}}
+{{range .}}{{$opid := .OperationId}}
+{{genResponseType $opid .Spec.Responses}}
+
+// Parse{{$opid}}Response parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{$opid}}Response(rsp *http.Response) (*{{$opid}}Response, error) {
+    bodyBytes, err := ioutil.ReadAll(rsp.Body)
+    defer rsp.Body.Close()
+    if err != nil {
+        return nil, err
+    }
+    
+    response := {{genResponsePayload $opid}}
+
+    {{genResponseUnmarshal $opid .Spec.Responses}}
+
+    return response, nil
+}
+
+{{/* Generate client methods (with responses)*/}}
+{{if .HasBody}}
+// {{$opid}} request with JSON body returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{$opid}}Response, error){
+    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
+	if err != nil {
+		return nil, err
+	}
+    return Parse{{$opid}}Response(rsp)
+}
+{{end}}{{/* if .HasBody */}}
+
+{{if .GenerateGenericForm}}
+// {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{$opid}}Response, error){
+    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{$opid}}Response(rsp)
+}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
+
+
+{{/* Generate server */}}
 {{range .}}{{$opid := .OperationId -}}
 {{if .HasBody}}
 // New{{$opid}}Request generates requests for {{$opid}} with JSON body
@@ -426,11 +259,9 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
 
 {{end}}{{/* Range */}}
 `,
-	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
+	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
 //
-// This is an autogenerated file, any edits which you make here will be lost!
-// Code generated by oapi-codegen (https://github.com/deepmap/oapi-codegen) - DO NOT EDIT.
-
+// Code generated by github.com/deepmap/oapi-codegen DO NOT EDIT.
 package {{.PackageName}}
 
 {{if .Imports}}
