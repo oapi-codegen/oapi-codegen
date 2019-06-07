@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -225,4 +226,27 @@ func TestSplitParameter(t *testing.T) {
 		"role=admin&firstName=Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedExplodedObject, result)
+}
+
+func TestBindQueryParameter(t *testing.T) {
+	type ID struct{
+		FirstName *string	`json:"firstName"`
+		LastName  *string 	`json:"lastName"`
+		Role      string	`json:"role"`
+	}
+
+	expectedName := "Alex"
+	expectedDeepObject := &ID{FirstName: &expectedName, Role: "admin"}
+
+	actual := new(ID)
+	paramName := "id"
+	queryParams := url.Values{
+		"id[firstName]": {"Alex"},
+		"id[role]": {"admin"},
+		"foo": {"bar"},
+	}
+
+	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actual)
 }
