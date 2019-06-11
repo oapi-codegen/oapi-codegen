@@ -13,6 +13,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -421,6 +422,953 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Res
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: http.Client{},
+			Server: server,
+		},
+	}
+}
+
+// GetContentObjectResponse is returned by Client.GetContentObject()
+type GetContentObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetContentObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetContentObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetContentObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetContentObject request returning *GetContentObjectResponse
+func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*GetContentObjectResponse, error) {
+	rsp, err := c.GetContentObject(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetContentObjectResponse(rsp)
+}
+
+// GetCookieResponse is returned by Client.GetCookie()
+type GetCookieResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetCookieResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetCookieResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
+func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetCookieResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// GetCookie request returning *GetCookieResponse
+func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*GetCookieResponse, error) {
+	rsp, err := c.GetCookie(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCookieResponse(rsp)
+}
+
+// GetHeaderResponse is returned by Client.GetHeader()
+type GetHeaderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetHeaderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetHeaderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetHeaderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// GetHeader request returning *GetHeaderResponse
+func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*GetHeaderResponse, error) {
+	rsp, err := c.GetHeader(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetHeaderResponse(rsp)
+}
+
+// GetLabelExplodeArrayResponse is returned by Client.GetLabelExplodeArray()
+type GetLabelExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetLabelExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetLabelExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetLabelExplodeArray request returning *GetLabelExplodeArrayResponse
+func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelExplodeArrayResponse, error) {
+	rsp, err := c.GetLabelExplodeArray(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelExplodeArrayResponse(rsp)
+}
+
+// GetLabelExplodeObjectResponse is returned by Client.GetLabelExplodeObject()
+type GetLabelExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetLabelExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetLabelExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetLabelExplodeObject request returning *GetLabelExplodeObjectResponse
+func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelExplodeObjectResponse, error) {
+	rsp, err := c.GetLabelExplodeObject(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelExplodeObjectResponse(rsp)
+}
+
+// GetLabelNoExplodeArrayResponse is returned by Client.GetLabelNoExplodeArray()
+type GetLabelNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetLabelNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetLabelNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetLabelNoExplodeArray request returning *GetLabelNoExplodeArrayResponse
+func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelNoExplodeArrayResponse, error) {
+	rsp, err := c.GetLabelNoExplodeArray(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelNoExplodeArrayResponse(rsp)
+}
+
+// GetLabelNoExplodeObjectResponse is returned by Client.GetLabelNoExplodeObject()
+type GetLabelNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetLabelNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetLabelNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLabelNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetLabelNoExplodeObject request returning *GetLabelNoExplodeObjectResponse
+func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelNoExplodeObjectResponse, error) {
+	rsp, err := c.GetLabelNoExplodeObject(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLabelNoExplodeObjectResponse(rsp)
+}
+
+// GetMatrixExplodeArrayResponse is returned by Client.GetMatrixExplodeArray()
+type GetMatrixExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetMatrixExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetMatrixExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMatrixExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetMatrixExplodeArray request returning *GetMatrixExplodeArrayResponse
+func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixExplodeArrayResponse, error) {
+	rsp, err := c.GetMatrixExplodeArray(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMatrixExplodeArrayResponse(rsp)
+}
+
+// GetMatrixExplodeObjectResponse is returned by Client.GetMatrixExplodeObject()
+type GetMatrixExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetMatrixExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetMatrixExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMatrixExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetMatrixExplodeObject request returning *GetMatrixExplodeObjectResponse
+func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixExplodeObjectResponse, error) {
+	rsp, err := c.GetMatrixExplodeObject(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMatrixExplodeObjectResponse(rsp)
+}
+
+// GetMatrixNoExplodeArrayResponse is returned by Client.GetMatrixNoExplodeArray()
+type GetMatrixNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetMatrixNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetMatrixNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMatrixNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetMatrixNoExplodeArray request returning *GetMatrixNoExplodeArrayResponse
+func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixNoExplodeArrayResponse, error) {
+	rsp, err := c.GetMatrixNoExplodeArray(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMatrixNoExplodeArrayResponse(rsp)
+}
+
+// GetMatrixNoExplodeObjectResponse is returned by Client.GetMatrixNoExplodeObject()
+type GetMatrixNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetMatrixNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetMatrixNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetMatrixNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetMatrixNoExplodeObject request returning *GetMatrixNoExplodeObjectResponse
+func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixNoExplodeObjectResponse, error) {
+	rsp, err := c.GetMatrixNoExplodeObject(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMatrixNoExplodeObjectResponse(rsp)
+}
+
+// GetPassThroughResponse is returned by Client.GetPassThrough()
+type GetPassThroughResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetPassThroughResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetPassThroughResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetPassThroughResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetPassThrough request returning *GetPassThroughResponse
+func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string) (*GetPassThroughResponse, error) {
+	rsp, err := c.GetPassThrough(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetPassThroughResponse(rsp)
+}
+
+// GetQueryFormResponse is returned by Client.GetQueryForm()
+type GetQueryFormResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetQueryFormResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetQueryFormResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetQueryFormResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetQueryForm request returning *GetQueryFormResponse
+func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*GetQueryFormResponse, error) {
+	rsp, err := c.GetQueryForm(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetQueryFormResponse(rsp)
+}
+
+// GetSimpleExplodeArrayResponse is returned by Client.GetSimpleExplodeArray()
+type GetSimpleExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetSimpleExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetSimpleExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetSimpleExplodeArray request returning *GetSimpleExplodeArrayResponse
+func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleExplodeArrayResponse, error) {
+	rsp, err := c.GetSimpleExplodeArray(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleExplodeArrayResponse(rsp)
+}
+
+// GetSimpleExplodeObjectResponse is returned by Client.GetSimpleExplodeObject()
+type GetSimpleExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetSimpleExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetSimpleExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetSimpleExplodeObject request returning *GetSimpleExplodeObjectResponse
+func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleExplodeObjectResponse, error) {
+	rsp, err := c.GetSimpleExplodeObject(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleExplodeObjectResponse(rsp)
+}
+
+// GetSimpleNoExplodeArrayResponse is returned by Client.GetSimpleNoExplodeArray()
+type GetSimpleNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetSimpleNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetSimpleNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetSimpleNoExplodeArray request returning *GetSimpleNoExplodeArrayResponse
+func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleNoExplodeArrayResponse, error) {
+	rsp, err := c.GetSimpleNoExplodeArray(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleNoExplodeArrayResponse(rsp)
+}
+
+// GetSimpleNoExplodeObjectResponse is returned by Client.GetSimpleNoExplodeObject()
+type GetSimpleNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetSimpleNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetSimpleNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetSimpleNoExplodeObject request returning *GetSimpleNoExplodeObjectResponse
+func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleNoExplodeObjectResponse, error) {
+	rsp, err := c.GetSimpleNoExplodeObject(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleNoExplodeObjectResponse(rsp)
+}
+
+// GetSimplePrimitiveResponse is returned by Client.GetSimplePrimitive()
+type GetSimplePrimitiveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *GetSimplePrimitiveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *GetSimplePrimitiveResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimplePrimitiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// GetSimplePrimitive request returning *GetSimplePrimitiveResponse
+func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*GetSimplePrimitiveResponse, error) {
+	rsp, err := c.GetSimplePrimitive(ctx, param)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimplePrimitiveResponse(rsp)
 }
 
 // NewGetContentObjectRequest generates requests for GetContentObject

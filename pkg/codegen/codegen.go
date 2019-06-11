@@ -114,6 +114,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "io.") {
 			imports = append(imports, "io")
 		}
+		if strings.Contains(str, "ioutil.") {
+			imports = append(imports, "io/ioutil")
+		}
 		if strings.Contains(str, "url.") {
 			imports = append(imports, "net/url")
 		}
@@ -140,6 +143,12 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 		if strings.Contains(str, "fmt.") {
 			imports = append(imports, "fmt")
+		}
+		if strings.Contains(str, "yaml.") {
+			imports = append(imports, "gopkg.in/yaml.v2")
+		}
+		if strings.Contains(str, "xml.") {
+			imports = append(imports, "encoding/xml")
 		}
 	}
 

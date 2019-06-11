@@ -52,6 +52,21 @@ type Client struct {
 type ClientInterface interface {
 }
 
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: http.Client{},
+			Server: server,
+		},
+	}
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 }

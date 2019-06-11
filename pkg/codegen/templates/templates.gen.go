@@ -21,14 +21,15 @@ type ClientInterface interface {
 {{range .}}{{$opid := .OperationId -}}
 {{- if .HasBody}}// {{$opid}} request with JSON body
     {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error)
-{{- end}}
+{{- end}}{{/* if .HasBody */}}
 {{if .GenerateGenericForm}}
     // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
     {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
-{{end}}
-{{end}}{{/* range .OperationId */}}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
 }
 
+{{/* Generate client methods */}}
 {{range .}}{{$opid := .OperationId}}
 {{if .HasBody}}
 // {{$opid}} request with JSON body
@@ -46,7 +47,7 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
     }
     return c.Client.Do(req)
 }
-{{end}}{{/* end of .HasBody */}}
+{{end}}{{/* if .HasBody */}}
 
 {{if .GenerateGenericForm}}
 // {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
@@ -64,9 +65,69 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
         }
     return c.Client.Do(req)
 }
-{{end}}
-{{end}}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
 
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+    ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: http.Client{},
+            Server: server,
+        },
+    }
+}
+
+{{/* Generate parse functions for responses*/}}
+{{range .}}{{$opid := .OperationId}}
+{{genResponseType $opid .Spec.Responses}}
+
+// Parse{{$opid}}Response parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{$opid}}Response(rsp *http.Response) (*{{$opid}}Response, error) {
+    bodyBytes, err := ioutil.ReadAll(rsp.Body)
+    defer rsp.Body.Close()
+    if err != nil {
+        return nil, err
+    }
+    
+    response := {{genResponsePayload $opid}}
+
+    {{genResponseUnmarshal $opid .Spec.Responses}}
+
+    return response, nil
+}
+
+{{/* Generate client methods (with responses)*/}}
+{{if .HasBody}}
+// {{$opid}} request with JSON body returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{$opid}}Response, error){
+    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
+	if err != nil {
+		return nil, err
+	}
+    return Parse{{$opid}}Response(rsp)
+}
+{{end}}{{/* if .HasBody */}}
+
+{{if .GenerateGenericForm}}
+// {{$opid}}{{if .HasAnyBody}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{$opid}}Response, error){
+    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{$opid}}Response(rsp)
+}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}{{/* range . $opid := .OperationId */}}
+
+
+{{/* Generate server */}}
 {{range .}}{{$opid := .OperationId -}}
 {{if .HasBody}}
 // New{{$opid}}Request generates requests for {{$opid}} with JSON body
