@@ -25,10 +25,12 @@ import (
 )
 
 var (
-	payloadPrefix    = "payload"
-	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
-	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
+	payloadPrefix      = "payload"
+	contentTypesJSON   = []string{echo.MIMEApplicationJSON, "text/x-json"}
+	contentTypesYAML   = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
+	contentTypesXML    = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
+	responseTypePrefix = "OAPI"
+	responseTypeSuffix = "Response"
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -86,7 +88,7 @@ func genResponsePayload(operationID string) string {
 	var buffer = bytes.NewBufferString("")
 
 	// Here is where we build up a response:
-	fmt.Fprintf(buffer, "&%sResponse{\n", operationID)
+	fmt.Fprintf(buffer, "&%s{\n", genResponseTypeName(operationID))
 	fmt.Fprintf(buffer, "Body: bodyBytes,\n")
 	fmt.Fprintf(buffer, "HTTPResponse: rsp,\n")
 	fmt.Fprintf(buffer, "}")
@@ -99,8 +101,8 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 	var buffer = bytes.NewBufferString("")
 
 	// The header and standard struct attributes:
-	fmt.Fprintf(buffer, "// %sResponse is returned by Client.%s()\n", operationID, operationID)
-	fmt.Fprintf(buffer, "type %sResponse struct {\n", operationID)
+	fmt.Fprintf(buffer, "// %s is returned by Client.%s()\n", genResponseTypeName(operationID), operationID)
+	fmt.Fprintf(buffer, "type %s struct {\n", genResponseTypeName(operationID))
 	fmt.Fprintf(buffer, "Body []byte\n")
 	fmt.Fprintf(buffer, "HTTPResponse *http.Response\n")
 
@@ -163,7 +165,7 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 
 	// Status() provides an easy way to get the Status:
 	fmt.Fprintf(buffer, "// Status returns HTTPResponse.Status\n")
-	fmt.Fprintf(buffer, "func (r *%sResponse) Status() string {\n", operationID)
+	fmt.Fprintf(buffer, "func (r *%s) Status() string {\n", genResponseTypeName(operationID))
 	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
 	fmt.Fprintf(buffer, "		return r.HTTPResponse.Status\n")
 	fmt.Fprintf(buffer, "	}\n")
@@ -172,7 +174,7 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 
 	// StatusCode() provides an easy way to get the StatusCode:
 	fmt.Fprintf(buffer, "// StatusCode returns HTTPResponse.StatusCode\n")
-	fmt.Fprintf(buffer, "func (r *%sResponse) StatusCode() int {\n", operationID)
+	fmt.Fprintf(buffer, "func (r *%s) StatusCode() int {\n", genResponseTypeName(operationID))
 	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
 	fmt.Fprintf(buffer, "		return r.HTTPResponse.StatusCode\n")
 	fmt.Fprintf(buffer, "	}\n")
@@ -312,6 +314,11 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 	return buffer.String()
 }
 
+// genResponseTypeName creates the name of generated response types (given the operationID):
+func genResponseTypeName(operationID string) string {
+	return fmt.Sprintf("%s%s%s", responseTypePrefix, operationID, responseTypeSuffix)
+}
+
 // contains tells us if a string is found in a slice of strings:
 func contains(strings []string, s string) bool {
 	for _, stringInSlice := range strings {
@@ -334,5 +341,6 @@ var TemplateFunctions = template.FuncMap{
 	"camelCase":            ToCamelCase,
 	"genResponsePayload":   genResponsePayload,
 	"genResponseType":      genResponseType,
+	"genResponseTypeName":  genResponseTypeName,
 	"genResponseUnmarshal": genResponseUnmarshal,
 }

@@ -62,7 +62,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")
 
-	findPetByIDResponse, err := examplePetstore.ParseFindPetByIdResponse(cannedResponse)
+	findPetByIDResponse, err := examplePetstore.ParseOAPIFindPetByIdResponse(cannedResponse)
 	assert.NoError(t, err)
 	assert.NotNil(t, findPetByIDResponse.JSON200)
 	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
@@ -99,16 +99,16 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "package testswagger")
 
 	// Check that response structs are generated correctly:
-	assert.Contains(t, code, "type GetTestByNameResponse struct {")
+	assert.Contains(t, code, "type OAPIGetTestByNameResponse struct {")
 
 	// Check that the helper methods are generated correctly:
-	assert.Contains(t, code, "func (r *GetTestByNameResponse) Status() string {")
-	assert.Contains(t, code, "func (r *GetTestByNameResponse) StatusCode() int {")
-	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {")
+	assert.Contains(t, code, "func (r *OAPIGetTestByNameResponse) Status() string {")
+	assert.Contains(t, code, "func (r *OAPIGetTestByNameResponse) StatusCode() int {")
+	assert.Contains(t, code, "func ParseOAPIGetTestByNameResponse(rsp *http.Response) (*OAPIGetTestByNameResponse, error) {")
 
 	// Check the client method signatures:
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*GetTestByNameResponse, error) {")
+	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*OAPIGetTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)

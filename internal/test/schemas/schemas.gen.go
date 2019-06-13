@@ -90,14 +90,14 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 	}
 }
 
-// Issue9Response is returned by Client.Issue9()
-type Issue9Response struct {
+// OAPIIssue9Response is returned by Client.Issue9()
+type OAPIIssue9Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *Issue9Response) Status() string {
+func (r *OAPIIssue9Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -105,22 +105,22 @@ func (r *Issue9Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *Issue9Response) StatusCode() int {
+func (r *OAPIIssue9Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
-func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
+// ParseOAPIIssue9Response parses an HTTP response from a Issue9WithResponse call
+func ParseOAPIIssue9Response(rsp *http.Response) (*OAPIIssue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue9Response{
+	response := &OAPIIssue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -132,12 +132,12 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 }
 
 // Issue9 request with JSON body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*Issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*OAPIIssue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue9Response(rsp)
+	return ParseOAPIIssue9Response(rsp)
 }
 
 // NewIssue9Request generates requests for Issue9 with JSON body
