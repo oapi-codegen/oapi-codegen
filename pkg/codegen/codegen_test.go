@@ -133,7 +133,7 @@ paths:
   /test/{name}:
     get:
       tags:
-      - pet
+      - test
       summary: Get test
       operationId: getTestByName
       parameters:
@@ -161,9 +161,38 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Error'
+  /cat:
+    get:
+      tags:
+      - cat
+      summary: Get cat status
+      operationId: getCatStatus
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+            application/xml:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+            application/yaml:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -183,7 +212,7 @@ components:
           type: string
         command:
           type: string
-  
+
     Error:
       properties:
         code:
@@ -191,4 +220,23 @@ components:
           format: int32
         message:
           type: string
+
+    CatAlive:
+      properties:
+        name:
+          type: string
+        alive_since:
+          type: string
+          format: date-time
+
+    CatDead:
+      properties:
+        name:
+          type: string
+        dead_since:
+          type: string
+          format: date-time
+        cause:
+          type: string
+          enum: [car, dog, oldage]
 `

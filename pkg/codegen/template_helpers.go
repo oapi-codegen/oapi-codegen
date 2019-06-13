@@ -131,6 +131,12 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 						continue
 					}
 
+					// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+					if goType == "interface{}" {
+						// Unable to unmarshal this, so we leave it out:
+						continue
+					}
+
 					// Generate different attribute names for different content-types:
 					switch {
 
@@ -228,6 +234,12 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			goType, err := schemaToGoType(contentType.Schema, true)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
+				continue
+			}
+
+			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+			if goType == "interface{}" {
+				// Unable to unmarshal this, so we leave it out:
 				continue
 			}
 
