@@ -29,7 +29,6 @@ var (
 	contentTypesJSON   = []string{echo.MIMEApplicationJSON, "text/x-json"}
 	contentTypesYAML   = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
 	contentTypesXML    = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
-	responseTypePrefix = "OAPI"
 	responseTypeSuffix = "Response"
 )
 
@@ -316,7 +315,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 // genResponseTypeName creates the name of generated response types (given the operationID):
 func genResponseTypeName(operationID string) string {
-	return fmt.Sprintf("%s%s%s", responseTypePrefix, operationID, responseTypeSuffix)
+	return fmt.Sprintf("%s%s", LowercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
 // contains tells us if a string is found in a slice of strings:

@@ -439,14 +439,14 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 	}
 }
 
-// OAPIGetContentObjectResponse is returned by Client.GetContentObject()
-type OAPIGetContentObjectResponse struct {
+// getContentObjectResponse is returned by Client.GetContentObject()
+type getContentObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetContentObjectResponse) Status() string {
+func (r *getContentObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -454,22 +454,22 @@ func (r *OAPIGetContentObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetContentObjectResponse) StatusCode() int {
+func (r *getContentObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
-func ParseOAPIGetContentObjectResponse(rsp *http.Response) (*OAPIGetContentObjectResponse, error) {
+// ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetContentObjectResponse{
+	response := &getContentObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -483,22 +483,22 @@ func ParseOAPIGetContentObjectResponse(rsp *http.Response) (*OAPIGetContentObjec
 }
 
 // GetContentObject request returning *GetContentObjectResponse
-func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*OAPIGetContentObjectResponse, error) {
+func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*getContentObjectResponse, error) {
 	rsp, err := c.GetContentObject(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetContentObjectResponse(rsp)
+	return ParsegetContentObjectResponse(rsp)
 }
 
-// OAPIGetCookieResponse is returned by Client.GetCookie()
-type OAPIGetCookieResponse struct {
+// getCookieResponse is returned by Client.GetCookie()
+type getCookieResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetCookieResponse) Status() string {
+func (r *getCookieResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -506,22 +506,22 @@ func (r *OAPIGetCookieResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetCookieResponse) StatusCode() int {
+func (r *getCookieResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
-func ParseOAPIGetCookieResponse(rsp *http.Response) (*OAPIGetCookieResponse, error) {
+// ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
+func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetCookieResponse{
+	response := &getCookieResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -533,22 +533,22 @@ func ParseOAPIGetCookieResponse(rsp *http.Response) (*OAPIGetCookieResponse, err
 }
 
 // GetCookie request returning *GetCookieResponse
-func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*OAPIGetCookieResponse, error) {
+func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*getCookieResponse, error) {
 	rsp, err := c.GetCookie(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetCookieResponse(rsp)
+	return ParsegetCookieResponse(rsp)
 }
 
-// OAPIGetHeaderResponse is returned by Client.GetHeader()
-type OAPIGetHeaderResponse struct {
+// getHeaderResponse is returned by Client.GetHeader()
+type getHeaderResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetHeaderResponse) Status() string {
+func (r *getHeaderResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -556,22 +556,22 @@ func (r *OAPIGetHeaderResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetHeaderResponse) StatusCode() int {
+func (r *getHeaderResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
-func ParseOAPIGetHeaderResponse(rsp *http.Response) (*OAPIGetHeaderResponse, error) {
+// ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetHeaderResponse{
+	response := &getHeaderResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -583,22 +583,22 @@ func ParseOAPIGetHeaderResponse(rsp *http.Response) (*OAPIGetHeaderResponse, err
 }
 
 // GetHeader request returning *GetHeaderResponse
-func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*OAPIGetHeaderResponse, error) {
+func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*getHeaderResponse, error) {
 	rsp, err := c.GetHeader(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetHeaderResponse(rsp)
+	return ParsegetHeaderResponse(rsp)
 }
 
-// OAPIGetLabelExplodeArrayResponse is returned by Client.GetLabelExplodeArray()
-type OAPIGetLabelExplodeArrayResponse struct {
+// getLabelExplodeArrayResponse is returned by Client.GetLabelExplodeArray()
+type getLabelExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetLabelExplodeArrayResponse) Status() string {
+func (r *getLabelExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -606,22 +606,22 @@ func (r *OAPIGetLabelExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetLabelExplodeArrayResponse) StatusCode() int {
+func (r *getLabelExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
-func ParseOAPIGetLabelExplodeArrayResponse(rsp *http.Response) (*OAPIGetLabelExplodeArrayResponse, error) {
+// ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetLabelExplodeArrayResponse{
+	response := &getLabelExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -635,22 +635,22 @@ func ParseOAPIGetLabelExplodeArrayResponse(rsp *http.Response) (*OAPIGetLabelExp
 }
 
 // GetLabelExplodeArray request returning *GetLabelExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*OAPIGetLabelExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelExplodeArray(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetLabelExplodeArrayResponse(rsp)
+	return ParsegetLabelExplodeArrayResponse(rsp)
 }
 
-// OAPIGetLabelExplodeObjectResponse is returned by Client.GetLabelExplodeObject()
-type OAPIGetLabelExplodeObjectResponse struct {
+// getLabelExplodeObjectResponse is returned by Client.GetLabelExplodeObject()
+type getLabelExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetLabelExplodeObjectResponse) Status() string {
+func (r *getLabelExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -658,22 +658,22 @@ func (r *OAPIGetLabelExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetLabelExplodeObjectResponse) StatusCode() int {
+func (r *getLabelExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
-func ParseOAPIGetLabelExplodeObjectResponse(rsp *http.Response) (*OAPIGetLabelExplodeObjectResponse, error) {
+// ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetLabelExplodeObjectResponse{
+	response := &getLabelExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -687,22 +687,22 @@ func ParseOAPIGetLabelExplodeObjectResponse(rsp *http.Response) (*OAPIGetLabelEx
 }
 
 // GetLabelExplodeObject request returning *GetLabelExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*OAPIGetLabelExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelExplodeObject(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetLabelExplodeObjectResponse(rsp)
+	return ParsegetLabelExplodeObjectResponse(rsp)
 }
 
-// OAPIGetLabelNoExplodeArrayResponse is returned by Client.GetLabelNoExplodeArray()
-type OAPIGetLabelNoExplodeArrayResponse struct {
+// getLabelNoExplodeArrayResponse is returned by Client.GetLabelNoExplodeArray()
+type getLabelNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetLabelNoExplodeArrayResponse) Status() string {
+func (r *getLabelNoExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -710,22 +710,22 @@ func (r *OAPIGetLabelNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetLabelNoExplodeArrayResponse) StatusCode() int {
+func (r *getLabelNoExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
-func ParseOAPIGetLabelNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetLabelNoExplodeArrayResponse, error) {
+// ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetLabelNoExplodeArrayResponse{
+	response := &getLabelNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -739,22 +739,22 @@ func ParseOAPIGetLabelNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetLabelN
 }
 
 // GetLabelNoExplodeArray request returning *GetLabelNoExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*OAPIGetLabelNoExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelNoExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelNoExplodeArray(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetLabelNoExplodeArrayResponse(rsp)
+	return ParsegetLabelNoExplodeArrayResponse(rsp)
 }
 
-// OAPIGetLabelNoExplodeObjectResponse is returned by Client.GetLabelNoExplodeObject()
-type OAPIGetLabelNoExplodeObjectResponse struct {
+// getLabelNoExplodeObjectResponse is returned by Client.GetLabelNoExplodeObject()
+type getLabelNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetLabelNoExplodeObjectResponse) Status() string {
+func (r *getLabelNoExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -762,22 +762,22 @@ func (r *OAPIGetLabelNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetLabelNoExplodeObjectResponse) StatusCode() int {
+func (r *getLabelNoExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
-func ParseOAPIGetLabelNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetLabelNoExplodeObjectResponse, error) {
+// ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetLabelNoExplodeObjectResponse{
+	response := &getLabelNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -791,22 +791,22 @@ func ParseOAPIGetLabelNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetLabel
 }
 
 // GetLabelNoExplodeObject request returning *GetLabelNoExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*OAPIGetLabelNoExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelNoExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelNoExplodeObject(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetLabelNoExplodeObjectResponse(rsp)
+	return ParsegetLabelNoExplodeObjectResponse(rsp)
 }
 
-// OAPIGetMatrixExplodeArrayResponse is returned by Client.GetMatrixExplodeArray()
-type OAPIGetMatrixExplodeArrayResponse struct {
+// getMatrixExplodeArrayResponse is returned by Client.GetMatrixExplodeArray()
+type getMatrixExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetMatrixExplodeArrayResponse) Status() string {
+func (r *getMatrixExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -814,22 +814,22 @@ func (r *OAPIGetMatrixExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetMatrixExplodeArrayResponse) StatusCode() int {
+func (r *getMatrixExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
-func ParseOAPIGetMatrixExplodeArrayResponse(rsp *http.Response) (*OAPIGetMatrixExplodeArrayResponse, error) {
+// ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetMatrixExplodeArrayResponse{
+	response := &getMatrixExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -843,22 +843,22 @@ func ParseOAPIGetMatrixExplodeArrayResponse(rsp *http.Response) (*OAPIGetMatrixE
 }
 
 // GetMatrixExplodeArray request returning *GetMatrixExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*OAPIGetMatrixExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixExplodeArray(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetMatrixExplodeArrayResponse(rsp)
+	return ParsegetMatrixExplodeArrayResponse(rsp)
 }
 
-// OAPIGetMatrixExplodeObjectResponse is returned by Client.GetMatrixExplodeObject()
-type OAPIGetMatrixExplodeObjectResponse struct {
+// getMatrixExplodeObjectResponse is returned by Client.GetMatrixExplodeObject()
+type getMatrixExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetMatrixExplodeObjectResponse) Status() string {
+func (r *getMatrixExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -866,22 +866,22 @@ func (r *OAPIGetMatrixExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetMatrixExplodeObjectResponse) StatusCode() int {
+func (r *getMatrixExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
-func ParseOAPIGetMatrixExplodeObjectResponse(rsp *http.Response) (*OAPIGetMatrixExplodeObjectResponse, error) {
+// ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetMatrixExplodeObjectResponse{
+	response := &getMatrixExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -895,22 +895,22 @@ func ParseOAPIGetMatrixExplodeObjectResponse(rsp *http.Response) (*OAPIGetMatrix
 }
 
 // GetMatrixExplodeObject request returning *GetMatrixExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*OAPIGetMatrixExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixExplodeObject(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetMatrixExplodeObjectResponse(rsp)
+	return ParsegetMatrixExplodeObjectResponse(rsp)
 }
 
-// OAPIGetMatrixNoExplodeArrayResponse is returned by Client.GetMatrixNoExplodeArray()
-type OAPIGetMatrixNoExplodeArrayResponse struct {
+// getMatrixNoExplodeArrayResponse is returned by Client.GetMatrixNoExplodeArray()
+type getMatrixNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetMatrixNoExplodeArrayResponse) Status() string {
+func (r *getMatrixNoExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -918,22 +918,22 @@ func (r *OAPIGetMatrixNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetMatrixNoExplodeArrayResponse) StatusCode() int {
+func (r *getMatrixNoExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
-func ParseOAPIGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetMatrixNoExplodeArrayResponse, error) {
+// ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetMatrixNoExplodeArrayResponse{
+	response := &getMatrixNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -947,22 +947,22 @@ func ParseOAPIGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetMatri
 }
 
 // GetMatrixNoExplodeArray request returning *GetMatrixNoExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*OAPIGetMatrixNoExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixNoExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeArray(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetMatrixNoExplodeArrayResponse(rsp)
+	return ParsegetMatrixNoExplodeArrayResponse(rsp)
 }
 
-// OAPIGetMatrixNoExplodeObjectResponse is returned by Client.GetMatrixNoExplodeObject()
-type OAPIGetMatrixNoExplodeObjectResponse struct {
+// getMatrixNoExplodeObjectResponse is returned by Client.GetMatrixNoExplodeObject()
+type getMatrixNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetMatrixNoExplodeObjectResponse) Status() string {
+func (r *getMatrixNoExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -970,22 +970,22 @@ func (r *OAPIGetMatrixNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetMatrixNoExplodeObjectResponse) StatusCode() int {
+func (r *getMatrixNoExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
-func ParseOAPIGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetMatrixNoExplodeObjectResponse, error) {
+// ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetMatrixNoExplodeObjectResponse{
+	response := &getMatrixNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -999,22 +999,22 @@ func ParseOAPIGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetMatr
 }
 
 // GetMatrixNoExplodeObject request returning *GetMatrixNoExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*OAPIGetMatrixNoExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixNoExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeObject(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetMatrixNoExplodeObjectResponse(rsp)
+	return ParsegetMatrixNoExplodeObjectResponse(rsp)
 }
 
-// OAPIGetPassThroughResponse is returned by Client.GetPassThrough()
-type OAPIGetPassThroughResponse struct {
+// getPassThroughResponse is returned by Client.GetPassThrough()
+type getPassThroughResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetPassThroughResponse) Status() string {
+func (r *getPassThroughResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1022,22 +1022,22 @@ func (r *OAPIGetPassThroughResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetPassThroughResponse) StatusCode() int {
+func (r *getPassThroughResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
-func ParseOAPIGetPassThroughResponse(rsp *http.Response) (*OAPIGetPassThroughResponse, error) {
+// ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetPassThroughResponse{
+	response := &getPassThroughResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1051,22 +1051,22 @@ func ParseOAPIGetPassThroughResponse(rsp *http.Response) (*OAPIGetPassThroughRes
 }
 
 // GetPassThrough request returning *GetPassThroughResponse
-func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string) (*OAPIGetPassThroughResponse, error) {
+func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string) (*getPassThroughResponse, error) {
 	rsp, err := c.GetPassThrough(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetPassThroughResponse(rsp)
+	return ParsegetPassThroughResponse(rsp)
 }
 
-// OAPIGetQueryFormResponse is returned by Client.GetQueryForm()
-type OAPIGetQueryFormResponse struct {
+// getQueryFormResponse is returned by Client.GetQueryForm()
+type getQueryFormResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetQueryFormResponse) Status() string {
+func (r *getQueryFormResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1074,22 +1074,22 @@ func (r *OAPIGetQueryFormResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetQueryFormResponse) StatusCode() int {
+func (r *getQueryFormResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
-func ParseOAPIGetQueryFormResponse(rsp *http.Response) (*OAPIGetQueryFormResponse, error) {
+// ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetQueryFormResponse{
+	response := &getQueryFormResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1103,22 +1103,22 @@ func ParseOAPIGetQueryFormResponse(rsp *http.Response) (*OAPIGetQueryFormRespons
 }
 
 // GetQueryForm request returning *GetQueryFormResponse
-func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*OAPIGetQueryFormResponse, error) {
+func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*getQueryFormResponse, error) {
 	rsp, err := c.GetQueryForm(ctx, params)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetQueryFormResponse(rsp)
+	return ParsegetQueryFormResponse(rsp)
 }
 
-// OAPIGetSimpleExplodeArrayResponse is returned by Client.GetSimpleExplodeArray()
-type OAPIGetSimpleExplodeArrayResponse struct {
+// getSimpleExplodeArrayResponse is returned by Client.GetSimpleExplodeArray()
+type getSimpleExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetSimpleExplodeArrayResponse) Status() string {
+func (r *getSimpleExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1126,22 +1126,22 @@ func (r *OAPIGetSimpleExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetSimpleExplodeArrayResponse) StatusCode() int {
+func (r *getSimpleExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
-func ParseOAPIGetSimpleExplodeArrayResponse(rsp *http.Response) (*OAPIGetSimpleExplodeArrayResponse, error) {
+// ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetSimpleExplodeArrayResponse{
+	response := &getSimpleExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1155,22 +1155,22 @@ func ParseOAPIGetSimpleExplodeArrayResponse(rsp *http.Response) (*OAPIGetSimpleE
 }
 
 // GetSimpleExplodeArray request returning *GetSimpleExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*OAPIGetSimpleExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleExplodeArray(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetSimpleExplodeArrayResponse(rsp)
+	return ParsegetSimpleExplodeArrayResponse(rsp)
 }
 
-// OAPIGetSimpleExplodeObjectResponse is returned by Client.GetSimpleExplodeObject()
-type OAPIGetSimpleExplodeObjectResponse struct {
+// getSimpleExplodeObjectResponse is returned by Client.GetSimpleExplodeObject()
+type getSimpleExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetSimpleExplodeObjectResponse) Status() string {
+func (r *getSimpleExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1178,22 +1178,22 @@ func (r *OAPIGetSimpleExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetSimpleExplodeObjectResponse) StatusCode() int {
+func (r *getSimpleExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
-func ParseOAPIGetSimpleExplodeObjectResponse(rsp *http.Response) (*OAPIGetSimpleExplodeObjectResponse, error) {
+// ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetSimpleExplodeObjectResponse{
+	response := &getSimpleExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1207,22 +1207,22 @@ func ParseOAPIGetSimpleExplodeObjectResponse(rsp *http.Response) (*OAPIGetSimple
 }
 
 // GetSimpleExplodeObject request returning *GetSimpleExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*OAPIGetSimpleExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleExplodeObject(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetSimpleExplodeObjectResponse(rsp)
+	return ParsegetSimpleExplodeObjectResponse(rsp)
 }
 
-// OAPIGetSimpleNoExplodeArrayResponse is returned by Client.GetSimpleNoExplodeArray()
-type OAPIGetSimpleNoExplodeArrayResponse struct {
+// getSimpleNoExplodeArrayResponse is returned by Client.GetSimpleNoExplodeArray()
+type getSimpleNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetSimpleNoExplodeArrayResponse) Status() string {
+func (r *getSimpleNoExplodeArrayResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1230,22 +1230,22 @@ func (r *OAPIGetSimpleNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetSimpleNoExplodeArrayResponse) StatusCode() int {
+func (r *getSimpleNoExplodeArrayResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
-func ParseOAPIGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetSimpleNoExplodeArrayResponse, error) {
+// ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetSimpleNoExplodeArrayResponse{
+	response := &getSimpleNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1259,22 +1259,22 @@ func ParseOAPIGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*OAPIGetSimpl
 }
 
 // GetSimpleNoExplodeArray request returning *GetSimpleNoExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*OAPIGetSimpleNoExplodeArrayResponse, error) {
+func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleNoExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeArray(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetSimpleNoExplodeArrayResponse(rsp)
+	return ParsegetSimpleNoExplodeArrayResponse(rsp)
 }
 
-// OAPIGetSimpleNoExplodeObjectResponse is returned by Client.GetSimpleNoExplodeObject()
-type OAPIGetSimpleNoExplodeObjectResponse struct {
+// getSimpleNoExplodeObjectResponse is returned by Client.GetSimpleNoExplodeObject()
+type getSimpleNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetSimpleNoExplodeObjectResponse) Status() string {
+func (r *getSimpleNoExplodeObjectResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1282,22 +1282,22 @@ func (r *OAPIGetSimpleNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetSimpleNoExplodeObjectResponse) StatusCode() int {
+func (r *getSimpleNoExplodeObjectResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
-func ParseOAPIGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetSimpleNoExplodeObjectResponse, error) {
+// ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetSimpleNoExplodeObjectResponse{
+	response := &getSimpleNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1311,22 +1311,22 @@ func ParseOAPIGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*OAPIGetSimp
 }
 
 // GetSimpleNoExplodeObject request returning *GetSimpleNoExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*OAPIGetSimpleNoExplodeObjectResponse, error) {
+func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleNoExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeObject(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetSimpleNoExplodeObjectResponse(rsp)
+	return ParsegetSimpleNoExplodeObjectResponse(rsp)
 }
 
-// OAPIGetSimplePrimitiveResponse is returned by Client.GetSimplePrimitive()
-type OAPIGetSimplePrimitiveResponse struct {
+// getSimplePrimitiveResponse is returned by Client.GetSimplePrimitive()
+type getSimplePrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r *OAPIGetSimplePrimitiveResponse) Status() string {
+func (r *getSimplePrimitiveResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1334,22 +1334,22 @@ func (r *OAPIGetSimplePrimitiveResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r *OAPIGetSimplePrimitiveResponse) StatusCode() int {
+func (r *getSimplePrimitiveResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ParseOAPIGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
-func ParseOAPIGetSimplePrimitiveResponse(rsp *http.Response) (*OAPIGetSimplePrimitiveResponse, error) {
+// ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &OAPIGetSimplePrimitiveResponse{
+	response := &getSimplePrimitiveResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1363,12 +1363,12 @@ func ParseOAPIGetSimplePrimitiveResponse(rsp *http.Response) (*OAPIGetSimplePrim
 }
 
 // GetSimplePrimitive request returning *GetSimplePrimitiveResponse
-func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*OAPIGetSimplePrimitiveResponse, error) {
+func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*getSimplePrimitiveResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param)
 	if err != nil {
 		return nil, err
 	}
-	return ParseOAPIGetSimplePrimitiveResponse(rsp)
+	return ParsegetSimplePrimitiveResponse(rsp)
 }
 
 // NewGetContentObjectRequest generates requests for GetContentObject
