@@ -143,17 +143,17 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 					// JSON:
 					case contains(contentTypesJSON, contentTypeName):
 						attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
 
 					// YAML:
 					case contains(contentTypesYAML, contentTypeName):
 						attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
 
 					// XML:
 					case contains(contentTypesXML, contentTypeName):
 						attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s // '%s' (%s)\n", attributeName, goType, responseRef.Value.Description, contentType.Schema.Ref)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
 					}
 				}
 			}

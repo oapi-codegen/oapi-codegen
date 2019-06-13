@@ -133,8 +133,8 @@ type FindPetsResponse struct {
 		NewPet
 		// Embedded fields due to inline allOf schema
 		Id int64 `json:"id"`
-	} // 'pet response' ()
-	JSONDefault *Error // 'unexpected error' (#/components/schemas/Error)
+	}
+	JSONDefault *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -205,8 +205,8 @@ type AddPetResponse struct {
 		NewPet
 		// Embedded fields due to inline allOf schema
 		Id int64 `json:"id"`
-	} // 'pet response' (#/components/schemas/Pet)
-	JSONDefault *Error // 'unexpected error' (#/components/schemas/Error)
+	}
+	JSONDefault *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -272,7 +272,7 @@ func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body NewPe
 type DeletePetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *Error // 'unexpected error' (#/components/schemas/Error)
+	JSONDefault  *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -335,8 +335,8 @@ type FindPetByIdResponse struct {
 		NewPet
 		// Embedded fields due to inline allOf schema
 		Id int64 `json:"id"`
-	} // 'pet response' (#/components/schemas/Pet)
-	JSONDefault *Error // 'unexpected error' (#/components/schemas/Error)
+	}
+	JSONDefault *Error
 }
 
 // Status returns HTTPResponse.Status
