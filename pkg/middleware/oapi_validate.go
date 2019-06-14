@@ -17,12 +17,16 @@ package middleware
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
-	"io/ioutil"
-	"net/http"
 )
+
+const EchoContextKey = "oapi-codegen/echo-context"
+const UserDataKey = "oapi-codegen/user-data"
 
 // This is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
@@ -45,10 +49,23 @@ func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 
 // Create a validator from a swagger object.
 func OapiRequestValidator(swagger *openapi3.Swagger) echo.MiddlewareFunc {
+	return OapiRequestValidatorWithOptions(swagger, nil)
+}
+
+// Options to customize request validation. These are passed through to
+// openapi3filter.
+type Options struct {
+	Options      openapi3filter.Options
+	ParamDecoder openapi3filter.ContentParameterDecoder
+	UserData     interface{}
+}
+
+// Create a validator from a swagger object, with validation options
+func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) echo.MiddlewareFunc {
 	router := openapi3filter.NewRouter().WithSwagger(swagger)
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			err := ValidateRequestFromContext(c, router)
+			err := ValidateRequestFromContext(c, router, options)
 			if err != nil {
 				return err
 			}
@@ -59,7 +76,7 @@ func OapiRequestValidator(swagger *openapi3.Swagger) echo.MiddlewareFunc {
 
 // This function is called from the middleware above and actually does the work
 // of validating a request.
-func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router) error {
+func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router, options *Options) error {
 	req := ctx.Request()
 	route, pathParams, err := router.FindRoute(req.Method, req.URL)
 
@@ -78,17 +95,30 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router)
 		}
 	}
 
-	err = openapi3filter.ValidateRequest(context.Background(),
-		&openapi3filter.RequestValidationInput{
-			Request:    req,
-			PathParams: pathParams,
-			Route:      route,
-		})
+	validationInput := &openapi3filter.RequestValidationInput{
+		Request:    req,
+		PathParams: pathParams,
+		Route:      route,
+	}
+
+	// Pass the Echo context into the request validator, so that any callbacks
+	// which it invokes make it available.
+	requestContext := context.WithValue(context.Background(), EchoContextKey, ctx)
+
+	if options != nil {
+		validationInput.Options = &options.Options
+		validationInput.ParamDecoder = options.ParamDecoder
+		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData)
+	}
+
+	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
 			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+		case *openapi3filter.SecurityRequirementsError:
+			return echo.NewHTTPError(http.StatusForbidden, e.Error())
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
@@ -97,4 +127,22 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router)
 		}
 	}
 	return nil
+}
+
+// Helper function to get the echo context from within requests. It returns
+// nil if not found or wrong type.
+func GetEchoContext(c context.Context) echo.Context {
+	iface := c.Value(EchoContextKey)
+	if iface == nil {
+		return nil
+	}
+	eCtx, ok := iface.(echo.Context)
+	if !ok {
+		return nil
+	}
+	return eCtx
+}
+
+func GetUserData(c context.Context) interface{} {
+	return c.Value(UserDataKey)
 }

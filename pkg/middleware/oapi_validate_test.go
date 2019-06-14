@@ -15,11 +15,14 @@
 package middleware
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
@@ -66,6 +69,30 @@ paths:
               properties:
                 name:
                   type: string
+  /protected_resource:
+    get:
+      operationId: getProtectedResource
+      security:
+        - BearerAuth:
+          - someScope
+      responses:
+        '204':
+          description: no content
+  /protected_resource2:
+    get:
+      operationId: getProtectedResource
+      security:
+        - BearerAuth:
+          - otherScope
+      responses:
+        '204':
+          description: no content
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 `
 
 func doGet(t *testing.T, e *echo.Echo, url string) *httptest.ResponseRecorder {
@@ -85,8 +112,30 @@ func TestOapiRequestValidator(t *testing.T) {
 	// Create a new echo router
 	e := echo.New()
 
+	// Set up an authenticator to check authenticated function. It will allow
+	// access to "someScope", but disallow others.
+	options := Options{
+		Options: openapi3filter.Options{
+			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
+				// The echo context should be propagated into here.
+				eCtx := GetEchoContext(c)
+				assert.NotNil(t, eCtx)
+				// As should user data
+				assert.EqualValues(t, "hi!", GetUserData(c))
+
+				for _, s := range input.Scopes {
+					if s == "someScope" {
+						return nil
+					}
+				}
+				return errors.New("forbidden")
+			},
+		},
+		UserData:"hi!",
+	}
+
 	// Install our OpenApi based request validator
-	e.Use(OapiRequestValidator(swagger))
+	e.Use(OapiRequestValidatorWithOptions(swagger, &options))
 
 	called := false
 
@@ -156,6 +205,32 @@ func TestOapiRequestValidator(t *testing.T) {
 		}
 		rec := doPost(t, e, "http://deepmap.ai/resource", body)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+
+	e.GET("/protected_resource", func(c echo.Context) error {
+		called = true
+		return c.NoContent(http.StatusNoContent)
+
+	})
+
+	// Call a protected function to which we have access
+	{
+		rec := doGet(t, e, "http://deepmap.ai/protected_resource")
+		assert.Equal(t, http.StatusNoContent, rec.Code)
+		assert.True(t, called, "Handler should have been called")
+		called = false
+	}
+
+	e.GET("/protected_resource2", func(c echo.Context) error {
+		called = true
+		return c.NoContent(http.StatusNoContent)
+	})
+	// Call a protected function to which we dont have access
+	{
+		rec := doGet(t, e, "http://deepmap.ai/protected_resource2")
+		assert.Equal(t, http.StatusForbidden, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
