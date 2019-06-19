@@ -219,11 +219,13 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 			// not this field is required
 			return result, nil
 		case "integer":
-			// We default to int32 if format doesn't ask for something else.
+			// We default to int if format doesn't ask for something else.
 			if f == "int64" {
 				result = "int64"
-			} else if f == "int32" || f == "" {
+			} else if f == "int32" {
 				result = "int32"
+			} else if f == "" {
+				result = "int"
 			} else {
 				return "", fmt.Errorf("invalid integer format: %s", f)
 			}

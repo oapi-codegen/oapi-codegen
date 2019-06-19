@@ -35,6 +35,7 @@ paths:
           type: array
           items:
             type: integer
+            format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -52,6 +53,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -99,6 +101,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -116,6 +119,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -163,6 +167,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -180,6 +185,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -255,6 +261,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: a
           description: array
           in: query
@@ -265,6 +272,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: eo
           description: exploded object
           in: query
@@ -286,6 +294,7 @@ paths:
           explode: true
           schema:
             type: integer
+            format: int32
         - name: p
           description: primitive
           in: query
@@ -293,6 +302,7 @@ paths:
           explode: false
           schema:
             type: integer
+            format: int32
         - name: co
           description: complex object
           in: query
@@ -315,6 +325,7 @@ paths:
           explode: false
           schema:
             type: integer
+            format: int32
         - name: X-Primitive-Exploded
           description: primitive
           in: header
@@ -322,6 +333,7 @@ paths:
           explode: true
           schema:
             type: integer
+            format: int32
         - name: X-Array-Exploded
           description: exploded array
           in: header
@@ -331,6 +343,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: X-Array
           description: array
           in: header
@@ -340,6 +353,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: X-Object-Exploded
           description: exploded object
           in: header
@@ -373,6 +387,7 @@ paths:
           explode: false
           schema:
             type: integer
+            format: int32
         - name: ep
           description: primitive
           in: cookie
@@ -380,6 +395,7 @@ paths:
           explode: true
           schema:
             type: integer
+            format: int32
         - name: ea
           description: exploded array
           in: cookie
@@ -389,6 +405,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: a
           description: array
           in: cookie
@@ -398,6 +415,7 @@ paths:
             type: array
             items:
               type: integer
+              format: int32
         - name: eo
           description: exploded object
           in: cookie
