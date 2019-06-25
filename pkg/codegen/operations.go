@@ -272,6 +272,11 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
 
+			// We rely on OperationID to generate function names, it's required
+			if op.OperationID == "" {
+				return nil, fmt.Errorf("OpearationId is missing on path '%s %s'", opName, requestPath)
+			}
+
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
 			localParams, err := DescribeParameters(op.Parameters)

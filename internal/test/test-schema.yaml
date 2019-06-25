@@ -134,7 +134,7 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
-  /resource3/:
+  /resource3/{inline_argument}:
     put:
       summary: Update a resource with inline body
       operationId: updateResource3
