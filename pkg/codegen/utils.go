@@ -241,3 +241,49 @@ func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinit
 	}
 	return out, nil
 }
+
+// Returns whether the given string is a go keyword
+func IsGoKeyword(str string) bool {
+	keywords := []string{
+		"break",
+		"case",
+		"chan",
+		"const",
+		"continue",
+		"default",
+		"defer",
+		"else",
+		"fallthrough",
+		"for",
+		"func",
+		"go",
+		"goto",
+		"if",
+		"import",
+		"interface",
+		"map",
+		"package",
+		"range",
+		"return",
+		"select",
+		"struct",
+		"switch",
+		"type",
+		"var",
+	}
+
+	for _, k := range keywords {
+		if k == str {
+			return true
+		}
+	}
+	return false
+}
+
+// Prefixes a string if it's a go keyword
+func PrefixKeyword(str, prefix string) string {
+	if IsGoKeyword(str) {
+		return prefix + UppercaseFirstCharacter(str)
+	}
+	return str
+}

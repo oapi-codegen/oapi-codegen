@@ -94,7 +94,7 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
     if err != nil {
         return nil, err
     }
-    
+
     response := {{genResponsePayload $opid}}
 
     {{genResponseUnmarshal $opid .Spec.Responses}}
@@ -160,7 +160,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.ParamName | camelCase | lcFirst }})
+    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}})
     if err != nil {
         return nil, err
     }
@@ -352,7 +352,8 @@ type {{.TypeName}} {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{range .}}{{.SummaryAsComment -}}
+// ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
@@ -366,7 +367,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
-    var {{$varName := .GoName | lcFirst}}{{$varName}} {{.TypeDef}}
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 {{if .IsPassThrough}}
     {{$varName}} = ctx.Param("{{.ParamName}}")
 {{end}}

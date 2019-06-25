@@ -2000,41 +2000,41 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	//  (GET /contentObject/{param})
+	// (GET /contentObject/{param})
 	GetContentObject(ctx echo.Context, param ComplexObject) error
-	//  (GET /cookie)
+	// (GET /cookie)
 	GetCookie(ctx echo.Context, params GetCookieParams) error
-	//  (GET /header)
+	// (GET /header)
 	GetHeader(ctx echo.Context, params GetHeaderParams) error
-	//  (GET /labelExplodeArray/{.param*})
+	// (GET /labelExplodeArray/{.param*})
 	GetLabelExplodeArray(ctx echo.Context, param []int32) error
-	//  (GET /labelExplodeObject/{.param*})
+	// (GET /labelExplodeObject/{.param*})
 	GetLabelExplodeObject(ctx echo.Context, param Object) error
-	//  (GET /labelNoExplodeArray/{.param})
+	// (GET /labelNoExplodeArray/{.param})
 	GetLabelNoExplodeArray(ctx echo.Context, param []int32) error
-	//  (GET /labelNoExplodeObject/{.param})
+	// (GET /labelNoExplodeObject/{.param})
 	GetLabelNoExplodeObject(ctx echo.Context, param Object) error
-	//  (GET /matrixExplodeArray/{.id*})
+	// (GET /matrixExplodeArray/{.id*})
 	GetMatrixExplodeArray(ctx echo.Context, id []int32) error
-	//  (GET /matrixExplodeObject/{.id*})
+	// (GET /matrixExplodeObject/{.id*})
 	GetMatrixExplodeObject(ctx echo.Context, id Object) error
-	//  (GET /matrixNoExplodeArray/{.id})
+	// (GET /matrixNoExplodeArray/{.id})
 	GetMatrixNoExplodeArray(ctx echo.Context, id []int32) error
-	//  (GET /matrixNoExplodeObject/{.id})
+	// (GET /matrixNoExplodeObject/{.id})
 	GetMatrixNoExplodeObject(ctx echo.Context, id Object) error
-	//  (GET /passThrough/{param})
+	// (GET /passThrough/{param})
 	GetPassThrough(ctx echo.Context, param string) error
-	//  (GET /queryForm)
+	// (GET /queryForm)
 	GetQueryForm(ctx echo.Context, params GetQueryFormParams) error
-	//  (GET /simpleExplodeArray/{param*})
+	// (GET /simpleExplodeArray/{param*})
 	GetSimpleExplodeArray(ctx echo.Context, param []int32) error
-	//  (GET /simpleExplodeObject/{param*})
+	// (GET /simpleExplodeObject/{param*})
 	GetSimpleExplodeObject(ctx echo.Context, param Object) error
-	//  (GET /simpleNoExplodeArray/{param})
+	// (GET /simpleNoExplodeArray/{param})
 	GetSimpleNoExplodeArray(ctx echo.Context, param []int32) error
-	//  (GET /simpleNoExplodeObject/{param})
+	// (GET /simpleNoExplodeObject/{param})
 	GetSimpleNoExplodeObject(ctx echo.Context, param Object) error
-	//  (GET /simplePrimitive/{param})
+	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(ctx echo.Context, param int32) error
 }
 

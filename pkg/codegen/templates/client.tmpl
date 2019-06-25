@@ -90,7 +90,7 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
     if err != nil {
         return nil, err
     }
-    
+
     response := {{genResponsePayload $opid}}
 
     {{genResponseUnmarshal $opid .Spec.Responses}}
@@ -156,7 +156,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.ParamName | camelCase | lcFirst }})
+    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}})
     if err != nil {
         return nil, err
     }

@@ -55,8 +55,28 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+
+	// Issue30 request
+	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
+
 	// Issue9 request with JSON body
 	Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error)
+}
+
+// Issue30 request
+func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
+	req, err := NewIssue30Request(c.Server, pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
 }
 
 // Issue9 request with JSON body
@@ -88,6 +108,56 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 			Server: server,
 		},
 	}
+}
+
+// issue30Response is returned by Client.Issue30()
+type issue30Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r *issue30Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r *issue30Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
+func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue30Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// Issue30 request returning *Issue30Response
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
+	rsp, err := c.Issue30(ctx, pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+	return Parseissue30Response(rsp)
 }
 
 // issue9Response is returned by Client.Issue9()
@@ -140,6 +210,27 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	return Parseissue9Response(rsp)
 }
 
+// NewIssue30Request generates requests for Issue30
+func NewIssue30Request(server string, pFallthrough string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "fallthrough", pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/issues/30/%s", server, pathParam0)
+
+	req, err := http.NewRequest("GET", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewIssue9Request generates requests for Issue9 with JSON body
 func NewIssue9Request(server string, params *Issue9Params, body *Issue9RequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -185,13 +276,31 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	//  (GET /issues/9)
+	// (GET /issues/30/{fallthrough})
+	Issue30(ctx echo.Context, pFallthrough string) error
+	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// Issue30 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "fallthrough" -------------
+	var pFallthrough string
+
+	err = runtime.BindStyledParameter("simple", false, "fallthrough", ctx.Param("fallthrough"), &pFallthrough)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue30(ctx, pFallthrough)
+	return err
 }
 
 // Issue9 converts echo context to params.
@@ -224,6 +333,7 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
+	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/9", wrapper.Issue9)
 
 }
@@ -231,14 +341,15 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/2xSsW7cMAz9FYGz4cu1U7y1GYpMKZBsvQw8iT4rsCWFpK41DP97IfmMNmg3SnyPfE9P",
-	"C9g4pRgoqEC3gNiBJqzllzC/zImO0C1rs58+lY4jseyT+higg5fBi5Eh5tGZMxkMxgcl7tHSssLawEMW",
-	"jdOzsg+XMqOM6CNPqNCBrU1oQGsHpMIK7RsFYm+fzm9ktXBuiLhdrOvagA99/I8iEjUWhcT0kc0V2ccs",
-	"xovkepWDM/FKbNRP1JrvI6GQQecMGt25hXoKGGZzzhfT+1/k2lMoQr2OtG95Jr4SQwNXYtm2H9u79q4Y",
-	"iIkCJg8dfG7v2iM0kFCH+raHTcvhvhwupP96eBg9BTUJGScxxbrxwUZmsjrOpR6zI1cNMr3nIuan18Gc",
-	"o5sNBncKlUtKLJvwmIixjH900MFjUXBfRe0w6H4s4Mv290w8QwMBp2K1jxEaKGs8k4NOOVNz+yt/JbNn",
-	"t75uYBL9Gt1cEDYGpVB9Ykqjt1XI4U2K2eXPqJrqx5d4qgWO1dkHGT2OQmulSM1hc5B5hA4G1dQdDrcQ",
-	"SqytI0oTphY9rK/r7wAAAP//9Cn8pfsCAAA=",
+	"H4sIAAAAAAAC/5SSPXPbPAyA/woOs0523kzR9jZDL1N6TbYmA0xCFlOKZEDSqU7H/94jbTfONUs3SsTH",
+	"84BYUfk5eMcuRRxWjGrimdrxf7c8LoGvcFhLd/76r95ojkpMSMY7HPBxMhHi5LPVsGMgB8YllpEUrwVL",
+	"h7c5Jj8/JDFuX2vUEqOXmRIOqNoldpjaDcYWVtO+smMx6n73wirVnFOEP/4opXRo3Og/IeKYQFHkCKMX",
+	"OJAYnyOYGHP7lZ0Gf2CBZGbu4ZtligykNRCkc25NfXLkFtjlPYzmF+v+yVVQkyyfuzywHFiwwwNLPHa/",
+	"6rf9tgr4wI6CwQGv+21/hR0GSlOb7ebIsrnebtaRrE2T+Lyfyt8u3znWFhp+8vLmRV+OOgg3LjCuSdLO",
+	"MjiaOR5J99zm5gML1XJ3Gge8q52vG2AgoZkTS8Thx4qm9quI2GGtggNesGGHwq/ZCGsckmTuTsty8TTn",
+	"xyvPpfvjeFMDTigf3W6tYZegYUSoNcA45UVYJbvUs82adXvE2rsO/M2kCXZeL0BOP7l3haPyJ643+Lnp",
+	"a2ZZLlS9/zfFYzDH9MXrpUYo7xK75kkhWKMayOYlVtn1vVTb3I+TuG8Hss3sA8ZINnJpKW0RTgZZLA44",
+	"pRSGzea0aHV1e80cZgo9GSzP5XcAAAD//zmfd/ffAwAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

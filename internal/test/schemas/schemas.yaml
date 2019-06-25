@@ -26,7 +26,17 @@ paths:
         content:
           application/json:
             schema: {}
-
+  /issues/30/{fallthrough}:
+    get:
+      operationId: Issue30
+    description: |
+      Reserved keywords should be prefixed in variable names.
+    parameters:
+      - name: fallthrough
+        in: path
+        required: true
+        schema:
+          type: string
 components:
   schemas:
     GenericObject:

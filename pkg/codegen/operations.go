@@ -25,7 +25,6 @@ import (
 
 type ParameterDefinition struct {
 	ParamName string // The original json parameter name, eg param_name
-	GoName    string // The Go friendly type name of above, ParamName
 	TypeDef   string // The Go type definition of the parameter, "int" or "CustomType"
 	Reference string // Swagger reference if present
 	In        string // Where the parameter is defined - path, header, cookie, query
@@ -100,6 +99,20 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+
+
+func (pd ParameterDefinition) GoVariableName() string {
+	name := LowercaseFirstCharacter(pd.GoName())
+	if IsGoKeyword(name) {
+		name = "p" + UppercaseFirstCharacter(name)
+	}
+	return name
+}
+
+func (pd ParameterDefinition) GoName() string {
+	return ToCamelCase(pd.ParamName)
+}
+
 type ParameterDefinitions []ParameterDefinition
 
 func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
@@ -109,6 +122,16 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 		}
 	}
 	return nil
+}
+
+// Generates a go variable name for a parameter. It's the camel case of the
+// json name, with a 'p' prefix if it's a Go typename when conveted to camel case.
+func ParamToVariableName(param *openapi3.Parameter) string {
+	name := ToCamelCase(param.Name)
+	if IsGoKeyword(name) {
+		name = "p" + UppercaseFirstCharacter(name)
+	}
+	return name
 }
 
 // This function walks the given parameters dictionary, and generates the above
@@ -130,7 +153,6 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 			}
 			pd := ParameterDefinition{
 				ParamName: param.Name,
-				GoName:    ToCamelCase(param.Name),
 				TypeDef:   goType,
 				Reference: paramOrRef.Ref,
 				In:        param.In,
@@ -148,7 +170,6 @@ func DescribeParameters(params openapi3.Parameters) ([]ParameterDefinition, erro
 			}
 			pd := ParameterDefinition{
 				ParamName: param.Name,
-				GoName:    ToCamelCase(param.Name),
 				TypeDef:   goType,
 				Reference: paramOrRef.Ref,
 				In:        param.In,
@@ -229,6 +250,19 @@ func (o *OperationDefinition) HasGenericBody() bool {
 	return false
 }
 
+// This returns the Operations summary as a multi line comment
+func (o *OperationDefinition) SummaryAsComment() string {
+	if o.Summary == "" {
+		return ""
+	}
+	trimmed := strings.TrimSuffix(o.Summary, "\n")
+	parts := strings.Split(trimmed, "\n")
+	for i, p := range parts {
+		parts[i] = "// " + p
+	}
+	return strings.Join(parts, "\n")
+}
+
 // Called by the template engine to get the body definition
 func (o *OperationDefinition) GetBodyDefinition() RequestBodyDefinition {
 	return *(o.Body)
@@ -303,6 +337,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
 				OperationId:  ToCamelCase(op.OperationID),
+				// Replace newlines in summary.
 				Summary:      op.Summary,
 				Method:       opName,
 				Path:         requestPath,

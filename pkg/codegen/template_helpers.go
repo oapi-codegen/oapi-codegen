@@ -42,7 +42,7 @@ func genParamArgs(params []ParameterDefinition) string {
 	}
 	parts := make([]string, len(params))
 	for i, p := range params {
-		paramName := LowercaseFirstCharacter(ToCamelCase(p.ParamName))
+		paramName := p.GoVariableName()
 		parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef)
 	}
 	return ", " + strings.Join(parts, ", ")
@@ -72,8 +72,7 @@ func genParamNames(params []ParameterDefinition) string {
 	}
 	parts := make([]string, len(params))
 	for i, p := range params {
-		paramName := LowercaseFirstCharacter(ToCamelCase(p.ParamName))
-		parts[i] = paramName
+		parts[i] = p.GoVariableName()
 	}
 	return ", " + strings.Join(parts, ", ")
 }

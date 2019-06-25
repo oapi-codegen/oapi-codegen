@@ -134,12 +134,14 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
-  /resource3/{inline_argument}:
+  /resource3/{fallthrough}:
     put:
-      summary: Update a resource with inline body
+      summary: |
+        Update a resource with inline body. The parameter name is a reserved
+        keyword, so make sure that gets prefixed to avoid syntax errors.
       operationId: updateResource3
       parameters:
-        - name: inline_argument
+        - name: fallthrough
           in: path
           required: true
           description: Some argument
@@ -295,6 +297,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/some_object"
+    ReservedKeyword:
+      properties:
+        channel:
+          type: string
+      required: [ type ]
   responses:
     SimpleResponse:
       description: A simple response object

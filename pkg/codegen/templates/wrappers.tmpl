@@ -7,7 +7,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
-    var {{$varName := .GoName | lcFirst}}{{$varName}} {{.TypeDef}}
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 {{if .IsPassThrough}}
     {{$varName}} = ctx.Param("{{.ParamName}}")
 {{end}}
