@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
@@ -116,7 +117,10 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router,
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+			// Split up the verbose error by lines and return the first one
+			// openapi errors seem to be multi-line with a decent message on the first
+			errorLines := strings.Split(e.Error(), "\n")
+			return echo.NewHTTPError(http.StatusBadRequest, errorLines[0])
 		case *openapi3filter.SecurityRequirementsError:
 			return echo.NewHTTPError(http.StatusForbidden, e.Error())
 		default:
