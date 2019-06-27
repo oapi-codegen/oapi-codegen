@@ -1,3 +1,3 @@
 package components
 
-//go:generate sh -c "go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen  --package=components components.yaml > components.gen.go"
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen  --package=components -o components.gen.go components.yaml

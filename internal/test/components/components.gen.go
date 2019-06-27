@@ -8,12 +8,20 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"net/http"
 	"strings"
 )
+
+// ObjectWithJsonField defines component schema for ObjectWithJsonField.
+type ObjectWithJsonField struct {
+	Name   string          `json:"name"`
+	Value1 json.RawMessage `json:"value1"`
+	Value2 json.RawMessage `json:"value2,omitempty"`
+}
 
 // SchemaObject defines component schema for SchemaObject.
 type SchemaObject struct {
@@ -84,12 +92,13 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9ySzU7rQAyFXyXyvcsoacUuO1ggseBHtDvUxTBxwdVkZmq7FVWVd0czSVsofQFYxXbs",
-	"75yjZA82dDF49CrQ7CEaNh0qcu6eDt3j6wqtppENXtHn0sToyBql4OuVBJ9mYt+xM5nEISIrYSbdEro2",
-	"Ff8Zl9DAv/qkWw9HUs/yc9Tq+xIY1xtibKF5GQmLNFb80Do6Q2eSuosIDYgy+Tfo02qLYpli8ggNmOKY",
-	"D0pI57DeIO+OYih6E9rR8/NxsPt1yQeGxODlEGZo/siXvC6EuuiwOIQswklsdJFA34z8yLIkFn0wHV7Q",
-	"LIGDu/TiLE3eKr+gFtku+WVIx44seskcn4Xg/m6e6Eqa8DBH0WKGvM3/5BZZhoTTalJN0mKI6E0kaOCq",
-	"mlRT6D8DAAD//9SMdbW0AwAA",
+	"H4sIAAAAAAAC/9xTS2/bMAz+Kwa3o2En28237TBgA/bAEqCHIgfVphsGtqSQTNAg8H8vJD/SpAnQa3uy",
+	"SH38HhR8hNK13lm0KlAcwRs2LSpyrP6N1d+HDZYaWqWzijYejfcNlUbJ2XwjzoaelGtsTWRi55GVMDL9",
+	"IGyqcPjMWEMBn/KTbt4PSb6I30Gr61Jg3O6IsYLifmBYhbbik+a+MXQhqQePUIAok32ELkArlJLJB49Q",
+	"gEmmfJBCGIftDvkwiaHod1cNnv9PjcO7S95ziHdWxjB98UFe8lsi1PoGkzFk4k5ig4tA1Fu4I13/Emcn",
+	"7+eRrGnximoKe9PscB6uasetUSggrie9Af3yBujFMqL2pLSa4GOcFM52+cp7TSz651YAds21iwsPEZW+",
+	"oFrFjZOtXRhuqEQreNoU/P65DOxKGuhhiaLJAnkff6s9svSPNM9m2SwAnUdrPEEBX7NZNofuOQAA///B",
+	"iY9adwQAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
@@ -115,4 +124,3 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	}
 	return swagger, nil
 }
-

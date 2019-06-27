@@ -203,6 +203,9 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 
 		return outType, nil
 	} else {
+		// Whether to generate a pointer to a type for optional fields. Some
+		// fields override this.
+		optionalByPointer := true
 		// Here, we handle several types of non-object schemas.
 		// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes
 		var result string
@@ -248,6 +251,9 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 			switch f {
 			case "date-time", "date":
 				result = "time.Time"
+			case "json":
+				result = "json.RawMessage"
+				optionalByPointer = false
 			default:
 				// All unrecognized formats are simply a regular string.
 				result = "string"
@@ -258,7 +264,7 @@ func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
 
 		// If a field isn't required, we will pass it by pointer, so that it
 		// is nullable.
-		if !required {
+		if !required && optionalByPointer {
 			result = "*" + result
 		}
 		return result, nil

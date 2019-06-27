@@ -1,3 +1,3 @@
 package schemas
 
-//go:generate sh -c "go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=schemas schemas.yaml > schemas.gen.go"
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=schemas -o schemas.gen.go schemas.yaml

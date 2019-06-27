@@ -15,6 +15,25 @@ components:
       required:
         - role
         - firstName
+#    AdditionalPropertiesObject:
+#      type: object
+#      properties:
+#        name:
+#          type: string
+#      additionalProperties:
+#        type: integer
+    ObjectWithJsonField:
+      type: object
+      properties:
+        name:
+          type: string
+        value1:
+          type: string
+          format: json
+        value2:
+          type: string
+          format: json
+      required: [name, value1]
   responses:
     ResponseObject:
       description: A simple response object
