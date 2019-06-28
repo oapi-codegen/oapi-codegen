@@ -43,7 +43,7 @@ func genParamArgs(params []ParameterDefinition) string {
 	parts := make([]string, len(params))
 	for i, p := range params {
 		paramName := p.GoVariableName()
-		parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef)
+		parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef())
 	}
 	return ", " + strings.Join(parts, ", ")
 }
@@ -58,7 +58,7 @@ func genParamTypes(params []ParameterDefinition) string {
 	}
 	parts := make([]string, len(params))
 	for i, p := range params {
-		parts[i] = fmt.Sprintf(p.TypeDef)
+		parts[i] = p.TypeDef()
 	}
 	return ", " + strings.Join(parts, ", ")
 }
@@ -125,14 +125,15 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 				if contentType.Schema != nil {
 
 					// Make sure that we actually have a go-type for this response:
-					goType, err := schemaToGoType(contentType.Schema, true)
+					//goType, err := schemaToGoType(contentType.Schema, true, nil)
+					goType, err := GenerateGoSchema(contentType.Schema, []string{responseName})
 					if err != nil {
 						fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
 						continue
 					}
 
 					// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-					if goType == "interface{}" {
+					if goType.TypeDecl() == "interface{}" {
 						// Unable to unmarshal this, so we leave it out:
 						continue
 					}
@@ -143,17 +144,17 @@ func genResponseType(operationID string, responses openapi3.Responses) string {
 					// JSON:
 					case contains(contentTypesJSON, contentTypeName):
 						attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
 
 					// YAML:
 					case contains(contentTypesYAML, contentTypeName):
 						attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
 
 					// XML:
 					case contains(contentTypesXML, contentTypeName):
 						attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType)
+						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
 					}
 				}
 			}
@@ -231,14 +232,14 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			}
 
 			// Make sure that we actually have a go-type for this response:
-			goType, err := schemaToGoType(contentType.Schema, true)
+			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName})
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
 				continue
 			}
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if goType == "interface{}" {
+			if goType.TypeDecl() == "interface{}" {
 				// Unable to unmarshal this, so we leave it out:
 				continue
 			}
@@ -249,7 +250,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			// JSON:
 			case contains(contentTypesJSON, contentTypeName):
 				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
@@ -261,7 +262,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			// YAML:
 			case contains(contentTypesYAML, contentTypeName):
 				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
@@ -273,7 +274,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			// XML:
 			case contains(contentTypesXML, contentTypeName):
 				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType, attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction

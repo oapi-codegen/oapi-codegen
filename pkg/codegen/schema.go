@@ -1,94 +1,354 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 // This describes a Schema, a type definition.
-type SchemaDescriptor struct {
-	Required                bool   // Is the schema required? If not, we'll pass by pointer
-	GoType                  string // The Go type needed to represent the json type.
-	GoName                  string // The Go compatible type name for the type
-	JsonName                string // The json type name for the type
-	IsRef                   bool   // Is this schema a reference to predefined object?
-	HasAdditionalProperties bool   // Are additional properties allowed?
+type Schema struct {
+	GoType  string // The Go type needed to represent the schema
+	RefType string // If the type has a type name, this is set
+
+	Properties               []Property       // For an object, the fields with names
+	HasAdditionalProperties  bool             // Whether we support additional properties
+	AdditionalPropertiesType *Schema          // And if we do, their type
+	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
+
+	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 }
 
-// Walk the Properties field of the specified schema, generating SchemaDescriptors
-// for each of them.
-func DescribeSchemaProperties(schema *openapi3.Schema) ([]SchemaDescriptor, error) {
-	var desc []SchemaDescriptor
-	propNames := SortedSchemaKeys(schema.Properties)
-	for _, propName := range propNames {
-		propOrRef := schema.Properties[propName]
-		propRequired := StringInArray(propName, schema.Required)
-		propType, err := schemaToGoType(propOrRef, propRequired)
-		if err != nil {
-			return nil, fmt.Errorf("error generating type for property '%s': %s", propName, err)
+func (s Schema) IsRef() bool {
+	return s.RefType != ""
+}
+
+func (s Schema) TypeDecl() string {
+	if s.IsRef() {
+		return s.RefType
+	}
+	return s.GoType
+}
+
+func (s *Schema) MergeProperty(p Property) error {
+	// Scan all existing properties for a conflict
+	for _, e := range s.Properties {
+		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
+			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
 		}
-		goFieldName := ToCamelCase(propName)
-		desc = append(desc, SchemaDescriptor{
-			Required: propRequired,
-			GoType:   propType,
-			GoName:   goFieldName,
-			JsonName: propName,
-			IsRef:    propOrRef.Ref != "",
-		})
+	}
+	s.Properties = append(s.Properties, p)
+	return nil
+}
+
+func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
+	var result []TypeDefinition
+	for _, p := range s.Properties {
+		result = append(result, p.Schema.GetAdditionalTypeDefs()...)
+	}
+	result = append(result, s.AdditionalTypes...)
+	return result
+}
+
+type Property struct {
+	JsonFieldName string
+	Schema        Schema
+	Required      bool
+}
+
+func (p Property) GoFieldName() string {
+	return ToCamelCase(p.JsonFieldName)
+}
+
+func (p Property) GoTypeDef() string {
+	typeDef := p.Schema.TypeDecl()
+	if !p.Schema.SkipOptionalPointer && !p.Required {
+		typeDef = "*" + typeDef
+	}
+	return typeDef
+}
+
+type TypeDefinition struct {
+	TypeName string
+	JsonName string
+	Schema   Schema
+}
+
+func PropertiesEqual(a, b Property) bool {
+	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
+}
+
+func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+	schema := sref.Value
+	// We can't support this in any meaningful way
+	if schema.AnyOf != nil {
+		return Schema{GoType: "interface{}"}, nil
+	}
+	// We can't support this in any meaningful way
+	if schema.OneOf != nil {
+		return Schema{GoType: "interface{}"}, nil
 	}
 
-	// Here, we may handle additionalProperties in the future.
-	if schema.AdditionalProperties != nil {
-		return nil, errors.New("additional_properties are not yet supported")
-	}
-	if schema.PatternProperties != "" {
-		return nil, errors.New("pattern_properties are not yet supported")
+	// AllOf is interesting, and useful. It's the union of a number of other
+	// schemas. A common usage is to create a union of an object with an ID,
+	// so that in a RESTful paradigm, the Create operation can return
+	// (object, id), so that other operations can refer to (id)
+	if schema.AllOf != nil {
+		return MergeSchemas(schema.AllOf, path)
 	}
 
-	return desc, nil
+	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
+	// another type. We're not de-referencing, so simply use the referenced type.
+	var refType string
+	if sref.Ref != "" {
+		var err error
+		// Convert the reference path to Go type
+		refType, err = RefPathToGoType(sref.Ref)
+		if err != nil {
+			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
+				sref.Ref, err)
+		}
+	}
+
+	// Schema type and format, eg. string / binary
+	t := schema.Type
+
+	outSchema := Schema{
+		RefType: refType,
+	}
+	// Handle objects and empty schemas first as a special case
+	if t == "" || t == "object" {
+		var outType string
+
+		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) {
+			// If the object has no properties or additional properties, we
+			// have some special cases for its type.
+			if t == "object" {
+				// We have an object with no properties. This is a generic object
+				// expressed as a map.
+				outType = "map[string]interface{}"
+			} else { // t == ""
+				// If we don't even have the object designator, we're a completely
+				// generic type.
+				outType = "interface{}"
+			}
+			outSchema.GoType = outType
+		} else {
+			// We've got an object with some properties.
+			for pName, p := range schema.Properties {
+				propertyPath := append(path, pName)
+				pSchema, err := GenerateGoSchema(p, propertyPath)
+				if err != nil {
+					return Schema{}, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
+				}
+
+				required := StringInArray(pName, schema.Required)
+
+				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
+					// If we have fields present which have additional properties,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeName := PathToTypeName(propertyPath)
+
+					typeDef := TypeDefinition{
+						TypeName: typeName,
+						JsonName: strings.Join(propertyPath, "."),
+						Schema:   pSchema,
+					}
+					pSchema.AdditionalTypes = append(pSchema.AdditionalTypes, typeDef)
+
+					pSchema.RefType = typeName
+				}
+
+				prop := Property{
+					JsonFieldName: pName,
+					Schema:        pSchema,
+					Required:      required,
+				}
+				outSchema.Properties = append(outSchema.Properties, prop)
+			}
+
+			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
+			outSchema.AdditionalPropertiesType = &Schema{
+				GoType: "interface{}",
+			}
+			if schema.AdditionalProperties != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+				if err != nil {
+					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
+				}
+				outSchema.AdditionalPropertiesType = &additionalSchema
+			}
+
+			outSchema.GoType = GenStructFromSchema(outSchema)
+		}
+		return outSchema, nil
+	} else {
+		f := schema.Format
+
+		switch t {
+		case "array":
+			// For arrays, we'll get the type of the Items and throw a
+			// [] in front of it.
+			arrayType, err := GenerateGoSchema(schema.Items, path)
+			if err != nil {
+				return Schema{}, errors.Wrap(err, "error generating type for array")
+			}
+			outSchema.GoType = "[]" + arrayType.TypeDecl()
+		case "integer":
+			// We default to int if format doesn't ask for something else.
+			if f == "int64" {
+				outSchema.GoType = "int64"
+			} else if f == "int32" {
+				outSchema.GoType = "int32"
+			} else if f == "" {
+				outSchema.GoType = "int"
+			} else {
+				return Schema{}, fmt.Errorf("invalid integer format: %s", f)
+			}
+		case "number":
+			// We default to float for "number"
+			if f == "double" {
+				outSchema.GoType = "float64"
+			} else if f == "float" || f == "" {
+				outSchema.GoType = "float32"
+			} else {
+				return Schema{}, fmt.Errorf("invalid number format: %s", f)
+			}
+		case "boolean":
+			if f != "" {
+				return Schema{}, fmt.Errorf("invalid format (%s) for boolean", f)
+			}
+			outSchema.GoType = "bool"
+		case "string":
+			// Special case string formats here.
+			switch f {
+			case "date-time", "date":
+				outSchema.GoType = "time.Time"
+			case "json":
+				outSchema.GoType = "json.RawMessage"
+				outSchema.SkipOptionalPointer = true
+			default:
+				// All unrecognized formats are simply a regular string.
+				outSchema.GoType = "string"
+			}
+		default:
+			return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
+		}
+	}
+	return outSchema, nil
+}
+
+// This describes a Schema, a type definition.
+type SchemaDescriptor struct {
+	Fields                   []FieldDescriptor
+	HasAdditionalProperties  bool
+	AdditionalPropertiesType string
+}
+
+type FieldDescriptor struct {
+	Required bool   // Is the schema required? If not, we'll pass by pointer
+	GoType   string // The Go type needed to represent the json type.
+	GoName   string // The Go compatible type name for the type
+	JsonName string // The json type name for the type
+	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
 // Given a list of schema descriptors, produce corresponding field names with
 // JSON annotations
-func GenFieldsFromSchemaDescriptors(desc []SchemaDescriptor) []string {
+func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
-	for _, s := range desc {
-		field := fmt.Sprintf("    %s %s", s.GoName, s.GoType)
-		if s.Required {
-			field += fmt.Sprintf(" `json:\"%s\"`", s.JsonName)
+	for _, p := range props {
+		field := fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
+		if p.Required {
+			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", s.JsonName)
+			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
 		}
 		fields = append(fields, field)
 	}
 	return fields
 }
 
-// Given the list of schema descriptors above, generate a Go struct to represent
-// a type, with one field per SchemaDescriptor
-func GenStructFromSchemaDescriptors(desc []SchemaDescriptor) string {
+func GenStructFromSchema(schema Schema) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	// Append all the field definitions
-	objectParts = append(objectParts, GenFieldsFromSchemaDescriptors(desc)...)
+	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
+	if schema.HasAdditionalProperties {
+		objectParts = append(objectParts,
+			fmt.Sprintf("additionalProperties map[string]%s `json:\"-\"`",
+				schema.AdditionalPropertiesType.GoType))
+	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
+}
+
+// Merge all the fields in the schemas supplied into one giant schema.
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+	var outSchema Schema
+	for _, schemaOrRef := range allOf {
+		ref := schemaOrRef.Ref
+
+		var refType string
+		var err error
+		if ref != "" {
+			refType, err = RefPathToGoType(ref)
+			if err != nil {
+				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
+			}
+		}
+
+		schema, err := GenerateGoSchema(schemaOrRef, path)
+		if err != nil {
+			return Schema{}, errors.Wrap(err, "error generating Go schema in allOf")
+		}
+		schema.RefType = refType
+
+		for _, p := range schema.Properties {
+			err = outSchema.MergeProperty(p)
+			if err != nil {
+				return Schema{}, errors.Wrap(err, "error merging properties")
+			}
+		}
+
+		if schema.HasAdditionalProperties {
+			if outSchema.HasAdditionalProperties {
+				// Both this schema, and the aggregate schema have additional
+				// properties, they must match.
+				if schema.AdditionalPropertiesType.TypeDecl() != outSchema.AdditionalPropertiesType.TypeDecl() {
+					return Schema{}, errors.New("additional properties in allOf have incompatible types")
+				}
+			} else {
+				// We're switching from having no additional properties to having
+				// them
+				outSchema.HasAdditionalProperties = true
+				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
+			}
+		}
+	}
+
+	// Now, we generate the struct which merges together all the fields.
+	var err error
+	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	if err != nil {
+		return Schema{}, errors.Wrap(err, "unable to generate aggregate type for AllOf")
+	}
+	return outSchema, nil
 }
 
 // This function generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef) (string, error) {
+func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
-		val := schemaOrRef.Value
-
 		if ref != "" {
 			// We have a referenced type, we will generate an inlined struct
 			// member.
@@ -107,12 +367,12 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef) (string, error) {
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
-			descriptors, err := DescribeSchemaProperties(val)
+			goSchema, err := GenerateGoSchema(schemaOrRef, path)
 			if err != nil {
 				return "", err
 			}
 			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
-			objectParts = append(objectParts, GenFieldsFromSchemaDescriptors(descriptors)...)
+			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
 		}
 	}
@@ -120,183 +380,36 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef) (string, error) {
 	return strings.Join(objectParts, "\n"), nil
 }
 
-// This structure is passed into our type generation code to give the templating
-// system the context needed to produce our type definitions.
-type TypeDefinition struct {
-	TypeName     string // The Go type name of an object
-	JsonTypeName string // The corresponding JSON field name
-	TypeDef      string // The Go type definition for the type
-}
-
-// This function recursively walks the given schema and generates a Go type to represent
-// that schema. References are not followed, and it is assumed that each Ref will be
-// a concrete Go type.
-// "required" tells us if this field is required. Optional fields have a
-// * prepended in the correct place.
-// skipRef tells us not to use the top level Ref, instead use the resolved
-// type. This is only set to true for handling AllOf
-func schemaToGoType(sref *openapi3.SchemaRef, required bool) (string, error) {
-	schema := sref.Value
-	// We can't support this in any meaningful way
-	if schema.AnyOf != nil {
-		return "interface{}", nil
-	}
-	// We can't support this in any meaningful way
-	if schema.OneOf != nil {
-		return "interface{}", nil
-	}
-	// AllOf is interesting, and useful. It's the union of a number of other
-	// schemas. A common usage is to create a union of an object with an ID,
-	// so that in a RESTful paradigm, the Create operation can return
-	// (object, id), so that other operations can refer to (id)
-	if schema.AllOf != nil {
-		outType, err := GenStructFromAllOf(schema.AllOf)
-		if err != nil {
-			return "", err
-		}
-		return outType, nil
-	}
-
-	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
-	// another type. We're not de-referencing, so simply use the referenced type.
-	if sref.Ref != "" {
-		// Convert the reference path to Go type
-		goType, err := RefPathToGoType(sref.Ref)
-		if err != nil {
-			return "", fmt.Errorf("error turning reference (%s) into a Go type: %s",
-				sref.Ref, err)
-		}
-		if !required {
-			goType = "*" + goType
-		}
-		return goType, nil
-	}
-
-	// Schema type and format, eg. string / binary
-	t := schema.Type
-	f := schema.Format
-
-	// Handle objects and empty schemas first as a special case
-	if t == "" || t == "object" {
-		var outType string
-		if len(schema.Properties) == 0 {
-			if t == "object" {
-				// We have an object with no properties. This is a generic object
-				// expressed as a map.
-				outType = "map[string]interface{}"
-			} else { // t == ""
-				// If we don't even have the object designator, we're a completely
-				// generic type.
-				outType = "interface{}"
-			}
-		} else {
-			desc, err := DescribeSchemaProperties(schema)
-			if err != nil {
-				return "", err
-			}
-			outType = GenStructFromSchemaDescriptors(desc)
-		}
-
-		if !required {
-			outType = "*" + outType
-		}
-
-		return outType, nil
-	} else {
-		// Whether to generate a pointer to a type for optional fields. Some
-		// fields override this.
-		optionalByPointer := true
-		// Here, we handle several types of non-object schemas.
-		// https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md#dataTypes
-		var result string
-		switch t {
-		case "array":
-			// For arrays, we'll get the type of the Items and throw a
-			// [] in front of it.
-			arrayType, err := schemaToGoType(schema.Items, true)
-			if err != nil {
-				return "", fmt.Errorf("error generating type for array: %s", err)
-			}
-			result = "[]" + arrayType
-			// Arrays are nullable, so we return our result here, whether or
-			// not this field is required
-			return result, nil
-		case "integer":
-			// We default to int if format doesn't ask for something else.
-			if f == "int64" {
-				result = "int64"
-			} else if f == "int32" {
-				result = "int32"
-			} else if f == "" {
-				result = "int"
-			} else {
-				return "", fmt.Errorf("invalid integer format: %s", f)
-			}
-		case "number":
-			// We default to float for "number"
-			if f == "double" {
-				result = "float64"
-			} else if f == "float" || f == "" {
-				result = "float32"
-			} else {
-				return "", fmt.Errorf("invalid number format: %s", f)
-			}
-		case "boolean":
-			if f != "" {
-				return "", fmt.Errorf("invalid format (%s) for boolean", f)
-			}
-			result = "bool"
-		case "string":
-			// Special case string formats here.
-			switch f {
-			case "date-time", "date":
-				result = "time.Time"
-			case "json":
-				result = "json.RawMessage"
-				optionalByPointer = false
-			default:
-				// All unrecognized formats are simply a regular string.
-				result = "string"
-			}
-		default:
-			return "", fmt.Errorf("unhandled Schema type: %s", t)
-		}
-
-		// If a field isn't required, we will pass it by pointer, so that it
-		// is nullable.
-		if !required && optionalByPointer {
-			result = "*" + result
-		}
-		return result, nil
-	}
-}
-
 // This constructs a Go type for a parameter, looking at either the schema or
 // the content, whichever is available
-func paramToGoType(param *openapi3.Parameter) (string, error) {
+func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
-		return "", fmt.Errorf("parameter '%s' has no schema or content", param.Name)
+		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
 	}
 
 	// We can process the schema through the generic schema processor
 	if param.Schema != nil {
-		return schemaToGoType(param.Schema, true)
+		return GenerateGoSchema(param.Schema, path)
 	}
 
 	// At this point, we have a content type. We know how to deal with
 	// application/json, but if multiple formats are present, we can't do anything,
 	// so we'll return the parameter as a string, not bothering to decode it.
 	if len(param.Content) > 1 {
-		return "string", nil
+		return Schema{
+			GoType: "string",
+		}, nil
 	}
 
 	// Otherwise, look for application/json in there
 	mt, found := param.Content["application/json"]
 	if !found {
 		// If we don't have json, it's a string
-		return "string", nil
+		return Schema{
+			GoType: "string",
+		}, nil
 	}
 
 	// For json, we go through the standard schema mechanism
-	return schemaToGoType(mt.Schema, true)
+	return GenerateGoSchema(mt.Schema, path)
 }

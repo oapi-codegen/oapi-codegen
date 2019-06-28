@@ -1,4 +1,8 @@
-{{range .Types}}
-// {{.TypeName}} defines component requestBodies for {{.JsonTypeName}}.
-type {{.TypeName}} {{.TypeDef}}
+{{range .}}
+{{if .HasBody}}
+{{if .GetBodyDefinition.CustomType}}
+// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
+type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
+{{end}}
+{{end}}
 {{end}}

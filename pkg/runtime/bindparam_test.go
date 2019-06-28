@@ -229,10 +229,10 @@ func TestSplitParameter(t *testing.T) {
 }
 
 func TestBindQueryParameter(t *testing.T) {
-	type ID struct{
-		FirstName *string	`json:"firstName"`
-		LastName  *string 	`json:"lastName"`
-		Role      string	`json:"role"`
+	type ID struct {
+		FirstName *string `json:"firstName"`
+		LastName  *string `json:"lastName"`
+		Role      string  `json:"role"`
 	}
 
 	expectedName := "Alex"
@@ -242,8 +242,8 @@ func TestBindQueryParameter(t *testing.T) {
 	paramName := "id"
 	queryParams := url.Values{
 		"id[firstName]": {"Alex"},
-		"id[role]": {"admin"},
-		"foo": {"bar"},
+		"id[role]":      {"admin"},
+		"foo":           {"bar"},
 	}
 
 	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)

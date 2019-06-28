@@ -2,7 +2,81 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
+var templates = map[string]string{"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+
+// Returns the additional properties dict
+func (a {{.TypeName}}) AdditionalProperties() map[string]{{$addType}} {
+    return a.additionalProperties
+}
+
+// Getter for additional properties for {{.TypeName}}. Returns the specified
+// element and whether it was found
+func (a {{.TypeName}}) Get(fieldName string) (value {{$addType}}, found bool) {
+    if a.additionalProperties != nil {
+        value, found = a.additionalProperties[fieldName]
+    }
+    return
+}
+
+// Setter for additional properties for {{.TypeName}}
+func (a *{{.TypeName}}) Set(fieldName string, value {{$addType}}) {
+    if a.additionalProperties == nil {
+        a.additionalProperties = make(map[string]{{$addType}})
+    }
+    a.additionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for {{.TypeName}} to handle additionalProperties
+func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
+    object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+{{range .Schema.Properties}}
+    if raw, found := object["{{.JsonFieldName}}"]; found {
+        err = json.Unmarshal(raw, &a.{{.GoFieldName}})
+        if err != nil {
+            return errors.Wrap(err, "error reading '{{.JsonFieldName}}'")
+        }
+        delete(object, "{{.JsonFieldName}}")
+    }
+{{end}}
+    a.additionalProperties = make(map[string]{{$addType}})
+    for fieldName, fieldBuf := range object {
+        var fieldVal {{$addType}}
+        err := json.Unmarshal(fieldBuf, &fieldVal)
+        if err != nil {
+            return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+        }
+        a.additionalProperties[fieldName] = fieldVal
+    }
+	return nil
+}
+
+// Override default JSON handling for {{.TypeName}} to handle additionalProperties
+func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
+    var err error
+    object := make(map[string]json.RawMessage)
+{{range .Schema.Properties}}
+{{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
+    object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
+    if err != nil {
+        return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '{{.JsonFieldName}}'"))
+    }
+{{if not .Required}} }{{end}}
+{{end}}
+    for fieldName, field := range a.additionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+{{end}}
+`,
+	"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
     // The endpoint of the server conforming to this interface, with scheme,
     // https://api.deepmap.com for example.
@@ -300,28 +374,11 @@ func GetSwagger() (*openapi3.Swagger, error) {
     return swagger, nil
 }
 `,
-	"param-types.tmpl": `{{range .}}
-
-{{if .Params}}
-// {{.OperationId}}Params defines parameters for {{.OperationId}}.
-type {{.OperationId}}Params struct {
-{{range .Params}}
-    {{.GoName}} {{if not .Required}}*{{end}}{{.TypeDef}} {{.JsonTag}}{{end}}
-}
+	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
+{{range .TypeDefinitions}}
+// {{.TypeName}} defines parameters for {{$opid}}.
+type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
-
-{{if .HasBody}}
-{{if .GetBodyDefinition.CustomType}}
-// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
-type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
-{{end}}
-{{end}}
-
-{{end}}
-`,
-	"parameters.tmpl": `{{range .Types}}
-// {{.TypeName}} defines component parameter for "{{.JsonTypeName}}"
-type {{.TypeName}} {{.TypeDef}}
 {{end}}
 `,
 	"register.tmpl": `// RegisterHandlers adds each server route to the EchoRouter.
@@ -335,19 +392,13 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 {{end}}
 }
 `,
-	"request-bodies.tmpl": `{{range .Types}}
-// {{.TypeName}} defines component requestBodies for {{.JsonTypeName}}.
-type {{.TypeName}} {{.TypeDef}}
+	"request-bodies.tmpl": `{{range .}}
+{{if .HasBody}}
+{{if .GetBodyDefinition.CustomType}}
+// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
+type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
 {{end}}
-`,
-	"responses.tmpl": `{{range .Types}}
-// {{.TypeName}} defines component response for {{.JsonTypeName}}.
-type {{.TypeName}} {{.TypeDef}}
 {{end}}
-`,
-	"schemas.tmpl": `{{range .Types}}
-// {{.TypeName}} defines component schema for {{.JsonTypeName}}.
-type {{.TypeName}} {{.TypeDef}}
 {{end}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
@@ -357,6 +408,11 @@ type ServerInterface interface {
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
+`,
+	"typedef.tmpl": `{{range .Types}}
+// {{.TypeName}} defines model for {{.JsonName}}.
+type {{.TypeName}} {{.Schema.TypeDecl}}
+{{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {

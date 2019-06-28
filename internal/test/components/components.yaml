@@ -4,6 +4,54 @@ info:
   title: Test Server
   license:
     name: MIT
+paths:
+  /params_with_add_props:
+    get:
+      operationId: ParamsWithAddProps
+      description: |
+        A path with parameters and a body which require additional properties
+      parameters:
+        - name: p1
+          description: |
+            This parameter has additional properties
+          in: query
+          required: true
+          style: simple
+          schema:
+            type: object
+            additionalProperties: true
+        - name: p2
+          description: |
+            This parameter has an anonymous inner property which needs to be
+            turned into a proper type for additionalProperties to work
+          in: query
+          required: true
+          schema:
+            properties:
+              inner:
+                type: object
+                additionalProperties:
+                  type: string
+            required: [inner]
+    post:
+      operationId: BodyWithAddProps
+      description: |
+        Has a request body which contains a direct additionalProperties, and
+        an anonymous inner property with additionalProperties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                inner:
+                  type: object
+                  additionalProperties:
+                    type: integer
+              required: [name, inner]
+              additionalProperties: true
 components:
   schemas:
     SchemaObject:
@@ -15,13 +63,52 @@ components:
       required:
         - role
         - firstName
-#    AdditionalPropertiesObject:
-#      type: object
-#      properties:
-#        name:
-#          type: string
-#      additionalProperties:
-#        type: integer
+    AdditionalPropertiesObject1:
+      description: Has additional properties of type int
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+        optional:
+          type: string
+      required: [name, id]
+      additionalProperties:
+        type: integer
+    AdditionalPropertiesObject2:
+      description: Does not allow additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+      required: [name, id]
+      additionalProperties: false
+    AdditionalPropertiesObject3:
+      description: Allows any additional property
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+      additionalProperties: true
+    AdditionalPropertiesObject4:
+      description: Has anonymous field which has additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          properties:
+            name:
+              type: string
+          required: [name]
+          additionalProperties: true
+      required: [inner, name]
+      additionalProperties: true
     ObjectWithJsonField:
       type: object
       properties:

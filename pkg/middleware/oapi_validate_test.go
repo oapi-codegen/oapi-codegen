@@ -131,7 +131,7 @@ func TestOapiRequestValidator(t *testing.T) {
 				return errors.New("forbidden")
 			},
 		},
-		UserData:"hi!",
+		UserData: "hi!",
 	}
 
 	// Install our OpenApi based request validator

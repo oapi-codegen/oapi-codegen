@@ -392,7 +392,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		// Loop through all queryParams and fill the objectMap with all key/value pairs having paramName as key
 		objectMap := map[string]string{}
 		for k, v := range queryParams {
-			if !strings.HasPrefix(k, paramName + "[") {
+			if !strings.HasPrefix(k, paramName+"[") {
 				continue
 			}
 			split := strings.Split(k, "[")

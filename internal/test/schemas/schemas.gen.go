@@ -19,25 +19,25 @@ import (
 	"strings"
 )
 
-// AnyType1 defines component schema for AnyType1.
+// AnyType1 defines model for AnyType1.
 type AnyType1 interface{}
 
-// AnyType2 defines component schema for AnyType2.
+// AnyType2 defines model for AnyType2.
 type AnyType2 interface{}
 
-// CustomStringType defines component schema for CustomStringType.
+// CustomStringType defines model for CustomStringType.
 type CustomStringType string
 
-// GenericObject defines component schema for GenericObject.
+// GenericObject defines model for GenericObject.
 type GenericObject map[string]interface{}
+
+// Issue9JSONBody defines parameters for Issue9.
+type Issue9JSONBody interface{}
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
 	Foo string `json:"foo"`
 }
-
-// Issue9RequestBody defines body for Issue9 for application/json ContentType.
-type Issue9RequestBody interface{}
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
@@ -60,7 +60,7 @@ type ClientInterface interface {
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
 	// Issue9 request with JSON body
-	Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error)
+	Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*http.Response, error)
 }
 
 // Issue30 request
@@ -80,7 +80,7 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Respon
 }
 
 // Issue9 request with JSON body
-func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*http.Response, error) {
+func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -202,7 +202,7 @@ func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 }
 
 // Issue9 request with JSON body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9RequestBody) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err
@@ -232,7 +232,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 }
 
 // NewIssue9Request generates requests for Issue9 with JSON body
-func NewIssue9Request(server string, params *Issue9Params, body *Issue9RequestBody) (*http.Request, error) {
+func NewIssue9Request(server string, params *Issue9Params, body *Issue9JSONBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	if body != nil {
 		buf, err := json.Marshal(body)

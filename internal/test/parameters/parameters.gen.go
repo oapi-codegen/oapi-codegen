@@ -19,13 +19,13 @@ import (
 	"strings"
 )
 
-// ComplexObject defines component schema for ComplexObject.
+// ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
 	Id     string `json:"Id"`
 	Object Object `json:"Object"`
 }
 
-// Object defines component schema for Object.
+// Object defines model for Object.
 type Object struct {
 	FirstName string `json:"firstName"`
 	Role      string `json:"role"`

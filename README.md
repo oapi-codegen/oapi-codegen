@@ -118,7 +118,7 @@ If you changed the OpenAPI specification to make the parameter required, the
 ```
 type FindPetsParams struct {
     Tags  *[]string `json:"tags,omitempty"`
-    Limit int32   `json:"limit"`
+    Limit int32     `json:"limit"`
 }
 ```
 
@@ -149,6 +149,69 @@ func SetupHandler() {
     ...
 }
 ```
+
+#### Additional Properties in type definitions
+
+[OpenAPI Schemas](https://swagger.io/specification/#schemaObject) implicitly
+accept `additionalProperties`, meaning that any fields provided, but not explicitly
+defined via properties on the schema are accepted as input, and propagated. When
+unspecified, the `additionalProperties` field is assumed to be `true`.
+
+Additional properties are tricky to support in Go with typing, and require
+lots of boilerplate code, so in this library, we assume that `additionalProperties`
+defaults to `false` and we don't generate this boilerplate. If you would like
+an object to accept `additionalProperties`, specify a schema for `additionalProperties`.
+
+Say we declared `NewPet` above like so:
+```yaml
+    NewPet:
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        tag:
+          type: string
+      additionalProperties:
+        type: string
+```
+
+The Go code for `NewPet` would now look like this:
+```go
+// NewPet defines model for NewPet.
+type NewPet struct {
+	Name                 string            `json:"name"`
+	Tag                  *string           `json:"tag,omitempty"`
+	additionalProperties map[string]string `json:"-"`
+}
+```
+
+The additionalProperties, of type `string` become `map[string]string`, which maps
+field names to instances of the `additionalProperties` schema. We've used a
+private field that's not exported in JSON, since the structure would be wrong,
+so we provide a bunch of helper functions to deal with these additional properties:
+```
+// Returns the additional properties dict
+func (a NewPet) AdditionalProperties() map[string]string {...}
+
+// Getter for additional properties for NewPet. Returns the specified
+// element and whether it was found
+func (a NewPet) Get(fieldName string) (value string, found bool) {...}
+
+// Setter for additional properties for NewPet
+func (a *NewPet) Set(fieldName string, value string) {...}
+
+// Override default JSON handling for NewPet to handle additionalProperties
+func (a *NewPet) UnmarshalJSON(b []byte) error {...}
+
+// Override default JSON handling for NewPet to handle additionalProperties
+func (a NewPet) MarshalJSON() ([]byte, error) {...}
+```
+
+There are many special cases for `additionalProperties`, such as having to
+define types for inner fields which themselves support additionalProperties, and
+all of them are tested via the `internal/test/components` schemas and tests. Please
+look through those tests for more usage examples. 
 
 ## Generated Client Boilerplate
 
@@ -285,7 +348,7 @@ So, for example, if you would like to produce only the server code, you could
 run `oapi-generate --generate types,server`. You could generate `types` and `server`
 into separate files, but both are required for the server code.  
 
-## What's missing
+## What's missing or incomplete
 
 This code is still young, and not complete, since we're filling it in as we
 need it. We've not yet implemented several things:
@@ -307,12 +370,10 @@ need it. We've not yet implemented several things:
     commonly used to merge objects with an identifier, as in the
     `petstore-expanded` example.
 
-- `additionalProperties` isn't supported, and will exit with an error. This
- should be possible to support in the future via a `map[string]interface{}` or
- `map[string]string`.
-
-- `patternProperties` isn't yet supported and will exit with an error. This too
- should be possible to implement.
+- `patternProperties` isn't yet supported and will exit with an error. Pattern
+ properties were defined in JSONSchema, and the `kin-openapi` Swagger object
+ knows how to parse them, but they're not part of OpenAPI 3.0, so we've left
+ them out, as support is very complicated.
 
 
 ## Making changes to code generation

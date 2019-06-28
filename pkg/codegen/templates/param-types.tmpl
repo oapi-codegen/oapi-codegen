@@ -1,18 +1,6 @@
-{{range .}}
-
-{{if .Params}}
-// {{.OperationId}}Params defines parameters for {{.OperationId}}.
-type {{.OperationId}}Params struct {
-{{range .Params}}
-    {{.GoName}} {{if not .Required}}*{{end}}{{.TypeDef}} {{.JsonTag}}{{end}}
-}
+{{range .}}{{$opid := .OperationId}}
+{{range .TypeDefinitions}}
+// {{.TypeName}} defines parameters for {{$opid}}.
+type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
-
-{{if .HasBody}}
-{{if .GetBodyDefinition.CustomType}}
-// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
-type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
-{{end}}
-{{end}}
-
 {{end}}

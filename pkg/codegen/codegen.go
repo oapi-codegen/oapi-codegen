@@ -150,6 +150,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "xml.") {
 			imports = append(imports, "encoding/xml")
 		}
+		if strings.Contains(str, "errors.") {
+			imports = append(imports, "github.com/pkg/errors")
+		}
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)
@@ -207,193 +210,184 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, ops []OperationDefinition) (string, error) {
-	schemasOut, err := GenerateTypesForSchemas(t, swagger.Components.Schemas)
+	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component schemas")
 	}
 
-	paramsOut, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component parameters")
 	}
+	allTypes := append(schemaTypes, paramTypes...)
 
-	responsesOut, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component responses")
 	}
+	allTypes = append(allTypes, responseTypes...)
 
-	bodiesOut, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component request bodies")
 	}
+	allTypes = append(allTypes, bodyTypes...)
 
-	paramsTypesOut, err := GenerateTypesForParams(t, ops)
+	paramTypesOut, err := GenerateTypesForOperations(t, ops)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating Go types for component request bodies")
+		return "", errors.Wrap(err, "error generating Go types for operation parameters")
 	}
 
-	typeDefinitions := strings.Join([]string{schemasOut, paramsOut, responsesOut, bodiesOut, paramsTypesOut}, "")
+	typesOut, err := GenerateTypes(t, allTypes)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating code for type definitions")
+	}
+
+	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, allTypes)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating allOf boilerplate")
+	}
+
+	typeDefinitions := strings.Join([]string{typesOut, paramTypesOut, allOfBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
-func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef) (string, error) {
+func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef) ([]TypeDefinition, error) {
 	types := make([]TypeDefinition, 0)
 	// We're going to define Go types for every object under components/schemas
 	for _, schemaName := range SortedSchemaKeys(schemas) {
 		schemaRef := schemas[schemaName]
-		typeDef, err := schemaToGoType(schemaRef, true)
+
+		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
 		if err != nil {
-			return "", errors.Wrap(err, fmt.Sprintf("error converting Schema %s to Go type", schemaName))
+			return nil, errors.Wrap(err, fmt.Sprintf("error converting Schema %s to Go type", schemaName))
 		}
 
 		types = append(types, TypeDefinition{
-			JsonTypeName: schemaName,
-			TypeName:     ToCamelCase(schemaName),
-			TypeDef:      typeDef,
+			JsonName: schemaName,
+			TypeName: ToCamelCase(schemaName),
+			Schema:   goSchema,
 		})
-	}
 
-	typesOut, err := GenerateTypes(t, "schemas.tmpl", types)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating type definitions")
+		types = append(types, goSchema.GetAdditionalTypeDefs()...)
 	}
-
-	return typesOut, nil
+	return types, nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/parameters section of the Swagger spec.
-func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) (string, error) {
-	types := make([]TypeDefinition, 0)
+func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
 	for _, paramName := range SortedParameterKeys(params) {
 		paramOrRef := params[paramName]
-		if paramOrRef.Ref != "" {
-			// The entire definition of the parameter is an external reference
-			goType, err := RefPathToGoType(paramOrRef.Ref)
-			if err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", paramOrRef.Ref, paramName))
-			}
-			types = append(types, TypeDefinition{
-				JsonTypeName: paramName,
-				TypeName:     ToCamelCase(paramName),
-				TypeDef:      goType,
-			})
-		} else {
-			// The parameter is defined inline
-			goType, err := paramToGoType(paramOrRef.Value)
-			if err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", paramName))
-			}
-			types = append(types, TypeDefinition{
-				JsonTypeName: paramName,
-				TypeName:     ToCamelCase(paramName),
-				TypeDef:      goType,
-			})
+
+		goType, err := paramToGoType(paramOrRef.Value, nil)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", paramName))
 		}
-	}
 
-	typesOut, err := GenerateTypes(t, "parameters.tmpl", types)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating type definitions")
-	}
+		typeDef := TypeDefinition{
+			JsonName: paramName,
+			Schema:   goType,
+			TypeName: ToCamelCase(paramName),
+		}
 
-	return typesOut, nil
+		if paramOrRef.Ref != "" {
+			// Generate a reference type for referenced parameters
+			refType, err := RefPathToGoType(paramOrRef.Ref)
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", paramOrRef.Ref, paramName))
+			}
+			typeDef.TypeName = ToCamelCase(refType)
+		}
+
+		types = append(types, typeDef)
+	}
+	return types, nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) (string, error) {
-	types := make([]TypeDefinition, 0)
+func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
 	for _, responseName := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[responseName]
-		if responseOrRef.Ref != "" {
-			// The entire response is defined as a reference
-			goType, err := RefPathToGoType(responseOrRef.Ref)
+
+		// We have to generate the response object. We're only going to
+		// handle application/json media types here. Other responses should
+		// simply be specified as strings or byte arrays.
+		response := responseOrRef.Value
+		jsonResponse, found := response.Content["application/json"]
+		if found {
+			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
 			if err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
+				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in response %s", responseName))
 			}
-			types = append(types, TypeDefinition{
-				JsonTypeName: responseName,
-				TypeName:     ToCamelCase(responseName),
-				TypeDef:      goType,
-			})
-		} else {
-			// We have to generate the response object. We're only going to
-			// handle application/json media types here. Other responses should
-			// simply be specified as strings or byte arrays.
-			response := responseOrRef.Value
-			jsonResponse, found := response.Content["application/json"]
-			if found {
-				goType, err := schemaToGoType(jsonResponse.Schema, true)
+
+			typeDef := TypeDefinition{
+				JsonName: responseName,
+				Schema:   goType,
+				TypeName: ToCamelCase(responseName),
+			}
+
+			if responseOrRef.Ref != "" {
+				// Generate a reference type for referenced parameters
+				refType, err := RefPathToGoType(responseOrRef.Ref)
 				if err != nil {
-					return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", responseName))
+					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
 				}
-				types = append(types, TypeDefinition{
-					JsonTypeName: responseName,
-					TypeName:     ToCamelCase(responseName),
-					TypeDef:      goType,
-				})
+				typeDef.TypeName = ToCamelCase(refType)
 			}
+			types = append(types, typeDef)
 		}
 	}
-
-	typesOut, err := GenerateTypes(t, "responses.tmpl", types)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating response type definitions")
-	}
-
-	return typesOut, nil
+	return types, nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
-func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) (string, error) {
-	types := make([]TypeDefinition, 0)
+func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
 		bodyOrRef := bodies[bodyName]
-		if bodyOrRef.Ref != "" {
-			ref := bodyOrRef.Ref
-			goType, err := RefPathToGoType(ref)
+
+		// As for responses, we will only generate Go code for JSON bodies,
+		// the other body formats are up to the user.
+		response := bodyOrRef.Value
+		jsonBody, found := response.Content["application/json"]
+		if found {
+			goType, err := GenerateGoSchema(jsonBody.Schema, []string{bodyName})
 			if err != nil {
-				return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in request body %s", ref, bodyName))
+				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in body %s", bodyName))
 			}
-			types = append(types, TypeDefinition{
-				JsonTypeName: bodyName,
-				TypeName:     ToCamelCase(bodyName),
-				TypeDef:      goType,
-			})
-		} else {
-			body := bodyOrRef.Value
-			// As for responses, we will only generate Go code for JSON bodies,
-			// the other body formats are up to the user.
-			jsonResponse, found := body.Content["application/json"]
-			if found {
-				goType, err := schemaToGoType(jsonResponse.Schema, true)
+
+			typeDef := TypeDefinition{
+				JsonName: bodyName,
+				Schema:   goType,
+				TypeName: ToCamelCase(bodyName),
+			}
+
+			if bodyOrRef.Ref != "" {
+				// Generate a reference type for referenced bodies
+				refType, err := RefPathToGoType(bodyOrRef.Ref)
 				if err != nil {
-					return "", errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", bodyName))
+					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in body %s", bodyOrRef.Ref, bodyName))
 				}
-				types = append(types, TypeDefinition{
-					JsonTypeName: bodyName,
-					TypeName:     ToCamelCase(bodyName),
-					TypeDef:      goType,
-				})
+				typeDef.TypeName = ToCamelCase(refType)
 			}
+			types = append(types, typeDef)
 		}
 	}
-
-	typesOut, err := GenerateTypes(t, "request-bodies.tmpl", types)
-	if err != nil {
-		return "", fmt.Errorf("error generating type definitions: %s", err)
-	}
-
-	return typesOut, nil
+	return types, nil
 }
 
 // Helper function to pass a bunch of types to the template engine, and buffer
 // its output into a string.
-func GenerateTypes(t *template.Template, templateName string, types []TypeDefinition) (string, error) {
+func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -403,7 +397,7 @@ func GenerateTypes(t *template.Template, templateName string, types []TypeDefini
 		Types: types,
 	}
 
-	err := t.ExecuteTemplate(w, templateName, context)
+	err := t.ExecuteTemplate(w, "typedef.tmpl", context)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating types")
 	}
@@ -434,6 +428,36 @@ func GenerateImports(t *template.Template, imports []string, packageName string)
 	err = w.Flush()
 	if err != nil {
 		return "", errors.Wrap(err, "error flushing output buffer for imports")
+	}
+	return buf.String(), nil
+}
+
+// Generate all the glue code which provides the API for interacting with
+// additional properties and JSON-ification
+func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	var filteredTypes []TypeDefinition
+	for _, t := range typeDefs {
+		if t.Schema.HasAdditionalProperties {
+			filteredTypes = append(filteredTypes, t)
+		}
+	}
+
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	err := t.ExecuteTemplate(w, "additional-properties.tmpl", context)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating additional properties code")
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for additional properties")
 	}
 	return buf.String(), nil
 }

@@ -14,9 +14,10 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
+
 	"regexp"
 	"sort"
 	"strings"
@@ -298,4 +299,29 @@ func PrefixKeyword(str, prefix string) string {
 		return prefix + UppercaseFirstCharacter(str)
 	}
 	return str
+}
+
+// According to the spec, additionalProperties may be true, false, or a
+// schema. If not present, true is implied. If it's a schema, true is implied.
+// If it's false, no additional properties are allowed. We're going to act a little
+// differently, in that if you want additionalProperties code to be generated,
+// you must specify an additionalProperties type
+// If additionalProperties it true/false, this field will be non-nil.
+func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
+	if schema.AdditionalPropertiesAllowed != nil {
+		return *schema.AdditionalPropertiesAllowed
+	}
+	if schema.AdditionalProperties != nil {
+		return true
+	}
+	return false
+}
+
+// This converts a path, like Object/field1/nestedField into a go
+// type name.
+func PathToTypeName(path []string) string {
+	for i, p := range path {
+		path[i] = ToCamelCase(p)
+	}
+	return strings.Join(path, "_")
 }
