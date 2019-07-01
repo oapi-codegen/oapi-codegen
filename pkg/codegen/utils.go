@@ -137,6 +137,18 @@ func SortedContentKeys(dict openapi3.Content) []string {
 	return keys
 }
 
+// This returns string map keys in sorted order
+func SortedStringKeys(dict map[string]string) []string {
+	keys := make([]string, len(dict))
+	i := 0
+	for key := range dict {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // This returns sorted keys for a ParameterRef dict
 func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
 	keys := make([]string, len(dict))
