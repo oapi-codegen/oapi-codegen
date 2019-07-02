@@ -298,14 +298,14 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 	// Now build the switch statement in order of most-to-least specific:
 	fmt.Fprintf(buffer, "switch {\n")
-	for caseClause, caseAction := range mostSpecific {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	for _, caseClause := range SortedStringKeys(mostSpecific) {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, mostSpecific[caseClause])
 	}
-	for caseClause, caseAction := range lessSpecific {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	for _, caseClause := range SortedStringKeys(lessSpecific) {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, lessSpecific[caseClause])
 	}
-	for caseClause, caseAction := range leastSpecific {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, caseAction)
+	for _, caseClause := range SortedStringKeys(leastSpecific) {
+		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, leastSpecific[caseClause])
 	}
 	fmt.Fprintf(buffer, "}\n")
 
