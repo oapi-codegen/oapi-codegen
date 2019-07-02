@@ -137,7 +137,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.GoType = outType
 		} else {
 			// We've got an object with some properties.
-			for pName, p := range schema.Properties {
+			for _, pName := range SortedSchemaKeys(schema.Properties) {
+				p := schema.Properties[pName]
 				propertyPath := append(path, pName)
 				pSchema, err := GenerateGoSchema(p, propertyPath)
 				if err != nil {

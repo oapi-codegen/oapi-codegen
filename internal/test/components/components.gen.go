@@ -30,8 +30,8 @@ type AdditionalPropertiesObject1 struct {
 
 // AdditionalPropertiesObject2 defines model for AdditionalPropertiesObject2.
 type AdditionalPropertiesObject2 struct {
-	Name string `json:"name"`
 	Id   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 // AdditionalPropertiesObject3 defines model for AdditionalPropertiesObject3.
@@ -55,9 +55,9 @@ type AdditionalPropertiesObject4_Inner struct {
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
-	Value2 json.RawMessage `json:"value2,omitempty"`
 	Name   string          `json:"name"`
 	Value1 json.RawMessage `json:"value1"`
+	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
 // SchemaObject defines model for SchemaObject.
