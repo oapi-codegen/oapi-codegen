@@ -257,9 +257,64 @@ func (o *OperationDefinition) SummaryAsComment() string {
 	return strings.Join(parts, "\n")
 }
 
-// Called by the template engine to get the body definition
+// Called by the template engine to get the body definition.
 func (o *OperationDefinition) GetBodyDefinition() RequestBodyDefinition {
 	return *(o.Body)
+}
+
+// Produces a list of type definitions for a given Operation for the response
+// types which we know how to parse. These will be turned into fields on a
+// response object for automatic deserialization of responses in the generated
+// Client code. See "client-with-responses.tmpl".
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
+	var tds []TypeDefinition
+
+	responses := o.Spec.Responses
+	sortedResponsesKeys := SortedResponsesKeys(responses)
+	for _, responseName := range sortedResponsesKeys {
+		responseRef := responses[responseName]
+
+		// We can only generate a type if we have a value:
+		if responseRef.Value != nil {
+			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			for _, contentTypeName := range sortedContentKeys {
+				contentType := responseRef.Value.Content[contentTypeName]
+				// We can only generate a type if we have a schema:
+				if contentType.Schema != nil {
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					if err != nil {
+						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
+					}
+
+					var typeName string
+					switch {
+					case StringInArray(contentTypeName, contentTypesJSON):
+						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+					// YAML:
+					case StringInArray(contentTypeName, contentTypesYAML):
+						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+					// XML:
+					case StringInArray(contentTypeName, contentTypesXML):
+						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+					}
+
+					td := TypeDefinition{
+						TypeName: typeName,
+						Schema:   responseSchema,
+					}
+					if contentType.Schema.Ref != "" {
+						refType, err := RefPathToGoType(contentType.Schema.Ref)
+						if err != nil {
+							return nil, errors.Wrap(err, "error dereferencing response Ref")
+						}
+						td.Schema.RefType = refType
+					}
+					tds = append(tds, td)
+				}
+			}
+		}
+	}
+	return tds, nil
 }
 
 // This describes a request body
@@ -583,6 +638,24 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 	w := bufio.NewWriter(&buf)
 
 	err := t.ExecuteTemplate(w, "client.tmpl", ops)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating client bindings: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
+	}
+	return buf.String(), nil
+}
+
+// This generates a client which extends the basic client which does response
+// unmarshaling.
+func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ops)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating client bindings: %s", err)

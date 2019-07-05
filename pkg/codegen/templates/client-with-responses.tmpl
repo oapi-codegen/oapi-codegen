@@ -1,0 +1,40 @@
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+    ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: http.Client{},
+            Server: server,
+        },
+    }
+}
+
+{{range .}}{{$opid := .OperationId}}{{$op := .}}
+type {{$opid | lcFirst}}Response struct {
+    Body         []byte
+	HTTPResponse *http.Response
+    {{- range getResponseTypeDefinitions .}}
+    {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+}
+
+// Status returns HTTPResponse.Status
+func (r {{$opid | lcFirst}}Response) Status() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Status
+    }
+    return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r {{$opid | lcFirst}}Response) StatusCode() int {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.StatusCode
+    }
+    return 0
+}
+{{end}}

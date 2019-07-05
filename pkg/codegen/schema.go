@@ -82,22 +82,6 @@ func PropertiesEqual(a, b Property) bool {
 
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	schema := sref.Value
-	// We can't support this in any meaningful way
-	if schema.AnyOf != nil {
-		return Schema{GoType: "interface{}"}, nil
-	}
-	// We can't support this in any meaningful way
-	if schema.OneOf != nil {
-		return Schema{GoType: "interface{}"}, nil
-	}
-
-	// AllOf is interesting, and useful. It's the union of a number of other
-	// schemas. A common usage is to create a union of an object with an ID,
-	// so that in a RESTful paradigm, the Create operation can return
-	// (object, id), so that other operations can refer to (id)
-	if schema.AllOf != nil {
-		return MergeSchemas(schema.AllOf, path)
-	}
 
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
@@ -110,6 +94,28 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
+	}
+
+	// We can't support this in any meaningful way
+	if schema.AnyOf != nil {
+		return Schema{GoType: "interface{}", RefType:refType}, nil
+	}
+	// We can't support this in any meaningful way
+	if schema.OneOf != nil {
+		return Schema{GoType: "interface{}", RefType:refType}, nil
+	}
+
+	// AllOf is interesting, and useful. It's the union of a number of other
+	// schemas. A common usage is to create a union of an object with an ID,
+	// so that in a RESTful paradigm, the Create operation can return
+	// (object, id), so that other operations can refer to (id)
+	if schema.AllOf != nil {
+		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		if err != nil {
+			return Schema{}, errors.Wrap(err, "error merging schemas")
+		}
+		mergedSchema.RefType = refType
+		return mergedSchema, nil
 	}
 
 	// Schema type and format, eg. string / binary

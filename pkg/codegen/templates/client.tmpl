@@ -64,24 +64,8 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
 {{end}}{{/* if .GenerateGenericForm */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-    ClientInterface
-}
-
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-    return &ClientWithResponses{
-        ClientInterface: &Client{
-            Client: http.Client{},
-            Server: server,
-        },
-    }
-}
-
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
-{{genResponseType $opid .Spec.Responses}}
 
 // Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {

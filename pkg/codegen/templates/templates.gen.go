@@ -76,6 +76,47 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `,
+	"client-with-responses.tmpl": `// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+    ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: http.Client{},
+            Server: server,
+        },
+    }
+}
+
+{{range .}}{{$opid := .OperationId}}{{$op := .}}
+type {{$opid | lcFirst}}Response struct {
+    Body         []byte
+	HTTPResponse *http.Response
+    {{- range getResponseTypeDefinitions .}}
+    {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+}
+
+// Status returns HTTPResponse.Status
+func (r {{$opid | lcFirst}}Response) Status() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Status
+    }
+    return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r {{$opid | lcFirst}}Response) StatusCode() int {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.StatusCode
+    }
+    return 0
+}
+{{end}}
+`,
 	"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
     // The endpoint of the server conforming to this interface, with scheme,
@@ -142,24 +183,8 @@ func (c *Client) {{$opid}}{{if .HasAnyBody}}WithBody{{end}}(ctx context.Context{
 {{end}}{{/* if .GenerateGenericForm */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-    ClientInterface
-}
-
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-    return &ClientWithResponses{
-        ClientInterface: &Client{
-            Client: http.Client{},
-            Server: server,
-        },
-    }
-}
-
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
-{{genResponseType $opid .Spec.Responses}}
 
 // Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {

@@ -79,6 +79,14 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
+	var clientWithResponsesOut string
+	if opts.GenerateClient {
+		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating client with responses")
+		}
+	}
+
 	var inlinedSpec string
 	if opts.EmbedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
@@ -95,7 +103,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
-	for _, str := range []string{typeDefinitions, serverOut, clientOut, inlinedSpec} {
+	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec} {
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
@@ -173,6 +181,10 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	if opts.GenerateClient {
 		_, err = w.WriteString(clientOut)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing client")
+		}
+		_, err = w.WriteString(clientWithResponsesOut)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing client")
 		}

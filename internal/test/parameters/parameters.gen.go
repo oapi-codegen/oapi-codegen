@@ -424,43 +424,6 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Res
 	return c.Client.Do(req)
 }
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-		},
-	}
-}
-
-// getContentObjectResponse is returned by Client.GetContentObject()
-type getContentObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getContentObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getContentObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
 func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -491,28 +454,6 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 	return ParsegetContentObjectResponse(rsp)
 }
 
-// getCookieResponse is returned by Client.GetCookie()
-type getCookieResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getCookieResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getCookieResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
 func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -541,28 +482,6 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	return ParsegetCookieResponse(rsp)
 }
 
-// getHeaderResponse is returned by Client.GetHeader()
-type getHeaderResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getHeaderResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getHeaderResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
 func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -589,28 +508,6 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 		return nil, err
 	}
 	return ParsegetHeaderResponse(rsp)
-}
-
-// getLabelExplodeArrayResponse is returned by Client.GetLabelExplodeArray()
-type getLabelExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getLabelExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getLabelExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
@@ -643,28 +540,6 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 	return ParsegetLabelExplodeArrayResponse(rsp)
 }
 
-// getLabelExplodeObjectResponse is returned by Client.GetLabelExplodeObject()
-type getLabelExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getLabelExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getLabelExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
 func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -693,28 +568,6 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParsegetLabelExplodeObjectResponse(rsp)
-}
-
-// getLabelNoExplodeArrayResponse is returned by Client.GetLabelNoExplodeArray()
-type getLabelNoExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getLabelNoExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getLabelNoExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
@@ -747,28 +600,6 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 	return ParsegetLabelNoExplodeArrayResponse(rsp)
 }
 
-// getLabelNoExplodeObjectResponse is returned by Client.GetLabelNoExplodeObject()
-type getLabelNoExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getLabelNoExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getLabelNoExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
 func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -797,28 +628,6 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 		return nil, err
 	}
 	return ParsegetLabelNoExplodeObjectResponse(rsp)
-}
-
-// getMatrixExplodeArrayResponse is returned by Client.GetMatrixExplodeArray()
-type getMatrixExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getMatrixExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getMatrixExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
@@ -851,28 +660,6 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 	return ParsegetMatrixExplodeArrayResponse(rsp)
 }
 
-// getMatrixExplodeObjectResponse is returned by Client.GetMatrixExplodeObject()
-type getMatrixExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getMatrixExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getMatrixExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
 func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -901,28 +688,6 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParsegetMatrixExplodeObjectResponse(rsp)
-}
-
-// getMatrixNoExplodeArrayResponse is returned by Client.GetMatrixNoExplodeArray()
-type getMatrixNoExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getMatrixNoExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getMatrixNoExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
@@ -955,28 +720,6 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 	return ParsegetMatrixNoExplodeArrayResponse(rsp)
 }
 
-// getMatrixNoExplodeObjectResponse is returned by Client.GetMatrixNoExplodeObject()
-type getMatrixNoExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getMatrixNoExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getMatrixNoExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
 func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -1005,28 +748,6 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParsegetMatrixNoExplodeObjectResponse(rsp)
-}
-
-// getPassThroughResponse is returned by Client.GetPassThrough()
-type getPassThroughResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getPassThroughResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getPassThroughResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
@@ -1059,28 +780,6 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 	return ParsegetPassThroughResponse(rsp)
 }
 
-// getQueryFormResponse is returned by Client.GetQueryForm()
-type getQueryFormResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getQueryFormResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getQueryFormResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
 func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -1109,28 +808,6 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 		return nil, err
 	}
 	return ParsegetQueryFormResponse(rsp)
-}
-
-// getSimpleExplodeArrayResponse is returned by Client.GetSimpleExplodeArray()
-type getSimpleExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getSimpleExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getSimpleExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
@@ -1163,28 +840,6 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 	return ParsegetSimpleExplodeArrayResponse(rsp)
 }
 
-// getSimpleExplodeObjectResponse is returned by Client.GetSimpleExplodeObject()
-type getSimpleExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getSimpleExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getSimpleExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
 func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -1213,28 +868,6 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 		return nil, err
 	}
 	return ParsegetSimpleExplodeObjectResponse(rsp)
-}
-
-// getSimpleNoExplodeArrayResponse is returned by Client.GetSimpleNoExplodeArray()
-type getSimpleNoExplodeArrayResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getSimpleNoExplodeArrayResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getSimpleNoExplodeArrayResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
@@ -1267,28 +900,6 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 	return ParsegetSimpleNoExplodeArrayResponse(rsp)
 }
 
-// getSimpleNoExplodeObjectResponse is returned by Client.GetSimpleNoExplodeObject()
-type getSimpleNoExplodeObjectResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getSimpleNoExplodeObjectResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getSimpleNoExplodeObjectResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
 func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -1317,28 +928,6 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParsegetSimpleNoExplodeObjectResponse(rsp)
-}
-
-// getSimplePrimitiveResponse is returned by Client.GetSimplePrimitive()
-type getSimplePrimitiveResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r *getSimplePrimitiveResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *getSimplePrimitiveResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
@@ -1996,6 +1585,415 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	}
 
 	return req, nil
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: http.Client{},
+			Server: server,
+		},
+	}
+}
+
+type getContentObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getContentObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getContentObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getCookieResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r getCookieResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getCookieResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getHeaderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r getHeaderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getHeaderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getLabelExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getLabelExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getLabelExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getLabelExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getLabelExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getLabelExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getLabelNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getLabelNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getLabelNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getLabelNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getLabelNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getLabelNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getMatrixExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getMatrixExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getMatrixExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getMatrixExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getMatrixExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getMatrixExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getMatrixNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getMatrixNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getMatrixNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getMatrixNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getMatrixNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getMatrixNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getPassThroughResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getPassThroughResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getPassThroughResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getQueryFormResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getQueryFormResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getQueryFormResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getSimpleExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getSimpleExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getSimpleExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getSimpleExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getSimpleExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getSimpleExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getSimpleNoExplodeArrayResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getSimpleNoExplodeArrayResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getSimpleNoExplodeArrayResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getSimpleNoExplodeObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getSimpleNoExplodeObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getSimpleNoExplodeObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getSimplePrimitiveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	*string
+}
+
+// Status returns HTTPResponse.Status
+func (r getSimplePrimitiveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getSimplePrimitiveResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 // ServerInterface represents all server handlers.

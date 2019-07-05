@@ -109,50 +109,6 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 	return c.Client.Do(req)
 }
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-		},
-	}
-}
-
-// findPetsResponse is returned by Client.FindPets()
-type findPetsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]struct {
-		// Embedded struct due to allOf(#/components/schemas/NewPet)
-		NewPet
-		// Embedded fields due to inline allOf schema
-		Id int64 `json:"id"`
-	}
-	JSONDefault *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r *findPetsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *findPetsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsefindPetsResponse parses an HTTP response from a FindPetsWithResponse call
 func ParsefindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -168,12 +124,7 @@ func ParsefindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]struct {
-			// Embedded struct due to allOf(#/components/schemas/NewPet)
-			NewPet
-			// Embedded fields due to inline allOf schema
-			Id int64 `json:"id"`
-		}{}
+		response.JSON200 = &[]Pet{}
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
@@ -196,35 +147,6 @@ func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *
 	return ParsefindPetsResponse(rsp)
 }
 
-// addPetResponse is returned by Client.AddPet()
-type addPetResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Embedded struct due to allOf(#/components/schemas/NewPet)
-		NewPet
-		// Embedded fields due to inline allOf schema
-		Id int64 `json:"id"`
-	}
-	JSONDefault *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r *addPetResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *addPetResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParseaddPetResponse parses an HTTP response from a AddPetWithResponse call
 func ParseaddPetResponse(rsp *http.Response) (*addPetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -240,12 +162,7 @@ func ParseaddPetResponse(rsp *http.Response) (*addPetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &struct {
-			// Embedded struct due to allOf(#/components/schemas/NewPet)
-			NewPet
-			// Embedded fields due to inline allOf schema
-			Id int64 `json:"id"`
-		}{}
+		response.JSON200 = &Pet{}
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
@@ -266,29 +183,6 @@ func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body NewPe
 		return nil, err
 	}
 	return ParseaddPetResponse(rsp)
-}
-
-// deletePetResponse is returned by Client.DeletePet()
-type deletePetResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSONDefault  *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r *deletePetResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *deletePetResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
 }
 
 // ParsedeletePetResponse parses an HTTP response from a DeletePetWithResponse call
@@ -326,35 +220,6 @@ func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int6
 	return ParsedeletePetResponse(rsp)
 }
 
-// findPetByIdResponse is returned by Client.FindPetById()
-type findPetByIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Embedded struct due to allOf(#/components/schemas/NewPet)
-		NewPet
-		// Embedded fields due to inline allOf schema
-		Id int64 `json:"id"`
-	}
-	JSONDefault *Error
-}
-
-// Status returns HTTPResponse.Status
-func (r *findPetByIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r *findPetByIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // ParsefindPetByIdResponse parses an HTTP response from a FindPetByIdWithResponse call
 func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -370,12 +235,7 @@ func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &struct {
-			// Embedded struct due to allOf(#/components/schemas/NewPet)
-			NewPet
-			// Embedded fields due to inline allOf schema
-			Id int64 `json:"id"`
-		}{}
+		response.JSON200 = &Pet{}
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
@@ -508,4 +368,110 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 	}
 
 	return req, nil
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses returns a ClientWithResponses with a default Client:
+func NewClientWithResponses(server string) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: http.Client{},
+			Server: server,
+		},
+	}
+}
+
+type findPetsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Pet
+	JSONDefault  *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r findPetsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r findPetsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type addPetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Pet
+	JSONDefault  *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r addPetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r addPetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type deletePetResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSONDefault  *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r deletePetResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r deletePetResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type findPetByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Pet
+	JSONDefault  *Error
+}
+
+// Status returns HTTPResponse.Status
+func (r findPetByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r findPetByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }

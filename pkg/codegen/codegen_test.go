@@ -102,8 +102,8 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "type getTestByNameResponse struct {")
 
 	// Check that the helper methods are generated correctly:
-	assert.Contains(t, code, "func (r *getTestByNameResponse) Status() string {")
-	assert.Contains(t, code, "func (r *getTestByNameResponse) StatusCode() int {")
+	assert.Contains(t, code, "func (r getTestByNameResponse) Status() string {")
+	assert.Contains(t, code, "func (r getTestByNameResponse) StatusCode() int {")
 	assert.Contains(t, code, "func ParsegetTestByNameResponse(rsp *http.Response) (*getTestByNameResponse, error) {")
 
 	// Check the client method signatures:

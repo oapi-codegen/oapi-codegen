@@ -25,7 +25,6 @@ import (
 )
 
 var (
-	payloadPrefix      = "payload"
 	contentTypesJSON   = []string{echo.MIMEApplicationJSON, "text/x-json"}
 	contentTypesYAML   = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
 	contentTypesXML    = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
@@ -90,95 +89,6 @@ func genResponsePayload(operationID string) string {
 	fmt.Fprintf(buffer, "Body: bodyBytes,\n")
 	fmt.Fprintf(buffer, "HTTPResponse: rsp,\n")
 	fmt.Fprintf(buffer, "}")
-
-	return buffer.String()
-}
-
-// genResponseType generates type definitions for those that we can read
-func genResponseType(operationID string, responses openapi3.Responses) string {
-	var buffer = bytes.NewBufferString("")
-
-	// The header and standard struct attributes:
-	fmt.Fprintf(buffer, "// %s is returned by Client.%s()\n", genResponseTypeName(operationID), operationID)
-	fmt.Fprintf(buffer, "type %s struct {\n", genResponseTypeName(operationID))
-	fmt.Fprintf(buffer, "Body []byte\n")
-	fmt.Fprintf(buffer, "HTTPResponse *http.Response\n")
-
-	// Add an attribute for each possible response:
-	sortedResponsesKeys := SortedResponsesKeys(responses)
-	for _, responseName := range sortedResponsesKeys {
-		responseRef, ok := responses[responseName]
-		if !ok {
-			continue
-		}
-
-		// We can only generate a type if we have a value:
-		if responseRef.Value != nil {
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
-			for _, contentTypeName := range sortedContentKeys {
-				contentType, ok := responseRef.Value.Content[contentTypeName]
-				if !ok {
-					continue
-				}
-
-				// We can only generate a type if we have a schema:
-				if contentType.Schema != nil {
-
-					// Make sure that we actually have a go-type for this response:
-					//goType, err := schemaToGoType(contentType.Schema, true, nil)
-					goType, err := GenerateGoSchema(contentType.Schema, []string{responseName})
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
-						continue
-					}
-
-					// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-					if goType.TypeDecl() == "interface{}" {
-						// Unable to unmarshal this, so we leave it out:
-						continue
-					}
-
-					// Generate different attribute names for different content-types:
-					switch {
-
-					// JSON:
-					case contains(contentTypesJSON, contentTypeName):
-						attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
-
-					// YAML:
-					case contains(contentTypesYAML, contentTypeName):
-						attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
-
-					// XML:
-					case contains(contentTypesXML, contentTypeName):
-						attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-						fmt.Fprintf(buffer, "%s *%s\n", attributeName, goType.TypeDecl())
-					}
-				}
-			}
-		}
-	}
-	fmt.Fprintf(buffer, "}\n")
-
-	// Status() provides an easy way to get the Status:
-	fmt.Fprintf(buffer, "// Status returns HTTPResponse.Status\n")
-	fmt.Fprintf(buffer, "func (r *%s) Status() string {\n", genResponseTypeName(operationID))
-	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
-	fmt.Fprintf(buffer, "		return r.HTTPResponse.Status\n")
-	fmt.Fprintf(buffer, "	}\n")
-	fmt.Fprintf(buffer, "	return http.StatusText(0)\n")
-	fmt.Fprintf(buffer, "}\n")
-
-	// StatusCode() provides an easy way to get the StatusCode:
-	fmt.Fprintf(buffer, "// StatusCode returns HTTPResponse.StatusCode\n")
-	fmt.Fprintf(buffer, "func (r *%s) StatusCode() int {\n", genResponseTypeName(operationID))
-	fmt.Fprintf(buffer, "	if r.HTTPResponse != nil {\n")
-	fmt.Fprintf(buffer, "		return r.HTTPResponse.StatusCode\n")
-	fmt.Fprintf(buffer, "	}\n")
-	fmt.Fprintf(buffer, "	return 0\n")
-	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()
 }
@@ -248,7 +158,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			switch {
 
 			// JSON:
-			case contains(contentTypesJSON, contentTypeName):
+			case StringInArray(contentTypeName, contentTypesJSON):
 				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
@@ -260,7 +170,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 				}
 
 			// YAML:
-			case contains(contentTypesYAML, contentTypeName):
+			case StringInArray(contentTypeName, contentTypesYAML):
 				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
@@ -272,7 +182,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 				}
 
 			// XML:
-			case contains(contentTypesXML, contentTypeName):
+			case StringInArray(contentTypeName, contentTypesXML):
 				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
 				if responseName == "default" {
@@ -318,14 +228,12 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", LowercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-// contains tells us if a string is found in a slice of strings:
-func contains(strings []string, s string) bool {
-	for _, stringInSlice := range strings {
-		if s == stringInSlice {
-			return true
-		}
+func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
+	td, err := op.GetResponseTypeDefinitions()
+	if err != nil {
+		panic(err)
 	}
-	return false
+	return td
 }
 
 // This function map is passed to the template engine, and we can call each
@@ -339,7 +247,7 @@ var TemplateFunctions = template.FuncMap{
 	"lcFirst":              LowercaseFirstCharacter,
 	"camelCase":            ToCamelCase,
 	"genResponsePayload":   genResponsePayload,
-	"genResponseType":      genResponseType,
 	"genResponseTypeName":  genResponseTypeName,
 	"genResponseUnmarshal": genResponseUnmarshal,
+	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 }
