@@ -1605,7 +1605,6 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 type getContentObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1669,7 +1668,6 @@ func (r getHeaderResponse) StatusCode() int {
 type getLabelExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1691,7 +1689,6 @@ func (r getLabelExplodeArrayResponse) StatusCode() int {
 type getLabelExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1713,7 +1710,6 @@ func (r getLabelExplodeObjectResponse) StatusCode() int {
 type getLabelNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1735,7 +1731,6 @@ func (r getLabelNoExplodeArrayResponse) StatusCode() int {
 type getLabelNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1757,7 +1752,6 @@ func (r getLabelNoExplodeObjectResponse) StatusCode() int {
 type getMatrixExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1779,7 +1773,6 @@ func (r getMatrixExplodeArrayResponse) StatusCode() int {
 type getMatrixExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1801,7 +1794,6 @@ func (r getMatrixExplodeObjectResponse) StatusCode() int {
 type getMatrixNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1823,7 +1815,6 @@ func (r getMatrixNoExplodeArrayResponse) StatusCode() int {
 type getMatrixNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1845,7 +1836,6 @@ func (r getMatrixNoExplodeObjectResponse) StatusCode() int {
 type getPassThroughResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1867,7 +1857,6 @@ func (r getPassThroughResponse) StatusCode() int {
 type getQueryFormResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1889,7 +1878,6 @@ func (r getQueryFormResponse) StatusCode() int {
 type getSimpleExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1911,7 +1899,6 @@ func (r getSimpleExplodeArrayResponse) StatusCode() int {
 type getSimpleExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1933,7 +1920,6 @@ func (r getSimpleExplodeObjectResponse) StatusCode() int {
 type getSimpleNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1955,7 +1941,6 @@ func (r getSimpleNoExplodeArrayResponse) StatusCode() int {
 type getSimpleNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status
@@ -1977,7 +1962,6 @@ func (r getSimpleNoExplodeObjectResponse) StatusCode() int {
 type getSimplePrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	*string
 }
 
 // Status returns HTTPResponse.Status

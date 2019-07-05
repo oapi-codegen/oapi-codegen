@@ -288,7 +288,7 @@ func GenStructFromSchema(schema Schema) string {
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
-			fmt.Sprintf("additionalProperties map[string]%s `json:\"-\"`",
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
 				schema.AdditionalPropertiesType.GoType))
 	}
 	objectParts = append(objectParts, "}")

@@ -182,18 +182,13 @@ The Go code for `NewPet` would now look like this:
 type NewPet struct {
 	Name                 string            `json:"name"`
 	Tag                  *string           `json:"tag,omitempty"`
-	additionalProperties map[string]string `json:"-"`
+	AdditionalProperties map[string]string `json:"-"`
 }
 ```
 
 The additionalProperties, of type `string` become `map[string]string`, which maps
-field names to instances of the `additionalProperties` schema. We've used a
-private field that's not exported in JSON, since the structure would be wrong,
-so we provide a bunch of helper functions to deal with these additional properties:
+field names to instances of the `additionalProperties` schema.
 ```
-// Returns the additional properties dict
-func (a NewPet) AdditionalProperties() map[string]string {...}
-
 // Getter for additional properties for NewPet. Returns the specified
 // element and whether it was found
 func (a NewPet) Get(fieldName string) (value string, found bool) {...}
