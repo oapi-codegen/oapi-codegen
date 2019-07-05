@@ -296,6 +296,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 					// XML:
 					case StringInArray(contentTypeName, contentTypesXML):
 						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+					default:
+						continue
 					}
 
 					td := TypeDefinition{
