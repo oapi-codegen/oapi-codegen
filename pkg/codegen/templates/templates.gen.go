@@ -37,14 +37,16 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
         delete(object, "{{.JsonFieldName}}")
     }
 {{end}}
-    a.AdditionalProperties = make(map[string]{{$addType}})
-    for fieldName, fieldBuf := range object {
-        var fieldVal {{$addType}}
-        err := json.Unmarshal(fieldBuf, &fieldVal)
-        if err != nil {
-            return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+    if len(object) != 0 {
+        a.AdditionalProperties = make(map[string]{{$addType}})
+        for fieldName, fieldBuf := range object {
+            var fieldVal {{$addType}}
+            err := json.Unmarshal(fieldBuf, &fieldVal)
+            if err != nil {
+                return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+            }
+            a.AdditionalProperties[fieldName] = fieldVal
         }
-        a.AdditionalProperties[fieldName] = fieldVal
     }
 	return nil
 }

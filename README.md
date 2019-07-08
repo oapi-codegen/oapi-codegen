@@ -200,7 +200,7 @@ func (a *NewPet) Set(fieldName string, value string) {...}
 func (a *NewPet) UnmarshalJSON(b []byte) error {...}
 
 // Override default JSON handling for NewPet to handle additionalProperties
-func (a NewPet) MarshalJSON() ([]byte, error) {...}
+func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 ```
 
 There are many special cases for `additionalProperties`, such as having to

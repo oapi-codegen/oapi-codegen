@@ -134,14 +134,16 @@ func (a *ParamsWithAddPropsParams_P1) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	a.AdditionalProperties = make(map[string]interface{})
-	for fieldName, fieldBuf := range object {
-		var fieldVal interface{}
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -185,14 +187,16 @@ func (a *ParamsWithAddPropsParams_P2_Inner) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	a.AdditionalProperties = make(map[string]string)
-	for fieldName, fieldBuf := range object {
-		var fieldVal string
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -252,14 +256,16 @@ func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
 		delete(object, "name")
 	}
 
-	a.AdditionalProperties = make(map[string]interface{})
-	for fieldName, fieldBuf := range object {
-		var fieldVal interface{}
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -313,14 +319,16 @@ func (a *BodyWithAddPropsJSONBody_Inner) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	a.AdditionalProperties = make(map[string]int)
-	for fieldName, fieldBuf := range object {
-		var fieldVal int
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]int)
+		for fieldName, fieldBuf := range object {
+			var fieldVal int
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -388,14 +396,16 @@ func (a *AdditionalPropertiesObject1) UnmarshalJSON(b []byte) error {
 		delete(object, "optional")
 	}
 
-	a.AdditionalProperties = make(map[string]int)
-	for fieldName, fieldBuf := range object {
-		var fieldVal int
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]int)
+		for fieldName, fieldBuf := range object {
+			var fieldVal int
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -464,14 +474,16 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 		delete(object, "name")
 	}
 
-	a.AdditionalProperties = make(map[string]interface{})
-	for fieldName, fieldBuf := range object {
-		var fieldVal interface{}
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -536,14 +548,16 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 		delete(object, "name")
 	}
 
-	a.AdditionalProperties = make(map[string]interface{})
-	for fieldName, fieldBuf := range object {
-		var fieldVal interface{}
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
@@ -605,14 +619,16 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 		delete(object, "name")
 	}
 
-	a.AdditionalProperties = make(map[string]interface{})
-	for fieldName, fieldBuf := range object {
-		var fieldVal interface{}
-		err := json.Unmarshal(fieldBuf, &fieldVal)
-		if err != nil {
-			return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
 		}
-		a.AdditionalProperties[fieldName] = fieldVal
 	}
 	return nil
 }
