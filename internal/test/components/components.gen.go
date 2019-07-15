@@ -708,44 +708,6 @@ func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSON
 	return c.Client.Do(req)
 }
 
-// ParseparamsWithAddPropsResponse parses an HTTP response from a ParamsWithAddPropsWithResponse call
-func ParseparamsWithAddPropsResponse(rsp *http.Response) (*paramsWithAddPropsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &paramsWithAddPropsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsebodyWithAddPropsResponse parses an HTTP response from a BodyWithAddPropsWithResponse call
-func ParsebodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &bodyWithAddPropsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
 // NewParamsWithAddPropsRequest generates requests for ParamsWithAddProps
 func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParams) (*http.Request, error) {
 	var err error
@@ -885,6 +847,44 @@ func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsebodyWithAddPropsResponse(rsp)
+}
+
+// ParseparamsWithAddPropsResponse parses an HTTP response from a ParamsWithAddPropsWithResponse call
+func ParseparamsWithAddPropsResponse(rsp *http.Response) (*paramsWithAddPropsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &paramsWithAddPropsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsebodyWithAddPropsResponse parses an HTTP response from a BodyWithAddPropsWithResponse call
+func ParsebodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &bodyWithAddPropsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
 }
 
 // ServerInterface represents all server handlers.

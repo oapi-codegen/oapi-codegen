@@ -109,119 +109,6 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 	return c.Client.Do(req)
 }
 
-// ParsefindPetsResponse parses an HTTP response from a FindPetsWithResponse call
-func ParsefindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &findPetsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
-			return nil, err
-		}
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
-			return nil, err
-		}
-	}
-
-	return response, nil
-}
-
-// ParseaddPetResponse parses an HTTP response from a AddPetWithResponse call
-func ParseaddPetResponse(rsp *http.Response) (*addPetResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &addPetResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
-			return nil, err
-		}
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
-			return nil, err
-		}
-	}
-
-	return response, nil
-}
-
-// ParsedeletePetResponse parses an HTTP response from a DeletePetWithResponse call
-func ParsedeletePetResponse(rsp *http.Response) (*deletePetResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &deletePetResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 204:
-		break // No content-type
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
-			return nil, err
-		}
-	}
-
-	return response, nil
-}
-
-// ParsefindPetByIdResponse parses an HTTP response from a FindPetByIdWithResponse call
-func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &findPetByIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
-			return nil, err
-		}
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
-			return nil, err
-		}
-	}
-
-	return response, nil
-}
-
 // NewFindPetsRequest generates requests for FindPets
 func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
 	var err error
@@ -474,4 +361,117 @@ func (c *ClientWithResponses) FindPetByIdWithResponse(ctx context.Context, id in
 		return nil, err
 	}
 	return ParsefindPetByIdResponse(rsp)
+}
+
+// ParsefindPetsResponse parses an HTTP response from a FindPetsWithResponse call
+func ParsefindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &findPetsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &[]Pet{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		response.JSONDefault = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+			return nil, err
+		}
+	}
+
+	return response, nil
+}
+
+// ParseaddPetResponse parses an HTTP response from a AddPetWithResponse call
+func ParseaddPetResponse(rsp *http.Response) (*addPetResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &addPetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &Pet{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		response.JSONDefault = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+			return nil, err
+		}
+	}
+
+	return response, nil
+}
+
+// ParsedeletePetResponse parses an HTTP response from a DeletePetWithResponse call
+func ParsedeletePetResponse(rsp *http.Response) (*deletePetResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &deletePetResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		response.JSONDefault = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+			return nil, err
+		}
+	}
+
+	return response, nil
+}
+
+// ParsefindPetByIdResponse parses an HTTP response from a FindPetByIdWithResponse call
+func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &findPetByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &Pet{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		response.JSONDefault = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+			return nil, err
+		}
+	}
+
+	return response, nil
 }

@@ -95,44 +95,6 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9J
 	return c.Client.Do(req)
 }
 
-// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
-func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &issue30Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// Parseissue9Response parses an HTTP response from a Issue9WithResponse call
-func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &issue9Response{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
 // NewIssue30Request generates requests for Issue30
 func NewIssue30Request(server string, pFallthrough string) (*http.Request, error) {
 	var err error
@@ -270,6 +232,44 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 		return nil, err
 	}
 	return Parseissue9Response(rsp)
+}
+
+// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
+func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue30Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// Parseissue9Response parses an HTTP response from a Issue9WithResponse call
+func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue9Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
 }
 
 // ServerInterface represents all server handlers.

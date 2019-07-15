@@ -424,380 +424,6 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Res
 	return c.Client.Do(req)
 }
 
-// ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
-func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getContentObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
-func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getCookieResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
-func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getHeaderResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
-func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getLabelExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
-func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getLabelExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
-func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getLabelNoExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
-func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getLabelNoExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
-func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getMatrixExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
-func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getMatrixExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
-func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getMatrixNoExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
-func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getMatrixNoExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
-func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getPassThroughResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
-func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getQueryFormResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
-func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getSimpleExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
-func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getSimpleExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
-func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getSimpleNoExplodeArrayResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
-func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getSimpleNoExplodeObjectResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
-// ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
-func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getSimplePrimitiveResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-	}
-
-	return response, nil
-}
-
 // NewGetContentObjectRequest generates requests for GetContentObject
 func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Request, error) {
 	var err error
@@ -1978,6 +1604,380 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParsegetSimplePrimitiveResponse(rsp)
+}
+
+// ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getContentObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
+func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getCookieResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getHeaderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getLabelExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getLabelExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getLabelNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getLabelNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getMatrixExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getMatrixExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getMatrixNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getMatrixNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getPassThroughResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getQueryFormResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getSimpleExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getSimpleExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getSimpleNoExplodeArrayResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getSimpleNoExplodeObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
+}
+
+// ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getSimplePrimitiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
+	}
+
+	return response, nil
 }
 
 // ServerInterface represents all server handlers.

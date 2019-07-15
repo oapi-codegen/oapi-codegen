@@ -175,126 +175,6 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// ParsepostBothResponse parses an HTTP response from a PostBothWithResponse call
-func ParsepostBothResponse(rsp *http.Response) (*postBothResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &postBothResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsegetBothResponse parses an HTTP response from a GetBothWithResponse call
-func ParsegetBothResponse(rsp *http.Response) (*getBothResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getBothResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
-	}
-
-	return response, nil
-}
-
-// ParsepostJsonResponse parses an HTTP response from a PostJsonWithResponse call
-func ParsepostJsonResponse(rsp *http.Response) (*postJsonResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &postJsonResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsegetJsonResponse parses an HTTP response from a GetJsonWithResponse call
-func ParsegetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getJsonResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
-	}
-
-	return response, nil
-}
-
-// ParsepostOtherResponse parses an HTTP response from a PostOtherWithResponse call
-func ParsepostOtherResponse(rsp *http.Response) (*postOtherResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &postOtherResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsegetOtherResponse parses an HTTP response from a GetOtherWithResponse call
-func ParsegetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &getOtherResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
-	}
-
-	return response, nil
-}
-
 // NewPostBothRequest generates requests for PostBoth with JSON body
 func NewPostBothRequest(server string, body SchemaObject) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -610,6 +490,126 @@ func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context) (*getOth
 		return nil, err
 	}
 	return ParsegetOtherResponse(rsp)
+}
+
+// ParsepostBothResponse parses an HTTP response from a PostBothWithResponse call
+func ParsepostBothResponse(rsp *http.Response) (*postBothResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &postBothResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetBothResponse parses an HTTP response from a GetBothWithResponse call
+func ParsegetBothResponse(rsp *http.Response) (*getBothResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getBothResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		break // No content-type
+	}
+
+	return response, nil
+}
+
+// ParsepostJsonResponse parses an HTTP response from a PostJsonWithResponse call
+func ParsepostJsonResponse(rsp *http.Response) (*postJsonResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &postJsonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetJsonResponse parses an HTTP response from a GetJsonWithResponse call
+func ParsegetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getJsonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		break // No content-type
+	}
+
+	return response, nil
+}
+
+// ParsepostOtherResponse parses an HTTP response from a PostOtherWithResponse call
+func ParsepostOtherResponse(rsp *http.Response) (*postOtherResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &postOtherResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetOtherResponse parses an HTTP response from a GetOtherWithResponse call
+func ParsegetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getOtherResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		break // No content-type
+	}
+
+	return response, nil
 }
 
 // ServerInterface represents all server handlers.

@@ -64,3 +64,23 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}W
 }
 {{end}}{{/* if .GenerateGenericForm */}}
 {{end}}
+
+{{/* Generate parse functions for responses*/}}
+{{range .}}{{$opid := .OperationId}}
+
+// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+    bodyBytes, err := ioutil.ReadAll(rsp.Body)
+    defer rsp.Body.Close()
+    if err != nil {
+        return nil, err
+    }
+
+    response := {{genResponsePayload $opid}}
+
+    {{genResponseUnmarshal $opid .Spec.Responses}}
+
+    return response, nil
+}
+{{end}}{{/* range . $opid := .OperationId */}}
+

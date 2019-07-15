@@ -139,6 +139,26 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}W
 }
 {{end}}{{/* if .GenerateGenericForm */}}
 {{end}}
+
+{{/* Generate parse functions for responses*/}}
+{{range .}}{{$opid := .OperationId}}
+
+// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+    bodyBytes, err := ioutil.ReadAll(rsp.Body)
+    defer rsp.Body.Close()
+    if err != nil {
+        return nil, err
+    }
+
+    response := {{genResponsePayload $opid}}
+
+    {{genResponseUnmarshal $opid .Spec.Responses}}
+
+    return response, nil
+}
+{{end}}{{/* range . $opid := .OperationId */}}
+
 `,
 	"client.tmpl": `// Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
@@ -205,26 +225,6 @@ func (c *Client) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}(ctx context.C
 }
 {{end}}{{/* if .GenerateGenericForm */}}
 {{end}}{{/* range . $opid := .OperationId */}}
-
-{{/* Generate parse functions for responses*/}}
-{{range .}}{{$opid := .OperationId}}
-
-// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
-func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer rsp.Body.Close()
-    if err != nil {
-        return nil, err
-    }
-
-    response := {{genResponsePayload $opid}}
-
-    {{genResponseUnmarshal $opid .Spec.Responses}}
-
-    return response, nil
-}
-{{end}}{{/* range . $opid := .OperationId */}}
-
 
 {{/* Generate server */}}
 {{range .}}{{$opid := .OperationId -}}
