@@ -138,7 +138,7 @@ paths:
     put:
       summary: |
         Update a resource with inline body. The parameter name is a reserved
-        keyword, so make sure that gets prefixed to avoid syntax errors.
+        keyword, so make sure that gets prefixed to avoid syntax errors
       operationId: updateResource3
       parameters:
         - name: fallthrough

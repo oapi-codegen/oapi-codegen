@@ -224,6 +224,18 @@ func (o *OperationDefinition) HasAnyBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
+// This returns whether there are multiple body types for a request.
+func (o *OperationDefinition) HasMultipleBodies() bool {
+	if !o.HasBody() {
+		return false
+	}
+
+	if len(o.Spec.RequestBody.Value.Content) > 1 {
+		return true
+	}
+	return false
+}
+
 // This decides whether we need to generate the second, generic form of a
 // function with a body implementation. This is described in the top level
 // README.

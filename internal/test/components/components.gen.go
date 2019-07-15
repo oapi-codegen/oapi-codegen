@@ -727,15 +727,6 @@ func ParseparamsWithAddPropsResponse(rsp *http.Response) (*paramsWithAddPropsRes
 	return response, nil
 }
 
-// ParamsWithAddProps request returning *ParamsWithAddPropsResponse
-func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error) {
-	rsp, err := c.ParamsWithAddProps(ctx, params)
-	if err != nil {
-		return nil, err
-	}
-	return ParseparamsWithAddPropsResponse(rsp)
-}
-
 // ParsebodyWithAddPropsResponse parses an HTTP response from a BodyWithAddPropsWithResponse call
 func ParsebodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -753,15 +744,6 @@ func ParsebodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsRespons
 	}
 
 	return response, nil
-}
-
-// BodyWithAddProps request with JSON body returning *BodyWithAddPropsResponse
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONBody) (*bodyWithAddPropsResponse, error) {
-	rsp, err := c.BodyWithAddProps(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParsebodyWithAddPropsResponse(rsp)
 }
 
 // NewParamsWithAddPropsRequest generates requests for ParamsWithAddProps
@@ -885,6 +867,24 @@ func (r bodyWithAddPropsResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ParamsWithAddProps request returning *ParamsWithAddPropsResponse
+func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error) {
+	rsp, err := c.ParamsWithAddProps(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseparamsWithAddPropsResponse(rsp)
+}
+
+// BodyWithAddProps request with JSON body returning *BodyWithAddPropsResponse
+func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONBody) (*bodyWithAddPropsResponse, error) {
+	rsp, err := c.BodyWithAddProps(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsebodyWithAddPropsResponse(rsp)
 }
 
 // ServerInterface represents all server handlers.

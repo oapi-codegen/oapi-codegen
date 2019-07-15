@@ -38,3 +38,29 @@ func (r {{$opid | lcFirst}}Response) StatusCode() int {
     return 0
 }
 {{end}}
+
+
+{{range .}}{{$opid := .OperationId -}}
+{{/* Generate client methods (with responses)*/}}
+{{if .HasBody}}
+// {{$opid}} request with JSON body returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{genResponseTypeName $opid}}, error){
+    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
+	if err != nil {
+		return nil, err
+	}
+    return Parse{{genResponseTypeName $opid}}(rsp)
+}
+{{end}}{{/* if .HasBody */}}
+
+{{if .GenerateGenericForm}}
+// {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
+    rsp, err := c.{{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{genResponseTypeName $opid}}(rsp)
+}
+{{end}}{{/* if .GenerateGenericForm */}}
+{{end}}

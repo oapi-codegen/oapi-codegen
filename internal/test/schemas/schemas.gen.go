@@ -114,15 +114,6 @@ func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
 	return response, nil
 }
 
-// Issue30 request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
-	rsp, err := c.Issue30(ctx, pFallthrough)
-	if err != nil {
-		return nil, err
-	}
-	return Parseissue30Response(rsp)
-}
-
 // Parseissue9Response parses an HTTP response from a Issue9WithResponse call
 func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -140,15 +131,6 @@ func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 	}
 
 	return response, nil
-}
-
-// Issue9 request with JSON body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*issue9Response, error) {
-	rsp, err := c.Issue9(ctx, params, body)
-	if err != nil {
-		return nil, err
-	}
-	return Parseissue9Response(rsp)
 }
 
 // NewIssue30Request generates requests for Issue30
@@ -270,6 +252,24 @@ func (r issue9Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Issue30 request returning *Issue30Response
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
+	rsp, err := c.Issue30(ctx, pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+	return Parseissue30Response(rsp)
+}
+
+// Issue9 request with JSON body returning *Issue9Response
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*issue9Response, error) {
+	rsp, err := c.Issue9(ctx, params, body)
+	if err != nil {
+		return nil, err
+	}
+	return Parseissue9Response(rsp)
 }
 
 // ServerInterface represents all server handlers.
