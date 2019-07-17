@@ -98,11 +98,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	// We can't support this in any meaningful way
 	if schema.AnyOf != nil {
-		return Schema{GoType: "interface{}", RefType:refType}, nil
+		return Schema{GoType: "interface{}", RefType: refType}, nil
 	}
 	// We can't support this in any meaningful way
 	if schema.OneOf != nil {
-		return Schema{GoType: "interface{}", RefType:refType}, nil
+		return Schema{GoType: "interface{}", RefType: refType}, nil
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -287,9 +287,13 @@ func GenStructFromSchema(schema Schema) string {
 	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
+		addPropsType := schema.AdditionalPropertiesType.GoType
+		if schema.AdditionalPropertiesType.RefType != "" {
+			addPropsType = schema.AdditionalPropertiesType.RefType
+		}
+
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
-				schema.AdditionalPropertiesType.GoType))
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
