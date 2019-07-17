@@ -28,3 +28,6 @@ type FindPetsParams struct {
 	Tags  *[]string `json:"tags,omitempty"`
 	Limit *int32    `json:"limit,omitempty"`
 }
+
+// AddPetRequestBody defines body for AddPet for application/json ContentType.
+type AddPetJSONRequestBody NewPet

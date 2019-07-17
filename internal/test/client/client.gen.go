@@ -25,6 +25,12 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
+// PostBothRequestBody defines body for PostBoth for application/json ContentType.
+type PostBothJSONRequestBody SchemaObject
+
+// PostJsonRequestBody defines body for PostJson for application/json ContentType.
+type PostJsonJSONRequestBody SchemaObject
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -41,45 +47,29 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBoth request with JSON body
-	PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error)
-
-	// PostBothWithBody request with arbitrary body
+	// PostBoth request  with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error)
 
 	// GetBoth request
 	GetBoth(ctx context.Context) (*http.Response, error)
 
-	// PostJson request with JSON body
+	// PostJson request  with any body
+	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
 	PostJson(ctx context.Context, body SchemaObject) (*http.Response, error)
 
 	// GetJson request
 	GetJson(ctx context.Context) (*http.Response, error)
 
-	// PostOther request with arbitrary body
-	PostOther(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// PostOther request  with any body
+	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	// GetOther request
 	GetOther(ctx context.Context) (*http.Response, error)
 }
 
-// PostBoth request with JSON body
-func (c *Client) PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error) {
-	req, err := NewPostBothRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-// PostBothWithBody request with arbitrary body
 func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewPostBothRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -95,7 +85,21 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
-// GetBoth request
+func (c *Client) PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error) {
+	req, err := NewPostBothRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetBothRequest(c.Server)
 	if err != nil {
@@ -111,7 +115,21 @@ func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// PostJson request with JSON body
+func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewPostJsonRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) PostJson(ctx context.Context, body SchemaObject) (*http.Response, error) {
 	req, err := NewPostJsonRequest(c.Server, body)
 	if err != nil {
@@ -127,7 +145,6 @@ func (c *Client) PostJson(ctx context.Context, body SchemaObject) (*http.Respons
 	return c.Client.Do(req)
 }
 
-// GetJson request
 func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetJsonRequest(c.Server)
 	if err != nil {
@@ -143,8 +160,7 @@ func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// PostOther request with arbitrary body
-func (c *Client) PostOther(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewPostOtherRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -159,7 +175,6 @@ func (c *Client) PostOther(ctx context.Context, contentType string, body io.Read
 	return c.Client.Do(req)
 }
 
-// GetOther request
 func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetOtherRequest(c.Server)
 	if err != nil {
@@ -175,20 +190,18 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-// NewPostBothRequest generates requests for PostBoth with JSON body
+// NewPostBothRequest calls the generic PostBoth builder with application/json body
 func NewPostBothRequest(server string, body SchemaObject) (*http.Request, error) {
 	var bodyReader io.Reader
-
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-
 	return NewPostBothRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostBothRequestWithBody generates requests for PostBoth with non-JSON body
+// NewPostBothRequestWithBody generates requests for PostBoth with any type of body
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -217,20 +230,18 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostJsonRequest generates requests for PostJson with JSON body
+// NewPostJsonRequest calls the generic PostJson builder with application/json body
 func NewPostJsonRequest(server string, body SchemaObject) (*http.Request, error) {
 	var bodyReader io.Reader
-
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-
 	return NewPostJsonRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostJsonRequestWithBody generates requests for PostJson with non-JSON body
+// NewPostJsonRequestWithBody generates requests for PostJson with any type of body
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -259,7 +270,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostOtherRequestWithBody generates requests for PostOther with non-JSON body
+// NewPostOtherRequestWithBody generates requests for PostOther with any type of body
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -429,16 +440,7 @@ func (r getOtherResponse) StatusCode() int {
 	return 0
 }
 
-// PostBoth request with JSON body returning *PostBothResponse
-func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body SchemaObject) (*postBothResponse, error) {
-	rsp, err := c.PostBoth(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParsepostBothResponse(rsp)
-}
-
-// PostBothWithBody request with arbitrary body returning *PostBothResponse
+// PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
 func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postBothResponse, error) {
 	rsp, err := c.PostBothWithBody(ctx, contentType, body)
 	if err != nil {
@@ -447,7 +449,15 @@ func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, 
 	return ParsepostBothResponse(rsp)
 }
 
-// GetBoth request returning *GetBothResponse
+func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body SchemaObject) (*postBothResponse, error) {
+	rsp, err := c.PostBoth(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsepostBothResponse(rsp)
+}
+
+// GetBothWithResponse request returning *GetBothResponse
 func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context) (*getBothResponse, error) {
 	rsp, err := c.GetBoth(ctx)
 	if err != nil {
@@ -456,7 +466,15 @@ func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context) (*getBoth
 	return ParsegetBothResponse(rsp)
 }
 
-// PostJson request with JSON body returning *PostJsonResponse
+// PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
+func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postJsonResponse, error) {
+	rsp, err := c.PostJsonWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsepostJsonResponse(rsp)
+}
+
 func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body SchemaObject) (*postJsonResponse, error) {
 	rsp, err := c.PostJson(ctx, body)
 	if err != nil {
@@ -465,7 +483,7 @@ func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body Sch
 	return ParsepostJsonResponse(rsp)
 }
 
-// GetJson request returning *GetJsonResponse
+// GetJsonWithResponse request returning *GetJsonResponse
 func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context) (*getJsonResponse, error) {
 	rsp, err := c.GetJson(ctx)
 	if err != nil {
@@ -474,16 +492,16 @@ func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context) (*getJson
 	return ParsegetJsonResponse(rsp)
 }
 
-// PostOther request with arbitrary body returning *PostOtherResponse
-func (c *ClientWithResponses) PostOtherWithResponse(ctx context.Context, contentType string, body io.Reader) (*postOtherResponse, error) {
-	rsp, err := c.PostOther(ctx, contentType, body)
+// PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
+func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postOtherResponse, error) {
+	rsp, err := c.PostOtherWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
 	return ParsepostOtherResponse(rsp)
 }
 
-// GetOther request returning *GetOtherResponse
+// GetOtherWithResponse request returning *GetOtherResponse
 func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context) (*getOtherResponse, error) {
 	rsp, err := c.GetOther(ctx)
 	if err != nil {

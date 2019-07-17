@@ -80,7 +80,6 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-
 	// GetContentObject request
 	GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error)
 
@@ -136,7 +135,6 @@ type ClientInterface interface {
 	GetSimplePrimitive(ctx context.Context, param int32) (*http.Response, error)
 }
 
-// GetContentObject request
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error) {
 	req, err := NewGetContentObjectRequest(c.Server, param)
 	if err != nil {
@@ -152,7 +150,6 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*ht
 	return c.Client.Do(req)
 }
 
-// GetCookie request
 func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams) (*http.Response, error) {
 	req, err := NewGetCookieRequest(c.Server, params)
 	if err != nil {
@@ -168,7 +165,6 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams) (*http.
 	return c.Client.Do(req)
 }
 
-// GetHeader request
 func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams) (*http.Response, error) {
 	req, err := NewGetHeaderRequest(c.Server, params)
 	if err != nil {
@@ -184,7 +180,6 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams) (*http.
 	return c.Client.Do(req)
 }
 
-// GetLabelExplodeArray request
 func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
 	req, err := NewGetLabelExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -200,7 +195,6 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32) (*http
 	return c.Client.Do(req)
 }
 
-// GetLabelExplodeObject request
 func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
 	req, err := NewGetLabelExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -216,7 +210,6 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object) (*http
 	return c.Client.Do(req)
 }
 
-// GetLabelNoExplodeArray request
 func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -232,7 +225,6 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32) (*ht
 	return c.Client.Do(req)
 }
 
-// GetLabelNoExplodeObject request
 func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -248,7 +240,6 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object) (*ht
 	return c.Client.Do(req)
 }
 
-// GetMatrixExplodeArray request
 func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeArrayRequest(c.Server, id)
 	if err != nil {
@@ -264,7 +255,6 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.R
 	return c.Client.Do(req)
 }
 
-// GetMatrixExplodeObject request
 func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeObjectRequest(c.Server, id)
 	if err != nil {
@@ -280,7 +270,6 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object) (*http.R
 	return c.Client.Do(req)
 }
 
-// GetMatrixNoExplodeArray request
 func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeArrayRequest(c.Server, id)
 	if err != nil {
@@ -296,7 +285,6 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http
 	return c.Client.Do(req)
 }
 
-// GetMatrixNoExplodeObject request
 func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeObjectRequest(c.Server, id)
 	if err != nil {
@@ -312,7 +300,6 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http
 	return c.Client.Do(req)
 }
 
-// GetPassThrough request
 func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Response, error) {
 	req, err := NewGetPassThroughRequest(c.Server, param)
 	if err != nil {
@@ -328,7 +315,6 @@ func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Respon
 	return c.Client.Do(req)
 }
 
-// GetQueryForm request
 func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams) (*http.Response, error) {
 	req, err := NewGetQueryFormRequest(c.Server, params)
 	if err != nil {
@@ -344,7 +330,6 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams) (
 	return c.Client.Do(req)
 }
 
-// GetSimpleExplodeArray request
 func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -360,7 +345,6 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32) (*htt
 	return c.Client.Do(req)
 }
 
-// GetSimpleExplodeObject request
 func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -376,7 +360,6 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object) (*htt
 	return c.Client.Do(req)
 }
 
-// GetSimpleNoExplodeArray request
 func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -392,7 +375,6 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*h
 	return c.Client.Do(req)
 }
 
-// GetSimpleNoExplodeObject request
 func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -408,7 +390,6 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object) (*h
 	return c.Client.Do(req)
 }
 
-// GetSimplePrimitive request
 func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Response, error) {
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -1444,7 +1425,7 @@ func (r getSimplePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
-// GetContentObject request returning *GetContentObjectResponse
+// GetContentObjectWithResponse request returning *GetContentObjectResponse
 func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*getContentObjectResponse, error) {
 	rsp, err := c.GetContentObject(ctx, param)
 	if err != nil {
@@ -1453,7 +1434,7 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 	return ParsegetContentObjectResponse(rsp)
 }
 
-// GetCookie request returning *GetCookieResponse
+// GetCookieWithResponse request returning *GetCookieResponse
 func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*getCookieResponse, error) {
 	rsp, err := c.GetCookie(ctx, params)
 	if err != nil {
@@ -1462,7 +1443,7 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	return ParsegetCookieResponse(rsp)
 }
 
-// GetHeader request returning *GetHeaderResponse
+// GetHeaderWithResponse request returning *GetHeaderResponse
 func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*getHeaderResponse, error) {
 	rsp, err := c.GetHeader(ctx, params)
 	if err != nil {
@@ -1471,7 +1452,7 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 	return ParsegetHeaderResponse(rsp)
 }
 
-// GetLabelExplodeArray request returning *GetLabelExplodeArrayResponse
+// GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
 func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelExplodeArray(ctx, param)
 	if err != nil {
@@ -1480,7 +1461,7 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 	return ParsegetLabelExplodeArrayResponse(rsp)
 }
 
-// GetLabelExplodeObject request returning *GetLabelExplodeObjectResponse
+// GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
 func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelExplodeObject(ctx, param)
 	if err != nil {
@@ -1489,7 +1470,7 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 	return ParsegetLabelExplodeObjectResponse(rsp)
 }
 
-// GetLabelNoExplodeArray request returning *GetLabelNoExplodeArrayResponse
+// GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
 func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelNoExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelNoExplodeArray(ctx, param)
 	if err != nil {
@@ -1498,7 +1479,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 	return ParsegetLabelNoExplodeArrayResponse(rsp)
 }
 
-// GetLabelNoExplodeObject request returning *GetLabelNoExplodeObjectResponse
+// GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
 func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelNoExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelNoExplodeObject(ctx, param)
 	if err != nil {
@@ -1507,7 +1488,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 	return ParsegetLabelNoExplodeObjectResponse(rsp)
 }
 
-// GetMatrixExplodeArray request returning *GetMatrixExplodeArrayResponse
+// GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
 func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixExplodeArray(ctx, id)
 	if err != nil {
@@ -1516,7 +1497,7 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 	return ParsegetMatrixExplodeArrayResponse(rsp)
 }
 
-// GetMatrixExplodeObject request returning *GetMatrixExplodeObjectResponse
+// GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
 func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixExplodeObject(ctx, id)
 	if err != nil {
@@ -1525,7 +1506,7 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 	return ParsegetMatrixExplodeObjectResponse(rsp)
 }
 
-// GetMatrixNoExplodeArray request returning *GetMatrixNoExplodeArrayResponse
+// GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
 func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixNoExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeArray(ctx, id)
 	if err != nil {
@@ -1534,7 +1515,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 	return ParsegetMatrixNoExplodeArrayResponse(rsp)
 }
 
-// GetMatrixNoExplodeObject request returning *GetMatrixNoExplodeObjectResponse
+// GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
 func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixNoExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeObject(ctx, id)
 	if err != nil {
@@ -1543,7 +1524,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 	return ParsegetMatrixNoExplodeObjectResponse(rsp)
 }
 
-// GetPassThrough request returning *GetPassThroughResponse
+// GetPassThroughWithResponse request returning *GetPassThroughResponse
 func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string) (*getPassThroughResponse, error) {
 	rsp, err := c.GetPassThrough(ctx, param)
 	if err != nil {
@@ -1552,7 +1533,7 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 	return ParsegetPassThroughResponse(rsp)
 }
 
-// GetQueryForm request returning *GetQueryFormResponse
+// GetQueryFormWithResponse request returning *GetQueryFormResponse
 func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*getQueryFormResponse, error) {
 	rsp, err := c.GetQueryForm(ctx, params)
 	if err != nil {
@@ -1561,7 +1542,7 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 	return ParsegetQueryFormResponse(rsp)
 }
 
-// GetSimpleExplodeArray request returning *GetSimpleExplodeArrayResponse
+// GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
 func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleExplodeArray(ctx, param)
 	if err != nil {
@@ -1570,7 +1551,7 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 	return ParsegetSimpleExplodeArrayResponse(rsp)
 }
 
-// GetSimpleExplodeObject request returning *GetSimpleExplodeObjectResponse
+// GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
 func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleExplodeObject(ctx, param)
 	if err != nil {
@@ -1579,7 +1560,7 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 	return ParsegetSimpleExplodeObjectResponse(rsp)
 }
 
-// GetSimpleNoExplodeArray request returning *GetSimpleNoExplodeArrayResponse
+// GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
 func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleNoExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeArray(ctx, param)
 	if err != nil {
@@ -1588,7 +1569,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 	return ParsegetSimpleNoExplodeArrayResponse(rsp)
 }
 
-// GetSimpleNoExplodeObject request returning *GetSimpleNoExplodeObjectResponse
+// GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
 func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleNoExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeObject(ctx, param)
 	if err != nil {
@@ -1597,7 +1578,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 	return ParsegetSimpleNoExplodeObjectResponse(rsp)
 }
 
-// GetSimplePrimitive request returning *GetSimplePrimitiveResponse
+// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
 func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*getSimplePrimitiveResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param)
 	if err != nil {

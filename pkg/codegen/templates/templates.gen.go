@@ -115,30 +115,33 @@ func (r {{$opid | lcFirst}}Response) StatusCode() int {
 {{end}}
 
 
-{{range .}}{{$opid := .OperationId -}}
+{{range .}}
+{{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
-{{if .HasBody}}
-// {{$opid}} request with JSON body returning *{{$opid}}Response
-func (c *ClientWithResponses) {{$opid}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*{{genResponseTypeName $opid}}, error){
-    rsp, err := c.{{$opid}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
-	if err != nil {
-		return nil, err
-	}
-    return Parse{{genResponseTypeName $opid}}(rsp)
-}
-{{end}}{{/* if .HasBody */}}
 
-{{if .GenerateGenericForm}}
-// {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}} returning *{{$opid}}Response
-func (c *ClientWithResponses) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
-    rsp, err := c.{{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
+// {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
+    rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
     }
     return Parse{{genResponseTypeName $opid}}(rsp)
 }
-{{end}}{{/* if .GenerateGenericForm */}}
+
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$bodyRequired := .BodyRequired -}}
+{{range .Bodies}}
+func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.TypeDef}}) (*{{genResponseTypeName $opid}}, error) {
+    rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
+    if err != nil {
+        return nil, err
+    }
+    return Parse{{genResponseTypeName $opid}}(rsp)
+}
 {{end}}
+
+{{end}}{{/* operations */}}
 
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
@@ -176,23 +179,27 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-{{range .}}{{$opid := .OperationId -}}
-{{- if .HasBody}}// {{$opid}} request with JSON body
-    {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error)
-{{- end}}{{/* if .HasBody */}}
-{{if .GenerateGenericForm}}
-    // {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
-    {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
-{{end}}{{/* if .GenerateGenericForm */}}
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$opid := .OperationId -}}
+    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
+{{range .Bodies}}
+    {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.TypeDef}}) (*http.Response, error)
+{{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
 
+
 {{/* Generate client methods */}}
-{{range .}}{{$opid := .OperationId}}
-{{if .HasBody}}
-// {{$opid}} request with JSON body
-func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Response, error){
-    req, err := New{{$opid}}Request(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, body)
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$opid := .OperationId -}}
+
+func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error) {
+    req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
     }
@@ -205,45 +212,47 @@ func (c *Client) {{$opid}}(ctx context.Context{{genParamArgs .PathParams}}{{if .
     }
     return c.Client.Do(req)
 }
-{{end}}{{/* if .HasBody */}}
 
-{{if .GenerateGenericForm}}
-// {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}} request{{if .HasAnyBody}} with arbitrary body{{end}}
-func (c *Client) {{$opid}}{{if .HasMultipleBodies}}WithBody{{end}}(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error){
-    req, err := New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasAnyBody}}, contentType, body{{end}})
+{{range .Bodies}}
+func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.TypeDef}}) (*http.Response, error) {
+    req, err := New{{$opid}}{{.Suffix}}Request(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-            err = c.RequestEditor(req, ctx)
-            if err != nil {
-                return nil, err
-            }
-        }
-    return c.Client.Do(req)
-}
-{{end}}{{/* if .GenerateGenericForm */}}
-{{end}}{{/* range . $opid := .OperationId */}}
-
-{{/* Generate server */}}
-{{range .}}{{$opid := .OperationId -}}
-{{if .HasBody}}
-// New{{$opid}}Request generates requests for {{$opid}} with JSON body
-func New{{$opid}}Request(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}, body {{if not .GetBodyDefinition.Required}}*{{end}}{{if .GetBodyDefinition.CustomType}}{{$opid}}RequestBody{{else}}{{.GetBodyDefinition.TypeDef}}{{end}}) (*http.Request, error) {
-    var bodyReader io.Reader
-    {{if not .GetBodyDefinition.Required}}if body != nil { {{end}}
-        buf, err := json.Marshal(body)
+        err = c.RequestEditor(req, ctx)
         if err != nil {
             return nil, err
         }
-        bodyReader = bytes.NewReader(buf)
-    {{if not .GetBodyDefinition.Required}}}{{end}}
-        return New{{$opid}}RequestWithBody(server{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}, "application/json", bodyReader)
-}{{end}}{{/* end of .HasBody */}}
+    }
+    return c.Client.Do(req)
+}
+{{end}}{{/* range .Bodies */}}
+{{end}}
 
-// New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasAnyBody}} with non-JSON body{{end}}
-func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasAnyBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
+{{/* Generate request builders */}}
+{{range .}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$bodyRequired := .BodyRequired -}}
+{{$opid := .OperationId -}}
+
+{{range .Bodies}}
+// New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
+func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.Schema.TypeDecl}}) (*http.Request, error) {
+    var bodyReader io.Reader
+    buf, err := json.Marshal(body)
+    if err != nil {
+        return nil, err
+    }
+    bodyReader = bytes.NewReader(buf)
+    return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+}
+{{end}}
+
+// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
+func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string
@@ -296,7 +305,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
         queryUrl += "?" + strings.Join(queryStrings, "&")
     }
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasAnyBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
@@ -352,7 +361,7 @@ func New{{$opid}}Request{{if .HasAnyBody}}WithBody{{end}}(server string{{genPara
     req.AddCookie(cookie{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
-    {{if .HasAnyBody}}req.Header.Add("Content-Type", contentType){{end}}
+    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
     return req, nil
 }
 
@@ -417,12 +426,10 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 {{end}}
 }
 `,
-	"request-bodies.tmpl": `{{range .}}
-{{if .HasBody}}
-{{if .GetBodyDefinition.CustomType}}
-// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
-type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
-{{end}}
+	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
+{{range .Bodies}}
+// {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
+type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 {{end}}
 {{end}}
 `,

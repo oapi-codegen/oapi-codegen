@@ -39,6 +39,9 @@ type Issue9Params struct {
 	Foo string `json:"foo"`
 }
 
+// Issue9RequestBody defines body for Issue9 for application/json ContentType.
+type Issue9JSONRequestBody Issue9JSONBody
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -55,15 +58,15 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
-	// Issue9 request with JSON body
-	Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*http.Response, error)
+	// Issue9 request  with any body
+	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
+
+	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*http.Response, error)
 }
 
-// Issue30 request
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
 	req, err := NewIssue30Request(c.Server, pFallthrough)
 	if err != nil {
@@ -79,8 +82,22 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Respon
 	return c.Client.Do(req)
 }
 
-// Issue9 request with JSON body
-func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*http.Response, error) {
+func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewIssue9RequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -116,20 +133,18 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	return req, nil
 }
 
-// NewIssue9Request generates requests for Issue9 with JSON body
-func NewIssue9Request(server string, params *Issue9Params, body *Issue9JSONBody) (*http.Request, error) {
+// NewIssue9Request calls the generic Issue9 builder with application/json body
+func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if body != nil {
-		buf, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
-		}
-		bodyReader = bytes.NewReader(buf)
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
 	}
+	bodyReader = bytes.NewReader(buf)
 	return NewIssue9RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewIssue9RequestWithBody generates requests for Issue9 with non-JSON body
+// NewIssue9RequestWithBody generates requests for Issue9 with any type of body
 func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -216,7 +231,7 @@ func (r issue9Response) StatusCode() int {
 	return 0
 }
 
-// Issue30 request returning *Issue30Response
+// Issue30WithResponse request returning *Issue30Response
 func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
 	if err != nil {
@@ -225,8 +240,16 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 	return Parseissue30Response(rsp)
 }
 
-// Issue9 request with JSON body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONBody) (*issue9Response, error) {
+// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
+func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*issue9Response, error) {
+	rsp, err := c.Issue9WithBody(ctx, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return Parseissue9Response(rsp)
+}
+
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err

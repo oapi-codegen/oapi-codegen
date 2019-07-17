@@ -1,8 +1,6 @@
-{{range .}}
-{{if .HasBody}}
-{{if .GetBodyDefinition.CustomType}}
-// {{.OperationId}}RequestBody defines body for {{.OperationId}} for application/json ContentType.
-type {{.OperationId}}RequestBody {{.GetBodyDefinition.TypeDef}}
-{{end}}
+{{range .}}{{$opid := .OperationId}}
+{{range .Bodies}}
+// {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
+type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 {{end}}
 {{end}}

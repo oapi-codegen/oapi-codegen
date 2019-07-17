@@ -109,6 +109,9 @@ type BodyWithAddPropsJSONBody_Inner struct {
 	AdditionalProperties map[string]int `json:"-"`
 }
 
+// BodyWithAddPropsRequestBody defines body for BodyWithAddProps for application/json ContentType.
+type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody
+
 // Getter for additional properties for ParamsWithAddPropsParams_P1. Returns the specified
 // element and whether it was found
 func (a ParamsWithAddPropsParams_P1) Get(fieldName string) (value interface{}, found bool) {
@@ -668,15 +671,15 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-
 	// ParamsWithAddProps request
 	ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams) (*http.Response, error)
 
-	// BodyWithAddProps request with JSON body
+	// BodyWithAddProps request  with any body
+	BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
 	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONBody) (*http.Response, error)
 }
 
-// ParamsWithAddProps request
 func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams) (*http.Response, error) {
 	req, err := NewParamsWithAddPropsRequest(c.Server, params)
 	if err != nil {
@@ -692,7 +695,21 @@ func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPr
 	return c.Client.Do(req)
 }
 
-// BodyWithAddProps request with JSON body
+func (c *Client) BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewBodyWithAddPropsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONBody) (*http.Response, error) {
 	req, err := NewBodyWithAddPropsRequest(c.Server, body)
 	if err != nil {
@@ -746,20 +763,18 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 	return req, nil
 }
 
-// NewBodyWithAddPropsRequest generates requests for BodyWithAddProps with JSON body
+// NewBodyWithAddPropsRequest calls the generic BodyWithAddProps builder with application/json body
 func NewBodyWithAddPropsRequest(server string, body BodyWithAddPropsJSONBody) (*http.Request, error) {
 	var bodyReader io.Reader
-
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-
 	return NewBodyWithAddPropsRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewBodyWithAddPropsRequestWithBody generates requests for BodyWithAddProps with non-JSON body
+// NewBodyWithAddPropsRequestWithBody generates requests for BodyWithAddProps with any type of body
 func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -831,7 +846,7 @@ func (r bodyWithAddPropsResponse) StatusCode() int {
 	return 0
 }
 
-// ParamsWithAddProps request returning *ParamsWithAddPropsResponse
+// ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
 func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error) {
 	rsp, err := c.ParamsWithAddProps(ctx, params)
 	if err != nil {
@@ -840,7 +855,15 @@ func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context
 	return ParseparamsWithAddPropsResponse(rsp)
 }
 
-// BodyWithAddProps request with JSON body returning *BodyWithAddPropsResponse
+// BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
+func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*bodyWithAddPropsResponse, error) {
+	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsebodyWithAddPropsResponse(rsp)
+}
+
 func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONBody) (*bodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddProps(ctx, body)
 	if err != nil {

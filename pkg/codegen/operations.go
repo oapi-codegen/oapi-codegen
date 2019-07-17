@@ -176,18 +176,17 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
-	PathParams   []ParameterDefinition // Parameters in the path, eg, /path/:param
-	HeaderParams []ParameterDefinition // Parameters in HTTP headers
-	QueryParams  []ParameterDefinition // Parameters in the query, /path?param
-	CookieParams []ParameterDefinition // Parameters in cookies
-
-	TypeDefinitions []TypeDefinition // These are all the types we need to define for this operation
-
-	Body    *RequestBodyDefinition // The body of the request if it takes one
-	Summary string                 // Summary string from Swagger, used to generate a comment
-	Method  string                 // GET, POST, DELETE, etc.
-	Path    string                 // The Swagger path for the operation, like /resource/{id}
-	Spec    *openapi3.Operation
+	PathParams      []ParameterDefinition // Parameters in the path, eg, /path/:param
+	HeaderParams    []ParameterDefinition // Parameters in HTTP headers
+	QueryParams     []ParameterDefinition // Parameters in the query, /path?param
+	CookieParams    []ParameterDefinition // Parameters in cookies
+	TypeDefinitions []TypeDefinition      // These are all the types we need to define for this operation
+	BodyRequired    bool
+	Bodies          []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Summary         string                  // Summary string from Swagger, used to generate a comment
+	Method          string                  // GET, POST, DELETE, etc.
+	Path            string                  // The Swagger path for the operation, like /resource/{id}
+	Spec            *openapi3.Operation
 }
 
 // Returns the list of all parameters except Path parameters. Path parameters
@@ -213,47 +212,11 @@ func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
 }
 
-// Called by template engine to determine whether to generate a body definition.
-// This is true if the Operation has a body marshalled as application/json
+// This is called by the template engine to determine whether to generate body
+// marshaling code on the client. This is true for all body types, whether or
+// not we generate types for them.
 func (o *OperationDefinition) HasBody() bool {
-	return o.Body != nil
-}
-
-// This returns whether the operation has any kind of body specified
-func (o *OperationDefinition) HasAnyBody() bool {
 	return o.Spec.RequestBody != nil
-}
-
-// This returns whether there are multiple body types for a request.
-func (o *OperationDefinition) HasMultipleBodies() bool {
-	if !o.HasBody() {
-		return false
-	}
-
-	if len(o.Spec.RequestBody.Value.Content) > 1 {
-		return true
-	}
-	return false
-}
-
-// This decides whether we need to generate the second, generic form of a
-// function with a body implementation. This is described in the top level
-// README.
-func (o *OperationDefinition) GenerateGenericForm() bool {
-	return !o.HasBody() || o.HasGenericBody()
-}
-
-// This returns whether we have any non-json body
-func (o *OperationDefinition) HasGenericBody() bool {
-	if o.Spec.RequestBody == nil {
-		return false
-	}
-	for k := range o.Spec.RequestBody.Value.Content {
-		if k != "application/json" {
-			return true
-		}
-	}
-	return false
 }
 
 // This returns the Operations summary as a multi line comment
@@ -267,11 +230,6 @@ func (o *OperationDefinition) SummaryAsComment() string {
 		parts[i] = "// " + p
 	}
 	return strings.Join(parts, "\n")
-}
-
-// Called by the template engine to get the body definition.
-func (o *OperationDefinition) GetBodyDefinition() RequestBodyDefinition {
-	return *(o.Body)
 }
 
 // Produces a list of type definitions for a given Operation for the response
@@ -333,8 +291,22 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 
 // This describes a request body
 type RequestBodyDefinition struct {
-	Required bool // Is this body required, or optional?
-	Schema   Schema
+	// Is this body required, or optional?
+	Required bool
+
+	// This is the schema describing this body
+	Schema Schema
+
+	// When we generate type names, we need a Tag for it, such as JSON, in
+	// which case we will produce "JSONBody".
+	NameTag string
+
+	// This is the content type corresponding to the body, eg, application/json
+	ContentType string
+
+	// Whether this is the default body type. For an operation named OpFoo, we
+	// will not add suffixes like OpFooJSONBody for this one.
+	Default bool
 }
 
 // Returns the Go type definition for a request body
@@ -347,6 +319,17 @@ func (r RequestBodyDefinition) TypeDef() string {
 // TODO: clean up the templates code, it can be simpler.
 func (r RequestBodyDefinition) CustomType() bool {
 	return r.Schema.RefType == ""
+}
+
+// When we're generating multiple functions which relate to request bodies,
+// this generates the suffix. Such as Operation DoFoo would be suffixed with
+// DoFooWithXMLBody.
+func (r RequestBodyDefinition) Suffix() string {
+	// The default response is never suffixed.
+	if r.Default {
+		return ""
+	}
+	return "With" + r.NameTag + "Body"
 }
 
 // This function returns the subset of the specified parameters which are of the
@@ -405,6 +388,11 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				return nil, err
 			}
 
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating body definitions")
+			}
+
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
@@ -412,52 +400,16 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
 				OperationId:  ToCamelCase(op.OperationID),
 				// Replace newlines in summary.
-				Summary: op.Summary,
-				Method:  opName,
-				Path:    requestPath,
-				Spec:    op,
+				Summary:         op.Summary,
+				Method:          opName,
+				Path:            requestPath,
+				Spec:            op,
+				Bodies:          bodyDefinitions,
+				TypeDefinitions: typeDefinitions,
 			}
 
-			// Does request have a body payload?
 			if op.RequestBody != nil {
-				bodyOrRef := op.RequestBody
-				body := bodyOrRef.Value
-
-				// We only generate the body type inline for application/json
-				// content. Users can marshal other body types themselves.
-				content, found := body.Content["application/json"]
-				if found {
-					// We'll generate a schema for the body. The path will generate inner
-					// types as necessary, so we start with OperationIdBody as the base name.
-					bodyTypeName := op.OperationID + "JSONBody"
-					bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
-					if err != nil {
-						return nil, errors.Wrap(err, "error generating request body definition")
-					}
-
-					// If the body is a pre-defined type
-					if bodyOrRef.Ref != "" {
-						bodySchema.RefType = bodyOrRef.Ref
-					}
-
-					// If the request has a body, but it's not a user defined
-					// type under #/components, we'll define a type for it, so
-					// that we have an easy to use type for marshaling.
-					if bodySchema.RefType == "" {
-						td := TypeDefinition{
-							TypeName: bodyTypeName,
-							Schema:   bodySchema,
-						}
-						opDef.TypeDefinitions = append(opDef.TypeDefinitions, td)
-						// The body schema now is a reference to a type
-						bodySchema.RefType = bodyTypeName
-					}
-
-					opDef.Body = &RequestBodyDefinition{
-						Required: body.Required,
-						Schema:   bodySchema,
-					}
-				}
+				opDef.BodyRequired = op.RequestBody.Value.Required
 			}
 
 			// Generate all the type definitions needed for this operation
@@ -467,6 +419,65 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		}
 	}
 	return operations, nil
+}
+
+// This function turns the Swagger body definitions into a list of our body
+// definitions which will be used for code generation.
+func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+	if bodyOrRef == nil {
+		return nil, nil, nil
+	}
+	body := bodyOrRef.Value
+
+	var bodyDefinitions []RequestBodyDefinition
+	var typeDefinitions []TypeDefinition
+
+	for contentType, content := range body.Content {
+		var tag string
+		var defaultBody bool
+
+		switch contentType {
+		case "application/json":
+			tag = "JSON"
+			defaultBody = true
+		default:
+			continue
+		}
+
+		bodyTypeName := operationID + tag + "Body"
+		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
+		if err != nil {
+			return nil, nil, errors.Wrap(err, "error generating request body definition")
+		}
+
+		// If the body is a pre-defined type
+		if bodyOrRef.Ref != "" {
+			bodySchema.RefType = bodyOrRef.Ref
+		}
+
+		// If the request has a body, but it's not a user defined
+		// type under #/components, we'll define a type for it, so
+		// that we have an easy to use type for marshaling.
+		if bodySchema.RefType == "" {
+			td := TypeDefinition{
+				TypeName: bodyTypeName,
+				Schema:   bodySchema,
+			}
+			typeDefinitions = append(typeDefinitions, td)
+			// The body schema now is a reference to a type
+			bodySchema.RefType = bodyTypeName
+		}
+
+		bd := RequestBodyDefinition{
+			Required:    body.Required,
+			Schema:      bodySchema,
+			NameTag:     tag,
+			ContentType: contentType,
+			Default:     defaultBody,
+		}
+		bodyDefinitions = append(bodyDefinitions, bd)
+	}
+	return bodyDefinitions, typeDefinitions, nil
 }
 
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
@@ -481,10 +492,9 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, param.Schema.GetAdditionalTypeDefs()...)
 	}
 
-	if op.Body != nil {
-		typeDefs = append(typeDefs, op.Body.Schema.GetAdditionalTypeDefs()...)
+	for _, body := range op.Bodies {
+		typeDefs = append(typeDefs, body.Schema.GetAdditionalTypeDefs()...)
 	}
-
 	return typeDefs
 }
 
