@@ -58,4 +58,15 @@ func TestAdditionalProperties(t *testing.T) {
 	assert.True(t, found)
 	assert.EqualValues(t, 7, foo)
 
+	// test that additionalProperties that reference a schema work when unmarshalling
+	bossSchema := SchemaObject{
+		FirstName: "bob",
+		Role:      "warehouse manager",
+	}
+
+	buf2 := `{"boss": { "firstName": "bob", "role": "warehouse manager" }, "employee": { "firstName": "kevin", "role": "warehouse"}}`
+	var obj5 AdditionalPropertiesObject5
+	err = json.Unmarshal([]byte(buf2), &obj5)
+	assert.NoError(t, err)
+	assert.Equal(t, bossSchema, obj5.AdditionalProperties["boss"])
 }

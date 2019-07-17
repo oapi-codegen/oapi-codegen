@@ -53,6 +53,11 @@ type AdditionalPropertiesObject4_Inner struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
+// AdditionalPropertiesObject5 defines model for AdditionalPropertiesObject5.
+type AdditionalPropertiesObject5 struct {
+	AdditionalProperties map[string]SchemaObject `json:"-"`
+}
+
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
 	Name   string          `json:"name"`
@@ -652,6 +657,59 @@ func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for AdditionalPropertiesObject5. Returns the specified
+// element and whether it was found
+func (a AdditionalPropertiesObject5) Get(fieldName string) (value SchemaObject, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for AdditionalPropertiesObject5
+func (a *AdditionalPropertiesObject5) Set(fieldName string, value SchemaObject) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]SchemaObject)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for AdditionalPropertiesObject5 to handle AdditionalProperties
+func (a *AdditionalPropertiesObject5) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]SchemaObject)
+		for fieldName, fieldBuf := range object {
+			var fieldVal SchemaObject
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for AdditionalPropertiesObject5 to handle AdditionalProperties
+func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -959,19 +1017,20 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/9xWy27bOhD9FWLuXQp2Hu1GOxdF0RRoGzQBukiMgBFHEVOZVEg6rhDo34shJcuRaVdO",
+	"s2lXtiTO4xyeeTxBpheVVqichfQJKm74Ah0a/3TePX29vcfM0atMK4fK/+VVVcqMO6nV9N5qRe9sVuCC",
+	"e09GV2icRO/pg8RS0J//DeaQwn/TPu40GNnphf9tYzVNAgYfltKggPSq9TCn1w5/umlVcjkI6eoKIQXr",
+	"jFR30NBRgTYzsqIcIQXO1vggATKHhyWaeh0MrXunRZvzt/WL+q9DHnzYSivbgQkP/8hNzpiVi6pE1oFk",
+	"ug/WZkGOZkJIMuHl+RpFSOvYA4983ogvlcM7NLAV/iO3rLdlPUNM54yMmVQOkgF1UsR9K77ACOoEdBUC",
+	"xCh5zql3kVCEedId7RhJ9rBwspuFnJcWh8Dfa7RMacd4WepVnIM/xf1K0E53Q3NmuYVsRoAs46qOoKq3",
+	"MB2Q+2Fpvzksba9EpVW90EvLciottipkVrBil0a370cpNL8L+6rwx5mHvJKXsPh2X3WP71zj634lXcGC",
+	"E5Zrw4TM/CETCN9KPUT4Ll3xyWq1bqqjWE7gkZdL9B0s12bBHaTg+3ay4+jJiKPxsmsjxdh/RtVW7rk0",
+	"1n3ZBcDocoQA/Klkw9XcjwKpck3GpcxQWeyZgs9nl+TdSUfu4RKtYxdoHr2MHtHYcI3Hk6PJUWiwqHgl",
+	"IYXTydHkmCqDu8LnP/Wrgr2hi73hQtwQPP/lDj3c4UAiyyCDfoliXAnG2a0WdVuVLby4iq7pWujBj+Iz",
+	"AWlYwSzpZCbEuU8hebalXQ0zuSyk7VPY3QZ8sI0dqKtKqIiH/hpC+fezeV+T2NKIdbW/iTCtoUnGZKs2",
+	"OprvAes23JKoEIVlTrNbvFZuaRQKGria8fZkmMFUh7FsyXKlzY/dDJzsZeCg7hkR/4ClaNebN828SaDS",
+	"NiI234ZYu7Buqot2Oi4VfRXSYOai+BOS5bXayzPpOGYbkSgtyAOBmheuzuMH0FjWN9aNF06hbv/orqUZ",
+	"SsOv278CAAD//0Y7czRJDQAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

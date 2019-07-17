@@ -109,6 +109,11 @@ components:
           additionalProperties: true
       required: [inner, name]
       additionalProperties: true
+    AdditionalPropertiesObject5:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObject'
     ObjectWithJsonField:
       type: object
       properties:
