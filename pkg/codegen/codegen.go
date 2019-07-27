@@ -279,7 +279,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 
 		types = append(types, TypeDefinition{
 			JsonName: schemaName,
-			TypeName: ToCamelCase(schemaName),
+			TypeName: SchemaNameToTypeName(schemaName),
 			Schema:   goSchema,
 		})
 
@@ -303,7 +303,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		typeDef := TypeDefinition{
 			JsonName: paramName,
 			Schema:   goType,
-			TypeName: ToCamelCase(paramName),
+			TypeName: SchemaNameToTypeName(paramName),
 		}
 
 		if paramOrRef.Ref != "" {
@@ -312,7 +312,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", paramOrRef.Ref, paramName))
 			}
-			typeDef.TypeName = ToCamelCase(refType)
+			typeDef.TypeName = SchemaNameToTypeName(refType)
 		}
 
 		types = append(types, typeDef)
@@ -342,7 +342,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
-				TypeName: ToCamelCase(responseName),
+				TypeName: SchemaNameToTypeName(responseName),
 			}
 
 			if responseOrRef.Ref != "" {
@@ -351,7 +351,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				if err != nil {
 					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
 				}
-				typeDef.TypeName = ToCamelCase(refType)
+				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
 		}
@@ -380,7 +380,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 			typeDef := TypeDefinition{
 				JsonName: bodyName,
 				Schema:   goType,
-				TypeName: ToCamelCase(bodyName),
+				TypeName: SchemaNameToTypeName(bodyName),
 			}
 
 			if bodyOrRef.Ref != "" {
@@ -389,7 +389,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				if err != nil {
 					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in body %s", bodyOrRef.Ref, bodyName))
 				}
-				typeDef.TypeName = ToCamelCase(refType)
+				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
 		}

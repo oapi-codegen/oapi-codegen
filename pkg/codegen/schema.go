@@ -59,7 +59,7 @@ type Property struct {
 }
 
 func (p Property) GoFieldName() string {
-	return ToCamelCase(p.JsonFieldName)
+	return SchemaNameToTypeName(p.JsonFieldName)
 }
 
 func (p Property) GoTypeDef() string {

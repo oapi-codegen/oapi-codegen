@@ -37,6 +37,16 @@ paths:
         required: true
         schema:
           type: string
+  /issues/41/{1param}:
+    get:
+      operationId: Issue41
+      description: Parameter name starting with number
+      parameters:
+        - name: 1param
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/5StartsWithNumber"
 components:
   schemas:
     GenericObject:
@@ -47,3 +57,6 @@ components:
     CustomStringType:
       type: string
       format: custom
+    5StartsWithNumber:
+      type: object
+      description: This schema name starts with a number

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
@@ -111,6 +112,9 @@ func (pd ParameterDefinition) GoVariableName() string {
 	name := LowercaseFirstCharacter(pd.GoName())
 	if IsGoKeyword(name) {
 		name = "p" + UppercaseFirstCharacter(name)
+	}
+	if unicode.IsNumber([]rune(name)[0]) {
+		name = "n" + name
 	}
 	return name
 }

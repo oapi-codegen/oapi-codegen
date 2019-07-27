@@ -19,6 +19,9 @@ import (
 	"strings"
 )
 
+// N5StartsWithNumber defines model for 5StartsWithNumber.
+type N5StartsWithNumber map[string]interface{}
+
 // AnyType1 defines model for AnyType1.
 type AnyType1 interface{}
 
@@ -64,6 +67,9 @@ type ClientInterface interface {
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
+	// Issue41 request
+	Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http.Response, error)
+
 	// Issue9 request  with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
 
@@ -72,6 +78,21 @@ type ClientInterface interface {
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
 	req, err := NewIssue30Request(c.Server, pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http.Response, error) {
+	req, err := NewIssue41Request(c.Server, n1param)
 	if err != nil {
 		return nil, err
 	}
@@ -127,6 +148,27 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	}
 
 	queryUrl := fmt.Sprintf("%s/issues/30/%s", server, pathParam0)
+
+	req, err := http.NewRequest("GET", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewIssue41Request generates requests for Issue41
+func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "1param", n1param)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/issues/41/%s", server, pathParam0)
 
 	req, err := http.NewRequest("GET", queryUrl, nil)
 	if err != nil {
@@ -224,6 +266,27 @@ func (r issue30Response) StatusCode() int {
 	return 0
 }
 
+type issue41Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r issue41Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r issue41Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type issue9Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -252,6 +315,15 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 		return nil, err
 	}
 	return Parseissue30Response(rsp)
+}
+
+// Issue41WithResponse request returning *Issue41Response
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*issue41Response, error) {
+	rsp, err := c.Issue41(ctx, n1param)
+	if err != nil {
+		return nil, err
+	}
+	return Parseissue41Response(rsp)
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
@@ -290,6 +362,25 @@ func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
 	return response, nil
 }
 
+// Parseissue41Response parses an HTTP response from a Issue41WithResponse call
+func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue41Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // Parseissue9Response parses an HTTP response from a Issue9WithResponse call
 func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -313,6 +404,8 @@ func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 type ServerInterface interface {
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
+	// (GET /issues/41/{1param})
+	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
@@ -335,6 +428,22 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
+	return err
+}
+
+// Issue41 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "1param" -------------
+	var n1param N5StartsWithNumber
+
+	err = runtime.BindStyledParameter("simple", false, "1param", ctx.Param("1param"), &n1param)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue41(ctx, n1param)
 	return err
 }
 
@@ -369,6 +478,7 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	}
 
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
+	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
 
 }
@@ -376,15 +486,17 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5SSPXPbPAyA/woOs0523kzR9jZDL1N6TbYmA0xCFlOKZEDSqU7H/94jbTfONUs3SsTH",
-	"84BYUfk5eMcuRRxWjGrimdrxf7c8LoGvcFhLd/76r95ojkpMSMY7HPBxMhHi5LPVsGMgB8YllpEUrwVL",
-	"h7c5Jj8/JDFuX2vUEqOXmRIOqNoldpjaDcYWVtO+smMx6n73wirVnFOEP/4opXRo3Og/IeKYQFHkCKMX",
-	"OJAYnyOYGHP7lZ0Gf2CBZGbu4ZtligykNRCkc25NfXLkFtjlPYzmF+v+yVVQkyyfuzywHFiwwwNLPHa/",
-	"6rf9tgr4wI6CwQGv+21/hR0GSlOb7ebIsrnebtaRrE2T+Lyfyt8u3znWFhp+8vLmRV+OOgg3LjCuSdLO",
-	"MjiaOR5J99zm5gML1XJ3Gge8q52vG2AgoZkTS8Thx4qm9quI2GGtggNesGGHwq/ZCGsckmTuTsty8TTn",
-	"xyvPpfvjeFMDTigf3W6tYZegYUSoNcA45UVYJbvUs82adXvE2rsO/M2kCXZeL0BOP7l3haPyJ643+Lnp",
-	"a2ZZLlS9/zfFYzDH9MXrpUYo7xK75kkhWKMayOYlVtn1vVTb3I+TuG8Hss3sA8ZINnJpKW0RTgZZLA44",
-	"pRSGzea0aHV1e80cZgo9GSzP5XcAAAD//zmfd/ffAwAA",
+	"H4sIAAAAAAAC/5STQVPbMBCF/8rOtkePnRR6QLeWQ4dLYQozPRQOirWORW1JSKtQj8f/vSM5IaZAO70p",
+	"jlbvfW93R6xt76whwwHFiKFuqZf5+PGapefwXXP7NfYb8umjolB77VhbgwJvWh1gLgEje4KQS+BRcwsS",
+	"zFxWIA+OUKDd3FPNOBX4yQw3g6M1ivH468NbAq2NnYINgTSgDZNvZE3jlB46j4Ftf81em+1NVhmxsb6X",
+	"jALr/OdRP+RrqewLGfK6vpwNifFPh9NUoDaNfcURBYZaBgrQWA876bWNAXQIMX+KRoHdkQfWPZVw1ZEM",
+	"BFIpkMCH2lR6a6QZYBO30OhfpMpbk4xq7uigck1+l+PbkQ+z+rpclasEYB0Z6TQKPClX5RoLdJLb3Ldq",
+	"9lKdrKqxkV3Hrbdx204vWb5RSBIKftLwaL1aRu08ZV+gTYaUm45yj8PsdEs5N+vIy/TchUKBF0n5JBt0",
+	"0suemHxA8WNEnfSSRSwwvYICF96wQE8PUXtSKNhHKvaDuGjNoXnT3VQ8MZ6uq3GdpTLe3tRzyquDk8WI",
+	"arOdh/RpRF8BOZ1j/RfHrP9XhPeeGhT4rjouW7XftOrlmiXEBePZm2TnnSbDkPUDpJxAm9p6TzV3Qzp3",
+	"UZHKg5rMpaHK1BurBpBG3Zoj3tzWV2I4eyOFh0h+WLTT2v9r43yZAn+2akg3amuYTOaUznW6zkaq+5Bg",
+	"x+NTeTufJ3GZD7LLZM9sNLILNOWSPOx7gug7FNgyO1FV+2VK61kqItdLV0qN0930OwAA///Z/BiYHwUA",
+	"AA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

@@ -201,7 +201,7 @@ func RefPathToGoType(refPath string) (string, error) {
 	if len(pathParts) != 4 {
 		return "", errors.New("Parameter nesting is deeper than supported")
 	}
-	return ToCamelCase(pathParts[3]), nil
+	return SchemaNameToTypeName(pathParts[3]), nil
 }
 
 // This function converts a swagger style path URI with parameters to a
@@ -293,12 +293,15 @@ func IsGoKeyword(str string) bool {
 	return false
 }
 
-// Prefixes a string if it's a go keyword
-func PrefixKeyword(str, prefix string) string {
-	if IsGoKeyword(str) {
-		return prefix + UppercaseFirstCharacter(str)
+// Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
+// valid in Go
+func SchemaNameToTypeName(name string) string {
+	name = ToCamelCase(name)
+	// Prepend "N" to schemas starting with a number
+	if unicode.IsDigit([]rune(name)[0]) {
+		name = "N" + name
 	}
-	return str
+	return name
 }
 
 // According to the spec, additionalProperties may be true, false, or a
