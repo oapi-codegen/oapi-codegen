@@ -2139,7 +2139,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 	headers := ctx.Request().Header
 	// ------------- Optional header parameter "X-Primitive" -------------
-	if valueList, found := headers["X-Primitive"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive")]; found {
 		var XPrimitive int32
 		n := len(valueList)
 		if n != 1 {
@@ -2154,7 +2154,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XPrimitive = &XPrimitive
 	}
 	// ------------- Optional header parameter "X-Primitive-Exploded" -------------
-	if valueList, found := headers["X-Primitive-Exploded"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive-Exploded")]; found {
 		var XPrimitiveExploded int32
 		n := len(valueList)
 		if n != 1 {
@@ -2169,7 +2169,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XPrimitiveExploded = &XPrimitiveExploded
 	}
 	// ------------- Optional header parameter "X-Array-Exploded" -------------
-	if valueList, found := headers["X-Array-Exploded"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Array-Exploded")]; found {
 		var XArrayExploded []int32
 		n := len(valueList)
 		if n != 1 {
@@ -2184,7 +2184,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XArrayExploded = &XArrayExploded
 	}
 	// ------------- Optional header parameter "X-Array" -------------
-	if valueList, found := headers["X-Array"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Array")]; found {
 		var XArray []int32
 		n := len(valueList)
 		if n != 1 {
@@ -2199,7 +2199,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XArray = &XArray
 	}
 	// ------------- Optional header parameter "X-Object-Exploded" -------------
-	if valueList, found := headers["X-Object-Exploded"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Object-Exploded")]; found {
 		var XObjectExploded Object
 		n := len(valueList)
 		if n != 1 {
@@ -2214,7 +2214,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XObjectExploded = &XObjectExploded
 	}
 	// ------------- Optional header parameter "X-Object" -------------
-	if valueList, found := headers["X-Object"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Object")]; found {
 		var XObject Object
 		n := len(valueList)
 		if n != 1 {
@@ -2229,7 +2229,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.XObject = &XObject
 	}
 	// ------------- Optional header parameter "X-Complex-Object" -------------
-	if valueList, found := headers["X-Complex-Object"]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("X-Complex-Object")]; found {
 		var XComplexObject ComplexObject
 		n := len(valueList)
 		if n != 1 {

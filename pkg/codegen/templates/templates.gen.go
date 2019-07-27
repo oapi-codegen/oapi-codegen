@@ -518,7 +518,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{if .HeaderParams}}
     headers := ctx.Request().Header
 {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
-    if valueList, found := headers["{{.ParamName}}"]; found {
+    if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
         var {{.GoName}} {{.TypeDef}}
         n := len(valueList)
         if n != 1 {
