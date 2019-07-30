@@ -53,7 +53,7 @@ type ClientInterface interface {
 	// PostBoth request  with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error)
+	PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error)
 
 	// GetBoth request
 	GetBoth(ctx context.Context) (*http.Response, error)
@@ -61,7 +61,7 @@ type ClientInterface interface {
 	// PostJson request  with any body
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	PostJson(ctx context.Context, body SchemaObject) (*http.Response, error)
+	PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error)
 
 	// GetJson request
 	GetJson(ctx context.Context) (*http.Response, error)
@@ -88,7 +88,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostBoth(ctx context.Context, body SchemaObject) (*http.Response, error) {
+func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error) {
 	req, err := NewPostBothRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -133,7 +133,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostJson(ctx context.Context, body SchemaObject) (*http.Response, error) {
+func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error) {
 	req, err := NewPostJsonRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 }
 
 // NewPostBothRequest calls the generic PostBoth builder with application/json body
-func NewPostBothRequest(server string, body SchemaObject) (*http.Request, error) {
+func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -234,7 +234,7 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 }
 
 // NewPostJsonRequest calls the generic PostJson builder with application/json body
-func NewPostJsonRequest(server string, body SchemaObject) (*http.Request, error) {
+func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -463,7 +463,7 @@ func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, 
 	return ParsepostBothResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body SchemaObject) (*postBothResponse, error) {
+func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*postBothResponse, error) {
 	rsp, err := c.PostBoth(ctx, body)
 	if err != nil {
 		return nil, err
@@ -489,7 +489,7 @@ func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, 
 	return ParsepostJsonResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body SchemaObject) (*postJsonResponse, error) {
+func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*postJsonResponse, error) {
 	rsp, err := c.PostJson(ctx, body)
 	if err != nil {
 		return nil, err

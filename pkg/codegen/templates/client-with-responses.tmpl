@@ -69,7 +69,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
-func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.TypeDef}}) (*{{genResponseTypeName $opid}}, error) {
+func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error) {
     rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
