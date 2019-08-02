@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -117,13 +118,33 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		mergedSchema.RefType = refType
 		return mergedSchema, nil
 	}
-
-	// Schema type and format, eg. string / binary
-	t := schema.Type
-
 	outSchema := Schema{
 		RefType: refType,
 	}
+
+	// Check for custom Go type extensipn
+	if typeName, ok := schema.Extensions["x-go-type"]; ok {
+		if raw, isRawMessage := typeName.(json.RawMessage); isRawMessage {
+			var typeString string
+			err := json.Unmarshal(raw, &typeString)
+			if err != nil {
+				return outSchema, errors.Wrap(err, `invalid value for "x-go-type"`)
+			}
+			outSchema.GoType = typeString
+			return outSchema, nil
+		}
+		return outSchema, fmt.Errorf(`invalid value for "x-go-type"`)
+	}
+
+	// Already has custom type
+	if outSchema.GoType != "" {
+		return outSchema, nil
+	}
+
+	// Schema type and format, eg. string / binary
+	t := schema.Type
+	f := schema.Format
+
 	// Handle objects and empty schemas first as a special case
 	if t == "" || t == "object" {
 		var outType string
@@ -193,58 +214,56 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.GoType = GenStructFromSchema(outSchema)
 		}
 		return outSchema, nil
-	} else {
-		f := schema.Format
+	}
 
-		switch t {
-		case "array":
-			// For arrays, we'll get the type of the Items and throw a
-			// [] in front of it.
-			arrayType, err := GenerateGoSchema(schema.Items, path)
-			if err != nil {
-				return Schema{}, errors.Wrap(err, "error generating type for array")
-			}
-			outSchema.GoType = "[]" + arrayType.TypeDecl()
-		case "integer":
-			// We default to int if format doesn't ask for something else.
-			if f == "int64" {
-				outSchema.GoType = "int64"
-			} else if f == "int32" {
-				outSchema.GoType = "int32"
-			} else if f == "" {
-				outSchema.GoType = "int"
-			} else {
-				return Schema{}, fmt.Errorf("invalid integer format: %s", f)
-			}
-		case "number":
-			// We default to float for "number"
-			if f == "double" {
-				outSchema.GoType = "float64"
-			} else if f == "float" || f == "" {
-				outSchema.GoType = "float32"
-			} else {
-				return Schema{}, fmt.Errorf("invalid number format: %s", f)
-			}
-		case "boolean":
-			if f != "" {
-				return Schema{}, fmt.Errorf("invalid format (%s) for boolean", f)
-			}
-			outSchema.GoType = "bool"
-		case "string":
-			// Special case string formats here.
-			switch f {
-			case "date-time", "date":
-				outSchema.GoType = "time.Time"
-			case "json":
-				outSchema.GoType = "json.RawMessage"
-				outSchema.SkipOptionalPointer = true
-			default:
-				// All unrecognized formats are simply a regular string.
-				outSchema.GoType = "string"
-			}
-		default:
-			return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
+	switch t {
+	case "array":
+		// For arrays, we'll get the type of the Items and throw a
+		// [] in front of it.
+		arrayType, err := GenerateGoSchema(schema.Items, path)
+		if err != nil {
+			return Schema{}, errors.Wrap(err, "error generating type for array")
 		}
+		outSchema.GoType = "[]" + arrayType.TypeDecl()
+	case "integer":
+		// We default to int if format doesn't ask for something else.
+		if f == "int64" {
+			outSchema.GoType = "int64"
+		} else if f == "int32" {
+			outSchema.GoType = "int32"
+		} else if f == "" {
+			outSchema.GoType = "int"
+		} else {
+			return Schema{}, fmt.Errorf("invalid integer format: %s", f)
+		}
+	case "number":
+		// We default to float for "number"
+		if f == "double" {
+			outSchema.GoType = "float64"
+		} else if f == "float" || f == "" {
+			outSchema.GoType = "float32"
+		} else {
+			return Schema{}, fmt.Errorf("invalid number format: %s", f)
+		}
+	case "boolean":
+		if f != "" {
+			return Schema{}, fmt.Errorf("invalid format (%s) for boolean", f)
+		}
+		outSchema.GoType = "bool"
+	case "string":
+		// Special case string formats here.
+		switch f {
+		case "date-time", "date":
+			outSchema.GoType = "time.Time"
+		case "json":
+			outSchema.GoType = "json.RawMessage"
+			outSchema.SkipOptionalPointer = true
+		default:
+			// All unrecognized formats are simply a regular string.
+			outSchema.GoType = "string"
+		}
+	default:
+		return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
 	}
 	return outSchema, nil
 }
