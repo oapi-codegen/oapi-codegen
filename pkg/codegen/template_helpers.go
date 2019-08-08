@@ -94,7 +94,7 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(operationID string, responses openapi3.Responses) string {
+func genResponseUnmarshal(operationID string, responses openapi3.Responses, typeMap map[string]string) string {
 	var buffer = bytes.NewBufferString("")
 	var mostSpecific = make(map[string]string)  // content-type and status-code
 	var lessSpecific = make(map[string]string)  // status-code only
@@ -142,7 +142,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 			}
 
 			// Make sure that we actually have a go-type for this response:
-			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName})
+			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName}, typeMap)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
 				continue
@@ -239,15 +239,15 @@ func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
-	"genParamArgs":         genParamArgs,
-	"genParamTypes":        genParamTypes,
-	"genParamNames":        genParamNames,
-	"genParamFmtString":    genParamFmtString,
-	"swaggerUriToEchoUri":  SwaggerUriToEchoUri,
-	"lcFirst":              LowercaseFirstCharacter,
-	"camelCase":            ToCamelCase,
-	"genResponsePayload":   genResponsePayload,
-	"genResponseTypeName":  genResponseTypeName,
-	"genResponseUnmarshal": genResponseUnmarshal,
+	"genParamArgs":               genParamArgs,
+	"genParamTypes":              genParamTypes,
+	"genParamNames":              genParamNames,
+	"genParamFmtString":          genParamFmtString,
+	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+	"lcFirst":                    LowercaseFirstCharacter,
+	"camelCase":                  ToCamelCase,
+	"genResponsePayload":         genResponsePayload,
+	"genResponseTypeName":        genResponseTypeName,
+	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 }

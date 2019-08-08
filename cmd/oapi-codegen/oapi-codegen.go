@@ -30,16 +30,36 @@ func errExit(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
+// TODO define a type to allow recording of Type -> Import Path as args
+// TODO this is temporary until we sort the config question
+type refImports []string
+
+func (ri *refImports) String() string {
+	return "Reference Import arg"
+}
+
+func (ri *refImports) Set(r string) error {
+	*ri = append(*ri, r)
+	return nil
+}
+
 func main() {
 	var (
 		packageName string
 		generate    string
 		outputFile  string
+		refImports  refImports
+		allowRefs   bool
+		insecure    bool
 	)
+
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", client", "server", "spec"  (default types,client,server,"spec")`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "server", "spec"  (default types,client,server,"spec")`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
+	flag.Var(&refImports, "ri", "Repeated reference import statements of the form Type=<import path>")
+	flag.BoolVar(&allowRefs, "extrefs", false, "Allow resolving external references")
+	flag.BoolVar(&insecure, "insecure", false, "Allow resolving remote URL's that have bad SSL/TLS")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -75,9 +95,22 @@ func main() {
 		}
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	// Add user defined type -> import mapping
+	typeImports := map[string]string{}
+	for _, ri := range refImports {
+		parts := strings.Split(ri, "=")
+		if len(parts) != 2 {
+			fmt.Printf("invalid ref import arg. %s\n", ri)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+		typeImports[parts[0]] = parts[1]
+	}
+	opts.TypeImports = typeImports
+
+	swagger, err := util.LoadSwagger(flag.Arg(0), allowRefs, insecure)
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExit("error loading swagger spec:\n%s\n", err)
 	}
 
 	code, err := codegen.Generate(swagger, packageName, opts)
@@ -88,7 +121,7 @@ func main() {
 	if outputFile != "" {
 		err = ioutil.WriteFile(outputFile, []byte(code), 0644)
 		if err != nil {
-			errExit("error writing generated code to file: %s", err)
+			errExit("error writing generated code to file: %s\n", err)
 		}
 	} else {
 		fmt.Println(code)

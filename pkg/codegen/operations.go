@@ -141,12 +141,12 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
-func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+func DescribeParameters(params openapi3.Parameters, path []string, typeMap map[string]string) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		goType, err := paramToGoType(param, append(path, param.Name), typeMap)
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
@@ -164,7 +164,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
 		if paramOrRef.Ref != "" {
-			goType, err := RefPathToGoType(paramOrRef.Ref)
+			goType, err := RefPathToGoType(paramOrRef.Ref, typeMap)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
 					paramOrRef.Ref, param.Name, err)
@@ -190,6 +190,7 @@ type OperationDefinition struct {
 	Summary         string                  // Summary string from Swagger, used to generate a comment
 	Method          string                  // GET, POST, DELETE, etc.
 	Path            string                  // The Swagger path for the operation, like /resource/{id}
+	TypeMap         map[string]string       // map of typename to go path for import
 	Spec            *openapi3.Operation
 }
 
@@ -255,7 +256,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName}, o.TypeMap)
 					if err != nil {
 						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
 					}
@@ -279,7 +280,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						Schema:   responseSchema,
 					}
 					if contentType.Schema.Ref != "" {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+						refType, err := RefPathToGoType(contentType.Schema.Ref, o.TypeMap)
 						if err != nil {
 							return nil, errors.Wrap(err, "error dereferencing response Ref")
 						}
@@ -349,14 +350,14 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.Swagger, typeMap map[string]string) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		globalParams, err := DescribeParameters(pathItem.Parameters, nil, typeMap)
 		if err != nil {
 			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
@@ -374,7 +375,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"}, typeMap)
 			if err != nil {
 				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
@@ -392,7 +393,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody, typeMap)
 			if err != nil {
 				return nil, errors.Wrap(err, "error generating body definitions")
 			}
@@ -410,6 +411,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				TypeDefinitions: typeDefinitions,
+				TypeMap:         typeMap,
 			}
 
 			if op.RequestBody != nil {
@@ -427,7 +429,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 // This function turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef, typeMap map[string]string) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
@@ -449,7 +451,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bodyTypeName := operationID + tag + "Body"
-		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
+		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName}, typeMap)
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "error generating request body definition")
 		}
@@ -457,7 +459,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// If the body is a pre-defined type
 		if bodyOrRef.Ref != "" {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(bodyOrRef.Ref)
+			refType, err := RefPathToGoType(bodyOrRef.Ref, typeMap)
 			if err != nil {
 				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
 			}

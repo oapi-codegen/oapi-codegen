@@ -134,22 +134,91 @@ func TestSortedRequestBodyKeys(t *testing.T) {
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	goType, err := RefPathToGoType("#/components/schemas/Foo")
-	assert.Equal(t, "Foo", goType)
-	assert.NoError(t, err, "Expecting no error")
+	testTable := map[string]struct {
+		path    string
+		typeMap map[string]string
+		goType  string
+		isErr   bool
+	}{
+		"Pascal case": {
+			"#/components/schemas/Foo",
+			nil,
+			"Foo",
+			false,
+		},
+		"Snake case": {
+			"#/components/parameters/foo_bar",
+			nil,
+			"FooBar",
+			false,
+		},
+		"remote ref, no typemap": {
+			"http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			nil,
+			"",
+			true,
+		},
+		"path ref, no typemap": {
+			"doc.json#/components/parameters/foo_bar",
+			nil,
+			"",
+			true,
+		},
+		"remote ref, matches typemap": {
+			"http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			map[string]string{"FooBar": "github.com/me/mypkg"},
+			"mypkg.FooBar",
+			false,
+		},
+		"path ref, matches typemap": {
+			"doc.json#/components/parameters/foo_bar",
+			map[string]string{"FooBar": "github.com/me/mypkg"},
+			"mypkg.FooBar",
+			false,
+		},
+		"remote ref, no match in typemap": {
+			"http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			map[string]string{"Foo": "github.com/me/mypkg"},
+			"",
+			true,
+		},
+		"path ref, no match in typemap": {
+			"doc.json#/components/parameters/foo_bar",
+			map[string]string{"Foo": "github.com/me/mypkg"},
+			"",
+			true,
+		},
+		"reference depth incorrect": {
+			"#/components/parameters/foo/components/bar",
+			nil,
+			"",
+			true,
+		},
+		"invalid path, too many #": {
+			"#/components/parameters/foo#",
+			nil,
+			"",
+			true,
+		},
+		"invalid path, no #": {
+			"/components/parameters/foo",
+			nil,
+			"",
+			true,
+		},
+	}
+	for name, test := range testTable {
+		t.Run(name, func(t *testing.T) {
+			goType, err := RefPathToGoType(test.path, test.typeMap)
+			assert.Equal(t, test.goType, goType)
+			if test.isErr {
+				assert.Error(t, err, "Expected an error")
+			} else {
+				assert.NoError(t, err, "Expecting no error")
+			}
+		})
+	}
 
-	goType, err = RefPathToGoType("#/components/parameters/foo_bar")
-	assert.Equal(t, "FooBar", goType)
-	assert.NoError(t, err, "Expecting no error")
-
-	_, err = RefPathToGoType("http://deepmap.com/doc.json#/components/parameters/foo_bar")
-	assert.Errorf(t, err, "Expected an error on URL reference")
-
-	_, err = RefPathToGoType("doc.json#/components/parameters/foo_bar")
-	assert.Errorf(t, err, "Expected an error on remote reference")
-
-	_, err = RefPathToGoType("#/components/parameters/foo/components/bar")
-	assert.Errorf(t, err, "Expected an error on reference depth")
 }
 
 func TestSwaggerUriToEchoUri(t *testing.T) {

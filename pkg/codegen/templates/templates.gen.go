@@ -168,7 +168,7 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
 
     response := {{genResponsePayload $opid}}
 
-    {{genResponseUnmarshal $opid .Spec.Responses}}
+    {{genResponseUnmarshal $opid .Spec.Responses .TypeMap}}
 
     return response, nil
 }

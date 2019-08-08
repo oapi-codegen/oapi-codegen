@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
 
@@ -188,20 +189,38 @@ func StringInArray(str string, array []string) bool {
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
-// Remote components (document.json#/Foo) are not yet supported
-// URL components (http://deepmap.com/schemas/document.json#Foo) are not yet
-// supported
-// We only support flat components for now, so no components in a schema under
-// components.
-func RefPathToGoType(refPath string) (string, error) {
-	pathParts := strings.Split(refPath, "/")
-	if pathParts[0] != "#" {
-		return "", errors.New("Only local document components are supported")
+//
+// To specify remote paths there must also be a typeImport map with the types
+// mapped to import paths.
+// https://foo.com/bar#/components/parameters/Bar -> packagename.Bar
+// foo.json#/components/parameters/Bar -> packagename.Bar
+func RefPathToGoType(refPath string, packages map[string]string) (string, error) {
+	s := strings.Split(refPath, "#")
+	if len(s) < 2 {
+		return "", errors.New("Missing fragment marker - this does not seem like a local or remote reference")
+	} else if len(s) > 2 {
+		return "", errors.New("Extra fragment marker")
 	}
+
+	pathParts := strings.Split(s[len(s)-1], "/")
+
 	if len(pathParts) != 4 {
 		return "", errors.New("Parameter nesting is deeper than supported")
 	}
-	return SchemaNameToTypeName(pathParts[3]), nil
+	schemaName := SchemaNameToTypeName(pathParts[len(pathParts)-1])
+
+	if s[0] != "" {
+		if packages == nil {
+			return "", errors.New("detected remote document component but no TypeImports specified")
+		}
+		packagePath, ok := packages[schemaName]
+		if !ok {
+			return "", errors.New("detected remote document component not specified in TypeImports")
+		}
+		p := strings.Split(packagePath, "/")
+		return p[len(p)-1] + "." + schemaName, nil
+	}
+	return schemaName, nil
 }
 
 // This function converts a swagger style path URI with parameters to a

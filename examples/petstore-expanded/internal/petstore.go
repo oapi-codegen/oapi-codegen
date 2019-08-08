@@ -15,9 +15,10 @@ package internal
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"sync"
+
+	"github.com/labstack/echo/v4"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
 )
