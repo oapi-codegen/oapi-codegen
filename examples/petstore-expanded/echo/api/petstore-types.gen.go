@@ -5,22 +5,14 @@ package api
 
 // Error defines model for Error.
 type Error struct {
-
-	// Error code
-	Code int32 `json:"code"`
-
-	// Error message
+	Code    int32  `json:"code"`
 	Message string `json:"message"`
 }
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
+	Name string  `json:"name"`
+	Tag  *string `json:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
@@ -28,8 +20,6 @@ type Pet struct {
 	// Embedded struct due to allOf(#/components/schemas/NewPet)
 	NewPet
 	// Embedded fields due to inline allOf schema
-
-	// Unique id of the pet
 	Id int64 `json:"id"`
 }
 

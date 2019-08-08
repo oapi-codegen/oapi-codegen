@@ -1,0 +1,11 @@
+linters:
+  enable-all: false
+  presets:
+  - bugs
+  - complexity
+  - unused
+  disable-all: false
+  disable:
+  - gochecknoinits
+  - dupl
+  - gochecknoglobals

@@ -1,0 +1,41 @@
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  desscription: |
+    Ensure discriminator type is generated correctly
+paths:
+components:
+  schemas:
+    Book:
+      type: object
+      properties:
+        classification:
+            $ref: '#/components/schemas/Classification'
+    Classification:
+      oneOf:
+      -  $ref: '#/components/schemas/Novel'
+      -  $ref: '#/components/schemas/Textbook'
+      discriminator:
+        required: true
+        propertyName: type
+
+
+    Novel:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+        genre:
+          type: string
+
+    Textbook:
+      type: object
+      properties:
+        type:
+          type: string
+        field:
+          type: string
+

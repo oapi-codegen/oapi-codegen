@@ -26,7 +26,7 @@ import (
 
 // This generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (string, error) {
+func GenerateInlinedSpec(ctx *genCtx, t *template.Template, swagger *openapi3.Swagger) (string, error) {
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
 	if err != nil {

@@ -1,0 +1,184 @@
+openapi: 3.0.1
+
+info:
+  title: OpenAPI-CodeGen Test
+  description: 'This is a test OpenAPI Spec'
+  version: 1.0.0
+
+servers:
+- url: https://test.oapi-codegen.com/v2
+- url: http://test.oapi-codegen.com/v2
+
+paths:
+  /test/{name}:
+    get:
+      tags:
+      - test
+      summary: Get test
+      operationId: getTestByName
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cat:
+    put:
+      summary: deposit cats
+      operationId: putCats
+      requestBody:
+        description: list of feline creatures
+        required: true
+        content:
+          application-json:
+            schema:
+              $ref: '#/components/schemas/Cats'
+
+    get:
+      tags:
+      - cat
+      summary: Get cat status
+      operationId: getCatStatus
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                discriminator:
+                  propertyName: "type"
+                oneOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+            application/xml:
+              schema:
+                anyOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+            application/yaml:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/CatAlive'
+                - $ref: '#/components/schemas/CatDead'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+
+    Test:
+      properties:
+        name:
+          type: string
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestCase'
+
+    TestCase:
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+
+    Cats:
+      type: object
+      properties:
+        breed:
+          $ref: '#/components/schemas/CatBreed'
+        box:
+          discriminator:
+            propertyName: "type"
+          oneOf:
+            - $ref: '#/components/schemas/CatAlive'
+            - $ref: '#/components/schemas/CatDead'
+    
+    CatBreed:
+      type: object
+      discriminator:
+          propertyName: "type"
+      oneOf:
+        - $ref: '#/components/schemas/Purebred'
+        - $ref: '#/components/schemas/MixedBreed'
+
+    Error:
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
+    Purebred:
+      properties:
+        type:
+          type: string
+          enum:
+          - pure_breed
+        breed:
+          type: string
+        breeder:
+          type: string
+
+    MixedBreed:
+      properties:
+        type:
+          type: string
+          enum:
+          - mixed_breed
+        furColor:
+          type: string
+        furLength:
+          type: string
+
+    CatAlive:
+      properties:
+        type:
+          type: string
+          enum:
+          - cat_alive
+        name:
+          type: string
+        alive_since:
+          type: string
+          format: date-time
+
+    CatDead:
+      properties:
+        type:
+          type: string
+          enum:
+          - cat_dead
+        name:
+          type: string
+        dead_since:
+          type: string
+          format: date-time
+        cause:
+          type: string
+          enum: [car, dog, oldage]

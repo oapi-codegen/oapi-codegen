@@ -11,9 +11,10 @@ import (
 	"os"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/weberr13/oapi-codegen/examples/petstore-expanded/api"
+	"github.com/weberr13/oapi-codegen/pkg/middleware"
 )
 
 func main() {

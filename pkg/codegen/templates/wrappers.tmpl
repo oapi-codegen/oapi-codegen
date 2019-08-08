@@ -3,7 +3,7 @@ type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+{{range .OpDefs}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
@@ -18,7 +18,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }
 {{end}}
 {{if .IsStyled}}
-    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, url.PathUnescape, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
@@ -75,7 +75,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         }
 {{end}}
 {{if .IsStyled}}
-        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+        passthrough := func(s string) (string, error) {
+		    return s, nil
+	    }
+        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, passthrough, "{{.ParamName}}", valueList[0], &{{.GoName}})
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
@@ -107,7 +110,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
-    err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+    passthrough := func(s string) (string, error) {
+		return s, nil
+	}
+    err = runtime.BindStyledParameter("simple",{{.Explode}}, passthrough, "{{.ParamName}}", cookie.Value, &value)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }

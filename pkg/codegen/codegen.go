@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"os"
 	"regexp"
 	"sort"
 	"strings"
@@ -27,19 +28,21 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
+	"github.com/weberr13/oapi-codegen/pkg/codegen/templates"
 )
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateChiServer  bool     // GenerateChiServer specifies whether to generate chi server boilerplate
-	GenerateEchoServer bool     // GenerateEchoServer specifies whether to generate echo server boilerplate
-	GenerateClient     bool     // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes      bool     // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec          bool     // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool     // Whether to skip go fmt on the generated code
-	IncludeTags        []string // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags        []string // Exclude operations that have one of these tags. Ignored when empty.
+	GenerateChiServer  bool                      // GenerateChiServer specifies whether to generate chi server boilerplate
+	GenerateEchoServer bool                      // GenerateEchoServer specifies whether to generate echo server boilerplate
+	GenerateClient     bool                      // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes      bool                      // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec          bool                      // Whether to embed the swagger spec in the generated code
+	SkipFmt            bool                      // Whether to skip go fmt on the generated code
+	IncludeTags        []string                  // Only include operations that have one of these tags. Ignored when empty.
+	ExcludeTags        []string                  // Exclude operations that have one of these tags. Ignored when empty.
+	ClearRefsSpec      bool                      // Whether to resolve all references in the included swagger spec
+	ImportedTypes      map[string]TypeImportSpec // Additional imports added when using remote references
 }
 
 type goImport struct {
@@ -72,19 +75,47 @@ var (
 		{lookFor: "ioutil\\.", packageName: "io/ioutil"},
 		{lookFor: "json\\.", packageName: "encoding/json"},
 		{lookFor: "openapi3\\.", packageName: "github.com/getkin/kin-openapi/openapi3"},
-		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/weberr13/oapi-codegen/pkg/types"},
 		{lookFor: "path\\.", packageName: "path"},
-		{lookFor: "runtime\\.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
+		{lookFor: "runtime\\.", packageName: "github.com/weberr13/oapi-codegen/pkg/runtime"},
 		{lookFor: "strings\\.", packageName: "strings"},
 		{lookFor: "time\\.Duration", packageName: "time"},
 		{lookFor: "time\\.Time", packageName: "time"},
 		{lookFor: "url\\.", packageName: "net/url"},
 		{lookFor: "xml\\.", packageName: "encoding/xml"},
 		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
+		{lookFor: "decode\\.", packageName: "github.com/weberr13/go-decode/decode"},
 	}
 )
 
 // Uses the Go templating engine to generate all of our server wrappers from
+
+type genCtx struct {
+	PackageName   string
+	TypeDefs      []TypeDefinition
+	OpDefs        []OperationDefinition
+	GoSchemaMap   map[string]Schema
+	ImportedTypes map[string]TypeImportSpec
+	Swagger       *openapi3.Swagger
+	HasDecorators bool
+}
+
+func newGenCtx(swagger *openapi3.Swagger, packageName string, opts Options) *genCtx {
+	return &genCtx{Swagger: swagger, PackageName: packageName,
+		TypeDefs: []TypeDefinition{}, GoSchemaMap: map[string]Schema{},
+		ImportedTypes: opts.ImportedTypes,
+	}
+}
+
+func (ctx *genCtx) getAllOpTypes() []TypeDefinition {
+	var td []TypeDefinition
+	for _, op := range ctx.OpDefs {
+		td = append(td, op.TypeDefinitions...)
+	}
+	return td
+}
+
+// Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
@@ -99,14 +130,19 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error parsing oapi-codegen templates")
 	}
 
-	ops, err := OperationDefinitions(swagger)
-	if err != nil {
-		return "", errors.Wrap(err, "error creating operation definitions")
+	ctx := newGenCtx(swagger, packageName, opts)
+
+	// only generate operation typedefs if not producing resolved spec
+	if !opts.ClearRefsSpec {
+		err = OperationDefinitions(ctx, swagger)
+		if err != nil {
+			return "", errors.Wrap(err, "error creating operation definitions")
+		}
 	}
 
 	var typeDefinitions string
 	if opts.GenerateTypes {
-		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops)
+		typeDefinitions, err = GenerateTypeDefinitions(ctx, t, swagger)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}
@@ -130,7 +166,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var clientOut string
 	if opts.GenerateClient {
-		clientOut, err = GenerateClient(t, ops)
+		clientOut, err = GenerateClient(ctx, t)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client")
 		}
@@ -138,7 +174,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var clientWithResponsesOut string
 	if opts.GenerateClient {
-		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
+		clientWithResponsesOut, err = GenerateClientWithResponses(ctx, t)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client with responses")
 		}
@@ -146,18 +182,25 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var inlinedSpec string
 	if opts.EmbedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
+		inlinedSpec, err = GenerateInlinedSpec(ctx, t, swagger)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
 	}
 
 	// Imports needed for the generated code to compile
-	var imports []string
+	var imports []TypeImportSpec
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
+	// TODO: this is error prone, use tighter matches
+	allCode := strings.Join([]string{typeDefinitions, echoServerOut, chiServerOut, clientOut, clientWithResponsesOut, inlinedSpec}, "\n")
+	for t, i := range ctx.ImportedTypes {
+		if strings.Contains(allCode, t) {
+			allGoImports = append(allGoImports, goImport{lookFor: `\` + i.Name, packageName: i.PackageName})
+		}
+	}
 	// Based on module prefixes, figure out which optional imports are required.
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
 		for _, goImport := range allGoImports {
@@ -171,7 +214,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	importsOut, err := GenerateImports(t, imports, packageName)
+	importsOut, err := GenerateImports(ctx, t, imports)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating imports")
 	}
@@ -240,41 +283,39 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	return string(outBytes), nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, ops []OperationDefinition) (string, error) {
-	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas)
+func GenerateTypeDefinitions(ctx *genCtx, t *template.Template, swagger *openapi3.Swagger) (string, error) {
+	var err error
+
+	err = GenerateTypesForSchemas(ctx, t, swagger.Components.Schemas)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component schemas")
 	}
 
-	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+	err = GenerateTypesForParameters(ctx, t, swagger.Components.Parameters)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component parameters")
 	}
-	allTypes := append(schemaTypes, paramTypes...)
 
-	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+	err = GenerateTypesForResponses(ctx, t, swagger.Components.Responses)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component responses")
 	}
-	allTypes = append(allTypes, responseTypes...)
 
-	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+	err = GenerateTypesForRequestBodies(ctx, t, swagger.Components.RequestBodies)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component request bodies")
 	}
-	allTypes = append(allTypes, bodyTypes...)
 
-	paramTypesOut, err := GenerateTypesForOperations(t, ops)
+	paramTypesOut, err := GenerateTypesForOperations(ctx, t)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for operation parameters")
 	}
 
-	typesOut, err := GenerateTypes(t, allTypes)
+	typesOut, err := GenerateTypes(ctx, t)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating code for type definitions")
 	}
-
-	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, allTypes)
+	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(ctx, t, ctx.TypeDefs)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating allOf boilerplate")
 	}
@@ -285,38 +326,37 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
-func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef) ([]TypeDefinition, error) {
-	types := make([]TypeDefinition, 0)
+func GenerateTypesForSchemas(ctx *genCtx, t *template.Template, schemas map[string]*openapi3.SchemaRef) error {
+
 	// We're going to define Go types for every object under components/schemas
 	for _, schemaName := range SortedSchemaKeys(schemas) {
 		schemaRef := schemas[schemaName]
 
-		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
+		goSchema, err := GenerateGoSchema(ctx, schemaRef, []string{schemaName})
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error converting Schema %s to Go type", schemaName))
+			return errors.Wrap(err, fmt.Sprintf("error converting Schema %s to Go type", schemaName))
 		}
 
-		types = append(types, TypeDefinition{
+		ctx.TypeDefs = append(ctx.TypeDefs, TypeDefinition{
 			JsonName: schemaName,
 			TypeName: SchemaNameToTypeName(schemaName),
 			Schema:   goSchema,
 		})
 
-		types = append(types, goSchema.GetAdditionalTypeDefs()...)
+		ctx.TypeDefs = append(ctx.TypeDefs, goSchema.GetAdditionalTypeDefs()...)
 	}
-	return types, nil
+	return nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/parameters section of the Swagger spec.
-func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
-	var types []TypeDefinition
+func GenerateTypesForParameters(ctx *genCtx, t *template.Template, params map[string]*openapi3.ParameterRef) error {
 	for _, paramName := range SortedParameterKeys(params) {
 		paramOrRef := params[paramName]
 
-		goType, err := paramToGoType(paramOrRef.Value, nil)
+		goType, err := paramToGoType(ctx, paramOrRef.Value, nil)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", paramName))
+			return errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", paramName))
 		}
 
 		typeDef := TypeDefinition{
@@ -327,22 +367,21 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 		if paramOrRef.Ref != "" {
 			// Generate a reference type for referenced parameters
-			refType, err := RefPathToGoType(paramOrRef.Ref)
+			refType, err := RefPathToGoType(paramOrRef.Ref, ctx.ImportedTypes)
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", paramOrRef.Ref, paramName))
+				return errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", paramOrRef.Ref, paramName))
 			}
 			typeDef.TypeName = SchemaNameToTypeName(refType)
 		}
 
-		types = append(types, typeDef)
+		ctx.TypeDefs = append(ctx.TypeDefs, typeDef)
 	}
-	return types, nil
+	return nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
-	var types []TypeDefinition
+func GenerateTypesForResponses(ctx *genCtx, t *template.Template, responses openapi3.Responses) error {
 
 	for _, responseName := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[responseName]
@@ -353,9 +392,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		response := responseOrRef.Value
 		jsonResponse, found := response.Content["application/json"]
 		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+			goType, err := GenerateGoSchema(ctx, jsonResponse.Schema, []string{responseName})
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in response %s", responseName))
+				return errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in response %s", responseName))
 			}
 
 			typeDef := TypeDefinition{
@@ -366,21 +405,21 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 			if responseOrRef.Ref != "" {
 				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
+				refType, err := RefPathToGoType(responseOrRef.Ref, ctx.ImportedTypes)
 				if err != nil {
-					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
+					return errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
-			types = append(types, typeDef)
+			ctx.TypeDefs = append(ctx.TypeDefs, typeDef)
 		}
 	}
-	return types, nil
+	return nil
 }
 
 // Generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
-func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
+func GenerateTypesForRequestBodies(ctx *genCtx, t *template.Template, bodies map[string]*openapi3.RequestBodyRef) error {
 	var types []TypeDefinition
 
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
@@ -391,9 +430,9 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		response := bodyOrRef.Value
 		jsonBody, found := response.Content["application/json"]
 		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{bodyName})
+			goType, err := GenerateGoSchema(ctx, jsonBody.Schema, []string{bodyName})
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in body %s", bodyName))
+				return errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in body %s", bodyName))
 			}
 
 			typeDef := TypeDefinition{
@@ -404,31 +443,26 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 
 			if bodyOrRef.Ref != "" {
 				// Generate a reference type for referenced bodies
-				refType, err := RefPathToGoType(bodyOrRef.Ref)
+				refType, err := RefPathToGoType(bodyOrRef.Ref, ctx.ImportedTypes)
 				if err != nil {
-					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in body %s", bodyOrRef.Ref, bodyName))
+					return errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in body %s", bodyOrRef.Ref, bodyName))
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
 		}
 	}
-	return types, nil
+	ctx.TypeDefs = append(ctx.TypeDefs, types...)
+	return nil
 }
 
 // Helper function to pass a bunch of types to the template engine, and buffer
 // its output into a string.
-func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
+func GenerateTypes(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	context := struct {
-		Types []TypeDefinition
-	}{
-		Types: types,
-	}
-
-	err := t.ExecuteTemplate(w, "typedef.tmpl", context)
+	err := t.ExecuteTemplate(w, "typedef.tmpl", ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating types")
 	}
@@ -440,17 +474,17 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // Generate our import statements and package definition.
-func GenerateImports(t *template.Template, imports []string, packageName string) (string, error) {
-	sort.Strings(imports)
+func GenerateImports(ctx *genCtx, t *template.Template, imports []TypeImportSpec) (string, error) {
+	sort.Slice(imports, func(i, j int) bool { return imports[i].ImportPath < imports[j].ImportPath })
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	context := struct {
-		Imports     []string
+		Imports     []TypeImportSpec
 		PackageName string
 	}{
 		Imports:     imports,
-		PackageName: packageName,
+		PackageName: ctx.PackageName,
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {
@@ -463,25 +497,108 @@ func GenerateImports(t *template.Template, imports []string, packageName string)
 	return buf.String(), nil
 }
 
+func getDecorators(decorators map[string]Decorator, s Schema) map[string]Decorator {
+	if len(s.Decorators) > 0 {
+		for k, v := range s.Decorators {
+			decorators[k] = v
+		}
+	}
+	if s.AdditionalPropertiesType != nil {
+		m := getDecorators(decorators, *s.AdditionalPropertiesType)
+		for k, v := range m {
+			decorators[k] = v
+		}
+	}
+	for _, p := range s.Properties {
+		m := getDecorators(decorators, p.Schema)
+		for k, v := range m {
+			decorators[k] = v
+		}
+	}
+	for _, p := range s.AdditionalTypes {
+		m := getDecorators(decorators, p.Schema)
+		for k, v := range m {
+			decorators[k] = v
+		}
+	}
+	return decorators
+}
+
 // Generate all the glue code which provides the API for interacting with
 // additional properties and JSON-ification
-func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+func GenerateAdditionalPropertyBoilerplate(ctx *genCtx, t *template.Template, td []TypeDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
 	var filteredTypes []TypeDefinition
-	for _, t := range typeDefs {
+	decorators := make(map[string]Decorator)
+	for _, t := range td {
 		if t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}
+		// If the type is an empty interface, can assume it's decorators are held by parent that references it
+		if t.Schema.GoType != "interface{}" {
+			decorators = getDecorators(decorators, t.Schema)
+		}
+	}
+
+	// filter out all decorators with a schema path that is deeper than SchemaName.property
+	// since the decode library always operates on an object of the current schema, iterating over its properties
+	for k, _ := range decorators {
+		if strings.Count(k, ".") > 1 {
+			delete(decorators, k)
+		}
+	}
+
+	// todo: this has side effects that should be computed elsewhere
+	ctx.HasDecorators = ctx.HasDecorators || len(decorators) > 0
+
+	type factoryMap struct {
+		Discriminator string
+		Factories     []Decorator
+	}
+
+	dsm := map[string]Decorator{}
+	dsp := map[string]factoryMap{}
+	for _, v := range decorators {
+		dsm[v.SchemaName] = v
+
+		fm := dsp[v.SchemaPath]
+		fm.Discriminator = v.Discriminator
+		fm.Factories = append(fm.Factories, v)
+		dsp[v.SchemaPath] = fm
+
+	}
+	for _, v := range dsp {
+		sort.Slice(v.Factories, func(i, j int) bool { return v.Factories[i].JSONName < v.Factories[j].JSONName })
+	}
+
+	// issue a warning if dsm contains schemas that have duplicate  JSONName (this will cause TypeFactory to have
+	// duplicate map entries and will therefore not compile. TypeFactory is intended to be removed. This is a temporary measure
+	// todo: remove once we no longer use type factory
+	djn := map[string]Decorator{}
+	for _, v := range dsm {
+		if d, ok := djn[v.JSONName]; ok {
+			fmt.Fprintf(os.Stderr, "Duplicate Discriminator JSON value `%s` (schema1: %s, schema2: %s). Code will not compile\n", v.JSONName, d.SchemaName, v.SchemaName)
+		}
+		djn[v.JSONName] = v
 	}
 
 	context := struct {
-		Types []TypeDefinition
+		Types            []TypeDefinition
+		Decorators       map[string]Decorator
+		DecoratedSchemas map[string]Decorator
+		DecoratedPaths   map[string]factoryMap
+		HasDecorators    bool
 	}{
-		Types: filteredTypes,
+		Types:            filteredTypes,
+		Decorators:       decorators,
+		DecoratedSchemas: dsm,
+		DecoratedPaths:   dsp,
+		HasDecorators:    ctx.HasDecorators,
 	}
 
+	//debug.PrintStack()
 	err := t.ExecuteTemplate(w, "additional-properties.tmpl", context)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating additional properties code")

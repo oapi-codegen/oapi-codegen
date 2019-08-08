@@ -1,0 +1,114 @@
+{
+  "components": {
+    "schemas": {
+      "Test": {
+        "properties": {
+          "cases": {
+            "items": {
+              "properties": {
+                "command": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "verifier": {
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "TestCase": {
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "info": {
+    "description": "This is a test OpenAPI Spec",
+    "title": "OpenAPI-CodeGen Test",
+    "version": "1.0.0"
+  },
+  "openapi": "3.0.1",
+  "paths": {
+    "/test/{name}": {
+      "get": {
+        "operationId": "getTestByName",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "cases": {
+                      "items": {
+                        "properties": {
+                          "command": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "type": "array"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "verifier": {
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Success"
+          }
+        },
+        "summary": "Get test",
+        "tags": [
+          "test"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "https://test.oapi-codegen.com/v2"
+    },
+    {
+      "url": "http://test.oapi-codegen.com/v2"
+    }
+  ]
+}

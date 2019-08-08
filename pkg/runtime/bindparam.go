@@ -28,8 +28,8 @@ import (
 // This function binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
-func BindStyledParameter(style string, explode bool, paramName string,
-	value string, dest interface{}) error {
+func BindStyledParameter(style string, explode bool, unescape func(string) (string, error),
+	paramName string, value string, dest interface{}) error {
 
 	if value == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "parameter '%s' is empty, can't bind its value", paramName)
@@ -49,7 +49,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-		err = bindSplitPartsToDestinationStruct(paramName, parts, explode, dest)
+		err = bindSplitPartsToDestinationStruct(paramName, parts, explode, unescape, dest)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
@@ -63,7 +63,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 			return fmt.Errorf("error splitting input '%s' into parts: %s", value, err)
 		}
 
-		err = bindSplitPartsToDestinationArray(parts, dest)
+		err = bindSplitPartsToDestinationArray(unescape, parts, dest)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
@@ -71,7 +71,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 	}
 
 	// Try to bind the remaining types as a base type.
-	return BindStringToObject(value, dest)
+	return BindStringToObject(unescape, value, dest)
 }
 
 // This is a complex set of operations, but each given parameter style can be
@@ -167,7 +167,7 @@ func splitStyledParameter(style string, explode bool, object bool, paramName str
 
 // Given a set of values as a slice, create a slice to hold them all, and
 // assign to each one by one.
-func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
+func bindSplitPartsToDestinationArray(unescape func(string) (string, error), parts []string, dest interface{}) error {
 	// Everything comes in by pointer, dereference it
 	v := reflect.Indirect(reflect.ValueOf(dest))
 
@@ -179,7 +179,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 	// hold all the parts.
 	newArray := reflect.MakeSlice(t, len(parts), len(parts))
 	for i, p := range parts {
-		err := BindStringToObject(p, newArray.Index(i).Addr().Interface())
+		err := BindStringToObject(unescape, p, newArray.Index(i).Addr().Interface())
 		if err != nil {
 			return fmt.Errorf("error setting array element: %s", err)
 		}
@@ -200,7 +200,8 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 // We punt the hard work of binding these values to the object to the json
 // library. We'll turn those arrays into JSON strings, and unmarshal
 // into the struct.
-func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest interface{}) error {
+func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool,
+	unescape func(string) (string, error), dest interface{}) error {
 	// We've got a destination object, we'll create a JSON representation
 	// of the input value, and let the json library deal with the unmarshaling
 	var fields []string
@@ -220,7 +221,13 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 		fields = make([]string, len(parts)/2)
 		for i := 0; i < len(parts); i += 2 {
 			key := parts[i]
-			value := parts[i+1]
+			if unescape == nil {
+				return fmt.Errorf("no unescape function provided")
+			}
+			value, err := unescape(parts[i+1])
+			if err != nil {
+				return fmt.Errorf("error unescaping string parameter element: %s", parts[i+1])
+			}
 			fields[i/2] = "\"" + key + "\":\"" + value + "\""
 		}
 	}
@@ -313,7 +320,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 						return nil
 					}
 				}
-				err = bindSplitPartsToDestinationArray(values, output)
+				err = bindSplitPartsToDestinationArray(url.QueryUnescape, values, output)
 			case reflect.Struct:
 				// This case is really annoying, and error prone, but the
 				// form style object binding doesn't tell us which arguments
@@ -335,7 +342,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 					return echo.NewHTTPError(http.StatusBadRequest,
 						fmt.Sprintf("multiple values for single value parameter '%s'", paramName))
 				}
-				err = BindStringToObject(values[0], output)
+				err = BindStringToObject(url.QueryUnescape, values[0], output)
 			}
 			if err != nil {
 				return err
@@ -365,9 +372,9 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		var err error
 		switch k {
 		case reflect.Slice:
-			err = bindSplitPartsToDestinationArray(parts, output)
+			err = bindSplitPartsToDestinationArray(url.QueryUnescape, parts, output)
 		case reflect.Struct:
-			err = bindSplitPartsToDestinationStruct(paramName, parts, explode, output)
+			err = bindSplitPartsToDestinationStruct(paramName, parts, explode, url.QueryUnescape, output)
 		default:
 			if len(parts) == 0 {
 				if required {
@@ -381,7 +388,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 				return echo.NewHTTPError(http.StatusBadRequest,
 					fmt.Sprintf("multiple values for single value parameter '%s'", paramName))
 			}
-			err = BindStringToObject(parts[0], output)
+			err = BindStringToObject(url.QueryUnescape, parts[0], output)
 		}
 		if err != nil {
 			return err
@@ -404,7 +411,12 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			}
 
 			k = strings.TrimSuffix(split[1], "]")
-			objectMap[k] = v[0]
+			val, err := url.QueryUnescape(v[0])
+			if err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest,
+					fmt.Sprintf("parameter '%s=%s' could not be unescaped", k, v))
+			}
+			objectMap[k] = val
 		}
 
 		// Marshal and unmarshal the objectMap into dest
@@ -473,7 +485,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 				return echo.NewHTTPError(http.StatusBadRequest,
 					fmt.Sprintf("field '%s' specified multiple times for param '%s'", fieldName, paramName))
 			}
-			err := BindStringToObject(fieldVal[0], v.Field(i).Addr().Interface())
+			err := BindStringToObject(url.QueryUnescape, fieldVal[0], v.Field(i).Addr().Interface())
 			if err != nil {
 				return echo.NewHTTPError(http.StatusBadRequest,
 					fmt.Sprintf("could not bind query arg '%s' to request object: %s", paramName, err))

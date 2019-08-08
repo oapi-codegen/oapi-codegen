@@ -2,7 +2,77 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+var templates = map[string]string{"additional-properties.tmpl": `{{if .HasDecorators}}
+func factory(fm map[string]func() interface{}, path, dk string, o map[string]interface{}) (interface{}, error) {
+    var dp interface{}
+    var dv string
+    var ok bool
+
+	if dp, ok = o[dk]; !ok {
+		return nil, fmt.Errorf( "expecting OneOf object at path '%s' to to have a discriminator property '%s'", path, dk )
+	}
+
+	if dv, ok = dp.(string); !ok {
+		return nil, fmt.Errorf("expecting OneOf field '%s's' discriminator property '%s' value to be a string", path, dk)
+	}
+
+	f, ok := fm[dv]
+	if !ok {
+		return nil, fmt.Errorf("Unknown discriminator value '%s' when handling OneOf field '%s'", path, dv)
+	}
+	return f(), nil
+}
+
+{{range $key, $value := .DecoratedPaths}}
+// Factory method for objects at path {{$key}}
+func {{dottedStringToTypeName $key}}_Factory(o map[string]interface{}) (interface{}, error) {
+	fm := map[string]func() interface{} { {{range $v2 := $value.Factories}}
+       "{{ $v2.JSONName }}": New{{ $v2.SchemaName }},
+        {{- end }}
+	}
+    return factory(fm, "{{$key}}", "{{$value.Discriminator}}", o)
+}
+{{end}}
+
+
+func SchemaPathFactory(path string) (func(map[string]interface{}) (interface{}, error), error) {
+    // Map StringPath => Factory
+    pathFactoryMap := map[string]func(map[string]interface{}) (interface{}, error) { {{range $key, $value := .DecoratedPaths}}
+    	"{{$key}}": {{dottedStringToTypeName $key}}_Factory,
+	    {{- end}}
+    }
+
+	return pathFactoryMap[path], nil
+}
+
+
+func TypeFactory(kind string) (interface{}, error) {
+    // Map StringPath => Factory
+    var factoryMap = map[string]func() interface{} { {{range $key, $value := .DecoratedSchemas}}
+        "{{$value.JSONName}}": New{{ $value.SchemaName }},
+        {{- end}}
+    }
+	f, ok := factoryMap[kind]
+	if !ok {
+		return nil, fmt.Errorf("cannot find type %s", kind)
+	}
+	return f(), nil
+}
+
+{{range $key, $value := .DecoratedSchemas}}
+func New{{ $key }}() interface{} {
+	_d := "{{- $value.JSONName -}}"; return &{{ $key }} { {{ $value.DiscriminatorPascal }}: {{if ne true $value.Required }} &{{end}}_d }
+}
+
+func (r {{ $key }}) Discriminator() string {
+    return "{{ $value.Discriminator }}"
+}
+
+{{end -}}
+{{end}}
+
+
+{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
 
 // Getter for additional properties for {{.TypeName}}. Returns the specified
 // element and whether it was found
@@ -282,7 +352,12 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
     if err != nil {
         return nil, err
     }
-    return &ClientWithResponses{client}, nil
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: client,
+            Server: server,
+        },
+    }, nil
 }
 
 // WithBaseURL overrides the baseURL.
@@ -301,10 +376,26 @@ func WithBaseURL(baseURL string) ClientOption {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
+// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
+func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: &http.Client{},
+			Server: server,
+			RequestEditor: reqEditorFn,
+		},
+	}
+}
+
+func (c *ClientWithResponses) UpdateHttpClient(cli HTTPClientInterface) {
+     c.ClientInterface.(*Client).Client = cli
+}
+
+{{range .OpDefs}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | lcFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
-    {{- range getResponseTypeDefinitions .}}
+    {{- range getResponseTypeDefinitions $ .}}
     {{.TypeName}} *{{.Schema.TypeDecl}}
     {{- end}}
 }
@@ -327,7 +418,7 @@ func (r {{$opid | lcFirst}}Response) StatusCode() int {
 {{end}}
 
 
-{{range .}}
+{{range .OpDefs}}
 {{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
 
@@ -356,7 +447,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 {{end}}{{/* operations */}}
 
 {{/* Generate parse functions for responses*/}}
-{{range .}}{{$opid := .OperationId}}
+{{range .OpDefs}}{{$opid := .OperationId}}
 
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
@@ -368,21 +459,18 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
     response := {{genResponsePayload $opid}}
 
-    {{genResponseUnmarshal .}}
+    {{genResponseUnmarshal $ $opid .Spec.Responses }}
 
     return response, nil
 }
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .OpDefs $opid := .OperationId */}}
 
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
+type HTTPClientInterface interface {
+    Do(req *http.Request) (*http.Response, error)
 }
 
 // Client which conforms to the OpenAPI3 specification for this service.
@@ -391,9 +479,8 @@ type Client struct {
 	// https://api.deepmap.com for example.
 	Server string
 
-	// Doer for performing requests, typically a *http.Client with any
-	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+    // HTTP client with any customized settings, such as certificate chains.
+    Client HTTPClientInterface
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
@@ -442,7 +529,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-{{range . -}}
+{{range .OpDefs -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -451,12 +538,12 @@ type ClientInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .OpDefs $opid := .OperationId */}}
 }
 
 
 {{/* Generate client methods */}}
-{{range . -}}
+{{range .OpDefs -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -495,7 +582,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
 {{end}}
 
 {{/* Generate request builders */}}
-{{range .}}
+{{range .OpDefs}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
@@ -531,7 +618,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}})
+    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, url.PathEscape, "{{.ParamName}}", {{.GoVariableName}})
     if err != nil {
         return nil, err
     }
@@ -561,7 +648,8 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    queryParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, url.QueryEscape, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
         return nil, err
     } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
        return nil, err
@@ -597,7 +685,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    passthrough := func(s string) string {
+		return s
+	}
+    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, passthrough, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -621,7 +712,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
     {{end}}
     {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    passthrough := func(s string) string {
+		return s
+	}
+    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, passthrough, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -641,12 +735,12 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 `,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
 //
-// Code generated by github.com/deepmap/oapi-codegen DO NOT EDIT.
+// Code generated by github.com/weberr13/oapi-codegen DO NOT EDIT.
 package {{.PackageName}}
 
 {{if .Imports}}
 import (
-{{range .Imports}} {{ . }}
+{{range .Imports}} {{.PackageName}} "{{.ImportPath}}"
 {{end}})
 {{end}}
 `,
@@ -659,28 +753,39 @@ var swaggerSpec = []string{
 // GetSwagger returns the Swagger specification corresponding to the generated code
 // in this file.
 func GetSwagger() (*openapi3.Swagger, error) {
-    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-    if err != nil {
-        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-    }
-    zr, err := gzip.NewReader(bytes.NewReader(zipped))
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
-    var buf bytes.Buffer
-    _, err = buf.ReadFrom(zr)
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
 
-    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
+    spec, err := GetSwaggerSpec()
+    if err != nil {
+        return nil, err
+    }
+    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
     if err != nil {
         return nil, fmt.Errorf("error loading Swagger: %s", err)
     }
     return swagger, nil
 }
+
+
+// GetSwaggerSpec returns the Swagger specification as string corresponding to the generated code
+// in this file.
+func GetSwaggerSpec() (string, error) {
+    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+    if err != nil {
+        return "", fmt.Errorf("error base64 decoding spec: %s", err)
+    }
+    zr, err := gzip.NewReader(bytes.NewReader(zipped))
+    if err != nil {
+        return "", fmt.Errorf("error decompressing spec: %s", err)
+    }
+    var buf bytes.Buffer
+    _, err = buf.ReadFrom(zr)
+    if err != nil {
+        return "", fmt.Errorf("error decompressing spec: %s", err)
+    }
+    return buf.String(), nil
+}
 `,
-	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
+	"param-types.tmpl": `{{range .OpDefs}}{{$opid := .OperationId}}
 {{range .TypeDefinitions}}
 // {{.TypeName}} defines parameters for {{$opid}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
@@ -706,11 +811,11 @@ func RegisterHandlers(router interface {
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .OpDefs}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
 `,
-	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
+	"request-bodies.tmpl": `{{range .OpDefs}}{{$opid := .OperationId}}
 {{range .Bodies}}
 // {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
 type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
@@ -725,7 +830,7 @@ type ServerInterface interface {
 {{end}}
 }
 `,
-	"typedef.tmpl": `{{range .Types}}
+	"typedef.tmpl": `{{range .TypeDefs}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
@@ -735,7 +840,7 @@ type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+{{range .OpDefs}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
@@ -750,7 +855,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }
 {{end}}
 {{if .IsStyled}}
-    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, url.PathUnescape, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
@@ -807,7 +912,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         }
 {{end}}
 {{if .IsStyled}}
-        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+        passthrough := func(s string) (string, error) {
+		    return s, nil
+	    }
+        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, passthrough, "{{.ParamName}}", valueList[0], &{{.GoName}})
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
@@ -839,7 +947,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
-    err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+    passthrough := func(s string) (string, error) {
+		return s, nil
+	}
+    err = runtime.BindStyledParameter("simple",{{.Explode}}, passthrough, "{{.ParamName}}", cookie.Value, &value)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }

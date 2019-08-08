@@ -25,7 +25,7 @@ import (
 
 // Given an input value, such as a primitive type, array or object, turn it
 // into a parameter based on style/explode definition.
-func StyleParam(style string, explode bool, paramName string, value interface{}) (string, error) {
+func StyleParam(style string, explode bool, escape func(string) string, paramName string, value interface{}) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
 
@@ -46,17 +46,17 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 		for i := 0; i < n; i++ {
 			sliceVal[i] = v.Index(i).Interface()
 		}
-		return styleSlice(style, explode, paramName, sliceVal)
+		return styleSlice(style, explode, escape, paramName, sliceVal)
 	case reflect.Struct:
-		return styleStruct(style, explode, paramName, value)
+		return styleStruct(style, explode, escape, paramName, value)
 	case reflect.Map:
 		return styleMap(style, explode, paramName, value)
 	default:
-		return stylePrimitive(style, explode, paramName, value)
+		return stylePrimitive(style, explode, escape, paramName, value)
 	}
 }
 
-func styleSlice(style string, explode bool, paramName string, values []interface{}) (string, error) {
+func styleSlice(style string, explode bool, escape func(string) string, paramName string, values []interface{}) (string, error) {
 	var prefix string
 	var separator string
 
@@ -106,7 +106,7 @@ func styleSlice(style string, explode bool, paramName string, values []interface
 	var err error
 	parts := make([]string, len(values))
 	for i, v := range values {
-		parts[i], err = primitiveToString(v)
+		parts[i], err = primitiveToString(escape, v)
 		if err != nil {
 			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
 		}
@@ -125,7 +125,7 @@ func sortedKeys(strMap map[string]string) []string {
 	return keys
 }
 
-func styleStruct(style string, explode bool, paramName string, value interface{}) (string, error) {
+func styleStruct(style string, explode bool, escape func(string) string, paramName string, value interface{}) (string, error) {
 	// This is a special case. The struct may be a time, in which case, marshal
 	// it in RFC3339 format.
 	if timeVal, ok := value.(*time.Time); ok {
@@ -157,7 +157,7 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 		if f.Type().Kind() == reflect.Ptr && f.IsNil() {
 			continue
 		}
-		str, err := primitiveToString(f.Interface())
+		str, err := primitiveToString(escape, f.Interface())
 		if err != nil {
 			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
 		}
@@ -252,8 +252,8 @@ func processFieldDict(style string, explode bool, paramName string, fieldDict ma
 	return prefix + strings.Join(parts, separator), nil
 }
 
-func stylePrimitive(style string, explode bool, paramName string, value interface{}) (string, error) {
-	strVal, err := primitiveToString(value)
+func stylePrimitive(style string, explode bool, escape func(string) string, paramName string, value interface{}) (string, error) {
+	strVal, err := primitiveToString(escape, value)
 	if err != nil {
 		return "", err
 	}
@@ -275,7 +275,7 @@ func stylePrimitive(style string, explode bool, paramName string, value interfac
 
 // Converts a primitive value to a string. We need to do this based on the
 // Kind of an interface, not the Type to work with aliased types.
-func primitiveToString(value interface{}) (string, error) {
+func primitiveToString(escape func(string) string, value interface{}) (string, error) {
 	var output string
 
 	// Values may come in by pointer for optionals, so make sure to dereferene.
@@ -295,7 +295,10 @@ func primitiveToString(value interface{}) (string, error) {
 			output = "false"
 		}
 	case reflect.String:
-		output = v.String()
+		if escape == nil {
+			return "", fmt.Errorf("no escape function provided")
+		}
+		output = escape(v.String())
 	default:
 		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
 	}

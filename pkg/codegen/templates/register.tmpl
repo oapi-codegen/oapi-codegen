@@ -17,6 +17,6 @@ func RegisterHandlers(router interface {
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .OpDefs}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }

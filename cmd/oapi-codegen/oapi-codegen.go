@@ -17,17 +17,50 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/weberr13/oapi-codegen/pkg/codegen"
+	"github.com/weberr13/oapi-codegen/pkg/util"
 )
 
 func errExit(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
+}
+
+func usageErr(format string, args ...interface{}) {
+	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+	flag.PrintDefaults()
+	os.Exit(1)
+}
+
+// TODO define a type to allow recording of Type -> Import Path as args
+// TODO this is temporary until we sort the config question
+type refImports []string
+
+func (ri *refImports) String() string {
+	return "Reference Import arg"
+}
+
+func (ri *refImports) Set(r string) error {
+	*ri = append(*ri, r)
+	return nil
+}
+
+// TODO define a type to allow recording of package -> Import Path as args
+// TODO this is temporary until we sort the config question
+type pkgImports []string
+
+func (pi *pkgImports) String() string {
+	return "Pkg Import arg"
+}
+
+func (pi *pkgImports) Set(r string) error {
+	*pi = append(*pi, r)
+	return nil
 }
 
 func main() {
@@ -37,13 +70,21 @@ func main() {
 		outputFile  string
 		includeTags string
 		excludeTags string
+		refImports  refImports
+		pkgImports  pkgImports
+		allowRefs   bool
+		insecure    bool
 	)
+
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
 		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "skip-fmt", "spec"`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
-	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
+	flag.Var(&refImports, "ri", "Repeated reference import statements of the form Type=<[package:]import path>")
+	flag.Var(&pkgImports, "pi", "Repeated package import statements of the form <package>=<[package:]import path>")
+	flag.BoolVar(&allowRefs, "extrefs", false, "Allow resolving external references")
+	flag.BoolVar(&insecure, "insecure", false, "Allow resolving remote URL's that have bad SSL/TLS")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -76,10 +117,12 @@ func main() {
 			opts.EmbedSpec = true
 		case "skip-fmt":
 			opts.SkipFmt = true
+		case "resolved-spec":
+			opts.ClearRefsSpec = true
+			opts.EmbedSpec = true
 		default:
-			fmt.Printf("unknown generate option %s\n", g)
-			flag.PrintDefaults()
-			os.Exit(1)
+			// never returns
+			usageErr("unknown generate option %s\n", g)
 		}
 	}
 
@@ -90,9 +133,21 @@ func main() {
 		errExit("can not specify both server and chi-server targets simultaneously")
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	if opts.ClearRefsSpec && (opts.GenerateClient || opts.GenerateServer || opts.GenerateTypes) {
+		// never returns
+		usageErr("resolved-spec option is only valid when specified on its own")
+	}
+
+	// Add user defined type -> import mapping
+	opts.ImportedTypes = importPackages(pkgImports, allowRefs, insecure)
+	// override with specific imports if so indicated
+	for k, v := range importTypes(refImports) {
+		opts.ImportedTypes[k] = v
+	}
+
+	swagger, err := util.LoadSwagger(flag.Arg(0), allowRefs, insecure, opts.ClearRefsSpec)
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExit("error loading swagger spec:\n%s\n", err)
 	}
 
 	code, err := codegen.Generate(swagger, packageName, opts)
@@ -103,7 +158,7 @@ func main() {
 	if outputFile != "" {
 		err = ioutil.WriteFile(outputFile, []byte(code), 0644)
 		if err != nil {
-			errExit("error writing generated code to file: %s", err)
+			errExit("error writing generated code to file: %s\n", err)
 		}
 	} else {
 		fmt.Println(code)
@@ -124,4 +179,76 @@ func splitCSVArg(input string) []string {
 		}
 	}
 	return args
+}
+
+func mapArgSlice(as []string, an string) map[string]string {
+	m := map[string]string{}
+	for _, ri := range as {
+		parts := strings.Split(ri, "=")
+		if len(parts) != 2 {
+			fmt.Printf("invalid %s arg. %s\n", an, ri)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+		m[parts[0]] = parts[1]
+	}
+	return m
+}
+
+func importPackages(imports pkgImports, allowRefs, insecure bool) map[string]codegen.TypeImportSpec {
+	importedTypes := map[string]codegen.TypeImportSpec{}
+	pi := mapArgSlice(imports, "package import")
+
+	for sr, p := range pi {
+		var u *url.URL
+		var err error
+
+		if u, err = url.Parse(sr); err != nil {
+			errExit("package import: specified schema ref is not a URL:\n%s\n", err)
+		}
+		swagger, err := util.LoadSwaggerFromURL(u, allowRefs, insecure)
+		if err != nil {
+			errExit("package import: error loading swagger spec:\n%s\n", err)
+		}
+
+		// iterate over model to find schema names - extract only top level names
+		for n := range swagger.Components.Schemas {
+			if _, ok := importedTypes[n]; !ok {
+				importedTypes[n] = getImportedType(n, p)
+			}
+		}
+	}
+	return importedTypes
+}
+
+func importTypes(typeImports refImports) map[string]codegen.TypeImportSpec {
+	importedTypes := map[string]codegen.TypeImportSpec{}
+	pi := mapArgSlice(typeImports, "type imports")
+
+	for t, p := range pi {
+		importedTypes[t] = getImportedType(t, p)
+	}
+	return importedTypes
+}
+
+func getImportedType(typeName, pkgImport string) codegen.TypeImportSpec {
+	var pkgName string
+	var impPath string
+
+	// if a package name was specified in the form pkg:<import path>, use that, otherwise use last part of import path
+	parts := strings.Split(pkgImport, ":")
+	if len(parts) > 2 {
+		errExit("Parsing type import: too many fragments. At most one ':' expected (type:%s, import:%s)", typeName, pkgImport)
+	}
+
+	if len(parts) == 2 {
+		pkgName = parts[0]
+		impPath = parts[1]
+	} else {
+		parts = strings.Split(pkgImport, "/")
+		pkgName = parts[len(parts)-1]
+		impPath = pkgImport
+	}
+
+	return codegen.NewTypeImportSpec(typeName, pkgName, impPath)
 }

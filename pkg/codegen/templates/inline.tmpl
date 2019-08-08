@@ -7,23 +7,34 @@ var swaggerSpec = []string{
 // GetSwagger returns the Swagger specification corresponding to the generated code
 // in this file.
 func GetSwagger() (*openapi3.Swagger, error) {
-    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-    if err != nil {
-        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-    }
-    zr, err := gzip.NewReader(bytes.NewReader(zipped))
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
-    var buf bytes.Buffer
-    _, err = buf.ReadFrom(zr)
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
 
-    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
+    spec, err := GetSwaggerSpec()
+    if err != nil {
+        return nil, err
+    }
+    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
     if err != nil {
         return nil, fmt.Errorf("error loading Swagger: %s", err)
     }
     return swagger, nil
+}
+
+
+// GetSwaggerSpec returns the Swagger specification as string corresponding to the generated code
+// in this file.
+func GetSwaggerSpec() (string, error) {
+    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+    if err != nil {
+        return "", fmt.Errorf("error base64 decoding spec: %s", err)
+    }
+    zr, err := gzip.NewReader(bytes.NewReader(zipped))
+    if err != nil {
+        return "", fmt.Errorf("error decompressing spec: %s", err)
+    }
+    var buf bytes.Buffer
+    _, err = buf.ReadFrom(zr)
+    if err != nil {
+        return "", fmt.Errorf("error decompressing spec: %s", err)
+    }
+    return buf.String(), nil
 }

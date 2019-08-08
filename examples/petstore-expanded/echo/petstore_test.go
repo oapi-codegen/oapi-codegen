@@ -27,6 +27,9 @@ import (
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/weberr13/oapi-codegen/examples/petstore-expanded/api"
+	"github.com/weberr13/oapi-codegen/pkg/middleware"
+	"github.com/weberr13/oapi-codegen/pkg/testutil"
 )
 
 func TestPetStore(t *testing.T) {

@@ -1,11 +1,8 @@
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
+type HTTPClientInterface interface {
+    Do(req *http.Request) (*http.Response, error)
 }
 
 // Client which conforms to the OpenAPI3 specification for this service.
@@ -14,9 +11,8 @@ type Client struct {
 	// https://api.deepmap.com for example.
 	Server string
 
-	// Doer for performing requests, typically a *http.Client with any
-	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+    // HTTP client with any customized settings, such as certificate chains.
+    Client HTTPClientInterface
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
@@ -65,7 +61,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-{{range . -}}
+{{range .OpDefs -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -74,12 +70,12 @@ type ClientInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .OpDefs $opid := .OperationId */}}
 }
 
 
 {{/* Generate client methods */}}
-{{range . -}}
+{{range .OpDefs -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -118,7 +114,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
 {{end}}
 
 {{/* Generate request builders */}}
-{{range .}}
+{{range .OpDefs}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
@@ -154,7 +150,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}})
+    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, url.PathEscape, "{{.ParamName}}", {{.GoVariableName}})
     if err != nil {
         return nil, err
     }
@@ -184,7 +180,8 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    queryParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, url.QueryEscape, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    if err != nil {
         return nil, err
     } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
        return nil, err
@@ -220,7 +217,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    passthrough := func(s string) string {
+		return s
+	}
+    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, passthrough, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -244,7 +244,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
     {{end}}
     {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    passthrough := func(s string) string {
+		return s
+	}
+    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, passthrough, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }

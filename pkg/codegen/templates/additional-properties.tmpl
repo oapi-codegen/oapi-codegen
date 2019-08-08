@@ -1,3 +1,73 @@
+{{if .HasDecorators}}
+func factory(fm map[string]func() interface{}, path, dk string, o map[string]interface{}) (interface{}, error) {
+    var dp interface{}
+    var dv string
+    var ok bool
+
+	if dp, ok = o[dk]; !ok {
+		return nil, fmt.Errorf( "expecting OneOf object at path '%s' to to have a discriminator property '%s'", path, dk )
+	}
+
+	if dv, ok = dp.(string); !ok {
+		return nil, fmt.Errorf("expecting OneOf field '%s's' discriminator property '%s' value to be a string", path, dk)
+	}
+
+	f, ok := fm[dv]
+	if !ok {
+		return nil, fmt.Errorf("Unknown discriminator value '%s' when handling OneOf field '%s'", path, dv)
+	}
+	return f(), nil
+}
+
+{{range $key, $value := .DecoratedPaths}}
+// Factory method for objects at path {{$key}}
+func {{dottedStringToTypeName $key}}_Factory(o map[string]interface{}) (interface{}, error) {
+	fm := map[string]func() interface{} { {{range $v2 := $value.Factories}}
+       "{{ $v2.JSONName }}": New{{ $v2.SchemaName }},
+        {{- end }}
+	}
+    return factory(fm, "{{$key}}", "{{$value.Discriminator}}", o)
+}
+{{end}}
+
+
+func SchemaPathFactory(path string) (func(map[string]interface{}) (interface{}, error), error) {
+    // Map StringPath => Factory
+    pathFactoryMap := map[string]func(map[string]interface{}) (interface{}, error) { {{range $key, $value := .DecoratedPaths}}
+    	"{{$key}}": {{dottedStringToTypeName $key}}_Factory,
+	    {{- end}}
+    }
+
+	return pathFactoryMap[path], nil
+}
+
+
+func TypeFactory(kind string) (interface{}, error) {
+    // Map StringPath => Factory
+    var factoryMap = map[string]func() interface{} { {{range $key, $value := .DecoratedSchemas}}
+        "{{$value.JSONName}}": New{{ $value.SchemaName }},
+        {{- end}}
+    }
+	f, ok := factoryMap[kind]
+	if !ok {
+		return nil, fmt.Errorf("cannot find type %s", kind)
+	}
+	return f(), nil
+}
+
+{{range $key, $value := .DecoratedSchemas}}
+func New{{ $key }}() interface{} {
+	_d := "{{- $value.JSONName -}}"; return &{{ $key }} { {{ $value.DiscriminatorPascal }}: {{if ne true $value.Required }} &{{end}}_d }
+}
+
+func (r {{ $key }}) Discriminator() string {
+    return "{{ $value.Discriminator }}"
+}
+
+{{end -}}
+{{end}}
+
+
 {{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
 
 // Getter for additional properties for {{.TypeName}}. Returns the specified

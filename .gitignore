@@ -1,3 +1,7 @@
 .idea
 .DS_Store
 .vscode/
+coverage-all.out
+coverage.out
+test-coverage.html
+test-results.out

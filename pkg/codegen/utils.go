@@ -15,6 +15,10 @@ package codegen
 
 import (
 	"fmt"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
+
 	"regexp"
 	"sort"
 	"strings"
@@ -26,8 +30,12 @@ import (
 
 var pathParamRE *regexp.Regexp
 
+// list of valid word characters in an identifier (excluding '/') used by ToCamelCase
+var separatorRE *regexp.Regexp
+
 func init() {
 	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+	separatorRE = regexp.MustCompile(`[^.+:;_~ (){}\[\]\-]+`)
 }
 
 // Uppercase the first character in a string. This assumes UTF-8, so we have
@@ -65,7 +73,7 @@ func ToCamelCase(str string) string {
 		if unicode.IsUpper(v) {
 			n += string(v)
 		}
-			if unicode.IsDigit(v) {
+		if unicode.IsDigit(v) {
 			n += string(v)
 		}
 		if unicode.IsLower(v) {
@@ -76,7 +84,7 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		 if strings.ContainsRune(separators, v) {
+		if strings.ContainsRune(separators, v) {
 			capNext = true
 		} else {
 			capNext = false
@@ -197,20 +205,38 @@ func StringInArray(str string, array []string) bool {
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
-// Remote components (document.json#/Foo) are not yet supported
-// URL components (http://deepmap.com/schemas/document.json#Foo) are not yet
-// supported
-// We only support flat components for now, so no components in a schema under
-// components.
-func RefPathToGoType(refPath string) (string, error) {
-	pathParts := strings.Split(refPath, "/")
-	if pathParts[0] != "#" {
-		return "", errors.New("Only local document components are supported")
+//
+// To specify remote paths there must also be a typeImport map with the types
+// mapped to import paths.
+// https://foo.com/bar#/components/parameters/Bar -> packagename.Bar
+// foo.json#/components/parameters/Bar -> packagename.Bar
+func RefPathToGoType(refPath string, importedTypes map[string]TypeImportSpec) (string, error) {
+	s := strings.Split(refPath, "#")
+	if len(s) < 2 {
+		return "", errors.New("Missing fragment marker - this does not seem like a local or remote reference")
+	} else if len(s) > 2 {
+		return "", errors.New("Extra fragment marker")
 	}
+
+	pathParts := strings.Split(s[len(s)-1], "/")
+
 	if len(pathParts) != 4 {
 		return "", errors.New("Parameter nesting is deeper than supported")
 	}
-	return SchemaNameToTypeName(pathParts[3]), nil
+	schemaName := SchemaNameToTypeName(pathParts[len(pathParts)-1])
+
+	if s[0] != "" {
+		if importedTypes == nil {
+			return "", errors.New("detected remote document component but no TypeImports specified")
+		}
+		importedType, ok := importedTypes[schemaName]
+		if !ok {
+			return "", errors.New("detected remote document component not specified in TypeImports")
+		}
+
+		return importedType.PackageName + "." + schemaName, nil
+	}
+	return schemaName, nil
 }
 
 // This function converts a swagger style path URI with parameters to a
@@ -257,6 +283,12 @@ func OrderedParamsFromUri(uri string) []string {
 // Replaces path parameters with %s
 func ReplacePathParamsWithStr(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "%s")
+}
+
+// Replaces path parameters with Par1, Par2...
+func ReplacePathParamsWithParNStr(uri string) string {
+	p := 0
+	return pathParamRE.ReplaceAllStringFunc(uri, func(_ string) string { p++; return fmt.Sprintf("Par%d", p) })
 }
 
 // Reorders the given parameter definitions to match those in the path URI.
@@ -371,4 +403,14 @@ func StringToGoComment(in string) string {
 	// empty-line-comments, like `// `. Therefore remove this line comment.
 	in = strings.TrimSuffix(in, "\n// ")
 	return in
+}
+
+// This converts a path, like Object/field1/nestedField into a dot separated single string
+func DotSeparatedPath(path []string) string {
+	return strings.Join(path, ".")
+}
+
+// DotSeparatedPath converts a dot separated path string, like Object.field1 into a go identifier
+func DottedStringToTypeName(path string) string {
+	return strings.ReplaceAll(path, ".", "_")
 }

@@ -135,8 +135,8 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router,
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
 			return &echo.HTTPError{
-				Code: http.StatusInternalServerError,
-				Message: fmt.Sprintf("error validating request: %s", err),
+				Code:     http.StatusInternalServerError,
+				Message:  fmt.Sprintf("error validating request: %s", err),
 				Internal: err,
 			}
 		}

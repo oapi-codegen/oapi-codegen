@@ -270,4 +270,97 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
+	// ------------------------ deepObject style ---------------------------------
+	type ID struct {
+		FirstName *string `json:"firstName"`
+		LastName  *string `json:"lastName"`
+		Role      string  `json:"role"`
+	}
+
+	expectedName := "Alex"
+	expectedDeepObject := &ID{FirstName: &expectedName, Role: "admin?"}
+
+	actualDeepObject := new(ID)
+	paramName := "id"
+	queryParams := url.Values{
+		"id[firstName]": {"Alex"},
+		"id[role]":      {"admin%3F"},
+		"foo":           {"bar"},
+	}
+
+	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actualDeepObject)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actualDeepObject)
+
+	// ------------------------ form style ---------------------------------
+	// ----- slice, exploded=true -----
+	expectedSlice := &[]string{"Alex", "Ben?", "Carl"}
+
+	actualSlice := &[]string{}
+	paramName = "name"
+	queryParams = url.Values{
+		"name": {"Alex", "Ben%3F", "Carl"},
+	}
+
+	err = BindQueryParameter("form", true, false, paramName, queryParams, &actualSlice)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedSlice, actualSlice)
+
+	// ----- slice, exploded=false -----
+	expectedSlice = &[]string{"Ben?"}
+
+	actualSlice = &[]string{}
+	paramName = "name"
+	queryParams = url.Values{
+		"name": {"Ben%3F"},
+	}
+
+	err = BindQueryParameter("form", false, false, paramName, queryParams, &actualSlice)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedSlice, actualSlice)
+
+	// ----- struct, exploded=true -----
+	type Name struct {
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName"`
+	}
+
+	expectedStruct := &Name{FirstName: "Alex", LastName: "$mith"}
+
+	actualStruct := new(Name)
+	paramName = "name"
+	queryParams = url.Values{
+		"firstName": {"Alex"},
+		"lastName":  {"%24mith"},
+	}
+
+	err = BindQueryParameter("form", true, false, paramName, queryParams, &actualStruct)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedStruct, actualStruct)
+
+	// ----- struct, exploded=false -----
+	expectedStruct = &Name{FirstName: "Alex", LastName: "$mith"}
+
+	actualStruct = new(Name)
+	paramName = "name"
+	queryParams = url.Values{
+		"name": {"firstname,Alex,lastName,%24mith"},
+	}
+
+	err = BindQueryParameter("form", false, false, paramName, queryParams, &actualStruct)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedStruct, actualStruct)
+
+	// ----- default -----
+	expectedString := "$mith"
+
+	actualString := new(string)
+	paramName = "name"
+	queryParams = url.Values{
+		"name": {"%24mith"},
+	}
+
+	err = BindQueryParameter("form", true, false, paramName, queryParams, &actualString)
+	assert.NoError(t, err)
+	assert.Equal(t, &expectedString, actualString)
 }

@@ -1,0 +1,90 @@
+openapi: 3.0.1
+info:
+  title: failed
+  version: 1.0.0
+servers: []
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        type:
+          type: string
+
+        # refer to schema that has a oneOf
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Growl'
+          discriminator:
+            propertyName: type
+            mapping:
+              LOUD: '#/components/schemas/Meow'
+              WARN: '#/components/schemas/Growl'
+
+        # nested anonymous schemas with oneOf are unsupported
+        echoChamberOneOf:
+          type: object
+          properties:
+            type:
+              type: string
+            sound:
+              oneOf:
+                - $ref: '#/components/schemas/Meow'
+                - $ref: '#/components/schemas/Purr'
+              discriminator:
+                propertyName: type
+
+
+    GeneralSound:
+      type: object
+      properties:
+        type:
+          type: string
+        sound:
+          type: string
+
+    GeneralOneOfSound:
+      type: object
+      properties:
+        type:
+          type: string
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+            - $ref: '#/components/schemas/Growl'
+          discriminator:
+            propertyName: type
+            mapping:
+              LOUD: '#/components/schemas/Meow'
+              WARN: '#/components/schemas/Growl'
+
+    Meow:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [MEOW]
+        squeel:
+          type: string
+
+    Purr:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [PURR]
+        heritage:
+          type: string
+
+    Growl:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [GROWL]
+        severity:
+          type: string
+

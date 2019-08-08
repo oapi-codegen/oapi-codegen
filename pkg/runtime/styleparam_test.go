@@ -14,14 +14,23 @@
 package runtime
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+func escapePassThrough(s string) string {
+	return s
+}
+
 func TestStyleParam(t *testing.T) {
 	primitive := 5
+	unescapedPrimitive := "foo=bar"
+
 	array := []int{3, 4, 5}
+	unescapedArray := []string{"test?", "Sm!th", "J+mes", "foo=bar"}
+
 	type TestObject struct {
 		FirstName string `json:"firstName"`
 		Role      string `json:"role"`
@@ -34,29 +43,66 @@ func TestStyleParam(t *testing.T) {
 	dict["firstName"] = "Alex"
 	dict["role"] = "admin"
 
+	unescapedObject := TestObject{
+		FirstName: "Al=x",
+		Role:      "adm;n",
+	}
+
 	// ---------------------------- Simple Style -------------------------------
 
-	result, err := StyleParam("simple", false, "id", primitive)
+	result, err := StyleParam("simple", false, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "5", result)
 
-	result, err = StyleParam("simple", true, "id", primitive)
+	result, err = StyleParam("simple", true, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "5", result)
 
-	result, err = StyleParam("simple", false, "id", array)
+	result, err = StyleParam("simple", false, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "foo=bar", result)
+
+	result, err = StyleParam("simple", true, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "foo=bar", result)
+
+	result, err = StyleParam("simple", false, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "foo%3Dbar", result)
+
+	result, err = StyleParam("simple", true, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "foo%3Dbar", result)
+
+	result, err = StyleParam("simple", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "3,4,5", result)
 
-	result, err = StyleParam("simple", true, "id", array)
+	result, err = StyleParam("simple", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "3,4,5", result)
 
-	result, err = StyleParam("simple", false, "id", object)
+	result, err = StyleParam("simple", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "test%3F,Sm%21th,J+mes,foo=bar", result)
+
+	result, err = StyleParam("simple", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "test%3F,Sm%21th,J+mes,foo=bar", result)
+
+	result, err = StyleParam("simple", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "test%3F,Sm%21th,J%2Bmes,foo%3Dbar", result)
+
+	result, err = StyleParam("simple", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "test%3F,Sm%21th,J%2Bmes,foo%3Dbar", result)
+
+	result, err = StyleParam("simple", false, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("simple", true, "id", object)
+	result, err = StyleParam("simple", true, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
 
@@ -67,30 +113,77 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("simple", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
+	result, err = StyleParam("simple", false, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Al=x,role,adm%3Bn", result)
+
+	result, err = StyleParam("simple", true, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Al=x,role=adm%3Bn", result)
+
+	result, err = StyleParam("simple", false, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Al%3Dx,role,adm%3Bn", result)
+
+	result, err = StyleParam("simple", true, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Al%3Dx,role=adm%3Bn", result)
 
 	// ----------------------------- Label Style -------------------------------
 
-	result, err = StyleParam("label", false, "id", primitive)
+	result, err = StyleParam("label", false, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".5", result)
 
-	result, err = StyleParam("label", true, "id", primitive)
+	result, err = StyleParam("label", true, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".5", result)
 
-	result, err = StyleParam("label", false, "id", array)
+	result, err = StyleParam("label", false, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".foo=bar", result)
+
+	result, err = StyleParam("label", true, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".foo=bar", result)
+
+	result, err = StyleParam("label", false, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".foo%3Dbar", result)
+
+	result, err = StyleParam("label", true, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".foo%3Dbar", result)
+
+	result, err = StyleParam("label", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".3,4,5", result)
 
-	result, err = StyleParam("label", true, "id", array)
+	result, err = StyleParam("label", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".3.4.5", result)
 
-	result, err = StyleParam("label", false, "id", object)
+	result, err = StyleParam("label", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".test%3F,Sm%21th,J+mes,foo=bar", result)
+
+	result, err = StyleParam("label", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".test%3F.Sm%21th.J+mes.foo=bar", result)
+
+	result, err = StyleParam("label", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".test%3F,Sm%21th,J%2Bmes,foo%3Dbar", result)
+
+	result, err = StyleParam("label", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".test%3F.Sm%21th.J%2Bmes.foo%3Dbar", result)
+
+	result, err = StyleParam("label", false, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("label", true, "id", object)
+	result, err = StyleParam("label", true, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
 
@@ -101,30 +194,77 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("label", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
+	result, err = StyleParam("label", false, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName,Al=x,role,adm%3Bn", result)
+
+	result, err = StyleParam("label", true, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName=Al=x.role=adm%3Bn", result)
+
+	result, err = StyleParam("label", false, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName,Al%3Dx,role,adm%3Bn", result)
+
+	result, err = StyleParam("label", true, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName=Al%3Dx.role=adm%3Bn", result)
 
 	// ----------------------------- Matrix Style ------------------------------
 
-	result, err = StyleParam("matrix", false, "id", primitive)
+	result, err = StyleParam("matrix", false, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=5", result)
 
-	result, err = StyleParam("matrix", true, "id", primitive)
+	result, err = StyleParam("matrix", true, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=5", result)
 
-	result, err = StyleParam("matrix", false, "id", array)
+	result, err = StyleParam("matrix", false, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=foo=bar", result)
+
+	result, err = StyleParam("matrix", true, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=foo=bar", result)
+
+	result, err = StyleParam("matrix", false, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=foo%3Dbar", result)
+
+	result, err = StyleParam("matrix", true, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=foo%3Dbar", result)
+
+	result, err = StyleParam("matrix", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=3,4,5", result)
 
-	result, err = StyleParam("matrix", true, "id", array)
+	result, err = StyleParam("matrix", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=3;id=4;id=5", result)
 
-	result, err = StyleParam("matrix", false, "id", object)
+	result, err = StyleParam("matrix", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=test%3F,Sm%21th,J+mes,foo=bar", result)
+
+	result, err = StyleParam("matrix", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=test%3F;id=Sm%21th;id=J+mes;id=foo=bar", result)
+
+	result, err = StyleParam("matrix", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=test%3F,Sm%21th,J%2Bmes,foo%3Dbar", result)
+
+	result, err = StyleParam("matrix", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=test%3F;id=Sm%21th;id=J%2Bmes;id=foo%3Dbar", result)
+
+	result, err = StyleParam("matrix", false, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("matrix", true, "id", object)
+	result, err = StyleParam("matrix", true, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
 
@@ -135,29 +275,76 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("matrix", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
+	result, err = StyleParam("matrix", false, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=firstName,Al=x,role,adm%3Bn", result)
+
+	result, err = StyleParam("matrix", true, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";firstName=Al=x;role=adm%3Bn", result)
+
+	result, err = StyleParam("matrix", false, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=firstName,Al%3Dx,role,adm%3Bn", result)
+
+	result, err = StyleParam("matrix", true, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";firstName=Al%3Dx;role=adm%3Bn", result)
 
 	// ------------------------------ Form Style -------------------------------
-	result, err = StyleParam("form", false, "id", primitive)
+	result, err = StyleParam("form", false, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=5", result)
 
-	result, err = StyleParam("form", true, "id", primitive)
+	result, err = StyleParam("form", true, escapePassThrough, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=5", result)
 
-	result, err = StyleParam("form", false, "id", array)
+	result, err = StyleParam("form", false, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=foo=bar", result)
+
+	result, err = StyleParam("form", true, url.PathEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=foo=bar", result)
+
+	result, err = StyleParam("form", false, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=foo%3Dbar", result)
+
+	result, err = StyleParam("form", true, url.QueryEscape, "id", unescapedPrimitive)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=foo%3Dbar", result)
+
+	result, err = StyleParam("form", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3,4,5", result)
 
-	result, err = StyleParam("form", true, "id", array)
+	result, err = StyleParam("form", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("form", false, "id", object)
+	result, err = StyleParam("form", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F,Sm%21th,J+mes,foo=bar", result)
+
+	result, err = StyleParam("form", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J+mes&id=foo=bar", result)
+
+	result, err = StyleParam("form", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F,Sm%21th,J%2Bmes,foo%3Dbar", result)
+
+	result, err = StyleParam("form", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J%2Bmes&id=foo%3Dbar", result)
+
+	result, err = StyleParam("form", false, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("form", true, "id", object)
+	result, err = StyleParam("form", true, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
 
@@ -168,27 +355,58 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("form", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
+	result, err = StyleParam("form", false, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=firstName,Al=x,role,adm%3Bn", result)
+
+	result, err = StyleParam("form", true, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Al=x&role=adm%3Bn", result)
+
+	result, err = StyleParam("form", false, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=firstName,Al%3Dx,role,adm%3Bn", result)
+
+	result, err = StyleParam("form", true, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Al%3Dx&role=adm%3Bn", result)
 
 	// ------------------------  spaceDelimited Style --------------------------
 
-	result, err = StyleParam("spaceDelimited", false, "id", primitive)
+	_, err = StyleParam("spaceDelimited", false, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", primitive)
+	_, err = StyleParam("spaceDelimited", true, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", array)
+	result, err = StyleParam("spaceDelimited", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3 4 5", result)
 
-	result, err = StyleParam("spaceDelimited", true, "id", array)
+	result, err = StyleParam("spaceDelimited", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("spaceDelimited", false, "id", object)
+	result, err = StyleParam("spaceDelimited", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F Sm%21th J+mes foo=bar", result)
+
+	result, err = StyleParam("spaceDelimited", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J+mes&id=foo=bar", result)
+
+	result, err = StyleParam("spaceDelimited", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F Sm%21th J%2Bmes foo%3Dbar", result)
+
+	result, err = StyleParam("spaceDelimited", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J%2Bmes&id=foo%3Dbar", result)
+
+	_, err = StyleParam("spaceDelimited", false, escapePassThrough, "id", object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", object)
+	_, err = StyleParam("spaceDelimited", true, escapePassThrough, "id", object)
 	assert.Error(t, err)
 
 	result, err = StyleParam("spaceDelimited", false, "id", dict)
@@ -198,24 +416,40 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 	// -------------------------  pipeDelimited Style --------------------------
 
-	result, err = StyleParam("pipeDelimited", false, "id", primitive)
+	_, err = StyleParam("pipeDelimited", false, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", primitive)
+	_, err = StyleParam("pipeDelimited", true, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", array)
+	result, err = StyleParam("pipeDelimited", false, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3|4|5", result)
 
-	result, err = StyleParam("pipeDelimited", true, "id", array)
+	result, err = StyleParam("pipeDelimited", true, escapePassThrough, "id", array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("pipeDelimited", false, "id", object)
+	result, err = StyleParam("pipeDelimited", false, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F|Sm%21th|J+mes|foo=bar", result)
+
+	result, err = StyleParam("pipeDelimited", true, url.PathEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J+mes&id=foo=bar", result)
+
+	result, err = StyleParam("pipeDelimited", false, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F|Sm%21th|J%2Bmes|foo%3Dbar", result)
+
+	result, err = StyleParam("pipeDelimited", true, url.QueryEscape, "id", unescapedArray)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=test%3F&id=Sm%21th&id=J%2Bmes&id=foo%3Dbar", result)
+
+	_, err = StyleParam("pipeDelimited", false, escapePassThrough, "id", object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", object)
+	_, err = StyleParam("pipeDelimited", true, escapePassThrough, "id", object)
 	assert.Error(t, err)
 
 	result, err = StyleParam("pipeDelimited", false, "id", dict)
@@ -225,43 +459,50 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	// ---------------------------  deepObject Style ---------------------------
-	result, err = StyleParam("deepObject", false, "id", primitive)
+	_, err = StyleParam("deepObject", false, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", primitive)
+	_, err = StyleParam("deepObject", true, escapePassThrough, "id", primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", array)
+	_, err = StyleParam("deepObject", false, escapePassThrough, "id", array)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", array)
+	_, err = StyleParam("deepObject", true, escapePassThrough, "id", array)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", object)
+	_, err = StyleParam("deepObject", false, escapePassThrough, "id", object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", object)
+	result, err = StyleParam("deepObject", true, escapePassThrough, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
 	result, err = StyleParam("deepObject", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
+	result, err = StyleParam("deepObject", true, url.PathEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[firstName]=Al=x&id[role]=adm%3Bn", result)
+
+	result, err = StyleParam("deepObject", true, url.QueryEscape, "id", unescapedObject)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[firstName]=Al%3Dx&id[role]=adm%3Bn", result)
 
 	// Misc tests
 	// Test type aliases
 	type StrType string
-	result, err = StyleParam("simple", false, "foo", StrType("test"))
+	result, err = StyleParam("simple", false, escapePassThrough, "foo", StrType("test"))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "test", result)
 
 	type IntType int32
-	result, err = StyleParam("simple", false, "foo", IntType(7))
+	result, err = StyleParam("simple", false, escapePassThrough, "foo", IntType(7))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7", result)
 
 	type FloatType float64
-	result, err = StyleParam("simple", false, "foo", FloatType(7.5))
+	result, err = StyleParam("simple", false, escapePassThrough, "foo", FloatType(7.5))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7.5", result)
 
@@ -276,13 +517,13 @@ func TestStyleParam(t *testing.T) {
 		FirstName: &name,
 		Role:      &role,
 	}
-	result, err = StyleParam("simple", false, "id", object2)
+	result, err = StyleParam("simple", false, escapePassThrough, "id", object2)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
 	// Nullable fields need to be excluded when null
 	object2.Role = nil
-	result, err = StyleParam("simple", false, "id", object2)
+	result, err = StyleParam("simple", false, escapePassThrough, "id", object2)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex", result)
 }

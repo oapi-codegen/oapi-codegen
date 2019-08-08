@@ -1,0 +1,343 @@
+openapi: 3.0.1
+info:
+  title: Pets
+  version: 1.0.0
+servers: []
+paths:
+  /owner:
+    put:
+      summary: create pet owners
+      operationId: putOwner
+      requestBody:
+        description: list of feline creatures
+        required: true
+        content:
+          application-json:
+            schema:
+              $ref: '#/components/schemas/PetOwner'
+
+
+  /owner/testStatus:
+    get:
+      tags:
+        - owner
+      summary: Test Owner Status as OneOf
+      operationId: testOwnerStatus
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+#                $ref: '#/components/schemas/PetOwnerStatus'
+                  discriminator:
+                    propertyName: "type"
+                  oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+
+  /owner/pets:
+    get:
+      tags:
+      - owner
+      summary: Get owner pets
+      operationId: getOwnerStatus
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetOwnerStatus'
+#                discriminator:
+#                  propertyName: "type"
+#                oneOf:
+#                - $ref: '#/components/schemas/Cat'
+#                - $ref: '#/components/schemas/Dog'
+            application/xml:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+            application/yaml:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    PetOwnerStatus:
+      discriminator:
+        propertyName: "type"
+        mapping:
+          LOUD: '#/components/schemas/Cat'
+          WARN: '#/components/schemas/Dog'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+
+
+    PetOwner:
+      type: object
+      properties:
+        name: 
+          type: string
+        age:
+          type: integer
+          default: 7
+        favorite:  
+          oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+          discriminator:
+            propertyName: type
+
+
+        dogs:
+          type: array
+          default: []
+          items:
+            $ref: '#/components/schemas/Dog'
+
+        livesIn:
+          oneOf:
+            - $ref: '#/components/schemas/House'
+            - $ref: '#/components/schemas/Palace'
+          discriminator:
+            propertyName: type
+
+        petLivesIn:
+          $ref: '#/components/schemas/Accommodation'
+
+        owns:
+          type: array
+          items:
+            $ref: '#/components/schemas/Accommodation'
+
+    Cheetah:
+      type: object
+      properties:
+        type:
+          type: string
+          default: black
+
+        # refer to schema that has a oneOf
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+            - $ref: '#/components/schemas/Growl'
+          discriminator:
+            propertyName: type
+            mapping:
+              LOUD: '#/components/schemas/Meow'
+              WARN: '#/components/schemas/Growl'
+
+        # refer to schema that has the same property name as the oneOf above
+        echo:
+          $ref: '#/components/schemas/SchemaWithSound'
+
+        # refer to schema that is a oneOf and has the same property name as the oneOf above
+        echoOneOf:
+          $ref: '#/components/schemas/SchemaWithOneOfSound'
+
+        echoChamber:
+          type: object
+          properties:
+            type:
+              type: string
+            sound:
+              type: string
+
+        favSound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+          discriminator:
+            propertyName: type
+
+    SchemaWithSound:
+      type: object
+      properties:
+        type:
+          type: string
+        sound:
+          type: string
+
+    SchemaWithOneOfSound:
+      type: object
+      properties:
+        type:
+          type: string
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+            - $ref: '#/components/schemas/Growl'
+          discriminator:
+            propertyName: type
+            mapping:
+              LOUD: '#/components/schemas/Meow'
+              WARN: '#/components/schemas/Growl'
+
+
+
+    Dog:
+      type: object
+      properties:
+        type:
+          type: string
+
+        kind:
+          type: string
+          enum: [GUIDE,SHEPHERD,TOY]
+
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Bark'
+          discriminator:
+            propertyName: type
+
+    Cat:
+      type: object
+      properties:
+        type:
+          type: string
+
+        mood:
+          type: string
+          enum: [ALOOF, FRIENDLY, SHY]
+
+        sound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+            - $ref: '#/components/schemas/Growl'
+          discriminator:
+            propertyName: type
+            mapping:
+              LOUD: '#/components/schemas/Meow'
+              WARN: '#/components/schemas/Growl'
+
+        favSound:
+          oneOf:
+            - $ref: '#/components/schemas/Meow'
+            - $ref: '#/components/schemas/Purr'
+          discriminator:
+            propertyName: type
+
+    Bark:
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: [BARK]
+        volume: 
+          type: integer
+
+    Meow:
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: [MEOW]
+        squeel:
+          type: string
+
+    Purr:
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: [PURR]
+        heritage:
+          $ref: '#/components/schemas/Accommodation'
+          
+    Growl:
+      type: object
+      properties:
+        type: 
+          type: string
+          enum: [GROWL]
+        severity:
+          type: string
+
+    Accommodation:
+      type: object
+      properties:
+        title: 
+          type: string
+        class:
+          oneOf:
+            - $ref: '#/components/schemas/Palace'
+            - $ref: '#/components/schemas/Shack'
+            - $ref: '#/components/schemas/House'
+            - $ref: '#/components/schemas/Kennel'
+          discriminator:
+            propertyName: type
+
+
+    Kennel:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [BARK]
+        name:
+          type: string
+        rooms:
+          type: integer
+
+
+    House:
+      type: object
+      properties:
+        type: 
+          type: string
+        name:
+          type: string
+        rooms:
+          type: integer
+        
+
+    Shack:
+      type: object
+      properties:
+        type: 
+          type: string
+        name:
+          type: string
+        material:
+          type: string
+          default: timber
+
+
+    Palace:
+      type: object
+      properties:
+        type: 
+          type: string
+        name:
+          type: string
+        Halls:
+          type: integer
+          default: 7
+        towers:
+          type: integer
+          default: 1
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+

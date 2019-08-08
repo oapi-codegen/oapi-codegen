@@ -101,6 +101,8 @@ func genResponsePayload(operationID string) string {
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
 	var caseClauses = make(map[string]string)
+	operationID := op.OperationID
+	responses := op.Responses
 
 	// Get the type definitions from the operation:
 	typeDefinitions, err := op.GetResponseTypeDefinitions()
@@ -109,7 +111,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	}
 
 	// Add a case for each possible response:
-	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
 
 		responseRef, ok := responses[typeDefinition.ResponseName]
@@ -139,10 +140,51 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		// If we made it this far then we need to handle unmarshaling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
+			contentType, ok := responseRef.Value.Content[contentTypeName]
+			if !ok {
+				continue
+			}
+
+			// But we can only do this if we actually have a schema (otherwise there will be no struct to unmarshal into):
+			if contentType.Schema == nil {
+				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", operationID, responseName)
+				continue
+			}
+
+			// Make sure that we actually have a go-type for this response:
+			goType, err := GenerateGoSchema(ctx, contentType.Schema, []string{contentTypeName})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
+				continue
+			}
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if typeDefinition.TypeName == "interface{}" {
+			if goType.TypeDecl() == "interface{}" && !goType.SkipOptionalPointer {
 				// Unable to unmarshal this, so we leave it out:
+				continue
+			}
+
+			// decodeable types unmarshal differently
+			if goType.TypeDecl() == "interface{}" {
+				// Need to define the type in a ref in order to decode.Unmarshal
+				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+
+				var decorator *Decorator
+				for _, v := range goType.Decorators {
+					if v.Discriminator != "" {
+						decorator = &v
+					}
+				}
+				if decorator != nil {
+					caseAction := fmt.Sprintf("res, err := decode.UnmarshalJSONInto(bodyBytes, &%s{}, SchemaPathFactory) \n if err != nil { \n return nil, err \n} \n response.%s = &res", decorator.SchemaName, attributeName)
+					if responseName == "default" {
+						caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
+						leastSpecific[caseClause] = caseAction
+					} else {
+						caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
+						mostSpecific[caseClause] = caseAction
+					}
+				}
 				continue
 			}
 
@@ -151,9 +193,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				var caseAction string
-				if typeDefinition.Schema.TypeDecl() == "interface{}" {
-					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
+				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+				fmtStr := "response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}"
+				if ctx.HasDecorators {
+					fmtStr = "response.%s = &%s{} \nif _, err := decode.UnmarshalJSONInto(bodyBytes, response.%s, SchemaPathFactory); err != nil { \n return nil, err \n}"
+				}
+				caseAction := fmt.Sprintf(fmtStr, attributeName, goType.TypeDecl(), attributeName)
+				if responseName == "default" {
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
+					leastSpecific[caseClause] = caseAction
 				} else {
 					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				}
@@ -223,8 +271,8 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", LowercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
-	td, err := op.GetResponseTypeDefinitions()
+func getResponseTypeDefinitions(ctx *genCtx, op *OperationDefinition) []TypeDefinition {
+	td, err := op.GetResponseTypeDefinitions(ctx)
 	if err != nil {
 		panic(err)
 	}
@@ -261,4 +309,6 @@ var TemplateFunctions = template.FuncMap{
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
 	"stripNewLines":              stripNewLines,
+	"split":                      strings.Split,
+	"dottedStringToTypeName":     DottedStringToTypeName,
 }

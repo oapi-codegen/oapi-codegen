@@ -10,7 +10,12 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
     if err != nil {
         return nil, err
     }
-    return &ClientWithResponses{client}, nil
+    return &ClientWithResponses{
+        ClientInterface: &Client{
+            Client: client,
+            Server: server,
+        },
+    }, nil
 }
 
 // WithBaseURL overrides the baseURL.
@@ -29,10 +34,26 @@ func WithBaseURL(baseURL string) ClientOption {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
+// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
+func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
+	return &ClientWithResponses{
+		ClientInterface: &Client{
+			Client: &http.Client{},
+			Server: server,
+			RequestEditor: reqEditorFn,
+		},
+	}
+}
+
+func (c *ClientWithResponses) UpdateHttpClient(cli HTTPClientInterface) {
+     c.ClientInterface.(*Client).Client = cli
+}
+
+{{range .OpDefs}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | lcFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
-    {{- range getResponseTypeDefinitions .}}
+    {{- range getResponseTypeDefinitions $ .}}
     {{.TypeName}} *{{.Schema.TypeDecl}}
     {{- end}}
 }
@@ -55,7 +76,7 @@ func (r {{$opid | lcFirst}}Response) StatusCode() int {
 {{end}}
 
 
-{{range .}}
+{{range .OpDefs}}
 {{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
 
@@ -84,7 +105,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 {{end}}{{/* operations */}}
 
 {{/* Generate parse functions for responses*/}}
-{{range .}}{{$opid := .OperationId}}
+{{range .OpDefs}}{{$opid := .OperationId}}
 
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
@@ -96,9 +117,9 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
     response := {{genResponsePayload $opid}}
 
-    {{genResponseUnmarshal .}}
+    {{genResponseUnmarshal $ $opid .Spec.Responses }}
 
     return response, nil
 }
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .OpDefs $opid := .OperationId */}}
 

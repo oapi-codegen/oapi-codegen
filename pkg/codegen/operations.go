@@ -141,12 +141,12 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
-func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+func DescribeParameters(ctx *genCtx, params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		goType, err := paramToGoType(ctx, param, append(path, param.Name))
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
@@ -164,7 +164,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
 		if paramOrRef.Ref != "" {
-			goType, err := RefPathToGoType(paramOrRef.Ref)
+			goType, err := RefPathToGoType(paramOrRef.Ref, ctx.ImportedTypes)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
 					paramOrRef.Ref, param.Name, err)
@@ -204,10 +204,11 @@ type OperationDefinition struct {
 	TypeDefinitions     []TypeDefinition      // These are all the types we need to define for this operation
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
-	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
-	Summary             string                  // Summary string from Swagger, used to generate a comment
-	Method              string                  // GET, POST, DELETE, etc.
-	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Bodies              []RequestBodyDefinition   // The list of bodies for which to generate handlers.
+	Summary             string                    // Summary string from Swagger, used to generate a comment
+	Method              string                    // GET, POST, DELETE, etc.
+	Path                string                    // The Swagger path for the operation, like /resource/{id}
+	ImportedTypes       map[string]TypeImportSpec // map of typename to go path for import
 	Spec                *openapi3.Operation
 }
 
@@ -258,7 +259,7 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
+func (o *OperationDefinition) GetResponseTypeDefinitions(ctx *genCtx) ([]TypeDefinition, error) {
 	var tds []TypeDefinition
 
 	responses := o.Spec.Responses
@@ -273,7 +274,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(ctx, contentType.Schema, []string{responseName})
 					if err != nil {
 						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
 					}
@@ -298,7 +299,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						ResponseName: responseName,
 					}
 					if contentType.Schema.Ref != "" {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+						refType, err := RefPathToGoType(contentType.Schema.Ref, o.ImportedTypes)
 						if err != nil {
 							return nil, errors.Wrap(err, "error dereferencing response Ref")
 						}
@@ -368,16 +369,15 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
-	var operations []OperationDefinition
+func OperationDefinitions(ctx *genCtx, swagger *openapi3.Swagger) error {
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		globalParams, err := DescribeParameters(ctx, pathItem.Parameters, nil)
 		if err != nil {
-			return nil, fmt.Errorf("error describing global parameters for %s: %s",
+			return fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
 		}
 
@@ -386,22 +386,20 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
 			// We rely on OperationID to generate function names, it's required
-			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
-				if err != nil {
-					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
-						opName, requestPath, err)
-				}
-				op.OperationID = op.OperationID
-			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
+			opID := op.OperationID
+			if opID == "" {
+				// construct a default operationID
+				opID = opName + " " + requestPath
+				opID = ReplacePathParamsWithParNStr(opID)
+				opID = strings.ReplaceAll(opID, "/", " ")
 			}
+			opID = ToCamelCase(opID)
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(ctx, op.Parameters, []string{opID + "Params"})
 			if err != nil {
-				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
+				return fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
@@ -414,12 +412,12 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 			pathParams := FilterParameterDefinitionByType(allParams, "path")
 			pathParams, err = SortParamsByPath(requestPath, pathParams)
 			if err != nil {
-				return nil, err
+				return err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(ctx, opID, op.RequestBody)
 			if err != nil {
-				return nil, errors.Wrap(err, "error generating body definitions")
+				return errors.Wrap(err, "error generating body definitions")
 			}
 
 			opDef := OperationDefinition{
@@ -427,7 +425,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  ToCamelCase(op.OperationID),
+				OperationId:  opID,
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -435,6 +433,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				TypeDefinitions: typeDefinitions,
+				ImportedTypes:   ctx.ImportedTypes,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -458,10 +457,10 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
-			operations = append(operations, opDef)
+			ctx.OpDefs = append(ctx.OpDefs, opDef)
 		}
 	}
-	return operations, nil
+	return nil
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
@@ -486,7 +485,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 
 // This function turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+func GenerateBodyDefinitions(ctx *genCtx, operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
@@ -508,7 +507,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bodyTypeName := operationID + tag + "Body"
-		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
+		bodySchema, err := GenerateGoSchema(ctx, content.Schema, []string{bodyTypeName})
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "error generating request body definition")
 		}
@@ -516,7 +515,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// If the body is a pre-defined type
 		if bodyOrRef.Ref != "" {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(bodyOrRef.Ref)
+			refType, err := RefPathToGoType(bodyOrRef.Ref, ctx.ImportedTypes)
 			if err != nil {
 				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
 			}
@@ -607,27 +606,22 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 }
 
 // Generates code for all types produced
-func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateTypesForOperations(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "param-types.tmpl", ops)
+	err := t.ExecuteTemplate(w, "param-types.tmpl", ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating types for params objects")
 	}
 
-	err = t.ExecuteTemplate(w, "request-bodies.tmpl", ops)
+	err = t.ExecuteTemplate(w, "request-bodies.tmpl", ctx)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating request bodies for operations")
 	}
 
 	// Generate boiler plate for all additional types.
-	var td []TypeDefinition
-	for _, op := range ops {
-		td = append(td, op.TypeDefinitions...)
-	}
-
-	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
+	addProps, err := GenerateAdditionalPropertyBoilerplate(ctx, t, ctx.getAllOpTypes())
 	if err != nil {
 		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
 	}
@@ -681,18 +675,19 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	si, err := GenerateServerInterface(t, operations)
+func GenerateEchoServer(ctx *genCtx, t *template.Template, operations []OperationDefinition) (string, error) {
+	si, err := GenerateServerInterface(ctx, t, operations)
+
 	if err != nil {
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)
 	}
 
-	wrappers, err := GenerateWrappers(t, operations)
+	wrappers, err := GenerateWrappers(ctx, t)
 	if err != nil {
 		return "", fmt.Errorf("Error generating handler wrappers: %s", err)
 	}
 
-	register, err := GenerateRegistration(t, operations)
+	register, err := GenerateRegistration(ctx, t)
 	if err != nil {
 		return "", fmt.Errorf("Error generating handler registration: %s", err)
 	}
@@ -700,11 +695,11 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 }
 
 // Uses the template engine to generate the server interface
-func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateServerInterface(ctx *genCtx, t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "server-interface.tmpl", ops)
+	err := t.ExecuteTemplate(w, "server-interface.tmpl", ctx)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating server interface: %s", err)
@@ -719,11 +714,11 @@ func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (s
 // Uses the template engine to generate all the wrappers which wrap our simple
 // interface functions and perform marshallin/unmarshalling from HTTP
 // request objects.
-func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateWrappers(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "wrappers.tmpl", ops)
+	err := t.ExecuteTemplate(w, "wrappers.tmpl", ctx)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating server interface: %s", err)
@@ -737,11 +732,11 @@ func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, 
 
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateRegistration(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateRegistration(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "register.tmpl", ops)
+	err := t.ExecuteTemplate(w, "register.tmpl", ctx)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating route registration: %s", err)
@@ -755,11 +750,11 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClient(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "client.tmpl", ops)
+	err := t.ExecuteTemplate(w, "client.tmpl", ctx)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating client bindings: %s", err)
@@ -773,11 +768,11 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 
 // This generates a client which extends the basic client which does response
 // unmarshaling.
-func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClientWithResponses(ctx *genCtx, t *template.Template) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ops)
+	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ctx)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating client bindings: %s", err)

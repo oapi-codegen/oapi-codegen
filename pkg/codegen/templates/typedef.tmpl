@@ -1,4 +1,4 @@
-{{range .Types}}
+{{range .TypeDefs}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}

@@ -20,45 +20,45 @@ import (
 
 func TestGenerateDefaultOperationID(t *testing.T) {
 	type test struct {
-		op string
-		path string
-		want string
+		op      string
+		path    string
+		want    string
 		wantErr bool
 	}
 
-	suite := []test {
+	suite := []test{
 		{
-			op: http.MethodGet,
-			path: "/v1/foo/bar",
-			want: "GetV1FooBar",
+			op:      http.MethodGet,
+			path:    "/v1/foo/bar",
+			want:    "GetV1FooBar",
 			wantErr: false,
 		},
 		{
-			op: http.MethodGet,
-			path: "/v1/foo/bar/",
-			want: "GetV1FooBar",
+			op:      http.MethodGet,
+			path:    "/v1/foo/bar/",
+			want:    "GetV1FooBar",
 			wantErr: false,
 		},
 		{
-			op: http.MethodPost,
-			path: "/v1",
-			want: "PostV1",
+			op:      http.MethodPost,
+			path:    "/v1",
+			want:    "PostV1",
 			wantErr: false,
 		},
 		{
-			op: http.MethodPost,
-			path: "v1",
-			want: "PostV1",
+			op:      http.MethodPost,
+			path:    "v1",
+			want:    "PostV1",
 			wantErr: false,
 		},
 		{
-			path: "v1",
-			want: "",
+			path:    "v1",
+			want:    "",
 			wantErr: true,
 		},
 		{
-			path: "",
-			want: "PostV1",
+			path:    "",
+			want:    "PostV1",
 			wantErr: true,
 		},
 	}
@@ -71,7 +71,7 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 			}
 		}
 
-		if test.wantErr	{
+		if test.wantErr {
 			return
 		}
 		if got != test.want {

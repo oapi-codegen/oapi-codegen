@@ -29,7 +29,7 @@ import (
 // type aliases. This function was the easy way out, the better way, since we
 // know the destination type each place that we use this, is to generate code
 // to read each specific type.
-func BindStringToObject(src string, dst interface{}) error {
+func BindStringToObject(unescape func(string) (string, error), src string, dst interface{}) error {
 	var err error
 
 	v := reflect.ValueOf(dst)
@@ -55,7 +55,16 @@ func BindStringToObject(src string, dst interface{}) error {
 			v.SetInt(val)
 		}
 	case reflect.String:
-		v.SetString(src)
+		if unescape == nil {
+			return fmt.Errorf("no unescape function provided")
+		}
+
+		var escaped string
+		escaped, err = unescape(src)
+		if err != nil {
+			return fmt.Errorf("error unescaping string parameter element: %s", src)
+		}
+		v.SetString(escaped)
 		err = nil
 	case reflect.Float64, reflect.Float32:
 		var val float64
