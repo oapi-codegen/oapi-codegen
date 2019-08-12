@@ -10,6 +10,8 @@ paths:
   /with_json_response:
     get:
       operationId: GetJson
+      security:
+      - OpenId: [json.read, json.admin]
       responses:
         200:
           application/json:

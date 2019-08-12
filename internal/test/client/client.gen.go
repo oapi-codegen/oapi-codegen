@@ -696,6 +696,10 @@ func (w *ServerInterfaceWrapper) PostJson(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetJson(ctx echo.Context) error {
 	var err error
 
+	// HasSecurity is set
+
+	ctx.Set("OpenId.Scopes", []string{"json.read", "json.admin"})
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetJson(ctx)
 	return err
@@ -738,14 +742,14 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8yTQW8TMRCF/8pq4LgkW7jtEQ6oSFBEI3EAhBzvS+xq1zbjaatVlf+OxknIRlRRJFTU",
-	"SzSOZ0bvvc/7QDYOKQYEydQ+ULYOgynldSmvljewoufEMYHFo9yuPGf5ZAboQcYEaikL+7CmTU0c+8cu",
-	"9Aa/bj2jo/bbtquerPqx0RYfVlGHO2TLPomPgVpaOJ8rQZZc3TuIA1fiUL3rPYJUJnS78qsX9wU5xZCR",
-	"K8Oo1ghgI+gqG5lhpR+/B6qp9xYhF52hGKGPlwtVL15UPi2QpboG34Gppjtw3kq5mDWzRhtjQjDJU0tv",
-	"Zs3sgmpKRlzJZ37vxf1cxvLT7UJLMZcoNUijvi47aulzzPI2iqNtOtBTN2qfjUEQyohJqfe2DM1vssrY",
-	"w9LqJWNFLb2YH2jOdyjnRxw13+mqaAXyKgvDDMcrV5EHI9TS0gfDI9V/wTyiKXyL8tfEOO8x6L41HrH+",
-	"Hgfnk97XTfNcPU88qiSFO55G+0GV/xe0p4AUsfuQT/H4I/cJeUxTjPopnxHjlfadneNTveut2nNyPOg9",
-	"HeS/vsbN5ncAAAD//29vOELEBQAA",
+	"H4sIAAAAAAAC/8yTQYsTQRCF/8pQehyTrN7mqAdZQSNuwEMM0ul5yfSS6W6rK7sMIf9dqicxE1xCQFb2",
+	"EqrTVcV775vekQ1tDB5eElU7SrZBa3J5l8vp8h5W9Bw5RLA45NuV4yRfTAs9SBdBFSVh59e0L4nD5qkL",
+	"vcGvrWPUVM37rnKwarHXFudXQYdrJMsuigueKpo1LhWCJKl4bCANuJAGxYeNg5fC+PpQfnfSfEOKwSek",
+	"wjCKNTzYCOrCBmZY2XQ/PJW0cRY+ZZ0+G6HPtzNVL05UPs2QpLgDP4CppAdw6qXcjCajiTaGCG+io4re",
+	"jSajGyopGmlyPuNHJ83PZcg/9SG0GFKOUoM06uu2poq+hiTvgzTUpwM91Z322eAFPo+YGDfO5qHxfVIZ",
+	"R1havWasqKJX4xPN8QHl+Iyj5jtcFaxA3iRhmPZ85Spwa4QqWjpvuKPyL5hnNIW3yH8NjPMRg+5b4wnr",
+	"H3FyPuh9O5m8VM8DjypJ4XaX0X5S5f8F7SUgWewx5Es8/sh9Rh4qK8Fu2UlH1XxH04gsYE66d8QwNZV9",
+	"berWeVrsFycvQV//FclPte/q6J/rKfRqr4n+pPdy9v/6Ae/3vwMAAP//ZMSZTPcFAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
