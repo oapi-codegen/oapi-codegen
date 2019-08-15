@@ -738,7 +738,7 @@ type ClientInterface interface {
 	// BodyWithAddProps request  with any body
 	BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
-	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONBody) (*http.Response, error)
+	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*http.Response, error)
 }
 
 func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams) (*http.Response, error) {
@@ -771,7 +771,7 @@ func (c *Client) BodyWithAddPropsWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
-func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONBody) (*http.Response, error) {
+func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*http.Response, error) {
 	req, err := NewBodyWithAddPropsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -825,7 +825,7 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 }
 
 // NewBodyWithAddPropsRequest calls the generic BodyWithAddProps builder with application/json body
-func NewBodyWithAddPropsRequest(server string, body BodyWithAddPropsJSONBody) (*http.Request, error) {
+func NewBodyWithAddPropsRequest(server string, body BodyWithAddPropsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -936,7 +936,7 @@ func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.C
 	return ParsebodyWithAddPropsResponse(rsp)
 }
 
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONBody) (*bodyWithAddPropsResponse, error) {
+func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*bodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddProps(ctx, body)
 	if err != nil {
 		return nil, err

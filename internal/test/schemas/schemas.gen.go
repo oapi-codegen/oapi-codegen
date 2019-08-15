@@ -73,7 +73,7 @@ type ClientInterface interface {
 	// Issue9 request  with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
 
-	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*http.Response, error)
+	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
 }
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
@@ -121,7 +121,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 	return c.Client.Do(req)
 }
 
-func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*http.Response, error) {
+func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -179,7 +179,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 }
 
 // NewIssue9Request calls the generic Issue9 builder with application/json body
-func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONBody) (*http.Request, error) {
+func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
@@ -335,7 +335,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	return Parseissue9Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONBody) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err
