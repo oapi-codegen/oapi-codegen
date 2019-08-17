@@ -86,6 +86,10 @@ func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (str
 	if err != nil {
 		return "", fmt.Errorf("error loading swagger ui template: %s", err)
 	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for swagger ui template: %s", err)
+	}
 	swaggerUI := buf.Bytes()
 	buf.Reset()
 
