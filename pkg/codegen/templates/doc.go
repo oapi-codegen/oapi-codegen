@@ -1,3 +1,3 @@
 package templates
 
-//go:generate gobin -m -run github.com/pseudo-su/templates -s . -o templates.gen.go
+//go:generate go run github.com/pseudo-su/templates -s . -o templates.gen.go

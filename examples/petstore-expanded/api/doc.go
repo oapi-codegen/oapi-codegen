@@ -17,7 +17,7 @@ package api
 // server. The file petstore.gen.go is automatically generated from the schema
 
 // Run oapi-codegen to regenerate the petstore boilerplate
-//go:generate gobin -m -run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go petstore-expanded.yaml
-//go:generate gobin -m -run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go petstore-expanded.yaml
-//go:generate gobin -m -run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate client -o petstore-client.gen.go petstore-expanded.yaml
-//go:generate gobin -m -run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate specui -o swagger-ui.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate client -o petstore-client.gen.go petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate specui -o swagger-ui.gen.go petstore-expanded.yaml
