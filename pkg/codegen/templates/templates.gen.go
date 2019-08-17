@@ -418,8 +418,13 @@ func GetSwaggerUI(specURL string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error decompressing spec: %s", err)
 	}
+	s := string(buf.Bytes())
+	idx := strings.Index(s, "<!DOCTYPE html>")
 
-	tmpl, err := template.New("swaggerui").Delims("__LEFT_DELIM__", "__RIGHT_DELIM__").Parse(string(buf.Bytes()))
+	tmpl, err := template.
+		New("swaggerui").
+		Delims("__LEFT_DELIM__", "__RIGHT_DELIM__").
+		Parse(s[idx:])
 
 	if err != nil {
 		return nil, fmt.Errorf("error loading swagger ui template: %s", err)
