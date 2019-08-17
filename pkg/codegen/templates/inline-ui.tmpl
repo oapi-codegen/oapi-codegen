@@ -7,7 +7,7 @@ var swaggerUI = []string{
 // GetSwagger returns the Swagger specification corresponding to the generated code
 // in this file.
 func GetSwaggerUI(specURL string) ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerUI, ""))
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding swagger ui: %s", err)
 	}
