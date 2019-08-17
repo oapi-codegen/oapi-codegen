@@ -23,6 +23,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 		GenerateServer: true,
 		GenerateTypes:  true,
 		EmbedSpec:      true,
+		EmbedSpecUI:    true,
 	}
 
 	// Get a spec from the example PetStore definition:
@@ -80,6 +81,7 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 		GenerateServer: true,
 		GenerateTypes:  true,
 		EmbedSpec:      true,
+		EmbedSpecUI:    true,
 	}
 
 	// Get a spec from the test definition in this file:

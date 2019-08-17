@@ -24,7 +24,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// This generates a gzipped, base64 encoded JSON representation of the
+// GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
 func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (string, error) {
 	// Marshal to json
@@ -72,6 +72,61 @@ func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (strin
 	err = w.Flush()
 	if err != nil {
 		return "", fmt.Errorf("error flushing output buffer for inlined spec: %s", err)
+	}
+	return buf.String(), nil
+}
+
+// GenerateInlinedSpecUI generates a gzipped, base64 encoded HTML template of
+// swagger ui, which we embed inside the generated code.
+func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (string, error) {
+	// load the HTML swagger ui template
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	err := t.ExecuteTemplate(w, "swagger.html.tmpl", nil)
+	if err != nil {
+		return "", fmt.Errorf("error loading swagger ui template: %s", err)
+	}
+	swaggerUI := buf.Bytes()
+	buf.Reset()
+
+	// gzip
+	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	if err != nil {
+		return "", fmt.Errorf("error creating gzip compressor: %s", err)
+	}
+	_, err = zw.Write(swaggerUI)
+	if err != nil {
+		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+	}
+	err = zw.Close()
+	if err != nil {
+		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+	}
+	str := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	var parts []string
+	const width = 80
+
+	// Chop up the string into an array of strings.
+	for len(str) > width {
+		part := str[0:width]
+		parts = append(parts, part)
+		str = str[width:]
+	}
+	if len(str) > 0 {
+		parts = append(parts, str)
+	}
+
+	// Generate inline code.
+	buf.Reset()
+	w = bufio.NewWriter(&buf)
+	err = t.ExecuteTemplate(w, "inline-ui.tmpl", parts)
+	if err != nil {
+		return "", fmt.Errorf("error generating inlined spec ui: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for inlined spec ui: %s", err)
 	}
 	return buf.String(), nil
 }

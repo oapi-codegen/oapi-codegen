@@ -3,5 +3,5 @@
 package tools
 
 import (
-	_ "github.com/cyberdelia/templates"
+	_ "github.com/pseudo-su/templates"
 )

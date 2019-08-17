@@ -1,3 +1,7 @@
 .idea
 .DS_Store
 .vscode/
+.gobincache/
+swagger1.tmp
+swagger2.tmp
+swagger-ui-dist/

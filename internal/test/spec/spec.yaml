@@ -1,0 +1,62 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  description: |
+    Test cases for various issues found over time. Please add a test case for
+    any bug fixed.
+servers:
+  - url: http://openapitest.deepmap.ai
+paths:
+  /issues/9:
+    get:
+      operationId: Issue9
+      description: |
+        Client params type incorrectly included for request with body and
+        parameters.
+      parameters:
+        - name: foo
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Optional body
+        required: false
+        content:
+          application/json:
+            schema: {}
+  /issues/30/{fallthrough}:
+    get:
+      operationId: Issue30
+    description: |
+      Reserved keywords should be prefixed in variable names.
+    parameters:
+      - name: fallthrough
+        in: path
+        required: true
+        schema:
+          type: string
+  /issues/41/{1param}:
+    get:
+      operationId: Issue41
+      description: Parameter name starting with number
+      parameters:
+        - name: 1param
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/5StartsWithNumber"
+components:
+  schemas:
+    GenericObject:
+      type: object
+    AnyType1: {}
+    AnyType2:
+      description: This should be an interface{}
+    CustomStringType:
+      type: string
+      format: custom
+    5StartsWithNumber:
+      type: object
+      description: This schema name starts with a number

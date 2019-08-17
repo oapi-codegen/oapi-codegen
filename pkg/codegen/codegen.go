@@ -35,9 +35,10 @@ type Options struct {
 	GenerateClient bool // GenerateClient specifies whether to generate client boilerplate
 	GenerateTypes  bool // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec      bool // Whether to embed the swagger spec in the generated code
+	EmbedSpecUI    bool // Whether to embed the swagger ui in the generated code
 }
 
-// Uses the Go templating engine to generate all of our server wrappers from
+// Generate Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
@@ -91,7 +92,15 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	if opts.EmbedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
 		if err != nil {
-			return "", errors.Wrap(err, "error generating Go handlers for Paths")
+			return "", errors.Wrap(err, "error generating embedded spec")
+		}
+	}
+
+	var inlinedSpecUI string
+	if opts.EmbedSpecUI {
+		inlinedSpecUI, err = GenerateInlinedSpecUI(t, swagger)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating swagger ui")
 		}
 	}
 
@@ -103,7 +112,10 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
-	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec} {
+	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec, inlinedSpecUI} {
+		if strings.Contains(str, "template.") {
+			imports = append(imports, "text/template")
+		}
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
@@ -201,6 +213,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing inlined spec")
+		}
+	}
+
+	if opts.EmbedSpecUI {
+		_, err = w.WriteString(inlinedSpecUI)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing inlined spec ui")
 		}
 	}
 

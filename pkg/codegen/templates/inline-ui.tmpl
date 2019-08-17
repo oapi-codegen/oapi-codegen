@@ -1,0 +1,32 @@
+// swaggerUI is a Base64 encoded, gzipped, json marshaled swaggerui.html template
+var swaggerUI = []string{
+{{range .}}
+    "{{.}}",{{end}}
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file.
+func GetSwaggerUI(specURL string) ([]byte, error) {
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding swagger ui: %s", err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(zr)
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+
+	tmpl, err := template.New("swaggerui").Parse(string(buf.Bytes()))
+
+	if err != nil {
+		return nil, fmt.Errorf("error loading swagger ui template: %s", err)
+	}
+	buf.Reset()
+	tmpl.Execute(&buf, specURL)
+	return buf.Bytes(), nil
+}
