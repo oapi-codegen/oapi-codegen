@@ -6,6 +6,7 @@ env:
   - GO111MODULE: 'on'
   - CGO_ENABLED: '0'
 script:
+  - GO111MODULE=off go get -u github.com/myitcv/gobin
   - go test -v ./...
   - go generate ./pkg/codegen/templates
   - go generate ./...
