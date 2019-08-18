@@ -97,8 +97,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	var inlinedSpecUI string
+	var inlinedSpecUIRedirect string
 	if opts.EmbedSpecUI {
-		inlinedSpecUI, err = GenerateInlinedSpecUI(t, swagger)
+		inlinedSpecUI, err = GenerateInlinedSpecUI(t)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating swagger ui")
+		}
+		inlinedSpecUIRedirect, err = GenerateInlinedSpecRedirect(t)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating swagger ui")
 		}
@@ -112,9 +117,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
-	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec, inlinedSpecUI} {
+	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec, inlinedSpecUI, inlinedSpecUIRedirect} {
 		if strings.Contains(str, "template.") {
-			imports = append(imports, "text/template")
+			imports = append(imports, "html/template")
 		}
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
@@ -220,6 +225,10 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		_, err = w.WriteString(inlinedSpecUI)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing inlined spec ui")
+		}
+		_, err = w.WriteString(inlinedSpecUIRedirect)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing inlined spec ui redirect")
 		}
 	}
 

@@ -1,15 +1,15 @@
-// swaggerUI is a Base64 encoded, gzipped, json marshaled swaggerui.html template
-var swaggerUI = []string{
-{{range .}}
+// swagger{{.Code}} is a Base64 encoded, gzipped, json marshaled swaggerui.html template
+var swagger{{.Code}} = []string{
+{{range .Parts}}
     "{{.}}",{{end}}
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
+// GetSwagger{{.Code}} returns the Swagger specification corresponding to the generated code
 // in this file.
-func GetSwaggerUI(specURL string) ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerUI, ""))
+func GetSwagger{{.Code}}(specURL string, redirectURL string) ([]byte, error) {
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swagger{{.Code}}, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding swagger ui: %s", err)
+		return nil, fmt.Errorf("error base64 decoding swagger {{.Code}}: %s", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
@@ -20,18 +20,26 @@ func GetSwaggerUI(specURL string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error decompressing spec: %s", err)
 	}
-	s := string(buf.Bytes())
-	idx := strings.Index(s, "<!DOCTYPE html>")
+	s := buf.String()
+	// idx := strings.Index(s, "<!DOCTYPE html>")
 
 	tmpl, err := template.
-		New("swaggerui").
+		New("swagger {{.Code}}").
 		Delims("__LEFT_DELIM__", "__RIGHT_DELIM__").
-		Parse(s[idx:])
+		Parse(s)
 
 	if err != nil {
-		return nil, fmt.Errorf("error loading swagger ui template: %s", err)
+		return nil, fmt.Errorf("error loading swagger {{.Code}} template: %s", err)
 	}
 	buf.Reset()
-	tmpl.Execute(&buf, specURL)
+	data := struct {
+		SpecURL string
+		SwaggerUIRedirectURL string
+	} {
+		SpecURL: specURL,
+		SwaggerUIRedirectURL: redirectURL,
+	}
+	
+	tmpl.Execute(&buf, data)
 	return buf.Bytes(), nil
 }

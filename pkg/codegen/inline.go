@@ -21,7 +21,11 @@ import (
 	"fmt"
 	"text/template"
 
+	htmlTemplate "html/template"
+
+	htmlTemplates "github.com/deepmap/oapi-codegen/pkg/codegen/html"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 // GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
@@ -78,11 +82,29 @@ func GenerateInlinedSpec(t *template.Template, swagger *openapi3.Swagger) (strin
 
 // GenerateInlinedSpecUI generates a gzipped, base64 encoded HTML template of
 // swagger ui, which we embed inside the generated code.
-func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (string, error) {
+func GenerateInlinedSpecUI(t *template.Template) (string, error) {
+	return generateInlinedPage(t, "UIPage", "swagger.html")
+}
+
+// GenerateInlinedSpecRedirect generates a gzipped, base64 encoded HTML template of
+// the swagger ui redirect page, which we embed inside the generated code.
+func GenerateInlinedSpecRedirect(t *template.Template) (string, error) {
+	return generateInlinedPage(t, "UIRedirect", "swagger-redirect.html")
+}
+
+func generateInlinedPage(t *template.Template, code, filename string) (string, error) {
+	// This creates the golang templates text package
+	ht := htmlTemplate.New("html-templates")
+	// This parses all of our own template files into the template object
+	// above
+	ht, err := htmlTemplates.Parse(ht)
+	if err != nil {
+		return "", errors.Wrap(err, "error parsing html templates")
+	}
 	// load the HTML swagger ui template
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
-	err := t.ExecuteTemplate(w, "swagger.html.tmpl", nil)
+	err = ht.ExecuteTemplate(w, filename, nil)
 	if err != nil {
 		return "", fmt.Errorf("error loading swagger ui template: %s", err)
 	}
@@ -90,7 +112,8 @@ func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (str
 	if err != nil {
 		return "", fmt.Errorf("error flushing output buffer for swagger ui template: %s", err)
 	}
-	swaggerUI := buf.Bytes()
+	pageContent := buf.String()
+
 	buf.Reset()
 
 	// gzip
@@ -98,7 +121,7 @@ func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (str
 	if err != nil {
 		return "", fmt.Errorf("error creating gzip compressor: %s", err)
 	}
-	_, err = zw.Write(swaggerUI)
+	_, err = zw.Write([]byte(pageContent))
 	if err != nil {
 		return "", fmt.Errorf("error gzipping swagger file: %s", err)
 	}
@@ -124,7 +147,15 @@ func GenerateInlinedSpecUI(t *template.Template, swagger *openapi3.Swagger) (str
 	// Generate inline code.
 	buf.Reset()
 	w = bufio.NewWriter(&buf)
-	err = t.ExecuteTemplate(w, "inline-ui.tmpl", parts)
+
+	data := struct {
+		Parts []string
+		Code  string
+	}{
+		Parts: parts,
+		Code:  code,
+	}
+	err = t.ExecuteTemplate(w, "inline-ui.tmpl", data)
 	if err != nil {
 		return "", fmt.Errorf("error generating inlined spec ui: %s", err)
 	}
