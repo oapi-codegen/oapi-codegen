@@ -17,5 +17,4 @@ cp swagger-ui-dist/oauth2-redirect.html pkg/codegen/html/swagger-redirect.html
 rm swagger1.tmp
 rm swagger2.tmp
 rm swagger3.tmp
-rm swagger-redirect1.tmp
 rm -r swagger-ui-dist
