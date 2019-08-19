@@ -130,8 +130,8 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 
 }
 
-// ChiHandlers adds each server route to the EchoRouter.
-func ChiHandler(si ChiServerInterface) {
+// ChiHandler creates a http handler with routing matching OpenAPI spec.
+func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/pets", si.FindPets)
@@ -139,6 +139,7 @@ func ChiHandler(si ChiServerInterface) {
 	r.Delete("/pets/:id", si.DeletePet)
 	r.Get("/pets/:id", si.FindPetById)
 
+	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

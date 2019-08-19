@@ -759,8 +759,8 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 
 }
 
-// ChiHandlers adds each server route to the EchoRouter.
-func ChiHandler(si ChiServerInterface) {
+// ChiHandler creates a http handler with routing matching OpenAPI spec.
+func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
 	r.Post("/with_both_bodies", si.PostBoth)
@@ -770,6 +770,7 @@ func ChiHandler(si ChiServerInterface) {
 	r.Post("/with_other_body", si.PostOther)
 	r.Get("/with_other_response", si.GetOther)
 
+	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
