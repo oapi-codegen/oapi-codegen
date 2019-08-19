@@ -25,11 +25,8 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 {{end}}
 
-{{if .HasSecurity}}
-    // HasSecurity is set
 {{range .SecurityDefinitions}}
-            ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
-{{end}}
+    ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}

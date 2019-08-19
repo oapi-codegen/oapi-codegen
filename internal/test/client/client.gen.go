@@ -696,8 +696,6 @@ func (w *ServerInterfaceWrapper) PostJson(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetJson(ctx echo.Context) error {
 	var err error
 
-	// HasSecurity is set
-
 	ctx.Set("OpenId.Scopes", []string{"json.read", "json.admin"})
 
 	// Invoke the callback with all the unmarshalled arguments
