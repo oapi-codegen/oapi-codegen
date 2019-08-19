@@ -56,6 +56,7 @@ func FindPetsCtx(next http.Handler) http.Handler {
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params FindPetsParams
+
 		// ------------- Optional query parameter "tags" -------------
 		if paramValue := r.Query().Get("tags"); paramValue != "" {
 
@@ -80,9 +81,6 @@ func FindPetsCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "FindPetsParams", params)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -100,9 +98,6 @@ func GetAddPetParams(ctx context.Context) *AddPetParams {
 func AddPetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -132,9 +127,6 @@ func DeletePetCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "id", id)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -162,9 +154,6 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "id", id)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

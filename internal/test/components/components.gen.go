@@ -1014,6 +1014,7 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params ParamsWithAddPropsParams
+
 		// ------------- Required query parameter "p1" -------------
 		if paramValue := r.Query().Get("p1"); paramValue != "" {
 
@@ -1044,9 +1045,6 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", params)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -1064,9 +1062,6 @@ func GetBodyWithAddPropsParams(ctx context.Context) *BodyWithAddPropsParams {
 func BodyWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

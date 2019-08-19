@@ -444,9 +444,6 @@ func Issue30Ctx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "pFallthrough", pFallthrough)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -475,9 +472,6 @@ func Issue41Ctx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "n1param", n1param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -498,6 +492,7 @@ func Issue9Ctx(next http.Handler) http.Handler {
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params Issue9Params
+
 		// ------------- Required query parameter "foo" -------------
 		if paramValue := r.Query().Get("foo"); paramValue != "" {
 
@@ -513,9 +508,6 @@ func Issue9Ctx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "Issue9Params", params)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

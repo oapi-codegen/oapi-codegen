@@ -696,9 +696,6 @@ func PostBothCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -716,9 +713,6 @@ func GetGetBothParams(ctx context.Context) *GetBothParams {
 func GetBothCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -738,9 +732,6 @@ func PostJsonCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -758,9 +749,6 @@ func GetGetJsonParams(ctx context.Context) *GetJsonParams {
 func GetJsonCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -780,9 +768,6 @@ func PostOtherCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -800,9 +785,6 @@ func GetGetOtherParams(ctx context.Context) *GetOtherParams {
 func GetOtherCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

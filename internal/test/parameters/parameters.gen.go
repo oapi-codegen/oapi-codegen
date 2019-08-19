@@ -2079,9 +2079,6 @@ func GetContentObjectCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2103,10 +2100,92 @@ func GetCookieCtx(next http.Handler) http.Handler {
 		// Parameter object where we will unmarshal all parameters from the context
 		var params GetCookieParams
 
-		ctx = context.WithValue(r.Context(), "GetCookieParams", params)
+		if cookie, err := r.Cookie("p"); err == nil {
+			var value int32
+			err = runtime.BindStyledParameter("simple", false, "p", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter p: %s", http.StatusBadRequest)
+				return
+			}
+			params.P = &value
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
+		}
+
+		if cookie, err := r.Cookie("ep"); err == nil {
+			var value int32
+			err = runtime.BindStyledParameter("simple", true, "ep", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter ep: %s", http.StatusBadRequest)
+				return
+			}
+			params.Ep = &value
+
+		}
+
+		if cookie, err := r.Cookie("ea"); err == nil {
+			var value []int32
+			err = runtime.BindStyledParameter("simple", true, "ea", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter ea: %s", http.StatusBadRequest)
+				return
+			}
+			params.Ea = &value
+
+		}
+
+		if cookie, err := r.Cookie("a"); err == nil {
+			var value []int32
+			err = runtime.BindStyledParameter("simple", false, "a", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter a: %s", http.StatusBadRequest)
+				return
+			}
+			params.A = &value
+
+		}
+
+		if cookie, err := r.Cookie("eo"); err == nil {
+			var value Object
+			err = runtime.BindStyledParameter("simple", true, "eo", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter eo: %s", http.StatusBadRequest)
+				return
+			}
+			params.Eo = &value
+
+		}
+
+		if cookie, err := r.Cookie("o"); err == nil {
+			var value Object
+			err = runtime.BindStyledParameter("simple", false, "o", cookie.Value, &value)
+			if err != nil {
+				http.Error(w, "Invalid format for parameter o: %s", http.StatusBadRequest)
+				return
+			}
+			params.O = &value
+
+		}
+
+		if cookie, err := r.Cookie("co"); err == nil {
+			var value ComplexObject
+			var decoded string
+			decoded, err := url.QueryUnescape(cookie.Value)
+			if err != nil {
+				http.Error(w, "Error unescaping cookie parameter 'co'", http.StatusBadRequest)
+				return
+			}
+
+			err = json.Unmarshal([]byte(decoded), &value)
+			if err != nil {
+				http.Error(w, "Error unmarshaling parameter 'co' as JSON", http.StatusBadRequest)
+				return
+			}
+
+			params.Co = &value
+
+		}
+
+		ctx = context.WithValue(r.Context(), "GetCookieParams", params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2129,10 +2208,142 @@ func GetHeaderCtx(next http.Handler) http.Handler {
 		// Parameter object where we will unmarshal all parameters from the context
 		var params GetHeaderParams
 
-		ctx = context.WithValue(r.Context(), "GetHeaderParams", params)
+		headers := r.Header
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
+		// ------------- Optional header parameter "X-Primitive" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive")]; found {
+			var XPrimitive int32
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Primitive, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", false, "X-Primitive", valueList[0], &XPrimitive)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Primitive: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XPrimitive = &XPrimitive
+
+		}
+
+		// ------------- Optional header parameter "X-Primitive-Exploded" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive-Exploded")]; found {
+			var XPrimitiveExploded int32
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Primitive-Exploded, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", true, "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Primitive-Exploded: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XPrimitiveExploded = &XPrimitiveExploded
+
+		}
+
+		// ------------- Optional header parameter "X-Array-Exploded" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Array-Exploded")]; found {
+			var XArrayExploded []int32
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Array-Exploded, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", true, "X-Array-Exploded", valueList[0], &XArrayExploded)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Array-Exploded: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XArrayExploded = &XArrayExploded
+
+		}
+
+		// ------------- Optional header parameter "X-Array" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Array")]; found {
+			var XArray []int32
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Array, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", false, "X-Array", valueList[0], &XArray)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Array: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XArray = &XArray
+
+		}
+
+		// ------------- Optional header parameter "X-Object-Exploded" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Object-Exploded")]; found {
+			var XObjectExploded Object
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Object-Exploded, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", true, "X-Object-Exploded", valueList[0], &XObjectExploded)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Object-Exploded: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XObjectExploded = &XObjectExploded
+
+		}
+
+		// ------------- Optional header parameter "X-Object" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Object")]; found {
+			var XObject Object
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Object, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = runtime.BindStyledParameter("simple", false, "X-Object", valueList[0], &XObject)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("Invalid format for parameter X-Object: %s", err), http.StatusBadRequest)
+				return
+			}
+
+			params.XObject = &XObject
+
+		}
+
+		// ------------- Optional header parameter "X-Complex-Object" -------------
+		if valueList, found := headers[http.CanonicalHeaderKey("X-Complex-Object")]; found {
+			var XComplexObject ComplexObject
+			n := len(valueList)
+			if n != 1 {
+				http.Error(w, fmt.Sprintf("Expected one value for X-Complex-Object, got %d", n), http.StatusBadRequest)
+				return
+			}
+
+			err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+			if err != nil {
+				http.Error(w, "Error unmarshaling parameter 'X-Complex-Object' as JSON", http.StatusBadRequest)
+				return
+			}
+
+			params.XComplexObject = &XComplexObject
+
+		}
+
+		ctx = context.WithValue(r.Context(), "GetHeaderParams", params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2162,9 +2373,6 @@ func GetLabelExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2192,9 +2400,6 @@ func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "param", param)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2224,9 +2429,6 @@ func GetLabelNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2254,9 +2456,6 @@ func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "param", param)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2286,9 +2485,6 @@ func GetMatrixExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "id", id)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2316,9 +2512,6 @@ func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "id", id)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2348,9 +2541,6 @@ func GetMatrixNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "id", id)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2379,9 +2569,6 @@ func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "id", id)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2406,9 +2593,6 @@ func GetPassThroughCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2429,6 +2613,7 @@ func GetQueryFormCtx(next http.Handler) http.Handler {
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params GetQueryFormParams
+
 		// ------------- Optional query parameter "ea" -------------
 		if paramValue := r.Query().Get("ea"); paramValue != "" {
 
@@ -2504,14 +2689,12 @@ func GetQueryFormCtx(next http.Handler) http.Handler {
 				http.Error(w, "Error unmarshaling parameter 'co' as JSON", http.StatusBadRequest)
 				return
 			}
+
 			params.Co = &value
 
 		}
 
 		ctx = context.WithValue(r.Context(), "GetQueryFormParams", params)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2541,9 +2724,6 @@ func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2571,9 +2751,6 @@ func GetSimpleExplodeObjectCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "param", param)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -2603,9 +2780,6 @@ func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2634,9 +2808,6 @@ func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
-		// TODO: HeaderParams
-		// TOOD: CookieParams
-
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -2664,9 +2835,6 @@ func GetSimplePrimitiveCtx(next http.Handler) http.Handler {
 		}
 
 		ctx = context.WithValue(r.Context(), "param", param)
-
-		// TODO: HeaderParams
-		// TOOD: CookieParams
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
