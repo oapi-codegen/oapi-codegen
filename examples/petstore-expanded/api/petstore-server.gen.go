@@ -42,38 +42,35 @@ type ChiServerInterface interface {
 
 // GetFindPetsParams request parameters from context
 func GetFindPetsParams(ctx context.Context) *FindPetsParams {
-	params, err := ctx.Value("FindPetsParams").(*FindPetsParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("FindPetsParams").(*FindPetsParams)
 }
 
 // FindPets operation middleware
 func FindPetsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params FindPetsParams
 
 		// ------------- Optional query parameter "tags" -------------
-		if paramValue := r.Query().Get("tags"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", true, false, "tags", r.Query(), &params.Tags)
+		err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "limit" -------------
-		if paramValue := r.Query().Get("limit"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", true, false, "limit", r.Query(), &params.Limit)
+		err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
 			return
@@ -87,16 +84,13 @@ func FindPetsCtx(next http.Handler) http.Handler {
 
 // GetAddPetParams request parameters from context
 func GetAddPetParams(ctx context.Context) *AddPetParams {
-	params, err := ctx.Value("AddPetParams").(*AddPetParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("AddPetParams").(*AddPetParams)
 }
 
 // AddPet operation middleware
 func AddPetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -105,21 +99,19 @@ func AddPetCtx(next http.Handler) http.Handler {
 
 // GetDeletePetParams request parameters from context
 func GetDeletePetParams(ctx context.Context) *DeletePetParams {
-	params, err := ctx.Value("DeletePetParams").(*DeletePetParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("DeletePetParams").(*DeletePetParams)
 }
 
 // DeletePet operation middleware
 func DeletePetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id int64
 
-		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
@@ -133,21 +125,19 @@ func DeletePetCtx(next http.Handler) http.Handler {
 
 // GetFindPetByIdParams request parameters from context
 func GetFindPetByIdParams(ctx context.Context) *FindPetByIdParams {
-	params, err := ctx.Value("FindPetByIdParams").(*FindPetByIdParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("FindPetByIdParams").(*FindPetByIdParams)
 }
 
 // FindPetById operation middleware
 func FindPetByIdCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id int64
 
-		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return

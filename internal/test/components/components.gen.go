@@ -1000,44 +1000,41 @@ type ChiServerInterface interface {
 
 // GetParamsWithAddPropsParams request parameters from context
 func GetParamsWithAddPropsParams(ctx context.Context) *ParamsWithAddPropsParams {
-	params, err := ctx.Value("ParamsWithAddPropsParams").(*ParamsWithAddPropsParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("ParamsWithAddPropsParams").(*ParamsWithAddPropsParams)
 }
 
 // ParamsWithAddProps operation middleware
 func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params ParamsWithAddPropsParams
 
 		// ------------- Required query parameter "p1" -------------
-		if paramValue := r.Query().Get("p1"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("p1"); paramValue != "" {
 
 		} else {
 			http.Error(w, "Query argument p1 is required, but not found", http.StatusBadRequest)
 			return
 		}
 
-		err = runtime.BindQueryParameter("simple", true, true, "p1", r.Query(), &params.P1)
+		err = runtime.BindQueryParameter("simple", true, true, "p1", r.URL.Query(), &params.P1)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter p1: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Required query parameter "p2" -------------
-		if paramValue := r.Query().Get("p2"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("p2"); paramValue != "" {
 
 		} else {
 			http.Error(w, "Query argument p2 is required, but not found", http.StatusBadRequest)
 			return
 		}
 
-		err = runtime.BindQueryParameter("form", true, true, "p2", r.Query(), &params.P2)
+		err = runtime.BindQueryParameter("form", true, true, "p2", r.URL.Query(), &params.P2)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter p2: %s", err), http.StatusBadRequest)
 			return
@@ -1051,16 +1048,13 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 
 // GetBodyWithAddPropsParams request parameters from context
 func GetBodyWithAddPropsParams(ctx context.Context) *BodyWithAddPropsParams {
-	params, err := ctx.Value("BodyWithAddPropsParams").(*BodyWithAddPropsParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("BodyWithAddPropsParams").(*BodyWithAddPropsParams)
 }
 
 // BodyWithAddProps operation middleware
 func BodyWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))

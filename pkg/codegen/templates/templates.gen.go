@@ -484,32 +484,30 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 
 // Get{{.OperationId}}Params request parameters from context
 func Get{{.OperationId}}Params(ctx context.Context) *{{.OperationId}}Params {
-  params, err := ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
-  if (err != nil) {
-    panic(err)
-  }
-  return params
+  return ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
 }
 
 // {{$opid}} operation middleware
 func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    var err error
     ctx := r.Context()
+
     {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
     {{if .IsPassThrough}}
-    {{$varName}} = chi.URLParam("{{.ParamName}}")
+    {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
     {{end}}
     {{if .IsJson}}
-    err = json.Unmarshal([]byte(chi.URLParam("{{.ParamName}}")), &{{$varName}})
+    err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
     if err != nil {
       http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
       return
     }
     {{end}}
     {{if .IsStyled}}
-    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
     if err != nil {
       http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
       return
@@ -524,7 +522,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
       var params {{.OperationId}}Params
 
       {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
-        if paramValue := r.Query().Get("{{.ParamName}}"); paramValue != "" {
+        if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
           params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
@@ -545,7 +543,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
             return
         }{{end}}
         {{if .IsStyled}}
-        err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.Query(), &params.{{.GoName}})
+        err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
         if err != nil {
           http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
           return

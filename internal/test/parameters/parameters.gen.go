@@ -2057,21 +2057,19 @@ type ChiServerInterface interface {
 
 // GetGetContentObjectParams request parameters from context
 func GetGetContentObjectParams(ctx context.Context) *GetContentObjectParams {
-	params, err := ctx.Value("GetContentObjectParams").(*GetContentObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetContentObjectParams").(*GetContentObjectParams)
 }
 
 // GetContentObject operation middleware
 func GetContentObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param ComplexObject
 
-		err = json.Unmarshal([]byte(chi.URLParam("param")), &param)
+		err = json.Unmarshal([]byte(chi.URLParam(r, "param")), &param)
 		if err != nil {
 			http.Error(w, "Error unmarshaling parameter 'param' as JSON", http.StatusBadRequest)
 			return
@@ -2085,16 +2083,13 @@ func GetContentObjectCtx(next http.Handler) http.Handler {
 
 // GetGetCookieParams request parameters from context
 func GetGetCookieParams(ctx context.Context) *GetCookieParams {
-	params, err := ctx.Value("GetCookieParams").(*GetCookieParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetCookieParams").(*GetCookieParams)
 }
 
 // GetCookie operation middleware
 func GetCookieCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		// Parameter object where we will unmarshal all parameters from the context
@@ -2193,16 +2188,13 @@ func GetCookieCtx(next http.Handler) http.Handler {
 
 // GetGetHeaderParams request parameters from context
 func GetGetHeaderParams(ctx context.Context) *GetHeaderParams {
-	params, err := ctx.Value("GetHeaderParams").(*GetHeaderParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetHeaderParams").(*GetHeaderParams)
 }
 
 // GetHeader operation middleware
 func GetHeaderCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		// Parameter object where we will unmarshal all parameters from the context
@@ -2351,21 +2343,19 @@ func GetHeaderCtx(next http.Handler) http.Handler {
 
 // GetGetLabelExplodeArrayParams request parameters from context
 func GetGetLabelExplodeArrayParams(ctx context.Context) *GetLabelExplodeArrayParams {
-	params, err := ctx.Value("GetLabelExplodeArrayParams").(*GetLabelExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetLabelExplodeArrayParams").(*GetLabelExplodeArrayParams)
 }
 
 // GetLabelExplodeArray operation middleware
 func GetLabelExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param []int32
 
-		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2379,21 +2369,19 @@ func GetLabelExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetLabelExplodeObjectParams request parameters from context
 func GetGetLabelExplodeObjectParams(ctx context.Context) *GetLabelExplodeObjectParams {
-	params, err := ctx.Value("GetLabelExplodeObjectParams").(*GetLabelExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetLabelExplodeObjectParams").(*GetLabelExplodeObjectParams)
 }
 
 // GetLabelExplodeObject operation middleware
 func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param Object
 
-		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2407,21 +2395,19 @@ func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetLabelNoExplodeArrayParams request parameters from context
 func GetGetLabelNoExplodeArrayParams(ctx context.Context) *GetLabelNoExplodeArrayParams {
-	params, err := ctx.Value("GetLabelNoExplodeArrayParams").(*GetLabelNoExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetLabelNoExplodeArrayParams").(*GetLabelNoExplodeArrayParams)
 }
 
 // GetLabelNoExplodeArray operation middleware
 func GetLabelNoExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param []int32
 
-		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2435,21 +2421,19 @@ func GetLabelNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetLabelNoExplodeObjectParams request parameters from context
 func GetGetLabelNoExplodeObjectParams(ctx context.Context) *GetLabelNoExplodeObjectParams {
-	params, err := ctx.Value("GetLabelNoExplodeObjectParams").(*GetLabelNoExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetLabelNoExplodeObjectParams").(*GetLabelNoExplodeObjectParams)
 }
 
 // GetLabelNoExplodeObject operation middleware
 func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param Object
 
-		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2463,21 +2447,19 @@ func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetMatrixExplodeArrayParams request parameters from context
 func GetGetMatrixExplodeArrayParams(ctx context.Context) *GetMatrixExplodeArrayParams {
-	params, err := ctx.Value("GetMatrixExplodeArrayParams").(*GetMatrixExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetMatrixExplodeArrayParams").(*GetMatrixExplodeArrayParams)
 }
 
 // GetMatrixExplodeArray operation middleware
 func GetMatrixExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id []int32
 
-		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
@@ -2491,21 +2473,19 @@ func GetMatrixExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetMatrixExplodeObjectParams request parameters from context
 func GetGetMatrixExplodeObjectParams(ctx context.Context) *GetMatrixExplodeObjectParams {
-	params, err := ctx.Value("GetMatrixExplodeObjectParams").(*GetMatrixExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetMatrixExplodeObjectParams").(*GetMatrixExplodeObjectParams)
 }
 
 // GetMatrixExplodeObject operation middleware
 func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id Object
 
-		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
@@ -2519,21 +2499,19 @@ func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetMatrixNoExplodeArrayParams request parameters from context
 func GetGetMatrixNoExplodeArrayParams(ctx context.Context) *GetMatrixNoExplodeArrayParams {
-	params, err := ctx.Value("GetMatrixNoExplodeArrayParams").(*GetMatrixNoExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetMatrixNoExplodeArrayParams").(*GetMatrixNoExplodeArrayParams)
 }
 
 // GetMatrixNoExplodeArray operation middleware
 func GetMatrixNoExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id []int32
 
-		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
@@ -2547,21 +2525,19 @@ func GetMatrixNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetMatrixNoExplodeObjectParams request parameters from context
 func GetGetMatrixNoExplodeObjectParams(ctx context.Context) *GetMatrixNoExplodeObjectParams {
-	params, err := ctx.Value("GetMatrixNoExplodeObjectParams").(*GetMatrixNoExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetMatrixNoExplodeObjectParams").(*GetMatrixNoExplodeObjectParams)
 }
 
 // GetMatrixNoExplodeObject operation middleware
 func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "id" -------------
 		var id Object
 
-		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam("id"), &id)
+		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam(r, "id"), &id)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
@@ -2575,21 +2551,19 @@ func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetPassThroughParams request parameters from context
 func GetGetPassThroughParams(ctx context.Context) *GetPassThroughParams {
-	params, err := ctx.Value("GetPassThroughParams").(*GetPassThroughParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetPassThroughParams").(*GetPassThroughParams)
 }
 
 // GetPassThrough operation middleware
 func GetPassThroughCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param string
 
-		param = chi.URLParam("param")
+		param = chi.URLParam(r, "param")
 
 		ctx = context.WithValue(r.Context(), "param", param)
 
@@ -2599,89 +2573,86 @@ func GetPassThroughCtx(next http.Handler) http.Handler {
 
 // GetGetQueryFormParams request parameters from context
 func GetGetQueryFormParams(ctx context.Context) *GetQueryFormParams {
-	params, err := ctx.Value("GetQueryFormParams").(*GetQueryFormParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetQueryFormParams").(*GetQueryFormParams)
 }
 
 // GetQueryForm operation middleware
 func GetQueryFormCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params GetQueryFormParams
 
 		// ------------- Optional query parameter "ea" -------------
-		if paramValue := r.Query().Get("ea"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("ea"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", true, false, "ea", r.Query(), &params.Ea)
+		err = runtime.BindQueryParameter("form", true, false, "ea", r.URL.Query(), &params.Ea)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter ea: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "a" -------------
-		if paramValue := r.Query().Get("a"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("a"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", false, false, "a", r.Query(), &params.A)
+		err = runtime.BindQueryParameter("form", false, false, "a", r.URL.Query(), &params.A)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter a: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "eo" -------------
-		if paramValue := r.Query().Get("eo"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("eo"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", true, false, "eo", r.Query(), &params.Eo)
+		err = runtime.BindQueryParameter("form", true, false, "eo", r.URL.Query(), &params.Eo)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter eo: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "o" -------------
-		if paramValue := r.Query().Get("o"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("o"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", false, false, "o", r.Query(), &params.O)
+		err = runtime.BindQueryParameter("form", false, false, "o", r.URL.Query(), &params.O)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter o: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "ep" -------------
-		if paramValue := r.Query().Get("ep"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("ep"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", true, false, "ep", r.Query(), &params.Ep)
+		err = runtime.BindQueryParameter("form", true, false, "ep", r.URL.Query(), &params.Ep)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter ep: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "p" -------------
-		if paramValue := r.Query().Get("p"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("p"); paramValue != "" {
 
 		}
 
-		err = runtime.BindQueryParameter("form", false, false, "p", r.Query(), &params.P)
+		err = runtime.BindQueryParameter("form", false, false, "p", r.URL.Query(), &params.P)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter p: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		// ------------- Optional query parameter "co" -------------
-		if paramValue := r.Query().Get("co"); paramValue != "" {
+		if paramValue := r.URL.Query().Get("co"); paramValue != "" {
 
 			var value ComplexObject
 			err = json.Unmarshal([]byte(paramValue), &value)
@@ -2702,21 +2673,19 @@ func GetQueryFormCtx(next http.Handler) http.Handler {
 
 // GetGetSimpleExplodeArrayParams request parameters from context
 func GetGetSimpleExplodeArrayParams(ctx context.Context) *GetSimpleExplodeArrayParams {
-	params, err := ctx.Value("GetSimpleExplodeArrayParams").(*GetSimpleExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetSimpleExplodeArrayParams").(*GetSimpleExplodeArrayParams)
 }
 
 // GetSimpleExplodeArray operation middleware
 func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param []int32
 
-		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2730,21 +2699,19 @@ func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetSimpleExplodeObjectParams request parameters from context
 func GetGetSimpleExplodeObjectParams(ctx context.Context) *GetSimpleExplodeObjectParams {
-	params, err := ctx.Value("GetSimpleExplodeObjectParams").(*GetSimpleExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetSimpleExplodeObjectParams").(*GetSimpleExplodeObjectParams)
 }
 
 // GetSimpleExplodeObject operation middleware
 func GetSimpleExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param Object
 
-		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2758,21 +2725,19 @@ func GetSimpleExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetSimpleNoExplodeArrayParams request parameters from context
 func GetGetSimpleNoExplodeArrayParams(ctx context.Context) *GetSimpleNoExplodeArrayParams {
-	params, err := ctx.Value("GetSimpleNoExplodeArrayParams").(*GetSimpleNoExplodeArrayParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetSimpleNoExplodeArrayParams").(*GetSimpleNoExplodeArrayParams)
 }
 
 // GetSimpleNoExplodeArray operation middleware
 func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param []int32
 
-		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2786,21 +2751,19 @@ func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
 
 // GetGetSimpleNoExplodeObjectParams request parameters from context
 func GetGetSimpleNoExplodeObjectParams(ctx context.Context) *GetSimpleNoExplodeObjectParams {
-	params, err := ctx.Value("GetSimpleNoExplodeObjectParams").(*GetSimpleNoExplodeObjectParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetSimpleNoExplodeObjectParams").(*GetSimpleNoExplodeObjectParams)
 }
 
 // GetSimpleNoExplodeObject operation middleware
 func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param Object
 
-		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
@@ -2814,21 +2777,19 @@ func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 // GetGetSimplePrimitiveParams request parameters from context
 func GetGetSimplePrimitiveParams(ctx context.Context) *GetSimplePrimitiveParams {
-	params, err := ctx.Value("GetSimplePrimitiveParams").(*GetSimplePrimitiveParams)
-	if err != nil {
-		panic(err)
-	}
-	return params
+	return ctx.Value("GetSimplePrimitiveParams").(*GetSimplePrimitiveParams)
 }
 
 // GetSimplePrimitive operation middleware
 func GetSimplePrimitiveCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var err error
 		ctx := r.Context()
+
 		// ------------- Path parameter "param" -------------
 		var param int32
 
-		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam(r, "param"), &param)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter param: %s", err), http.StatusBadRequest)
 			return
