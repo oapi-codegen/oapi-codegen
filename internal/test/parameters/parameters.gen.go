@@ -2055,6 +2055,440 @@ type ChiServerInterface interface {
 	GetSimplePrimitive(w http.ResponseWriter, r *http.Request)
 }
 
+// GetContentObject operation middleware
+func GetContentObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param ComplexObject
+
+		err = json.Unmarshal([]byte(chi.URLParam("param")), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetCookie operation middleware
+func GetCookieCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params GetCookieParams
+
+		ctx = context.WithValue(r.Context(), "GetCookieParams", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetHeader operation middleware
+func GetHeaderCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params GetHeaderParams
+
+		ctx = context.WithValue(r.Context(), "GetHeaderParams", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetLabelExplodeArray operation middleware
+func GetLabelExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param []int32
+
+		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetLabelExplodeObject operation middleware
+func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param Object
+
+		err = runtime.BindStyledParameter("label", true, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetLabelNoExplodeArray operation middleware
+func GetLabelNoExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param []int32
+
+		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetLabelNoExplodeObject operation middleware
+func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param Object
+
+		err = runtime.BindStyledParameter("label", false, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetMatrixExplodeArray operation middleware
+func GetMatrixExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id []int32
+
+		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetMatrixExplodeObject operation middleware
+func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id Object
+
+		err = runtime.BindStyledParameter("matrix", true, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetMatrixNoExplodeArray operation middleware
+func GetMatrixNoExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id []int32
+
+		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetMatrixNoExplodeObject operation middleware
+func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id Object
+
+		err = runtime.BindStyledParameter("matrix", false, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetPassThrough operation middleware
+func GetPassThroughCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param string
+
+		param = chi.URLParam("param")
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetQueryForm operation middleware
+func GetQueryFormCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params GetQueryFormParams
+		// ------------- Optional query parameter "ea" -------------
+		if paramValue := r.Query().Get("ea"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", true, false, "ea", r.Query(), &params.Ea)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ea: %s", err))
+		}
+
+		// ------------- Optional query parameter "a" -------------
+		if paramValue := r.Query().Get("a"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", false, false, "a", r.Query(), &params.A)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter a: %s", err))
+		}
+
+		// ------------- Optional query parameter "eo" -------------
+		if paramValue := r.Query().Get("eo"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", true, false, "eo", r.Query(), &params.Eo)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: %s", err))
+		}
+
+		// ------------- Optional query parameter "o" -------------
+		if paramValue := r.Query().Get("o"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", false, false, "o", r.Query(), &params.O)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter o: %s", err))
+		}
+
+		// ------------- Optional query parameter "ep" -------------
+		if paramValue := r.Query().Get("ep"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", true, false, "ep", r.Query(), &params.Ep)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ep: %s", err))
+		}
+
+		// ------------- Optional query parameter "p" -------------
+		if paramValue := r.Query().Get("p"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", false, false, "p", r.Query(), &params.P)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p: %s", err))
+		}
+
+		// ------------- Optional query parameter "co" -------------
+		if paramValue := r.Query().Get("co"); paramValue != "" {
+
+			var value ComplexObject
+			err = json.Unmarshal([]byte(paramValue), &value)
+			if err != nil {
+				// return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
+			}
+			params.Co = &value
+
+		}
+
+		ctx = context.WithValue(r.Context(), "GetQueryFormParams", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetSimpleExplodeArray operation middleware
+func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param []int32
+
+		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetSimpleExplodeObject operation middleware
+func GetSimpleExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param Object
+
+		err = runtime.BindStyledParameter("simple", true, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetSimpleNoExplodeArray operation middleware
+func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param []int32
+
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetSimpleNoExplodeObject operation middleware
+func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param Object
+
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// GetSimplePrimitive operation middleware
+func GetSimplePrimitiveCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "param" -------------
+		var param int32
+
+		err = runtime.BindStyledParameter("simple", false, "param", chi.URLParam("param"), &param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "param", param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -2625,24 +3059,78 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/contentObject/{param}", si.GetContentObject)
-	r.Get("/cookie", si.GetCookie)
-	r.Get("/header", si.GetHeader)
-	r.Get("/labelExplodeArray/{param}", si.GetLabelExplodeArray)
-	r.Get("/labelExplodeObject/{param}", si.GetLabelExplodeObject)
-	r.Get("/labelNoExplodeArray/{param}", si.GetLabelNoExplodeArray)
-	r.Get("/labelNoExplodeObject/{param}", si.GetLabelNoExplodeObject)
-	r.Get("/matrixExplodeArray/{id}", si.GetMatrixExplodeArray)
-	r.Get("/matrixExplodeObject/{id}", si.GetMatrixExplodeObject)
-	r.Get("/matrixNoExplodeArray/{id}", si.GetMatrixNoExplodeArray)
-	r.Get("/matrixNoExplodeObject/{id}", si.GetMatrixNoExplodeObject)
-	r.Get("/passThrough/{param}", si.GetPassThrough)
-	r.Get("/queryForm", si.GetQueryForm)
-	r.Get("/simpleExplodeArray/{param}", si.GetSimpleExplodeArray)
-	r.Get("/simpleExplodeObject/{param}", si.GetSimpleExplodeObject)
-	r.Get("/simpleNoExplodeArray/{param}", si.GetSimpleNoExplodeArray)
-	r.Get("/simpleNoExplodeObject/{param}", si.GetSimpleNoExplodeObject)
-	r.Get("/simplePrimitive/{param}", si.GetSimplePrimitive)
+	r.Group(func(r chi.Router) {
+		r.Use(GetContentObjectCtx)
+		r.Get("/contentObject/{param}", si.GetContentObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetCookieCtx)
+		r.Get("/cookie", si.GetCookie)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetHeaderCtx)
+		r.Get("/header", si.GetHeader)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetLabelExplodeArrayCtx)
+		r.Get("/labelExplodeArray/{param}", si.GetLabelExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetLabelExplodeObjectCtx)
+		r.Get("/labelExplodeObject/{param}", si.GetLabelExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetLabelNoExplodeArrayCtx)
+		r.Get("/labelNoExplodeArray/{param}", si.GetLabelNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetLabelNoExplodeObjectCtx)
+		r.Get("/labelNoExplodeObject/{param}", si.GetLabelNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetMatrixExplodeArrayCtx)
+		r.Get("/matrixExplodeArray/{id}", si.GetMatrixExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetMatrixExplodeObjectCtx)
+		r.Get("/matrixExplodeObject/{id}", si.GetMatrixExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetMatrixNoExplodeArrayCtx)
+		r.Get("/matrixNoExplodeArray/{id}", si.GetMatrixNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetMatrixNoExplodeObjectCtx)
+		r.Get("/matrixNoExplodeObject/{id}", si.GetMatrixNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetPassThroughCtx)
+		r.Get("/passThrough/{param}", si.GetPassThrough)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetQueryFormCtx)
+		r.Get("/queryForm", si.GetQueryForm)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetSimpleExplodeArrayCtx)
+		r.Get("/simpleExplodeArray/{param}", si.GetSimpleExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetSimpleExplodeObjectCtx)
+		r.Get("/simpleExplodeObject/{param}", si.GetSimpleExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetSimpleNoExplodeArrayCtx)
+		r.Get("/simpleNoExplodeArray/{param}", si.GetSimpleNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetSimpleNoExplodeObjectCtx)
+		r.Get("/simpleNoExplodeObject/{param}", si.GetSimpleNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetSimplePrimitiveCtx)
+		r.Get("/simplePrimitive/{param}", si.GetSimplePrimitive)
+	})
 
 	return r
 }

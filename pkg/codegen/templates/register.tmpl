@@ -13,7 +13,10 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
   r := chi.NewRouter()
 
-{{range .}}r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+{{range .}}r.Group(func(r chi.Router) {
+  r.Use({{.OperationId}}Ctx)
+  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+})
 {{end}}
   return r
 }

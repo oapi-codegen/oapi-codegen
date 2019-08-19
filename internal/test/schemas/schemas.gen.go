@@ -420,6 +420,76 @@ type ChiServerInterface interface {
 	Issue9(w http.ResponseWriter, r *http.Request)
 }
 
+// Issue30 operation middleware
+func Issue30Ctx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "fallthrough" -------------
+		var pFallthrough string
+
+		err = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam("fallthrough"), &pFallthrough)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "pFallthrough", pFallthrough)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Issue41 operation middleware
+func Issue41Ctx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "1param" -------------
+		var n1param N5StartsWithNumber
+
+		err = runtime.BindStyledParameter("simple", false, "1param", chi.URLParam("1param"), &n1param)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "n1param", n1param)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// Issue9 operation middleware
+func Issue9Ctx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params Issue9Params
+		// ------------- Required query parameter "foo" -------------
+		if paramValue := r.Query().Get("foo"); paramValue != "" {
+
+		} else {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument foo is required, but not found"))
+		}
+
+		err = runtime.BindQueryParameter("form", true, true, "foo", r.Query(), &params.Foo)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "Issue9Params", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -497,9 +567,18 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/issues/30/{fallthrough}", si.Issue30)
-	r.Get("/issues/41/{1param}", si.Issue41)
-	r.Get("/issues/9", si.Issue9)
+	r.Group(func(r chi.Router) {
+		r.Use(Issue30Ctx)
+		r.Get("/issues/30/{fallthrough}", si.Issue30)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(Issue41Ctx)
+		r.Get("/issues/41/{1param}", si.Issue41)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(Issue9Ctx)
+		r.Get("/issues/9", si.Issue9)
+	})
 
 	return r
 }

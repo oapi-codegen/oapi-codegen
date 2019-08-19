@@ -998,6 +998,58 @@ type ChiServerInterface interface {
 	BodyWithAddProps(w http.ResponseWriter, r *http.Request)
 }
 
+// ParamsWithAddProps operation middleware
+func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params ParamsWithAddPropsParams
+		// ------------- Required query parameter "p1" -------------
+		if paramValue := r.Query().Get("p1"); paramValue != "" {
+
+		} else {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p1 is required, but not found"))
+		}
+
+		err = runtime.BindQueryParameter("simple", true, true, "p1", r.Query(), &params.P1)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p1: %s", err))
+		}
+
+		// ------------- Required query parameter "p2" -------------
+		if paramValue := r.Query().Get("p2"); paramValue != "" {
+
+		} else {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p2 is required, but not found"))
+		}
+
+		err = runtime.BindQueryParameter("form", true, true, "p2", r.Query(), &params.P2)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p2: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// BodyWithAddProps operation middleware
+func BodyWithAddPropsCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -1063,8 +1115,14 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/params_with_add_props", si.ParamsWithAddProps)
-	r.Post("/params_with_add_props", si.BodyWithAddProps)
+	r.Group(func(r chi.Router) {
+		r.Use(ParamsWithAddPropsCtx)
+		r.Get("/params_with_add_props", si.ParamsWithAddProps)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(BodyWithAddPropsCtx)
+		r.Post("/params_with_add_props", si.BodyWithAddProps)
+	})
 
 	return r
 }

@@ -6,6 +6,7 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
@@ -37,6 +38,96 @@ type ChiServerInterface interface {
 	DeletePet(w http.ResponseWriter, r *http.Request)
 	//  (GET /pets/{id})
 	FindPetById(w http.ResponseWriter, r *http.Request)
+}
+
+// FindPets operation middleware
+func FindPetsCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// Parameter object where we will unmarshal all parameters from the context
+		var params FindPetsParams
+		// ------------- Optional query parameter "tags" -------------
+		if paramValue := r.Query().Get("tags"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", true, false, "tags", r.Query(), &params.Tags)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
+		}
+
+		// ------------- Optional query parameter "limit" -------------
+		if paramValue := r.Query().Get("limit"); paramValue != "" {
+
+		}
+
+		err = runtime.BindQueryParameter("form", true, false, "limit", r.Query(), &params.Limit)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "FindPetsParams", params)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// AddPet operation middleware
+func AddPetCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// DeletePet operation middleware
+func DeletePetCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id int64
+
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// FindPetById operation middleware
+func FindPetByIdCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		// ------------- Path parameter "id" -------------
+		var id int64
+
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
+		if err != nil {
+			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		}
+
+		ctx = context.WithValue(r.Context(), "id", id)
+
+		// TODO: HeaderParams
+		// TOOD: CookieParams
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -134,10 +225,22 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/pets", si.FindPets)
-	r.Post("/pets", si.AddPet)
-	r.Delete("/pets/{id}", si.DeletePet)
-	r.Get("/pets/{id}", si.FindPetById)
+	r.Group(func(r chi.Router) {
+		r.Use(FindPetsCtx)
+		r.Get("/pets", si.FindPets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(AddPetCtx)
+		r.Post("/pets", si.AddPet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(DeletePetCtx)
+		r.Delete("/pets/{id}", si.DeletePet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(FindPetByIdCtx)
+		r.Get("/pets/{id}", si.FindPetById)
+	})
 
 	return r
 }
