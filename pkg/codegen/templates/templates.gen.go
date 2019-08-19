@@ -488,6 +488,13 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 {{end}}
 
+{{if .HasSecurity}}
+    // HasSecurity is set
+{{range .SecurityDefinitions}}
+            ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+{{end}}
+{{end}}
+
 {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params

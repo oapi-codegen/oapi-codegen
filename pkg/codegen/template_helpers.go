@@ -236,18 +236,24 @@ func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
 	return td
 }
 
+// This outputs a string array
+func toStringArray(sarr []string) string {
+	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
+}
+
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
-	"genParamArgs":         genParamArgs,
-	"genParamTypes":        genParamTypes,
-	"genParamNames":        genParamNames,
-	"genParamFmtString":    genParamFmtString,
-	"swaggerUriToEchoUri":  SwaggerUriToEchoUri,
-	"lcFirst":              LowercaseFirstCharacter,
-	"camelCase":            ToCamelCase,
-	"genResponsePayload":   genResponsePayload,
-	"genResponseTypeName":  genResponseTypeName,
-	"genResponseUnmarshal": genResponseUnmarshal,
+	"genParamArgs":               genParamArgs,
+	"genParamTypes":              genParamTypes,
+	"genParamNames":              genParamNames,
+	"genParamFmtString":          genParamFmtString,
+	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+	"lcFirst":                    LowercaseFirstCharacter,
+	"camelCase":                  ToCamelCase,
+	"genResponsePayload":         genResponsePayload,
+	"genResponseTypeName":        genResponseTypeName,
+	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
+	"toStringArray":              toStringArray,
 }

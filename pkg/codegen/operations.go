@@ -176,21 +176,39 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 	return outParams, nil
 }
 
+type SecurityDefinition struct {
+	ProviderName string
+	Scopes       []string
+}
+
+func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequirements) []SecurityDefinition {
+	outDefs := make([]SecurityDefinition, 0)
+
+	for _, sr := range securityRequirements {
+		for k, v := range sr {
+			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
+		}
+	}
+
+	return outDefs
+}
+
 // This structure describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
-	PathParams      []ParameterDefinition // Parameters in the path, eg, /path/:param
-	HeaderParams    []ParameterDefinition // Parameters in HTTP headers
-	QueryParams     []ParameterDefinition // Parameters in the query, /path?param
-	CookieParams    []ParameterDefinition // Parameters in cookies
-	TypeDefinitions []TypeDefinition      // These are all the types we need to define for this operation
-	BodyRequired    bool
-	Bodies          []RequestBodyDefinition // The list of bodies for which to generate handlers.
-	Summary         string                  // Summary string from Swagger, used to generate a comment
-	Method          string                  // GET, POST, DELETE, etc.
-	Path            string                  // The Swagger path for the operation, like /resource/{id}
-	Spec            *openapi3.Operation
+	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
+	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
+	QueryParams         []ParameterDefinition // Parameters in the query, /path?param
+	CookieParams        []ParameterDefinition // Parameters in cookies
+	TypeDefinitions     []TypeDefinition      // These are all the types we need to define for this operation
+	SecurityDefinitions []SecurityDefinition  // These are the security providers
+	BodyRequired        bool
+	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Summary             string                  // Summary string from Swagger, used to generate a comment
+	Method              string                  // GET, POST, DELETE, etc.
+	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Spec                *openapi3.Operation
 }
 
 // Returns the list of all parameters except Path parameters. Path parameters
@@ -214,6 +232,11 @@ func (o *OperationDefinition) AllParams() []ParameterDefinition {
 // engine.
 func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
+}
+
+// if the operation has a security section defined
+func (o *OperationDefinition) HasSecurity() bool {
+	return o.Spec.Security != nil
 }
 
 // This is called by the template engine to determine whether to generate body
@@ -410,6 +433,10 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				TypeDefinitions: typeDefinitions,
+			}
+
+			if op.Security != nil {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
 			}
 
 			if op.RequestBody != nil {
