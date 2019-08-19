@@ -136,8 +136,8 @@ func ChiHandler(si ChiServerInterface) http.Handler {
 
 	r.Get("/pets", si.FindPets)
 	r.Post("/pets", si.AddPet)
-	r.Delete("/pets/:id", si.DeletePet)
-	r.Get("/pets/:id", si.FindPetById)
+	r.Delete("/pets/{id}", si.DeletePet)
+	r.Get("/pets/{id}", si.FindPetById)
 
 	return r
 }

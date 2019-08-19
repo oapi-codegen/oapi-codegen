@@ -445,7 +445,7 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
   r := chi.NewRouter()
 
-{{range .}}r.{{.Method | lower | title }}("{{.Path | swaggerUriToEchoUri}}", si.{{.OperationId}})
+{{range .}}r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
 {{end}}
   return r
 }

@@ -497,8 +497,8 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 func ChiHandler(si ChiServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/issues/30/:fallthrough", si.Issue30)
-	r.Get("/issues/41/:1param", si.Issue41)
+	r.Get("/issues/30/{fallthrough}", si.Issue30)
+	r.Get("/issues/41/{1param}", si.Issue41)
 	r.Get("/issues/9", si.Issue9)
 
 	return r
