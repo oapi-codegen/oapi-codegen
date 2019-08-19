@@ -492,6 +492,16 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 
 }
 
+// ChiHandlers adds each server route to the EchoRouter.
+func ChiHandler(si ChiServerInterface) {
+	r := chi.NewRouter()
+
+	r.Get("/issues/30/:fallthrough", si.Issue30)
+	r.Get("/issues/41/:1param", si.Issue41)
+	r.Get("/issues/9", si.Issue9)
+
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 

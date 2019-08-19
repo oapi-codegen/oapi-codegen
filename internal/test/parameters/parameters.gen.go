@@ -2620,6 +2620,31 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 
 }
 
+// ChiHandlers adds each server route to the EchoRouter.
+func ChiHandler(si ChiServerInterface) {
+	r := chi.NewRouter()
+
+	r.Get("/contentObject/:param", si.GetContentObject)
+	r.Get("/cookie", si.GetCookie)
+	r.Get("/header", si.GetHeader)
+	r.Get("/labelExplodeArray/:param", si.GetLabelExplodeArray)
+	r.Get("/labelExplodeObject/:param", si.GetLabelExplodeObject)
+	r.Get("/labelNoExplodeArray/:param", si.GetLabelNoExplodeArray)
+	r.Get("/labelNoExplodeObject/:param", si.GetLabelNoExplodeObject)
+	r.Get("/matrixExplodeArray/:id", si.GetMatrixExplodeArray)
+	r.Get("/matrixExplodeObject/:id", si.GetMatrixExplodeObject)
+	r.Get("/matrixNoExplodeArray/:id", si.GetMatrixNoExplodeArray)
+	r.Get("/matrixNoExplodeObject/:id", si.GetMatrixNoExplodeObject)
+	r.Get("/passThrough/:param", si.GetPassThrough)
+	r.Get("/queryForm", si.GetQueryForm)
+	r.Get("/simpleExplodeArray/:param", si.GetSimpleExplodeArray)
+	r.Get("/simpleExplodeObject/:param", si.GetSimpleExplodeObject)
+	r.Get("/simpleNoExplodeArray/:param", si.GetSimpleNoExplodeArray)
+	r.Get("/simpleNoExplodeObject/:param", si.GetSimpleNoExplodeObject)
+	r.Get("/simplePrimitive/:param", si.GetSimplePrimitive)
+
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 

@@ -256,4 +256,6 @@ var TemplateFunctions = template.FuncMap{
 	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
+	"lower":                      strings.ToLower,
+	"title":                      strings.Title,
 }

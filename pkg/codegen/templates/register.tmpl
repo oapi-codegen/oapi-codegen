@@ -8,3 +8,11 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 {{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
+
+// ChiHandlers adds each server route to the EchoRouter.
+func ChiHandler(si ChiServerInterface) {
+  r := chi.NewRouter()
+
+{{range .}}r.{{.Method | lower | title }}("{{.Path | swaggerUriToEchoUri}}", si.{{.OperationId}})
+{{end}}
+}
