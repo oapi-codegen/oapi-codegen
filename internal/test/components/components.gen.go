@@ -998,6 +998,15 @@ type ChiServerInterface interface {
 	BodyWithAddProps(w http.ResponseWriter, r *http.Request)
 }
 
+// GetParamsWithAddPropsParams request parameters from context
+func GetParamsWithAddPropsParams(ctx context.Context) *ParamsWithAddPropsParams {
+	params, err := ctx.Value("ParamsWithAddPropsParams").(*ParamsWithAddPropsParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // ParamsWithAddProps operation middleware
 func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -1036,6 +1045,15 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetBodyWithAddPropsParams request parameters from context
+func GetBodyWithAddPropsParams(ctx context.Context) *BodyWithAddPropsParams {
+	params, err := ctx.Value("BodyWithAddPropsParams").(*BodyWithAddPropsParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // BodyWithAddProps operation middleware

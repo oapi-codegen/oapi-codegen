@@ -40,6 +40,15 @@ type ChiServerInterface interface {
 	FindPetById(w http.ResponseWriter, r *http.Request)
 }
 
+// GetFindPetsParams request parameters from context
+func GetFindPetsParams(ctx context.Context) *FindPetsParams {
+	params, err := ctx.Value("FindPetsParams").(*FindPetsParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // FindPets operation middleware
 func FindPetsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -76,6 +85,15 @@ func FindPetsCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetAddPetParams request parameters from context
+func GetAddPetParams(ctx context.Context) *AddPetParams {
+	params, err := ctx.Value("AddPetParams").(*AddPetParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // AddPet operation middleware
 func AddPetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +104,15 @@ func AddPetCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetDeletePetParams request parameters from context
+func GetDeletePetParams(ctx context.Context) *DeletePetParams {
+	params, err := ctx.Value("DeletePetParams").(*DeletePetParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // DeletePet operation middleware
@@ -107,6 +134,15 @@ func DeletePetCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetFindPetByIdParams request parameters from context
+func GetFindPetByIdParams(ctx context.Context) *FindPetByIdParams {
+	params, err := ctx.Value("FindPetByIdParams").(*FindPetByIdParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // FindPetById operation middleware

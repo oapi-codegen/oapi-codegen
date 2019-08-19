@@ -682,6 +682,15 @@ type ChiServerInterface interface {
 	GetOther(w http.ResponseWriter, r *http.Request)
 }
 
+// GetPostBothParams request parameters from context
+func GetPostBothParams(ctx context.Context) *PostBothParams {
+	params, err := ctx.Value("PostBothParams").(*PostBothParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // PostBoth operation middleware
 func PostBothCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -692,6 +701,15 @@ func PostBothCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetBothParams request parameters from context
+func GetGetBothParams(ctx context.Context) *GetBothParams {
+	params, err := ctx.Value("GetBothParams").(*GetBothParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetBoth operation middleware
@@ -706,6 +724,15 @@ func GetBothCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetPostJsonParams request parameters from context
+func GetPostJsonParams(ctx context.Context) *PostJsonParams {
+	params, err := ctx.Value("PostJsonParams").(*PostJsonParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // PostJson operation middleware
 func PostJsonCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -716,6 +743,15 @@ func PostJsonCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetJsonParams request parameters from context
+func GetGetJsonParams(ctx context.Context) *GetJsonParams {
+	params, err := ctx.Value("GetJsonParams").(*GetJsonParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetJson operation middleware
@@ -730,6 +766,15 @@ func GetJsonCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetPostOtherParams request parameters from context
+func GetPostOtherParams(ctx context.Context) *PostOtherParams {
+	params, err := ctx.Value("PostOtherParams").(*PostOtherParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // PostOther operation middleware
 func PostOtherCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -740,6 +785,15 @@ func PostOtherCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetOtherParams request parameters from context
+func GetGetOtherParams(ctx context.Context) *GetOtherParams {
+	params, err := ctx.Value("GetOtherParams").(*GetOtherParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetOther operation middleware

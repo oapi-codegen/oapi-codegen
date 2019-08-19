@@ -2055,6 +2055,15 @@ type ChiServerInterface interface {
 	GetSimplePrimitive(w http.ResponseWriter, r *http.Request)
 }
 
+// GetGetContentObjectParams request parameters from context
+func GetGetContentObjectParams(ctx context.Context) *GetContentObjectParams {
+	params, err := ctx.Value("GetContentObjectParams").(*GetContentObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetContentObject operation middleware
 func GetContentObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2076,6 +2085,15 @@ func GetContentObjectCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetCookieParams request parameters from context
+func GetGetCookieParams(ctx context.Context) *GetCookieParams {
+	params, err := ctx.Value("GetCookieParams").(*GetCookieParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetCookie operation middleware
 func GetCookieCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2093,6 +2111,15 @@ func GetCookieCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetHeaderParams request parameters from context
+func GetGetHeaderParams(ctx context.Context) *GetHeaderParams {
+	params, err := ctx.Value("GetHeaderParams").(*GetHeaderParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetHeader operation middleware
 func GetHeaderCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2108,6 +2135,15 @@ func GetHeaderCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetLabelExplodeArrayParams request parameters from context
+func GetGetLabelExplodeArrayParams(ctx context.Context) *GetLabelExplodeArrayParams {
+	params, err := ctx.Value("GetLabelExplodeArrayParams").(*GetLabelExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetLabelExplodeArray operation middleware
@@ -2131,6 +2167,15 @@ func GetLabelExplodeArrayCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetLabelExplodeObjectParams request parameters from context
+func GetGetLabelExplodeObjectParams(ctx context.Context) *GetLabelExplodeObjectParams {
+	params, err := ctx.Value("GetLabelExplodeObjectParams").(*GetLabelExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetLabelExplodeObject operation middleware
 func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2150,6 +2195,15 @@ func GetLabelExplodeObjectCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetLabelNoExplodeArrayParams request parameters from context
+func GetGetLabelNoExplodeArrayParams(ctx context.Context) *GetLabelNoExplodeArrayParams {
+	params, err := ctx.Value("GetLabelNoExplodeArrayParams").(*GetLabelNoExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetLabelNoExplodeArray operation middleware
@@ -2173,6 +2227,15 @@ func GetLabelNoExplodeArrayCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetLabelNoExplodeObjectParams request parameters from context
+func GetGetLabelNoExplodeObjectParams(ctx context.Context) *GetLabelNoExplodeObjectParams {
+	params, err := ctx.Value("GetLabelNoExplodeObjectParams").(*GetLabelNoExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetLabelNoExplodeObject operation middleware
 func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2192,6 +2255,15 @@ func GetLabelNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetMatrixExplodeArrayParams request parameters from context
+func GetGetMatrixExplodeArrayParams(ctx context.Context) *GetMatrixExplodeArrayParams {
+	params, err := ctx.Value("GetMatrixExplodeArrayParams").(*GetMatrixExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetMatrixExplodeArray operation middleware
@@ -2215,6 +2287,15 @@ func GetMatrixExplodeArrayCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetMatrixExplodeObjectParams request parameters from context
+func GetGetMatrixExplodeObjectParams(ctx context.Context) *GetMatrixExplodeObjectParams {
+	params, err := ctx.Value("GetMatrixExplodeObjectParams").(*GetMatrixExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetMatrixExplodeObject operation middleware
 func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2234,6 +2315,15 @@ func GetMatrixExplodeObjectCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetMatrixNoExplodeArrayParams request parameters from context
+func GetGetMatrixNoExplodeArrayParams(ctx context.Context) *GetMatrixNoExplodeArrayParams {
+	params, err := ctx.Value("GetMatrixNoExplodeArrayParams").(*GetMatrixNoExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetMatrixNoExplodeArray operation middleware
@@ -2257,6 +2347,15 @@ func GetMatrixNoExplodeArrayCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetMatrixNoExplodeObjectParams request parameters from context
+func GetGetMatrixNoExplodeObjectParams(ctx context.Context) *GetMatrixNoExplodeObjectParams {
+	params, err := ctx.Value("GetMatrixNoExplodeObjectParams").(*GetMatrixNoExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetMatrixNoExplodeObject operation middleware
 func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2278,6 +2377,15 @@ func GetMatrixNoExplodeObjectCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetPassThroughParams request parameters from context
+func GetGetPassThroughParams(ctx context.Context) *GetPassThroughParams {
+	params, err := ctx.Value("GetPassThroughParams").(*GetPassThroughParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetPassThrough operation middleware
 func GetPassThroughCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2294,6 +2402,15 @@ func GetPassThroughCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetQueryFormParams request parameters from context
+func GetGetQueryFormParams(ctx context.Context) *GetQueryFormParams {
+	params, err := ctx.Value("GetQueryFormParams").(*GetQueryFormParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetQueryForm operation middleware
@@ -2384,6 +2501,15 @@ func GetQueryFormCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetSimpleExplodeArrayParams request parameters from context
+func GetGetSimpleExplodeArrayParams(ctx context.Context) *GetSimpleExplodeArrayParams {
+	params, err := ctx.Value("GetSimpleExplodeArrayParams").(*GetSimpleExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetSimpleExplodeArray operation middleware
 func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2403,6 +2529,15 @@ func GetSimpleExplodeArrayCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetSimpleExplodeObjectParams request parameters from context
+func GetGetSimpleExplodeObjectParams(ctx context.Context) *GetSimpleExplodeObjectParams {
+	params, err := ctx.Value("GetSimpleExplodeObjectParams").(*GetSimpleExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetSimpleExplodeObject operation middleware
@@ -2426,6 +2561,15 @@ func GetSimpleExplodeObjectCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetSimpleNoExplodeArrayParams request parameters from context
+func GetGetSimpleNoExplodeArrayParams(ctx context.Context) *GetSimpleNoExplodeArrayParams {
+	params, err := ctx.Value("GetSimpleNoExplodeArrayParams").(*GetSimpleNoExplodeArrayParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetSimpleNoExplodeArray operation middleware
 func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2447,6 +2591,15 @@ func GetSimpleNoExplodeArrayCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetGetSimpleNoExplodeObjectParams request parameters from context
+func GetGetSimpleNoExplodeObjectParams(ctx context.Context) *GetSimpleNoExplodeObjectParams {
+	params, err := ctx.Value("GetSimpleNoExplodeObjectParams").(*GetSimpleNoExplodeObjectParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // GetSimpleNoExplodeObject operation middleware
 func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -2466,6 +2619,15 @@ func GetSimpleNoExplodeObjectCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetGetSimplePrimitiveParams request parameters from context
+func GetGetSimplePrimitiveParams(ctx context.Context) *GetSimplePrimitiveParams {
+	params, err := ctx.Value("GetSimplePrimitiveParams").(*GetSimplePrimitiveParams)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // GetSimplePrimitive operation middleware

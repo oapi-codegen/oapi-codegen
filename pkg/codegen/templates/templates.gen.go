@@ -480,7 +480,18 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
 `,
 	"wrappers.tmpl": `
-{{range .}}{{$opid := .OperationId}}// {{$opid}} operation middleware
+{{range .}}{{$opid := .OperationId}}
+
+// Get{{.OperationId}}Params request parameters from context
+func Get{{.OperationId}}Params(ctx context.Context) *{{.OperationId}}Params {
+  params, err := ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
+  if (err != nil) {
+    panic(err)
+  }
+  return params
+}
+
+// {{$opid}} operation middleware
 func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()

@@ -420,6 +420,15 @@ type ChiServerInterface interface {
 	Issue9(w http.ResponseWriter, r *http.Request)
 }
 
+// GetIssue30Params request parameters from context
+func GetIssue30Params(ctx context.Context) *Issue30Params {
+	params, err := ctx.Value("Issue30Params").(*Issue30Params)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // Issue30 operation middleware
 func Issue30Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -441,6 +450,15 @@ func Issue30Ctx(next http.Handler) http.Handler {
 	})
 }
 
+// GetIssue41Params request parameters from context
+func GetIssue41Params(ctx context.Context) *Issue41Params {
+	params, err := ctx.Value("Issue41Params").(*Issue41Params)
+	if err != nil {
+		panic(err)
+	}
+	return params
+}
+
 // Issue41 operation middleware
 func Issue41Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -460,6 +478,15 @@ func Issue41Ctx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetIssue9Params request parameters from context
+func GetIssue9Params(ctx context.Context) *Issue9Params {
+	params, err := ctx.Value("Issue9Params").(*Issue9Params)
+	if err != nil {
+		panic(err)
+	}
+	return params
 }
 
 // Issue9 operation middleware
