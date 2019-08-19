@@ -161,6 +161,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "errors.") {
 			imports = append(imports, "github.com/pkg/errors")
 		}
+		if strings.Contains(str, "chi.") {
+			imports = append(imports, "github.com/go-chi/chi")
+		}
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)
