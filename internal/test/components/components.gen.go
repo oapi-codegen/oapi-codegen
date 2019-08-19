@@ -990,6 +990,13 @@ type ServerInterface interface {
 	BodyWithAddProps(ctx echo.Context) error
 }
 
+type ChiServerInterface interface {
+	//  (GET /params_with_add_props)
+	ParamsWithAddProps(w http.ResponseWriter, r *http.Request)
+	//  (POST /params_with_add_props)
+	BodyWithAddProps(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

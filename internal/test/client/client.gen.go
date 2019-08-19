@@ -666,6 +666,21 @@ type ServerInterface interface {
 	GetOther(ctx echo.Context) error
 }
 
+type ChiServerInterface interface {
+	//  (POST /with_both_bodies)
+	PostBoth(w http.ResponseWriter, r *http.Request)
+	//  (GET /with_both_responses)
+	GetBoth(w http.ResponseWriter, r *http.Request)
+	//  (POST /with_json_body)
+	PostJson(w http.ResponseWriter, r *http.Request)
+	//  (GET /with_json_response)
+	GetJson(w http.ResponseWriter, r *http.Request)
+	//  (POST /with_other_body)
+	PostOther(w http.ResponseWriter, r *http.Request)
+	//  (GET /with_other_response)
+	GetOther(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

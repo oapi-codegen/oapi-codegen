@@ -2015,6 +2015,45 @@ type ServerInterface interface {
 	GetSimplePrimitive(ctx echo.Context, param int32) error
 }
 
+type ChiServerInterface interface {
+	//  (GET /contentObject/{param})
+	GetContentObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /cookie)
+	GetCookie(w http.ResponseWriter, r *http.Request)
+	//  (GET /header)
+	GetHeader(w http.ResponseWriter, r *http.Request)
+	//  (GET /labelExplodeArray/{.param*})
+	GetLabelExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /labelExplodeObject/{.param*})
+	GetLabelExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /labelNoExplodeArray/{.param})
+	GetLabelNoExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /labelNoExplodeObject/{.param})
+	GetLabelNoExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /matrixExplodeArray/{.id*})
+	GetMatrixExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /matrixExplodeObject/{.id*})
+	GetMatrixExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /matrixNoExplodeArray/{.id})
+	GetMatrixNoExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /matrixNoExplodeObject/{.id})
+	GetMatrixNoExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /passThrough/{param})
+	GetPassThrough(w http.ResponseWriter, r *http.Request)
+	//  (GET /queryForm)
+	GetQueryForm(w http.ResponseWriter, r *http.Request)
+	//  (GET /simpleExplodeArray/{param*})
+	GetSimpleExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /simpleExplodeObject/{param*})
+	GetSimpleExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /simpleNoExplodeArray/{param})
+	GetSimpleNoExplodeArray(w http.ResponseWriter, r *http.Request)
+	//  (GET /simpleNoExplodeObject/{param})
+	GetSimpleNoExplodeObject(w http.ResponseWriter, r *http.Request)
+	//  (GET /simplePrimitive/{param})
+	GetSimplePrimitive(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

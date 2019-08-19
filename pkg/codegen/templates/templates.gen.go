@@ -455,6 +455,12 @@ type ServerInterface interface {
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
+
+type ChiServerInterface interface {
+{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{.OperationId}}(w http.ResponseWriter, r *http.Request)
+{{end}}
+}
 `,
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.

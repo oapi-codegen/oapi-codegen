@@ -410,6 +410,15 @@ type ServerInterface interface {
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
 
+type ChiServerInterface interface {
+	//  (GET /issues/30/{fallthrough})
+	Issue30(w http.ResponseWriter, r *http.Request)
+	//  (GET /issues/41/{1param})
+	Issue41(w http.ResponseWriter, r *http.Request)
+	//  (GET /issues/9)
+	Issue9(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

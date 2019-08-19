@@ -27,6 +27,17 @@ type ServerInterface interface {
 	FindPetById(ctx echo.Context, id int64) error
 }
 
+type ChiServerInterface interface {
+	//  (GET /pets)
+	FindPets(w http.ResponseWriter, r *http.Request)
+	//  (POST /pets)
+	AddPet(w http.ResponseWriter, r *http.Request)
+	//  (DELETE /pets/{id})
+	DeletePet(w http.ResponseWriter, r *http.Request)
+	//  (GET /pets/{id})
+	FindPetById(w http.ResponseWriter, r *http.Request)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
