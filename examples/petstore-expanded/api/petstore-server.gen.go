@@ -63,7 +63,8 @@ func FindPetsCtx(next http.Handler) http.Handler {
 
 		err = runtime.BindQueryParameter("form", true, false, "tags", r.Query(), &params.Tags)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		// ------------- Optional query parameter "limit" -------------
@@ -73,7 +74,8 @@ func FindPetsCtx(next http.Handler) http.Handler {
 
 		err = runtime.BindQueryParameter("form", true, false, "limit", r.Query(), &params.Limit)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "FindPetsParams", params)
@@ -124,7 +126,8 @@ func DeletePetCtx(next http.Handler) http.Handler {
 
 		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "id", id)
@@ -154,7 +157,8 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 
 		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam("id"), &id)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "id", id)

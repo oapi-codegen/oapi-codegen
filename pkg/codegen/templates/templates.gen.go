@@ -504,13 +504,15 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     {{if .IsJson}}
     err = json.Unmarshal([]byte(chi.URLParam("{{.ParamName}}")), &{{$varName}})
     if err != nil {
-        // return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+      http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+      return
     }
     {{end}}
     {{if .IsStyled}}
     err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam("{{.ParamName}}"), &{{$varName}})
     if err != nil {
-      // return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+      return
     }
     {{end}}
 
@@ -529,17 +531,20 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     var value {{.TypeDef}}
     err = json.Unmarshal([]byte(paramValue), &value)
     if err != nil {
-        // return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+      http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+      return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+        http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+        return
     }{{end}}
     {{if .IsStyled}}
     err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.Query(), &params.{{.GoName}})
     if err != nil {
-        // return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+      return
     }
     {{end}}
 {{end}}

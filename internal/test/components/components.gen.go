@@ -1018,24 +1018,28 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 		if paramValue := r.Query().Get("p1"); paramValue != "" {
 
 		} else {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p1 is required, but not found"))
+			http.Error(w, "Query argument p1 is required, but not found", http.StatusBadRequest)
+			return
 		}
 
 		err = runtime.BindQueryParameter("simple", true, true, "p1", r.Query(), &params.P1)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p1: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter p1: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		// ------------- Required query parameter "p2" -------------
 		if paramValue := r.Query().Get("p2"); paramValue != "" {
 
 		} else {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p2 is required, but not found"))
+			http.Error(w, "Query argument p2 is required, but not found", http.StatusBadRequest)
+			return
 		}
 
 		err = runtime.BindQueryParameter("form", true, true, "p2", r.Query(), &params.P2)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p2: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter p2: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", params)

@@ -438,7 +438,8 @@ func Issue30Ctx(next http.Handler) http.Handler {
 
 		err = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam("fallthrough"), &pFallthrough)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "pFallthrough", pFallthrough)
@@ -468,7 +469,8 @@ func Issue41Ctx(next http.Handler) http.Handler {
 
 		err = runtime.BindStyledParameter("simple", false, "1param", chi.URLParam("1param"), &n1param)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter 1param: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "n1param", n1param)
@@ -500,12 +502,14 @@ func Issue9Ctx(next http.Handler) http.Handler {
 		if paramValue := r.Query().Get("foo"); paramValue != "" {
 
 		} else {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument foo is required, but not found"))
+			http.Error(w, "Query argument foo is required, but not found", http.StatusBadRequest)
+			return
 		}
 
 		err = runtime.BindQueryParameter("form", true, true, "foo", r.Query(), &params.Foo)
 		if err != nil {
-			// return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
+			http.Error(w, fmt.Sprintf("Invalid format for parameter foo: %s", err), http.StatusBadRequest)
+			return
 		}
 
 		ctx = context.WithValue(r.Context(), "Issue9Params", params)
