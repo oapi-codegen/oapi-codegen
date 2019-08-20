@@ -1,34 +1,36 @@
 
 {{range .}}{{$opid := .OperationId}}
 
-// Get{{.OperationId}}Params request parameters from context
-func Get{{.OperationId}}Params(ctx context.Context) *{{.OperationId}}Params {
+{{if .RequiresParamObject}}
+// ParamsFor{{.OperationId}} operation parameters from context
+func ParamsFor{{.OperationId}}(ctx context.Context) *{{.OperationId}}Params {
   return ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
 }
+{{end}}
 
 // {{$opid}} operation middleware
 func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    var err error
     ctx := r.Context()
 
     {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+    var pathErr error
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
     {{if .IsPassThrough}}
     {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
     {{end}}
     {{if .IsJson}}
-    err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
-    if err != nil {
+    pathErr = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
+    if pathErr != nil {
       http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
       return
     }
     {{end}}
     {{if .IsStyled}}
-    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
-    if err != nil {
-      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+    pathErr = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
+    if pathErr != nil {
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", pathErr), http.StatusBadRequest)
       return
     }
     {{end}}
@@ -37,6 +39,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     {{end}}
 
     {{if .RequiresParamObject}}
+      var err error
       // Parameter object where we will unmarshal all parameters from the context
       var params {{.OperationId}}Params
 
@@ -156,7 +159,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
         {{- end}}
       {{end}}
 
-      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", params)
+      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", &params)
     {{end}}
     next.ServeHTTP(w, r.WithContext(ctx))
   })

@@ -998,17 +998,17 @@ type ChiServerInterface interface {
 	BodyWithAddProps(w http.ResponseWriter, r *http.Request)
 }
 
-// GetParamsWithAddPropsParams request parameters from context
-func GetParamsWithAddPropsParams(ctx context.Context) *ParamsWithAddPropsParams {
+// ParamsForParamsWithAddProps operation parameters from context
+func ParamsForParamsWithAddProps(ctx context.Context) *ParamsWithAddPropsParams {
 	return ctx.Value("ParamsWithAddPropsParams").(*ParamsWithAddPropsParams)
 }
 
 // ParamsWithAddProps operation middleware
 func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
+		var err error
 		// Parameter object where we will unmarshal all parameters from the context
 		var params ParamsWithAddPropsParams
 
@@ -1040,21 +1040,15 @@ func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", params)
+		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// GetBodyWithAddPropsParams request parameters from context
-func GetBodyWithAddPropsParams(ctx context.Context) *BodyWithAddPropsParams {
-	return ctx.Value("BodyWithAddPropsParams").(*BodyWithAddPropsParams)
-}
-
 // BodyWithAddProps operation middleware
 func BodyWithAddPropsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))

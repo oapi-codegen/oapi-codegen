@@ -420,23 +420,18 @@ type ChiServerInterface interface {
 	Issue9(w http.ResponseWriter, r *http.Request)
 }
 
-// GetIssue30Params request parameters from context
-func GetIssue30Params(ctx context.Context) *Issue30Params {
-	return ctx.Value("Issue30Params").(*Issue30Params)
-}
-
 // Issue30 operation middleware
 func Issue30Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		// ------------- Path parameter "fallthrough" -------------
+		var pathErr error
 		var pFallthrough string
 
-		err = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err), http.StatusBadRequest)
+		pathErr = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
+		if pathErr != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", pathErr), http.StatusBadRequest)
 			return
 		}
 
@@ -446,23 +441,18 @@ func Issue30Ctx(next http.Handler) http.Handler {
 	})
 }
 
-// GetIssue41Params request parameters from context
-func GetIssue41Params(ctx context.Context) *Issue41Params {
-	return ctx.Value("Issue41Params").(*Issue41Params)
-}
-
 // Issue41 operation middleware
 func Issue41Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		// ------------- Path parameter "1param" -------------
+		var pathErr error
 		var n1param N5StartsWithNumber
 
-		err = runtime.BindStyledParameter("simple", false, "1param", chi.URLParam(r, "1param"), &n1param)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter 1param: %s", err), http.StatusBadRequest)
+		pathErr = runtime.BindStyledParameter("simple", false, "1param", chi.URLParam(r, "1param"), &n1param)
+		if pathErr != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter 1param: %s", pathErr), http.StatusBadRequest)
 			return
 		}
 
@@ -472,17 +462,17 @@ func Issue41Ctx(next http.Handler) http.Handler {
 	})
 }
 
-// GetIssue9Params request parameters from context
-func GetIssue9Params(ctx context.Context) *Issue9Params {
+// ParamsForIssue9 operation parameters from context
+func ParamsForIssue9(ctx context.Context) *Issue9Params {
 	return ctx.Value("Issue9Params").(*Issue9Params)
 }
 
 // Issue9 operation middleware
 func Issue9Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
+		var err error
 		// Parameter object where we will unmarshal all parameters from the context
 		var params Issue9Params
 
@@ -500,7 +490,7 @@ func Issue9Ctx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "Issue9Params", params)
+		ctx = context.WithValue(r.Context(), "Issue9Params", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

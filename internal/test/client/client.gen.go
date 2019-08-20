@@ -682,90 +682,54 @@ type ChiServerInterface interface {
 	GetOther(w http.ResponseWriter, r *http.Request)
 }
 
-// GetPostBothParams request parameters from context
-func GetPostBothParams(ctx context.Context) *PostBothParams {
-	return ctx.Value("PostBothParams").(*PostBothParams)
-}
-
 // PostBoth operation middleware
 func PostBothCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// GetGetBothParams request parameters from context
-func GetGetBothParams(ctx context.Context) *GetBothParams {
-	return ctx.Value("GetBothParams").(*GetBothParams)
 }
 
 // GetBoth operation middleware
 func GetBothCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// GetPostJsonParams request parameters from context
-func GetPostJsonParams(ctx context.Context) *PostJsonParams {
-	return ctx.Value("PostJsonParams").(*PostJsonParams)
 }
 
 // PostJson operation middleware
 func PostJsonCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// GetGetJsonParams request parameters from context
-func GetGetJsonParams(ctx context.Context) *GetJsonParams {
-	return ctx.Value("GetJsonParams").(*GetJsonParams)
 }
 
 // GetJson operation middleware
 func GetJsonCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
-}
-
-// GetPostOtherParams request parameters from context
-func GetPostOtherParams(ctx context.Context) *PostOtherParams {
-	return ctx.Value("PostOtherParams").(*PostOtherParams)
 }
 
 // PostOther operation middleware
 func PostOtherCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-// GetGetOtherParams request parameters from context
-func GetGetOtherParams(ctx context.Context) *GetOtherParams {
-	return ctx.Value("GetOtherParams").(*GetOtherParams)
-}
-
 // GetOther operation middleware
 func GetOtherCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		ctx := r.Context()
 
 		next.ServeHTTP(w, r.WithContext(ctx))
