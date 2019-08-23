@@ -1,0 +1,11 @@
+// ChiHandler creates a http handler with routing matching OpenAPI spec.
+func ChiHandler(si ChiServerInterface) http.Handler {
+  r := chi.NewRouter()
+
+{{range .}}r.Group(func(r chi.Router) {
+  r.Use({{.OperationId}}Ctx)
+  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+})
+{{end}}
+  return r
+}
