@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
 	"github.com/labstack/echo/v4"
 	"io"
 	"io/ioutil"
@@ -667,75 +666,6 @@ type ServerInterface interface {
 	GetOther(ctx echo.Context) error
 }
 
-type ChiServerInterface interface {
-	//  (POST /with_both_bodies)
-	PostBoth(w http.ResponseWriter, r *http.Request)
-	//  (GET /with_both_responses)
-	GetBoth(w http.ResponseWriter, r *http.Request)
-	//  (POST /with_json_body)
-	PostJson(w http.ResponseWriter, r *http.Request)
-	//  (GET /with_json_response)
-	GetJson(w http.ResponseWriter, r *http.Request)
-	//  (POST /with_other_body)
-	PostOther(w http.ResponseWriter, r *http.Request)
-	//  (GET /with_other_response)
-	GetOther(w http.ResponseWriter, r *http.Request)
-}
-
-// PostBoth operation middleware
-func PostBothCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// GetBoth operation middleware
-func GetBothCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// PostJson operation middleware
-func PostJsonCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// GetJson operation middleware
-func GetJsonCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// PostOther operation middleware
-func PostOtherCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// GetOther operation middleware
-func GetOtherCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -811,38 +741,6 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	router.POST("/with_other_body", wrapper.PostOther)
 	router.GET("/with_other_response", wrapper.GetOther)
 
-}
-
-// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.Use(PostBothCtx)
-		r.Post("/with_both_bodies", si.PostBoth)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetBothCtx)
-		r.Get("/with_both_responses", si.GetBoth)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(PostJsonCtx)
-		r.Post("/with_json_body", si.PostJson)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetJsonCtx)
-		r.Get("/with_json_response", si.GetJson)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(PostOtherCtx)
-		r.Post("/with_other_body", si.PostOther)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetOtherCtx)
-		r.Get("/with_other_response", si.GetOther)
-	})
-
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

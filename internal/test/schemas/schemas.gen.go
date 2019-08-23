@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
 	"github.com/labstack/echo/v4"
 	"io"
 	"io/ioutil"
@@ -411,91 +410,6 @@ type ServerInterface interface {
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
 
-type ChiServerInterface interface {
-	//  (GET /issues/30/{fallthrough})
-	Issue30(w http.ResponseWriter, r *http.Request)
-	//  (GET /issues/41/{1param})
-	Issue41(w http.ResponseWriter, r *http.Request)
-	//  (GET /issues/9)
-	Issue9(w http.ResponseWriter, r *http.Request)
-}
-
-// Issue30 operation middleware
-func Issue30Ctx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// ------------- Path parameter "fallthrough" -------------
-		var pathErr error
-		var pFallthrough string
-
-		pathErr = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", pathErr), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "pFallthrough", pFallthrough)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// Issue41 operation middleware
-func Issue41Ctx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// ------------- Path parameter "1param" -------------
-		var pathErr error
-		var n1param N5StartsWithNumber
-
-		pathErr = runtime.BindStyledParameter("simple", false, "1param", chi.URLParam(r, "1param"), &n1param)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter 1param: %s", pathErr), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "n1param", n1param)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// ParamsForIssue9 operation parameters from context
-func ParamsForIssue9(ctx context.Context) *Issue9Params {
-	return ctx.Value("Issue9Params").(*Issue9Params)
-}
-
-// Issue9 operation middleware
-func Issue9Ctx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		var err error
-		// Parameter object where we will unmarshal all parameters from the context
-		var params Issue9Params
-
-		// ------------- Required query parameter "foo" -------------
-		if paramValue := r.URL.Query().Get("foo"); paramValue != "" {
-
-		} else {
-			http.Error(w, "Query argument foo is required, but not found", http.StatusBadRequest)
-			return
-		}
-
-		err = runtime.BindQueryParameter("form", true, true, "foo", r.URL.Query(), &params.Foo)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter foo: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "Issue9Params", &params)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -567,26 +481,6 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
 
-}
-
-// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.Use(Issue30Ctx)
-		r.Get("/issues/30/{fallthrough}", si.Issue30)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(Issue41Ctx)
-		r.Get("/issues/41/{1param}", si.Issue41)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(Issue9Ctx)
-		r.Get("/issues/9", si.Issue9)
-	})
-
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"io"
@@ -991,70 +990,6 @@ type ServerInterface interface {
 	BodyWithAddProps(ctx echo.Context) error
 }
 
-type ChiServerInterface interface {
-	//  (GET /params_with_add_props)
-	ParamsWithAddProps(w http.ResponseWriter, r *http.Request)
-	//  (POST /params_with_add_props)
-	BodyWithAddProps(w http.ResponseWriter, r *http.Request)
-}
-
-// ParamsForParamsWithAddProps operation parameters from context
-func ParamsForParamsWithAddProps(ctx context.Context) *ParamsWithAddPropsParams {
-	return ctx.Value("ParamsWithAddPropsParams").(*ParamsWithAddPropsParams)
-}
-
-// ParamsWithAddProps operation middleware
-func ParamsWithAddPropsCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		var err error
-		// Parameter object where we will unmarshal all parameters from the context
-		var params ParamsWithAddPropsParams
-
-		// ------------- Required query parameter "p1" -------------
-		if paramValue := r.URL.Query().Get("p1"); paramValue != "" {
-
-		} else {
-			http.Error(w, "Query argument p1 is required, but not found", http.StatusBadRequest)
-			return
-		}
-
-		err = runtime.BindQueryParameter("simple", true, true, "p1", r.URL.Query(), &params.P1)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter p1: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		// ------------- Required query parameter "p2" -------------
-		if paramValue := r.URL.Query().Get("p2"); paramValue != "" {
-
-		} else {
-			http.Error(w, "Query argument p2 is required, but not found", http.StatusBadRequest)
-			return
-		}
-
-		err = runtime.BindQueryParameter("form", true, true, "p2", r.URL.Query(), &params.P2)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter p2: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "ParamsWithAddPropsParams", &params)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// BodyWithAddProps operation middleware
-func BodyWithAddPropsCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
@@ -1114,22 +1049,6 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	router.GET("/params_with_add_props", wrapper.ParamsWithAddProps)
 	router.POST("/params_with_add_props", wrapper.BodyWithAddProps)
 
-}
-
-// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.Use(ParamsWithAddPropsCtx)
-		r.Get("/params_with_add_props", si.ParamsWithAddProps)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(BodyWithAddPropsCtx)
-		r.Post("/params_with_add_props", si.BodyWithAddProps)
-	})
-
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

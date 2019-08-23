@@ -6,12 +6,10 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi"
 	"github.com/labstack/echo/v4"
 	"net/http"
 	"strings"
@@ -27,110 +25,6 @@ type ServerInterface interface {
 	DeletePet(ctx echo.Context, id int64) error
 	// (GET /pets/{id})
 	FindPetById(ctx echo.Context, id int64) error
-}
-
-type ChiServerInterface interface {
-	//  (GET /pets)
-	FindPets(w http.ResponseWriter, r *http.Request)
-	//  (POST /pets)
-	AddPet(w http.ResponseWriter, r *http.Request)
-	//  (DELETE /pets/{id})
-	DeletePet(w http.ResponseWriter, r *http.Request)
-	//  (GET /pets/{id})
-	FindPetById(w http.ResponseWriter, r *http.Request)
-}
-
-// ParamsForFindPets operation parameters from context
-func ParamsForFindPets(ctx context.Context) *FindPetsParams {
-	return ctx.Value("FindPetsParams").(*FindPetsParams)
-}
-
-// FindPets operation middleware
-func FindPetsCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		var err error
-		// Parameter object where we will unmarshal all parameters from the context
-		var params FindPetsParams
-
-		// ------------- Optional query parameter "tags" -------------
-		if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
-
-		}
-
-		err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		// ------------- Optional query parameter "limit" -------------
-		if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
-
-		}
-
-		err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "FindPetsParams", &params)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// AddPet operation middleware
-func AddPetCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// DeletePet operation middleware
-func DeletePetCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// ------------- Path parameter "id" -------------
-		var pathErr error
-		var id int64
-
-		pathErr = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", pathErr), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "id", id)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-// FindPetById operation middleware
-func FindPetByIdCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		// ------------- Path parameter "id" -------------
-		var pathErr error
-		var id int64
-
-		pathErr = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", pathErr), http.StatusBadRequest)
-			return
-		}
-
-		ctx = context.WithValue(r.Context(), "id", id)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -222,30 +116,6 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	router.DELETE("/pets/:id", wrapper.DeletePet)
 	router.GET("/pets/:id", wrapper.FindPetById)
 
-}
-
-// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
-	r := chi.NewRouter()
-
-	r.Group(func(r chi.Router) {
-		r.Use(FindPetsCtx)
-		r.Get("/pets", si.FindPets)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(AddPetCtx)
-		r.Post("/pets", si.AddPet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(DeletePetCtx)
-		r.Delete("/pets/{id}", si.DeletePet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(FindPetByIdCtx)
-		r.Get("/pets/{id}", si.FindPetById)
-	})
-
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

@@ -196,7 +196,7 @@ paths:
 
 components:
   schemas:
-  
+
     Test:
       properties:
         name:
