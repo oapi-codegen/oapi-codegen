@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
@@ -62,7 +63,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")
 
-	findPetByIDResponse, err := examplePetstore.ParsefindPetByIdResponse(cannedResponse)
+	findPetByIDResponse, err := examplePetstoreClient.ParsefindPetByIdResponse(cannedResponse)
 	assert.NoError(t, err)
 	assert.NotNil(t, findPetByIDResponse.JSON200)
 	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
