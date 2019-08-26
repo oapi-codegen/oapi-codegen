@@ -17,94 +17,51 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id     string `json:"Id"`
-	Object Object `json:"Object"`
+	Id     string `json:"Id",xml:"Id"`
+	Object Object `json:"Object",xml:"Object"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName",xml:"firstName"`
+	Role      string `json:"role",xml:"role"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-
-	// primitive
-	P *int32 `json:"p,omitempty"`
-
-	// primitive
-	Ep *int32 `json:"ep,omitempty"`
-
-	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
-
-	// array
-	A *[]int32 `json:"a,omitempty"`
-
-	// exploded object
-	Eo *Object `json:"eo,omitempty"`
-
-	// object
-	O *Object `json:"o,omitempty"`
-
-	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	P  *int32         `json:"p,omitempty",xml:"p"`
+	Ep *int32         `json:"ep,omitempty",xml:"ep"`
+	Ea *[]int32       `json:"ea,omitempty",xml:"ea-list>ea"`
+	A  *[]int32       `json:"a,omitempty",xml:"a-list>a"`
+	Eo *Object        `json:"eo,omitempty",xml:"eo"`
+	O  *Object        `json:"o,omitempty",xml:"o"`
+	Co *ComplexObject `json:"co,omitempty",xml:"co"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-
-	// primitive
-	XPrimitive *int32 `json:"X-Primitive,omitempty"`
-
-	// primitive
-	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
-
-	// exploded array
-	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
-
-	// array
-	XArray *[]int32 `json:"X-Array,omitempty"`
-
-	// exploded object
-	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
-
-	// object
-	XObject *Object `json:"X-Object,omitempty"`
-
-	// complex object
-	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+	XPrimitive         *int32         `json:"X-Primitive,omitempty",xml:"X-Primitive"`
+	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty",xml:"X-Primitive-Exploded"`
+	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty",xml:"X-Array-Exploded-list>X-Array-Exploded"`
+	XArray             *[]int32       `json:"X-Array,omitempty",xml:"X-Array-list>X-Array"`
+	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty",xml:"X-Object-Exploded"`
+	XObject            *Object        `json:"X-Object,omitempty",xml:"X-Object"`
+	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty",xml:"X-Complex-Object"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-
-	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
-
-	// array
-	A *[]int32 `json:"a,omitempty"`
-
-	// exploded object
-	Eo *Object `json:"eo,omitempty"`
-
-	// object
-	O *Object `json:"o,omitempty"`
-
-	// exploded primitive
-	Ep *int32 `json:"ep,omitempty"`
-
-	// primitive
-	P *int32 `json:"p,omitempty"`
-
-	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Ea *[]int32       `json:"ea,omitempty",xml:"ea-list>ea"`
+	A  *[]int32       `json:"a,omitempty",xml:"a-list>a"`
+	Eo *Object        `json:"eo,omitempty",xml:"eo"`
+	O  *Object        `json:"o,omitempty",xml:"o"`
+	Ep *int32         `json:"ep,omitempty",xml:"ep"`
+	P  *int32         `json:"p,omitempty",xml:"p"`
+	Co *ComplexObject `json:"co,omitempty",xml:"co"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -117,27 +74,12 @@ type Client struct {
 	Server string
 
 	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	Client http.Client
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
-
-	// userAgent to use
-	userAgent string
-
-	// timeout of single request
-	requestTimeout time.Duration
-
-	// timeout of idle http connections
-	idleTimeout time.Duration
-
-	// maxium idle connections of the underlying http-client.
-	maxIdleConns int
 }
-
-// ClientOption allows setting custom parameters during construction
-type ClientOption func(*Client) error
 
 // The interface specification for the client above.
 type ClientInterface interface {
@@ -1098,116 +1040,11 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClient creates a new Client.
-func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses, error) {
-	// create a client with sane default values
-	client := Client{
-		// must have a slash in order to resolve relative paths correctly.
-		Server:         "",
-		userAgent:      "oapi-codegen",
-		maxIdleConns:   10,
-		requestTimeout: 5 * time.Second,
-		idleTimeout:    30 * time.Second,
-	}
-	// mutate defaultClient and add all optional params
-	for _, o := range opts {
-		if err := o(&client); err != nil {
-			return nil, err
-		}
-	}
-
-	// create httpClient, if not already present
-	if client.Client == nil {
-		client.Client = client.newHTTPClient()
-	}
-
-	return &ClientWithResponses{
-		ClientInterface: &client,
-	}, nil
-}
-
-// WithBaseURL overrides the baseURL.
-func WithBaseURL(baseURL string) ClientOption {
-	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
-		newBaseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-		c.Server = newBaseURL.String()
-		return nil
-	}
-}
-
-// WithUserAgent allows setting the userAgent
-func WithUserAgent(userAgent string) ClientOption {
-	return func(c *Client) error {
-		c.userAgent = userAgent
-		return nil
-	}
-}
-
-// WithIdleTimeout overrides the timeout of idle connections.
-func WithIdleTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.idleTimeout = timeout
-		return nil
-	}
-}
-
-// WithRequestTimeout overrides the timeout of individual requests.
-func WithRequestTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.requestTimeout = timeout
-		return nil
-	}
-}
-
-// WithMaxIdleConnections overrides the amount of idle connections of the
-// underlying http-client.
-func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
-	return func(c *Client) error {
-		c.maxIdleConns = int(maxIdleConns)
-		return nil
-	}
-}
-
-// WithHTTPClient allows overriding the default httpClient, which is
-// automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(c *Client) error {
-		c.Client = httpClient
-		return nil
-	}
-}
-
-// WithRequestEditorFn allows setting up a callback function, which will be
-// called right before sending the request. This can be used to mutate the request.
-func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return func(c *Client) error {
-		c.RequestEditor = fn
-		return nil
-	}
-}
-
-// newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: c.requestTimeout,
-		Transport: &http.Transport{
-			MaxIdleConns:    c.maxIdleConns,
-			IdleConnTimeout: c.idleTimeout,
-		},
-	}
-}
-
 // NewClientWithResponses returns a ClientWithResponses with a default Client:
 func NewClientWithResponses(server string) *ClientWithResponses {
 	return &ClientWithResponses{
 		ClientInterface: &Client{
-			Client: &http.Client{},
+			Client: http.Client{},
 			Server: server,
 		},
 	}
@@ -1217,7 +1054,7 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
 	return &ClientWithResponses{
 		ClientInterface: &Client{
-			Client:        &http.Client{},
+			Client:        http.Client{},
 			Server:        server,
 			RequestEditor: reqEditorFn,
 		},
@@ -1778,6 +1615,8 @@ func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectRespons
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1835,6 +1674,8 @@ func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArra
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1854,6 +1695,8 @@ func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObj
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1873,6 +1716,8 @@ func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplode
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1892,6 +1737,8 @@ func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplod
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1911,6 +1758,8 @@ func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeAr
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1930,6 +1779,8 @@ func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeO
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1949,6 +1800,8 @@ func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplo
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1968,6 +1821,8 @@ func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExpl
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1987,6 +1842,8 @@ func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, e
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2006,6 +1863,8 @@ func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2025,6 +1884,8 @@ func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeAr
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2044,6 +1905,8 @@ func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeO
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2063,6 +1926,8 @@ func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplo
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2082,6 +1947,8 @@ func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExpl
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -2101,6 +1968,8 @@ func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveRes
 	}
 
 	switch {
+	case rsp.StatusCode == 200:
+		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil

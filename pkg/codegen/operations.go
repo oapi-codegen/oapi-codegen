@@ -592,6 +592,10 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			Required:      param.Required,
 			Schema:        pSchema,
 		}
+		prop.XmlFieldName = param.ParamName
+		if param.Schema.IsArray {
+			prop.XmlFieldName = prop.XmlFieldName + "-list>" + prop.XmlFieldName
+		}
 		s.Properties = append(s.Properties, prop)
 	}
 
