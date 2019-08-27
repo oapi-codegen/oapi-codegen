@@ -12,7 +12,7 @@ type Error struct {
 // NewPet defines model for NewPet.
 type NewPet struct {
 	Name string  `json:"name" xml:"name"`
-	Tag  *string `json:"tag,omitempty" xml:"tag",omitempty`
+	Tag  *string `json:"tag,omitempty" xml:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
@@ -25,8 +25,8 @@ type Pet struct {
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
-	Tags  *[]string `json:"tags,omitempty" xml:"tags-list>tags",omitempty`
-	Limit *int32    `json:"limit,omitempty" xml:"limit",omitempty`
+	Tags  *[]string `json:"tags,omitempty" xml:"tags-list>tags,omitempty"`
+	Limit *int32    `json:"limit,omitempty" xml:"limit,omitempty"`
 }
 
 // AddPetRequestBody defines body for AddPet for application/json ContentType.

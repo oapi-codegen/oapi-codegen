@@ -24,7 +24,7 @@ import (
 type AdditionalPropertiesObject1 struct {
 	Id                   int            `json:"id" xml:"id"`
 	Name                 string         `json:"name" xml:"name"`
-	Optional             *string        `json:"optional,omitempty" xml:"optional",omitempty`
+	Optional             *string        `json:"optional,omitempty" xml:"optional,omitempty"`
 	AdditionalProperties map[string]int `json:"-"`
 }
 
@@ -62,7 +62,7 @@ type AdditionalPropertiesObject5 struct {
 type ObjectWithJsonField struct {
 	Name   string          `json:"name" xml:"name"`
 	Value1 json.RawMessage `json:"value1" xml:"value1"`
-	Value2 json.RawMessage `json:"value2,omitempty" xml:"value2",omitempty`
+	Value2 json.RawMessage `json:"value2,omitempty" xml:"value2,omitempty"`
 }
 
 // SchemaObject defines model for SchemaObject.
