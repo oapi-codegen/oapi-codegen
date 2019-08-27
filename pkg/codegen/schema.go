@@ -299,9 +299,9 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 		if p.Required {
-			field += fmt.Sprintf(" `json:\"%s\",xml:\"%s\"`", p.JsonFieldName, p.XmlFieldName)
+			field += fmt.Sprintf(" `json:\"%s\" xml:\"%s\"`", p.JsonFieldName, p.XmlFieldName)
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\",xml:\"%s\"`", p.JsonFieldName, p.XmlFieldName)
+			field += fmt.Sprintf(" `json:\"%s,omitempty\" xml:\"%s\",omitempty`", p.JsonFieldName, p.XmlFieldName)
 		}
 		fields = append(fields, field)
 	}

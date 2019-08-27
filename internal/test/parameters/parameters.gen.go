@@ -21,47 +21,47 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id     string `json:"Id",xml:"Id"`
-	Object Object `json:"Object",xml:"Object"`
+	Id     string `json:"Id" xml:"Id"`
+	Object Object `json:"Object" xml:"Object"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName",xml:"firstName"`
-	Role      string `json:"role",xml:"role"`
+	FirstName string `json:"firstName" xml:"firstName"`
+	Role      string `json:"role" xml:"role"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	P  *int32         `json:"p,omitempty",xml:"p"`
-	Ep *int32         `json:"ep,omitempty",xml:"ep"`
-	Ea *[]int32       `json:"ea,omitempty",xml:"ea-list>ea"`
-	A  *[]int32       `json:"a,omitempty",xml:"a-list>a"`
-	Eo *Object        `json:"eo,omitempty",xml:"eo"`
-	O  *Object        `json:"o,omitempty",xml:"o"`
-	Co *ComplexObject `json:"co,omitempty",xml:"co"`
+	P  *int32         `json:"p,omitempty" xml:"p",omitempty`
+	Ep *int32         `json:"ep,omitempty" xml:"ep",omitempty`
+	Ea *[]int32       `json:"ea,omitempty" xml:"ea-list>ea",omitempty`
+	A  *[]int32       `json:"a,omitempty" xml:"a-list>a",omitempty`
+	Eo *Object        `json:"eo,omitempty" xml:"eo",omitempty`
+	O  *Object        `json:"o,omitempty" xml:"o",omitempty`
+	Co *ComplexObject `json:"co,omitempty" xml:"co",omitempty`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	XPrimitive         *int32         `json:"X-Primitive,omitempty",xml:"X-Primitive"`
-	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty",xml:"X-Primitive-Exploded"`
-	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty",xml:"X-Array-Exploded-list>X-Array-Exploded"`
-	XArray             *[]int32       `json:"X-Array,omitempty",xml:"X-Array-list>X-Array"`
-	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty",xml:"X-Object-Exploded"`
-	XObject            *Object        `json:"X-Object,omitempty",xml:"X-Object"`
-	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty",xml:"X-Complex-Object"`
+	XPrimitive         *int32         `json:"X-Primitive,omitempty" xml:"X-Primitive",omitempty`
+	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty" xml:"X-Primitive-Exploded",omitempty`
+	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty" xml:"X-Array-Exploded-list>X-Array-Exploded",omitempty`
+	XArray             *[]int32       `json:"X-Array,omitempty" xml:"X-Array-list>X-Array",omitempty`
+	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty" xml:"X-Object-Exploded",omitempty`
+	XObject            *Object        `json:"X-Object,omitempty" xml:"X-Object",omitempty`
+	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty" xml:"X-Complex-Object",omitempty`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	Ea *[]int32       `json:"ea,omitempty",xml:"ea-list>ea"`
-	A  *[]int32       `json:"a,omitempty",xml:"a-list>a"`
-	Eo *Object        `json:"eo,omitempty",xml:"eo"`
-	O  *Object        `json:"o,omitempty",xml:"o"`
-	Ep *int32         `json:"ep,omitempty",xml:"ep"`
-	P  *int32         `json:"p,omitempty",xml:"p"`
-	Co *ComplexObject `json:"co,omitempty",xml:"co"`
+	Ea *[]int32       `json:"ea,omitempty" xml:"ea-list>ea",omitempty`
+	A  *[]int32       `json:"a,omitempty" xml:"a-list>a",omitempty`
+	Eo *Object        `json:"eo,omitempty" xml:"eo",omitempty`
+	O  *Object        `json:"o,omitempty" xml:"o",omitempty`
+	Ep *int32         `json:"ep,omitempty" xml:"ep",omitempty`
+	P  *int32         `json:"p,omitempty" xml:"p",omitempty`
+	Co *ComplexObject `json:"co,omitempty" xml:"co",omitempty`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

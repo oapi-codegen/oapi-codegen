@@ -22,34 +22,34 @@ import (
 
 // AdditionalPropertiesObject1 defines model for AdditionalPropertiesObject1.
 type AdditionalPropertiesObject1 struct {
-	Id                   int            `json:"id",xml:"id"`
-	Name                 string         `json:"name",xml:"name"`
-	Optional             *string        `json:"optional,omitempty",xml:"optional"`
+	Id                   int            `json:"id" xml:"id"`
+	Name                 string         `json:"name" xml:"name"`
+	Optional             *string        `json:"optional,omitempty" xml:"optional",omitempty`
 	AdditionalProperties map[string]int `json:"-"`
 }
 
 // AdditionalPropertiesObject2 defines model for AdditionalPropertiesObject2.
 type AdditionalPropertiesObject2 struct {
-	Id   int    `json:"id",xml:"id"`
-	Name string `json:"name",xml:"name"`
+	Id   int    `json:"id" xml:"id"`
+	Name string `json:"name" xml:"name"`
 }
 
 // AdditionalPropertiesObject3 defines model for AdditionalPropertiesObject3.
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name",xml:"name"`
+	Name                 string                 `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // AdditionalPropertiesObject4 defines model for AdditionalPropertiesObject4.
 type AdditionalPropertiesObject4 struct {
-	Inner                AdditionalPropertiesObject4_Inner `json:"inner",xml:"inner"`
-	Name                 string                            `json:"name",xml:"name"`
+	Inner                AdditionalPropertiesObject4_Inner `json:"inner" xml:"inner"`
+	Name                 string                            `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{}            `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name",xml:"name"`
+	Name                 string                 `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
@@ -60,15 +60,15 @@ type AdditionalPropertiesObject5 struct {
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
-	Name   string          `json:"name",xml:"name"`
-	Value1 json.RawMessage `json:"value1",xml:"value1"`
-	Value2 json.RawMessage `json:"value2,omitempty",xml:"value2"`
+	Name   string          `json:"name" xml:"name"`
+	Value1 json.RawMessage `json:"value1" xml:"value1"`
+	Value2 json.RawMessage `json:"value2,omitempty" xml:"value2",omitempty`
 }
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName",xml:"firstName"`
-	Role      string `json:"role",xml:"role"`
+	FirstName string `json:"firstName" xml:"firstName"`
+	Role      string `json:"role" xml:"role"`
 }
 
 // ParameterObject defines model for ParameterObject.
@@ -76,12 +76,12 @@ type ParameterObject string
 
 // ResponseObject defines model for ResponseObject.
 type ResponseObject struct {
-	Field SchemaObject `json:"Field",xml:"Field"`
+	Field SchemaObject `json:"Field" xml:"Field"`
 }
 
 // RequestBody defines model for RequestBody.
 type RequestBody struct {
-	Field SchemaObject `json:"Field",xml:"Field"`
+	Field SchemaObject `json:"Field" xml:"Field"`
 }
 
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
@@ -91,10 +91,10 @@ type ParamsWithAddPropsParams_P1 struct {
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
-	P1 ParamsWithAddPropsParams_P1 `json:"p1",xml:"p1"`
+	P1 ParamsWithAddPropsParams_P1 `json:"p1" xml:"p1"`
 	P2 struct {
-		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner",xml:"inner"`
-	} `json:"p2",xml:"p2"`
+		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner" xml:"inner"`
+	} `json:"p2" xml:"p2"`
 }
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.
@@ -104,8 +104,8 @@ type ParamsWithAddPropsParams_P2_Inner struct {
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
-	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner",xml:"inner"`
-	Name                 string                         `json:"name",xml:"name"`
+	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner" xml:"inner"`
+	Name                 string                         `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{}         `json:"-"`
 }
 
