@@ -25,11 +25,17 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
+// PostBothJSONBody defines parameters for PostBoth.
+type PostBothJSONBody SchemaObject
+
+// PostJsonJSONBody defines parameters for PostJson.
+type PostJsonJSONBody SchemaObject
+
 // PostBothRequestBody defines body for PostBoth for application/json ContentType.
-type PostBothJSONRequestBody SchemaObject
+type PostBothJSONRequestBody PostBothJSONBody
 
 // PostJsonRequestBody defines body for PostJson for application/json ContentType.
-type PostJsonJSONRequestBody SchemaObject
+type PostJsonJSONRequestBody PostJsonJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error

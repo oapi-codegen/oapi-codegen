@@ -94,6 +94,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
+		return Schema{
+			GoType:refType,
+		}, nil
 	}
 
 	// We can't support this in any meaningful way
