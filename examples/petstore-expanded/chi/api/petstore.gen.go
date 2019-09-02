@@ -45,7 +45,7 @@ type FindPetsParams struct {
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody NewPet
 
-type ChiServerInterface interface {
+type ServerInterface interface {
 	//  (GET /pets)
 	FindPets(w http.ResponseWriter, r *http.Request)
 	//  (POST /pets)
@@ -149,8 +149,8 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 	})
 }
 
-// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
+// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) http.Handler {
 	r := chi.NewRouter()
 
 	r.Group(func(r chi.Router) {

@@ -1,4 +1,4 @@
-type ChiServerInterface interface {
+type ServerInterface interface {
 {{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}

@@ -21,7 +21,7 @@ func main() {
 	petStore := api.NewPetStore()
 
 	// We now register our petStore above as the handler for the interface
-	h := api.ChiHandler(petStore)
+	h := api.Handler(petStore)
 
 	s := &http.Server{
 		Handler: h,

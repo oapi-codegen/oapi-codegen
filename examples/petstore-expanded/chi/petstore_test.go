@@ -25,7 +25,7 @@ func DoJson(handler http.Handler, method string, url string, body interface{}) *
 func TestPetStore(t *testing.T) {
 	var err error
 
-	h := api.ChiHandler(api.NewPetStore())
+	h := api.Handler(api.NewPetStore())
 
 	// At this point, we can start sending simulated Http requests, and record
 	// the HTTP responses to check for validity. This exercises every part of

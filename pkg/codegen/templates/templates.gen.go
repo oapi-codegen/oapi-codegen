@@ -73,8 +73,8 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `,
-	"chi-handler.tmpl": `// ChiHandler creates a http handler with routing matching OpenAPI spec.
-func ChiHandler(si ChiServerInterface) http.Handler {
+	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) http.Handler {
   r := chi.NewRouter()
 
 {{range .}}r.Group(func(r chi.Router) {
@@ -85,7 +85,7 @@ func ChiHandler(si ChiServerInterface) http.Handler {
   return r
 }
 `,
-	"chi-interface.tmpl": `type ChiServerInterface interface {
+	"chi-interface.tmpl": `type ServerInterface interface {
 {{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
