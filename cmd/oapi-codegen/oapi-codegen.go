@@ -77,6 +77,10 @@ func main() {
 		}
 	}
 
+	if opts.GenerateEchoServer && opts.GenerateChiServer {
+		errExit("can not specify both server and chi-server targets simultaneously")
+	}
+
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
 		errExit("error loading swagger spec\n: %s", err)
