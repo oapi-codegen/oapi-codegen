@@ -25,109 +25,132 @@ func DoJson(handler http.Handler, method string, url string, body interface{}) *
 func TestPetStore(t *testing.T) {
 	var err error
 
-	h := api.Handler(api.NewPetStore())
+	store := api.NewPetStore()
+	h := api.Handler(store)
 
-	// At this point, we can start sending simulated Http requests, and record
-	// the HTTP responses to check for validity. This exercises every part of
-	// the stack except the well-tested HTTP system in Go, which there is no
-	// point for us to test.
+	t.Run("Add pet", func(t *testing.T) {
+		tag := "TagOfSpot"
+		newPet := api.NewPet{
+			Name: "Spot",
+			Tag:  &tag,
+		}
 
-	tag := "TagOfSpot"
-	newPet := api.NewPet{
-		Name: "Spot",
-		Tag:  &tag,
-	}
+		rr := DoJson(h, "POST", "/pets", newPet)
+		assert.Equal(t, http.StatusCreated, rr.Code)
 
-	rr := DoJson(h, "POST", "/pets", newPet)
+		var resultPet api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&resultPet)
+		assert.NoError(t, err, "error unmarshaling response")
+		assert.Equal(t, newPet.Name, resultPet.Name)
+		assert.Equal(t, *newPet.Tag, *resultPet.Tag)
+	})
 
-	// We expect 201 code on successful pet insertion
-	assert.Equal(t, http.StatusCreated, rr.Code)
+	t.Run("Find pet by ID", func(t *testing.T) {
+		pet := api.Pet{
+			Id: 100,
+		}
 
-	// We should have gotten a response from the server with the new pet. Make
-	// sure that its fields match.
-	var resultPet api.Pet
+		store.Pets[pet.Id] = pet
+		rr := DoJson(h, "GET", fmt.Sprintf("/pets/%d", pet.Id), nil)
 
-	err = json.NewDecoder(rr.Body).Decode(&resultPet)
-	assert.NoError(t, err, "error unmarshaling response")
-	assert.Equal(t, newPet.Name, resultPet.Name)
-	assert.Equal(t, *newPet.Tag, *resultPet.Tag)
+		var resultPet api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&resultPet)
+		assert.NoError(t, err, "error getting pet")
+		assert.Equal(t, pet, resultPet)
+	})
 
-	// This is the Id of the pet we inserted.
-	petId := resultPet.Id
+	t.Run("Pet not found", func(t *testing.T) {
+		rr := DoJson(h, "GET", "/pets/27179095781", nil)
+		assert.Equal(t, http.StatusNotFound, rr.Code)
 
-	// Test the getter function.
-	rr = DoJson(h, "GET", fmt.Sprintf("/pets/%d", petId), nil)
+		var petError api.Error
+		err = json.NewDecoder(rr.Body).Decode(&petError)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
+	})
 
-	var resultPet2 api.Pet
-	err = json.NewDecoder(rr.Body).Decode(&resultPet2)
-	assert.NoError(t, err, "error getting pet")
-	assert.Equal(t, resultPet, resultPet2)
+	t.Run("List all pets", func(t *testing.T) {
+		store.Pets = map[int64]api.Pet{
+			1: api.Pet{},
+			2: api.Pet{},
+		}
 
-	// We should get a 404 on invalid ID
-	rr = DoJson(h, "GET", "/pets/27179095781", nil)
-	assert.Equal(t, http.StatusNotFound, rr.Code)
-	var petError api.Error
-	err = json.NewDecoder(rr.Body).Decode(&petError)
-	assert.NoError(t, err, "error getting response", err)
-	assert.Equal(t, int32(http.StatusNotFound), petError.Code)
+		// Now, list all pets, we should have two
+		rr := DoJson(h, "GET", "/pets", nil)
+		assert.Equal(t, http.StatusOK, rr.Code)
 
-	// Let's insert another pet for subsequent tests.
-	tag = "TagOfFido"
-	newPet = api.NewPet{
-		Name: "Fido",
-		Tag:  &tag,
-	}
-	rr = DoJson(h, "POST", "/pets", newPet)
-	// We expect 201 code on successful pet insertion
-	assert.Equal(t, http.StatusCreated, rr.Code)
-	// We should have gotten a response from the server with the new pet. Make
-	// sure that its fields match.
-	err = json.NewDecoder(rr.Body).Decode(&resultPet)
-	assert.NoError(t, err, "error unmarshaling response")
-	petId2 := resultPet.Id
+		var petList []api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 2, len(petList))
+	})
 
-	// Now, list all pets, we should have two
-	rr = DoJson(h, "GET", "/pets", nil)
-	assert.Equal(t, http.StatusOK, rr.Code)
-	var petList []api.Pet
-	err = json.NewDecoder(rr.Body).Decode(&petList)
-	assert.NoError(t, err, "error getting response", err)
-	assert.Equal(t, 2, len(petList))
+	t.Run("Filter pets by tag", func(t *testing.T) {
+		tag := "TagOfFido"
 
-	// Filter pets by tag, we should have 1
-	petList = nil
-	rr = DoJson(h, "GET", "/pets?tags=TagOfFido", nil)
-	assert.Equal(t, http.StatusOK, rr.Code)
-	err = json.NewDecoder(rr.Body).Decode(&petList)
-	assert.NoError(t, err, "error getting response", err)
-	assert.Equal(t, 1, len(petList))
+		store.Pets = map[int64]api.Pet{
+			1: api.Pet{
+				NewPet: api.NewPet{
+					Tag: &tag,
+				},
+			},
+			2: api.Pet{},
+		}
 
-	// Filter pets by non existent tag, we should have 0
-	petList = nil
-	rr = DoJson(h, "GET", "/pets?tags=NotExists", nil)
-	assert.Equal(t, http.StatusOK, rr.Code)
-	err = json.NewDecoder(rr.Body).Decode(&petList)
-	assert.NoError(t, err, "error getting response", err)
-	assert.Equal(t, 0, len(petList))
+		// Filter pets by tag, we should have 1
+		rr := DoJson(h, "GET", "/pets?tags=TagOfFido", nil)
+		assert.Equal(t, http.StatusOK, rr.Code)
 
-	// Let's delete non-existent pet
-	rr = DoJson(h, "DELETE", "/pets/7", nil)
-	assert.Equal(t, http.StatusNotFound, rr.Code)
-	err = json.NewDecoder(rr.Body).Decode(&petError)
-	assert.NoError(t, err, "error unmarshaling PetError")
-	assert.Equal(t, int32(http.StatusNotFound), petError.Code)
+		var petList []api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 1, len(petList))
+	})
 
-	// Now, delete both real pets
-	rr = DoJson(h, "DELETE", fmt.Sprintf("/pets/%d", petId), nil)
-	assert.Equal(t, http.StatusNoContent, rr.Code)
-	rr = DoJson(h, "DELETE", fmt.Sprintf("/pets/%d", petId2), nil)
-	assert.Equal(t, http.StatusNoContent, rr.Code)
+	t.Run("Filter pets by tag", func(t *testing.T) {
+		store.Pets = map[int64]api.Pet{
+			1: api.Pet{},
+			2: api.Pet{},
+		}
 
-	// Should have no pets left.
-	petList = nil
-	rr = DoJson(h, "GET", "/pets", nil)
-	assert.Equal(t, http.StatusOK, rr.Code)
-	err = json.NewDecoder(rr.Body).Decode(&petList)
-	assert.NoError(t, err, "error getting response", err)
-	assert.Equal(t, 0, len(petList))
+		// Filter pets by non existent tag, we should have 0
+		rr := DoJson(h, "GET", "/pets?tags=NotExists", nil)
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		var petList []api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 0, len(petList))
+	})
+
+	t.Run("Delete pets", func(t *testing.T) {
+		store.Pets = map[int64]api.Pet{
+			1: api.Pet{},
+			2: api.Pet{},
+		}
+
+		// Let's delete non-existent pet
+		rr := DoJson(h, "DELETE", "/pets/7", nil)
+		assert.Equal(t, http.StatusNotFound, rr.Code)
+
+		var petError api.Error
+		err = json.NewDecoder(rr.Body).Decode(&petError)
+		assert.NoError(t, err, "error unmarshaling PetError")
+		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
+
+		// Now, delete both real pets
+		rr = DoJson(h, "DELETE", "/pets/1", nil)
+		assert.Equal(t, http.StatusNoContent, rr.Code)
+
+		rr = DoJson(h, "DELETE", "/pets/2", nil)
+		assert.Equal(t, http.StatusNoContent, rr.Code)
+
+		// Should have no pets left.
+		var petList []api.Pet
+		rr = DoJson(h, "GET", "/pets", nil)
+		assert.Equal(t, http.StatusOK, rr.Code)
+		err = json.NewDecoder(rr.Body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 0, len(petList))
+	})
 }
