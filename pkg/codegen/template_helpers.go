@@ -249,6 +249,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamNames":              genParamNames,
 	"genParamFmtString":          genParamFmtString,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"lcFirst":                    LowercaseFirstCharacter,
 	"camelCase":                  ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
@@ -256,4 +257,6 @@ var TemplateFunctions = template.FuncMap{
 	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
+	"lower":                      strings.ToLower,
+	"title":                      strings.Title,
 }

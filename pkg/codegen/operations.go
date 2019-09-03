@@ -612,9 +612,38 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
-// This function generates all the go code for the ServerInterface as well as
+// GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server middleware")
+	}
+
+	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server http handler")
+	}
+
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for server")
+	}
+
+	return buf.String(), nil
+}
+
+// GenerateEchoServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	si, err := GenerateServerInterface(t, operations)
 	if err != nil {
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)

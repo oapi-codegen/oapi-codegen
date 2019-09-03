@@ -62,8 +62,10 @@ func main() {
 		switch g {
 		case "client":
 			opts.GenerateClient = true
+		case "chi-server":
+			opts.GenerateChiServer = true
 		case "server":
-			opts.GenerateServer = true
+			opts.GenerateEchoServer = true
 		case "types":
 			opts.GenerateTypes = true
 		case "spec":

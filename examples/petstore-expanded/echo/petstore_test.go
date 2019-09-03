@@ -11,7 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package internal
+
+package main
 
 import (
 	"fmt"
@@ -23,7 +24,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
@@ -34,7 +35,7 @@ func TestPetStore(t *testing.T) {
 	e := echo.New()
 
 	// Now, we create our empty pet store
-	store := NewPetStore()
+	store := api.NewPetStore()
 
 	// Get the swagger description of our API
 	swagger, err := api.GetSwagger()
