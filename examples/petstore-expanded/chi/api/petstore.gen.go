@@ -79,6 +79,9 @@ func FindPetsCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		// Parameter object where we will unmarshal all parameters from the context
+		var params FindPetsParams
+
 		var err error
 
 		// ------------- Optional query parameter "tags" -------------
@@ -123,6 +126,9 @@ func DeletePetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		// Parameter object where we will unmarshal all parameters from the context
+		var params DeletePetParams
+
 		// ------------- Path parameter "id" -------------
 		var pathErr error
 		var id int64
@@ -133,7 +139,7 @@ func DeletePetCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "id", id)
+		params.Id = id
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -144,6 +150,9 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		// Parameter object where we will unmarshal all parameters from the context
+		var params FindPetByIdParams
+
 		// ------------- Path parameter "id" -------------
 		var pathErr error
 		var id int64
@@ -154,7 +163,7 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "id", id)
+		params.Id = id
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

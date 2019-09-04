@@ -106,6 +106,11 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
 
+    {{ $paramLen := len .AllParams }} {{ if gt $paramLen 0 }}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+    {{end}}
+
     {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var pathErr error
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
@@ -128,7 +133,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     }
     {{end}}
 
-    ctx = context.WithValue(r.Context(), "{{$varName}}", {{$varName}})
+    params.{{.GoName}} = {{$varName}}
     {{end}}
 
     {{if .RequiresParamObject}}
