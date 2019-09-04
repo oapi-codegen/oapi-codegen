@@ -98,7 +98,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("id").(int64)
+	id := ParamsForFindPetById(r.Context()).Id
 
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
@@ -114,7 +114,7 @@ func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("id").(int64)
+	id := ParamsForDeletePet(r.Context()).Id
 
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
