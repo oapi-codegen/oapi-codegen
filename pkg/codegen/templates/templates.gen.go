@@ -93,8 +93,9 @@ func Handler(si ServerInterface) http.Handler {
 `,
 	"chi-middleware.tmpl": `
 {{range .}}{{$opid := .OperationId}}
+{{ $totalParams := len .AllParams }}
 
-{{if .RequiresParamObject}}
+{{if gt $totalParams 0 }}
 // ParamsFor{{.OperationId}} operation parameters from context
 func ParamsFor{{.OperationId}}(ctx context.Context) *{{.OperationId}}Params {
   return ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
@@ -106,7 +107,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
 
-    {{ $paramLen := len .AllParams }} {{ if gt $paramLen 0 }}
+    {{if gt $totalParams 0 }}
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
     {{end}}
@@ -254,8 +255,10 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
         }
         {{- end}}
       {{end}}
+    {{end}}
 
-      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", &params)
+    {{if gt $totalParams 0 }}
+    ctx = context.WithValue(ctx, "{{.OperationId}}Params", &params)
     {{end}}
     next.ServeHTTP(w, r.WithContext(ctx))
   })

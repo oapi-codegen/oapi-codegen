@@ -106,7 +106,7 @@ func FindPetsCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "FindPetsParams", &params)
+		ctx = context.WithValue(ctx, "FindPetsParams", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -119,6 +119,11 @@ func AddPetCtx(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// ParamsForDeletePet operation parameters from context
+func ParamsForDeletePet(ctx context.Context) *DeletePetParams {
+	return ctx.Value("DeletePetParams").(*DeletePetParams)
 }
 
 // DeletePet operation middleware
@@ -141,8 +146,15 @@ func DeletePetCtx(next http.Handler) http.Handler {
 
 		params.Id = id
 
+		ctx = context.WithValue(ctx, "DeletePetParams", &params)
+
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// ParamsForFindPetById operation parameters from context
+func ParamsForFindPetById(ctx context.Context) *FindPetByIdParams {
+	return ctx.Value("FindPetByIdParams").(*FindPetByIdParams)
 }
 
 // FindPetById operation middleware
@@ -164,6 +176,8 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 		}
 
 		params.Id = id
+
+		ctx = context.WithValue(ctx, "FindPetByIdParams", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
