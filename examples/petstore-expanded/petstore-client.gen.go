@@ -44,6 +44,16 @@ type FindPetsParams struct {
 // addPetJSONBody defines parameters for AddPet.
 type addPetJSONBody NewPet
 
+// DeletePetParams defines parameters for DeletePet.
+type DeletePetParams struct {
+	Id int64 `json:"id"`
+}
+
+// FindPetByIdParams defines parameters for FindPetById.
+type FindPetByIdParams struct {
+	Id int64 `json:"id"`
+}
+
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody addPetJSONBody
 

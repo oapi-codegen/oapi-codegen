@@ -514,7 +514,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 	// Start with the params object itself
-	if len(op.Params()) != 0 {
+	if len(op.AllParams()) != 0 {
 		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
@@ -535,6 +535,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 
 	objectParams := op.QueryParams
+	objectParams = append(objectParams, op.PathParams...)
 	objectParams = append(objectParams, op.HeaderParams...)
 	objectParams = append(objectParams, op.CookieParams...)
 

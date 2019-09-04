@@ -45,6 +45,16 @@ type FindPetsParams struct {
 // addPetJSONBody defines parameters for AddPet.
 type addPetJSONBody NewPet
 
+// DeletePetParams defines parameters for DeletePet.
+type DeletePetParams struct {
+	Id int64 `json:"id"`
+}
+
+// FindPetByIdParams defines parameters for FindPetById.
+type FindPetByIdParams struct {
+	Id int64 `json:"id"`
+}
+
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody addPetJSONBody
 
@@ -70,8 +80,6 @@ func FindPetsCtx(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		var err error
-		// Parameter object where we will unmarshal all parameters from the context
-		var params FindPetsParams
 
 		// ------------- Optional query parameter "tags" -------------
 		if paramValue := r.URL.Query().Get("tags"); paramValue != "" {

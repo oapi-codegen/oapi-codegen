@@ -31,6 +31,11 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// GetContentObjectParams defines parameters for GetContentObject.
+type GetContentObjectParams struct {
+	Param ComplexObject `json:"param"`
+}
+
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	P  *int32         `json:"p,omitempty"`
@@ -53,6 +58,51 @@ type GetHeaderParams struct {
 	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty"`
 }
 
+// GetLabelExplodeArrayParams defines parameters for GetLabelExplodeArray.
+type GetLabelExplodeArrayParams struct {
+	Param []int32 `json:"param"`
+}
+
+// GetLabelExplodeObjectParams defines parameters for GetLabelExplodeObject.
+type GetLabelExplodeObjectParams struct {
+	Param Object `json:"param"`
+}
+
+// GetLabelNoExplodeArrayParams defines parameters for GetLabelNoExplodeArray.
+type GetLabelNoExplodeArrayParams struct {
+	Param []int32 `json:"param"`
+}
+
+// GetLabelNoExplodeObjectParams defines parameters for GetLabelNoExplodeObject.
+type GetLabelNoExplodeObjectParams struct {
+	Param Object `json:"param"`
+}
+
+// GetMatrixExplodeArrayParams defines parameters for GetMatrixExplodeArray.
+type GetMatrixExplodeArrayParams struct {
+	Id []int32 `json:"id"`
+}
+
+// GetMatrixExplodeObjectParams defines parameters for GetMatrixExplodeObject.
+type GetMatrixExplodeObjectParams struct {
+	Id Object `json:"id"`
+}
+
+// GetMatrixNoExplodeArrayParams defines parameters for GetMatrixNoExplodeArray.
+type GetMatrixNoExplodeArrayParams struct {
+	Id []int32 `json:"id"`
+}
+
+// GetMatrixNoExplodeObjectParams defines parameters for GetMatrixNoExplodeObject.
+type GetMatrixNoExplodeObjectParams struct {
+	Id Object `json:"id"`
+}
+
+// GetPassThroughParams defines parameters for GetPassThrough.
+type GetPassThroughParams struct {
+	Param string `json:"param"`
+}
+
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 	Ea *[]int32       `json:"ea,omitempty"`
@@ -62,6 +112,31 @@ type GetQueryFormParams struct {
 	Ep *int32         `json:"ep,omitempty"`
 	P  *int32         `json:"p,omitempty"`
 	Co *ComplexObject `json:"co,omitempty"`
+}
+
+// GetSimpleExplodeArrayParams defines parameters for GetSimpleExplodeArray.
+type GetSimpleExplodeArrayParams struct {
+	Param []int32 `json:"param"`
+}
+
+// GetSimpleExplodeObjectParams defines parameters for GetSimpleExplodeObject.
+type GetSimpleExplodeObjectParams struct {
+	Param Object `json:"param"`
+}
+
+// GetSimpleNoExplodeArrayParams defines parameters for GetSimpleNoExplodeArray.
+type GetSimpleNoExplodeArrayParams struct {
+	Param []int32 `json:"param"`
+}
+
+// GetSimpleNoExplodeObjectParams defines parameters for GetSimpleNoExplodeObject.
+type GetSimpleNoExplodeObjectParams struct {
+	Param Object `json:"param"`
+}
+
+// GetSimplePrimitiveParams defines parameters for GetSimplePrimitive.
+type GetSimplePrimitiveParams struct {
+	Param int32 `json:"param"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

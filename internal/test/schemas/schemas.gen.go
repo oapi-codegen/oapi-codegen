@@ -34,6 +34,16 @@ type CustomStringType string
 // GenericObject defines model for GenericObject.
 type GenericObject map[string]interface{}
 
+// Issue30Params defines parameters for Issue30.
+type Issue30Params struct {
+	Fallthrough string `json:"fallthrough"`
+}
+
+// Issue41Params defines parameters for Issue41.
+type Issue41Params struct {
+	N1param N5StartsWithNumber `json:"1param"`
+}
+
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody interface{}
 
