@@ -23,11 +23,16 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	// These allow the case statements to be sorted later:
+	prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
+	responseTypeSuffix                                          = "Response"
+)
+
 var (
-	contentTypesJSON   = []string{echo.MIMEApplicationJSON, "text/x-json"}
-	contentTypesYAML   = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML    = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
-	responseTypeSuffix = "Response"
+	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
+	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
+	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -96,8 +101,6 @@ func genResponsePayload(operationID string) string {
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
 	var caseClauses = make(map[string]string)
-	// These allow the case statements to be sorted later:
-	var prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
 
 	// Get the type definitions from the operation:
 	typeDefinitions, err := op.GetResponseTypeDefinitions()
@@ -148,35 +151,20 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if typeDefinition.ResponseName == "default" {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
-					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				} else {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				}
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+				caseClauses[caseKey] = caseClause
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if typeDefinition.ResponseName == "default" {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
-					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				} else {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				}
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+				caseClauses[caseKey] = caseClause
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if typeDefinition.ResponseName == "default" {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
-					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				} else {
-					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-				}
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+				caseClauses[caseKey] = caseClause
 
 			// Everything else:
 			default:
@@ -200,6 +188,17 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()
+}
+
+// buildUnmarshalCase builds an unmarshalling case clause for different content-types:
+func buildUnmarshalCase(typeDefinition TypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	if typeDefinition.ResponseName == "default" {
+		caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\"):\n%s\n", echo.HeaderContentType, contentType, caseAction)
+	} else {
+		caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && rsp.StatusCode == %s:\n%s\n", echo.HeaderContentType, contentType, typeDefinition.ResponseName, caseAction)
+	}
+	return caseKey, caseClause
 }
 
 // genResponseTypeName creates the name of generated response types (given the operationID):
