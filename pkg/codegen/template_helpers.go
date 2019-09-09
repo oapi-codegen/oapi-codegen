@@ -95,9 +95,9 @@ func genResponsePayload(operationID string) string {
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
-	var mostSpecific = make(map[string]string)  // content-type and status-code
-	var lessSpecific = make(map[string]string)  // status-code only
-	var leastSpecific = make(map[string]string) // content-type only (default responses)
+	var caseClauses = make(map[string]string)
+	// These allow the case statements to be sorted later:
+	var prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
 
 	// Get the type definitions from the operation:
 	typeDefinitions, err := op.GetResponseTypeDefinitions()
@@ -123,11 +123,11 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
 			if typeDefinition.ResponseName == "default" {
-				caseClause := "default:"
-				leastSpecific[caseClause] = caseAction
+				caseClauseKey := "default:"
+				caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			} else {
-				caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
-				lessSpecific[caseClause] = caseAction
+				caseClauseKey := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
+				caseClauses[prefixLessSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			}
 			continue
 		}
@@ -149,44 +149,44 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			case StringInArray(contentTypeName, contentTypesJSON):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if typeDefinition.ResponseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
+					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					mostSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
+					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				}
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if typeDefinition.ResponseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
+					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					mostSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
+					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				}
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if typeDefinition.ResponseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
+					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
-					mostSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
+					caseClauses[prefixMostSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				}
 
 			// Everything else:
 			default:
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
 				if typeDefinition.ResponseName == "default" {
-					caseClause := "default:"
-					leastSpecific[caseClause] = caseAction
+					caseClauseKey := "default:"
+					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				} else {
-					caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
-					lessSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
+					caseClauses[prefixLessSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				}
 			}
 		}
@@ -194,14 +194,8 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 	// Now build the switch statement in order of most-to-least specific:
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClause := range SortedStringKeys(mostSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, mostSpecific[caseClause])
-	}
-	for _, caseClause := range SortedStringKeys(lessSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, lessSpecific[caseClause])
-	}
-	for _, caseClause := range SortedStringKeys(leastSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, leastSpecific[caseClause])
+	for _, caseClauseKey := range SortedStringKeys(caseClauses) {
+		fmt.Fprintf(buffer, "%s\n", caseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")
 
