@@ -219,6 +219,7 @@ func ParseexampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return response, nil

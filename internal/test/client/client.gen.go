@@ -563,8 +563,6 @@ func ParsegetBothResponse(rsp *http.Response) (*getBothResponse, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
 	}
 
 	return response, nil
@@ -603,8 +601,6 @@ func ParsegetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
 	}
 
 	return response, nil
@@ -643,8 +639,6 @@ func ParsegetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		break // No content-type
 	}
 
 	return response, nil

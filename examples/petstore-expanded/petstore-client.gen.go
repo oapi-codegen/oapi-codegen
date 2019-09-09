@@ -446,11 +446,13 @@ func ParsefindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return response, nil
@@ -475,11 +477,13 @@ func ParseaddPetResponse(rsp *http.Response) (*addPetResponse, error) {
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return response, nil
@@ -499,13 +503,12 @@ func ParsedeletePetResponse(rsp *http.Response) (*deletePetResponse, error) {
 	}
 
 	switch {
-	case rsp.StatusCode == 204:
-		break // No content-type
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return response, nil
@@ -530,11 +533,13 @@ func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}
+
 	}
 
 	return response, nil

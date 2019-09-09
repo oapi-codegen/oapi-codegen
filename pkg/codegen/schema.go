@@ -71,9 +71,10 @@ func (p Property) GoTypeDef() string {
 }
 
 type TypeDefinition struct {
-	TypeName string
-	JsonName string
-	Schema   Schema
+	TypeName     string
+	JsonName     string
+	ResponseName string
+	Schema       Schema
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -95,7 +96,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType:refType,
+			GoType: refType,
 		}, nil
 	}
 
