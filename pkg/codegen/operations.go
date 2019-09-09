@@ -294,6 +294,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 
 					td := TypeDefinition{
 						TypeName: typeName,
+						JsonName: responseName,
 						Schema:   responseSchema,
 					}
 					if contentType.Schema.Ref != "" {

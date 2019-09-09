@@ -93,37 +93,22 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-// func genResponseUnmarshal(op *OperationDefinition) string {
-// 	var buffer = bytes.NewBufferString("")
-// 	var mostSpecific = make(map[string]string)  // content-type and status-code
-// 	var lessSpecific = make(map[string]string)  // status-code only
-// 	var leastSpecific = make(map[string]string) // content-type only (default responses)
-
-// 	// Get the type definitions from the operation:
-// 	td, err := op.GetResponseTypeDefinitions()
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	// Go through all the type definitions:
-// 	for _, td := range(td) {
-
-// 	}
-
-// 	return buffer.String()
-// }
-
-// genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
 	var mostSpecific = make(map[string]string)  // content-type and status-code
 	var lessSpecific = make(map[string]string)  // status-code only
 	var leastSpecific = make(map[string]string) // content-type only (default responses)
 
+	// Get the type definitions from the operation:
+	typeDefinitions, err := op.GetResponseTypeDefinitions()
+	if err != nil {
+		panic(err)
+	}
+
 	// Add a case for each possible response:
 	responses := op.Spec.Responses
-	sortedResponsesKeys := SortedResponsesKeys(responses)
-	for _, responseName := range sortedResponsesKeys {
+	for _, typeDefinition := range typeDefinitions {
+		responseName := typeDefinition.JsonName
 		responseRef, ok := responses[responseName]
 		if !ok {
 			continue
@@ -151,26 +136,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		// If we made it this far then we need to handle unmarshaling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
-			contentType, ok := responseRef.Value.Content[contentTypeName]
-			if !ok {
-				continue
-			}
-
-			// But we can only do this if we actually have a schema (otherwise there will be no struct to unmarshal into):
-			if contentType.Schema == nil {
-				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", op.OperationId, responseName)
-				continue
-			}
-
-			// Make sure that we actually have a go-type for this response:
-			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", op.OperationId, contentTypeName, err)
-				continue
-			}
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if goType.TypeDecl() == "interface{}" {
+			if typeDefinition.TypeName == "interface{}" {
 				// Unable to unmarshal this, so we leave it out:
 				continue
 			}
@@ -180,8 +148,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
@@ -192,8 +159,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
-				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
@@ -204,8 +170,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
-				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
 				if responseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction

@@ -1615,8 +1615,6 @@ func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectRespons
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1674,8 +1672,6 @@ func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArra
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1695,8 +1691,6 @@ func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObj
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1716,8 +1710,6 @@ func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplode
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1737,8 +1729,6 @@ func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplod
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1758,8 +1748,6 @@ func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeAr
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1779,8 +1767,6 @@ func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeO
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1800,8 +1786,6 @@ func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplo
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1821,8 +1805,6 @@ func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExpl
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1842,8 +1824,6 @@ func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, e
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1863,8 +1843,6 @@ func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1884,8 +1862,6 @@ func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeAr
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1905,8 +1881,6 @@ func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeO
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1926,8 +1900,6 @@ func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplo
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1947,8 +1919,6 @@ func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExpl
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
@@ -1968,8 +1938,6 @@ func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveRes
 	}
 
 	switch {
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
 	}
 
 	return response, nil
