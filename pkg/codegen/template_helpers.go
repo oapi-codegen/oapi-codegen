@@ -20,7 +20,6 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 )
 
@@ -94,13 +93,35 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(operationID string, responses openapi3.Responses) string {
+// func genResponseUnmarshal(op *OperationDefinition) string {
+// 	var buffer = bytes.NewBufferString("")
+// 	var mostSpecific = make(map[string]string)  // content-type and status-code
+// 	var lessSpecific = make(map[string]string)  // status-code only
+// 	var leastSpecific = make(map[string]string) // content-type only (default responses)
+
+// 	// Get the type definitions from the operation:
+// 	td, err := op.GetResponseTypeDefinitions()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+
+// 	// Go through all the type definitions:
+// 	for _, td := range(td) {
+
+// 	}
+
+// 	return buffer.String()
+// }
+
+// genResponseUnmarshal generates unmarshaling steps for structured response payloads
+func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
 	var mostSpecific = make(map[string]string)  // content-type and status-code
 	var lessSpecific = make(map[string]string)  // status-code only
 	var leastSpecific = make(map[string]string) // content-type only (default responses)
 
 	// Add a case for each possible response:
+	responses := op.Spec.Responses
 	sortedResponsesKeys := SortedResponsesKeys(responses)
 	for _, responseName := range sortedResponsesKeys {
 		responseRef, ok := responses[responseName]
@@ -110,7 +131,7 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 		// We can't do much without a value:
 		if responseRef.Value == nil {
-			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", operationID, responseName)
+			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, responseName)
 			continue
 		}
 
@@ -137,14 +158,14 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 			// But we can only do this if we actually have a schema (otherwise there will be no struct to unmarshal into):
 			if contentType.Schema == nil {
-				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", operationID, responseName)
+				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", op.OperationId, responseName)
 				continue
 			}
 
 			// Make sure that we actually have a go-type for this response:
 			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName})
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
+				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", op.OperationId, contentTypeName, err)
 				continue
 			}
 
