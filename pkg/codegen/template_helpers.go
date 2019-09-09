@@ -108,26 +108,25 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// Add a case for each possible response:
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
-		responseName := typeDefinition.JsonName
-		responseRef, ok := responses[responseName]
+		responseRef, ok := responses[typeDefinition.ResponseName]
 		if !ok {
 			continue
 		}
 
 		// We can't do much without a value:
 		if responseRef.Value == nil {
-			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, responseName)
+			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
 			continue
 		}
 
 		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
-			if responseName == "default" {
+			if typeDefinition.ResponseName == "default" {
 				caseClause := "default:"
 				leastSpecific[caseClause] = caseAction
 			} else {
-				caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
+				caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
 				lessSpecific[caseClause] = caseAction
 			}
 			continue
@@ -149,44 +148,44 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if responseName == "default" {
+				if typeDefinition.ResponseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
 					mostSpecific[caseClause] = caseAction
 				}
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if responseName == "default" {
+				if typeDefinition.ResponseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
 					mostSpecific[caseClause] = caseAction
 				}
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				if responseName == "default" {
+				if typeDefinition.ResponseName == "default" {
 					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
+					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, typeDefinition.ResponseName)
 					mostSpecific[caseClause] = caseAction
 				}
 
 			// Everything else:
 			default:
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
-				if responseName == "default" {
+				if typeDefinition.ResponseName == "default" {
 					caseClause := "default:"
 					leastSpecific[caseClause] = caseAction
 				} else {
-					caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
+					caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
 					lessSpecific[caseClause] = caseAction
 				}
 			}
