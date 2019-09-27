@@ -388,7 +388,11 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				return nil, fmt.Errorf("OperationId is missing on path '%s %s'", opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				if err != nil {
+					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
+						opName, requestPath, err)
+				}
 			}
 
 			// These are parameters defined for the specific path method that
@@ -446,6 +450,26 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		}
 	}
 	return operations, nil
+}
+
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
+	var operationId string = strings.ToLower(opName)
+
+	if opName == "" {
+		return "", fmt.Errorf("operation name cannot be an empty string")
+	}
+
+	if requestPath == "" {
+		return "", fmt.Errorf("request path cannot be an empty string")
+	}
+
+	for _, part := range strings.Split(requestPath, "/") {
+		if part != "" {
+			operationId = operationId + "-" + part
+		}
+	}
+
+	return ToCamelCase(operationId), nil
 }
 
 // This function turns the Swagger body definitions into a list of our body
