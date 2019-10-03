@@ -74,6 +74,7 @@ func FindPetsCtx(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		var err error
+
 		// Parameter object where we will unmarshal all parameters from the context
 		var params FindPetsParams
 
@@ -119,13 +120,14 @@ func DeletePetCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "id" -------------
-		var pathErr error
 		var id int64
 
-		pathErr = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
 		}
 
@@ -140,13 +142,14 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "id" -------------
-		var pathErr error
 		var id int64
 
-		pathErr = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 			return
 		}
 

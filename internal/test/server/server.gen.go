@@ -159,6 +159,7 @@ func GetWithArgsCtx(next http.Handler) http.Handler {
 		ctx := r.Context()
 
 		var err error
+
 		// Parameter object where we will unmarshal all parameters from the context
 		var params GetWithArgsParams
 
@@ -219,24 +220,24 @@ func GetWithReferencesCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "global_argument" -------------
-		var pathErr error
 		var globalArgument int64
 
-		pathErr = runtime.BindStyledParameter("simple", false, "global_argument", chi.URLParam(r, "global_argument"), &globalArgument)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter global_argument: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "global_argument", chi.URLParam(r, "global_argument"), &globalArgument)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter global_argument: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		ctx = context.WithValue(r.Context(), "globalArgument", globalArgument)
 		// ------------- Path parameter "argument" -------------
-		var pathErr error
 		var argument Argument
 
-		pathErr = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter argument: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter argument: %s", err), http.StatusBadRequest)
 			return
 		}
 
@@ -251,13 +252,14 @@ func GetWithContentTypeCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "content_type" -------------
-		var pathErr error
 		var contentType string
 
-		pathErr = runtime.BindStyledParameter("simple", false, "content_type", chi.URLParam(r, "content_type"), &contentType)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter content_type: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "content_type", chi.URLParam(r, "content_type"), &contentType)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter content_type: %s", err), http.StatusBadRequest)
 			return
 		}
 
@@ -272,13 +274,14 @@ func CreateResourceCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "argument" -------------
-		var pathErr error
 		var argument Argument
 
-		pathErr = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter argument: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter argument: %s", err), http.StatusBadRequest)
 			return
 		}
 
@@ -298,19 +301,19 @@ func CreateResource2Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "inline_argument" -------------
-		var pathErr error
 		var inlineArgument int
 
-		pathErr = runtime.BindStyledParameter("simple", false, "inline_argument", chi.URLParam(r, "inline_argument"), &inlineArgument)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter inline_argument: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "inline_argument", chi.URLParam(r, "inline_argument"), &inlineArgument)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter inline_argument: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		ctx = context.WithValue(r.Context(), "inlineArgument", inlineArgument)
 
-		var err error
 		// Parameter object where we will unmarshal all parameters from the context
 		var params CreateResource2Params
 
@@ -336,13 +339,14 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
+		var err error
+
 		// ------------- Path parameter "fallthrough" -------------
-		var pathErr error
 		var pFallthrough int
 
-		pathErr = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
-		if pathErr != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", pathErr), http.StatusBadRequest)
+		err = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err), http.StatusBadRequest)
 			return
 		}
 

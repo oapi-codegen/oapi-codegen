@@ -105,25 +105,27 @@ func ParamsFor{{.OperationId}}(ctx context.Context) *{{.OperationId}}Params {
 func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
+    {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+    var err error
+    {{end}}
 
     {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
-    var pathErr error
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
     {{if .IsPassThrough}}
     {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
     {{end}}
     {{if .IsJson}}
-    pathErr = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
-    if pathErr != nil {
+    err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
+    if err != nil {
       http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
       return
     }
     {{end}}
     {{if .IsStyled}}
-    pathErr = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
-    if pathErr != nil {
-      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", pathErr), http.StatusBadRequest)
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
+    if err != nil {
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
       return
     }
     {{end}}
@@ -132,7 +134,6 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     {{end}}
 
     {{if .RequiresParamObject}}
-      var err error
       // Parameter object where we will unmarshal all parameters from the context
       var params {{.OperationId}}Params
 
