@@ -124,6 +124,11 @@ paths:
           description: Some argument
           schema:
             type: integer
+        - name: inline_query_argument
+          in: query
+          description: Some query argument
+          schema:
+            type: integer
       requestBody:
         description: Optional body
         required: false
