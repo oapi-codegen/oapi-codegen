@@ -86,7 +86,7 @@ func Handler(si ServerInterface) http.Handler {
 }
 `,
 	"chi-interface.tmpl": `type ServerInterface interface {
-{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{range .}}// {{.Summary | singleLine }} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
 }
