@@ -253,7 +253,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
         {{- end}}
       {{end}}
 
-      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", &params)
+      ctx = context.WithValue(ctx, "{{.OperationId}}Params", &params)
     {{end}}
     next.ServeHTTP(w, r.WithContext(ctx))
   })

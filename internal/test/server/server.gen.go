@@ -209,7 +209,7 @@ func GetWithArgsCtx(next http.Handler) http.Handler {
 
 		}
 
-		ctx = context.WithValue(r.Context(), "GetWithArgsParams", &params)
+		ctx = context.WithValue(ctx, "GetWithArgsParams", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -328,7 +328,7 @@ func CreateResource2Ctx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "CreateResource2Params", &params)
+		ctx = context.WithValue(ctx, "CreateResource2Params", &params)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
