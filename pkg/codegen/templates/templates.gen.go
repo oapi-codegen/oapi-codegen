@@ -648,6 +648,14 @@ type ServerInterface interface {
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
+{{ if .Schema.EnumValues }}
+const (
+{{$typeName := .TypeName}}
+{{range .Schema.EnumValues}}
+  {{$typeName | camelCase}}{{.Name | camelCase}} {{$typeName | camelCase}} = {{.Value}}
+{{end}}
+)
+{{end}}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.

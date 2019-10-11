@@ -111,6 +111,14 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*getTestByNameResponse, error) {")
 
+	// Check if Enum contain
+	assert.Contains(t, code, "CatSleepRem CatSleep = \"rem\"")
+	assert.Contains(t, code, "CatSleepNonRem CatSleep = \"non_rem\"")
+	assert.Contains(t, code, "CatCode0 CatCode = 0")
+	assert.Contains(t, code, "CatCode1 CatCode = 1")
+	assert.Contains(t, code, "CatBlessNormal CatBless = 0")
+	assert.Contains(t, code, "CatBlessSnore CatBless = 1")
+
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
 	problems, err := linter.Lint("test.gen.go", []byte(code))
@@ -240,4 +248,18 @@ components:
         cause:
           type: string
           enum: [car, dog, oldage]
+
+    CatSleep:
+      type: string
+      enum: [rem, non_rem]
+
+    CatCode:
+      type: integer
+      enum: [0, 1]
+
+    CatBless:
+      type: integer
+      enum: [0, 1]
+      x-enum-varnames: [normal, snore]
+
 `

@@ -1,7 +1,9 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -19,6 +21,14 @@ type Schema struct {
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
+	Extensions          Extensions
+}
+
+type Extensions map[string]json.RawMessage
+
+type Enum struct {
+	Name  string
+	Value string
 }
 
 func (s Schema) IsRef() bool {
@@ -50,6 +60,52 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 	}
 	result = append(result, s.AdditionalTypes...)
 	return result
+}
+
+func (s Schema) EnumValues() []Enum {
+	if s.GoType != "string" && !strings.HasPrefix(s.GoType, "int") {
+		return nil
+	}
+	if s.Extensions == nil {
+		return nil
+	}
+	if _, ok := s.Extensions["enum"]; !ok {
+		return nil
+	}
+	enum := s.Extensions["enum"]
+	values := []string{}
+	if s.GoType == "string" {
+		var stringEnums []string
+		json.Unmarshal(enum, &stringEnums)
+		values = stringEnums
+	}
+	if strings.HasPrefix(s.GoType, "int") {
+		var intEnums []int
+		json.Unmarshal(enum, &intEnums)
+		for _, v := range intEnums {
+			values = append(values, strconv.Itoa(v))
+		}
+	}
+	var enumNames []string
+	if enumVarName, ok := s.Extensions["x-enum-varnames"]; ok {
+		json.Unmarshal(enumVarName, &enumNames)
+	}
+	var enums []Enum
+	for i, v := range values {
+		name := v
+		if enumNames != nil {
+			name = enumNames[i]
+		}
+		if s.GoType == "string" {
+			v = fmt.Sprintf("\"%s\"", v)
+		}
+		enums = append(enums, Enum{
+			Name:  name,
+			Value: v,
+		})
+	}
+	return enums
+
 }
 
 type Property struct {
@@ -220,6 +276,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				return Schema{}, fmt.Errorf("invalid integer format: %s", f)
 			}
+			if &schema.ExtensionProps != nil {
+				extentions := make(Extensions)
+				for k, v := range schema.ExtensionProps.Extensions {
+					extentions[k] = v.(json.RawMessage)
+				}
+				outSchema.Extensions = extentions
+			}
 		case "number":
 			// We default to float for "number"
 			if f == "double" {
@@ -245,6 +308,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			default:
 				// All unrecognized formats are simply a regular string.
 				outSchema.GoType = "string"
+			}
+			if &schema.ExtensionProps != nil {
+				extentions := make(Extensions)
+				for k, v := range schema.ExtensionProps.Extensions {
+					extentions[k] = v.(json.RawMessage)
+				}
+				outSchema.Extensions = extentions
 			}
 		default:
 			return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
