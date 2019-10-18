@@ -53,10 +53,11 @@ func LowercaseFirstCharacter(str string) string {
 }
 
 // This function will convert query-arg style strings to CamelCase. We will
-// use (., -, _, ~, ' ') as valid delimiters for words. So, "word.word-word~word_word word"
-// would be converted to WordWordWordWord
+// use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
+// So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := []string{".", "-", "_", "~", " "}
+	separators := []string{".", "-", "+", ":", ";", "_", "~", " ", "(", ")", "{", "}", "[", "]"}
 	in := []string{str}
 	out := make([]string, 0)
 
