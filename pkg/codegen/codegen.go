@@ -36,6 +36,7 @@ type Options struct {
 	GenerateClient     bool // GenerateClient specifies whether to generate client boilerplate
 	GenerateTypes      bool // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool // Whether to embed the swagger spec in the generated code
+	SkipFmt            bool // Whether to skip go fmt on the generated code
 }
 
 // Uses the Go templating engine to generate all of our server wrappers from
@@ -232,6 +233,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// The generation code produces unindented horrors. Use the Go formatter
 	// to make it all pretty.
+	if opts.SkipFmt {
+		return goCode, nil
+	}
 	outBytes, err := format.Source([]byte(goCode))
 	if err != nil {
 		fmt.Println(goCode)
