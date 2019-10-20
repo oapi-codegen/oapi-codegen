@@ -321,7 +321,68 @@ There are some caveats to using this code.
  for anything other than trivial objects, they can marshal to arbitrary JSON
  structures. When you send them as cookie (`in: cookie`) arguments, we will
  URL encode them, since JSON delimiters aren't allowed in cookies.
- 
+
+## Using SecurityProviders
+
+If you generate client-code, you can use some default-provided security providers
+which help you to use the various OpenAPI 3 Authentication mechanism.
+
+
+```
+    import (
+        "github.com/deepmap/oapi-codegen/pkg/securityprovider"
+    )
+
+    func CreateSampleProviders() error {
+        // Example BasicAuth
+        // See: https://swagger.io/docs/specification/authentication/basic-authentication/
+        basicAuthProvider, basicAuthProviderErr := securityprovider.NewSecurityProviderBasicAuth("MY_USER", "MY_PASS")
+        if basicAuthProviderErr != nil {
+            panic(basicAuthProviderErr)
+        }
+
+        // Example BearerToken
+        // See: https://swagger.io/docs/specification/authentication/bearer-authentication/
+        bearerTokenProvider, bearerTokenProviderErr := securityprovider.NewSecurityProviderBearerToken("MY_TOKEN")
+        if bearerTokenProviderErr != nil {
+            panic(bearerTokenProviderErr)
+        }
+
+        // Example ApiKey provider
+        // See: https://swagger.io/docs/specification/authentication/api-keys/
+        apiKeyProvider, apiKeyProviderErr := securityprovider.NewSecurityProviderApiKey("query", "myApiKeyParam", "MY_API_KEY")
+        if apiKeyProviderErr != nil {
+            panic(apiKeyProviderErr)
+        }
+
+        // Example providing your own provider using an anonymous function wrapping in the
+        // InterceptoFn adapter. The behaviour between the InterceptorFn and the Interceptor interface
+        // are the same as http.HandlerFunc and http.Handler.
+        customProvider := func(req *http.Request, ctx context.Context) error {
+            // Just log the request header, nothing else.
+            log.Println(req.Header)
+            return nil
+        }
+
+        // Exhaustive list of some defaults you can use to initialize a Client.
+        // If you need to override the underlying httpClient, you can use the option
+        //
+        // WithHTTPClient(httpClient *http.Client)
+        //
+        client, clientErr := NewClient(context.Background(), []ClientOption{
+            WithBaseURL("https://api.deepmap.com"),
+            WithUserAgent("MY_USER_AGENT"),
+            WithMaxIdleConnections(10),
+            WithIdleTimeout(10 * time.Second),
+            WithRequestTimeout(1 * time.Second),
+            WithRequestEditorFn(apiKeyProvider.Edit),
+        }...,
+        )
+
+        return nil
+    }
+```
+
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,
