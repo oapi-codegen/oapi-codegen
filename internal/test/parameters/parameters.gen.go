@@ -33,34 +33,76 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	P  *int32         `json:"p,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
+
+	// primitive
+	P *int32 `json:"p,omitempty"`
+
+	// primitive
+	Ep *int32 `json:"ep,omitempty"`
+
+	// exploded array
+	Ea *[]int32 `json:"ea,omitempty"`
+
+	// array
+	A *[]int32 `json:"a,omitempty"`
+
+	// exploded object
+	Eo *Object `json:"eo,omitempty"`
+
+	// object
+	O *Object `json:"o,omitempty"`
+
+	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	XPrimitive         *int32         `json:"X-Primitive,omitempty"`
-	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty"`
-	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty"`
-	XArray             *[]int32       `json:"X-Array,omitempty"`
-	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty"`
-	XObject            *Object        `json:"X-Object,omitempty"`
-	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty"`
+
+	// primitive
+	XPrimitive *int32 `json:"X-Primitive,omitempty"`
+
+	// primitive
+	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
+
+	// exploded array
+	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+
+	// array
+	XArray *[]int32 `json:"X-Array,omitempty"`
+
+	// exploded object
+	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
+
+	// object
+	XObject *Object `json:"X-Object,omitempty"`
+
+	// complex object
+	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	P  *int32         `json:"p,omitempty"`
+
+	// exploded array
+	Ea *[]int32 `json:"ea,omitempty"`
+
+	// array
+	A *[]int32 `json:"a,omitempty"`
+
+	// exploded object
+	Eo *Object `json:"eo,omitempty"`
+
+	// object
+	O *Object `json:"o,omitempty"`
+
+	// exploded primitive
+	Ep *int32 `json:"ep,omitempty"`
+
+	// primitive
+	P *int32 `json:"p,omitempty"`
+
+	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
 }
 

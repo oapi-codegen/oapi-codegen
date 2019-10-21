@@ -345,3 +345,23 @@ func PathToTypeName(path []string) string {
 	}
 	return strings.Join(path, "_")
 }
+
+// StringToGoComment renders a possible multi-line string as a valid Go-Comment.
+// Each line is prefixed as a comment.
+func StringToGoComment(in string) string {
+	// Normalize newlines from Windows/Mac to Linux
+	in = strings.Replace(in, "\r\n", "\n", -1)
+	in = strings.Replace(in, "\r", "\n", -1)
+
+	// Add comment to each line
+	var lines []string
+	for _, line := range strings.Split(in, "\n") {
+		lines = append(lines, fmt.Sprintf("// %s", line))
+	}
+	in = strings.Join(lines, "\n")
+
+	// in case we have a multiline string which ends with \n, we would generate
+	// empty-line-comments, like `// `. Therefore remove this line comment.
+	in = strings.TrimSuffix(in, "\n// ")
+	return in
+}

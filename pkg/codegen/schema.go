@@ -53,6 +53,7 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
+	Description   string
 	JsonFieldName string
 	Schema        Schema
 	Required      bool
@@ -281,7 +282,14 @@ type FieldDescriptor struct {
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for _, p := range props {
-		field := fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
+		field := ""
+		// Add a comment to a field in case we have one, otherwise skip.
+		if p.Description != "" {
+			// Separate the comment from a previous-defined, unrelated field.
+			// Make sure the actual field is separated by a newline.
+			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
+		}
+		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 		if p.Required {
 			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {
