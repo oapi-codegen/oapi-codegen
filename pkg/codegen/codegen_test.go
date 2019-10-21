@@ -102,6 +102,19 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	// Check that response structs are generated correctly:
 	assert.Contains(t, code, "type getTestByNameResponse struct {")
 
+	// Check that response structs contains fallbacks to interface for invalid types:
+	// Here an invalid array with no items.
+	assert.Contains(t, code, `
+type getTestByNameResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Test
+	XML200       *[]Test
+	JSON422      *[]interface{}
+	XML422       *[]interface{}
+	JSONDefault  *Error
+}`)
+
 	// Check that the helper methods are generated correctly:
 	assert.Contains(t, code, "func (r getTestByNameResponse) Status() string {")
 	assert.Contains(t, code, "func (r getTestByNameResponse) StatusCode() int {")
@@ -157,6 +170,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Test'
+        422:
+          description: InvalidArray
+          content:
+            application/xml:
+              schema:
+                type: array
+            application/json:
+              schema:
+                type: array
         default:
           description: Error
           content:
