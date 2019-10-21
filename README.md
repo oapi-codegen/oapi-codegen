@@ -339,8 +339,9 @@ you can specify any combination of those.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
- is useful for creating runtime validators.
- 
+- `skip-fmt`: skip running `go fmt` on the generated code. This is useful for debugging
+ the generated file in case the spec contains weird strings.
+
 So, for example, if you would like to produce only the server code, you could
 run `oapi-generate --generate types,server`. You could generate `types` and `server`
 into separate files, but both are required for the server code.  

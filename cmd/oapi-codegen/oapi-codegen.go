@@ -38,7 +38,7 @@ func main() {
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", client", "server", "spec"  (default types,client,server,"spec")`)
+		`Comma-separated list of code to generate; valid options: "types", client", "chi-server", "server", "skip-fmt", '"spec"  (default types,client,server,"spec")`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.Parse()
 
@@ -70,6 +70,8 @@ func main() {
 			opts.GenerateTypes = true
 		case "spec":
 			opts.EmbedSpec = true
+		case "skip-fmt":
+			opts.SkipFmt = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
