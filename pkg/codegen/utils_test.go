@@ -22,7 +22,7 @@ import (
 
 func TestStringOps(t *testing.T) {
 	// Test that each substitution works
-	assert.Equal(t, "WordWordWORDWordWord", ToCamelCase("word.word-WORD_word~word"), "Camel case conversion failed")
+	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
 
 	// Make sure numbers don't interact in a funny way.
 	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
