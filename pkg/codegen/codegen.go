@@ -229,7 +229,8 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error flushing output buffer")
 	}
 
-	goCode := buf.String()
+	// remove any byte-order-marks which break Go-Code
+	goCode := SanitizeCode(buf.String())
 
 	// The generation code produces unindented horrors. Use the Go formatter
 	// to make it all pretty.
@@ -495,4 +496,12 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 		return "", errors.Wrap(err, "error flushing output buffer for additional properties")
 	}
 	return buf.String(), nil
+}
+
+// SanitizeCode runs sanitizers across the generated Go code to ensure the
+// generated code will be able to compile.
+func SanitizeCode(goCode string) string {
+	// remove any byte-order-marks which break Go-Code
+	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
+	return strings.Replace(goCode, "\uFEFF", "", -1)
 }
