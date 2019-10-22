@@ -114,6 +114,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
+		if strings.Contains(str, "time.Duration") {
+			imports = append(imports, "time")
+		}
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
 		}
