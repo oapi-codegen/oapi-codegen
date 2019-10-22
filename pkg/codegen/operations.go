@@ -435,8 +435,18 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				TypeDefinitions: typeDefinitions,
 			}
 
+			// check for overrides of SecurityDefinitions.
+			// See: "Step 2. Applying security:" from the spec:
+			// https://swagger.io/docs/specification/authentication/
 			if op.Security != nil {
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+			} else {
+				// use global securityDefinitions
+				// globalSecurityDefinitions contains the top-level securityDefinitions.
+				// They are the default securityPermissions which are injected into each
+				// path, except for the case where a path explicitly overrides them.
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+
 			}
 
 			if op.RequestBody != nil {
