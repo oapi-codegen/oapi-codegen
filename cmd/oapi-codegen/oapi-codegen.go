@@ -38,7 +38,7 @@ func main() {
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", client", "server", "spec", "specui"  (default types,client,server,"spec")`)
+		`Comma-separated list of code to generate; valid options: "types", client", "chi-server", "server", "skip-fmt", '"spec", "specui"  (default types,client,server,"spec")`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.Parse()
 
@@ -62,19 +62,27 @@ func main() {
 		switch g {
 		case "client":
 			opts.GenerateClient = true
+		case "chi-server":
+			opts.GenerateChiServer = true
 		case "server":
-			opts.GenerateServer = true
+			opts.GenerateEchoServer = true
 		case "types":
 			opts.GenerateTypes = true
 		case "spec":
 			opts.EmbedSpec = true
 		case "specui":
 			opts.EmbedSpecUI = true
+		case "skip-fmt":
+			opts.SkipFmt = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
 			os.Exit(1)
 		}
+	}
+
+	if opts.GenerateEchoServer && opts.GenerateChiServer {
+		errExit("can not specify both server and chi-server targets simultaneously")
 	}
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))

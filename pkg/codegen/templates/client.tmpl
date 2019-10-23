@@ -3,17 +3,32 @@ type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
-    // The endpoint of the server conforming to this interface, with scheme,
-    // https://api.deepmap.com for example.
-    Server string
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example.
+	Server string
 
-    // HTTP client with any customized settings, such as certificate chains.
-    Client http.Client
+	// HTTP client with any customized settings, such as certificate chains.
+	Client *http.Client
 
-    // A callback for modifying requests which are generated before sending over
-    // the network.
-    RequestEditor RequestEditorFn
+	// A callback for modifying requests which are generated before sending over
+	// the network.
+	RequestEditor RequestEditorFn
+
+	// userAgent to use
+	userAgent string
+
+	// timeout of single request
+	requestTimeout time.Duration
+
+	// timeout of idle http connections
+	idleTimeout time.Duration
+
+	// maxium idle connections of the underlying http-client.
+	maxIdleConns int
 }
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
 
 // The interface specification for the client above.
 type ClientInterface interface {

@@ -176,21 +176,39 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 	return outParams, nil
 }
 
+type SecurityDefinition struct {
+	ProviderName string
+	Scopes       []string
+}
+
+func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequirements) []SecurityDefinition {
+	outDefs := make([]SecurityDefinition, 0)
+
+	for _, sr := range securityRequirements {
+		for k, v := range sr {
+			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
+		}
+	}
+
+	return outDefs
+}
+
 // This structure describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
-	PathParams      []ParameterDefinition // Parameters in the path, eg, /path/:param
-	HeaderParams    []ParameterDefinition // Parameters in HTTP headers
-	QueryParams     []ParameterDefinition // Parameters in the query, /path?param
-	CookieParams    []ParameterDefinition // Parameters in cookies
-	TypeDefinitions []TypeDefinition      // These are all the types we need to define for this operation
-	BodyRequired    bool
-	Bodies          []RequestBodyDefinition // The list of bodies for which to generate handlers.
-	Summary         string                  // Summary string from Swagger, used to generate a comment
-	Method          string                  // GET, POST, DELETE, etc.
-	Path            string                  // The Swagger path for the operation, like /resource/{id}
-	Spec            *openapi3.Operation
+	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
+	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
+	QueryParams         []ParameterDefinition // Parameters in the query, /path?param
+	CookieParams        []ParameterDefinition // Parameters in cookies
+	TypeDefinitions     []TypeDefinition      // These are all the types we need to define for this operation
+	SecurityDefinitions []SecurityDefinition  // These are the security providers
+	BodyRequired        bool
+	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Summary             string                  // Summary string from Swagger, used to generate a comment
+	Method              string                  // GET, POST, DELETE, etc.
+	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Spec                *openapi3.Operation
 }
 
 // Returns the list of all parameters except Path parameters. Path parameters
@@ -275,8 +293,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 					}
 
 					td := TypeDefinition{
-						TypeName: typeName,
-						Schema:   responseSchema,
+						TypeName:     typeName,
+						Schema:       responseSchema,
+						ResponseName: responseName,
 					}
 					if contentType.Schema.Ref != "" {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
@@ -369,7 +388,11 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				return nil, fmt.Errorf("OperationId is missing on path '%s %s'", opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				if err != nil {
+					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
+						opName, requestPath, err)
+				}
 			}
 
 			// These are parameters defined for the specific path method that
@@ -412,6 +435,20 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				TypeDefinitions: typeDefinitions,
 			}
 
+			// check for overrides of SecurityDefinitions.
+			// See: "Step 2. Applying security:" from the spec:
+			// https://swagger.io/docs/specification/authentication/
+			if op.Security != nil {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+			} else {
+				// use global securityDefinitions
+				// globalSecurityDefinitions contains the top-level securityDefinitions.
+				// They are the default securityPermissions which are injected into each
+				// path, except for the case where a path explicitly overrides them.
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+
+			}
+
 			if op.RequestBody != nil {
 				opDef.BodyRequired = op.RequestBody.Value.Required
 			}
@@ -423,6 +460,26 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		}
 	}
 	return operations, nil
+}
+
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
+	var operationId string = strings.ToLower(opName)
+
+	if opName == "" {
+		return "", fmt.Errorf("operation name cannot be an empty string")
+	}
+
+	if requestPath == "" {
+		return "", fmt.Errorf("request path cannot be an empty string")
+	}
+
+	for _, part := range strings.Split(requestPath, "/") {
+		if part != "" {
+			operationId = operationId + "-" + part
+		}
+	}
+
+	return ToCamelCase(operationId), nil
 }
 
 // This function turns the Swagger body definitions into a list of our body
@@ -530,6 +587,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
+			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
@@ -590,9 +648,38 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
-// This function generates all the go code for the ServerInterface as well as
+// GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server middleware")
+	}
+
+	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server http handler")
+	}
+
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for server")
+	}
+
+	return buf.String(), nil
+}
+
+// GenerateEchoServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	si, err := GenerateServerInterface(t, operations)
 	if err != nil {
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)

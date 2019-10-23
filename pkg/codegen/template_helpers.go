@@ -20,15 +20,19 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	// These allow the case statements to be sorted later:
+	prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
+	responseTypeSuffix                                          = "Response"
+)
+
 var (
-	contentTypesJSON   = []string{echo.MIMEApplicationJSON, "text/x-json"}
-	contentTypesYAML   = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML    = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
-	responseTypeSuffix = "Response"
+	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
+	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
+	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -94,35 +98,39 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(operationID string, responses openapi3.Responses) string {
+func genResponseUnmarshal(op *OperationDefinition) string {
 	var buffer = bytes.NewBufferString("")
-	var mostSpecific = make(map[string]string)  // content-type and status-code
-	var lessSpecific = make(map[string]string)  // status-code only
-	var leastSpecific = make(map[string]string) // content-type only (default responses)
+	var caseClauses = make(map[string]string)
+
+	// Get the type definitions from the operation:
+	typeDefinitions, err := op.GetResponseTypeDefinitions()
+	if err != nil {
+		panic(err)
+	}
 
 	// Add a case for each possible response:
-	sortedResponsesKeys := SortedResponsesKeys(responses)
-	for _, responseName := range sortedResponsesKeys {
-		responseRef, ok := responses[responseName]
+	responses := op.Spec.Responses
+	for _, typeDefinition := range typeDefinitions {
+		responseRef, ok := responses[typeDefinition.ResponseName]
 		if !ok {
 			continue
 		}
 
 		// We can't do much without a value:
 		if responseRef.Value == nil {
-			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", operationID, responseName)
+			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
 			continue
 		}
 
 		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
-			if responseName == "default" {
-				caseClause := "default:"
-				leastSpecific[caseClause] = caseAction
+			if typeDefinition.ResponseName == "default" {
+				caseClauseKey := "default:"
+				caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			} else {
-				caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
-				lessSpecific[caseClause] = caseAction
+				caseClauseKey := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
+				caseClauses[prefixLessSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			}
 			continue
 		}
@@ -130,26 +138,9 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 		// If we made it this far then we need to handle unmarshaling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
-			contentType, ok := responseRef.Value.Content[contentTypeName]
-			if !ok {
-				continue
-			}
-
-			// But we can only do this if we actually have a schema (otherwise there will be no struct to unmarshal into):
-			if contentType.Schema == nil {
-				fmt.Fprintf(os.Stderr, "Response %s.%s has nil schema\n", operationID, responseName)
-				continue
-			}
-
-			// Make sure that we actually have a go-type for this response:
-			goType, err := GenerateGoSchema(contentType.Schema, []string{contentTypeName})
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "Unable to determine Go type for %s.%s: %v\n", operationID, contentTypeName, err)
-				continue
-			}
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if goType.TypeDecl() == "interface{}" {
+			if typeDefinition.TypeName == "interface{}" {
 				// Unable to unmarshal this, so we leave it out:
 				continue
 			}
@@ -159,49 +150,31 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				attributeName := fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
-				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
-				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"json\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
-					mostSpecific[caseClause] = caseAction
-				}
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+				caseClauses[caseKey] = caseClause
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
-				attributeName := fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
-				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
-				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"yaml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
-					mostSpecific[caseClause] = caseAction
-				}
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+				caseClauses[caseKey] = caseClause
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
-				attributeName := fmt.Sprintf("XML%s", ToCamelCase(responseName))
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", attributeName, goType.TypeDecl(), attributeName)
-				if responseName == "default" {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\"):", echo.HeaderContentType)
-					leastSpecific[caseClause] = caseAction
-				} else {
-					caseClause := fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"xml\") && rsp.StatusCode == %s:", echo.HeaderContentType, responseName)
-					mostSpecific[caseClause] = caseAction
-				}
+				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+				caseClauses[caseKey] = caseClause
 
 			// Everything else:
 			default:
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
-				if responseName == "default" {
-					caseClause := "default:"
-					leastSpecific[caseClause] = caseAction
+				if typeDefinition.ResponseName == "default" {
+					caseClauseKey := "default:"
+					caseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				} else {
-					caseClause := fmt.Sprintf("case rsp.StatusCode == %s:", responseName)
-					lessSpecific[caseClause] = caseAction
+					caseClauseKey := fmt.Sprintf("case rsp.StatusCode == %s:", typeDefinition.ResponseName)
+					caseClauses[prefixLessSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 				}
 			}
 		}
@@ -209,18 +182,23 @@ func genResponseUnmarshal(operationID string, responses openapi3.Responses) stri
 
 	// Now build the switch statement in order of most-to-least specific:
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClause := range SortedStringKeys(mostSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, mostSpecific[caseClause])
-	}
-	for _, caseClause := range SortedStringKeys(lessSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, lessSpecific[caseClause])
-	}
-	for _, caseClause := range SortedStringKeys(leastSpecific) {
-		fmt.Fprintf(buffer, "%s\n%s\n", caseClause, leastSpecific[caseClause])
+	for _, caseClauseKey := range SortedStringKeys(caseClauses) {
+		fmt.Fprintf(buffer, "%s\n", caseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()
+}
+
+// buildUnmarshalCase builds an unmarshalling case clause for different content-types:
+func buildUnmarshalCase(typeDefinition TypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	if typeDefinition.ResponseName == "default" {
+		caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\"):\n%s\n", echo.HeaderContentType, contentType, caseAction)
+	} else {
+		caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && rsp.StatusCode == %s:\n%s\n", echo.HeaderContentType, contentType, typeDefinition.ResponseName, caseAction)
+	}
+	return caseKey, caseClause
 }
 
 // genResponseTypeName creates the name of generated response types (given the operationID):
@@ -236,18 +214,27 @@ func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
 	return td
 }
 
+// This outputs a string array
+func toStringArray(sarr []string) string {
+	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
+}
+
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
-	"genParamArgs":         genParamArgs,
-	"genParamTypes":        genParamTypes,
-	"genParamNames":        genParamNames,
-	"genParamFmtString":    genParamFmtString,
-	"swaggerUriToEchoUri":  SwaggerUriToEchoUri,
-	"lcFirst":              LowercaseFirstCharacter,
-	"camelCase":            ToCamelCase,
-	"genResponsePayload":   genResponsePayload,
-	"genResponseTypeName":  genResponseTypeName,
-	"genResponseUnmarshal": genResponseUnmarshal,
+	"genParamArgs":               genParamArgs,
+	"genParamTypes":              genParamTypes,
+	"genParamNames":              genParamNames,
+	"genParamFmtString":          genParamFmtString,
+	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+	"swaggerUriToChiUri":         SwaggerUriToChiUri,
+	"lcFirst":                    LowercaseFirstCharacter,
+	"camelCase":                  ToCamelCase,
+	"genResponsePayload":         genResponsePayload,
+	"genResponseTypeName":        genResponseTypeName,
+	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
+	"toStringArray":              toStringArray,
+	"lower":                      strings.ToLower,
+	"title":                      strings.Title,
 }

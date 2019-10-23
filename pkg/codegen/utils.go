@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
 
@@ -52,10 +53,11 @@ func LowercaseFirstCharacter(str string) string {
 }
 
 // This function will convert query-arg style strings to CamelCase. We will
-// use (., -, _, ~, ' ') as valid delimiters for words. So, "word.word-word~word_word word"
-// would be converted to WordWordWordWord
+// use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
+// So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := []string{".", "-", "_", "~", " "}
+	separators := []string{".", "-", "+", ":", ";", "_", "~", " ", "(", ")", "{", "}", "[", "]"}
 	in := []string{str}
 	out := make([]string, 0)
 
@@ -219,6 +221,21 @@ func SwaggerUriToEchoUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
+// This function converts a swagger style path URI with parameters to a
+// Chi compatible path URI. We need to replace all of Swagger parameters with
+// "{param}". Valid input parameters are:
+//   {param}
+//   {param*}
+//   {.param}
+//   {.param*}
+//   {;param}
+//   {;param*}
+//   {?param}
+//   {?param*}
+func SwaggerUriToChiUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, "{$1}")
+}
+
 // Returns the argument names, in order, in a given URI string, so for
 // /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
 func OrderedParamsFromUri(uri string) []string {
@@ -327,4 +344,24 @@ func PathToTypeName(path []string) string {
 		path[i] = ToCamelCase(p)
 	}
 	return strings.Join(path, "_")
+}
+
+// StringToGoComment renders a possible multi-line string as a valid Go-Comment.
+// Each line is prefixed as a comment.
+func StringToGoComment(in string) string {
+	// Normalize newlines from Windows/Mac to Linux
+	in = strings.Replace(in, "\r\n", "\n", -1)
+	in = strings.Replace(in, "\r", "\n", -1)
+
+	// Add comment to each line
+	var lines []string
+	for _, line := range strings.Split(in, "\n") {
+		lines = append(lines, fmt.Sprintf("// %s", line))
+	}
+	in = strings.Join(lines, "\n")
+
+	// in case we have a multiline string which ends with \n, we would generate
+	// empty-line-comments, like `// `. Therefore remove this line comment.
+	in = strings.TrimSuffix(in, "\n// ")
+	return in
 }

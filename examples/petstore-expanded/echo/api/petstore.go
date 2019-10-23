@@ -11,34 +11,37 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package internal
+
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go ../../petstore-expanded.yaml
+
+package api
 
 import (
 	"fmt"
-	"github.com/labstack/echo/v4"
 	"net/http"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
+	"github.com/labstack/echo/v4"
 )
 
 type PetStore struct {
-	Pets   map[int64]api.Pet
+	Pets   map[int64]Pet
 	NextId int64
 	Lock   sync.Mutex
 }
 
 func NewPetStore() *PetStore {
 	return &PetStore{
-		Pets:   make(map[int64]api.Pet),
+		Pets:   make(map[int64]Pet),
 		NextId: 1000,
 	}
 }
 
-// This function wraps sending of an error in the api.Error format, and
+// This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetstoreError(ctx echo.Context, code int, message string) error {
-	petErr := api.Error{
+	petErr := Error{
 		Code:    int32(code),
 		Message: message,
 	}
@@ -46,12 +49,12 @@ func sendPetstoreError(ctx echo.Context, code int, message string) error {
 	return err
 }
 
-// Here, we implement all of the handlers in the api.ServerInterface
-func (p *PetStore) FindPets(ctx echo.Context, params api.FindPetsParams) error {
+// Here, we implement all of the handlers in the ServerInterface
+func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
-	var result []api.Pet
+	var result []Pet
 
 	for _, pet := range p.Pets {
 		if params.Tags != nil {
@@ -79,7 +82,7 @@ func (p *PetStore) FindPets(ctx echo.Context, params api.FindPetsParams) error {
 
 func (p *PetStore) AddPet(ctx echo.Context) error {
 	// We expect a NewPet object in the request body.
-	var newPet api.NewPet
+	var newPet NewPet
 	err := ctx.Bind(&newPet)
 	if err != nil {
 		return sendPetstoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
@@ -91,7 +94,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	defer p.Lock.Unlock()
 
 	// We handle pets, not NewPets, which have an additional ID field
-	var pet api.Pet
+	var pet Pet
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId

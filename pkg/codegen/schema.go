@@ -53,6 +53,7 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
+	Description   string
 	JsonFieldName string
 	Schema        Schema
 	Required      bool
@@ -71,9 +72,10 @@ func (p Property) GoTypeDef() string {
 }
 
 type TypeDefinition struct {
-	TypeName string
-	JsonName string
-	Schema   Schema
+	TypeName     string
+	JsonName     string
+	ResponseName string
+	Schema       Schema
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -81,11 +83,19 @@ func PropertiesEqual(a, b Property) bool {
 }
 
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
-	schema := sref.Value
-
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	var refType string
+
+	// Add a fallback value in case the sref is nil.
+	// i.e. the parent schema defines a type:array, but the array has
+	// no items defined. Therefore we have at least valid Go-Code.
+	if sref == nil {
+		return Schema{GoType: "interface{}", RefType: refType}, nil
+	}
+
+	schema := sref.Value
+
 	if sref.Ref != "" {
 		var err error
 		// Convert the reference path to Go type
@@ -94,6 +104,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
+		return Schema{
+			GoType: refType,
+		}, nil
 	}
 
 	// We can't support this in any meaningful way
@@ -269,7 +282,14 @@ type FieldDescriptor struct {
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for _, p := range props {
-		field := fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
+		field := ""
+		// Add a comment to a field in case we have one, otherwise skip.
+		if p.Description != "" {
+			// Separate the comment from a previous-defined, unrelated field.
+			// Make sure the actual field is separated by a newline.
+			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
+		}
+		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 		if p.Required {
 			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {

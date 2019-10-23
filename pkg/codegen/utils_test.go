@@ -22,7 +22,7 @@ import (
 
 func TestStringOps(t *testing.T) {
 	// Test that each substitution works
-	assert.Equal(t, "WordWordWORDWordWord", ToCamelCase("word.word-WORD_word~word"), "Camel case conversion failed")
+	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
 
 	// Make sure numbers don't interact in a funny way.
 	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
@@ -180,4 +180,56 @@ func TestOrderedParamsFromUri(t *testing.T) {
 func TestReplacePathParamsWithStr(t *testing.T) {
 	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
 	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+}
+
+func TestStringToGoComment(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		message  string
+	}{
+		{
+			input:    "",
+			expected: "// ",
+			message:  "blank string should be preserved with comment",
+		},
+		{
+			input:    " ",
+			expected: "//  ",
+			message:  "whitespace should be preserved with comment",
+		},
+		{
+			input:    "Single Line",
+			expected: "// Single Line",
+			message:  "single line comment",
+		},
+		{
+			input:    "    Single Line",
+			expected: "//     Single Line",
+			message:  "single line comment preserving whitespace",
+		},
+		{
+			input: `Multi
+Line
+  With
+    Spaces
+	And
+		Tabs
+`,
+			expected: `// Multi
+// Line
+//   With
+//     Spaces
+// 	And
+// 		Tabs`,
+			message: "multi line preserving whitespaces using tabs or spaces",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringToGoComment(testCase.input)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
+
 }

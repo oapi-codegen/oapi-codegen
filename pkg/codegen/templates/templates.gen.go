@@ -76,16 +76,310 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `,
+	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) http.Handler {
+  r := chi.NewRouter()
+
+{{range .}}r.Group(func(r chi.Router) {
+  r.Use({{.OperationId}}Ctx)
+  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+})
+{{end}}
+  return r
+}
+`,
+	"chi-interface.tmpl": `type ServerInterface interface {
+{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{.OperationId}}(w http.ResponseWriter, r *http.Request)
+{{end}}
+}
+`,
+	"chi-middleware.tmpl": `
+{{range .}}{{$opid := .OperationId}}
+
+{{if .RequiresParamObject}}
+// ParamsFor{{.OperationId}} operation parameters from context
+func ParamsFor{{.OperationId}}(ctx context.Context) *{{.OperationId}}Params {
+  return ctx.Value("{{.OperationId}}Params").(*{{.OperationId}}Params)
+}
+{{end}}
+
+// {{$opid}} operation middleware
+func {{$opid}}Ctx(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
+
+    {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+    var pathErr error
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+
+    {{if .IsPassThrough}}
+    {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
+    {{end}}
+    {{if .IsJson}}
+    pathErr = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
+    if pathErr != nil {
+      http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+      return
+    }
+    {{end}}
+    {{if .IsStyled}}
+    pathErr = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
+    if pathErr != nil {
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", pathErr), http.StatusBadRequest)
+      return
+    }
+    {{end}}
+
+    ctx = context.WithValue(r.Context(), "{{$varName}}", {{$varName}})
+    {{end}}
+
+    {{if .RequiresParamObject}}
+      var err error
+      // Parameter object where we will unmarshal all parameters from the context
+      var params {{.OperationId}}Params
+
+      {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+        if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
+
+        {{if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        {{end}}
+
+        {{if .IsJson}}
+          var value {{.TypeDef}}
+          err = json.Unmarshal([]byte(paramValue), &value)
+          if err != nil {
+            http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+            return
+          }
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        {{end}}
+        }{{if .Required}} else {
+            http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+            return
+        }{{end}}
+        {{if .IsStyled}}
+        err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
+        if err != nil {
+          http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+          return
+        }
+        {{end}}
+    {{end}}
+
+      {{if .HeaderParams}}
+        headers := r.Header
+
+        {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+          if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+            var {{.GoName}} {{.TypeDef}}
+            n := len(valueList)
+            if n != 1 {
+              http.Error(w, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n), http.StatusBadRequest)
+              return
+            }
+
+          {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+          {{end}}
+
+          {{if .IsJson}}
+            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            if err != nil {
+              http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+              return
+            }
+          {{end}}
+
+          {{if .IsStyled}}
+            err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+            if err != nil {
+              http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+              return
+            }
+          {{end}}
+
+            params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+
+          } {{if .Required}}else {
+              http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found", err), http.StatusBadRequest)
+              return
+          }{{end}}
+
+        {{end}}
+      {{end}}
+
+      {{range .CookieParams}}
+        if cookie, err := r.Cookie("{{.ParamName}}"); err == nil {
+
+        {{- if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+        {{end}}
+
+        {{- if .IsJson}}
+          var value {{.TypeDef}}
+          var decoded string
+          decoded, err := url.QueryUnescape(cookie.Value)
+          if err != nil {
+            http.Error(w, "Error unescaping cookie parameter '{{.ParamName}}'", http.StatusBadRequest)
+            return
+          }
+
+          err = json.Unmarshal([]byte(decoded), &value)
+          if err != nil {
+            http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+            return
+          }
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        {{end}}
+
+        {{- if .IsStyled}}
+          var value {{.TypeDef}}
+          err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+          if err != nil {
+            http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
+            return
+          }
+          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        {{end}}
+
+        }
+
+        {{- if .Required}} else {
+          http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+          return
+        }
+        {{- end}}
+      {{end}}
+
+      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", &params)
+    {{end}}
+    next.ServeHTTP(w, r.WithContext(ctx))
+  })
+}
+{{end}}
+
+
+
+`,
 	"client-with-responses.tmpl": `// ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
     ClientInterface
+}
+
+// NewClient creates a new Client.
+func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses, error) {
+	// create a client with sane default values
+	client := Client{
+		// must have a slash in order to resolve relative paths correctly.
+		Server:         "",
+		userAgent:      "oapi-codegen",
+		maxIdleConns:   10,
+		requestTimeout: 5 * time.Second,
+		idleTimeout:    30 * time.Second,
+	}
+	// mutate defaultClient and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = client.newHTTPClient()
+	}
+
+	return &ClientWithResponses{
+		ClientInterface: &client,
+	}, nil
+}
+
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
+	}
+}
+
+// WithUserAgent allows setting the userAgent
+func WithUserAgent(userAgent string) ClientOption {
+	return func(c *Client) error {
+		c.userAgent = userAgent
+		return nil
+	}
+}
+
+// WithIdleTimeout overrides the timeout of idle connections.
+func WithIdleTimeout(timeout time.Duration) ClientOption {
+	return func(c *Client) error {
+		c.idleTimeout = timeout
+		return nil
+	}
+}
+
+// WithRequestTimeout overrides the timeout of individual requests.
+func WithRequestTimeout(timeout time.Duration) ClientOption {
+	return func(c *Client) error {
+		c.requestTimeout = timeout
+		return nil
+	}
+}
+
+// WithMaxIdleConnections overrides the amount of idle connections of the
+// underlying http-client.
+func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
+	return func(c *Client) error {
+		c.maxIdleConns = int(maxIdleConns)
+		return nil
+	}
+}
+
+// WithHTTPClient allows overriding the default httpClient, which is
+// automatically created. This is useful for tests.
+func WithHTTPClient(httpClient *http.Client) ClientOption {
+	return func(c *Client) error {
+		c.Client = httpClient
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
+}
+
+// newHTTPClient creates a httpClient for the current connection options.
+func (c *Client) newHTTPClient() *http.Client {
+	return &http.Client{
+		Timeout: c.requestTimeout,
+		Transport: &http.Transport{
+			MaxIdleConns:    c.maxIdleConns,
+			IdleConnTimeout: c.idleTimeout,
+		},
+	}
 }
 
 // NewClientWithResponses returns a ClientWithResponses with a default Client:
 func NewClientWithResponses(server string) *ClientWithResponses {
     return &ClientWithResponses{
         ClientInterface: &Client{
-            Client: http.Client{},
+            Client: &http.Client{},
             Server: server,
         },
     }
@@ -95,7 +389,7 @@ func NewClientWithResponses(server string) *ClientWithResponses {
 func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
 	return &ClientWithResponses{
 		ClientInterface: &Client{
-			Client: http.Client{},
+			Client: &http.Client{},
 			Server: server,
 			RequestEditor: reqEditorFn,
 		},
@@ -171,7 +465,7 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
 
     response := {{genResponsePayload $opid}}
 
-    {{genResponseUnmarshal $opid .Spec.Responses}}
+    {{genResponseUnmarshal .}}
 
     return response, nil
 }
@@ -183,17 +477,32 @@ type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
-    // The endpoint of the server conforming to this interface, with scheme,
-    // https://api.deepmap.com for example.
-    Server string
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example.
+	Server string
 
-    // HTTP client with any customized settings, such as certificate chains.
-    Client http.Client
+	// HTTP client with any customized settings, such as certificate chains.
+	Client *http.Client
 
-    // A callback for modifying requests which are generated before sending over
-    // the network.
-    RequestEditor RequestEditorFn
+	// A callback for modifying requests which are generated before sending over
+	// the network.
+	RequestEditor RequestEditorFn
+
+	// userAgent to use
+	userAgent string
+
+	// timeout of single request
+	requestTimeout time.Duration
+
+	// timeout of idle http connections
+	idleTimeout time.Duration
+
+	// maxium idle connections of the underlying http-client.
+	maxIdleConns int
 }
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
 
 // The interface specification for the client above.
 type ClientInterface interface {
@@ -535,6 +844,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
 {{end}}
+{{end}}
+
+{{range .SecurityDefinitions}}
+    ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}

@@ -31,11 +31,13 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateServer bool // GenerateServer specifies whether to generate server boilerplate
-	GenerateClient bool // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes  bool // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec      bool // Whether to embed the swagger spec in the generated code
-	EmbedSpecUI    bool // Whether to embed the swagger ui in the generated code
+	GenerateChiServer  bool // GenerateChiServer specifies whether to generate chi server boilerplate
+	GenerateEchoServer bool // GenerateEchoServer specifies whether to generate echo server boilerplate
+	GenerateClient     bool // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes      bool // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec          bool // Whether to embed the swagger spec in the generated code
+	EmbedSpecUI        bool // Whether to embed the swagger ui in the generated code
+	SkipFmt            bool // Whether to skip go fmt on the generated code
 }
 
 // Generate Uses the Go templating engine to generate all of our server wrappers from
@@ -64,9 +66,17 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	var serverOut string
-	if opts.GenerateServer {
-		serverOut, err = GenerateServer(t, ops)
+	var echoServerOut string
+	if opts.GenerateEchoServer {
+		echoServerOut, err = GenerateEchoServer(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating Go handlers for Paths")
+		}
+	}
+
+	var chiServerOut string
+	if opts.GenerateChiServer {
+		chiServerOut, err = GenerateChiServer(t, ops)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
@@ -117,9 +127,12 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
-	for _, str := range []string{typeDefinitions, serverOut, clientOut, clientWithResponsesOut, inlinedSpec, inlinedSpecUI, inlinedSpecUIRedirect} {
+	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec, inlinedSpecUI, inlinedSpecUIRedirect} {
 		if strings.Contains(str, "template.") {
 			imports = append(imports, "html/template")
+		}
+		if strings.Contains(str, "time.Duration") {
+			imports = append(imports, "time")
 		}
 		if strings.Contains(str, "time.Time") {
 			imports = append(imports, "time")
@@ -178,6 +191,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "errors.") {
 			imports = append(imports, "github.com/pkg/errors")
 		}
+		if strings.Contains(str, "chi.") {
+			imports = append(imports, "github.com/go-chi/chi")
+		}
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)
@@ -207,8 +223,15 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	if opts.GenerateServer {
-		_, err = w.WriteString(serverOut)
+	if opts.GenerateEchoServer {
+		_, err = w.WriteString(echoServerOut)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing server path handlers")
+		}
+	}
+
+	if opts.GenerateChiServer {
+		_, err = w.WriteString(chiServerOut)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing server path handlers")
 		}
@@ -237,10 +260,14 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error flushing output buffer")
 	}
 
-	goCode := buf.String()
+	// remove any byte-order-marks which break Go-Code
+	goCode := SanitizeCode(buf.String())
 
 	// The generation code produces unindented horrors. Use the Go formatter
 	// to make it all pretty.
+	if opts.SkipFmt {
+		return goCode, nil
+	}
 	outBytes, err := format.Source([]byte(goCode))
 	if err != nil {
 		fmt.Println(goCode)
@@ -500,4 +527,12 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 		return "", errors.Wrap(err, "error flushing output buffer for additional properties")
 	}
 	return buf.String(), nil
+}
+
+// SanitizeCode runs sanitizers across the generated Go code to ensure the
+// generated code will be able to compile.
+func SanitizeCode(goCode string) string {
+	// remove any byte-order-marks which break Go-Code
+	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
+	return strings.Replace(goCode, "\uFEFF", "", -1)
 }

@@ -7,7 +7,8 @@ import (
 	"net/http"
 	"testing"
 
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/api"
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
@@ -19,11 +20,11 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	// Input vars for code generation:
 	packageName := "api"
 	opts := Options{
-		GenerateClient: true,
-		GenerateServer: true,
-		GenerateTypes:  true,
-		EmbedSpec:      true,
-		EmbedSpecUI:    true,
+		GenerateClient:     true,
+		GenerateEchoServer: true,
+		GenerateTypes:      true,
+		EmbedSpec:          true,
+		EmbedSpecUI:        true,
 	}
 
 	// Get a spec from the example PetStore definition:
@@ -63,7 +64,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")
 
-	findPetByIDResponse, err := examplePetstore.ParsefindPetByIdResponse(cannedResponse)
+	findPetByIDResponse, err := examplePetstoreClient.ParsefindPetByIdResponse(cannedResponse)
 	assert.NoError(t, err)
 	assert.NotNil(t, findPetByIDResponse.JSON200)
 	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
@@ -77,11 +78,11 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Options{
-		GenerateClient: true,
-		GenerateServer: true,
-		GenerateTypes:  true,
-		EmbedSpec:      true,
-		EmbedSpecUI:    true,
+		GenerateClient:     true,
+		GenerateEchoServer: true,
+		GenerateTypes:      true,
+		EmbedSpec:          true,
+		EmbedSpecUI:        true,
 	}
 
 	// Get a spec from the test definition in this file:
@@ -102,6 +103,19 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Check that response structs are generated correctly:
 	assert.Contains(t, code, "type getTestByNameResponse struct {")
+
+	// Check that response structs contains fallbacks to interface for invalid types:
+	// Here an invalid array with no items.
+	assert.Contains(t, code, `
+type getTestByNameResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Test
+	XML200       *[]Test
+	JSON422      *[]interface{}
+	XML422       *[]interface{}
+	JSONDefault  *Error
+}`)
 
 	// Check that the helper methods are generated correctly:
 	assert.Contains(t, code, "func (r getTestByNameResponse) Status() string {")
@@ -158,6 +172,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Test'
+        422:
+          description: InvalidArray
+          content:
+            application/xml:
+              schema:
+                type: array
+            application/json:
+              schema:
+                type: array
         default:
           description: Error
           content:
@@ -198,7 +221,7 @@ paths:
 
 components:
   schemas:
-  
+
     Test:
       properties:
         name:
