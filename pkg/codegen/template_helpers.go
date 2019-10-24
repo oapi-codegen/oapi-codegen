@@ -219,8 +219,9 @@ func toStringArray(sarr []string) string {
 	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
 }
 
-func toSingleLine(s string) string {
-	return strings.ReplaceAll(s, "\n", "")
+func stripNewLines(s string) string {
+	r := strings.NewReplacer("\n", "")
+	return r.Replace(s)
 }
 
 // This function map is passed to the template engine, and we can call each
@@ -241,5 +242,5 @@ var TemplateFunctions = template.FuncMap{
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
-	"singleLine":                 toSingleLine,
+	"stripNewLines":              stripNewLines,
 }
