@@ -96,6 +96,11 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests
+type Doer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -103,7 +108,7 @@ type Client struct {
 	Server string
 
 	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	Client Doer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
