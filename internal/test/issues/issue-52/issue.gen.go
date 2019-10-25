@@ -96,7 +96,9 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
-// Doer performs HTTP requests
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
 type Doer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -107,7 +109,8 @@ type Client struct {
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
 	Client Doer
 
 	// A callback for modifying requests which are generated before sending over
