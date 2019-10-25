@@ -79,11 +79,11 @@ func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
 	}
 }
 
-// WithHTTPClient allows overriding the default httpClient, which is
-// automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer Doer) ClientOption {
 	return func(c *Client) error {
-		c.Client = httpClient
+		c.Client = doer
 		return nil
 	}
 }
