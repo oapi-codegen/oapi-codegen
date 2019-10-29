@@ -81,7 +81,7 @@ func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
 
 // WithHTTPClient allows overriding the default httpClient, which is
 // automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
+func WithHTTPClient(httpClient HTTPClient) ClientOption {
 	return func(c *Client) error {
 		c.Client = httpClient
 		return nil
@@ -98,7 +98,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 }
 
 // newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
+func (c *Client) newHTTPClient() HTTPClient {
 	return &http.Client{
 		Timeout: c.requestTimeout,
 		Transport: &http.Transport{

@@ -39,6 +39,26 @@ type PostBothJSONRequestBody PostBothJSONBody
 // PostJsonRequestBody defines body for PostJson for application/json ContentType.
 type PostJsonJSONRequestBody PostJsonJSONBody
 
+// HTTPClient interface allows the user to use custom wrapped http clients to implement
+// additional features like retries, backoffs
+// The interface matches all methods attached to the standard library HTTP Client
+// https://golang.org/pkg/net/http/#Client
+// type Client
+//     func (c *Client) CloseIdleConnections()
+//     func (c *Client) Do(req *Request) (*Response, error)
+//     func (c *Client) Get(url string) (resp *Response, err error)
+//     func (c *Client) Head(url string) (resp *Response, err error)
+//     func (c *Client) Post(url, contentType string, body io.Reader) (resp *Response, err error)
+//     func (c *Client) PostForm(url string, data url.Values) (resp *Response, err error)
+type HTTPClient interface {
+	CloseIdleConnections()
+	Do(req *http.Request) (*http.Response, error)
+	Get(url string) (*http.Response, error)
+	Head(url string) (*http.Response, error)
+	Post(url, contentType string, body io.Reader) (*http.Response, error)
+	PostForm(url string, data url.Values) (*http.Response, error)
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
@@ -49,7 +69,7 @@ type Client struct {
 	Server string
 
 	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	Client HTTPClient
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
@@ -408,7 +428,7 @@ func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
 
 // WithHTTPClient allows overriding the default httpClient, which is
 // automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
+func WithHTTPClient(httpClient HTTPClient) ClientOption {
 	return func(c *Client) error {
 		c.Client = httpClient
 		return nil
@@ -425,7 +445,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 }
 
 // newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
+func (c *Client) newHTTPClient() HTTPClient {
 	return &http.Client{
 		Timeout: c.requestTimeout,
 		Transport: &http.Transport{
