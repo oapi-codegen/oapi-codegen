@@ -21,18 +21,6 @@ type Client struct {
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
-
-	// userAgent to use
-	userAgent string
-
-	// timeout of single request
-	requestTimeout time.Duration
-
-	// timeout of idle http connections
-	idleTimeout time.Duration
-
-	// maxium idle connections of the underlying http-client.
-	maxIdleConns int
 }
 
 // ClientOption allows setting custom parameters during construction
