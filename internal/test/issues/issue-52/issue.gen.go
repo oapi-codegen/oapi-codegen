@@ -99,14 +99,12 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 // The interface matches all methods attached to the standard library HTTP Client
 // https://golang.org/pkg/net/http/#Client
 // type Client
-//     func (c *Client) CloseIdleConnections()
 //     func (c *Client) Do(req *Request) (*Response, error)
 //     func (c *Client) Get(url string) (resp *Response, err error)
 //     func (c *Client) Head(url string) (resp *Response, err error)
 //     func (c *Client) Post(url, contentType string, body io.Reader) (resp *Response, err error)
 //     func (c *Client) PostForm(url string, data url.Values) (resp *Response, err error)
 type HTTPClient interface {
-	CloseIdleConnections()
 	Do(req *http.Request) (*http.Response, error)
 	Get(url string) (*http.Response, error)
 	Head(url string) (*http.Response, error)
