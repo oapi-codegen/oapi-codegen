@@ -11,6 +11,7 @@ require (
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/tools v0.0.0-20191101200257-8dbcdeb83d3f // indirect
 )
 
 go 1.13
