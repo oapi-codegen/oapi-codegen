@@ -224,6 +224,10 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				outSchema.GoType = "int64"
 			} else if f == "int32" {
 				outSchema.GoType = "int32"
+			} else if f == "uint32" {
+				outSchema.GoType = "uint32"
+			} else if f == "uint64" {
+				outSchema.GoType = "uint64"
 			} else if f == "" {
 				outSchema.GoType = "int"
 			} else {
