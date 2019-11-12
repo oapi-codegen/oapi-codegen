@@ -246,7 +246,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		case "string":
 			// Special case string formats here.
 			switch f {
-			case "date-time", "date":
+			case "byte":
+				outSchema.GoType = "openapi_types.Byte"
+			case "date":
+				outSchema.GoType = "openapi_types.Date"
+			case "date-time":
 				outSchema.GoType = "time.Time"
 			case "json":
 				outSchema.GoType = "json.RawMessage"

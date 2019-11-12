@@ -39,6 +39,21 @@ type Options struct {
 	SkipFmt            bool // Whether to skip go fmt on the generated code
 }
 
+// imports contains list of imported libraries as alias/fullname tuples, and implements sort.Interface interface
+type imports [][2]string
+
+func (i imports) Len() int {
+	return len(i)
+}
+
+func (i imports) Less(a, b int) bool {
+	return i[a][1] < i[b][1]
+}
+
+func (i imports) Swap(a, b int) {
+	i[a], i[b] = i[b], i[a]
+}
+
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
@@ -106,7 +121,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	// Imports needed for the generated code to compile
-	var imports []string
+	var imports imports
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
@@ -115,67 +130,70 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	// TODO: this is error prone, use tighter matches
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
 		if strings.Contains(str, "time.Duration") {
-			imports = append(imports, "time")
+			imports = append(imports, [2]string{"", "time"})
 		}
 		if strings.Contains(str, "time.Time") {
-			imports = append(imports, "time")
+			imports = append(imports, [2]string{"", "time"})
 		}
 		if strings.Contains(str, "http.") {
-			imports = append(imports, "net/http")
+			imports = append(imports, [2]string{"", "net/http"})
 		}
 		if strings.Contains(str, "openapi3.") {
-			imports = append(imports, "github.com/getkin/kin-openapi/openapi3")
+			imports = append(imports, [2]string{"", "github.com/getkin/kin-openapi/openapi3"})
 		}
 		if strings.Contains(str, "json.") {
-			imports = append(imports, "encoding/json")
+			imports = append(imports, [2]string{"", "encoding/json"})
 		}
 		if strings.Contains(str, "echo.") {
-			imports = append(imports, "github.com/labstack/echo/v4")
+			imports = append(imports, [2]string{"", "github.com/labstack/echo/v4"})
 		}
 		if strings.Contains(str, "io.") {
-			imports = append(imports, "io")
+			imports = append(imports, [2]string{"", "io"})
 		}
 		if strings.Contains(str, "ioutil.") {
-			imports = append(imports, "io/ioutil")
+			imports = append(imports, [2]string{"", "io/ioutil"})
 		}
 		if strings.Contains(str, "url.") {
-			imports = append(imports, "net/url")
+			imports = append(imports, [2]string{"", "net/url"})
 		}
 		if strings.Contains(str, "context.") {
-			imports = append(imports, "context")
+			imports = append(imports, [2]string{"", "context"})
 		}
 		if strings.Contains(str, "runtime.") {
-			imports = append(imports, "github.com/deepmap/oapi-codegen/pkg/runtime")
+			imports = append(imports, [2]string{"", "github.com/deepmap/oapi-codegen/pkg/runtime"})
 		}
 		if strings.Contains(str, "bytes.") {
-			imports = append(imports, "bytes")
+			imports = append(imports, [2]string{"", "bytes"})
 		}
 		if strings.Contains(str, "gzip.") {
-			imports = append(imports, "compress/gzip")
+			imports = append(imports, [2]string{"", "compress/gzip"})
 		}
 		if strings.Contains(str, "base64.") {
-			imports = append(imports, "encoding/base64")
+			imports = append(imports, [2]string{"", "encoding/base64"})
 		}
 		if strings.Contains(str, "openapi3.") {
-			imports = append(imports, "github.com/getkin/kin-openapi/openapi3")
+			imports = append(imports, [2]string{"", "github.com/getkin/kin-openapi/openapi3"})
 		}
 		if strings.Contains(str, "strings.") {
-			imports = append(imports, "strings")
+			imports = append(imports, [2]string{"", "strings"})
 		}
 		if strings.Contains(str, "fmt.") {
-			imports = append(imports, "fmt")
+			imports = append(imports, [2]string{"", "fmt"})
 		}
 		if strings.Contains(str, "yaml.") {
-			imports = append(imports, "gopkg.in/yaml.v2")
+			imports = append(imports, [2]string{"", "gopkg.in/yaml.v2"})
 		}
 		if strings.Contains(str, "xml.") {
-			imports = append(imports, "encoding/xml")
+			imports = append(imports, [2]string{"", "encoding/xml"})
 		}
 		if strings.Contains(str, "errors.") {
-			imports = append(imports, "github.com/pkg/errors")
+			imports = append(imports, [2]string{"", "github.com/pkg/errors"})
 		}
 		if strings.Contains(str, "chi.") {
-			imports = append(imports, "github.com/go-chi/chi")
+			imports = append(imports, [2]string{"", "github.com/go-chi/chi"})
+		}
+		if strings.Contains(str, "openapi_types.") {
+			imports = append(imports, [2]string{"openapi_types", "github.com/deepmap/oapi-codegen/pkg/types"})
 		}
 	}
 
@@ -448,13 +466,13 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // Generate our import statements and package definition.
-func GenerateImports(t *template.Template, imports []string, packageName string) (string, error) {
-	sort.Strings(imports)
+func GenerateImports(t *template.Template, imports imports, packageName string) (string, error) {
+	sort.Sort(imports)
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	context := struct {
-		Imports     []string
+		Imports     [][2]string
 		PackageName string
 	}{
 		Imports:     imports,

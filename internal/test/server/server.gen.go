@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/go-chi/chi"
 	"net/http"
 	"time"
@@ -14,13 +15,14 @@ import (
 
 // EveryTypeOptional defines model for EveryTypeOptional.
 type EveryTypeOptional struct {
-	ArrayInlineField     *[]int        `json:"array_inline_field,omitempty"`
-	ArrayReferencedField *[]SomeObject `json:"array_referenced_field,omitempty"`
-	BoolField            *bool         `json:"bool_field,omitempty"`
-	DateField            *time.Time    `json:"date_field,omitempty"`
-	DateTimeField        *time.Time    `json:"date_time_field,omitempty"`
-	DoubleField          *float64      `json:"double_field,omitempty"`
-	FloatField           *float32      `json:"float_field,omitempty"`
+	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`
+	ArrayReferencedField *[]SomeObject       `json:"array_referenced_field,omitempty"`
+	BoolField            *bool               `json:"bool_field,omitempty"`
+	ByteField            *openapi_types.Byte `json:"byte_field,omitempty"`
+	DateField            *openapi_types.Date `json:"date_field,omitempty"`
+	DateTimeField        *time.Time          `json:"date_time_field,omitempty"`
+	DoubleField          *float64            `json:"double_field,omitempty"`
+	FloatField           *float32            `json:"float_field,omitempty"`
 	InlineObjectField    *struct {
 		Name   string `json:"name"`
 		Number int    `json:"number"`
@@ -35,13 +37,14 @@ type EveryTypeOptional struct {
 
 // EveryTypeRequired defines model for EveryTypeRequired.
 type EveryTypeRequired struct {
-	ArrayInlineField     []int        `json:"array_inline_field"`
-	ArrayReferencedField []SomeObject `json:"array_referenced_field"`
-	BoolField            bool         `json:"bool_field"`
-	DateField            time.Time    `json:"date_field"`
-	DateTimeField        time.Time    `json:"date_time_field"`
-	DoubleField          float64      `json:"double_field"`
-	FloatField           float32      `json:"float_field"`
+	ArrayInlineField     []int              `json:"array_inline_field"`
+	ArrayReferencedField []SomeObject       `json:"array_referenced_field"`
+	BoolField            bool               `json:"bool_field"`
+	ByteField            openapi_types.Byte `json:"byte_field"`
+	DateField            openapi_types.Date `json:"date_field"`
+	DateTimeField        time.Time          `json:"date_time_field"`
+	DoubleField          float64            `json:"double_field"`
+	FloatField           float32            `json:"float_field"`
 	InlineObjectField    struct {
 		Name   string `json:"name"`
 		Number int    `json:"number"`
