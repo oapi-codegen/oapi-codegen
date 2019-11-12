@@ -141,6 +141,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "url.") {
 			imports = append(imports, "net/url")
 		}
+		if strings.Contains(str, "path.") {
+			imports = append(imports, "path")
+		}
 		if strings.Contains(str, "context.") {
 			imports = append(imports, "context")
 		}

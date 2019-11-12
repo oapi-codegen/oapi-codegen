@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -181,37 +182,49 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/pets", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets"))
 
-	var queryStrings []string
+	queryValues := queryUrl.Query()
 
-	var queryParam0 string
 	if params.Tags != nil {
 
-		queryParam0, err = runtime.StyleParam("form", true, "tags", *params.Tags)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam0)
 	}
 
-	var queryParam1 string
 	if params.Limit != nil {
 
-		queryParam1, err = runtime.StyleParam("form", true, "limit", *params.Limit)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam1)
 	}
 
-	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
-	}
+	queryUrl.RawQuery = queryValues.Encode()
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -234,9 +247,13 @@ func NewAddPetRequest(server string, body AddPetJSONRequestBody) (*http.Request,
 func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/pets", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets"))
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -256,9 +273,13 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
 
-	req, err := http.NewRequest("DELETE", queryUrl, nil)
+	req, err := http.NewRequest("DELETE", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -277,9 +298,13 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}

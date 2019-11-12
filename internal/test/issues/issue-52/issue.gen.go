@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -150,9 +151,13 @@ func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
 func NewExampleGetRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/example", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/example"))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}

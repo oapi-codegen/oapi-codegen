@@ -127,38 +127,44 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
     {{end}}
 {{end}}
-    queryUrl := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
-{{if .QueryParams}}
-    var queryStrings []string
-{{range $paramIdx, $param := .QueryParams}}
-    var queryParam{{$paramIdx}} string
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    {{if .IsPassThrough}}
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var queryParamBuf{{$paramIdx}} []byte
-    queryParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    queryUrl, err := url.Parse(server)
     if err != nil {
         return nil, err
     }
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + string(queryParamBuf{{$paramIdx}})
+    queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+{{if .QueryParams}}
+    queryValues := queryUrl.Query()
+{{range $paramIdx, $param := .QueryParams}}
+    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+    {{if .IsPassThrough}}
+    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    {{end}}
+    {{if .IsJson}}
+    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+        return nil, err
+    } else {
+        queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+    }
 
     {{end}}
     {{if .IsStyled}}
-    queryParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
+    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
+    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+       return nil, err
+    } else {
+       for k, v := range parsed {
+           for _, v2 := range v {
+               queryValues.Add(k, v2)
+           }
+       }
     }
     {{end}}
-    queryStrings = append(queryStrings, queryParam{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
-    if len(queryStrings) != 0 {
-        queryUrl += "?" + strings.Join(queryStrings, "&")
-    }
+    queryUrl.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
