@@ -18,7 +18,7 @@ type EveryTypeOptional struct {
 	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`
 	ArrayReferencedField *[]SomeObject       `json:"array_referenced_field,omitempty"`
 	BoolField            *bool               `json:"bool_field,omitempty"`
-	ByteField            *openapi_types.Byte `json:"byte_field,omitempty"`
+	ByteField            *[]byte             `json:"byte_field,omitempty"`
 	DateField            *openapi_types.Date `json:"date_field,omitempty"`
 	DateTimeField        *time.Time          `json:"date_time_field,omitempty"`
 	DoubleField          *float64            `json:"double_field,omitempty"`
@@ -40,7 +40,7 @@ type EveryTypeRequired struct {
 	ArrayInlineField     []int              `json:"array_inline_field"`
 	ArrayReferencedField []SomeObject       `json:"array_referenced_field"`
 	BoolField            bool               `json:"bool_field"`
-	ByteField            openapi_types.Byte `json:"byte_field"`
+	ByteField            []byte             `json:"byte_field"`
 	DateField            openapi_types.Date `json:"date_field"`
 	DateTimeField        time.Time          `json:"date_time_field"`
 	DoubleField          float64            `json:"double_field"`
