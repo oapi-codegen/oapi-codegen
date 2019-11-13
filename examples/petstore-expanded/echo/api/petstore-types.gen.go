@@ -25,9 +25,16 @@ type Pet struct {
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
-	Tags  *[]string `json:"tags,omitempty" xml:"tags-list>tags,omitempty"`
-	Limit *int32    `json:"limit,omitempty" xml:"limit,omitempty"`
+
+	// tags to filter by
+	Tags *[]string `json:"tags,omitempty" xml:"tags-list>tags,omitempty"`
+
+	// maximum number of results to return
+	Limit *int32 `json:"limit,omitempty" xml:"limit,omitempty"`
 }
 
+// addPetJSONBody defines parameters for AddPet.
+type addPetJSONBody NewPet
+
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody NewPet
+type AddPetJSONRequestBody addPetJSONBody
