@@ -18,7 +18,6 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"time"
 )
 
 // ComplexObject defines model for ComplexObject.
@@ -111,30 +110,26 @@ type GetQueryFormParams struct {
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type Doer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client Doer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
-
-	// userAgent to use
-	userAgent string
-
-	// timeout of single request
-	requestTimeout time.Duration
-
-	// timeout of idle http connections
-	idleTimeout time.Duration
-
-	// maxium idle connections of the underlying http-client.
-	maxIdleConns int
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -1201,11 +1196,7 @@ func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses,
 	// create a client with sane default values
 	client := Client{
 		// must have a slash in order to resolve relative paths correctly.
-		Server:         "",
-		userAgent:      "oapi-codegen",
-		maxIdleConns:   10,
-		requestTimeout: 5 * time.Second,
-		idleTimeout:    30 * time.Second,
+		Server: "",
 	}
 	// mutate defaultClient and add all optional params
 	for _, o := range opts {
@@ -1216,7 +1207,7 @@ func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses,
 
 	// create httpClient, if not already present
 	if client.Client == nil {
-		client.Client = client.newHTTPClient()
+		client.Client = http.DefaultClient
 	}
 
 	return &ClientWithResponses{
@@ -1239,44 +1230,11 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-// WithUserAgent allows setting the userAgent
-func WithUserAgent(userAgent string) ClientOption {
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer Doer) ClientOption {
 	return func(c *Client) error {
-		c.userAgent = userAgent
-		return nil
-	}
-}
-
-// WithIdleTimeout overrides the timeout of idle connections.
-func WithIdleTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.idleTimeout = timeout
-		return nil
-	}
-}
-
-// WithRequestTimeout overrides the timeout of individual requests.
-func WithRequestTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.requestTimeout = timeout
-		return nil
-	}
-}
-
-// WithMaxIdleConnections overrides the amount of idle connections of the
-// underlying http-client.
-func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
-	return func(c *Client) error {
-		c.maxIdleConns = int(maxIdleConns)
-		return nil
-	}
-}
-
-// WithHTTPClient allows overriding the default httpClient, which is
-// automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(c *Client) error {
-		c.Client = httpClient
+		c.Client = doer
 		return nil
 	}
 }
@@ -1287,17 +1245,6 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
 		c.RequestEditor = fn
 		return nil
-	}
-}
-
-// newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: c.requestTimeout,
-		Transport: &http.Transport{
-			MaxIdleConns:    c.maxIdleConns,
-			IdleConnTimeout: c.idleTimeout,
-		},
 	}
 }
 
