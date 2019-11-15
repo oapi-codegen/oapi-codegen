@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -373,7 +372,17 @@ func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,

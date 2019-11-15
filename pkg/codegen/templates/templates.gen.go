@@ -746,8 +746,20 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 `,
-	"register.tmpl": `// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+	"register.tmpl": `
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router interface {
+                             	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             }, si ServerInterface) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
