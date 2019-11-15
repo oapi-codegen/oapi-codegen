@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -231,9 +232,13 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_both_bodies", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_both_bodies"))
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -246,9 +251,13 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 func NewGetBothRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_both_responses", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_both_responses"))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -271,9 +280,13 @@ func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Requ
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_json_body", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_json_body"))
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -286,9 +299,13 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 func NewGetJsonRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_json_response", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_json_response"))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -300,9 +317,13 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_other_body", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_other_body"))
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -315,9 +336,13 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 func NewGetOtherRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_other_response", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_other_response"))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}

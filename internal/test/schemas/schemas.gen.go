@@ -17,6 +17,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 )
@@ -164,9 +165,13 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/30/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/30/%s", pathParam0))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -185,9 +190,13 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/41/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/41/%s", pathParam0))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -210,24 +219,29 @@ func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONReques
 func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/issues/9", server)
-
-	var queryStrings []string
-
-	var queryParam0 string
-
-	queryParam0, err = runtime.StyleParam("form", true, "foo", params.Foo)
+	queryUrl, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/9"))
 
-	queryStrings = append(queryStrings, queryParam0)
+	queryValues := queryUrl.Query()
 
-	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
+	if queryFrag, err := runtime.StyleParam("form", true, "foo", params.Foo); err != nil {
+		return nil, err
+	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		return nil, err
+	} else {
+		for k, v := range parsed {
+			for _, v2 := range v {
+				queryValues.Add(k, v2)
+			}
+		}
 	}
 
-	req, err := http.NewRequest("GET", queryUrl, body)
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
