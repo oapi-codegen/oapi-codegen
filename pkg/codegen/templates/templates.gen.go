@@ -653,7 +653,7 @@ package {{.PackageName}}
 
 {{if .Imports}}
 import (
-{{range .Imports}} "{{.}}"
+{{range .Imports}} {{ . }}
 {{end}})
 {{end}}
 `,
