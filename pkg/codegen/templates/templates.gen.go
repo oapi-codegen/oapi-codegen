@@ -699,7 +699,7 @@ package {{.PackageName}}
 
 {{if .Imports}}
 import (
-{{range .Imports}} {{index . 0}} "{{index . 1}}"
+{{range .Imports}} {{ . }}
 {{end}})
 {{end}}
 `,
