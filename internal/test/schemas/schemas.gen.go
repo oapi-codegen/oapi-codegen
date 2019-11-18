@@ -17,8 +17,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
-	"time"
 )
 
 // N5StartsWithNumber defines model for 5StartsWithNumber.
@@ -50,30 +50,26 @@ type Issue9JSONRequestBody Issue9JSONBody
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type Doer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client Doer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
-
-	// userAgent to use
-	userAgent string
-
-	// timeout of single request
-	requestTimeout time.Duration
-
-	// timeout of idle http connections
-	idleTimeout time.Duration
-
-	// maxium idle connections of the underlying http-client.
-	maxIdleConns int
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -164,9 +160,13 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/30/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/30/%s", pathParam0))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -185,9 +185,13 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/41/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/41/%s", pathParam0))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -210,24 +214,29 @@ func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONReques
 func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/issues/9", server)
-
-	var queryStrings []string
-
-	var queryParam0 string
-
-	queryParam0, err = runtime.StyleParam("form", true, "foo", params.Foo)
+	queryUrl, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/9"))
 
-	queryStrings = append(queryStrings, queryParam0)
+	queryValues := queryUrl.Query()
 
-	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
+	if queryFrag, err := runtime.StyleParam("form", true, "foo", params.Foo); err != nil {
+		return nil, err
+	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		return nil, err
+	} else {
+		for k, v := range parsed {
+			for _, v2 := range v {
+				queryValues.Add(k, v2)
+			}
+		}
 	}
 
-	req, err := http.NewRequest("GET", queryUrl, body)
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -246,11 +255,7 @@ func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses,
 	// create a client with sane default values
 	client := Client{
 		// must have a slash in order to resolve relative paths correctly.
-		Server:         "",
-		userAgent:      "oapi-codegen",
-		maxIdleConns:   10,
-		requestTimeout: 5 * time.Second,
-		idleTimeout:    30 * time.Second,
+		Server: "",
 	}
 	// mutate defaultClient and add all optional params
 	for _, o := range opts {
@@ -261,7 +266,7 @@ func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses,
 
 	// create httpClient, if not already present
 	if client.Client == nil {
-		client.Client = client.newHTTPClient()
+		client.Client = http.DefaultClient
 	}
 
 	return &ClientWithResponses{
@@ -284,44 +289,11 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-// WithUserAgent allows setting the userAgent
-func WithUserAgent(userAgent string) ClientOption {
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer Doer) ClientOption {
 	return func(c *Client) error {
-		c.userAgent = userAgent
-		return nil
-	}
-}
-
-// WithIdleTimeout overrides the timeout of idle connections.
-func WithIdleTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.idleTimeout = timeout
-		return nil
-	}
-}
-
-// WithRequestTimeout overrides the timeout of individual requests.
-func WithRequestTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.requestTimeout = timeout
-		return nil
-	}
-}
-
-// WithMaxIdleConnections overrides the amount of idle connections of the
-// underlying http-client.
-func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
-	return func(c *Client) error {
-		c.maxIdleConns = int(maxIdleConns)
-		return nil
-	}
-}
-
-// WithHTTPClient allows overriding the default httpClient, which is
-// automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(c *Client) error {
-		c.Client = httpClient
+		c.Client = doer
 		return nil
 	}
 }
@@ -332,17 +304,6 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
 		c.RequestEditor = fn
 		return nil
-	}
-}
-
-// newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: c.requestTimeout,
-		Transport: &http.Transport{
-			MaxIdleConns:    c.maxIdleConns,
-			IdleConnTimeout: c.idleTimeout,
-		},
 	}
 }
 
@@ -593,7 +554,17 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
