@@ -19,8 +19,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
-	"time"
 )
 
 // ArrayValue defines model for ArrayValue.
@@ -134,34 +134,67 @@ func (a Document_Fields) MarshalXML() ([]byte, error) {
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client *http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
-
-	// userAgent to use
-	userAgent string
-
-	// timeout of single request
-	requestTimeout time.Duration
-
-	// timeout of idle http connections
-	idleTimeout time.Duration
-
-	// maxium idle connections of the underlying http-client.
-	maxIdleConns int
 }
 
 // ClientOption allows setting custom parameters during construction
 type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = http.DefaultClient
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
+}
 
 // The interface specification for the client above.
 type ClientInterface interface {
@@ -188,9 +221,13 @@ func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
 func NewExampleGetRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/example", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/example"))
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -203,32 +240,14 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClient creates a new Client.
-func NewClient(ctx context.Context, opts ...ClientOption) (*ClientWithResponses, error) {
-	// create a client with sane default values
-	client := Client{
-		// must have a slash in order to resolve relative paths correctly.
-		Server:         "",
-		userAgent:      "oapi-codegen",
-		maxIdleConns:   10,
-		requestTimeout: 5 * time.Second,
-		idleTimeout:    30 * time.Second,
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
 	}
-	// mutate defaultClient and add all optional params
-	for _, o := range opts {
-		if err := o(&client); err != nil {
-			return nil, err
-		}
-	}
-
-	// create httpClient, if not already present
-	if client.Client == nil {
-		client.Client = client.newHTTPClient()
-	}
-
-	return &ClientWithResponses{
-		ClientInterface: &client,
-	}, nil
+	return &ClientWithResponses{client}, nil
 }
 
 // WithBaseURL overrides the baseURL.
@@ -243,89 +262,6 @@ func WithBaseURL(baseURL string) ClientOption {
 		}
 		c.Server = newBaseURL.String()
 		return nil
-	}
-}
-
-// WithUserAgent allows setting the userAgent
-func WithUserAgent(userAgent string) ClientOption {
-	return func(c *Client) error {
-		c.userAgent = userAgent
-		return nil
-	}
-}
-
-// WithIdleTimeout overrides the timeout of idle connections.
-func WithIdleTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.idleTimeout = timeout
-		return nil
-	}
-}
-
-// WithRequestTimeout overrides the timeout of individual requests.
-func WithRequestTimeout(timeout time.Duration) ClientOption {
-	return func(c *Client) error {
-		c.requestTimeout = timeout
-		return nil
-	}
-}
-
-// WithMaxIdleConnections overrides the amount of idle connections of the
-// underlying http-client.
-func WithMaxIdleConnections(maxIdleConns uint) ClientOption {
-	return func(c *Client) error {
-		c.maxIdleConns = int(maxIdleConns)
-		return nil
-	}
-}
-
-// WithHTTPClient allows overriding the default httpClient, which is
-// automatically created. This is useful for tests.
-func WithHTTPClient(httpClient *http.Client) ClientOption {
-	return func(c *Client) error {
-		c.Client = httpClient
-		return nil
-	}
-}
-
-// WithRequestEditorFn allows setting up a callback function, which will be
-// called right before sending the request. This can be used to mutate the request.
-func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return func(c *Client) error {
-		c.RequestEditor = fn
-		return nil
-	}
-}
-
-// newHTTPClient creates a httpClient for the current connection options.
-func (c *Client) newHTTPClient() *http.Client {
-	return &http.Client{
-		Timeout: c.requestTimeout,
-		Transport: &http.Transport{
-			MaxIdleConns:    c.maxIdleConns,
-			IdleConnTimeout: c.idleTimeout,
-		},
-	}
-}
-
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: &http.Client{},
-			Server: server,
-		},
-	}
-}
-
-// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
-func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client:        &http.Client{},
-			Server:        server,
-			RequestEditor: reqEditorFn,
-		},
 	}
 }
 
@@ -406,7 +342,17 @@ func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,

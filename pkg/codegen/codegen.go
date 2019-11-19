@@ -39,6 +39,48 @@ type Options struct {
 	SkipFmt            bool // Whether to skip go fmt on the generated code
 }
 
+type goImport struct {
+	lookFor     string
+	alias       string
+	packageName string
+}
+
+func (i goImport) String() string {
+	if i.alias != "" {
+		return fmt.Sprintf("%s %q", i.alias, i.packageName)
+	}
+	return fmt.Sprintf("%q", i.packageName)
+}
+
+type goImports []goImport
+
+var (
+	allGoImports = goImports{
+		{lookFor: "base64.", packageName: "encoding/base64"},
+		{lookFor: "bytes.", packageName: "bytes"},
+		{lookFor: "chi.", packageName: "github.com/go-chi/chi"},
+		{lookFor: "context.", packageName: "context"},
+		{lookFor: "echo.", packageName: "github.com/labstack/echo/v4"},
+		{lookFor: "errors.", packageName: "github.com/pkg/errors"},
+		{lookFor: "fmt.", packageName: "fmt"},
+		{lookFor: "gzip.", packageName: "compress/gzip"},
+		{lookFor: "http.", packageName: "net/http"},
+		{lookFor: "io.", packageName: "io"},
+		{lookFor: "ioutil.", packageName: "io/ioutil"},
+		{lookFor: "json.", packageName: "encoding/json"},
+		{lookFor: "openapi3.", packageName: "github.com/getkin/kin-openapi/openapi3"},
+		{lookFor: "openapi_types.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "path.", packageName: "path"},
+		{lookFor: "runtime.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
+		{lookFor: "strings.", packageName: "strings"},
+		{lookFor: "time.Duration", packageName: "time"},
+		{lookFor: "time.Time", packageName: "time"},
+		{lookFor: "url.", packageName: "net/url"},
+		{lookFor: "xml.", packageName: "encoding/xml"},
+		{lookFor: "yaml.", packageName: "gopkg.in/yaml.v2"},
+	}
+)
+
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
@@ -114,71 +156,10 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	// Based on module prefixes, figure out which optional imports are required.
 	// TODO: this is error prone, use tighter matches
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
-		if strings.Contains(str, "time.Duration") {
-			imports = append(imports, "time")
-		}
-		if strings.Contains(str, "time.Time") {
-			imports = append(imports, "time")
-		}
-		if strings.Contains(str, "http.") {
-			imports = append(imports, "net/http")
-		}
-		if strings.Contains(str, "openapi3.") {
-			imports = append(imports, "github.com/getkin/kin-openapi/openapi3")
-		}
-		if strings.Contains(str, "json.") {
-			imports = append(imports, "encoding/json")
-		}
-		if strings.Contains(str, "echo.") {
-			imports = append(imports, "github.com/labstack/echo/v4")
-		}
-		if strings.Contains(str, "io.") {
-			imports = append(imports, "io")
-		}
-		if strings.Contains(str, "ioutil.") {
-			imports = append(imports, "io/ioutil")
-		}
-		if strings.Contains(str, "url.") {
-			imports = append(imports, "net/url")
-		}
-		if strings.Contains(str, "context.") {
-			imports = append(imports, "context")
-		}
-		if strings.Contains(str, "runtime.") {
-			imports = append(imports, "github.com/deepmap/oapi-codegen/pkg/runtime")
-		}
-		if strings.Contains(str, "xmlutil.") {
-			imports = append(imports, "github.com/deepmap/oapi-codegen/pkg/xmlutil")
-		}
-		if strings.Contains(str, "bytes.") {
-			imports = append(imports, "bytes")
-		}
-		if strings.Contains(str, "gzip.") {
-			imports = append(imports, "compress/gzip")
-		}
-		if strings.Contains(str, "base64.") {
-			imports = append(imports, "encoding/base64")
-		}
-		if strings.Contains(str, "openapi3.") {
-			imports = append(imports, "github.com/getkin/kin-openapi/openapi3")
-		}
-		if strings.Contains(str, "strings.") {
-			imports = append(imports, "strings")
-		}
-		if strings.Contains(str, "fmt.") {
-			imports = append(imports, "fmt")
-		}
-		if strings.Contains(str, "yaml.") {
-			imports = append(imports, "gopkg.in/yaml.v2")
-		}
-		if strings.Contains(str, "xml.") {
-			imports = append(imports, "encoding/xml")
-		}
-		if strings.Contains(str, "errors.") {
-			imports = append(imports, "github.com/pkg/errors")
-		}
-		if strings.Contains(str, "chi.") {
-			imports = append(imports, "github.com/go-chi/chi")
+		for _, goImport := range allGoImports {
+			if strings.Contains(str, goImport.lookFor) {
+				imports = append(imports, goImport.String())
+			}
 		}
 	}
 

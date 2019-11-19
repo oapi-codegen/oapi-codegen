@@ -371,10 +371,6 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         //
         client, clientErr := NewClient(context.Background(), []ClientOption{
             WithBaseURL("https://api.deepmap.com"),
-            WithUserAgent("MY_USER_AGENT"),
-            WithMaxIdleConnections(10),
-            WithIdleTimeout(10 * time.Second),
-            WithRequestTimeout(1 * time.Second),
             WithRequestEditorFn(apiKeyProvider.Edit),
         }...,
         )
