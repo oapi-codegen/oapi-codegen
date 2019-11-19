@@ -37,16 +37,6 @@ type Pet struct {
 	Id int64 `json:"id" xml:"id"`
 }
 
-// PetDescribed defines model for PetDescribed.
-type PetDescribed struct {
-	// Embedded struct due to allOf(#/components/schemas/Pet)
-	Pet
-	// Embedded fields due to inline allOf schema
-	Dictionary *struct {
-		Description *string `json:"description,omitempty" xml:"description,omitempty"`
-	} `json:"dictionary,omitempty" xml:"dictionary,omitempty"`
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 
@@ -60,14 +50,8 @@ type FindPetsParams struct {
 // addPetJSONBody defines parameters for AddPet.
 type addPetJSONBody NewPet
 
-// updatePetByIdJSONBody defines parameters for UpdatePetById.
-type updatePetByIdJSONBody PetDescribed
-
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody addPetJSONBody
-
-// UpdatePetByIdRequestBody defines body for UpdatePetById for application/json ContentType.
-type UpdatePetByIdJSONRequestBody updatePetByIdJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
@@ -149,11 +133,6 @@ type ClientInterface interface {
 
 	// FindPetById request
 	FindPetById(ctx context.Context, id int64) (*http.Response, error)
-
-	// UpdatePetById request  with any body
-	UpdatePetByIdWithBody(ctx context.Context, id int64, contentType string, body io.Reader) (*http.Response, error)
-
-	UpdatePetById(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*http.Response, error)
 }
 
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
@@ -218,36 +197,6 @@ func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error
 
 func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {
 	req, err := NewFindPetByIdRequest(c.Server, id)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdatePetByIdWithBody(ctx context.Context, id int64, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewUpdatePetByIdRequestWithBody(c.Server, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdatePetById(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*http.Response, error) {
-	req, err := NewUpdatePetByIdRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -395,43 +344,6 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 	return req, nil
 }
 
-// NewUpdatePetByIdRequest calls the generic UpdatePetById builder with application/json body
-func NewUpdatePetByIdRequest(server string, id int64, body UpdatePetByIdJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewUpdatePetByIdRequestWithBody(server, id, "application/json", bodyReader)
-}
-
-// NewUpdatePetByIdRequestWithBody generates requests for UpdatePetById with any type of body
-func NewUpdatePetByIdRequestWithBody(server string, id int64, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
-	if err != nil {
-		return nil, err
-	}
-
-	queryUrl, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
-
-	req, err := http.NewRequest("PUT", queryUrl.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-	return req, nil
-}
-
 // ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
 	ClientInterface
@@ -553,29 +465,6 @@ func (r findPetByIdResponse) StatusCode() int {
 	return 0
 }
 
-type updatePetByIdResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *PetDescribed
-	JSONDefault  *PetDescribed
-}
-
-// Status returns HTTPResponse.Status
-func (r updatePetByIdResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r updatePetByIdResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // FindPetsWithResponse request returning *FindPetsResponse
 func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *FindPetsParams) (*findPetsResponse, error) {
 	rsp, err := c.FindPets(ctx, params)
@@ -618,23 +507,6 @@ func (c *ClientWithResponses) FindPetByIdWithResponse(ctx context.Context, id in
 		return nil, err
 	}
 	return ParsefindPetByIdResponse(rsp)
-}
-
-// UpdatePetByIdWithBodyWithResponse request with arbitrary body returning *UpdatePetByIdResponse
-func (c *ClientWithResponses) UpdatePetByIdWithBodyWithResponse(ctx context.Context, id int64, contentType string, body io.Reader) (*updatePetByIdResponse, error) {
-	rsp, err := c.UpdatePetByIdWithBody(ctx, id, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseupdatePetByIdResponse(rsp)
-}
-
-func (c *ClientWithResponses) UpdatePetByIdWithResponse(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*updatePetByIdResponse, error) {
-	rsp, err := c.UpdatePetById(ctx, id, body)
-	if err != nil {
-		return nil, err
-	}
-	return ParseupdatePetByIdResponse(rsp)
 }
 
 // ParsefindPetsResponse parses an HTTP response from a FindPetsWithResponse call
@@ -746,37 +618,6 @@ func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
-			return nil, err
-		}
-
-	}
-
-	return response, nil
-}
-
-// ParseupdatePetByIdResponse parses an HTTP response from a UpdatePetByIdWithResponse call
-func ParseupdatePetByIdResponse(rsp *http.Response) (*updatePetByIdResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &updatePetByIdResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &PetDescribed{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
-			return nil, err
-		}
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &PetDescribed{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}

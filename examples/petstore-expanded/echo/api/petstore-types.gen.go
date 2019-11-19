@@ -23,16 +23,6 @@ type Pet struct {
 	Id int64 `json:"id" xml:"id"`
 }
 
-// PetDescribed defines model for PetDescribed.
-type PetDescribed struct {
-	// Embedded struct due to allOf(#/components/schemas/Pet)
-	Pet
-	// Embedded fields due to inline allOf schema
-	Dictionary *struct {
-		Description *string `json:"description,omitempty" xml:"description,omitempty"`
-	} `json:"dictionary,omitempty" xml:"dictionary,omitempty"`
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 
@@ -46,11 +36,5 @@ type FindPetsParams struct {
 // addPetJSONBody defines parameters for AddPet.
 type addPetJSONBody NewPet
 
-// updatePetByIdJSONBody defines parameters for UpdatePetById.
-type updatePetByIdJSONBody PetDescribed
-
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody addPetJSONBody
-
-// UpdatePetByIdRequestBody defines body for UpdatePetById for application/json ContentType.
-type UpdatePetByIdJSONRequestBody updatePetByIdJSONBody

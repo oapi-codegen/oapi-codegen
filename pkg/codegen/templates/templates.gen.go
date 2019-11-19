@@ -5,54 +5,13 @@ import "text/template"
 var templates = map[string]string{"additional-properties-xml.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
 
 // Override default XML handling for {{.TypeName}} to handle AdditionalProperties
-func (a *{{.TypeName}}) UnmarshalXML(b []byte) error {
-    object := make(map[string]xmlutil.RawMessage)
-	err := xml.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-{{range .Schema.Properties}}
-    if raw, found := object["{{.XmlFieldName}}"]; found {
-        err = xml.Unmarshal(raw, &a.{{.GoFieldName}})
-        if err != nil {
-            return errors.Wrap(err, "error reading '{{.XmlFieldName}}'")
-        }
-        delete(object, "{{.XmlFieldName}}")
-    }
-{{end}}
-    if len(object) != 0 {
-        a.AdditionalProperties = make(map[string]{{$addType}})
-        for fieldName, fieldBuf := range object {
-            var fieldVal {{$addType}}
-            err := xml.Unmarshal(fieldBuf, &fieldVal)
-            if err != nil {
-                return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-            }
-            a.AdditionalProperties[fieldName] = fieldVal
-        }
-    }
-	return nil
+func (a *{{.TypeName}}) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+    return errors.New("addditional properties are not supported via xml")
 }
 
 // Override default XML handling for {{.TypeName}} to handle AdditionalProperties
-func (a {{.TypeName}}) MarshalXML() ([]byte, error) {
-    var err error
-    object := make(map[string]xmlutil.RawMessage)
-{{range .Schema.Properties}}
-{{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
-    object["{{.XmlFieldName}}"], err = xml.Marshal(a.{{.GoFieldName}})
-    if err != nil {
-        return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '{{.XmlFieldName}}'"))
-    }
-{{if not .Required}} }{{end}}
-{{end}}
-    for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = xml.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return xml.Marshal(object)
+func (a {{.TypeName}}) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+    return errors.New("addditional properties are not supported via xml")
 }
 {{end}}
 `,
@@ -922,4 +881,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-

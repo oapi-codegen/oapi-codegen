@@ -97,11 +97,6 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pet)
 }
 
-func (p *PetStore) UpdatePetById(w http.ResponseWriter, r *http.Request) {
-	// TODO implement me
-	// id := r.Context().Value("id").(int64)
-}
-
 func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value("id").(int64)
 
