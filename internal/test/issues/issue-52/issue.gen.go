@@ -95,12 +95,12 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 
 // Override default XML handling for Document_Fields to handle AdditionalProperties
 func (a *Document_Fields) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for Document_Fields to handle AdditionalProperties
 func (a Document_Fields) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

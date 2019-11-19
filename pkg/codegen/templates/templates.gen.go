@@ -6,12 +6,12 @@ var templates = map[string]string{"additional-properties-xml.tmpl": `{{range .Ty
 
 // Override default XML handling for {{.TypeName}} to handle AdditionalProperties
 func (a *{{.TypeName}}) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-    return errors.New("addditional properties are not supported via xml")
+    return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for {{.TypeName}} to handle AdditionalProperties
 func (a {{.TypeName}}) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-    return errors.New("addditional properties are not supported via xml")
+    return errors.New("additional properties are not supported via xml")
 }
 {{end}}
 `,

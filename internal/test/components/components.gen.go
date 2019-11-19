@@ -365,42 +365,42 @@ func (a BodyWithAddPropsJSONBody_Inner) MarshalJSON() ([]byte, error) {
 
 // Override default XML handling for ParamsWithAddPropsParams_P1 to handle AdditionalProperties
 func (a *ParamsWithAddPropsParams_P1) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for ParamsWithAddPropsParams_P1 to handle AdditionalProperties
 func (a ParamsWithAddPropsParams_P1) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for ParamsWithAddPropsParams_P2_Inner to handle AdditionalProperties
 func (a *ParamsWithAddPropsParams_P2_Inner) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for ParamsWithAddPropsParams_P2_Inner to handle AdditionalProperties
 func (a ParamsWithAddPropsParams_P2_Inner) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
 func (a *BodyWithAddPropsJSONBody) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
 func (a BodyWithAddPropsJSONBody) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for BodyWithAddPropsJSONBody_Inner to handle AdditionalProperties
 func (a *BodyWithAddPropsJSONBody_Inner) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for BodyWithAddPropsJSONBody_Inner to handle AdditionalProperties
 func (a BodyWithAddPropsJSONBody_Inner) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Getter for additional properties for AdditionalPropertiesObject1. Returns the specified
@@ -763,52 +763,52 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 
 // Override default XML handling for AdditionalPropertiesObject1 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject1) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject1 to handle AdditionalProperties
 func (a AdditionalPropertiesObject1) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject3 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject3) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject3 to handle AdditionalProperties
 func (a AdditionalPropertiesObject3) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject4 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject4) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject4 to handle AdditionalProperties
 func (a AdditionalPropertiesObject4) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject4_Inner to handle AdditionalProperties
 func (a *AdditionalPropertiesObject4_Inner) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject4_Inner to handle AdditionalProperties
 func (a AdditionalPropertiesObject4_Inner) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject5 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject5) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // Override default XML handling for AdditionalPropertiesObject5 to handle AdditionalProperties
 func (a AdditionalPropertiesObject5) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return errors.New("addditional properties are not supported via xml")
+	return errors.New("additional properties are not supported via xml")
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
