@@ -893,7 +893,7 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 }
 
 // Override default XML handling for AdditionalPropertiesObject1 to handle AdditionalProperties
-func (a *AdditionalPropertiesObject1) UnmarshalXML(b []byte) error {
+func (a *AdditionalPropertiesObject1) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	object := make(map[string]xmlutil.RawMessage)
 	err := xml.Unmarshal(b, &object)
 	if err != nil {

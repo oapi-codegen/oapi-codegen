@@ -183,13 +183,6 @@ components:
               properties:
                 description:
                   type: string
-              additionalProperties:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                  text:
-                    type: string
     Error:
       required:
         - code
