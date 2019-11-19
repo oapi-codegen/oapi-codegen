@@ -386,7 +386,7 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClientWithResponses creates a new NewClientWithResponses, which wraps
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
 	client, err := NewClient(server, opts...)
