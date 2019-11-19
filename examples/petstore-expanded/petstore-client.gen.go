@@ -10,7 +10,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
@@ -567,9 +566,13 @@ func NewUpdatePetByIdRequestWithBody(server string, id int64, contentType string
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
 
-	req, err := http.NewRequest("PUT", queryUrl, body)
+	req, err := http.NewRequest("PUT", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
