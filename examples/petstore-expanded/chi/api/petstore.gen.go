@@ -8,14 +8,10 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
-	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
-	"github.com/pkg/errors"
 	"net/http"
 	"strings"
 )
@@ -45,16 +41,9 @@ type PetDescribed struct {
 	// Embedded struct due to allOf(#/components/schemas/Pet)
 	Pet
 	// Embedded fields due to inline allOf schema
-	Dictionary *PetDescribed_Dictionary `json:"dictionary,omitempty" xml:"dictionary,omitempty"`
-}
-
-// PetDescribed_Dictionary defines model for PetDescribed.Dictionary.
-type PetDescribed_Dictionary struct {
-	Description          *string `json:"description,omitempty" xml:"description,omitempty"`
-	AdditionalProperties map[string]struct {
-		Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-		Text *string `json:"text,omitempty" xml:"text,omitempty"`
-	} `json:"-" xml:"-"`
+	Dictionary *struct {
+		Description *string `json:"description,omitempty" xml:"description,omitempty"`
+	} `json:"dictionary,omitempty" xml:"dictionary,omitempty"`
 }
 
 // FindPetsParams defines parameters for FindPets.
@@ -78,146 +67,6 @@ type AddPetJSONRequestBody addPetJSONBody
 
 // UpdatePetByIdRequestBody defines body for UpdatePetById for application/json ContentType.
 type UpdatePetByIdJSONRequestBody updatePetByIdJSONBody
-
-// Getter for additional properties for PetDescribed_Dictionary. Returns the specified
-// element and whether it was found
-func (a PetDescribed_Dictionary) Get(fieldName string) (value struct {
-	Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-	Text *string `json:"text,omitempty" xml:"text,omitempty"`
-}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for PetDescribed_Dictionary
-func (a *PetDescribed_Dictionary) Set(fieldName string, value struct {
-	Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-	Text *string `json:"text,omitempty" xml:"text,omitempty"`
-}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]struct {
-			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-			Text *string `json:"text,omitempty" xml:"text,omitempty"`
-		})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for PetDescribed_Dictionary to handle AdditionalProperties
-func (a *PetDescribed_Dictionary) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["description"]; found {
-		err = json.Unmarshal(raw, &a.Description)
-		if err != nil {
-			return errors.Wrap(err, "error reading 'description'")
-		}
-		delete(object, "description")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]struct {
-			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-			Text *string `json:"text,omitempty" xml:"text,omitempty"`
-		})
-		for fieldName, fieldBuf := range object {
-			var fieldVal struct {
-				Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-				Text *string `json:"text,omitempty" xml:"text,omitempty"`
-			}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for PetDescribed_Dictionary to handle AdditionalProperties
-func (a PetDescribed_Dictionary) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.Description != nil {
-		object["description"], err = json.Marshal(a.Description)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'description'"))
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Override default XML handling for PetDescribed_Dictionary to handle AdditionalProperties
-func (a *PetDescribed_Dictionary) UnmarshalXML(b []byte) error {
-	object := make(map[string]xmlutil.RawMessage)
-	err := xml.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["description"]; found {
-		err = xml.Unmarshal(raw, &a.Description)
-		if err != nil {
-			return errors.Wrap(err, "error reading 'description'")
-		}
-		delete(object, "description")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]struct {
-			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-			Text *string `json:"text,omitempty" xml:"text,omitempty"`
-		})
-		for fieldName, fieldBuf := range object {
-			var fieldVal struct {
-				Code *int    `json:"code,omitempty" xml:"code,omitempty"`
-				Text *string `json:"text,omitempty" xml:"text,omitempty"`
-			}
-			err := xml.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default XML handling for PetDescribed_Dictionary to handle AdditionalProperties
-func (a PetDescribed_Dictionary) MarshalXML() ([]byte, error) {
-	var err error
-	object := make(map[string]xmlutil.RawMessage)
-
-	if a.Description != nil {
-		object["description"], err = xml.Marshal(a.Description)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'description'"))
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = xml.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return xml.Marshal(object)
-}
 
 type ServerInterface interface {
 	//  (GET /pets)
@@ -381,35 +230,34 @@ func Handler(si ServerInterface) http.Handler {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"7v8TAAD//45Jts8LFQAA",
+	"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",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
