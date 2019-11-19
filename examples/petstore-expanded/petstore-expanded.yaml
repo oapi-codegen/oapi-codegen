@@ -142,7 +142,11 @@ components:
           type: string
         tag:
           type: string
-
+      additionalProperties:
+        type: object
+        properties:
+          description:
+            type: string
     Error:
       required:
         - code
