@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"

@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/pkg/errors"
 )
 

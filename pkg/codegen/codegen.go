@@ -70,6 +70,7 @@ var (
 		{lookFor: "json.", packageName: "encoding/json"},
 		{lookFor: "openapi3.", packageName: "github.com/getkin/kin-openapi/openapi3"},
 		{lookFor: "openapi_types.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "xmlutil.", packageName: "github.com/deepmap/oapi-codegen/pkg/xmlutil"},
 		{lookFor: "path.", packageName: "path"},
 		{lookFor: "runtime.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
 		{lookFor: "strings.", packageName: "strings"},
