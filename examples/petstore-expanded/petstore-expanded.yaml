@@ -102,6 +102,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    put:
+      description: Updates a pet
+      operationId: updatePetById
+      parameters:
+        - name: id
+          in: path
+          description: ID of pet to fetch
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        description: Pet to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetDescribed'
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetDescribed'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetDescribed'
     delete:
       description: deletes a single pet based on the ID supplied
       operationId: deletePet
@@ -142,11 +173,23 @@ components:
           type: string
         tag:
           type: string
-      additionalProperties:
-        type: object
-        properties:
-          description:
-            type: string
+
+    PetDescribed:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            dictionary:
+              type: object
+              properties:
+                description:
+                  type: string
+              additionalProperties:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                  text:
+                    type: string
     Error:
       required:
         - code

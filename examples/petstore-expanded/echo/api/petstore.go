@@ -80,6 +80,11 @@ func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
 	return ctx.JSON(http.StatusOK, result)
 }
 
+func (p *PetStore) UpdatePetById(ctx echo.Context, id int64) error {
+	// TODO implement me
+	return nil
+}
+
 func (p *PetStore) AddPet(ctx echo.Context) error {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet

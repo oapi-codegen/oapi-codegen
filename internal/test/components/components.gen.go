@@ -9,8 +9,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -27,7 +29,7 @@ type AdditionalPropertiesObject1 struct {
 	Id                   int            `json:"id" xml:"id"`
 	Name                 string         `json:"name" xml:"name"`
 	Optional             *string        `json:"optional,omitempty" xml:"optional,omitempty"`
-	AdditionalProperties map[string]int `json:"-"`
+	AdditionalProperties map[string]int `json:"-" xml:"-"`
 }
 
 // AdditionalPropertiesObject2 defines model for AdditionalPropertiesObject2.
@@ -39,25 +41,25 @@ type AdditionalPropertiesObject2 struct {
 // AdditionalPropertiesObject3 defines model for AdditionalPropertiesObject3.
 type AdditionalPropertiesObject3 struct {
 	Name                 string                 `json:"name" xml:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AdditionalProperties map[string]interface{} `json:"-" xml:"-"`
 }
 
 // AdditionalPropertiesObject4 defines model for AdditionalPropertiesObject4.
 type AdditionalPropertiesObject4 struct {
 	Inner                AdditionalPropertiesObject4_Inner `json:"inner" xml:"inner"`
 	Name                 string                            `json:"name" xml:"name"`
-	AdditionalProperties map[string]interface{}            `json:"-"`
+	AdditionalProperties map[string]interface{}            `json:"-" xml:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
 	Name                 string                 `json:"name" xml:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AdditionalProperties map[string]interface{} `json:"-" xml:"-"`
 }
 
 // AdditionalPropertiesObject5 defines model for AdditionalPropertiesObject5.
 type AdditionalPropertiesObject5 struct {
-	AdditionalProperties map[string]SchemaObject `json:"-"`
+	AdditionalProperties map[string]SchemaObject `json:"-" xml:"-"`
 }
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
@@ -88,7 +90,7 @@ type RequestBody struct {
 
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams_P1 struct {
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AdditionalProperties map[string]interface{} `json:"-" xml:"-"`
 }
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
@@ -106,19 +108,19 @@ type ParamsWithAddPropsParams struct {
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams_P2_Inner struct {
-	AdditionalProperties map[string]string `json:"-"`
+	AdditionalProperties map[string]string `json:"-" xml:"-"`
 }
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
 	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner" xml:"inner"`
 	Name                 string                         `json:"name" xml:"name"`
-	AdditionalProperties map[string]interface{}         `json:"-"`
+	AdditionalProperties map[string]interface{}         `json:"-" xml:"-"`
 }
 
 // BodyWithAddPropsJSONBody_Inner defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody_Inner struct {
-	AdditionalProperties map[string]int `json:"-"`
+	AdditionalProperties map[string]int `json:"-" xml:"-"`
 }
 
 // BodyWithAddPropsRequestBody defines body for BodyWithAddProps for application/json ContentType.
@@ -360,6 +362,176 @@ func (a BodyWithAddPropsJSONBody_Inner) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
+}
+
+// Override default XML handling for ParamsWithAddPropsParams_P1 to handle AdditionalProperties
+func (a *ParamsWithAddPropsParams_P1) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for ParamsWithAddPropsParams_P1 to handle AdditionalProperties
+func (a ParamsWithAddPropsParams_P1) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for ParamsWithAddPropsParams_P2_Inner to handle AdditionalProperties
+func (a *ParamsWithAddPropsParams_P2_Inner) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for ParamsWithAddPropsParams_P2_Inner to handle AdditionalProperties
+func (a ParamsWithAddPropsParams_P2_Inner) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
+func (a *BodyWithAddPropsJSONBody) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["inner"]; found {
+		err = xml.Unmarshal(raw, &a.Inner)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'inner'")
+		}
+		delete(object, "inner")
+	}
+
+	if raw, found := object["name"]; found {
+		err = xml.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'name'")
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
+func (a BodyWithAddPropsJSONBody) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	object["inner"], err = xml.Marshal(a.Inner)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'inner'"))
+	}
+
+	object["name"], err = xml.Marshal(a.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for BodyWithAddPropsJSONBody_Inner to handle AdditionalProperties
+func (a *BodyWithAddPropsJSONBody_Inner) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]int)
+		for fieldName, fieldBuf := range object {
+			var fieldVal int
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for BodyWithAddPropsJSONBody_Inner to handle AdditionalProperties
+func (a BodyWithAddPropsJSONBody_Inner) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
 }
 
 // Getter for additional properties for AdditionalPropertiesObject1. Returns the specified
@@ -718,6 +890,279 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
+}
+
+// Override default XML handling for AdditionalPropertiesObject1 to handle AdditionalProperties
+func (a *AdditionalPropertiesObject1) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = xml.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'id'")
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["name"]; found {
+		err = xml.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'name'")
+		}
+		delete(object, "name")
+	}
+
+	if raw, found := object["optional"]; found {
+		err = xml.Unmarshal(raw, &a.Optional)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'optional'")
+		}
+		delete(object, "optional")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]int)
+		for fieldName, fieldBuf := range object {
+			var fieldVal int
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for AdditionalPropertiesObject1 to handle AdditionalProperties
+func (a AdditionalPropertiesObject1) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	object["id"], err = xml.Marshal(a.Id)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'id'"))
+	}
+
+	object["name"], err = xml.Marshal(a.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
+	}
+
+	if a.Optional != nil {
+		object["optional"], err = xml.Marshal(a.Optional)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'optional'"))
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for AdditionalPropertiesObject3 to handle AdditionalProperties
+func (a *AdditionalPropertiesObject3) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["name"]; found {
+		err = xml.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'name'")
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for AdditionalPropertiesObject3 to handle AdditionalProperties
+func (a AdditionalPropertiesObject3) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	object["name"], err = xml.Marshal(a.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for AdditionalPropertiesObject4 to handle AdditionalProperties
+func (a *AdditionalPropertiesObject4) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["inner"]; found {
+		err = xml.Unmarshal(raw, &a.Inner)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'inner'")
+		}
+		delete(object, "inner")
+	}
+
+	if raw, found := object["name"]; found {
+		err = xml.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'name'")
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for AdditionalPropertiesObject4 to handle AdditionalProperties
+func (a AdditionalPropertiesObject4) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	object["inner"], err = xml.Marshal(a.Inner)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'inner'"))
+	}
+
+	object["name"], err = xml.Marshal(a.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for AdditionalPropertiesObject4_Inner to handle AdditionalProperties
+func (a *AdditionalPropertiesObject4_Inner) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["name"]; found {
+		err = xml.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'name'")
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for AdditionalPropertiesObject4_Inner to handle AdditionalProperties
+func (a AdditionalPropertiesObject4_Inner) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	object["name"], err = xml.Marshal(a.Name)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
+}
+
+// Override default XML handling for AdditionalPropertiesObject5 to handle AdditionalProperties
+func (a *AdditionalPropertiesObject5) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]SchemaObject)
+		for fieldName, fieldBuf := range object {
+			var fieldVal SchemaObject
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for AdditionalPropertiesObject5 to handle AdditionalProperties
+func (a AdditionalPropertiesObject5) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

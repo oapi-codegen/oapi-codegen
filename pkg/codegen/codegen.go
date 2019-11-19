@@ -147,6 +147,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		if strings.Contains(str, "runtime.") {
 			imports = append(imports, "github.com/deepmap/oapi-codegen/pkg/runtime")
 		}
+		if strings.Contains(str, "xmlutil.") {
+			imports = append(imports, "github.com/deepmap/oapi-codegen/pkg/xmlutil")
+		}
 		if strings.Contains(str, "bytes.") {
 			imports = append(imports, "bytes")
 		}
@@ -491,6 +494,10 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 	}
 
 	err := t.ExecuteTemplate(w, "additional-properties.tmpl", context)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating additional properties code")
+	}
+	err = t.ExecuteTemplate(w, "additional-properties-xml.tmpl", context)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating additional properties code")
 	}

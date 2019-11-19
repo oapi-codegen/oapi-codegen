@@ -7,8 +7,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
@@ -26,11 +28,8 @@ type Error struct {
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-	Name                 string  `json:"name" xml:"name"`
-	Tag                  *string `json:"tag,omitempty" xml:"tag,omitempty"`
-	AdditionalProperties map[string]struct {
-		Description *string `json:"description,omitempty" xml:"description,omitempty"`
-	} `json:"-"`
+	Name string  `json:"name" xml:"name"`
+	Tag  *string `json:"tag,omitempty" xml:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
@@ -39,6 +38,23 @@ type Pet struct {
 	NewPet
 	// Embedded fields due to inline allOf schema
 	Id int64 `json:"id" xml:"id"`
+}
+
+// PetDescribed defines model for PetDescribed.
+type PetDescribed struct {
+	// Embedded struct due to allOf(#/components/schemas/Pet)
+	Pet
+	// Embedded fields due to inline allOf schema
+	Dictionary *PetDescribed_Dictionary `json:"dictionary,omitempty" xml:"dictionary,omitempty"`
+}
+
+// PetDescribed_Dictionary defines model for PetDescribed.Dictionary.
+type PetDescribed_Dictionary struct {
+	Description          *string `json:"description,omitempty" xml:"description,omitempty"`
+	AdditionalProperties map[string]struct {
+		Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+		Text *string `json:"text,omitempty" xml:"text,omitempty"`
+	} `json:"-" xml:"-"`
 }
 
 // FindPetsParams defines parameters for FindPets.
@@ -54,13 +70,20 @@ type FindPetsParams struct {
 // addPetJSONBody defines parameters for AddPet.
 type addPetJSONBody NewPet
 
+// updatePetByIdJSONBody defines parameters for UpdatePetById.
+type updatePetByIdJSONBody PetDescribed
+
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody addPetJSONBody
 
-// Getter for additional properties for NewPet. Returns the specified
+// UpdatePetByIdRequestBody defines body for UpdatePetById for application/json ContentType.
+type UpdatePetByIdJSONRequestBody updatePetByIdJSONBody
+
+// Getter for additional properties for PetDescribed_Dictionary. Returns the specified
 // element and whether it was found
-func (a NewPet) Get(fieldName string) (value struct {
-	Description *string `json:"description,omitempty" xml:"description,omitempty"`
+func (a PetDescribed_Dictionary) Get(fieldName string) (value struct {
+	Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+	Text *string `json:"text,omitempty" xml:"text,omitempty"`
 }, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
@@ -68,49 +91,45 @@ func (a NewPet) Get(fieldName string) (value struct {
 	return
 }
 
-// Setter for additional properties for NewPet
-func (a *NewPet) Set(fieldName string, value struct {
-	Description *string `json:"description,omitempty" xml:"description,omitempty"`
+// Setter for additional properties for PetDescribed_Dictionary
+func (a *PetDescribed_Dictionary) Set(fieldName string, value struct {
+	Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+	Text *string `json:"text,omitempty" xml:"text,omitempty"`
 }) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]struct {
-			Description *string `json:"description,omitempty" xml:"description,omitempty"`
+			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+			Text *string `json:"text,omitempty" xml:"text,omitempty"`
 		})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for NewPet to handle AdditionalProperties
-func (a *NewPet) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for PetDescribed_Dictionary to handle AdditionalProperties
+func (a *PetDescribed_Dictionary) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
+	if raw, found := object["description"]; found {
+		err = json.Unmarshal(raw, &a.Description)
 		if err != nil {
-			return errors.Wrap(err, "error reading 'name'")
+			return errors.Wrap(err, "error reading 'description'")
 		}
-		delete(object, "name")
-	}
-
-	if raw, found := object["tag"]; found {
-		err = json.Unmarshal(raw, &a.Tag)
-		if err != nil {
-			return errors.Wrap(err, "error reading 'tag'")
-		}
-		delete(object, "tag")
+		delete(object, "description")
 	}
 
 	if len(object) != 0 {
 		a.AdditionalProperties = make(map[string]struct {
-			Description *string `json:"description,omitempty" xml:"description,omitempty"`
+			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+			Text *string `json:"text,omitempty" xml:"text,omitempty"`
 		})
 		for fieldName, fieldBuf := range object {
 			var fieldVal struct {
-				Description *string `json:"description,omitempty" xml:"description,omitempty"`
+				Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+				Text *string `json:"text,omitempty" xml:"text,omitempty"`
 			}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -122,20 +141,15 @@ func (a *NewPet) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for NewPet to handle AdditionalProperties
-func (a NewPet) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for PetDescribed_Dictionary to handle AdditionalProperties
+func (a PetDescribed_Dictionary) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["name"], err = json.Marshal(a.Name)
-	if err != nil {
-		return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'name'"))
-	}
-
-	if a.Tag != nil {
-		object["tag"], err = json.Marshal(a.Tag)
+	if a.Description != nil {
+		object["description"], err = json.Marshal(a.Description)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'tag'"))
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'description'"))
 		}
 	}
 
@@ -146,6 +160,63 @@ func (a NewPet) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
+}
+
+// Override default XML handling for PetDescribed_Dictionary to handle AdditionalProperties
+func (a *PetDescribed_Dictionary) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["description"]; found {
+		err = xml.Unmarshal(raw, &a.Description)
+		if err != nil {
+			return errors.Wrap(err, "error reading 'description'")
+		}
+		delete(object, "description")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]struct {
+			Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+			Text *string `json:"text,omitempty" xml:"text,omitempty"`
+		})
+		for fieldName, fieldBuf := range object {
+			var fieldVal struct {
+				Code *int    `json:"code,omitempty" xml:"code,omitempty"`
+				Text *string `json:"text,omitempty" xml:"text,omitempty"`
+			}
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for PetDescribed_Dictionary to handle AdditionalProperties
+func (a PetDescribed_Dictionary) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	if a.Description != nil {
+		object["description"], err = xml.Marshal(a.Description)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling 'description'"))
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -195,6 +266,11 @@ type ClientInterface interface {
 
 	// FindPetById request
 	FindPetById(ctx context.Context, id int64) (*http.Response, error)
+
+	// UpdatePetById request  with any body
+	UpdatePetByIdWithBody(ctx context.Context, id int64, contentType string, body io.Reader) (*http.Response, error)
+
+	UpdatePetById(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*http.Response, error)
 }
 
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
@@ -259,6 +335,36 @@ func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error
 
 func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {
 	req, err := NewFindPetByIdRequest(c.Server, id)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePetByIdWithBody(ctx context.Context, id int64, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewUpdatePetByIdRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UpdatePetById(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*http.Response, error) {
+	req, err := NewUpdatePetByIdRequest(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -379,6 +485,39 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
+	return req, nil
+}
+
+// NewUpdatePetByIdRequest calls the generic UpdatePetById builder with application/json body
+func NewUpdatePetByIdRequest(server string, id int64, body UpdatePetByIdJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUpdatePetByIdRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewUpdatePetByIdRequestWithBody generates requests for UpdatePetById with any type of body
+func NewUpdatePetByIdRequestWithBody(server string, id int64, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/pets/%s", server, pathParam0)
+
+	req, err := http.NewRequest("PUT", queryUrl, body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -604,6 +743,29 @@ func (r findPetByIdResponse) StatusCode() int {
 	return 0
 }
 
+type updatePetByIdResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PetDescribed
+	JSONDefault  *PetDescribed
+}
+
+// Status returns HTTPResponse.Status
+func (r updatePetByIdResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r updatePetByIdResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // FindPetsWithResponse request returning *FindPetsResponse
 func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *FindPetsParams) (*findPetsResponse, error) {
 	rsp, err := c.FindPets(ctx, params)
@@ -646,6 +808,23 @@ func (c *ClientWithResponses) FindPetByIdWithResponse(ctx context.Context, id in
 		return nil, err
 	}
 	return ParsefindPetByIdResponse(rsp)
+}
+
+// UpdatePetByIdWithBodyWithResponse request with arbitrary body returning *UpdatePetByIdResponse
+func (c *ClientWithResponses) UpdatePetByIdWithBodyWithResponse(ctx context.Context, id int64, contentType string, body io.Reader) (*updatePetByIdResponse, error) {
+	rsp, err := c.UpdatePetByIdWithBody(ctx, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseupdatePetByIdResponse(rsp)
+}
+
+func (c *ClientWithResponses) UpdatePetByIdWithResponse(ctx context.Context, id int64, body UpdatePetByIdJSONRequestBody) (*updatePetByIdResponse, error) {
+	rsp, err := c.UpdatePetById(ctx, id, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseupdatePetByIdResponse(rsp)
 }
 
 // ParsefindPetsResponse parses an HTTP response from a FindPetsWithResponse call
@@ -757,6 +936,37 @@ func ParsefindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		response.JSONDefault = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return response, nil
+}
+
+// ParseupdatePetByIdResponse parses an HTTP response from a UpdatePetByIdWithResponse call
+func ParseupdatePetByIdResponse(rsp *http.Response) (*updatePetByIdResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &updatePetByIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &PetDescribed{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		response.JSONDefault = &PetDescribed{}
 		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
 			return nil, err
 		}

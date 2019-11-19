@@ -9,8 +9,10 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/deepmap/oapi-codegen/pkg/xmlutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
@@ -31,7 +33,7 @@ type Document struct {
 
 // Document_Fields defines model for Document.Fields.
 type Document_Fields struct {
-	AdditionalProperties map[string]Value `json:"-"`
+	AdditionalProperties map[string]Value `json:"-" xml:"-"`
 }
 
 // Value defines model for Value.
@@ -91,6 +93,42 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
+}
+
+// Override default XML handling for Document_Fields to handle AdditionalProperties
+func (a *Document_Fields) UnmarshalXML(b []byte) error {
+	object := make(map[string]xmlutil.RawMessage)
+	err := xml.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]Value)
+		for fieldName, fieldBuf := range object {
+			var fieldVal Value
+			err := xml.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default XML handling for Document_Fields to handle AdditionalProperties
+func (a Document_Fields) MarshalXML() ([]byte, error) {
+	var err error
+	object := make(map[string]xmlutil.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = xml.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return xml.Marshal(object)
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

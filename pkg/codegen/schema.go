@@ -74,11 +74,11 @@ func (p Property) GoTypeDef() string {
 }
 
 type TypeDefinition struct {
-	TypeName string
-	JsonName string
-	XmlName  string
+	TypeName     string
+	JsonName     string
+	XmlName      string
 	ResponseName string
-	Schema   Schema
+	Schema       Schema
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -321,7 +321,7 @@ func GenStructFromSchema(schema Schema) string {
 		}
 
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\" xml:\"-\"`", addPropsType))
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
