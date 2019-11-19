@@ -1,7 +1,5 @@
 module github.com/deepmap/oapi-codegen
 
-go 1.13
-
 require (
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
 	github.com/getkin/kin-openapi v0.2.0
@@ -21,3 +19,5 @@ require (
 	golang.org/x/tools v0.0.0-20190724185037-8aa4eac1a7c1 // indirect
 	gopkg.in/yaml.v2 v2.2.5 // indirect
 )
+
+go 1.13
