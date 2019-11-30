@@ -381,6 +381,9 @@ func GetPathFromServer(s *openapi3.Server) (string, error) {
 	}
 
 	path := u.Path
+	if path == "" {
+		path = "/"
+	}
 
 	if len(s.Variables) != 0 {
 		for k, variable := range s.Variables {

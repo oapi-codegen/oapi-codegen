@@ -363,7 +363,7 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 func Handler(si ServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Route("", func(r chi.Router) {
+	r.Route("/", func(r chi.Router) {
 		r.With(GetSimpleCtx).Get("/get-simple", si.GetSimple)
 		r.With(GetWithArgsCtx).Get("/get-with-args", si.GetWithArgs)
 		r.With(GetWithReferencesCtx).Get("/get-with-references/{global_argument}/{argument}", si.GetWithReferences)

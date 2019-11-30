@@ -35,7 +35,7 @@ func TestPetStore(t *testing.T) {
 			Tag:  &tag,
 		}
 
-		rr := DoJson(h, "POST", "/pets", newPet)
+		rr := DoJson(h, "POST", "/api/pets", newPet)
 		assert.Equal(t, http.StatusCreated, rr.Code)
 
 		var resultPet api.Pet
@@ -51,7 +51,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		store.Pets[pet.Id] = pet
-		rr := DoJson(h, "GET", fmt.Sprintf("/pets/%d", pet.Id), nil)
+		rr := DoJson(h, "GET", fmt.Sprintf("/api/pets/%d", pet.Id), nil)
 
 		var resultPet api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&resultPet)
@@ -60,7 +60,7 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("Pet not found", func(t *testing.T) {
-		rr := DoJson(h, "GET", "/pets/27179095781", nil)
+		rr := DoJson(h, "GET", "/api/pets/27179095781", nil)
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
@@ -76,7 +76,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		// Now, list all pets, we should have two
-		rr := DoJson(h, "GET", "/pets", nil)
+		rr := DoJson(h, "GET", "/api/pets", nil)
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -98,7 +98,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		// Filter pets by tag, we should have 1
-		rr := DoJson(h, "GET", "/pets?tags=TagOfFido", nil)
+		rr := DoJson(h, "GET", "/api/pets?tags=TagOfFido", nil)
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -114,7 +114,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		// Filter pets by non existent tag, we should have 0
-		rr := DoJson(h, "GET", "/pets?tags=NotExists", nil)
+		rr := DoJson(h, "GET", "/api/pets?tags=NotExists", nil)
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -130,7 +130,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		// Let's delete non-existent pet
-		rr := DoJson(h, "DELETE", "/pets/7", nil)
+		rr := DoJson(h, "DELETE", "/api/pets/7", nil)
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
@@ -139,15 +139,15 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 		// Now, delete both real pets
-		rr = DoJson(h, "DELETE", "/pets/1", nil)
+		rr = DoJson(h, "DELETE", "/api/pets/1", nil)
 		assert.Equal(t, http.StatusNoContent, rr.Code)
 
-		rr = DoJson(h, "DELETE", "/pets/2", nil)
+		rr = DoJson(h, "DELETE", "/api/pets/2", nil)
 		assert.Equal(t, http.StatusNoContent, rr.Code)
 
 		// Should have no pets left.
 		var petList []api.Pet
-		rr = DoJson(h, "GET", "/pets", nil)
+		rr = DoJson(h, "GET", "/api/pets", nil)
 		assert.Equal(t, http.StatusOK, rr.Code)
 		err = json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
