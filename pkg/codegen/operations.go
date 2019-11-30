@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"net/url"
 	"strings"
 	"text/template"
 	"unicode"
@@ -193,6 +194,12 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
+type OperationDefenitions struct {
+	BasePath string
+
+	Defenitions []OperationDefinition
+}
+
 // This structure describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
@@ -367,9 +374,48 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 	return out
 }
 
-// OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
-	var operations []OperationDefinition
+func GetPathFromServer(s *openapi3.Server) (string, error) {
+	u, err := url.Parse(s.URL)
+	if err != nil {
+		return "/", err
+	}
+
+	path := u.Path
+
+	if len(s.Variables) != 0 {
+		for k, variable := range s.Variables {
+			if variable != nil {
+				if variableDefault, ok := variable.Default.(string); ok {
+					path = strings.Replace(path, fmt.Sprintf("{%s}", k), variableDefault, -1)
+				}
+			}
+		}
+	}
+
+	if strings.HasPrefix(path, "//") {
+		return path, errors.Errorf(`basePath starting from two slashes: %s`, path)
+	}
+
+	return path, nil
+}
+
+// GetOperationDefinitions returns all operations for a swagger definition.
+func GetOperationDefinitions(swagger *openapi3.Swagger) (*OperationDefenitions, error) {
+	defenitions := &OperationDefenitions{
+		BasePath:    "/", // Default base path
+		Defenitions: []OperationDefinition{},
+	}
+
+	if len(swagger.Servers) != 0 {
+		// TODO: now we are using only first server, we should provide a
+		// 	 way which server to choose
+		path, err := GetPathFromServer(swagger.Servers[0])
+		if err != nil {
+			return nil, err
+		}
+
+		defenitions.BasePath = path
+	}
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
@@ -456,10 +502,10 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
-			operations = append(operations, opDef)
+			defenitions.Defenitions = append(defenitions.Defenitions, opDef)
 		}
 	}
-	return operations, nil
+	return defenitions, nil
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
@@ -650,21 +696,21 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateChiServer(t *template.Template, defenitions *OperationDefenitions) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
+	err := t.ExecuteTemplate(w, "chi-interface.tmpl", defenitions)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server interface")
 	}
 
-	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
+	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", defenitions)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server middleware")
 	}
 
-	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
+	err = t.ExecuteTemplate(w, "chi-handler.tmpl", defenitions)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server http handler")
 	}

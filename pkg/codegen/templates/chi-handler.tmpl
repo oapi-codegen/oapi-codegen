@@ -2,10 +2,11 @@
 func Handler(si ServerInterface) http.Handler {
   r := chi.NewRouter()
 
-{{range .}}r.Group(func(r chi.Router) {
-  r.Use({{.OperationId}}Ctx)
-  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
-})
-{{end}}
+    r.Route("{{.BasePath}}", func(r chi.Router) {
+        {{- range .Defenitions }}
+            r.With({{.OperationId}}Ctx).{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+        {{- end}}
+    })
+
   return r
 }

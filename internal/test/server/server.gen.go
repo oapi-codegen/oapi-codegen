@@ -363,33 +363,14 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 func Handler(si ServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Group(func(r chi.Router) {
-		r.Use(GetSimpleCtx)
-		r.Get("/get-simple", si.GetSimple)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetWithArgsCtx)
-		r.Get("/get-with-args", si.GetWithArgs)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetWithReferencesCtx)
-		r.Get("/get-with-references/{global_argument}/{argument}", si.GetWithReferences)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(GetWithContentTypeCtx)
-		r.Get("/get-with-type/{content_type}", si.GetWithContentType)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(CreateResourceCtx)
-		r.Post("/resource/{argument}", si.CreateResource)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(CreateResource2Ctx)
-		r.Post("/resource2/{inline_argument}", si.CreateResource2)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(UpdateResource3Ctx)
-		r.Put("/resource3/{fallthrough}", si.UpdateResource3)
+	r.Route("", func(r chi.Router) {
+		r.With(GetSimpleCtx).Get("/get-simple", si.GetSimple)
+		r.With(GetWithArgsCtx).Get("/get-with-args", si.GetWithArgs)
+		r.With(GetWithReferencesCtx).Get("/get-with-references/{global_argument}/{argument}", si.GetWithReferences)
+		r.With(GetWithContentTypeCtx).Get("/get-with-type/{content_type}", si.GetWithContentType)
+		r.With(CreateResourceCtx).Post("/resource/{argument}", si.CreateResource)
+		r.With(CreateResource2Ctx).Post("/resource2/{inline_argument}", si.CreateResource2)
+		r.With(UpdateResource3Ctx).Put("/resource3/{fallthrough}", si.UpdateResource3)
 	})
 
 	return r

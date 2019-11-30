@@ -94,14 +94,14 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error parsing oapi-codegen templates")
 	}
 
-	ops, err := OperationDefinitions(swagger)
+	ops, err := GetOperationDefinitions(swagger)
 	if err != nil {
 		return "", errors.Wrap(err, "error creating operation definitions")
 	}
 
 	var typeDefinitions string
 	if opts.GenerateTypes {
-		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops)
+		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops.Defenitions)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}
@@ -109,7 +109,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var echoServerOut string
 	if opts.GenerateEchoServer {
-		echoServerOut, err = GenerateEchoServer(t, ops)
+		echoServerOut, err = GenerateEchoServer(t, ops.Defenitions)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
@@ -125,7 +125,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var clientOut string
 	if opts.GenerateClient {
-		clientOut, err = GenerateClient(t, ops)
+		clientOut, err = GenerateClient(t, ops.Defenitions)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client")
 		}
@@ -133,7 +133,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var clientWithResponsesOut string
 	if opts.GenerateClient {
-		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
+		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops.Defenitions)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client with responses")
 		}

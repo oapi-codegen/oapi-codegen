@@ -77,22 +77,23 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 func Handler(si ServerInterface) http.Handler {
   r := chi.NewRouter()
 
-{{range .}}r.Group(func(r chi.Router) {
-  r.Use({{.OperationId}}Ctx)
-  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
-})
-{{end}}
+    r.Route("{{.BasePath}}", func(r chi.Router) {
+        {{- range .Defenitions }}
+            r.With({{.OperationId}}Ctx).{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
+        {{- end}}
+    })
+
   return r
 }
 `,
 	"chi-interface.tmpl": `type ServerInterface interface {
-{{range .}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
+{{range .Defenitions}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
 }
 `,
 	"chi-middleware.tmpl": `
-{{range .}}{{$opid := .OperationId}}
+{{range .Defenitions}}{{$opid := .OperationId}}
 
 {{if .RequiresParamObject}}
 // ParamsFor{{.OperationId}} operation parameters from context

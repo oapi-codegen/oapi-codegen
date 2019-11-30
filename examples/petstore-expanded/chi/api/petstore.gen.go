@@ -163,21 +163,11 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 func Handler(si ServerInterface) http.Handler {
 	r := chi.NewRouter()
 
-	r.Group(func(r chi.Router) {
-		r.Use(FindPetsCtx)
-		r.Get("/pets", si.FindPets)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(AddPetCtx)
-		r.Post("/pets", si.AddPet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(DeletePetCtx)
-		r.Delete("/pets/{id}", si.DeletePet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Use(FindPetByIdCtx)
-		r.Get("/pets/{id}", si.FindPetById)
+	r.Route("/api", func(r chi.Router) {
+		r.With(FindPetsCtx).Get("/pets", si.FindPets)
+		r.With(AddPetCtx).Post("/pets", si.AddPet)
+		r.With(DeletePetCtx).Delete("/pets/{id}", si.DeletePet)
+		r.With(FindPetByIdCtx).Get("/pets/{id}", si.FindPetById)
 	})
 
 	return r
