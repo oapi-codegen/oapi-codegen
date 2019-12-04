@@ -130,7 +130,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     }
     {{end}}
 
-    ctx = context.WithValue(r.Context(), "{{$varName}}", {{$varName}})
+    ctx = context.WithValue(ctx, "{{$varName}}", {{$varName}})
     {{end}}
 
     {{if .RequiresParamObject}}
