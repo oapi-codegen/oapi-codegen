@@ -33,6 +33,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/labstack/echo/v4"
 )
 
@@ -170,9 +171,15 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 
 	switch strings.TrimSpace(contentParts[0]) {
 	case "application/json":
-		return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
+		return c.UnmarshalJsonToObject(obj)
+	case "application/x-google-protobuf":
+		msg, ok := obj.(proto.Message)
+		if !ok {
+			return fmt.Errorf("incompatible obj")
+		}
+		return c.UnmarshalProtoToObject(msg)
 	default:
-		return fmt.Errorf("no Content-Type on response")
+		return fmt.Errorf("no unknown Content-Type in response")
 	}
 }
 
@@ -180,6 +187,10 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 // into the specified object.
 func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
+}
+
+func (c *CompletedRequest) UnmarshalProtoToObject(obj proto.Message) error {
+	return proto.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
 // Shortcut for response code
