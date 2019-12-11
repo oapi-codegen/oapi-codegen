@@ -167,13 +167,13 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 
 	// Content type can have an annotation after ;
 	contentParts := strings.Split(ctype, ";")
-
-	switch strings.TrimSpace(contentParts[0]) {
-	case "application/json":
-		return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
-	default:
-		return fmt.Errorf("no Content-Type on response")
+	content := strings.TrimSpace(contentParts[0])
+	handler := getHandler(content)
+	if handler == nil {
+		return fmt.Errorf("unhandled content: %s", content)
 	}
+
+	return handler(ctype, c.Recorder.Body, obj)
 }
 
 // This function assumes that the response contains JSON and unmarshals it
