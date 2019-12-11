@@ -2,6 +2,7 @@ package testutil
 
 import (
 	"encoding/json"
+	"io"
 	"sync"
 )
 
@@ -16,7 +17,7 @@ var (
 	knownHandlers   map[string]ResponseHandler
 )
 
-type ResponseHandler func(raw []byte, obj interface{}) error
+type ResponseHandler func(contentType string, raw io.Reader, obj interface{}) error
 
 func RegisterResponseHandler(mime string, handler ResponseHandler) {
 	knownHandlersMu.Lock()
@@ -34,6 +35,6 @@ func getHandler(mime string) ResponseHandler {
 
 // This function assumes that the response contains JSON and unmarshals it
 // into the specified object.
-func jsonHandler(raw []byte, obj interface{}) error {
-	return json.Unmarshal(raw, obj)
+func jsonHandler(_ string, r io.Reader, obj interface{}) error {
+	return json.NewDecoder(r).Decode(obj)
 }

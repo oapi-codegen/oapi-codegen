@@ -173,7 +173,7 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 		return fmt.Errorf("unhandled content: %s", content)
 	}
 
-	return handler(c.Recorder.Body.Bytes(), obj)
+	return handler(ctype, c.Recorder.Body, obj)
 }
 
 // This function assumes that the response contains JSON and unmarshals it
