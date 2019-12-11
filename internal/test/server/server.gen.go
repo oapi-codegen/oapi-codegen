@@ -234,7 +234,7 @@ func GetWithReferencesCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "globalArgument", globalArgument)
+		ctx = context.WithValue(ctx, "globalArgument", globalArgument)
 		// ------------- Path parameter "argument" -------------
 		var argument Argument
 
@@ -244,7 +244,7 @@ func GetWithReferencesCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "argument", argument)
+		ctx = context.WithValue(ctx, "argument", argument)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -266,7 +266,7 @@ func GetWithContentTypeCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "contentType", contentType)
+		ctx = context.WithValue(ctx, "contentType", contentType)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -288,7 +288,7 @@ func CreateResourceCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "argument", argument)
+		ctx = context.WithValue(ctx, "argument", argument)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -315,7 +315,7 @@ func CreateResource2Ctx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "inlineArgument", inlineArgument)
+		ctx = context.WithValue(ctx, "inlineArgument", inlineArgument)
 
 		// Parameter object where we will unmarshal all parameters from the context
 		var params CreateResource2Params
@@ -353,7 +353,7 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "pFallthrough", pFallthrough)
+		ctx = context.WithValue(ctx, "pFallthrough", pFallthrough)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

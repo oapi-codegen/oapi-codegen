@@ -131,7 +131,7 @@ func DeletePetCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "id", id)
+		ctx = context.WithValue(ctx, "id", id)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -153,7 +153,7 @@ func FindPetByIdCtx(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), "id", id)
+		ctx = context.WithValue(ctx, "id", id)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
