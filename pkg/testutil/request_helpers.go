@@ -33,7 +33,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gogo/protobuf/proto"
 	"github.com/labstack/echo/v4"
 )
 
@@ -168,29 +167,19 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 
 	// Content type can have an annotation after ;
 	contentParts := strings.Split(ctype, ";")
-
-	switch strings.TrimSpace(contentParts[0]) {
-	case "application/json":
-		return c.UnmarshalJsonToObject(obj)
-	case "application/x-google-protobuf":
-		msg, ok := obj.(proto.Message)
-		if !ok {
-			return fmt.Errorf("incompatible obj")
-		}
-		return c.UnmarshalProtoToObject(msg)
-	default:
-		return fmt.Errorf("no unknown Content-Type in response")
+	content := strings.TrimSpace(contentParts[0])
+	handler := getHandler(content)
+	if handler == nil {
+		return fmt.Errorf("unhandled content: %s", content)
 	}
+
+	return handler(c.Recorder.Body.Bytes(), obj)
 }
 
 // This function assumes that the response contains JSON and unmarshals it
 // into the specified object.
 func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
-}
-
-func (c *CompletedRequest) UnmarshalProtoToObject(obj proto.Message) error {
-	return proto.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
 // Shortcut for response code
