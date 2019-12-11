@@ -4,7 +4,6 @@ require (
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/go-chi/chi v4.0.2+incompatible
-	github.com/gogo/protobuf v1.3.1
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/labstack/echo/v4 v4.1.11
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
@@ -14,10 +13,10 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasttemplate v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect
-	golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f // indirect
 	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect
 	golang.org/x/sys v0.0.0-20191115151921-52ab43148777 // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/tools v0.0.0-20191125144606-a911d9008d1f // indirect
 	gopkg.in/yaml.v2 v2.2.5 // indirect
 )
 
