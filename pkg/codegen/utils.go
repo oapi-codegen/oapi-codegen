@@ -25,6 +25,9 @@ import (
 	"unicode"
 )
 
+// remove this characters in names if (only for go names)
+const specialCharactersToRemoveFromName string = "#@!$&="
+
 var pathParamRE *regexp.Regexp
 
 func init() {
@@ -313,7 +316,7 @@ func IsGoKeyword(str string) bool {
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	name = ToCamelCase(name)
+	name = ToCamelCase(RemoveSpecialCharactersFromName(name))
 	// Prepend "N" to schemas starting with a number
 	if unicode.IsDigit([]rune(name)[0]) {
 		name = "N" + name
@@ -364,4 +367,11 @@ func StringToGoComment(in string) string {
 	// empty-line-comments, like `// `. Therefore remove this line comment.
 	in = strings.TrimSuffix(in, "\n// ")
 	return in
+}
+
+func RemoveSpecialCharactersFromName(name string) string {
+	for _, characterToRemove := range specialCharactersToRemoveFromName {
+		name = strings.ReplaceAll(name, fmt.Sprintf("%c", characterToRemove), "")
+	}
+	return name
 }

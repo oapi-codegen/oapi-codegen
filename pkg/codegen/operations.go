@@ -120,7 +120,7 @@ func (pd ParameterDefinition) GoVariableName() string {
 }
 
 func (pd ParameterDefinition) GoName() string {
-	return ToCamelCase(pd.ParamName)
+	return ToCamelCase(RemoveSpecialCharactersFromName(pd.ParamName))
 }
 
 func (pd ParameterDefinition) IndirectOptional() bool {

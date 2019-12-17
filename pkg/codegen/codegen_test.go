@@ -121,8 +121,10 @@ type getTestByNameResponse struct {
 	assert.Contains(t, code, "func ParsegetTestByNameResponse(rsp *http.Response) (*getTestByNameResponse, error) {")
 
 	// Check the client method signatures:
-	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*getTestByNameResponse, error) {")
+	assert.Contains(t, code, "type GetTestByNameParams struct {")
+	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
+	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams) (*http.Response, error) {")
+	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*getTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
@@ -156,6 +158,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: $top
+        in: query
+        required: false
+        schema:
+          type: integer
       responses:
         200:
           description: Success
