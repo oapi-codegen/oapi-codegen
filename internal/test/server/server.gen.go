@@ -361,8 +361,11 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	r := chi.NewRouter()
+	return HandlerFromMux(si, chi.NewRouter())
+}
 
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, r *chi.Mux) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(GetSimpleCtx)
 		r.Get("/get-simple", si.GetSimple)
