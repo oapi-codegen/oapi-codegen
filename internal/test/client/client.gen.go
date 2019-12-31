@@ -268,6 +268,9 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_both_bodies"))
+	if strings.HasSuffix("/with_both_bodies", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -287,6 +290,9 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_both_responses"))
+	if strings.HasSuffix("/with_both_responses", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -316,6 +322,9 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_json_body"))
+	if strings.HasSuffix("/with_json_body", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -335,6 +344,9 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_json_response"))
+	if strings.HasSuffix("/with_json_response", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -353,6 +365,9 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_other_body"))
+	if strings.HasSuffix("/with_other_body", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -372,6 +387,9 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/with_other_response"))
+	if strings.HasSuffix("/with_other_response", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

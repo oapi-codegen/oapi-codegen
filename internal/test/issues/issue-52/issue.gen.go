@@ -187,6 +187,9 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/example"))
+	if strings.HasSuffix("/example", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

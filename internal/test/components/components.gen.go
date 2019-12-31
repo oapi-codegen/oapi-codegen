@@ -850,6 +850,9 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/params_with_add_props"))
+	if strings.HasSuffix("/params_with_add_props", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -907,6 +910,9 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/params_with_add_props"))
+	if strings.HasSuffix("/params_with_add_props", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {

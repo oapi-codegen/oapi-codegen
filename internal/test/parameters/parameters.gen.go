@@ -517,6 +517,9 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/contentObject/%s", pathParam0))
+	if strings.HasSuffix("/contentObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -535,6 +538,9 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/cookie"))
+	if strings.HasSuffix("/cookie", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -660,6 +666,9 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/header"))
+	if strings.HasSuffix("/header", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -764,6 +773,9 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/labelExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/labelExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -789,6 +801,9 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/labelExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/labelExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -814,6 +829,9 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/labelNoExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -839,6 +857,9 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/labelNoExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -864,6 +885,9 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/matrixExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/matrixExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -889,6 +913,9 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/matrixExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/matrixExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -914,6 +941,9 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/matrixNoExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -939,6 +969,9 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/matrixNoExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -961,6 +994,9 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/passThrough/%s", pathParam0))
+	if strings.HasSuffix("/passThrough/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -979,6 +1015,9 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/queryForm"))
+	if strings.HasSuffix("/queryForm", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -1114,6 +1153,9 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/simpleExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/simpleExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1139,6 +1181,9 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/simpleExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/simpleExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1164,6 +1209,9 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0))
+	if strings.HasSuffix("/simpleNoExplodeArray/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1189,6 +1237,9 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0))
+	if strings.HasSuffix("/simpleNoExplodeObject/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1214,6 +1265,9 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/simplePrimitive/%s", pathParam0))
+	if strings.HasSuffix("/simplePrimitive/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

@@ -202,6 +202,9 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/30/%s", pathParam0))
+	if strings.HasSuffix("/issues/30/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -227,6 +230,9 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/41/%s", pathParam0))
+	if strings.HasSuffix("/issues/41/%s", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -256,6 +262,9 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		return nil, err
 	}
 	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/9"))
+	if strings.HasSuffix("/issues/9", "/") && !strings.HasSuffix(queryUrl.Path, "/") {
+		queryUrl.Path += "/"
+	}
 
 	queryValues := queryUrl.Query()
 
