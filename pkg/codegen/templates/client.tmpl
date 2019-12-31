@@ -165,6 +165,9 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
     queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+    if strings.HasSuffix("{{genParamFmtString .Path}}", "/") && ! strings.HasSuffix(queryUrl.Path, "/") {
+        queryUrl.Path += "/"
+    }
 {{if .QueryParams}}
     queryValues := queryUrl.Query()
 {{range $paramIdx, $param := .QueryParams}}
