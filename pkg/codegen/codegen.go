@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -56,28 +57,28 @@ type goImports []goImport
 
 var (
 	allGoImports = goImports{
-		{lookFor: "base64.", packageName: "encoding/base64"},
-		{lookFor: "bytes.", packageName: "bytes"},
-		{lookFor: "chi.", packageName: "github.com/go-chi/chi"},
-		{lookFor: "context.", packageName: "context"},
-		{lookFor: "echo.", packageName: "github.com/labstack/echo/v4"},
-		{lookFor: "errors.", packageName: "github.com/pkg/errors"},
-		{lookFor: "fmt.", packageName: "fmt"},
-		{lookFor: "gzip.", packageName: "compress/gzip"},
-		{lookFor: "http.", packageName: "net/http"},
-		{lookFor: "io.", packageName: "io"},
-		{lookFor: "ioutil.", packageName: "io/ioutil"},
-		{lookFor: "json.", packageName: "encoding/json"},
-		{lookFor: "openapi3.", packageName: "github.com/getkin/kin-openapi/openapi3"},
-		{lookFor: "openapi_types.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
-		{lookFor: "path.", packageName: "path"},
-		{lookFor: "runtime.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
-		{lookFor: "strings.", packageName: "strings"},
-		{lookFor: "time.Duration", packageName: "time"},
-		{lookFor: "time.Time", packageName: "time"},
-		{lookFor: "url.", packageName: "net/url"},
-		{lookFor: "xml.", packageName: "encoding/xml"},
-		{lookFor: "yaml.", packageName: "gopkg.in/yaml.v2"},
+		{lookFor: "base64\\.", packageName: "encoding/base64"},
+		{lookFor: "bytes\\.", packageName: "bytes"},
+		{lookFor: "chi\\.", packageName: "github.com/go-chi/chi"},
+		{lookFor: "context\\.", packageName: "context"},
+		{lookFor: "echo\\.", packageName: "github.com/labstack/echo/v4"},
+		{lookFor: "errors\\.", packageName: "github.com/pkg/errors"},
+		{lookFor: "fmt\\.", packageName: "fmt"},
+		{lookFor: "gzip\\.", packageName: "compress/gzip"},
+		{lookFor: "http\\.", packageName: "net/http"},
+		{lookFor: "io\\.", packageName: "io"},
+		{lookFor: "ioutil\\.", packageName: "io/ioutil"},
+		{lookFor: "json\\.", packageName: "encoding/json"},
+		{lookFor: "openapi3\\.", packageName: "github.com/getkin/kin-openapi/openapi3"},
+		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "path\\.", packageName: "path"},
+		{lookFor: "runtime\\.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
+		{lookFor: "strings\\.", packageName: "strings"},
+		{lookFor: "time\\.Duration", packageName: "time"},
+		{lookFor: "time\\.Time", packageName: "time"},
+		{lookFor: "url\\.", packageName: "net/url"},
+		{lookFor: "xml\\.", packageName: "encoding/xml"},
+		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
 	}
 )
 
@@ -154,10 +155,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	w := bufio.NewWriter(&buf)
 
 	// Based on module prefixes, figure out which optional imports are required.
-	// TODO: this is error prone, use tighter matches
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
 		for _, goImport := range allGoImports {
-			if strings.Contains(str, goImport.lookFor) {
+			match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), str)
+			if err != nil {
+				return "", errors.Wrap(err, "error figuring out imports")
+			}
+			if match {
 				imports = append(imports, goImport.String())
 			}
 		}
