@@ -30,6 +30,9 @@ func TestStyleParam(t *testing.T) {
 		FirstName: "Alex",
 		Role:      "admin",
 	}
+	dict := map[string]interface{}{}
+	dict["firstName"] = "Alex"
+	dict["role"] = "admin"
 
 	// ---------------------------- Simple Style -------------------------------
 
@@ -54,6 +57,14 @@ func TestStyleParam(t *testing.T) {
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
 	result, err = StyleParam("simple", true, "id", object)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Alex,role=admin", result)
+
+	result, err = StyleParam("simple", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("simple", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
 
@@ -83,6 +94,14 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
 
+	result, err = StyleParam("label", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("label", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
+
 	// ----------------------------- Matrix Style ------------------------------
 
 	result, err = StyleParam("matrix", false, "id", primitive)
@@ -106,6 +125,14 @@ func TestStyleParam(t *testing.T) {
 	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
 
 	result, err = StyleParam("matrix", true, "id", object)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
+
+	result, err = StyleParam("matrix", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("matrix", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
 
@@ -134,6 +161,14 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
 
+	result, err = StyleParam("form", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("form", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Alex&role=admin", result)
+
 	// ------------------------  spaceDelimited Style --------------------------
 
 	result, err = StyleParam("spaceDelimited", false, "id", primitive)
@@ -156,6 +191,11 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("spaceDelimited", true, "id", object)
 	assert.Error(t, err)
 
+	result, err = StyleParam("spaceDelimited", false, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", true, "id", dict)
+	assert.Error(t, err)
 	// -------------------------  pipeDelimited Style --------------------------
 
 	result, err = StyleParam("pipeDelimited", false, "id", primitive)
@@ -178,6 +218,12 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("pipeDelimited", true, "id", object)
 	assert.Error(t, err)
 
+	result, err = StyleParam("pipeDelimited", false, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", true, "id", dict)
+	assert.Error(t, err)
+
 	// ---------------------------  deepObject Style ---------------------------
 	result, err = StyleParam("deepObject", false, "id", primitive)
 	assert.Error(t, err)
@@ -195,6 +241,10 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParam("deepObject", true, "id", object)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
+
+	result, err = StyleParam("deepObject", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
