@@ -35,11 +35,15 @@ func main() {
 		packageName string
 		generate    string
 		outputFile  string
+		includeTags string
+		excludeTags string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
 		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "skip-fmt", "spec"`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
+	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
+	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -78,6 +82,9 @@ func main() {
 			os.Exit(1)
 		}
 	}
+
+	opts.IncludeTags = strings.Split(includeTags, ",")
+	opts.ExcludeTags = strings.Split(excludeTags, ",")
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")
