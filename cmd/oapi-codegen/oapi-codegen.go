@@ -62,7 +62,7 @@ func main() {
 	}
 
 	opts := codegen.Options{}
-	for _, g := range strings.Split(generate, ",") {
+	for _, g := range splitCSVArg(generate) {
 		switch g {
 		case "client":
 			opts.GenerateClient = true
@@ -83,8 +83,8 @@ func main() {
 		}
 	}
 
-	opts.IncludeTags = strings.Split(includeTags, ",")
-	opts.ExcludeTags = strings.Split(excludeTags, ",")
+	opts.IncludeTags = splitCSVArg(includeTags)
+	opts.ExcludeTags = splitCSVArg(excludeTags)
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")
@@ -108,4 +108,20 @@ func main() {
 	} else {
 		fmt.Println(code)
 	}
+}
+
+func splitCSVArg(input string) []string {
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return nil
+	}
+	splitInput := strings.Split(input, ",")
+	args := make([]string, 0, len(splitInput))
+	for _, s := range splitInput {
+		s = strings.TrimSpace(s)
+		if len(s) > 0 {
+			args = append(args, s)
+		}
+	}
+	return args
 }
