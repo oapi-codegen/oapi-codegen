@@ -403,6 +403,14 @@ So, for example, if you would like to produce only the server code, you could
 run `oapi-generate --generate types,server`. You could generate `types` and `server`
 into separate files, but both are required for the server code.  
 
+`oapi-codegen` can filter paths base on their tags in the openapi definition.
+Use either `--include-tags` or `--exclude-tags` followed by a comma-separated
+list of tags. For instance, to generate a server that serves all paths except
+those tagged with `auth` or `admin`, use the argument,
+`--exclude-tags="auth,admin"`. To generate a server that only handles `admin`
+paths, use the argument `include-tags="admin"`. When neither of these arguments
+is present, all paths are generated.
+
 ## What's missing or incomplete
 
 This code is still young, and not complete, since we're filling it in as we
