@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
 )
 
@@ -299,6 +300,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			// different things based on destination type.
 			values, found := queryParams[paramName]
 			var err error
+
 			switch k {
 			case reflect.Slice:
 				// In the slice case, we simply use the arguments provided by
@@ -430,6 +432,12 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 // We don't try to be smart here, if the field exists as a query argument,
 // set its value.
 func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) error {
+	// special handling for custom types
+	switch dest.(type) {
+	case *types.Date:
+		return BindStringToObject(values.Get(paramName), dest)
+	}
+
 	v := reflect.Indirect(reflect.ValueOf(dest))
 	if v.Type().Kind() != reflect.Struct {
 		return echo.NewHTTPError(http.StatusInternalServerError,

@@ -5,14 +5,14 @@ import (
 	"time"
 )
 
-const dateFormat = "2006-01-02"
+const DateFormat = "2006-01-02"
 
 type Date struct {
 	time.Time
 }
 
 func (d Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.Time.Format(dateFormat))
+	return json.Marshal(d.Time.Format(DateFormat))
 }
 
 func (d *Date) UnmarshalJSON(data []byte) error {
@@ -21,7 +21,7 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	parsed, err := time.Parse(dateFormat, dateStr)
+	parsed, err := time.Parse(DateFormat, dateStr)
 	if err != nil {
 		return err
 	}
