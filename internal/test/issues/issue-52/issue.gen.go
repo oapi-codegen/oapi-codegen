@@ -16,7 +16,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -186,7 +185,10 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/example"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/example"))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

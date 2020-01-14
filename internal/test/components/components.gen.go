@@ -18,7 +18,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -849,7 +848,10 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/params_with_add_props"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/params_with_add_props"))
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -906,7 +908,10 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/params_with_add_props"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/params_with_add_props"))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {

@@ -13,7 +13,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -218,7 +217,10 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets"))
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -283,7 +285,10 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets"))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -309,7 +314,10 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("DELETE", queryUrl.String(), nil)
 	if err != nil {
@@ -334,7 +342,10 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/pets/%s", pathParam0))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

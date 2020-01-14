@@ -17,7 +17,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -201,7 +200,10 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/30/%s", pathParam0))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/30/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -226,7 +228,10 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/41/%s", pathParam0))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/41/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -255,7 +260,10 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/9"))
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/9"))
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 

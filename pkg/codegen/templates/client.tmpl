@@ -164,7 +164,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if err != nil {
         return nil, err
     }
-    queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+    queryUrl, err = queryUrl.Parse(fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+    if err != nil {
+        return nil, err
+    }
 {{if .QueryParams}}
     queryValues := queryUrl.Query()
 {{range $paramIdx, $param := .QueryParams}}
