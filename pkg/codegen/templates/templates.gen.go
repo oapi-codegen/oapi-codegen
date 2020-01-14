@@ -136,6 +136,10 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     ctx = context.WithValue(ctx, "{{$varName}}", {{$varName}})
     {{end}}
 
+{{range .SecurityDefinitions}}
+    ctx = context.WithValue(ctx, "{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+{{end}}
+
     {{if .RequiresParamObject}}
       // Parameter object where we will unmarshal all parameters from the context
       var params {{.OperationId}}Params
