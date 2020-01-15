@@ -1690,7 +1690,7 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetContentObjectResponse(rsp)
+	return ParseGetContentObjectResponse(rsp)
 }
 
 // GetCookieWithResponse request returning *GetCookieResponse
@@ -1699,7 +1699,7 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetCookieResponse(rsp)
+	return ParseGetCookieResponse(rsp)
 }
 
 // GetHeaderWithResponse request returning *GetHeaderResponse
@@ -1708,7 +1708,7 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetHeaderResponse(rsp)
+	return ParseGetHeaderResponse(rsp)
 }
 
 // GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
@@ -1717,7 +1717,7 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelExplodeArrayResponse(rsp)
+	return ParseGetLabelExplodeArrayResponse(rsp)
 }
 
 // GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
@@ -1726,7 +1726,7 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelExplodeObjectResponse(rsp)
+	return ParseGetLabelExplodeObjectResponse(rsp)
 }
 
 // GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
@@ -1735,7 +1735,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelNoExplodeArrayResponse(rsp)
+	return ParseGetLabelNoExplodeArrayResponse(rsp)
 }
 
 // GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
@@ -1744,7 +1744,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelNoExplodeObjectResponse(rsp)
+	return ParseGetLabelNoExplodeObjectResponse(rsp)
 }
 
 // GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
@@ -1753,7 +1753,7 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixExplodeArrayResponse(rsp)
+	return ParseGetMatrixExplodeArrayResponse(rsp)
 }
 
 // GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
@@ -1762,7 +1762,7 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixExplodeObjectResponse(rsp)
+	return ParseGetMatrixExplodeObjectResponse(rsp)
 }
 
 // GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
@@ -1771,7 +1771,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixNoExplodeArrayResponse(rsp)
+	return ParseGetMatrixNoExplodeArrayResponse(rsp)
 }
 
 // GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
@@ -1780,7 +1780,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixNoExplodeObjectResponse(rsp)
+	return ParseGetMatrixNoExplodeObjectResponse(rsp)
 }
 
 // GetPassThroughWithResponse request returning *GetPassThroughResponse
@@ -1789,7 +1789,7 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetPassThroughResponse(rsp)
+	return ParseGetPassThroughResponse(rsp)
 }
 
 // GetQueryFormWithResponse request returning *GetQueryFormResponse
@@ -1798,7 +1798,7 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetQueryFormResponse(rsp)
+	return ParseGetQueryFormResponse(rsp)
 }
 
 // GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
@@ -1807,7 +1807,7 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleExplodeArrayResponse(rsp)
+	return ParseGetSimpleExplodeArrayResponse(rsp)
 }
 
 // GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
@@ -1816,7 +1816,7 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleExplodeObjectResponse(rsp)
+	return ParseGetSimpleExplodeObjectResponse(rsp)
 }
 
 // GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
@@ -1825,7 +1825,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleNoExplodeArrayResponse(rsp)
+	return ParseGetSimpleNoExplodeArrayResponse(rsp)
 }
 
 // GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
@@ -1834,7 +1834,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleNoExplodeObjectResponse(rsp)
+	return ParseGetSimpleNoExplodeObjectResponse(rsp)
 }
 
 // GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
@@ -1843,11 +1843,11 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimplePrimitiveResponse(rsp)
+	return ParseGetSimplePrimitiveResponse(rsp)
 }
 
-// ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
-func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
+// ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParseGetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1865,8 +1865,8 @@ func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectRespons
 	return response, nil
 }
 
-// ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
-func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
+// ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
+func ParseGetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1884,8 +1884,8 @@ func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	return response, nil
 }
 
-// ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
-func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
+// ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParseGetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1903,8 +1903,8 @@ func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	return response, nil
 }
 
-// ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
-func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
+// ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1922,8 +1922,8 @@ func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArra
 	return response, nil
 }
 
-// ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
-func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
+// ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1941,8 +1941,8 @@ func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObj
 	return response, nil
 }
 
-// ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
-func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
+// ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1960,8 +1960,8 @@ func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplode
 	return response, nil
 }
 
-// ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
-func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
+// ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1979,8 +1979,8 @@ func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplod
 	return response, nil
 }
 
-// ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
-func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
+// ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1998,8 +1998,8 @@ func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeAr
 	return response, nil
 }
 
-// ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
-func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
+// ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2017,8 +2017,8 @@ func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeO
 	return response, nil
 }
 
-// ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
-func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
+// ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2036,8 +2036,8 @@ func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplo
 	return response, nil
 }
 
-// ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
-func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
+// ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2055,8 +2055,8 @@ func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExpl
 	return response, nil
 }
 
-// ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
-func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
+// ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParseGetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2074,8 +2074,8 @@ func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, e
 	return response, nil
 }
 
-// ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
-func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
+// ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParseGetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2093,8 +2093,8 @@ func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error
 	return response, nil
 }
 
-// ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
-func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
+// ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2112,8 +2112,8 @@ func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeAr
 	return response, nil
 }
 
-// ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
-func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
+// ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2131,8 +2131,8 @@ func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeO
 	return response, nil
 }
 
-// ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
-func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
+// ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2150,8 +2150,8 @@ func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplo
 	return response, nil
 }
 
-// ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
-func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
+// ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2169,8 +2169,8 @@ func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExpl
 	return response, nil
 }
 
-// ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
-func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
+// ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -2807,23 +2807,23 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xZy27rNhD9FWPaVaFr+d670y4IWjRA82idRYHAC0Ya20wlkSHpwIahfy9IPWw9LFOJ",
-	"LDvZxdI8zhweTcjhFnwWcRZjrCR4WxAoOYslmh9TGvEQ/8ke6Sc+ixXGSv+pcK1cHhIa61/SX2JEzPMN",
-	"R/BAKkHjBSRJ4kCA0heUK8pi8OBqJE3cUZ5rxJ5f0FegTdM4Jvs101br+/SltwUuGEehaAruJmjI5sDO",
-	"/FeBc/DgF3dXoZuFd+93GQW+rqjAALyn3NnRwWelYOXccyqkuiMRNkIQLGx6UcllrJy9UDPDFY3nTDuH",
-	"1MeM9NgkgtubRx1dUaXDwyNKNZqieEMBDryhkCm938eT8UQbMo4x4RQ8+DmejL+DA5yopcHvZuuY1udu",
-	"OREkSvSbBZpydbFEr5dmWT+83ncwoQSJUKGQ4D2VdEE4D6lvnN0XySrqaFuU8oJnbIBnYIOT02Aywz6X",
-	"SqwwmTll7f6YTA7lK+zcisATk9P1GfuPYjsbxqJGQ1noXNCIKvqmDXHNQxYgeHMSSswK8/MweWmlsjLL",
-	"HXdzJiKiwAMaq58/wMkFRmOFCxRaYVYQNF8HEGD/ELK0wYgIQTa2OEg7DqowklaAiidp+gaANVxtSzQg",
-	"roI4ln90VsyxdoR2XbGKpQ6hjaSeIJyqqZRL81ODHcuNJfkNNSUz0y6WSAIUbe3iz9Tio+1imYfJMP37",
-	"7WHPZdjG0YLl2++ZcM/TSurIrrS1JarBGssBmJfWXuow0y/Jks5TdJtDkD5/06lXlgU6WGHWgkLyjGG2",
-	"IkZG7nZses1vrZu6v6pu9RbVpAmb/Vg/qnVAqo3Z7ZoKoaddngNyFUVEbMCLV2FYozDfFnfl8NDuuA8S",
-	"bfQ7NF13rElzx+kq+7Xwtf/Zf13VFXSUddeBx6PC+wiRF6a8iChB1xXh0aD9K72tOb3nK6XByRWXVjcY",
-	"f4XiOhH4/j53hMFuUhuKq1qbo4EFVz00uS+kt3qP60biBzrcJ9McJ1I+LgVbLZY2g7mHnXnrWK7DuPYs",
-	"Q7fXFYrNH0xEbcX+XRgdOUtbnRRNyiFmTjv5aFfoeFKswDwfSrsTY5XVM8yjKhBOgqAg49ikpMrHQEPe",
-	"Fj76QHDOY3KlnObRXH+dKb2tKm8BLA6G05rb5Z6u0xJP+V+tRGLp2qkDi5dzvh6KsOrW8/h+YNrgd8En",
-	"7MGJtL/ynDY5XsQZeyjSipG+PV37NxIVot5FjIW0TsOK6f3SXK+n8FciBA+WSnHPdbO7dYVSjQNEHhE+",
-	"JhSSWfJ/AAAA//8fdsggUSEAAA==",
+	"H4sIAAAAAAAC/9xZyW7jOBD9FaNmTgO15e6+6dYIZgkwWWacwwCBD4xUtpmRRIakAxuG/r1BarG1WKYS",
+	"WXZyi6VaXj0+VcjiFnwWcRZjrCR4WxAoOYslmh9TGvEQ/80e6Sc+ixXGSv+pcK1cHhIa61/SX2JEzPMN",
+	"R/BAKkHjBSRJ4kCA0heUK8pi8ODHSJq4ozzXiD09o69Am6ZxTPYrpq3Wd+lLbwtcMI5C0RTcddCQzYGd",
+	"+a8C5+DBL+6uQjcL797tMgp8WVGBAXiPubOjg89Kwcq551RIdUsibIQgWNj0opLLWDl7oWaGKxrPmXYO",
+	"qY8Z6bFJBDfXDzq6okqHhweUajRF8YoCHHhFIVN6v44n44k2ZBxjwil48H08GX8FBzhRS4PfzdYxrc/d",
+	"ciJIlOg3CzTl6mKJXi/NMvyJ6mrfwYQSJEKFQoL3WNIF4TykvnF2nyWrqKNtUcoLnrEBnoENTk6DyQz7",
+	"XCqxwmTmlLX7bTI5lK+wcysCT0xO12fsf4rtbBiLGg1loXNBI6roqzbENQ9ZgODNSSgxK8zPw+SllcrK",
+	"LHfczZmIiAIPaKy+fwMnFxiNFS5QaIVZQdB8HUCA/UPI0gYjIgTZ2OIg7TiowkhaASqepOkbANZwtS3R",
+	"gLgK4lj+0Vkxx9oR2nXFKpY6hDaSeoJwqqZSLs1PDXYsN5bkN9SUzEy7WCIJULS1i79Si/e2i2UeJsP0",
+	"35f7PZdhG0cLli+/Z8I9TyupI/uhrS1RDdZYDsC8tPZSh5l+SZZ0nqLbHIL08ZtOvbIs0MEKsxYUkicM",
+	"sxUxMnK3Y9Nrfmvd1P1ddau3qCZN2OzH+lGtA1JtzG7XVAg97fIckKsoImIDXrwKwxqF+ba4K4eHdsd9",
+	"kGij36HpumVNmjtOV9mvha/9z/7zqq6go6y7DjweFd57iLww5UVECbquCI8G7V/pTc3pLV8pDU6uuLS6",
+	"wfgrFNeJwLf3uSMMdpPaUFzV2hwNLLjqocl9Ir3Ve1w3Et/R4T6Y5jiR8mEp2GqxtBnM3e/MW8dyHca1",
+	"Zxm6vaxQbP5gImor9p/C6MhZ2uqkaFIOMXPayUe7QseTYgXm+VDanRirrJ5hHlWBcBIEBRnHJiVVPgYa",
+	"8rbw0QeCcx6TK+U0j+b660zpbVV5C2BxMJzW3C73dJ2WeMr/aiUSS9dOHVi8nPP1UIRVt57H9wPTBr8L",
+	"PmEPTqT9lee0yfEizthDkVaM9O3p2r+RqBD1JmIspHUaVkzvl+Z6PYW/EiF4sFSKe66b3a0rlGocIPKI",
+	"8DGhkMySnwEAAP//njtWvlEhAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

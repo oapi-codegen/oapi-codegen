@@ -15,14 +15,13 @@ package codegen
 
 import (
 	"fmt"
-
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
-
 	"regexp"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 var pathParamRE *regexp.Regexp
@@ -57,25 +56,33 @@ func LowercaseFirstCharacter(str string) string {
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
 // would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := []string{".", "-", "+", ":", ";", "_", "~", " ", "(", ")", "{", "}", "[", "]"}
-	in := []string{str}
-	out := make([]string, 0)
+	separators := "-#@!$&=.+:;_~ (){}[]"
+	s := strings.Trim(str, " ")
 
-	for _, sep := range separators {
-		for _, inStr := range in {
-			parts := strings.Split(inStr, sep)
-			out = append(out, parts...)
+	n := ""
+	capNext := true
+	for _, v := range s {
+		if unicode.IsUpper(v) {
+			n += string(v)
 		}
-		in = out
-		out = make([]string, 0)
-	}
+			if unicode.IsDigit(v) {
+			n += string(v)
+		}
+		if unicode.IsLower(v) {
+			if capNext {
+				n += strings.ToUpper(string(v))
+			} else {
+				n += string(v)
+			}
+		}
 
-	words := in
-
-	for i := range words {
-		words[i] = UppercaseFirstCharacter(words[i])
+		 if strings.ContainsRune(separators, v) {
+			capNext = true
+		} else {
+			capNext = false
+		}
 	}
-	return strings.Join(words, "")
+	return n
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
@@ -315,7 +322,7 @@ func IsGoKeyword(str string) bool {
 func SchemaNameToTypeName(name string) string {
 	name = ToCamelCase(name)
 	// Prepend "N" to schemas starting with a number
-	if unicode.IsDigit([]rune(name)[0]) {
+	if name != "" && unicode.IsDigit([]rune(name)[0]) {
 		name = "N" + name
 	}
 	return name
