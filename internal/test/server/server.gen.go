@@ -97,11 +97,11 @@ type GetWithArgsParams struct {
 	HeaderArgument *int32 `json:"header_argument,omitempty"`
 }
 
-// createResourceJSONBody defines parameters for CreateResource.
-type createResourceJSONBody EveryTypeRequired
+// CreateResourceJSONBody defines parameters for CreateResource.
+type CreateResourceJSONBody EveryTypeRequired
 
-// createResource2JSONBody defines parameters for CreateResource2.
-type createResource2JSONBody Resource
+// CreateResource2JSONBody defines parameters for CreateResource2.
+type CreateResource2JSONBody Resource
 
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
@@ -110,20 +110,20 @@ type CreateResource2Params struct {
 	InlineQueryArgument *int `json:"inline_query_argument,omitempty"`
 }
 
-// updateResource3JSONBody defines parameters for UpdateResource3.
-type updateResource3JSONBody struct {
+// UpdateResource3JSONBody defines parameters for UpdateResource3.
+type UpdateResource3JSONBody struct {
 	Id   *int    `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
 }
 
 // CreateResourceRequestBody defines body for CreateResource for application/json ContentType.
-type CreateResourceJSONRequestBody createResourceJSONBody
+type CreateResourceJSONRequestBody CreateResourceJSONBody
 
 // CreateResource2RequestBody defines body for CreateResource2 for application/json ContentType.
-type CreateResource2JSONRequestBody createResource2JSONBody
+type CreateResource2JSONRequestBody CreateResource2JSONBody
 
 // UpdateResource3RequestBody defines body for UpdateResource3 for application/json ContentType.
-type UpdateResource3JSONRequestBody updateResource3JSONBody
+type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
 type ServerInterface interface {
 	// Get resource via simple path (GET /get-simple)

@@ -256,11 +256,11 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*exam
 	if err != nil {
 		return nil, err
 	}
-	return ParseexampleGetResponse(rsp)
+	return ParseExampleGetResponse(rsp)
 }
 
-// ParseexampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
-func ParseexampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
+// ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
+func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -328,12 +328,12 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5RST0v8MBD9KmV+v2No63rrTRBERPTkycuYzG6zpklIpovL0u8uk+5fFMVTkse8N29e",
-	"Zgc6DDF48pyh20HWPQ1Yrjcp4fYF3UjyskxDgf8nWkIH/5oTsdmzmrl6UsDbSNABioS8b4MeB/IsAjGF",
-	"SIktFbmlJWfKDY2xbINH93xR8ZeG4W1NmmH6iig4jnJpAC/G/KnZWSCTgszJ+tWRuG83o98ZEMj6ZZBi",
-	"QznrZKOMCx084jtVeUxUcY9cJdJjynZDlUjkChNVPXrjyFSzd7d99aCALTtpQR84REegYEMpz5pt3dZX",
-	"4jNE8hgtdHBdt/UCFETkvozeHIjdDlZUPkfUUWzdm5PwHTEoSJRj8HlObdG2cujgef+tGKOzunCbdRYP",
-	"h236LdfjcpSMDJ1H8/Qg6DRNnwEAAP//F7YifqkCAAA=",
+	"H4sIAAAAAAAC/5RSQU/zMAz9K5W/71i1ZdxyQwIhhBCcOHExibdmpEmUuBPT1P+OnG5jEwjEqcmr3/Pz",
+	"i3egwxCDJ88Z1A6y7mnAcrxKCbfP6EaSm2UaCvw/0RIU/Gs/ie2e1c7VUw28jQQKUCTkfh30OJBnEYgp",
+	"REpsqcgtLTlTTmiMZRs8uqezir80DK9r0gzTV6SG4yjnBvBszJ+anQQy1ZA5Wb86EvftZvQ7AwJZvwxS",
+	"bChnnWyUcUHBA75RlcdEFffIVSI9pmw3VIlErjBR1aM3jkw1e3fbFw81sGUnLegdh+gIathQyrNm13TN",
+	"hfgMkTxGCwoum65ZQA0RuS+jtwei2sGKyuOIOoqtOwMKbub/t8RQQ6Icg89zaouuk48OnvfPijE6qwu3",
+	"XWfxcNim33I9LkfJyNBpNI/3gk7T9BEAAP//t/QkwqkCAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

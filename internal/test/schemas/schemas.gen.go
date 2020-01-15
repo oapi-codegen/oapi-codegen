@@ -389,7 +389,7 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue30Response(rsp)
+	return ParseIssue30Response(rsp)
 }
 
 // Issue41WithResponse request returning *Issue41Response
@@ -398,7 +398,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue41Response(rsp)
+	return ParseIssue41Response(rsp)
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
@@ -407,7 +407,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
 func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
@@ -415,11 +415,11 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
-// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
-func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
+// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
+func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -437,8 +437,8 @@ func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
 	return response, nil
 }
 
-// Parseissue41Response parses an HTTP response from a Issue41WithResponse call
-func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
+// ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
+func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -456,8 +456,8 @@ func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
 	return response, nil
 }
 
-// Parseissue9Response parses an HTTP response from a Issue9WithResponse call
-func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
+// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
+func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
