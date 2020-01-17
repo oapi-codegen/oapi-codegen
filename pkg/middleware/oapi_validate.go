@@ -120,14 +120,25 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router,
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
 			errorLines := strings.Split(e.Error(), "\n")
-			return echo.NewHTTPError(http.StatusBadRequest, errorLines[0])
+			return &echo.HTTPError{
+				Code:     http.StatusBadRequest
+				Message:  errorLines[0],
+				Internal: err,
+			}
 		case *openapi3filter.SecurityRequirementsError:
-			return echo.NewHTTPError(http.StatusForbidden, e.Error())
+			return &echo.HTTPError{
+				Code:     http.StatusForbidden
+				Message:  e.Error(),
+				Internal: err,
+			}
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return echo.NewHTTPError(http.StatusInternalServerError,
-				fmt.Sprintf("error validating request: %s", err))
+			return &echo.HTTPError{
+				Code: http.StatusInternalServerError,
+				Message: fmt.Sprintf("error validating request: %s", err),
+				Internal: err,
+			}
 		}
 	}
 	return nil
