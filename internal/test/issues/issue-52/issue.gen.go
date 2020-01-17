@@ -286,6 +286,7 @@ func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /example)
 	ExampleGet(ctx echo.Context) error
 }

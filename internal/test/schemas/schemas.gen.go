@@ -477,10 +477,13 @@ func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
+
 	// (GET /issues/41/{1param})
 	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
+
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
