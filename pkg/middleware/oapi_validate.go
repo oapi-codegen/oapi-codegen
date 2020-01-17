@@ -121,13 +121,13 @@ func ValidateRequestFromContext(ctx echo.Context, router *openapi3filter.Router,
 			// openapi errors seem to be multi-line with a decent message on the first
 			errorLines := strings.Split(e.Error(), "\n")
 			return &echo.HTTPError{
-				Code:     http.StatusBadRequest
+				Code:     http.StatusBadRequest,
 				Message:  errorLines[0],
 				Internal: err,
 			}
 		case *openapi3filter.SecurityRequirementsError:
 			return &echo.HTTPError{
-				Code:     http.StatusForbidden
+				Code:     http.StatusForbidden,
 				Message:  e.Error(),
 				Internal: err,
 			}
