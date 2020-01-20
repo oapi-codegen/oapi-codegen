@@ -44,6 +44,9 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	// Check that the client method signatures return response structs:
 	assert.Contains(t, code, "func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {")
 
+	// Check that the property comments were generated
+	assert.Contains(t, code, "// Unique id of the pet")
+
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
 	problems, err := linter.Lint("test.gen.go", []byte(code))
