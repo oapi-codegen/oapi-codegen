@@ -187,6 +187,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					JsonFieldName: pName,
 					Schema:        pSchema,
 					Required:      required,
+					Description:   p.Value.Description,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}

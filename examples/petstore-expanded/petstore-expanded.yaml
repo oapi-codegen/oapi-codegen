@@ -133,6 +133,7 @@ components:
             id:
               type: integer
               format: int64
+              description: Unique id of the pet
 
     NewPet:
       required:
@@ -140,8 +141,10 @@ components:
       properties:
         name:
           type: string
+          description: Name of the pet
         tag:
           type: string
+          description: Type of the pet
 
     Error:
       required:
@@ -151,5 +154,7 @@ components:
         code:
           type: integer
           format: int32
+          description: Error code
         message:
           type: string
+          description: Error message
