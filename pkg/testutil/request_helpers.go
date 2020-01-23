@@ -71,6 +71,10 @@ func (r *RequestBuilder) Put(path string) *RequestBuilder {
 	return r.WithMethod("PUT", path)
 }
 
+func (r *RequestBuilder) Patch(path string) *RequestBuilder {
+	return r.WithMethod("PATCH", path)
+}
+
 func (r *RequestBuilder) Delete(path string) *RequestBuilder {
 	return r.WithMethod("DELETE", path)
 }
