@@ -47,6 +47,11 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	// Check that the property comments were generated
 	assert.Contains(t, code, "// Unique id of the pet")
 
+	// Check that the summary comment contains newlines
+	assert.Contains(t, code, `// Deletes a pet by ID
+	// (DELETE /pets/{id})
+`)
+
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
 	problems, err := linter.Lint("test.gen.go", []byte(code))
