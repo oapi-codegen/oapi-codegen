@@ -719,7 +719,7 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{.SummaryAsComment -}}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}

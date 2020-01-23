@@ -1060,8 +1060,10 @@ func ParseBodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsRespons
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /params_with_add_props)
 	ParamsWithAddProps(ctx echo.Context, params ParamsWithAddPropsParams) error
+
 	// (POST /params_with_add_props)
 	BodyWithAddProps(ctx echo.Context) error
 }

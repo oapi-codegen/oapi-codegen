@@ -828,18 +828,25 @@ func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*getJsonWithTrai
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (POST /with_both_bodies)
 	PostBoth(ctx echo.Context) error
+
 	// (GET /with_both_responses)
 	GetBoth(ctx echo.Context) error
+
 	// (POST /with_json_body)
 	PostJson(ctx echo.Context) error
+
 	// (GET /with_json_response)
 	GetJson(ctx echo.Context) error
+
 	// (POST /with_other_body)
 	PostOther(ctx echo.Context) error
+
 	// (GET /with_other_response)
 	GetOther(ctx echo.Context) error
+
 	// (GET /with_trailing_slash/)
 	GetJsonWithTrailingSlash(ctx echo.Context) error
 }
