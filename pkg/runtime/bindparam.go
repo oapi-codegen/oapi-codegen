@@ -432,19 +432,20 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 // We don't try to be smart here, if the field exists as a query argument,
 // set its value.
 func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) error {
-	// special handling for custom types
-	switch dest.(type) {
-	case *types.Date:
-		return BindStringToObject(values.Get(paramName), dest)
-	}
-
 	v := reflect.Indirect(reflect.ValueOf(dest))
+
 	if v.Type().Kind() != reflect.Struct {
 		return echo.NewHTTPError(http.StatusInternalServerError,
 			"unmarshaling query arg '%s' into wrong type", paramName)
 	}
 
 	t := v.Type()
+
+	// special handling for custom types
+	if t.ConvertibleTo(types.BaseDateType) {
+		fmt.Printf("It's convertible! %s", t.Name())
+		return BindStringToObject(values.Get(paramName), dest)
+	}
 
 	for i := 0; i < t.NumField(); i++ {
 		fieldT := t.Field(i)

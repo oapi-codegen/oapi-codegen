@@ -13,7 +13,7 @@ func TestDate_MarshalJSON(t *testing.T) {
 	b := struct {
 		DateField Date	`json:"date"`
 	}{
-		DateField: Date{testDate},
+		DateField: Date{Time:testDate},
 	}
 	jsonBytes, err := json.Marshal(b)
 	assert.NoError(t, err)

@@ -70,6 +70,17 @@ func BindStringToObject(src string, dst interface{}) error {
 			v.SetBool(val)
 		}
 	case reflect.Struct:
+		// special handling for custom types
+		if t.ConvertibleTo(types.BaseDateType) {
+			parsedTime, err := time.Parse(types.DateFormat, src)
+			if err != nil {
+				return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+			}
+			// set the Time field of the struct
+			v.Field(0).Set(reflect.ValueOf(parsedTime))
+			return nil
+		}
+
 		switch dstType := dst.(type) {
 		case *time.Time:
 			// Time is a special case of a struct that we handle
@@ -78,13 +89,6 @@ func BindStringToObject(src string, dst interface{}) error {
 				return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
 			}
 			*dstType = parsedTime
-			return nil
-		case *types.Date:
-			parsedTime, err := time.Parse(types.DateFormat, src)
-			if err != nil {
-				return fmt.Errorf("error parsing '%s' as date: %s", src, err)
-			}
-			dstType.Time = parsedTime
 			return nil
 		}
 		fallthrough
