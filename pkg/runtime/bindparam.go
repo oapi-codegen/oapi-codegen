@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/labstack/echo/v4"
@@ -436,6 +437,9 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 	switch dest.(type) {
 	case *types.Date:
 		return BindStringToObject(values.Get(paramName), dest)
+	case *time.Time:
+		return BindStringToObject(values.Get(paramName), dest)
+
 	}
 
 	v := reflect.Indirect(reflect.ValueOf(dest))
