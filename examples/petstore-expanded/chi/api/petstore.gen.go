@@ -175,7 +175,7 @@ func Handler(si ServerInterface) http.Handler {
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *chi.Mux) http.Handler {
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(FindPetsCtx)
 		r.Get("/pets", si.FindPets)
