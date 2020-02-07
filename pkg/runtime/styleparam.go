@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 // Given an input value, such as a primitive type, array or object, turn it
@@ -129,13 +131,23 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 	// This is a special case. The struct may be a time, in which case, marshal
 	// it in RFC3339 format.
 	if timeVal, ok := value.(*time.Time); ok {
-		return timeVal.Format(time.RFC3339Nano), nil
+		return stylePrimitive(style, explode, paramName, timeVal.Format(time.RFC3339Nano))
 	}
 
 	// Otherwise, we need to build a dictionary of the struct's fields. Each
 	// field may only be a primitive value.
 	v := reflect.ValueOf(value)
 	t := reflect.TypeOf(value)
+
+	// Special type handling
+	if t.ConvertibleTo(types.BaseDateType) {
+		timeVal, ok := v.Field(0).Interface().(time.Time)
+		if !ok {
+			return "", fmt.Errorf("error formatting '%s': could not coerce into a date", paramName)
+		}
+		return stylePrimitive(style, explode, paramName, timeVal.Format(types.DateFormat))
+	}
+
 	fieldDict := make(map[string]string)
 
 	for i := 0; i < t.NumField(); i++ {
@@ -278,7 +290,7 @@ func stylePrimitive(style string, explode bool, paramName string, value interfac
 func primitiveToString(value interface{}) (string, error) {
 	var output string
 
-	// Values may come in by pointer for optionals, so make sure to dereferene.
+	// Values may come in by pointer for optionals, so make sure to dereference.
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 	kind := t.Kind()

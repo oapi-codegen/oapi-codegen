@@ -15,7 +15,9 @@ package runtime
 
 import (
 	"testing"
+	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -33,6 +35,11 @@ func TestStyleParam(t *testing.T) {
 	dict := map[string]interface{}{}
 	dict["firstName"] = "Alex"
 	dict["role"] = "admin"
+
+	type testDateType types.Date
+	testDate := testDateType{
+		Time: time.Date(2020, 2, 7, 0, 0, 0, 0, time.UTC),
+	}
 
 	// ---------------------------- Simple Style -------------------------------
 
@@ -168,6 +175,14 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("form", true, "id", dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
+
+	result, err = StyleParam("form", true, "dateOfBirth", testDate)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "dateOfBirth=2020-02-07", result)
+
+	result, err = StyleParam("form", false, "dateOfBirth", testDate)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "dateOfBirth=2020-02-07", result)
 
 	// ------------------------  spaceDelimited Style --------------------------
 
