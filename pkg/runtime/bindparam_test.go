@@ -261,7 +261,7 @@ func TestBindQueryParameter(t *testing.T) {
 	})
 
 	t.Run("form", func(t *testing.T) {
-		expected := &types.Date{Time:time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
+		expected := &types.Date{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 		birthday := &types.Date{}
 		queryParams := url.Values{
 			"birthday": {"2020-01-01"},
