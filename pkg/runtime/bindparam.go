@@ -443,7 +443,6 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 
 	// special handling for custom types
 	if t.ConvertibleTo(types.BaseDateType) {
-		fmt.Printf("It's convertible! %s", t.Name())
 		return BindStringToObject(values.Get(paramName), dest)
 	}
 
