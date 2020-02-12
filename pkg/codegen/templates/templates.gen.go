@@ -541,7 +541,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if err != nil {
         return nil, err
     }
-    queryUrl, err = queryUrl.Parse(fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+
+    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if basePath[0] == '/' {
+        basePath = basePath[1:]
+    }
+
+    queryUrl, err = queryUrl.Parse(basePath)
     if err != nil {
         return nil, err
     }
@@ -878,4 +884,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-
