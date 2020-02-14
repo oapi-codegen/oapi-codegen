@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -48,6 +49,8 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 		return styleSlice(style, explode, paramName, sliceVal)
 	case reflect.Struct:
 		return styleStruct(style, explode, paramName, value)
+	case reflect.Map:
+		return styleMap(style, explode, paramName, value)
 	default:
 		return stylePrimitive(style, explode, paramName, value)
 	}
@@ -161,6 +164,28 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 		fieldDict[fieldName] = str
 	}
 
+	return processFieldDict(style, explode, paramName, fieldDict)
+}
+
+func styleMap(style string, explode bool, paramName string, value interface{}) (string, error) {
+	dict, ok := value.(map[string]interface{})
+	if !ok {
+		return "", errors.New("map not of type map[string]interface{}")
+	}
+
+	fieldDict := make(map[string]string)
+	for fieldName, value := range dict {
+		str, err := primitiveToString(value)
+		if err != nil {
+			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
+		}
+		fieldDict[fieldName] = str
+	}
+
+	return processFieldDict(style, explode, paramName, fieldDict)
+}
+
+func processFieldDict(style string, explode bool, paramName string, fieldDict map[string]string) (string, error) {
 	var parts []string
 
 	// This works for everything except deepObject. We'll handle that one

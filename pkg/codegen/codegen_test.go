@@ -9,7 +9,6 @@ import (
 
 	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
 	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
@@ -45,6 +44,14 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	// Check that the client method signatures return response structs:
 	assert.Contains(t, code, "func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {")
 
+	// Check that the property comments were generated
+	assert.Contains(t, code, "// Unique id of the pet")
+
+	// Check that the summary comment contains newlines
+	assert.Contains(t, code, `// Deletes a pet by ID
+	// (DELETE /pets/{id})
+`)
+
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
 	problems, err := linter.Lint("test.gen.go", []byte(code))
@@ -63,13 +70,58 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")
 
-	findPetByIDResponse, err := examplePetstoreClient.ParsefindPetByIdResponse(cannedResponse)
+	findPetByIDResponse, err := examplePetstoreClient.ParseFindPetByIdResponse(cannedResponse)
 	assert.NoError(t, err)
 	assert.NotNil(t, findPetByIDResponse.JSON200)
 	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
 	assert.Equal(t, "testpet", findPetByIDResponse.JSON200.Name)
 	assert.NotNil(t, findPetByIDResponse.JSON200.Tag)
 	assert.Equal(t, "cat", *findPetByIDResponse.JSON200.Tag)
+}
+
+func TestFilterOperationsByTag(t *testing.T) {
+	packageName := "testswagger"
+	t.Run("include tags", func(t *testing.T) {
+		opts := Options{
+			GenerateClient:     true,
+			GenerateEchoServer: true,
+			GenerateTypes:      true,
+			EmbedSpec:          true,
+			IncludeTags:        []string{"hippo", "giraffe", "cat"},
+		}
+
+		// Get a spec from the test definition in this file:
+		swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testOpenAPIDefinition))
+		assert.NoError(t, err)
+
+		// Run our code generation:
+		code, err := Generate(swagger, packageName, opts)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, code)
+		assert.NotContains(t, code, `"/test/:name"`)
+		assert.Contains(t, code, `"/cat"`)
+	})
+
+	t.Run("exclude tags", func(t *testing.T) {
+		opts := Options{
+			GenerateClient:     true,
+			GenerateEchoServer: true,
+			GenerateTypes:      true,
+			EmbedSpec:          true,
+			ExcludeTags:        []string{"hippo", "giraffe", "cat"},
+		}
+
+		// Get a spec from the test definition in this file:
+		swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testOpenAPIDefinition))
+		assert.NoError(t, err)
+
+		// Run our code generation:
+		code, err := Generate(swagger, packageName, opts)
+		assert.NoError(t, err)
+		assert.NotEmpty(t, code)
+		assert.Contains(t, code, `"/test/:name"`)
+		assert.NotContains(t, code, `"/cat"`)
+	})
 }
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
@@ -102,14 +154,29 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	// Check that response structs are generated correctly:
 	assert.Contains(t, code, "type getTestByNameResponse struct {")
 
+	// Check that response structs contains fallbacks to interface for invalid types:
+	// Here an invalid array with no items.
+	assert.Contains(t, code, `
+type getTestByNameResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Test
+	XML200       *[]Test
+	JSON422      *[]interface{}
+	XML422       *[]interface{}
+	JSONDefault  *Error
+}`)
+
 	// Check that the helper methods are generated correctly:
 	assert.Contains(t, code, "func (r getTestByNameResponse) Status() string {")
 	assert.Contains(t, code, "func (r getTestByNameResponse) StatusCode() int {")
-	assert.Contains(t, code, "func ParsegetTestByNameResponse(rsp *http.Response) (*getTestByNameResponse, error) {")
+	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*getTestByNameResponse, error) {")
 
 	// Check the client method signatures:
-	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string) (*getTestByNameResponse, error) {")
+	assert.Contains(t, code, "type GetTestByNameParams struct {")
+	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
+	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams) (*http.Response, error) {")
+	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*getTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
@@ -143,6 +210,11 @@ paths:
         required: true
         schema:
           type: string
+      - name: $top
+        in: query
+        required: false
+        schema:
+          type: integer
       responses:
         200:
           description: Success
@@ -157,6 +229,15 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Test'
+        422:
+          description: InvalidArray
+          content:
+            application/xml:
+              schema:
+                type: array
+            application/json:
+              schema:
+                type: array
         default:
           description: Error
           content:

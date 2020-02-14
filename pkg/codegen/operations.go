@@ -385,10 +385,16 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
-
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				return nil, fmt.Errorf("OperationId is missing on path '%s %s'", opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				if err != nil {
+					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
+						opName, requestPath, err)
+				}
+				op.OperationID = op.OperationID
+			} else {
+				op.OperationID = ToCamelCase(op.OperationID)
 			}
 
 			// These are parameters defined for the specific path method that
@@ -431,8 +437,18 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				TypeDefinitions: typeDefinitions,
 			}
 
+			// check for overrides of SecurityDefinitions.
+			// See: "Step 2. Applying security:" from the spec:
+			// https://swagger.io/docs/specification/authentication/
 			if op.Security != nil {
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+			} else {
+				// use global securityDefinitions
+				// globalSecurityDefinitions contains the top-level securityDefinitions.
+				// They are the default securityPermissions which are injected into each
+				// path, except for the case where a path explicitly overrides them.
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+
 			}
 
 			if op.RequestBody != nil {
@@ -446,6 +462,26 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		}
 	}
 	return operations, nil
+}
+
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
+	var operationId string = strings.ToLower(opName)
+
+	if opName == "" {
+		return "", fmt.Errorf("operation name cannot be an empty string")
+	}
+
+	if requestPath == "" {
+		return "", fmt.Errorf("request path cannot be an empty string")
+	}
+
+	for _, part := range strings.Split(requestPath, "/") {
+		if part != "" {
+			operationId = operationId + "-" + part
+		}
+	}
+
+	return ToCamelCase(operationId), nil
 }
 
 // This function turns the Swagger body definitions into a list of our body
@@ -553,6 +589,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
+			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,

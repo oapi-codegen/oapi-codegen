@@ -10,12 +10,12 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -40,18 +40,66 @@ type PostJsonJSONRequestBody PostJsonJSONBody
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = http.DefaultClient
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
 }
 
 // The interface specification for the client above.
@@ -77,6 +125,9 @@ type ClientInterface interface {
 
 	// GetOther request
 	GetOther(ctx context.Context) (*http.Response, error)
+
+	// GetJsonWithTrailingSlash request
+	GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error)
 }
 
 func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -199,6 +250,21 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetJsonWithTrailingSlashRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 // NewPostBothRequest calls the generic PostBoth builder with application/json body
 func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -214,9 +280,16 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_both_bodies", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_both_bodies"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -229,9 +302,16 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 func NewGetBothRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_both_responses", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_both_responses"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -254,9 +334,16 @@ func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Requ
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_json_body", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_json_body"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -269,9 +356,16 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 func NewGetJsonRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_json_response", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_json_response"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -283,9 +377,16 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_other_body", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_other_body"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("POST", queryUrl, body)
+	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -298,9 +399,37 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 func NewGetOtherRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/with_other_response", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_other_response"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetJsonWithTrailingSlashRequest generates requests for GetJsonWithTrailingSlash
+func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_trailing_slash/"))
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -313,24 +442,28 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-		},
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
 	}
+	return &ClientWithResponses{client}, nil
 }
 
-// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
-func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client:        http.Client{},
-			Server:        server,
-			RequestEditor: reqEditorFn,
-		},
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
 	}
 }
 
@@ -460,13 +593,34 @@ func (r getOtherResponse) StatusCode() int {
 	return 0
 }
 
+type getJsonWithTrailingSlashResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r getJsonWithTrailingSlashResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getJsonWithTrailingSlashResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
 func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postBothResponse, error) {
 	rsp, err := c.PostBothWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	return ParsepostBothResponse(rsp)
+	return ParsePostBothResponse(rsp)
 }
 
 func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*postBothResponse, error) {
@@ -474,7 +628,7 @@ func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body Pos
 	if err != nil {
 		return nil, err
 	}
-	return ParsepostBothResponse(rsp)
+	return ParsePostBothResponse(rsp)
 }
 
 // GetBothWithResponse request returning *GetBothResponse
@@ -483,7 +637,7 @@ func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context) (*getBoth
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetBothResponse(rsp)
+	return ParseGetBothResponse(rsp)
 }
 
 // PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
@@ -492,7 +646,7 @@ func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	return ParsepostJsonResponse(rsp)
+	return ParsePostJsonResponse(rsp)
 }
 
 func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*postJsonResponse, error) {
@@ -500,7 +654,7 @@ func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body Pos
 	if err != nil {
 		return nil, err
 	}
-	return ParsepostJsonResponse(rsp)
+	return ParsePostJsonResponse(rsp)
 }
 
 // GetJsonWithResponse request returning *GetJsonResponse
@@ -509,7 +663,7 @@ func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context) (*getJson
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetJsonResponse(rsp)
+	return ParseGetJsonResponse(rsp)
 }
 
 // PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
@@ -518,7 +672,7 @@ func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return ParsepostOtherResponse(rsp)
+	return ParsePostOtherResponse(rsp)
 }
 
 // GetOtherWithResponse request returning *GetOtherResponse
@@ -527,11 +681,20 @@ func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context) (*getOth
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetOtherResponse(rsp)
+	return ParseGetOtherResponse(rsp)
 }
 
-// ParsepostBothResponse parses an HTTP response from a PostBothWithResponse call
-func ParsepostBothResponse(rsp *http.Response) (*postBothResponse, error) {
+// GetJsonWithTrailingSlashWithResponse request returning *GetJsonWithTrailingSlashResponse
+func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*getJsonWithTrailingSlashResponse, error) {
+	rsp, err := c.GetJsonWithTrailingSlash(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetJsonWithTrailingSlashResponse(rsp)
+}
+
+// ParsePostBothResponse parses an HTTP response from a PostBothWithResponse call
+func ParsePostBothResponse(rsp *http.Response) (*postBothResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -549,8 +712,8 @@ func ParsepostBothResponse(rsp *http.Response) (*postBothResponse, error) {
 	return response, nil
 }
 
-// ParsegetBothResponse parses an HTTP response from a GetBothWithResponse call
-func ParsegetBothResponse(rsp *http.Response) (*getBothResponse, error) {
+// ParseGetBothResponse parses an HTTP response from a GetBothWithResponse call
+func ParseGetBothResponse(rsp *http.Response) (*getBothResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -568,8 +731,8 @@ func ParsegetBothResponse(rsp *http.Response) (*getBothResponse, error) {
 	return response, nil
 }
 
-// ParsepostJsonResponse parses an HTTP response from a PostJsonWithResponse call
-func ParsepostJsonResponse(rsp *http.Response) (*postJsonResponse, error) {
+// ParsePostJsonResponse parses an HTTP response from a PostJsonWithResponse call
+func ParsePostJsonResponse(rsp *http.Response) (*postJsonResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -587,8 +750,8 @@ func ParsepostJsonResponse(rsp *http.Response) (*postJsonResponse, error) {
 	return response, nil
 }
 
-// ParsegetJsonResponse parses an HTTP response from a GetJsonWithResponse call
-func ParsegetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
+// ParseGetJsonResponse parses an HTTP response from a GetJsonWithResponse call
+func ParseGetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -606,8 +769,8 @@ func ParsegetJsonResponse(rsp *http.Response) (*getJsonResponse, error) {
 	return response, nil
 }
 
-// ParsepostOtherResponse parses an HTTP response from a PostOtherWithResponse call
-func ParsepostOtherResponse(rsp *http.Response) (*postOtherResponse, error) {
+// ParsePostOtherResponse parses an HTTP response from a PostOtherWithResponse call
+func ParsePostOtherResponse(rsp *http.Response) (*postOtherResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -625,8 +788,8 @@ func ParsepostOtherResponse(rsp *http.Response) (*postOtherResponse, error) {
 	return response, nil
 }
 
-// ParsegetOtherResponse parses an HTTP response from a GetOtherWithResponse call
-func ParsegetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
+// ParseGetOtherResponse parses an HTTP response from a GetOtherWithResponse call
+func ParseGetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -644,20 +807,48 @@ func ParsegetOtherResponse(rsp *http.Response) (*getOtherResponse, error) {
 	return response, nil
 }
 
+// ParseGetJsonWithTrailingSlashResponse parses an HTTP response from a GetJsonWithTrailingSlashWithResponse call
+func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*getJsonWithTrailingSlashResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getJsonWithTrailingSlashResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (POST /with_both_bodies)
 	PostBoth(ctx echo.Context) error
+
 	// (GET /with_both_responses)
 	GetBoth(ctx echo.Context) error
+
 	// (POST /with_json_body)
 	PostJson(ctx echo.Context) error
+
 	// (GET /with_json_response)
 	GetJson(ctx echo.Context) error
+
 	// (POST /with_other_body)
 	PostOther(ctx echo.Context) error
+
 	// (GET /with_other_response)
 	GetOther(ctx echo.Context) error
+
+	// (GET /with_trailing_slash/)
+	GetJsonWithTrailingSlash(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -721,8 +912,29 @@ func (w *ServerInterfaceWrapper) GetOther(ctx echo.Context) error {
 	return err
 }
 
+// GetJsonWithTrailingSlash converts echo context to params.
+func (w *ServerInterfaceWrapper) GetJsonWithTrailingSlash(ctx echo.Context) error {
+	var err error
+
+	ctx.Set("OpenId.Scopes", []string{"json.read", "json.admin"})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetJsonWithTrailingSlash(ctx)
+	return err
+}
+
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -734,20 +946,22 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 	router.GET("/with_json_response", wrapper.GetJson)
 	router.POST("/with_other_body", wrapper.PostOther)
 	router.GET("/with_other_response", wrapper.GetOther)
+	router.GET("/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8yTQYsTQRCF/8pQehyTrN7mqAdZQSNuwEMM0ul5yfSS6W6rK7sMIf9dqicxE1xCQFb2",
-	"EqrTVcV775vekQ1tDB5eElU7SrZBa3J5l8vp8h5W9Bw5RLA45NuV4yRfTAs9SBdBFSVh59e0L4nD5qkL",
-	"vcGvrWPUVM37rnKwarHXFudXQYdrJMsuigueKpo1LhWCJKl4bCANuJAGxYeNg5fC+PpQfnfSfEOKwSek",
-	"wjCKNTzYCOrCBmZY2XQ/PJW0cRY+ZZ0+G6HPtzNVL05UPs2QpLgDP4CppAdw6qXcjCajiTaGCG+io4re",
-	"jSajGyopGmlyPuNHJ83PZcg/9SG0GFKOUoM06uu2poq+hiTvgzTUpwM91Z322eAFPo+YGDfO5qHxfVIZ",
-	"R1havWasqKJX4xPN8QHl+Iyj5jtcFaxA3iRhmPZ85Spwa4QqWjpvuKPyL5hnNIW3yH8NjPMRg+5b4wnr",
-	"H3FyPuh9O5m8VM8DjypJ4XaX0X5S5f8F7SUgWewx5Es8/sh9Rh4qK8Fu2UlH1XxH04gsYE66d8QwNZV9",
-	"berWeVrsFycvQV//FclPte/q6J/rKfRqr4n+pPdy9v/6Ae/3vwMAAP//ZMSZTPcFAAA=",
+	"H4sIAAAAAAAC/8xUzY4SQRB+lUnpcWRYvc1RD2ZNFCMkHpBsmp6C7s1Md1tV7GZCeHdTDcgQN8jBNXsh",
+	"1fRXle+nerZgY5diwCAM9RbYOuxMLqe5nCzv0YqeE8WEJB7z7coTyxfToR6kTwg1sJAPa9iVQLF96kJv",
+	"8OfGEzZQz/eocjBqsVOID6uozQ2yJZ/ExwA1zJznQpCFi0eH4pAKcVh8aD0GKUxoDuV3L+4bcoqBkQtD",
+	"WKwxIBnBprCRCK20/Y8AJbTeYuDMM2Qh8Pl2puzFi9KHGbIUU6QHJCjhAYn3VG5G49FYgTFhMMlDDe9G",
+	"49ENlJCMuOxP9ejF3S1j/mkOpqXI2Uo10qiu2wZq+BpZ3kdxsHcH9dT0irMxCIbcYlJqvc1N1T0rjWNY",
+	"Wr0mXEENr6pTmtUhyuosR/V3OCpaQXnDQmi685GrSJ0RqGHpg6Eeyj/CPEtTaIP5r4FwOsag89b4hPSP",
+	"eFI+wL4dj1+q5oFGpaTh9pej/aTM/0u0lwLJZI8mX8rjN91nzENpMdoNeemhnm9hkjATmIPOHRGaBsp9",
+	"bZrOB1jsFictUV//Fc5PFHe19c/1FPZsr7H+xPey9/9qgYWMb31Y33Fr2FV/2wr9ss4OLVPteKFrstv9",
+	"CgAA//91LTf11gYAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

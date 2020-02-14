@@ -124,6 +124,11 @@ paths:
           description: Some argument
           schema:
             type: integer
+        - name: inline_query_argument
+          in: query
+          description: Some query argument
+          schema:
+            type: integer
       requestBody:
         description: Optional body
         required: false
@@ -213,6 +218,9 @@ components:
         date_field:
           type: string
           format: date
+        byte_field:
+          type: string
+          format: byte
         date_time_field:
           type: string
           format: date-time
@@ -250,6 +258,7 @@ components:
         - referenced_field
         - array_inline_field
         - array_referenced_field
+        - byte_field
     EveryTypeOptional:
       properties:
         int32_field:
@@ -275,6 +284,9 @@ components:
         date_field:
           type: string
           format: date
+        byte_field:
+          type: string
+          format: byte
         date_time_field:
           type: string
           format: date-time

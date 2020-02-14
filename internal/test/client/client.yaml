@@ -17,6 +17,16 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SchemaObject'
+  /with_trailing_slash/:
+    get:
+      operationId: GetJsonWithTrailingSlash
+      security:
+        - OpenId: [json.read, json.admin]
+      responses:
+        200:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaObject'
   /with_other_response:
     get:
       operationId: GetOther

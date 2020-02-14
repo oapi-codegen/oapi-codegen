@@ -19,6 +19,8 @@ import (
 	"reflect"
 	"strconv"
 	"time"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 // This function takes a string, and attempts to assign it to the destination
@@ -68,13 +70,21 @@ func BindStringToObject(src string, dst interface{}) error {
 			v.SetBool(val)
 		}
 	case reflect.Struct:
-		// Time is a special case of a struct that we handle
-		if dstTime, ok := dst.(*time.Time); ok {
+		switch dstType := dst.(type) {
+		case *time.Time:
+			// Time is a special case of a struct that we handle
 			parsedTime, err := time.Parse(time.RFC3339Nano, src)
 			if err != nil {
 				return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
 			}
-			*dstTime = parsedTime
+			*dstType = parsedTime
+			return nil
+		case *types.Date:
+			parsedTime, err := time.Parse(types.DateFormat, src)
+			if err != nil {
+				return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+			}
+			dstType.Time = parsedTime
 			return nil
 		}
 		fallthrough

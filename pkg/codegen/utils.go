@@ -15,14 +15,13 @@ package codegen
 
 import (
 	"fmt"
-
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
-
 	"regexp"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 var pathParamRE *regexp.Regexp
@@ -53,28 +52,37 @@ func LowercaseFirstCharacter(str string) string {
 }
 
 // This function will convert query-arg style strings to CamelCase. We will
-// use (., -, _, ~, ' ') as valid delimiters for words. So, "word.word-word~word_word word"
-// would be converted to WordWordWordWord
+// use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
+// So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := []string{".", "-", "_", "~", " "}
-	in := []string{str}
-	out := make([]string, 0)
+	separators := "-#@!$&=.+:;_~ (){}[]"
+	s := strings.Trim(str, " ")
 
-	for _, sep := range separators {
-		for _, inStr := range in {
-			parts := strings.Split(inStr, sep)
-			out = append(out, parts...)
+	n := ""
+	capNext := true
+	for _, v := range s {
+		if unicode.IsUpper(v) {
+			n += string(v)
 		}
-		in = out
-		out = make([]string, 0)
-	}
+			if unicode.IsDigit(v) {
+			n += string(v)
+		}
+		if unicode.IsLower(v) {
+			if capNext {
+				n += strings.ToUpper(string(v))
+			} else {
+				n += string(v)
+			}
+		}
 
-	words := in
-
-	for i := range words {
-		words[i] = UppercaseFirstCharacter(words[i])
+		 if strings.ContainsRune(separators, v) {
+			capNext = true
+		} else {
+			capNext = false
+		}
 	}
-	return strings.Join(words, "")
+	return n
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
@@ -314,7 +322,7 @@ func IsGoKeyword(str string) bool {
 func SchemaNameToTypeName(name string) string {
 	name = ToCamelCase(name)
 	// Prepend "N" to schemas starting with a number
-	if unicode.IsDigit([]rune(name)[0]) {
+	if name != "" && unicode.IsDigit([]rune(name)[0]) {
 		name = "N" + name
 	}
 	return name
@@ -343,4 +351,24 @@ func PathToTypeName(path []string) string {
 		path[i] = ToCamelCase(p)
 	}
 	return strings.Join(path, "_")
+}
+
+// StringToGoComment renders a possible multi-line string as a valid Go-Comment.
+// Each line is prefixed as a comment.
+func StringToGoComment(in string) string {
+	// Normalize newlines from Windows/Mac to Linux
+	in = strings.Replace(in, "\r\n", "\n", -1)
+	in = strings.Replace(in, "\r", "\n", -1)
+
+	// Add comment to each line
+	var lines []string
+	for _, line := range strings.Split(in, "\n") {
+		lines = append(lines, fmt.Sprintf("// %s", line))
+	}
+	in = strings.Join(lines, "\n")
+
+	// in case we have a multiline string which ends with \n, we would generate
+	// empty-line-comments, like `// `. Therefore remove this line comment.
+	in = strings.TrimSuffix(in, "\n// ")
+	return in
 }

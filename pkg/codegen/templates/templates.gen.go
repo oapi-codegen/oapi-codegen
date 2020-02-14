@@ -75,8 +75,11 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 `,
 	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-  r := chi.NewRouter()
+  return HandlerFromMux(si, chi.NewRouter())
+}
 
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 {{range .}}r.Group(func(r chi.Router) {
   r.Use({{.OperationId}}Ctx)
   r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
@@ -86,7 +89,7 @@ func Handler(si ServerInterface) http.Handler {
 }
 `,
 	"chi-interface.tmpl": `type ServerInterface interface {
-{{range .}}// {{.Summary}} ({{.Method}} {{.Path}})
+{{range .}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
 }
@@ -105,34 +108,39 @@ func ParamsFor{{.OperationId}}(ctx context.Context) *{{.OperationId}}Params {
 func {{$opid}}Ctx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     ctx := r.Context()
+    {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+    var err error
+    {{end}}
 
     {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
-    var pathErr error
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
     {{if .IsPassThrough}}
     {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
     {{end}}
     {{if .IsJson}}
-    pathErr = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
-    if pathErr != nil {
+    err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
+    if err != nil {
       http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
       return
     }
     {{end}}
     {{if .IsStyled}}
-    pathErr = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
-    if pathErr != nil {
-      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", pathErr), http.StatusBadRequest)
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
+    if err != nil {
+      http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
       return
     }
     {{end}}
 
-    ctx = context.WithValue(r.Context(), "{{$varName}}", {{$varName}})
+    ctx = context.WithValue(ctx, "{{$varName}}", {{$varName}})
     {{end}}
 
+{{range .SecurityDefinitions}}
+    ctx = context.WithValue(ctx, "{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+{{end}}
+
     {{if .RequiresParamObject}}
-      var err error
       // Parameter object where we will unmarshal all parameters from the context
       var params {{.OperationId}}Params
 
@@ -252,7 +260,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
         {{- end}}
       {{end}}
 
-      ctx = context.WithValue(r.Context(), "{{.OperationId}}Params", &params)
+      ctx = context.WithValue(ctx, "{{.OperationId}}Params", &params)
     {{end}}
     next.ServeHTTP(w, r.WithContext(ctx))
   })
@@ -267,27 +275,30 @@ type ClientWithResponses struct {
     ClientInterface
 }
 
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-    return &ClientWithResponses{
-        ClientInterface: &Client{
-            Client: http.Client{},
-            Server: server,
-        },
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+    client, err := NewClient(server, opts...)
+    if err != nil {
+        return nil, err
     }
+    return &ClientWithResponses{client}, nil
 }
 
-// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
-func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-			RequestEditor: reqEditorFn,
-		},
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
 	}
 }
-
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | lcFirst}}Response struct {
@@ -326,7 +337,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid}}(rsp)
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 
 {{$hasParams := .RequiresParamObject -}}
@@ -338,7 +349,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid}}(rsp)
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 {{end}}
 
@@ -347,8 +358,8 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
 
-// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
-func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+// Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := ioutil.ReadAll(rsp.Body)
     defer rsp.Body.Close()
     if err != nil {
@@ -367,18 +378,66 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
-    // The endpoint of the server conforming to this interface, with scheme,
-    // https://api.deepmap.com for example.
-    Server string
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example.
+	Server string
 
-    // HTTP client with any customized settings, such as certificate chains.
-    Client http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
 
-    // A callback for modifying requests which are generated before sending over
-    // the network.
-    RequestEditor RequestEditorFn
+	// A callback for modifying requests which are generated before sending over
+	// the network.
+	RequestEditor RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+    // create a client with sane default values
+    client := Client{
+        Server: server,
+    }
+    // mutate client and add all optional params
+    for _, o := range opts {
+        if err := o(&client); err != nil {
+            return nil, err
+        }
+    }
+    // create httpClient, if not already present
+    if client.Client == nil {
+        client.Client = http.DefaultClient
+    }
+    return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
 }
 
 // The interface specification for the client above.
@@ -478,38 +537,47 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
     {{end}}
 {{end}}
-    queryUrl := fmt.Sprintf("%s{{genParamFmtString .Path}}", server{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
-{{if .QueryParams}}
-    var queryStrings []string
-{{range $paramIdx, $param := .QueryParams}}
-    var queryParam{{$paramIdx}} string
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    {{if .IsPassThrough}}
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var queryParamBuf{{$paramIdx}} []byte
-    queryParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    queryUrl, err := url.Parse(server)
     if err != nil {
         return nil, err
     }
-    queryParam{{$paramIdx}} = "{{.ParamName}}=" + string(queryParamBuf{{$paramIdx}})
+    queryUrl, err = queryUrl.Parse(fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+    if err != nil {
+        return nil, err
+    }
+{{if .QueryParams}}
+    queryValues := queryUrl.Query()
+{{range $paramIdx, $param := .QueryParams}}
+    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+    {{if .IsPassThrough}}
+    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    {{end}}
+    {{if .IsJson}}
+    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+        return nil, err
+    } else {
+        queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+    }
 
     {{end}}
     {{if .IsStyled}}
-    queryParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
+    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
+    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+       return nil, err
+    } else {
+       for k, v := range parsed {
+           for _, v2 := range v {
+               queryValues.Add(k, v2)
+           }
+       }
     }
     {{end}}
-    queryStrings = append(queryStrings, queryParam{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
-    if len(queryStrings) != 0 {
-        queryUrl += "?" + strings.Join(queryStrings, "&")
-    }
+    queryUrl.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl, {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
@@ -578,7 +646,7 @@ package {{.PackageName}}
 
 {{if .Imports}}
 import (
-{{range .Imports}} "{{.}}"
+{{range .Imports}} {{ . }}
 {{end}})
 {{end}}
 `,
@@ -619,8 +687,20 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 `,
-	"register.tmpl": `// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+	"register.tmpl": `
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router interface {
+                             	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+                             }, si ServerInterface) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
@@ -639,7 +719,7 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{.SummaryAsComment -}}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}

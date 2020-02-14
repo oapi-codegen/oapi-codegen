@@ -16,6 +16,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -48,18 +49,66 @@ type Issue9JSONRequestBody Issue9JSONBody
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
 
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = http.DefaultClient
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
 }
 
 // The interface specification for the client above.
@@ -147,9 +196,16 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/30/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/30/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -168,9 +224,16 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/issues/41/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/41/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -193,24 +256,32 @@ func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONReques
 func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/issues/9", server)
-
-	var queryStrings []string
-
-	var queryParam0 string
-
-	queryParam0, err = runtime.StyleParam("form", true, "foo", params.Foo)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/issues/9"))
 	if err != nil {
 		return nil, err
 	}
 
-	queryStrings = append(queryStrings, queryParam0)
+	queryValues := queryUrl.Query()
 
-	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
+	if queryFrag, err := runtime.StyleParam("form", true, "foo", params.Foo); err != nil {
+		return nil, err
+	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		return nil, err
+	} else {
+		for k, v := range parsed {
+			for _, v2 := range v {
+				queryValues.Add(k, v2)
+			}
+		}
 	}
 
-	req, err := http.NewRequest("GET", queryUrl, body)
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -224,24 +295,28 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-		},
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
 	}
+	return &ClientWithResponses{client}, nil
 }
 
-// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
-func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client:        http.Client{},
-			Server:        server,
-			RequestEditor: reqEditorFn,
-		},
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
 	}
 }
 
@@ -314,7 +389,7 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue30Response(rsp)
+	return ParseIssue30Response(rsp)
 }
 
 // Issue41WithResponse request returning *Issue41Response
@@ -323,7 +398,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue41Response(rsp)
+	return ParseIssue41Response(rsp)
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
@@ -332,7 +407,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
 func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
@@ -340,11 +415,11 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
-// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
-func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
+// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
+func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -362,8 +437,8 @@ func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
 	return response, nil
 }
 
-// Parseissue41Response parses an HTTP response from a Issue41WithResponse call
-func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
+// ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
+func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -381,8 +456,8 @@ func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
 	return response, nil
 }
 
-// Parseissue9Response parses an HTTP response from a Issue9WithResponse call
-func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
+// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
+func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -402,10 +477,13 @@ func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
+
 	// (GET /issues/41/{1param})
 	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
+
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
@@ -471,7 +549,17 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,

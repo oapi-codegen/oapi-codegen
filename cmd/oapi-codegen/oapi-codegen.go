@@ -35,11 +35,15 @@ func main() {
 		packageName string
 		generate    string
 		outputFile  string
+		includeTags string
+		excludeTags string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", client", "server", "spec"  (default types,client,server,"spec")`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "skip-fmt", "spec"`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
+	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
+	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -58,7 +62,7 @@ func main() {
 	}
 
 	opts := codegen.Options{}
-	for _, g := range strings.Split(generate, ",") {
+	for _, g := range splitCSVArg(generate) {
 		switch g {
 		case "client":
 			opts.GenerateClient = true
@@ -70,12 +74,17 @@ func main() {
 			opts.GenerateTypes = true
 		case "spec":
 			opts.EmbedSpec = true
+		case "skip-fmt":
+			opts.SkipFmt = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
 			os.Exit(1)
 		}
 	}
+
+	opts.IncludeTags = splitCSVArg(includeTags)
+	opts.ExcludeTags = splitCSVArg(excludeTags)
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")
@@ -99,4 +108,20 @@ func main() {
 	} else {
 		fmt.Println(code)
 	}
+}
+
+func splitCSVArg(input string) []string {
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return nil
+	}
+	splitInput := strings.Split(input, ",")
+	args := make([]string, 0, len(splitInput))
+	for _, s := range splitInput {
+		s = strings.TrimSpace(s)
+		if len(s) > 0 {
+			args = append(args, s)
+		}
+	}
+	return args
 }

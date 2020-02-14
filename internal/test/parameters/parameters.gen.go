@@ -33,39 +33,88 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	P  *int32         `json:"p,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
+
+	// primitive
+	P *int32 `json:"p,omitempty"`
+
+	// primitive
+	Ep *int32 `json:"ep,omitempty"`
+
+	// exploded array
+	Ea *[]int32 `json:"ea,omitempty"`
+
+	// array
+	A *[]int32 `json:"a,omitempty"`
+
+	// exploded object
+	Eo *Object `json:"eo,omitempty"`
+
+	// object
+	O *Object `json:"o,omitempty"`
+
+	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	XPrimitive         *int32         `json:"X-Primitive,omitempty"`
-	XPrimitiveExploded *int32         `json:"X-Primitive-Exploded,omitempty"`
-	XArrayExploded     *[]int32       `json:"X-Array-Exploded,omitempty"`
-	XArray             *[]int32       `json:"X-Array,omitempty"`
-	XObjectExploded    *Object        `json:"X-Object-Exploded,omitempty"`
-	XObject            *Object        `json:"X-Object,omitempty"`
-	XComplexObject     *ComplexObject `json:"X-Complex-Object,omitempty"`
+
+	// primitive
+	XPrimitive *int32 `json:"X-Primitive,omitempty"`
+
+	// primitive
+	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
+
+	// exploded array
+	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+
+	// array
+	XArray *[]int32 `json:"X-Array,omitempty"`
+
+	// exploded object
+	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
+
+	// object
+	XObject *Object `json:"X-Object,omitempty"`
+
+	// complex object
+	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	Ea *[]int32       `json:"ea,omitempty"`
-	A  *[]int32       `json:"a,omitempty"`
-	Eo *Object        `json:"eo,omitempty"`
-	O  *Object        `json:"o,omitempty"`
-	Ep *int32         `json:"ep,omitempty"`
-	P  *int32         `json:"p,omitempty"`
+
+	// exploded array
+	Ea *[]int32 `json:"ea,omitempty"`
+
+	// array
+	A *[]int32 `json:"a,omitempty"`
+
+	// exploded object
+	Eo *Object `json:"eo,omitempty"`
+
+	// object
+	O *Object `json:"o,omitempty"`
+
+	// exploded primitive
+	Ep *int32 `json:"ep,omitempty"`
+
+	// primitive
+	P *int32 `json:"p,omitempty"`
+
+	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
+
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
@@ -73,12 +122,53 @@ type Client struct {
 	// https://api.deepmap.com for example.
 	Server string
 
-	// HTTP client with any customized settings, such as certificate chains.
-	Client http.Client
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
 
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = http.DefaultClient
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditor = fn
+		return nil
+	}
 }
 
 // The interface specification for the client above.
@@ -421,9 +511,16 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 	}
 	pathParam0 = string(pathParamBuf0)
 
-	queryUrl := fmt.Sprintf("%s/contentObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/contentObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -435,9 +532,16 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/cookie", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/cookie"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -556,9 +660,16 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/header", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/header"))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -656,9 +767,16 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/labelExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -677,9 +795,16 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/labelExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -698,9 +823,16 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/labelNoExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -719,9 +851,16 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/labelNoExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -740,9 +879,16 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/matrixExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -761,9 +907,16 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/matrixExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -782,9 +935,16 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/matrixNoExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -803,9 +963,16 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/matrixNoExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -821,9 +988,16 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 
 	pathParam0 = param
 
-	queryUrl := fmt.Sprintf("%s/passThrough/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/passThrough/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -835,94 +1009,126 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/queryForm", server)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/queryForm"))
+	if err != nil {
+		return nil, err
+	}
 
-	var queryStrings []string
+	queryValues := queryUrl.Query()
 
-	var queryParam0 string
 	if params.Ea != nil {
 
-		queryParam0, err = runtime.StyleParam("form", true, "ea", *params.Ea)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", true, "ea", *params.Ea); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam0)
 	}
 
-	var queryParam1 string
 	if params.A != nil {
 
-		queryParam1, err = runtime.StyleParam("form", false, "a", *params.A)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", false, "a", *params.A); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam1)
 	}
 
-	var queryParam2 string
 	if params.Eo != nil {
 
-		queryParam2, err = runtime.StyleParam("form", true, "eo", *params.Eo)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", true, "eo", *params.Eo); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam2)
 	}
 
-	var queryParam3 string
 	if params.O != nil {
 
-		queryParam3, err = runtime.StyleParam("form", false, "o", *params.O)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", false, "o", *params.O); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam3)
 	}
 
-	var queryParam4 string
 	if params.Ep != nil {
 
-		queryParam4, err = runtime.StyleParam("form", true, "ep", *params.Ep)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", true, "ep", *params.Ep); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam4)
 	}
 
-	var queryParam5 string
 	if params.P != nil {
 
-		queryParam5, err = runtime.StyleParam("form", false, "p", *params.P)
-		if err != nil {
+		if queryFrag, err := runtime.StyleParam("form", false, "p", *params.P); err != nil {
 			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
 		}
 
-		queryStrings = append(queryStrings, queryParam5)
 	}
 
-	var queryParam6 string
 	if params.Co != nil {
 
-		var queryParamBuf6 []byte
-		queryParamBuf6, err = json.Marshal(*params.Co)
-		if err != nil {
+		if queryParamBuf, err := json.Marshal(*params.Co); err != nil {
 			return nil, err
+		} else {
+			queryValues.Add("co", string(queryParamBuf))
 		}
-		queryParam6 = "co=" + string(queryParamBuf6)
 
-		queryStrings = append(queryStrings, queryParam6)
 	}
 
-	if len(queryStrings) != 0 {
-		queryUrl += "?" + strings.Join(queryStrings, "&")
-	}
+	queryUrl.RawQuery = queryValues.Encode()
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -941,9 +1147,16 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/simpleExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -962,9 +1175,16 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/simpleExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -983,9 +1203,16 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/simpleNoExplodeArray/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1004,9 +1231,16 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/simpleNoExplodeObject/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1025,9 +1259,16 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/simplePrimitive/%s", server, pathParam0)
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simplePrimitive/%s", pathParam0))
+	if err != nil {
+		return nil, err
+	}
 
-	req, err := http.NewRequest("GET", queryUrl, nil)
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1040,24 +1281,28 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
-// NewClientWithResponses returns a ClientWithResponses with a default Client:
-func NewClientWithResponses(server string) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client: http.Client{},
-			Server: server,
-		},
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
 	}
+	return &ClientWithResponses{client}, nil
 }
 
-// NewClientWithResponsesAndRequestEditorFunc takes in a RequestEditorFn callback function and returns a ClientWithResponses with a default Client:
-func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn RequestEditorFn) *ClientWithResponses {
-	return &ClientWithResponses{
-		ClientInterface: &Client{
-			Client:        http.Client{},
-			Server:        server,
-			RequestEditor: reqEditorFn,
-		},
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
 	}
 }
 
@@ -1445,7 +1690,7 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetContentObjectResponse(rsp)
+	return ParseGetContentObjectResponse(rsp)
 }
 
 // GetCookieWithResponse request returning *GetCookieResponse
@@ -1454,7 +1699,7 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetCookieResponse(rsp)
+	return ParseGetCookieResponse(rsp)
 }
 
 // GetHeaderWithResponse request returning *GetHeaderResponse
@@ -1463,7 +1708,7 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetHeaderResponse(rsp)
+	return ParseGetHeaderResponse(rsp)
 }
 
 // GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
@@ -1472,7 +1717,7 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelExplodeArrayResponse(rsp)
+	return ParseGetLabelExplodeArrayResponse(rsp)
 }
 
 // GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
@@ -1481,7 +1726,7 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelExplodeObjectResponse(rsp)
+	return ParseGetLabelExplodeObjectResponse(rsp)
 }
 
 // GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
@@ -1490,7 +1735,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelNoExplodeArrayResponse(rsp)
+	return ParseGetLabelNoExplodeArrayResponse(rsp)
 }
 
 // GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
@@ -1499,7 +1744,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetLabelNoExplodeObjectResponse(rsp)
+	return ParseGetLabelNoExplodeObjectResponse(rsp)
 }
 
 // GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
@@ -1508,7 +1753,7 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixExplodeArrayResponse(rsp)
+	return ParseGetMatrixExplodeArrayResponse(rsp)
 }
 
 // GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
@@ -1517,7 +1762,7 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixExplodeObjectResponse(rsp)
+	return ParseGetMatrixExplodeObjectResponse(rsp)
 }
 
 // GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
@@ -1526,7 +1771,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixNoExplodeArrayResponse(rsp)
+	return ParseGetMatrixNoExplodeArrayResponse(rsp)
 }
 
 // GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
@@ -1535,7 +1780,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetMatrixNoExplodeObjectResponse(rsp)
+	return ParseGetMatrixNoExplodeObjectResponse(rsp)
 }
 
 // GetPassThroughWithResponse request returning *GetPassThroughResponse
@@ -1544,7 +1789,7 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetPassThroughResponse(rsp)
+	return ParseGetPassThroughResponse(rsp)
 }
 
 // GetQueryFormWithResponse request returning *GetQueryFormResponse
@@ -1553,7 +1798,7 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetQueryFormResponse(rsp)
+	return ParseGetQueryFormResponse(rsp)
 }
 
 // GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
@@ -1562,7 +1807,7 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleExplodeArrayResponse(rsp)
+	return ParseGetSimpleExplodeArrayResponse(rsp)
 }
 
 // GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
@@ -1571,7 +1816,7 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleExplodeObjectResponse(rsp)
+	return ParseGetSimpleExplodeObjectResponse(rsp)
 }
 
 // GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
@@ -1580,7 +1825,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleNoExplodeArrayResponse(rsp)
+	return ParseGetSimpleNoExplodeArrayResponse(rsp)
 }
 
 // GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
@@ -1589,7 +1834,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimpleNoExplodeObjectResponse(rsp)
+	return ParseGetSimpleNoExplodeObjectResponse(rsp)
 }
 
 // GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
@@ -1598,11 +1843,11 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetSimplePrimitiveResponse(rsp)
+	return ParseGetSimplePrimitiveResponse(rsp)
 }
 
-// ParsegetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
-func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
+// ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParseGetContentObjectResponse(rsp *http.Response) (*getContentObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1620,8 +1865,8 @@ func ParsegetContentObjectResponse(rsp *http.Response) (*getContentObjectRespons
 	return response, nil
 }
 
-// ParsegetCookieResponse parses an HTTP response from a GetCookieWithResponse call
-func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
+// ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
+func ParseGetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1639,8 +1884,8 @@ func ParsegetCookieResponse(rsp *http.Response) (*getCookieResponse, error) {
 	return response, nil
 }
 
-// ParsegetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
-func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
+// ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParseGetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1658,8 +1903,8 @@ func ParsegetHeaderResponse(rsp *http.Response) (*getHeaderResponse, error) {
 	return response, nil
 }
 
-// ParsegetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
-func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
+// ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1677,8 +1922,8 @@ func ParsegetLabelExplodeArrayResponse(rsp *http.Response) (*getLabelExplodeArra
 	return response, nil
 }
 
-// ParsegetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
-func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
+// ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1696,8 +1941,8 @@ func ParsegetLabelExplodeObjectResponse(rsp *http.Response) (*getLabelExplodeObj
 	return response, nil
 }
 
-// ParsegetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
-func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
+// ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1715,8 +1960,8 @@ func ParsegetLabelNoExplodeArrayResponse(rsp *http.Response) (*getLabelNoExplode
 	return response, nil
 }
 
-// ParsegetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
-func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
+// ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1734,8 +1979,8 @@ func ParsegetLabelNoExplodeObjectResponse(rsp *http.Response) (*getLabelNoExplod
 	return response, nil
 }
 
-// ParsegetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
-func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
+// ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1753,8 +1998,8 @@ func ParsegetMatrixExplodeArrayResponse(rsp *http.Response) (*getMatrixExplodeAr
 	return response, nil
 }
 
-// ParsegetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
-func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
+// ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1772,8 +2017,8 @@ func ParsegetMatrixExplodeObjectResponse(rsp *http.Response) (*getMatrixExplodeO
 	return response, nil
 }
 
-// ParsegetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
-func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
+// ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1791,8 +2036,8 @@ func ParsegetMatrixNoExplodeArrayResponse(rsp *http.Response) (*getMatrixNoExplo
 	return response, nil
 }
 
-// ParsegetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
-func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
+// ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1810,8 +2055,8 @@ func ParsegetMatrixNoExplodeObjectResponse(rsp *http.Response) (*getMatrixNoExpl
 	return response, nil
 }
 
-// ParsegetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
-func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
+// ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParseGetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1829,8 +2074,8 @@ func ParsegetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, e
 	return response, nil
 }
 
-// ParsegetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
-func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
+// ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParseGetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1848,8 +2093,8 @@ func ParsegetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error
 	return response, nil
 }
 
-// ParsegetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
-func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
+// ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1867,8 +2112,8 @@ func ParsegetSimpleExplodeArrayResponse(rsp *http.Response) (*getSimpleExplodeAr
 	return response, nil
 }
 
-// ParsegetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
-func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
+// ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1886,8 +2131,8 @@ func ParsegetSimpleExplodeObjectResponse(rsp *http.Response) (*getSimpleExplodeO
 	return response, nil
 }
 
-// ParsegetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
-func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
+// ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplodeArrayResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1905,8 +2150,8 @@ func ParsegetSimpleNoExplodeArrayResponse(rsp *http.Response) (*getSimpleNoExplo
 	return response, nil
 }
 
-// ParsegetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
-func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
+// ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExplodeObjectResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1924,8 +2169,8 @@ func ParsegetSimpleNoExplodeObjectResponse(rsp *http.Response) (*getSimpleNoExpl
 	return response, nil
 }
 
-// ParsegetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
-func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
+// ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -1945,40 +2190,58 @@ func ParsegetSimplePrimitiveResponse(rsp *http.Response) (*getSimplePrimitiveRes
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /contentObject/{param})
 	GetContentObject(ctx echo.Context, param ComplexObject) error
+
 	// (GET /cookie)
 	GetCookie(ctx echo.Context, params GetCookieParams) error
+
 	// (GET /header)
 	GetHeader(ctx echo.Context, params GetHeaderParams) error
+
 	// (GET /labelExplodeArray/{.param*})
 	GetLabelExplodeArray(ctx echo.Context, param []int32) error
+
 	// (GET /labelExplodeObject/{.param*})
 	GetLabelExplodeObject(ctx echo.Context, param Object) error
+
 	// (GET /labelNoExplodeArray/{.param})
 	GetLabelNoExplodeArray(ctx echo.Context, param []int32) error
+
 	// (GET /labelNoExplodeObject/{.param})
 	GetLabelNoExplodeObject(ctx echo.Context, param Object) error
+
 	// (GET /matrixExplodeArray/{.id*})
 	GetMatrixExplodeArray(ctx echo.Context, id []int32) error
+
 	// (GET /matrixExplodeObject/{.id*})
 	GetMatrixExplodeObject(ctx echo.Context, id Object) error
+
 	// (GET /matrixNoExplodeArray/{.id})
 	GetMatrixNoExplodeArray(ctx echo.Context, id []int32) error
+
 	// (GET /matrixNoExplodeObject/{.id})
 	GetMatrixNoExplodeObject(ctx echo.Context, id Object) error
+
 	// (GET /passThrough/{param})
 	GetPassThrough(ctx echo.Context, param string) error
+
 	// (GET /queryForm)
 	GetQueryForm(ctx echo.Context, params GetQueryFormParams) error
+
 	// (GET /simpleExplodeArray/{param*})
 	GetSimpleExplodeArray(ctx echo.Context, param []int32) error
+
 	// (GET /simpleExplodeObject/{param*})
 	GetSimpleExplodeObject(ctx echo.Context, param Object) error
+
 	// (GET /simpleNoExplodeArray/{param})
 	GetSimpleNoExplodeArray(ctx echo.Context, param []int32) error
+
 	// (GET /simpleNoExplodeObject/{param})
 	GetSimpleNoExplodeObject(ctx echo.Context, param Object) error
+
 	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(ctx echo.Context, param int32) error
 }
@@ -2522,7 +2785,17 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
+func RegisterHandlers(router interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -2552,23 +2825,23 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xZy27rNhD9FWPaVaFr+d670y4IWjRA82idRYHAC0Ya20wlkSHpwIahfy9IPWw9LFOJ",
-	"LDvZxdI8zhweTcjhFnwWcRZjrCR4WxAoOYslmh9TGvEQ/8ke6Sc+ixXGSv+pcK1cHhIa61/SX2JEzPMN",
-	"R/BAKkHjBSRJ4kCA0heUK8pi8OBqJE3cUZ5rxJ5f0FegTdM4Jvs101br+/SltwUuGEehaAruJmjI5sDO",
-	"/FeBc/DgF3dXoZuFd+93GQW+rqjAALyn3NnRwWelYOXccyqkuiMRNkIQLGx6UcllrJy9UDPDFY3nTDuH",
-	"1MeM9NgkgtubRx1dUaXDwyNKNZqieEMBDryhkCm938eT8UQbMo4x4RQ8+DmejL+DA5yopcHvZuuY1udu",
-	"OREkSvSbBZpydbFEr5dmWT+83ncwoQSJUKGQ4D2VdEE4D6lvnN0XySrqaFuU8oJnbIBnYIOT02Aywz6X",
-	"SqwwmTll7f6YTA7lK+zcisATk9P1GfuPYjsbxqJGQ1noXNCIKvqmDXHNQxYgeHMSSswK8/MweWmlsjLL",
-	"HXdzJiKiwAMaq58/wMkFRmOFCxRaYVYQNF8HEGD/ELK0wYgIQTa2OEg7DqowklaAiidp+gaANVxtSzQg",
-	"roI4ln90VsyxdoR2XbGKpQ6hjaSeIJyqqZRL81ODHcuNJfkNNSUz0y6WSAIUbe3iz9Tio+1imYfJMP37",
-	"7WHPZdjG0YLl2++ZcM/TSurIrrS1JarBGssBmJfWXuow0y/Jks5TdJtDkD5/06lXlgU6WGHWgkLyjGG2",
-	"IkZG7nZses1vrZu6v6pu9RbVpAmb/Vg/qnVAqo3Z7ZoKoaddngNyFUVEbMCLV2FYozDfFnfl8NDuuA8S",
-	"bfQ7NF13rElzx+kq+7Xwtf/Zf13VFXSUddeBx6PC+wiRF6a8iChB1xXh0aD9K72tOb3nK6XByRWXVjcY",
-	"f4XiOhH4/j53hMFuUhuKq1qbo4EFVz00uS+kt3qP60biBzrcJ9McJ1I+LgVbLZY2g7mHnXnrWK7DuPYs",
-	"Q7fXFYrNH0xEbcX+XRgdOUtbnRRNyiFmTjv5aFfoeFKswDwfSrsTY5XVM8yjKhBOgqAg49ikpMrHQEPe",
-	"Fj76QHDOY3KlnObRXH+dKb2tKm8BLA6G05rb5Z6u0xJP+V+tRGLp2qkDi5dzvh6KsOrW8/h+YNrgd8En",
-	"7MGJtL/ynDY5XsQZeyjSipG+PV37NxIVot5FjIW0TsOK6f3SXK+n8FciBA+WSnHPdbO7dYVSjQNEHhE+",
-	"JhSSWfJ/AAAA//8fdsggUSEAAA==",
+	"H4sIAAAAAAAC/9xZyW7jOBD9FaNmTgO15e6+6dYIZgkwWWacwwCBD4xUtpmRRIakAxuG/r1BarG1WKYS",
+	"WXZyi6VaXj0+VcjiFnwWcRZjrCR4WxAoOYslmh9TGvEQ/80e6Sc+ixXGSv+pcK1cHhIa61/SX2JEzPMN",
+	"R/BAKkHjBSRJ4kCA0heUK8pi8ODHSJq4ozzXiD09o69Am6ZxTPYrpq3Wd+lLbwtcMI5C0RTcddCQzYGd",
+	"+a8C5+DBL+6uQjcL797tMgp8WVGBAXiPubOjg89Kwcq551RIdUsibIQgWNj0opLLWDl7oWaGKxrPmXYO",
+	"qY8Z6bFJBDfXDzq6okqHhweUajRF8YoCHHhFIVN6v44n44k2ZBxjwil48H08GX8FBzhRS4PfzdYxrc/d",
+	"ciJIlOg3CzTl6mKJXi/NMvyJ6mrfwYQSJEKFQoL3WNIF4TykvnF2nyWrqKNtUcoLnrEBnoENTk6DyQz7",
+	"XCqxwmTmlLX7bTI5lK+wcysCT0xO12fsf4rtbBiLGg1loXNBI6roqzbENQ9ZgODNSSgxK8zPw+SllcrK",
+	"LHfczZmIiAIPaKy+fwMnFxiNFS5QaIVZQdB8HUCA/UPI0gYjIgTZ2OIg7TiowkhaASqepOkbANZwtS3R",
+	"gLgK4lj+0Vkxx9oR2nXFKpY6hDaSeoJwqqZSLs1PDXYsN5bkN9SUzEy7WCIJULS1i79Si/e2i2UeJsP0",
+	"35f7PZdhG0cLli+/Z8I9TyupI/uhrS1RDdZYDsC8tPZSh5l+SZZ0nqLbHIL08ZtOvbIs0MEKsxYUkicM",
+	"sxUxMnK3Y9Nrfmvd1P1ddau3qCZN2OzH+lGtA1JtzG7XVAg97fIckKsoImIDXrwKwxqF+ba4K4eHdsd9",
+	"kGij36HpumVNmjtOV9mvha/9z/7zqq6go6y7DjweFd57iLww5UVECbquCI8G7V/pTc3pLV8pDU6uuLS6",
+	"wfgrFNeJwLf3uSMMdpPaUFzV2hwNLLjqocl9Ir3Ve1w3Et/R4T6Y5jiR8mEp2GqxtBnM3e/MW8dyHca1",
+	"Zxm6vaxQbP5gImor9p/C6MhZ2uqkaFIOMXPayUe7QseTYgXm+VDanRirrJ5hHlWBcBIEBRnHJiVVPgYa",
+	"8rbw0QeCcx6TK+U0j+b660zpbVV5C2BxMJzW3C73dJ2WeMr/aiUSS9dOHVi8nPP1UIRVt57H9wPTBr8L",
+	"PmEPTqT9lee0yfEizthDkVaM9O3p2r+RqBD1JmIspHUaVkzvl+Z6PYW/EiF4sFSKe66b3a0rlGocIPKI",
+	"8DGhkMySnwEAAP//njtWvlEhAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

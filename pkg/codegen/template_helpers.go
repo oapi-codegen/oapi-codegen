@@ -111,6 +111,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// Add a case for each possible response:
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
+
 		responseRef, ok := responses[typeDefinition.ResponseName]
 		if !ok {
 			continue
@@ -150,19 +151,34 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				var caseAction string
+				if typeDefinition.Schema.TypeDecl() == "interface{}" {
+					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
+				} else {
+					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				}
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
 				caseClauses[caseKey] = caseClause
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				var caseAction string
+				if typeDefinition.Schema.TypeDecl() == "interface{}" {
+					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
+				} else {
+					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				}
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
 				caseClauses[caseKey] = caseClause
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
-				caseAction := fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				var caseAction string
+				if typeDefinition.Schema.TypeDecl() == "interface{}" {
+					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
+				} else {
+					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
+				}
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
 				caseClauses[caseKey] = caseClause
 
@@ -183,6 +199,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// Now build the switch statement in order of most-to-least specific:
 	fmt.Fprintf(buffer, "switch {\n")
 	for _, caseClauseKey := range SortedStringKeys(caseClauses) {
+
 		fmt.Fprintf(buffer, "%s\n", caseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")
@@ -219,6 +236,11 @@ func toStringArray(sarr []string) string {
 	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
 }
 
+func stripNewLines(s string) string {
+	r := strings.NewReplacer("\n", "")
+	return r.Replace(s)
+}
+
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -229,6 +251,7 @@ var TemplateFunctions = template.FuncMap{
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"lcFirst":                    LowercaseFirstCharacter,
+	"ucFirst":                    UppercaseFirstCharacter,
 	"camelCase":                  ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
@@ -237,4 +260,5 @@ var TemplateFunctions = template.FuncMap{
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
+	"stripNewLines":              stripNewLines,
 }
