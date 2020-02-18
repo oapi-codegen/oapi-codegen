@@ -515,7 +515,13 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/contentObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/contentObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -536,7 +542,13 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/cookie"))
+
+	basePath := fmt.Sprintf("/cookie")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -664,7 +676,13 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/header"))
+
+	basePath := fmt.Sprintf("/header")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -771,7 +789,13 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/labelExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -799,7 +823,13 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/labelExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -827,7 +857,13 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -855,7 +891,13 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -883,7 +925,13 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/matrixExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -911,7 +959,13 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/matrixExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -939,7 +993,13 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -967,7 +1027,13 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -992,7 +1058,13 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/passThrough/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/passThrough/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1013,7 +1085,13 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/queryForm"))
+
+	basePath := fmt.Sprintf("/queryForm")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1151,7 +1229,13 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/simpleExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1179,7 +1263,13 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/simpleExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1207,7 +1297,13 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1235,7 +1331,13 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1263,7 +1365,13 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/simplePrimitive/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/simplePrimitive/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
