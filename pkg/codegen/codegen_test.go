@@ -59,6 +59,37 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.Len(t, problems, 0)
 }
 
+func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
+
+	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Options{
+		GenerateTypes: true,
+		UserTemplates: userTemplates,
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, packageName, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "//blah")
+}
+
 func TestExamplePetStoreParseFunction(t *testing.T) {
 
 	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
