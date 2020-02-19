@@ -101,10 +101,12 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	// Override built-in templates with user-provided versions
-	for tplName, tplContent := range opts.UserTemplates {
-		tpl := t.New(tplName)
-		if _, err := tpl.Parse(tplContent); err != nil {
-			return "", errors.Wrapf(err, "error parsing user-provided template %q", tplName)
+	for _, tpl := range t.Templates() {
+		if _, ok := opts.UserTemplates[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			if _, err := utpl.Parse(opts.UserTemplates[tpl.Name()]); err != nil {
+				return "", errors.Wrapf(err, "error parsing user-provided template %q", tpl.Name())
+			}
 		}
 	}
 

@@ -46,7 +46,7 @@ func main() {
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
-	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing template overrides")
+	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing user templates")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -136,25 +136,7 @@ func splitCSVArg(input string) []string {
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
-	var (
-		knownTemplates = map[string]interface{}{
-			"additional-properties.tmpl": nil,
-			"chi-handler.tmpl":           nil,
-			"chi-interface.tmpl":         nil,
-			"chi-middleware.tmpl":        nil,
-			"client-with-responses.tmpl": nil,
-			"client.tmpl":                nil,
-			"imports.tmpl":               nil,
-			"inline.tmpl":                nil,
-			"param-types.tmpl":           nil,
-			"register.tmpl":              nil,
-			"request-bodies.tmpl":        nil,
-			"server-interface.tmpl":      nil,
-			"typedef.tmpl":               nil,
-			"wrappers.tmpl":              nil,
-		}
-		templates = make(map[string]string)
-	)
+	var templates = make(map[string]string)
 
 	if templatesDir == "" {
 		return templates, nil
@@ -166,13 +148,11 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 	}
 
 	for _, f := range files {
-		if _, ok := knownTemplates[f.Name()]; ok {
-			data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
-			if err != nil {
-				return nil, err
-			}
-			templates[f.Name()] = string(data)
+		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+		if err != nil {
+			return nil, err
 		}
+		templates[f.Name()] = string(data)
 	}
 
 	return templates, nil
