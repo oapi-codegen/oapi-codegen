@@ -75,7 +75,10 @@ func BindStringToObject(src string, dst interface{}) error {
 			// Time is a special case of a struct that we handle
 			parsedTime, err := time.Parse(time.RFC3339Nano, src)
 			if err != nil {
-				return fmt.Errorf("error parsing '%s' as RFC3339 time: %s", src, err)
+				parsedTime, err = time.Parse(types.DateFormat, src)
+				if err != nil {
+					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %s", src, err)
+				}
 			}
 			*dstType = parsedTime
 			return nil
