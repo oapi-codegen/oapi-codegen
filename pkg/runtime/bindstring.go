@@ -72,6 +72,9 @@ func BindStringToObject(src string, dst interface{}) error {
 	case reflect.Struct:
 		switch dstType := dst.(type) {
 		case *time.Time:
+			if src == "" {
+				return nil
+			}
 			// Time is a special case of a struct that we handle
 			parsedTime, err := time.Parse(time.RFC3339Nano, src)
 			if err != nil {
