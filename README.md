@@ -467,3 +467,6 @@ on-the-fly at run time. Example:
         -templates my-templates/ \
         -generate types,client \
         petstore-expanded.yaml
+
+Overriding default type mappings can be accomplished with `-type-mappings`.
+For example use unsigned integers with `-type-mappings integer=uint32`.

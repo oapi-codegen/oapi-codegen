@@ -39,6 +39,7 @@ func main() {
 		includeTags  string
 		excludeTags  string
 		templatesDir string
+		typeMappings string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
@@ -47,6 +48,7 @@ func main() {
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing user templates")
+	flag.StringVar(&typeMappings, "type-mappings", "", "Comma-separated list of type overrides,  like 'integer=uint64'.")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -88,6 +90,17 @@ func main() {
 
 	opts.IncludeTags = splitCSVArg(includeTags)
 	opts.ExcludeTags = splitCSVArg(excludeTags)
+
+	// Type mapping overrides
+	for _, g := range splitCSVArg(typeMappings) {
+		parts := strings.Split(g, "=")
+		if len(parts) != 2 {
+			fmt.Printf("Invalid type override, expected <type>=<value>, received '%s'", g)
+			os.Exit(1)
+		}
+
+		codegen.TypeMappings[parts[0]] = parts[1]
+	}
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")

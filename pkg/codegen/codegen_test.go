@@ -165,6 +165,8 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 		GenerateTypes:      true,
 		EmbedSpec:          true,
 	}
+	TypeMappings["integer"] = "uint64"
+	defer delete(TypeMappings, "integer")
 
 	// Get a spec from the test definition in this file:
 	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testOpenAPIDefinition))
@@ -205,7 +207,7 @@ type getTestByNameResponse struct {
 
 	// Check the client method signatures:
 	assert.Contains(t, code, "type GetTestByNameParams struct {")
-	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
+	assert.Contains(t, code, "Top *uint64 `json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*getTestByNameResponse, error) {")
 
