@@ -35,6 +35,7 @@ type Options struct {
 	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
 	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
 	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
+	GenerateCLIApp     bool              // GenerateCLIApp specifies whether to generate CLI application boilerplate
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go fmt on the generated code
@@ -60,28 +61,33 @@ type goImports []goImport
 
 var (
 	allGoImports = goImports{
-		{lookFor: "base64\\.", packageName: "encoding/base64"},
-		{lookFor: "bytes\\.", packageName: "bytes"},
-		{lookFor: "chi\\.", packageName: "github.com/go-chi/chi"},
-		{lookFor: "context\\.", packageName: "context"},
-		{lookFor: "echo\\.", packageName: "github.com/labstack/echo/v4"},
-		{lookFor: "errors\\.", packageName: "github.com/pkg/errors"},
-		{lookFor: "fmt\\.", packageName: "fmt"},
-		{lookFor: "gzip\\.", packageName: "compress/gzip"},
-		{lookFor: "http\\.", packageName: "net/http"},
-		{lookFor: "io\\.", packageName: "io"},
-		{lookFor: "ioutil\\.", packageName: "io/ioutil"},
-		{lookFor: "json\\.", packageName: "encoding/json"},
-		{lookFor: "openapi3\\.", packageName: "github.com/getkin/kin-openapi/openapi3"},
-		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
-		{lookFor: "path\\.", packageName: "path"},
-		{lookFor: "runtime\\.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
-		{lookFor: "strings\\.", packageName: "strings"},
+		{lookFor: "base64\\..+", packageName: "encoding/base64"},
+		{lookFor: "bytes\\..+", packageName: "bytes"},
+		{lookFor: "chi\\..+", packageName: "github.com/go-chi/chi"},
+		{lookFor: "cli\\..+", packageName: "github.com/urfave/cli/v2"},
+		{lookFor: "context\\..+", packageName: "context"},
+		{lookFor: "echo\\..+", packageName: "github.com/labstack/echo/v4"},
+		{lookFor: "errors\\..+", packageName: "github.com/pkg/errors"},
+		{lookFor: "fmt\\..+", packageName: "fmt"},
+		{lookFor: "gzip\\..+", packageName: "compress/gzip"},
+		{lookFor: "http\\..+", packageName: "net/http"},
+		{lookFor: "io\\..+", packageName: "io"},
+		{lookFor: "ioutil\\..+", packageName: "io/ioutil"},
+		{lookFor: "json\\..+", packageName: "encoding/json"},
+		{lookFor: "openapi3\\..+", packageName: "github.com/getkin/kin-openapi/openapi3"},
+		{lookFor: "openapi_types\\..+", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "os\\..+", packageName: "os"},
+		{lookFor: "path\\..+", packageName: "path"},
+		{lookFor: "reflect\\..+", packageName: "reflect"},
+		{lookFor: "runtime\\..+", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
+		{lookFor: "strings\\..+", packageName: "strings"},
+		{lookFor: "tablewriter\\..+", packageName: "github.com/olekukonko/tablewriter"},
+		{lookFor: "template\\..+", packageName: "text/template"},
 		{lookFor: "time\\.Duration", packageName: "time"},
 		{lookFor: "time\\.Time", packageName: "time"},
-		{lookFor: "url\\.", packageName: "net/url"},
-		{lookFor: "xml\\.", packageName: "encoding/xml"},
-		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
+		{lookFor: "url\\..+", packageName: "net/url"},
+		{lookFor: "xml\\..+", packageName: "encoding/xml"},
+		{lookFor: "yaml\\..+", packageName: "gopkg.in/yaml.v2"},
 	}
 )
 
@@ -155,6 +161,14 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
+	var cliAppOut string
+	if opts.GenerateCLIApp {
+		cliAppOut, err = GenerateCLIApp(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating CLI application")
+		}
+	}
+
 	var inlinedSpec string
 	if opts.EmbedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
@@ -170,7 +184,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	w := bufio.NewWriter(&buf)
 
 	// Based on module prefixes, figure out which optional imports are required.
-	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
+	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, cliAppOut, inlinedSpec} {
 		for _, goImport := range allGoImports {
 			match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), str)
 			if err != nil {
@@ -206,6 +220,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		_, err = w.WriteString(clientWithResponsesOut)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing client")
+		}
+	}
+
+	if opts.GenerateCLIApp {
+		_, err = w.WriteString(cliAppOut)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing CLI application")
 		}
 	}
 

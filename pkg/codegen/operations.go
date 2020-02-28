@@ -788,3 +788,20 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 	}
 	return buf.String(), nil
 }
+
+// GenerateCLIApp generates a command line interface (CLI) application code.
+func GenerateCLIApp(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "cli-app.tmpl", ops)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating CLI application bindings: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
+	}
+	return buf.String(), nil
+}

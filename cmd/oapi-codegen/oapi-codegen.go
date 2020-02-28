@@ -42,7 +42,7 @@ func main() {
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "skip-fmt", "spec"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "cli-app", "chi-server", "server", "skip-fmt", "spec"`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
@@ -69,6 +69,8 @@ func main() {
 		switch g {
 		case "client":
 			opts.GenerateClient = true
+		case "cli-app":
+			opts.GenerateCLIApp = true
 		case "chi-server":
 			opts.GenerateChiServer = true
 		case "server":

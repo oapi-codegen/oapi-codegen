@@ -964,6 +964,11 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
+type Response interface {
+	Status() string
+	StatusCode() int
+}
+
 type paramsWithAddPropsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response

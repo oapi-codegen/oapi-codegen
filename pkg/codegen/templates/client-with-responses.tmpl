@@ -28,6 +28,11 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
+type Response interface {
+    Status() string
+    StatusCode() int
+}
+
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | lcFirst}}Response struct {
     Body         []byte

@@ -395,6 +395,8 @@ you can specify any combination of those.
  that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
+- `cli-app`: generate a fully functional CLI application; requires `type` and
+ `client` targets.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
 - `skip-fmt`: skip running `go fmt` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.

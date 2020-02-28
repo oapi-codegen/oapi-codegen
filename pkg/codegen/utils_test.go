@@ -28,6 +28,23 @@ func TestStringOps(t *testing.T) {
 	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
 }
 
+func TestToKebabCase(t *testing.T) {
+	assert.Equal(t,
+		"word-word-word-word-word-word-word-word-word-word-word-word-word",
+		ToKebabCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"),
+		"Kebab case conversion failed")
+
+	assert.Equal(t,
+		"it",
+		ToKebabCase("IT"),
+		"Kebab case conversion failed")
+
+	assert.Equal(t,
+		"x",
+		ToKebabCase("X"),
+		"Kebab case conversion failed")
+}
+
 func TestSortedSchemaKeys(t *testing.T) {
 	dict := map[string]*openapi3.SchemaRef{
 		"f": nil,

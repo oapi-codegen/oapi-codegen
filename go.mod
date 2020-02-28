@@ -1,6 +1,7 @@
 module github.com/deepmap/oapi-codegen
 
 require (
+	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
 	github.com/getkin/kin-openapi v0.3.0
 	github.com/go-chi/chi v4.0.2+incompatible
@@ -9,8 +10,10 @@ require (
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
 	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
+	github.com/olekukonko/tablewriter v0.0.4
 	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.4.0
+	github.com/urfave/cli/v2 v2.1.1
 	github.com/valyala/fasttemplate v1.1.0 // indirect
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect
 	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect

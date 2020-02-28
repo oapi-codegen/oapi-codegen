@@ -84,6 +84,69 @@ func genParamFmtString(path string) string {
 	return ReplacePathParamsWithStr(path)
 }
 
+// This function takes a slice of ParameterDefinition and generates a map of key/value pairs
+// with parameter names as key and the associated ParameterDefinition as value.
+func genParamsMap(params []ParameterDefinition) map[string]ParameterDefinition {
+	if len(params) == 0 {
+		return nil
+	}
+
+	pmap := make(map[string]ParameterDefinition)
+	for _, p := range params {
+		pmap[p.GoVariableName()] = p
+	}
+
+	return pmap
+}
+
+// genParamFlagDef generates a urfave/cli.v2 command parameter declaration statement.
+func genParamFlagDef(param ParameterDefinition) string {
+	var flagDef string
+
+	switch param.Schema.GoType {
+	case "bool":
+		flagDef += "BoolFlag{"
+	case "int32", "int64":
+		flagDef += "IntFlag{"
+	case "string":
+		flagDef += "StringFlag{"
+	case "[]string":
+		flagDef += "StringSliceFlag{"
+	default:
+		panic(fmt.Sprintf("unsupported parameter type %q", param.Schema.GoType))
+	}
+
+	flagDef += fmt.Sprintf(`Name: "%s", Usage: "%s"`,
+		param.ParamName,
+		param.Spec.Description)
+
+	if param.Required {
+		flagDef += `, Required: true`
+	}
+
+	flagDef += "}"
+
+	return flagDef
+}
+
+// genParamFlagGet generates a urfave/cli.v2 command parameter getter statement.
+func genParamFlagGet(param ParameterDefinition) string {
+	switch param.Schema.GoType {
+	case "bool":
+		return `Bool("` + param.ParamName + `")`
+	case "int32":
+		return `Int("` + param.ParamName + `")`
+	case "int64":
+		return `Int64("` + param.ParamName + `")`
+	case "string":
+		return `String("` + param.ParamName + `")`
+	case "[]string":
+		return `StringSlice("` + param.ParamName + `")`
+	default:
+		panic(fmt.Sprintf("unsupported parameter type %q", param.Schema.GoType))
+	}
+}
+
 // genResponsePayload generates the payload returned at the end of each client request function
 func genResponsePayload(operationID string) string {
 	var buffer = bytes.NewBufferString("")
@@ -262,6 +325,9 @@ func stripNewLines(s string) string {
 var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
+	"genParamFlagDef":            genParamFlagDef,
+	"genParamFlagGet":            genParamFlagGet,
+	"genParamsMap":               genParamsMap,
 	"genParamNames":              genParamNames,
 	"genParamFmtString":          genParamFmtString,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
@@ -269,6 +335,7 @@ var TemplateFunctions = template.FuncMap{
 	"lcFirst":                    LowercaseFirstCharacter,
 	"ucFirst":                    UppercaseFirstCharacter,
 	"camelCase":                  ToCamelCase,
+	"kebabCase":                  ToKebabCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,

@@ -1,0 +1,301 @@
+{{define "paramsCmdVars"}}{{range $paramName, $param := .}}
+	{{$paramName}} {{$param.TypeDef}}
+{{end}}{{end}}
+
+{{define "paramFlagParse"}}{{range $param := .}}
+	{{$param.ParamName}} := {{- if eq $param.Schema.GoType "int32" -}}
+		int32(ctx.{{genParamFlagGet $param}})
+	{{- else -}}
+		ctx.{{genParamFlagGet $param}}
+	{{- end -}}
+{{end}}{{end}}
+
+var (
+	clientOptions = make([]ClientOption, 0)
+	client        *ClientWithResponses
+
+	appBeforeFuncs = make([]cli.BeforeFunc, 0)
+	app            = cli.NewApp()
+)
+
+func init() {
+	app.Flags = append(app.Flags,
+		&cli.StringFlag{
+			Name:    "server",
+			Usage:   "server to send requests to",
+			Aliases: []string{"S"},
+		},
+		&cli.StringFlag{
+			Name:     "output",
+			Usage:    "output format (text|table|json)",
+			Aliases:  []string{"O"},
+			Value:    "text",
+		},
+	)
+
+	app.Before = func(ctx *cli.Context) error {
+		var err error
+
+		for _, beforeFunc := range appBeforeFuncs {
+			if err = beforeFunc(ctx); err != nil {
+				return err
+			}
+		}
+
+		if client, err = NewClientWithResponses(ctx.String("server"), clientOptions...); err != nil {
+			return fmt.Errorf("unable to initialize client: %s\n", err)
+		}
+
+		return nil
+	}
+
+	app.Commands = make([]*cli.Command, 0)
+
+{{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{$hasBody := $op.HasBody -}}
+{{$hasParams := .RequiresParamObject -}}
+	{{$opid}}Cmd := &cli.Command{
+		Name: "{{$opid | kebabCase}}",
+		Usage: "{{$op.Summary}}",
+		Flags: []cli.Flag{
+		{{range $param := $op.AllParams}}
+			&cli.{{genParamFlagDef $param}},
+		{{end -}}
+		{{if $hasBody}}
+			&cli.StringFlag{Name: "body", Usage: "request body", Required: true},
+		{{end -}}
+		},
+		Action: func(ctx *cli.Context) error {
+			{{ if or ($hasParams) ($hasBody)}}var (
+			{{if $hasParams}}
+				{{template "paramsCmdVars" genParamsMap .PathParams}}
+				params {{$opid}}Params
+			{{else}}
+				body {{$opid}}{{(index $op.Bodies 0).NameTag}}RequestBody
+			{{end}}
+			){{end}}
+
+			{{- template "paramFlagParse" $op.AllParams}}
+
+			{{if $hasBody}}
+			if err := json.Unmarshal([]byte(ctx.String("body")), &body); err != nil {
+				return fmt.Errorf("unable to parse request body: %s", err)
+			}
+			{{end}}
+
+			{{if $hasParams}}{{range $param := $op.AllParams}}
+			params.{{- $param.GoName}} = {{if $param.IndirectOptional}}&{{end}}{{$param.ParamName -}}
+			{{end}}{{end}}
+
+			resp, err := client.{{$opid}}WithResponse(ctx.Context{{genParamNames .PathParams}}
+			{{- if $hasParams}}, &params{{else if $hasBody}}, body{{end}})
+			if err != nil {
+				return err
+			}
+
+			return outputResp(resp, ctx.String("output"))
+		},
+	}
+	app.Commands = append(app.Commands, {{$opid}}Cmd)
+{{end}}
+}
+
+func getResponseObject(resp Response) interface{} {
+	status := resp.StatusCode()
+
+	v := reflect.ValueOf(resp)
+	v = reflect.Indirect(v)
+	t := v.Type()
+
+	// If the interface is iterable (slice only), use the element type
+	if v.Kind() == reflect.Slice {
+		t = v.Type().Elem()
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		if t.Field(i).Name == fmt.Sprintf("JSON%d", status) {
+			return v.Field(i).Interface()
+		}
+	}
+
+	return nil
+}
+
+func getResponseObjectFields(o interface{}) []string {
+	var fields = make([]string, 0)
+
+	v := reflect.ValueOf(o)
+	v = reflect.Indirect(v)
+	t := v.Type()
+
+	// If the interface is iterable (slice only), use the element type
+	if v.Kind() == reflect.Slice {
+		t = v.Type().Elem()
+	}
+
+	for i := 0; i < t.NumField(); i++ {
+		fields = append(fields, t.Field(i).Name)
+	}
+
+	return fields
+}
+
+func outputJSON(o interface{}) error {
+	j, err := json.Marshal(o)
+	if err != nil {
+		return fmt.Errorf("output JSON encoding failed: %s", err)
+	}
+
+	fmt.Println(string(j))
+	return nil
+}
+
+func outputText(o interface{}) error {
+	tplFields := getResponseObjectFields(o)
+	for i := range tplFields {
+		tplFields[i] = "{%if ." + tplFields[i] + "%}{%." + tplFields[i] + "%}{%else%}n/a{%end%}"
+	}
+	tpl := strings.Join(tplFields, "\t")
+
+	t, err := template.New("out").Delims("{%", "%}").Parse(tpl)
+	if err != nil {
+		return fmt.Errorf("output template execution failed: %s", err)
+	}
+
+	// If the interface is iterable (slice only), we loop over the
+	// items and perform the templating directly
+	if v := reflect.ValueOf(o); reflect.Indirect(v).Kind() == reflect.Slice {
+		for i := 0; i < reflect.Indirect(v).Len(); i++ {
+			if err := t.Execute(os.Stdout, reflect.Indirect(v).Index(i).Interface()); err != nil {
+				return fmt.Errorf("output template execution failed: %s", err)
+			}
+			fmt.Println()
+		}
+		return nil
+	}
+
+	if err := t.Execute(os.Stdout, o); err != nil {
+		return fmt.Errorf("output template execution failed: %s", err)
+	}
+
+	fmt.Println()
+	return nil
+}
+
+func outputTable(o interface{}) error {
+	tab := tablewriter.NewWriter(os.Stdout)
+
+	v := reflect.ValueOf(o)
+	v = reflect.Indirect(v)
+	t := v.Type()
+
+	// If the interface is iterable (slice only), use the element type
+	if v.Kind() == reflect.Slice {
+		t = v.Type().Elem()
+	}
+
+	// Set up the table header
+	headers := make([]string, 0)
+	for i := 0; i < t.NumField(); i++ {
+		headers = append(headers, t.Field(i).Name)
+	}
+
+	// If the interface is iterable (slice only), we loop over the items and display
+	// each one in a table row
+	if v := reflect.ValueOf(o); reflect.Indirect(v).Kind() == reflect.Slice {
+		tab.SetHeader(headers)
+
+		for i := 0; i < reflect.Indirect(v).Len(); i++ {
+			item := reflect.Indirect(v).Index(i)
+			row := make([]string, 0)
+
+			for j := 0; j < item.NumField(); j++ {
+				field := item.Field(j)
+				switch field.Kind() {
+				case reflect.Slice:
+					// If the field value is a slice and is empty,
+					// print "n/a" instead of an empty slice
+					if field.Len() == 0 {
+						row = append(row, "n/a")
+					} else {
+						row = append(row, fmt.Sprint(field.Interface()))
+					}
+
+				case reflect.Ptr:
+					// If the field value is a nil pointer, print "n/a" instead of "<nil>"
+					if field.IsNil() {
+						row = append(row, "n/a")
+					} else {
+						row = append(row, fmt.Sprint(reflect.Indirect(field).Interface()))
+					}
+
+				default:
+					row = append(row, fmt.Sprint(field.Interface()))
+				}
+			}
+
+			tab.Append(row)
+		}
+
+		tab.Render()
+		return nil
+	}
+
+	// Single item, loop over the type fields and display each item in a key/value-type table
+
+	for i := 0; i < t.NumField(); i++ {
+		label := t.Field(i).Name
+		switch v.Field(i).Kind() {
+		case reflect.Slice:
+			// If the field value is a slice and is empty, print "n/a" instead of 0
+			if n := v.Field(i).Len(); n == 0 {
+				tab.Append([]string{label, "n/a"})
+			} else {
+				items := v.Field(i).Interface().([]string)
+				tab.Append([]string{label, strings.Join(items, "\n")})
+			}
+
+		case reflect.Ptr:
+			// If the field value is a nil pointer, print "n/a" instead of "<nil>"
+			if v.Field(i).IsNil() {
+				tab.Append([]string{label, "n/a"})
+			} else {
+				tab.Append([]string{label, fmt.Sprint(reflect.Indirect(v.Field(i)).Interface())})
+			}
+
+		default:
+			tab.Append([]string{label, fmt.Sprint(v.Field(i).Interface())})
+		}
+	}
+
+	tab.Render()
+	return nil
+}
+
+func outputResp(resp Response, format string) error {
+	o := getResponseObject(resp)
+	if o == nil {
+		return fmt.Errorf("%s", resp.Status())
+	}
+
+	switch format {
+		case "text":
+			return outputText(o)
+
+		case "table":
+			return outputTable(o)
+
+		case "json":
+			return outputJSON(o)
+
+		default:
+			return fmt.Errorf("unsupported output format %q", format)
+	}
+}
+
+func main() {
+	if err := app.Run(os.Args); err != nil {
+        fmt.Fprintln(os.Stderr, "error:", err)
+		os.Exit(1)
+	}
+}

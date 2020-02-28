@@ -65,7 +65,7 @@ func ToCamelCase(str string) string {
 		if unicode.IsUpper(v) {
 			n += string(v)
 		}
-			if unicode.IsDigit(v) {
+		if unicode.IsDigit(v) {
 			n += string(v)
 		}
 		if unicode.IsLower(v) {
@@ -76,13 +76,49 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		 if strings.ContainsRune(separators, v) {
+		if strings.ContainsRune(separators, v) {
 			capNext = true
 		} else {
 			capNext = false
 		}
 	}
 	return n
+}
+
+// ToKebabCase returns a "kebab case" version of a CamelCase string s, for example
+// "MyAwesomeString" would be transformed into "my-awesome-string".
+func ToKebabCase(s string) string {
+	var (
+		kebabString strings.Builder
+		prevUpper   bool
+	)
+
+	// Normalize the input string for a cleaner result
+	s = ToCamelCase(s)
+
+	for i, c := range s {
+		if unicode.IsUpper(c) {
+			// Don't add word separator after capital letter or if the previous character
+			// was already in upper case (i.e. acronym)
+			if i > 0 && !prevUpper {
+				kebabString.WriteRune('-')
+			}
+
+			kebabString.WriteRune(unicode.ToLower(c))
+			prevUpper = true
+
+			// Look forward in the string to identify the next word following an all-caps
+			// word/acronym so we can properly delimit it
+			if i+2 < len(s) && unicode.IsUpper(rune(s[i+1])) && unicode.IsLower(rune(s[i+2])) {
+				kebabString.WriteRune('-')
+			}
+		} else {
+			kebabString.WriteRune(c)
+			prevUpper = false
+		}
+	}
+
+	return kebabString.String()
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
