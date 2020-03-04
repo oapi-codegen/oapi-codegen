@@ -3,6 +3,7 @@ package util
 import (
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -18,10 +19,13 @@ func LoadSwagger(filePath string) (*openapi3.Swagger, error) {
 	var swagger *openapi3.Swagger
 	ext := filepath.Ext(filePath)
 	ext = strings.ToLower(ext)
+	dir := filepath.Dir(filePath)
 	switch ext {
 	// The YAML handler can parse both YAML and JSON
 	case ".yaml", ".yml", ".json":
-		swagger, err = openapi3.NewSwaggerLoader().LoadSwaggerFromData(data)
+		loader := openapi3.NewSwaggerLoader()
+		loader.IsExternalRefsAllowed = true
+		swagger, err = loader.LoadSwaggerFromDataWithPath(data, &url.URL{Path: dir + "/"})
 	default:
 		return nil, fmt.Errorf("%s is not a supported extension, use .yaml, .yml or .json", ext)
 	}
