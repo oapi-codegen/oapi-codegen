@@ -43,9 +43,6 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
-	if paramValue := ctx.QueryParam("tags"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
 	if err != nil {
@@ -53,9 +50,6 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "limit" -------------
-	if paramValue := ctx.QueryParam("limit"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
 	if err != nil {

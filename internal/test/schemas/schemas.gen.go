@@ -550,11 +550,6 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
-	if paramValue := ctx.QueryParam("foo"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument foo is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
 	if err != nil {

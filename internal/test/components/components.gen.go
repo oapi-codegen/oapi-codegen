@@ -1092,11 +1092,6 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ParamsWithAddPropsParams
 	// ------------- Required query parameter "p1" -------------
-	if paramValue := ctx.QueryParam("p1"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p1 is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("simple", true, true, "p1", ctx.QueryParams(), &params.P1)
 	if err != nil {
@@ -1104,11 +1099,6 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	}
 
 	// ------------- Required query parameter "p2" -------------
-	if paramValue := ctx.QueryParam("p2"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p2 is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("form", true, true, "p2", ctx.QueryParams(), &params.P2)
 	if err != nil {

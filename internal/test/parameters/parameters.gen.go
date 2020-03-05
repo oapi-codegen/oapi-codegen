@@ -21,8 +21,9 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id     string `json:"Id"`
-	Object Object `json:"Object"`
+	Id      int    `json:"Id"`
+	IsAdmin bool   `json:"IsAdmin"`
+	Object  Object `json:"Object"`
 }
 
 // Object defines model for Object.
@@ -79,6 +80,13 @@ type GetHeaderParams struct {
 
 	// complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+}
+
+// GetDeepObjectParams defines parameters for GetDeepObject.
+type GetDeepObjectParams struct {
+
+	// deep object
+	DeepObj ComplexObject `json:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
@@ -208,6 +216,9 @@ type ClientInterface interface {
 
 	// GetPassThrough request
 	GetPassThrough(ctx context.Context, param string) (*http.Response, error)
+
+	// GetDeepObject request
+	GetDeepObject(ctx context.Context, params *GetDeepObjectParams) (*http.Response, error)
 
 	// GetQueryForm request
 	GetQueryForm(ctx context.Context, params *GetQueryFormParams) (*http.Response, error)
@@ -395,6 +406,21 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http
 
 func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Response, error) {
 	req, err := NewGetPassThroughRequest(c.Server, param)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams) (*http.Response, error) {
+	req, err := NewGetDeepObjectRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -1077,6 +1103,49 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 	return req, nil
 }
 
+// NewGetDeepObjectRequest generates requests for GetDeepObject
+func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/queryDeepObject")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryUrl.Query()
+
+	if queryFrag, err := runtime.StyleParam("deepObject", true, "deepObj", params.DeepObj); err != nil {
+		return nil, err
+	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		return nil, err
+	} else {
+		for k, v := range parsed {
+			for _, v2 := range v {
+				queryValues.Add(k, v2)
+			}
+		}
+	}
+
+	queryUrl.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetQueryFormRequest generates requests for GetQueryForm
 func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Request, error) {
 	var err error
@@ -1666,6 +1735,27 @@ func (r getPassThroughResponse) StatusCode() int {
 	return 0
 }
 
+type getDeepObjectResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r getDeepObjectResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getDeepObjectResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type getQueryFormResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1898,6 +1988,15 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 		return nil, err
 	}
 	return ParseGetPassThroughResponse(rsp)
+}
+
+// GetDeepObjectWithResponse request returning *GetDeepObjectResponse
+func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams) (*getDeepObjectResponse, error) {
+	rsp, err := c.GetDeepObject(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDeepObjectResponse(rsp)
 }
 
 // GetQueryFormWithResponse request returning *GetQueryFormResponse
@@ -2182,6 +2281,25 @@ func ParseGetPassThroughResponse(rsp *http.Response) (*getPassThroughResponse, e
 	return response, nil
 }
 
+// ParseGetDeepObjectResponse parses an HTTP response from a GetDeepObjectWithResponse call
+func ParseGetDeepObjectResponse(rsp *http.Response) (*getDeepObjectResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getDeepObjectResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
 func ParseGetQueryFormResponse(rsp *http.Response) (*getQueryFormResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -2334,6 +2452,9 @@ type ServerInterface interface {
 
 	// (GET /passThrough/{param})
 	GetPassThrough(ctx echo.Context, param string) error
+
+	// (GET /queryDeepObject)
+	GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error
 
 	// (GET /queryForm)
 	GetQueryForm(ctx echo.Context, params GetQueryFormParams) error
@@ -2729,6 +2850,24 @@ func (w *ServerInterfaceWrapper) GetPassThrough(ctx echo.Context) error {
 	return err
 }
 
+// GetDeepObject converts echo context to params.
+func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDeepObjectParams
+	// ------------- Required query parameter "deepObj" -------------
+
+	err = runtime.BindQueryParameter("deepObject", true, true, "deepObj", ctx.QueryParams(), &params.DeepObj)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetDeepObject(ctx, params)
+	return err
+}
+
 // GetQueryForm converts echo context to params.
 func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	var err error
@@ -2736,9 +2875,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQueryFormParams
 	// ------------- Optional query parameter "ea" -------------
-	if paramValue := ctx.QueryParam("ea"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "ea", ctx.QueryParams(), &params.Ea)
 	if err != nil {
@@ -2746,9 +2882,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "a" -------------
-	if paramValue := ctx.QueryParam("a"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", false, false, "a", ctx.QueryParams(), &params.A)
 	if err != nil {
@@ -2756,9 +2889,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "eo" -------------
-	if paramValue := ctx.QueryParam("eo"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "eo", ctx.QueryParams(), &params.Eo)
 	if err != nil {
@@ -2766,9 +2896,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "o" -------------
-	if paramValue := ctx.QueryParam("o"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", false, false, "o", ctx.QueryParams(), &params.O)
 	if err != nil {
@@ -2776,9 +2903,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "ep" -------------
-	if paramValue := ctx.QueryParam("ep"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "ep", ctx.QueryParams(), &params.Ep)
 	if err != nil {
@@ -2786,9 +2910,6 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "p" -------------
-	if paramValue := ctx.QueryParam("p"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", false, false, "p", ctx.QueryParams(), &params.P)
 	if err != nil {
@@ -2796,6 +2917,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	}
 
 	// ------------- Optional query parameter "co" -------------
+
 	if paramValue := ctx.QueryParam("co"); paramValue != "" {
 
 		var value ComplexObject
@@ -2921,6 +3043,7 @@ func RegisterHandlers(router interface {
 	router.GET("/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
 	router.GET("/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
 	router.GET("/passThrough/:param", wrapper.GetPassThrough)
+	router.GET("/queryDeepObject", wrapper.GetDeepObject)
 	router.GET("/queryForm", wrapper.GetQueryForm)
 	router.GET("/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
 	router.GET("/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
@@ -2933,23 +3056,24 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xZyW7jOBD9FaNmTgO15e6+6dYIZgkwWWacwwCBD4xUtpmRRIakAxuG/r1BarG1WKYS",
-	"WXZyi6VaXj0+VcjiFnwWcRZjrCR4WxAoOYslmh9TGvEQ/80e6Sc+ixXGSv+pcK1cHhIa61/SX2JEzPMN",
-	"R/BAKkHjBSRJ4kCA0heUK8pi8ODHSJq4ozzXiD09o69Am6ZxTPYrpq3Wd+lLbwtcMI5C0RTcddCQzYGd",
-	"+a8C5+DBL+6uQjcL797tMgp8WVGBAXiPubOjg89Kwcq551RIdUsibIQgWNj0opLLWDl7oWaGKxrPmXYO",
-	"qY8Z6bFJBDfXDzq6okqHhweUajRF8YoCHHhFIVN6v44n44k2ZBxjwil48H08GX8FBzhRS4PfzdYxrc/d",
-	"ciJIlOg3CzTl6mKJXi/NMvyJ6mrfwYQSJEKFQoL3WNIF4TykvnF2nyWrqKNtUcoLnrEBnoENTk6DyQz7",
-	"XCqxwmTmlLX7bTI5lK+wcysCT0xO12fsf4rtbBiLGg1loXNBI6roqzbENQ9ZgODNSSgxK8zPw+SllcrK",
-	"LHfczZmIiAIPaKy+fwMnFxiNFS5QaIVZQdB8HUCA/UPI0gYjIgTZ2OIg7TiowkhaASqepOkbANZwtS3R",
-	"gLgK4lj+0Vkxx9oR2nXFKpY6hDaSeoJwqqZSLs1PDXYsN5bkN9SUzEy7WCIJULS1i79Si/e2i2UeJsP0",
-	"35f7PZdhG0cLli+/Z8I9TyupI/uhrS1RDdZYDsC8tPZSh5l+SZZ0nqLbHIL08ZtOvbIs0MEKsxYUkicM",
-	"sxUxMnK3Y9Nrfmvd1P1ddau3qCZN2OzH+lGtA1JtzG7XVAg97fIckKsoImIDXrwKwxqF+ba4K4eHdsd9",
-	"kGij36HpumVNmjtOV9mvha/9z/7zqq6go6y7DjweFd57iLww5UVECbquCI8G7V/pTc3pLV8pDU6uuLS6",
-	"wfgrFNeJwLf3uSMMdpPaUFzV2hwNLLjqocl9Ir3Ve1w3Et/R4T6Y5jiR8mEp2GqxtBnM3e/MW8dyHca1",
-	"Zxm6vaxQbP5gImor9p/C6MhZ2uqkaFIOMXPayUe7QseTYgXm+VDanRirrJ5hHlWBcBIEBRnHJiVVPgYa",
-	"8rbw0QeCcx6TK+U0j+b660zpbVV5C2BxMJzW3C73dJ2WeMr/aiUSS9dOHVi8nPP1UIRVt57H9wPTBr8L",
-	"PmEPTqT9lee0yfEizthDkVaM9O3p2r+RqBD1JmIspHUaVkzvl+Z6PYW/EiF4sFSKe66b3a0rlGocIPKI",
-	"8DGhkMySnwEAAP//njtWvlEhAAA=",
+	"H4sIAAAAAAAC/9xaS2/bOBD+K8bsnhaq5bY33YLuK8D2sescFihyYKRxzK4ksiQdxDD03xd82LIelilH",
+	"lt3cGmk4883Hj9PhyBuIWcZZjrmSEG1AoOQsl2j+mNOMp/iPe6SfxCxXmCv9T4XPKuQpobn+S8ZLzIh5",
+	"vuYIEUglaP4IRVEEkKCMBeWKshwiuJlI43eyjTVhD98wVqBNrR8T/QPTVs+f7ctoA1wwjkJRC+422YtG",
+	"c4WPKKAI4FbeJJkF5V4+MJYiyfXL0tnPAhcQwU9hmX/ogoefSzwCv6+owASir9vFgQ5dxrmvuK1iXFAh",
+	"1SeSYQsxAQiWtr2oRTVWwZ6re8MpzRdML05pjG5zchMIPt7eae+KKu0e7lCqyRzFEwoI4AmFtNvwdjqb",
+	"zrQh45gTTiGC99PZ9C0EwIlaGvyh22+bX7jhRJCs0G8e0aSrkyV6X/VuwB+oPuwvMK4EyVChkBB9reiH",
+	"cJ7S2CwOv0lWU1HX9lSF4diAyMCGYEuDiQz7XCqxwuI+qGr83Wx2KN7OLqwdhMLEDGPG/qPYzYaxaNBQ",
+	"PRBc0Iwq+qQN8ZmnLEGIFiSV6BKLt262qVXScpYldwsmMqLsqXj/DoLGISkCLwiarwMIcHgILmwyIUKQ",
+	"tS8O0o2DKsykF6DdExu+BWADV9cWjYhrRxzbHjov5lg3Qr/6WMfShNBF0kAQzlVUqqnF1qBkuTWluCWn",
+	"4t6UiyWSBEVXufjTWry0XCy3bhymf9982VsybuHowPLmNyfcy5SSJrIbbe2JarTCcgDmtZWXJkx7kjzp",
+	"PEe1OQTpxy86zcyco4MZuhKUkgdM3Y4YGYWbqak1v3Q2dX/VlzVLVJsmfPqxYVQbgFRr0+2aDGGgLi8A",
+	"ucoyItYQ5as0bVC4bYv7cnioOx6CRB/9jk3XJ9amueN0Vdd18LV/7F+v6nZ0VHXXg8ejwnsJkVemvIwo",
+	"QZ9rwqNJ9yn92Fh0yimlydkVZ7Mbjb+d4noReHqdO8JgP6mNxVWjzNHEg6sBitwr0luzxvUj8QUV7gfT",
+	"HCdS3i0FWz0ufQZzX0rzzrFcj7HuRYZu31co1r8i8nLmeijlPasjV+oEkXffb0zYMs/Euj5ZMLXGv9RN",
+	"UmJ2PbuJ/DsTWVeqf++MjmTqdTWuJXu+IVuZt14KPa/GNZiXQ+l3Ra6zeoEBXA3CWRDsyDg2GqrzMdJU",
+	"u4OPIRBcci5QS6d9FjlcKbaf8ao9j8dNeN5Ydr3jBJviOf8br5BY+c7Wg8XrGSiMRVi91z7eAM1b1l3x",
+	"SGF0Iv2/8c7bFl7FUGEs0nbfMPzp2v8EUyPqJGI8pHUeVkztl+b3BBb+SqQQwVIpHoWh+zGBQqmmupfN",
+	"CJ8SqnvZ/wMAAP//xqb11moiAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
