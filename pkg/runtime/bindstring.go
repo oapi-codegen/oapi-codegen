@@ -72,6 +72,7 @@ func BindStringToObject(src string, dst interface{}) error {
 	case reflect.Struct:
 		switch dstType := dst.(type) {
 		case *time.Time:
+			// Don't fail on empty string.
 			if src == "" {
 				return nil
 			}
@@ -86,6 +87,10 @@ func BindStringToObject(src string, dst interface{}) error {
 			*dstType = parsedTime
 			return nil
 		case *types.Date:
+			// Don't fail on empty string.
+			if src == "" {
+				return nil
+			}
 			parsedTime, err := time.Parse(types.DateFormat, src)
 			if err != nil {
 				return fmt.Errorf("error parsing '%s' as date: %s", src, err)
