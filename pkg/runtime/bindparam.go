@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -393,6 +394,9 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		}
 		return nil
 	case "deepObject":
+		if !explode {
+			return errors.New("deepObjects must be exploded")
+		}
 		return UnmarshalDeepObject(dest, paramName, queryParams)
 	case "spaceDelimited", "pipeDelimited":
 		return echo.NewHTTPError(http.StatusNotImplemented,

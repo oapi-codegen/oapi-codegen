@@ -57,6 +57,13 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 }
 
 func styleSlice(style string, explode bool, paramName string, values []interface{}) (string, error) {
+	if style == "deepObject" {
+		if !explode {
+			return "", errors.New("deepObjects must be exploded")
+		}
+		return MarshalDeepObject(values, paramName)
+	}
+
 	var prefix string
 	var separator string
 
@@ -126,6 +133,13 @@ func sortedKeys(strMap map[string]string) []string {
 }
 
 func styleStruct(style string, explode bool, paramName string, value interface{}) (string, error) {
+	if style == "deepObject" {
+		if !explode {
+			return "", errors.New("deepObjects must be exploded")
+		}
+		return MarshalDeepObject(value, paramName)
+	}
+
 	// This is a special case. The struct may be a time, in which case, marshal
 	// it in RFC3339 format.
 	if timeVal, ok := value.(*time.Time); ok {
@@ -168,6 +182,13 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 }
 
 func styleMap(style string, explode bool, paramName string, value interface{}) (string, error) {
+	if style == "deepObject" {
+		if !explode {
+			return "", errors.New("deepObjects must be exploded")
+		}
+		return MarshalDeepObject(value, paramName)
+	}
+
 	dict, ok := value.(map[string]interface{})
 	if !ok {
 		return "", errors.New("map not of type map[string]interface{}")
