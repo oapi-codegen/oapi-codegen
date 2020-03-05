@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -152,33 +153,41 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
 				var caseAction string
-				if typeDefinition.Schema.TypeDecl() == "interface{}" {
-					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
-				} else {
-					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := json.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				}
+
+				caseAction = fmt.Sprintf("var dest %s\n"+
+					"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+					" return nil, err \n"+
+					"}\n"+
+					"response.%s = &dest",
+					typeDefinition.Schema.TypeDecl(),
+					typeDefinition.TypeName)
+
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
 				caseClauses[caseKey] = caseClause
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				var caseAction string
-				if typeDefinition.Schema.TypeDecl() == "interface{}" {
-					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
-				} else {
-					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := yaml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				}
+				caseAction = fmt.Sprintf("var dest %s\n"+
+					"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+					" return nil, err \n"+
+					"}\n"+
+					"response.%s = &dest",
+					typeDefinition.Schema.TypeDecl(),
+					typeDefinition.TypeName)
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
 				caseClauses[caseKey] = caseClause
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				var caseAction string
-				if typeDefinition.Schema.TypeDecl() == "interface{}" {
-					caseAction = fmt.Sprintf("var temp interface{}\nresponse.%s = &temp \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.TypeName)
-				} else {
-					caseAction = fmt.Sprintf("response.%s = &%s{} \n if err := xml.Unmarshal(bodyBytes, response.%s); err != nil { \n return nil, err \n}", typeDefinition.TypeName, typeDefinition.Schema.TypeDecl(), typeDefinition.TypeName)
-				}
+				caseAction = fmt.Sprintf("var dest %s\n"+
+					"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+					" return nil, err \n"+
+					"}\n"+
+					"response.%s = &dest",
+					typeDefinition.Schema.TypeDecl(),
+					typeDefinition.TypeName)
 				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
 				caseClauses[caseKey] = caseClause
 
@@ -198,13 +207,32 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 	// Now build the switch statement in order of most-to-least specific:
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedStringKeys(caseClauses) {
+	for _, caseClauseKey := range sortedClauseKeys(caseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", caseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()
+}
+
+// This function sorts the clauses so that the "rsp.StatusCode" keys come last.
+// See: https://github.com/deepmap/oapi-codegen/issues/127
+func sortedClauseKeys(dict map[string]string) []string {
+	var typeClauses []string
+	var codeClauses []string
+
+	for k := range dict {
+		if strings.HasPrefix(k, "case rsp.StatusCode") {
+			codeClauses = append(codeClauses, k)
+		} else {
+			typeClauses = append(typeClauses, k)
+		}
+	}
+	sort.Strings(codeClauses)
+	sort.Strings(typeClauses)
+
+	return append(typeClauses, codeClauses...)
 }
 
 // buildUnmarshalCase builds an unmarshalling case clause for different content-types:

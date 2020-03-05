@@ -280,10 +280,11 @@ func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Document{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Document
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	}
 

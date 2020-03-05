@@ -569,16 +569,18 @@ func ParseFindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest []Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -600,16 +602,18 @@ func ParseAddPetResponse(rsp *http.Response) (*addPetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -631,10 +635,11 @@ func ParseDeletePetResponse(rsp *http.Response) (*deletePetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -656,16 +661,18 @@ func ParseFindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
