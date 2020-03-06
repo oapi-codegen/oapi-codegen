@@ -1,7 +1,9 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -53,10 +55,24 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description   string
-	JsonFieldName string
-	Schema        Schema
-	Required      bool
+	Description        string
+	Required           bool
+	FieldNullable      bool
+	FieldTag           string
+	JsonFieldName      string
+	JsonFieldOmitEmpty bool
+	Schema             Schema
+}
+
+func (p Property) GoFieldTag() string {
+	if p.FieldTag != "" {
+		return fmt.Sprintf("`%s`", p.FieldTag)
+	}
+	tag := fmt.Sprintf("`json:\"%s", p.JsonFieldName)
+	if p.JsonFieldOmitEmpty {
+		tag += ",omitempty"
+	}
+	return tag + "\"`"
 }
 
 func (p Property) GoFieldName() string {
@@ -65,7 +81,7 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && !p.Required {
+	if !p.Schema.SkipOptionalPointer && p.FieldNullable {
 		typeDef = "*" + typeDef
 	}
 	return typeDef
@@ -163,9 +179,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if err != nil {
 					return Schema{}, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
 				}
-
-				required := StringInArray(pName, schema.Required)
-
 				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
 					// If we have fields present which have additional properties,
 					// but are not a pre-defined type, we need to define a type
@@ -182,15 +195,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 					pSchema.RefType = typeName
 				}
-				description := ""
-				if p.Value != nil {
-					description = p.Value.Description
-				}
-				prop := Property{
-					JsonFieldName: pName,
-					Schema:        pSchema,
-					Required:      required,
-					Description:   description,
+				prop, err := parseProperty(pName, "", StringInArray(pName, schema.Required), pSchema, p)
+				if err != nil {
+					return Schema{}, errors.Wrap(err, fmt.Sprintf("error parsing property '%s'", pName))
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -285,6 +292,42 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
+// Parses OpenAPI property
+func parseProperty(name, description string, required bool, s Schema, sRef *openapi3.SchemaRef) (prop Property, err error) {
+	prop = Property{
+		Description:        description,
+		Required:           required,
+		FieldNullable:      !required,
+		JsonFieldName:      name,
+		JsonFieldOmitEmpty: !required,
+		Schema:             s,
+	}
+	if sRef.Value == nil {
+		return prop, nil
+	}
+	if description == "" {
+		prop.Description = sRef.Value.Description
+	}
+	for name, value := range sRef.Value.Extensions {
+		if len(name) < 6 || !strings.HasPrefix(name, "x-go-") {
+			continue
+		}
+		s := strings.ReplaceAll(string(value.(json.RawMessage)), "\\", "")
+		switch name[5:] {
+		case "nullable":
+			prop.FieldNullable, err = strconv.ParseBool(s)
+		case "tag":
+			prop.FieldTag = s[strings.IndexByte(s, '"')+1 : strings.LastIndexByte(s, '"')]
+		case "json-omitempty":
+			prop.JsonFieldOmitEmpty, err = strconv.ParseBool(s)
+		}
+		if err != nil {
+			return Property{}, errors.Wrap(err, fmt.Sprintf("error parsing extension '%s' of property", name[5:]))
+		}
+	}
+	return
+}
+
 // Given a list of schema descriptors, produce corresponding field names with
 // JSON annotations
 func GenFieldsFromProperties(props []Property) []string {
@@ -297,12 +340,7 @@ func GenFieldsFromProperties(props []Property) []string {
 			// Make sure the actual field is separated by a newline.
 			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
 		}
-		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
-		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
-		}
+		field += fmt.Sprintf("    %s %s %s", p.GoFieldName(), p.GoTypeDef(), p.GoFieldTag())
 		fields = append(fields, field)
 	}
 	return fields
