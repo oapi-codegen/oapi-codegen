@@ -39,6 +39,7 @@ func main() {
 		includeTags  string
 		excludeTags  string
 		templatesDir string
+		noOmitEmpty  bool
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
@@ -47,6 +48,7 @@ func main() {
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing user templates")
+	flag.BoolVar(&noOmitEmpty, "no-omitempty", false, "Don't omit empty json fields in generated models")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -104,6 +106,7 @@ func main() {
 	}
 	opts.UserTemplates = templates
 
+	codegen.SetOmitEmptyJSONFields(!noOmitEmpty)
 	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
 		errExit("error generating code: %s\n", err)

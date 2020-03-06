@@ -10,6 +10,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+var (
+	// Add ",omitempty" to fields json tag by default
+	omitEmptyJsonFields = true
+)
+
 // This describes a Schema, a type definition.
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
@@ -299,7 +304,7 @@ func parseProperty(name, description string, required bool, s Schema, sRef *open
 		Required:           required,
 		FieldNullable:      !required,
 		JsonFieldName:      name,
-		JsonFieldOmitEmpty: !required,
+		JsonFieldOmitEmpty: !required && omitEmptyJsonFields,
 		Schema:             s,
 	}
 	if sRef.Value == nil {
@@ -326,6 +331,12 @@ func parseProperty(name, description string, required bool, s Schema, sRef *open
 		}
 	}
 	return
+}
+
+// SetOmitEmptyJSONFields changes the value of omitEmptyJSONFields variable that
+// determines whether to add ",omitempty" to json tag by default
+func SetOmitEmptyJSONFields(is bool) {
+	omitEmptyJsonFields = is
 }
 
 // Given a list of schema descriptors, produce corresponding field names with
