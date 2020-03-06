@@ -94,7 +94,9 @@ type ParamsWithAddPropsParams_P1 struct {
 type ParamsWithAddPropsParams struct {
 
 	// This parameter has additional properties
-	P1 ParamsWithAddPropsParams_P1 `json:"p1"`
+	P1 struct {
+		AdditionalProperties map[string]interface{} `json:"-"`
+	} `json:"p1"`
 
 	// This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
