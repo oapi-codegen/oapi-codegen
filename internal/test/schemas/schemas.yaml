@@ -47,6 +47,34 @@ paths:
           required: true
           schema:
             $ref: "#/components/schemas/5StartsWithNumber"
+  /issues/127:
+    get:
+      operationId: Issue127
+      description: |
+        Make sure unsupported context types don't preempt supported types.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/yaml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
 components:
   schemas:
     GenericObject:

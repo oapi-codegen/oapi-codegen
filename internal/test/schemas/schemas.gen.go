@@ -9,10 +9,12 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -113,6 +115,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// Issue127 request
+	Issue127(ctx context.Context) (*http.Response, error)
+
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
@@ -123,6 +128,21 @@ type ClientInterface interface {
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
+}
+
+func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
+	req, err := NewIssue127Request(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
@@ -183,6 +203,33 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// NewIssue127Request generates requests for Issue127
+func NewIssue127Request(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/issues/127")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewIssue30Request generates requests for Issue30
@@ -338,6 +385,31 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
+type issue127Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GenericObject
+	XML200       *GenericObject
+	YAML200      *GenericObject
+	JSONDefault  *GenericObject
+}
+
+// Status returns HTTPResponse.Status
+func (r issue127Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r issue127Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -401,6 +473,15 @@ func (r issue9Response) StatusCode() int {
 	return 0
 }
 
+// Issue127WithResponse request returning *Issue127Response
+func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*issue127Response, error) {
+	rsp, err := c.Issue127(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue127Response(rsp)
+}
+
 // Issue30WithResponse request returning *Issue30Response
 func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
@@ -434,6 +515,59 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 		return nil, err
 	}
 	return ParseIssue9Response(rsp)
+}
+
+// ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
+func ParseIssue127Response(rsp *http.Response) (*issue127Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue127Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case rsp.StatusCode == 200:
+	// Content-type (text/markdown) unsupported
+
+	default:
+		// Content-type (text/markdown) unsupported
+
+	}
+
+	return response, nil
 }
 
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
@@ -496,6 +630,9 @@ func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /issues/127)
+	Issue127(ctx echo.Context) error
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
 
@@ -509,6 +646,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// Issue127 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue127(ctx)
+	return err
 }
 
 // Issue30 converts echo context to params.
@@ -578,6 +724,7 @@ func RegisterHandlers(router interface {
 		Handler: si,
 	}
 
+	router.GET("/issues/127", wrapper.Issue127)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
@@ -587,17 +734,18 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5STQVPbMBCF/8rOtkePnRR6QLeWQ4dLYQozPRQOirWORW1JSKtQj8f/vSM5IaZAO70p",
-	"jlbvfW93R6xt76whwwHFiKFuqZf5+PGapefwXXP7NfYb8umjolB77VhbgwJvWh1gLgEje4KQS+BRcwsS",
-	"zFxWIA+OUKDd3FPNOBX4yQw3g6M1ivH468NbAq2NnYINgTSgDZNvZE3jlB46j4Ftf81em+1NVhmxsb6X",
-	"jALr/OdRP+RrqewLGfK6vpwNifFPh9NUoDaNfcURBYZaBgrQWA876bWNAXQIMX+KRoHdkQfWPZVw1ZEM",
-	"BFIpkMCH2lR6a6QZYBO30OhfpMpbk4xq7uigck1+l+PbkQ+z+rpclasEYB0Z6TQKPClX5RoLdJLb3Ldq",
-	"9lKdrKqxkV3Hrbdx204vWb5RSBIKftLwaL1aRu08ZV+gTYaUm45yj8PsdEs5N+vIy/TchUKBF0n5JBt0",
-	"0suemHxA8WNEnfSSRSwwvYICF96wQE8PUXtSKNhHKvaDuGjNoXnT3VQ8MZ6uq3GdpTLe3tRzyquDk8WI",
-	"arOdh/RpRF8BOZ1j/RfHrP9XhPeeGhT4rjouW7XftOrlmiXEBePZm2TnnSbDkPUDpJxAm9p6TzV3Qzp3",
-	"UZHKg5rMpaHK1BurBpBG3Zoj3tzWV2I4eyOFh0h+WLTT2v9r43yZAn+2akg3amuYTOaUznW6zkaq+5Bg",
-	"x+NTeTufJ3GZD7LLZM9sNLILNOWSPOx7gug7FNgyO1FV+2VK61kqItdLV0qN0930OwAA///Z/BiYHwUA",
-	"AA==",
+	"H4sIAAAAAAAC/7RVTW/bOBD9K4PZBfZiSHaSRRHd2hyKHNoETYAemhxocWQxkUiGHDoRBP33gpRdKx9O",
+	"EaQ9mZI4M+/NvHnusTStNZo0eyx69GVNrUjH/y9YOPbfFddfQ7skF19K8qVTlpXRWOBlrTyMIaBFS+BT",
+	"CNwrrkGAHsNmyJ0lLNAsb6hkHGb4UXeXnaUFFv3u6WBfgdqERsKSQGhQmslVoqR+iIlOgmfTXrBTenWZ",
+	"qvRYGdcKxgLL9HFX36drMewzaXKqPBsBFf1ThMMwQ6Ur8wIi8gyl8OShMg7WwikTPCjvQ3oVtASzJges",
+	"WsrgvCHhCYSUIIC3sTH0SgvdwTKsoFIPJLMrHYEqbmhb5YLcOrVvTc6P1RfZPJtHAsaSFlZhgYfZPFvg",
+	"DK3gOs0tH7Hki4MP8XFF/JzFF3FL4IMjCNoHa41jklAazfTAEJvhQRr9H4N1RK1l2N1KX0e4xpITMeWp",
+	"xAJPY91YdYaOvDXaUwJ0MJ/Hn5RdJzDC2kaVKTK/8RHRVnnx9K+jCgv8J99JM9/oMn88uDimaa6HtnlP",
+	"qkg+b4W7leZevztRJ96DJqaRVInQ8F9s3h9iPIx4t8o7nOd9JZqGa2fCqh6e6+8b+ShuCbfU3Rsnp0tu",
+	"HaWNAKXTeollQ8ldNqLbCPoF7R2m1bDCiZaYnMfiR48q1ovLgTOMWbDACbak1bugHEks2AWaTVrwxDaG",
+	"6wnHo0XeL1KpYe+WnW+RTMxR6dVoj7/M8QUiR+NC/47HWP9VCq9N8bnBR4oTjsd7mZ00ijRDqu+TI4DS",
+	"pXGOSm66eG6CJJksMoKLdpZYL43sQGh5pXf09nrJ8Z4u3AVy3WScxrxtjONl8vzJyO4t27XZymknztJB",
+	"NInZIxiVaDyNi5HEvmEQXIMF1sy2yPONjcc/hkwS2VbYTCgcroefAQAA//9q8HMvmQcAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
