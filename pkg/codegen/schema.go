@@ -307,7 +307,7 @@ func parseProperty(name, description string, required bool, s Schema, sRef *open
 		JsonFieldOmitEmpty: !required && omitEmptyJsonFields,
 		Schema:             s,
 	}
-	if sRef.Value == nil {
+	if sRef == nil || sRef.Value == nil {
 		return prop, nil
 	}
 	if description == "" {
