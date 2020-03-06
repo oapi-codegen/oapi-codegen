@@ -149,6 +149,16 @@ components:
         tag:
           type: string
           description: Type of the pet
+        age:
+          type: integer
+          format: int32
+          description: Age of the pet
+          x-go-tag: 'json:"age" bson:"years_old"'
+        note:
+          type: string
+          description: Note of the pet
+          x-go-nullable: false
+          x-go-json-omitempty: false
 
     Error:
       required:

@@ -16,8 +16,14 @@ type Error struct {
 // NewPet defines model for NewPet.
 type NewPet struct {
 
+	// Age of the pet
+	Age *int32 `json:"age" bson:"years_old"`
+
 	// Name of the pet
 	Name string `json:"name"`
+
+	// Note of the pet
+	Note string `json:"note"`
 
 	// Type of the pet
 	Tag *string `json:"tag,omitempty"`

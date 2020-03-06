@@ -60,8 +60,10 @@ func TestPetStore(t *testing.T) {
 	// the stack except the well-tested HTTP system in Go, which there is no
 	// point for us to test.
 	tag := "TagOfSpot"
+	age := int32(1)
 	newPet := api.NewPet{
 		Name: "Spot",
+		Age:  &age,
 		Tag:  &tag,
 	}
 	result := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
@@ -96,8 +98,10 @@ func TestPetStore(t *testing.T) {
 
 	// Let's insert another pet for subsequent tests.
 	tag = "TagOfFido"
+	age = int32(2)
 	newPet = api.NewPet{
 		Name: "Fido",
+		Age:  &age,
 		Tag:  &tag,
 	}
 	result = testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
