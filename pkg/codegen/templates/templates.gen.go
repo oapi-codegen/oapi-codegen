@@ -376,7 +376,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -468,7 +468,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -484,7 +484,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
