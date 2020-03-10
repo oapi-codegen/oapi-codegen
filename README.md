@@ -249,7 +249,7 @@ type Client struct {
 
     // A callback for modifying requests which are generated before sending over
     // the network.
-    RequestEditor func(req *http.Request, ctx context.Context) error
+    RequestEditor func(ctx context.Context, req *http.Request) error
 }
 ```
 
