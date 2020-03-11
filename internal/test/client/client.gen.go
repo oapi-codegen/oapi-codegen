@@ -21,8 +21,8 @@ import (
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName,omitempty"`
+	Role      string `json:"role,omitempty"`
 }
 
 // PostBothJSONBody defines parameters for PostBoth.

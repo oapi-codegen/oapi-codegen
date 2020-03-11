@@ -3,7 +3,6 @@ package codegen
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -60,24 +59,35 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description        string
-	Required           bool
-	FieldNullable      bool
-	FieldTag           string
-	JsonFieldName      string
-	JsonFieldOmitEmpty bool
-	Schema             Schema
+	Description   string
+	Required      bool
+	JsonFieldName string
+	Schema        Schema
+
+	extensions map[string]string
 }
 
 func (p Property) GoFieldTag() string {
-	if p.FieldTag != "" {
-		return fmt.Sprintf("`%s`", p.FieldTag)
+	// If the tag was provided by the extension.
+	tag, ok := p.extensions["tag"]
+	if ok {
+		if len(tag) > 0 {
+			return fmt.Sprintf("`%s`", tag)
+		}
+		return ""
 	}
-	tag := fmt.Sprintf("`json:\"%s", p.JsonFieldName)
-	if p.JsonFieldOmitEmpty {
+	// Otherwise we provide only json tag.
+	tag = p.JsonFieldName
+	switch p.extensions["json-omitempty"] {
+	case "true":
 		tag += ",omitempty"
+	case "false":
+	case "":
+		if omitEmptyJsonFields {
+			tag += ",omitempty"
+		}
 	}
-	return tag + "\"`"
+	return fmt.Sprintf("`json:\"%s\"`", tag)
 }
 
 func (p Property) GoFieldName() string {
@@ -86,8 +96,16 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && p.FieldNullable {
-		typeDef = "*" + typeDef
+	if !p.Schema.SkipOptionalPointer {
+		switch p.extensions["nullable"] {
+		case "true":
+			typeDef = "*" + typeDef
+		case "false":
+		case "":
+			if !p.Required {
+				typeDef = "*" + typeDef
+			}
+		}
 	}
 	return typeDef
 }
@@ -200,11 +218,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 					pSchema.RefType = typeName
 				}
-				prop, err := parseProperty(pName, "", StringInArray(pName, schema.Required), pSchema, p)
-				if err != nil {
-					return Schema{}, errors.Wrap(err, fmt.Sprintf("error parsing property '%s'", pName))
-				}
-				outSchema.Properties = append(outSchema.Properties, prop)
+				outSchema.Properties = append(outSchema.Properties,
+					parseProperty(pName, "", StringInArray(pName, schema.Required), pSchema, p),
+				)
 			}
 
 			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
@@ -290,7 +306,7 @@ type SchemaDescriptor struct {
 }
 
 type FieldDescriptor struct {
-	Required bool   // Is the schema required? If not, we'll pass by pointer
+	Required bool   // Is the schema required?
 	GoType   string // The Go type needed to represent the json type.
 	GoName   string // The Go compatible type name for the type
 	JsonName string // The json type name for the type
@@ -298,39 +314,33 @@ type FieldDescriptor struct {
 }
 
 // Parses OpenAPI property
-func parseProperty(name, description string, required bool, s Schema, sRef *openapi3.SchemaRef) (prop Property, err error) {
-	prop = Property{
-		Description:        description,
-		Required:           required,
-		FieldNullable:      !required,
-		JsonFieldName:      name,
-		JsonFieldOmitEmpty: !required && omitEmptyJsonFields,
-		Schema:             s,
+func parseProperty(name, description string, required bool, s Schema, sRef *openapi3.SchemaRef) Property {
+	prop := Property{
+		Description:   description,
+		Required:      required,
+		JsonFieldName: name,
+		Schema:        s,
+		extensions:    make(map[string]string),
 	}
 	if sRef == nil || sRef.Value == nil {
-		return prop, nil
+		return prop
 	}
+	// If the description was not provided, then look for it in the scheme.
 	if description == "" {
 		prop.Description = sRef.Value.Description
 	}
 	for name, value := range sRef.Value.Extensions {
-		if len(name) < 6 || !strings.HasPrefix(name, "x-go-") {
+		if !strings.HasPrefix(name, "x-go-") {
 			continue
 		}
 		s := strings.ReplaceAll(string(value.(json.RawMessage)), "\\", "")
-		switch name[5:] {
-		case "nullable":
-			prop.FieldNullable, err = strconv.ParseBool(s)
-		case "tag":
-			prop.FieldTag = s[strings.IndexByte(s, '"')+1 : strings.LastIndexByte(s, '"')]
-		case "json-omitempty":
-			prop.JsonFieldOmitEmpty, err = strconv.ParseBool(s)
+		// Remove quotes.
+		if len(s) > 1 && (s[0] == '"' && s[len(s)-1] == '"') {
+			s = s[1 : len(s)-1]
 		}
-		if err != nil {
-			return Property{}, errors.Wrap(err, fmt.Sprintf("error parsing extension '%s' of property", name[5:]))
-		}
+		prop.extensions[name[5:]] = s
 	}
-	return
+	return prop
 }
 
 // SetOmitEmptyJSONFields changes the value of omitEmptyJSONFields variable that

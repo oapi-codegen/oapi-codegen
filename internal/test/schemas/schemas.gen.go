@@ -40,7 +40,7 @@ type Issue9JSONBody interface{}
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
-	Foo string `json:"foo"`
+	Foo string `json:"foo,omitempty"`
 }
 
 // Issue9RequestBody defines body for Issue9 for application/json ContentType.

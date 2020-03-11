@@ -21,15 +21,15 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id      int    `json:"Id"`
-	IsAdmin bool   `json:"IsAdmin"`
-	Object  Object `json:"Object"`
+	Id      int    `json:"Id,omitempty"`
+	IsAdmin bool   `json:"IsAdmin,omitempty"`
+	Object  Object `json:"Object,omitempty"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName,omitempty"`
+	Role      string `json:"role,omitempty"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
@@ -86,7 +86,7 @@ type GetHeaderParams struct {
 type GetDeepObjectParams struct {
 
 	// deep object
-	DeepObj ComplexObject `json:"deepObj"`
+	DeepObj ComplexObject `json:"deepObj,omitempty"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.

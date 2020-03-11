@@ -455,13 +455,8 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				opDef.BodyRequired = op.RequestBody.Value.Required
 			}
 
-			typeDefs, err := GenerateTypeDefsForOperation(opDef)
-			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating type defs for %s", opName))
-			}
-
 			// Generate all the type definitions needed for this operation
-			opDef.TypeDefinitions = append(opDef.TypeDefinitions, typeDefs...)
+			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
 			operations = append(operations, opDef)
 		}
@@ -553,15 +548,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateTypeDefsForOperation(op OperationDefinition) ([]TypeDefinition, error) {
+func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 	// Start with the params object itself
 	if len(op.Params()) != 0 {
-		paramsTypes, err := GenerateParamsTypes(op)
-		if err != nil {
-			return nil, err
-		}
-		typeDefs = append(typeDefs, paramsTypes...)
+		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
 	// Now, go through all the additional types we need to declare.
@@ -572,12 +563,12 @@ func GenerateTypeDefsForOperation(op OperationDefinition) ([]TypeDefinition, err
 	for _, body := range op.Bodies {
 		typeDefs = append(typeDefs, body.Schema.GetAdditionalTypeDefs()...)
 	}
-	return typeDefs, nil
+	return typeDefs
 }
 
 // This defines the schema for a parameters definition object which encapsulates
 // all the query, header and cookie parameters for an operation.
-func GenerateParamsTypes(op OperationDefinition) ([]TypeDefinition, error) {
+func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 
 	objectParams := op.QueryParams
@@ -597,11 +588,9 @@ func GenerateParamsTypes(op OperationDefinition) ([]TypeDefinition, error) {
 				Schema:   param.Schema,
 			})
 		}
-		prop, err := parseProperty(param.ParamName, param.Spec.Description, param.Required, param.Schema, param.Spec.Schema)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error parsing property '%s'", param.ParamName))
-		}
-		s.Properties = append(s.Properties, prop)
+		s.Properties = append(s.Properties,
+			parseProperty(param.ParamName, param.Spec.Description, param.Required, param.Schema, param.Spec.Schema),
+		)
 	}
 
 	s.GoType = GenStructFromSchema(s)
@@ -610,7 +599,7 @@ func GenerateParamsTypes(op OperationDefinition) ([]TypeDefinition, error) {
 		TypeName: typeName,
 		Schema:   s,
 	}
-	return append(typeDefs, td), nil
+	return append(typeDefs, td)
 }
 
 // Generates code for all types produced

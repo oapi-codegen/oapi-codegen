@@ -23,34 +23,34 @@ import (
 
 // AdditionalPropertiesObject1 defines model for AdditionalPropertiesObject1.
 type AdditionalPropertiesObject1 struct {
-	Id                   int            `json:"id"`
-	Name                 string         `json:"name"`
+	Id                   int            `json:"id,omitempty"`
+	Name                 string         `json:"name,omitempty"`
 	Optional             *string        `json:"optional,omitempty"`
 	AdditionalProperties map[string]int `json:"-"`
 }
 
 // AdditionalPropertiesObject2 defines model for AdditionalPropertiesObject2.
 type AdditionalPropertiesObject2 struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id   int    `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 // AdditionalPropertiesObject3 defines model for AdditionalPropertiesObject3.
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // AdditionalPropertiesObject4 defines model for AdditionalPropertiesObject4.
 type AdditionalPropertiesObject4 struct {
-	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
-	Name                 string                            `json:"name"`
+	Inner                AdditionalPropertiesObject4_Inner `json:"inner,omitempty"`
+	Name                 string                            `json:"name,omitempty"`
 	AdditionalProperties map[string]interface{}            `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
@@ -61,15 +61,15 @@ type AdditionalPropertiesObject5 struct {
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
-	Name   string          `json:"name"`
-	Value1 json.RawMessage `json:"value1"`
+	Name   string          `json:"name,omitempty"`
+	Value1 json.RawMessage `json:"value1,omitempty"`
 	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName,omitempty"`
+	Role      string `json:"role,omitempty"`
 }
 
 // ParameterObject defines model for ParameterObject.
@@ -77,12 +77,12 @@ type ParameterObject string
 
 // ResponseObject defines model for ResponseObject.
 type ResponseObject struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field,omitempty"`
 }
 
 // RequestBody defines model for RequestBody.
 type RequestBody struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field,omitempty"`
 }
 
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
@@ -96,13 +96,13 @@ type ParamsWithAddPropsParams struct {
 	// This parameter has additional properties
 	P1 struct {
 		AdditionalProperties map[string]interface{} `json:"-"`
-	} `json:"p1"`
+	} `json:"p1,omitempty"`
 
 	// This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
-		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner"`
-	} `json:"p2"`
+		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner,omitempty"`
+	} `json:"p2,omitempty"`
 }
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.
@@ -112,8 +112,8 @@ type ParamsWithAddPropsParams_P2_Inner struct {
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
-	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner"`
-	Name                 string                         `json:"name"`
+	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner,omitempty"`
+	Name                 string                         `json:"name,omitempty"`
 	AdditionalProperties map[string]interface{}         `json:"-"`
 }
 

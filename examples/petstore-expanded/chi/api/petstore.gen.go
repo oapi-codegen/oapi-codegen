@@ -20,10 +20,10 @@ import (
 type Error struct {
 
 	// Error code
-	Code int32 `json:"code"`
+	Code int32 `json:"code,omitempty"`
 
 	// Error message
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 }
 
 // NewPet defines model for NewPet.
@@ -33,7 +33,7 @@ type NewPet struct {
 	Age *int32 `json:"age" bson:"years_old"`
 
 	// Name of the pet
-	Name string `json:"name"`
+	Name string `json:"name,omitempty"`
 
 	// Note of the pet
 	Note string `json:"note"`
@@ -49,7 +49,7 @@ type Pet struct {
 	// Embedded fields due to inline allOf schema
 
 	// Unique id of the pet
-	Id int64 `json:"id"`
+	Id int64 `json:"id,omitempty"`
 }
 
 // FindPetsParams defines parameters for FindPets.
