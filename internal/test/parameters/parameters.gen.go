@@ -115,7 +115,7 @@ type GetQueryFormParams struct {
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -246,7 +246,7 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +261,7 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +276,7 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +291,7 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -306,7 +306,7 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +321,7 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +336,7 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +351,7 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.R
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -366,7 +366,7 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object) (*http.R
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -381,7 +381,7 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +396,7 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -411,7 +411,7 @@ func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Respon
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +426,7 @@ func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams)
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -441,7 +441,7 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams) (
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -456,7 +456,7 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32) (*htt
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -471,7 +471,7 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object) (*htt
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -486,7 +486,7 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -501,7 +501,7 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -516,7 +516,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Res
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
