@@ -46,6 +46,49 @@ type RequestEditorFn func(ctx context.Context, req *http.Request) error
 type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
+type DoFn func(r *http.Request) (*http.Response, error)
+
+type RoundTripMiddleware func(next DoFn) DoFn
+
+func (rtm RoundTripMiddleware) DoFn(doFn DoFn) DoFn {
+	return rtm(doFn)
+}
+
+func joinMiddleware(mw ...RoundTripMiddleware) RoundTripMiddleware {
+	middleware := mw[len(mw) - 1]
+	for i := len(mw) - 2; i >= 0; i-- {
+		middleware = middleware.Wrap(mw[i])
+	}
+	return middleware
+}
+
+func (mw RoundTripMiddleware) Wrap(wrapMw RoundTripMiddleware) RoundTripMiddleware {
+	return func(doFn DoFn) DoFn {
+		return wrapMw(mw(doFn))
+	}
+}
+
+
+
+type RoundTripMiddlewares struct {
+	PostBoth 									RoundTripMiddleware
+	GetBoth 									RoundTripMiddleware
+	PostJson 									RoundTripMiddleware
+	GetJson 									RoundTripMiddleware
+	PostOther					 				RoundTripMiddleware
+	GetOther 									RoundTripMiddleware
+	GetJsonWithTrailingSlash 	RoundTripMiddleware
+}
+
+type HttpDoFunctions struct {
+	PostBoth 									DoFn
+	GetBoth 									DoFn
+	PostJson 									DoFn
+	GetJson 									DoFn
+	PostOther					 				DoFn
+	GetOther 									DoFn
+	GetJsonWithTrailingSlash 	DoFn
+}
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
@@ -60,6 +103,12 @@ type Client struct {
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+
+	SharedRoundTripMiddleware RoundTripMiddleware
+
+	RoundTripMiddlewares RoundTripMiddlewares
+
+	HttpDoers *HttpDoFunctions
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -81,7 +130,114 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if client.Client == nil {
 		client.Client = http.DefaultClient
 	}
+
+	client.HttpDoers = setupHttpDoers(&client, client.RoundTripMiddlewares)
+
 	return &client, nil
+}
+
+func setupHttpDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *HttpDoFunctions {
+
+	sharedMiddlewares := []RoundTripMiddleware{}
+
+	if c.RequestEditor != nil {
+		mw := newRequestEditorMiddleware(c.RequestEditor)
+		sharedMiddlewares = append(sharedMiddlewares, mw)
+	}
+
+	if c.SharedRoundTripMiddleware != nil {
+		sharedMiddlewares = append(sharedMiddlewares, c.SharedRoundTripMiddleware)
+	}
+
+	sharedMiddleware := joinMiddleware(sharedMiddlewares...)
+
+	httpDoers := HttpDoFunctions{}
+
+	// PostBoth
+	if rtMiddlewares.PostBoth != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostBoth)
+		httpDoers.PostBoth = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.PostBoth = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// GetBoth
+	if rtMiddlewares.GetBoth != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetBoth)
+		httpDoers.GetBoth = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.GetBoth = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// PostJson
+	if rtMiddlewares.PostJson != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostJson)
+		httpDoers.PostJson = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.PostJson = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// GetJson
+	if rtMiddlewares.GetJson != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetJson)
+		httpDoers.GetJson = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.GetJson = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// PostOther
+	if rtMiddlewares.PostOther != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostOther)
+		httpDoers.PostOther = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.PostOther = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// GetOther
+	if rtMiddlewares.GetOther != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetOther)
+		httpDoers.GetOther = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.GetOther = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	// GetJsonWithTrailingSlash
+	if rtMiddlewares.GetJsonWithTrailingSlash != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetJsonWithTrailingSlash)
+		httpDoers.GetJsonWithTrailingSlash = mw.DoFn(c.Client.Do)
+	} else {
+		httpDoers.GetJsonWithTrailingSlash = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	return &httpDoers
+}
+
+func newRequestEditorMiddleware(requestEditorFn RequestEditorFn) RoundTripMiddleware {
+	return func(next DoFn) DoFn {
+		return func(r *http.Request) (*http.Response, error) {
+			err := requestEditorFn(r.Context(), r)
+			if err != nil {
+				return nil, err
+			}
+			return next(r)
+		}
+	}
+}
+
+// WithSharedRoundTripMiddleware add a middleware that applies to all routes
+func WithSharedRoundTripMiddleware(rtm RoundTripMiddleware) ClientOption {
+	return func(c *Client) error {
+		c.SharedRoundTripMiddleware = rtm
+		return nil
+	}
+}
+
+// WithRoundTripMiddlewares Add middlewares that apply to specific routes
+func WithRoundTripMiddlewares(rtMiddlewares RoundTripMiddlewares) ClientOption {
+	return func(c *Client) error {
+		c.RoundTripMiddlewares = rtMiddlewares
+		return nil
+	}
 }
 
 // WithHTTPClient allows overriding the default Doer, which is
@@ -136,13 +292,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.PostBoth(req)
 }
 
 func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error) {
@@ -151,13 +301,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*h
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.PostBoth(req)
 }
 
 func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
@@ -166,13 +310,7 @@ func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.GetBoth(req)
 }
 
 func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -181,13 +319,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.PostJson(req)
 }
 
 func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error) {
@@ -196,13 +328,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*h
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.PostJson(req)
 }
 
 func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
@@ -211,13 +337,7 @@ func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.GetJson(req)
 }
 
 func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -226,13 +346,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.PostOther(req)
 }
 
 func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
@@ -241,13 +355,7 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.GetOther(req)
 }
 
 func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error) {
@@ -256,13 +364,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.HttpDoers.GetJsonWithTrailingSlash(req)
 }
 
 // NewPostBothRequest calls the generic PostBoth builder with application/json body
