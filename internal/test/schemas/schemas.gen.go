@@ -119,6 +119,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// EnsureEverythingIsReferenced request
+	EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error)
+
 	// Issue127 request
 	Issue127(ctx context.Context) (*http.Response, error)
 
@@ -132,6 +135,21 @@ type ClientInterface interface {
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
+}
+
+func (c *Client) EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error) {
+	req, err := NewEnsureEverythingIsReferencedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
@@ -207,6 +225,33 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// NewEnsureEverythingIsReferencedRequest generates requests for EnsureEverythingIsReferenced
+func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/ensure-everything-is-referenced")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewIssue127Request generates requests for Issue127
@@ -386,6 +431,34 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
+type ensureEverythingIsReferencedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+		// This should be an interface{}
+		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+		CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r ensureEverythingIsReferencedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ensureEverythingIsReferencedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type issue127Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -474,6 +547,15 @@ func (r issue9Response) StatusCode() int {
 	return 0
 }
 
+// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*ensureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferenced(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnsureEverythingIsReferencedResponse(rsp)
+}
+
 // Issue127WithResponse request returning *Issue127Response
 func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*issue127Response, error) {
 	rsp, err := c.Issue127(ctx)
@@ -516,6 +598,38 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 		return nil, err
 	}
 	return ParseIssue9Response(rsp)
+}
+
+// ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
+func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*ensureEverythingIsReferencedResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ensureEverythingIsReferencedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+			// This should be an interface{}
+			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+			CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
@@ -631,6 +745,9 @@ func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /ensure-everything-is-referenced)
+	EnsureEverythingIsReferenced(ctx echo.Context) error
+
 	// (GET /issues/127)
 	Issue127(ctx echo.Context) error
 
@@ -647,6 +764,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// EnsureEverythingIsReferenced converts echo context to params.
+func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.EnsureEverythingIsReferenced(ctx)
+	return err
 }
 
 // Issue127 converts echo context to params.
@@ -730,6 +856,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
+	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
 	router.GET("/issues/127", wrapper.Issue127)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
@@ -740,18 +867,21 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"DYsJAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

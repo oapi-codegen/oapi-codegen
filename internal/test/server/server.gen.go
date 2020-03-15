@@ -126,6 +126,8 @@ type CreateResource2JSONRequestBody CreateResource2JSONBody
 type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
 type ServerInterface interface {
+	// get every type optional (GET /every-type-optional)
+	GetEveryTypeOptional(w http.ResponseWriter, r *http.Request)
 	// Get resource via simple path (GET /get-simple)
 	GetSimple(w http.ResponseWriter, r *http.Request)
 	// Getter with referenced parameter and referenced response (GET /get-with-args)
@@ -134,12 +136,25 @@ type ServerInterface interface {
 	GetWithReferences(w http.ResponseWriter, r *http.Request)
 	// Get an object by ID (GET /get-with-type/{content_type})
 	GetWithContentType(w http.ResponseWriter, r *http.Request)
+	// get with reserved keyword (GET /reserved-keyword)
+	GetReservedKeyword(w http.ResponseWriter, r *http.Request)
 	// Create a resource (POST /resource/{argument})
 	CreateResource(w http.ResponseWriter, r *http.Request)
 	// Create a resource with inline parameter (POST /resource2/{inline_argument})
 	CreateResource2(w http.ResponseWriter, r *http.Request)
 	// Update a resource with inline body. The parameter name is a reservedkeyword, so make sure that gets prefixed to avoid syntax errors (PUT /resource3/{fallthrough})
 	UpdateResource3(w http.ResponseWriter, r *http.Request)
+	// get response with reference (GET /response-with-reference)
+	GetResponseWithReference(w http.ResponseWriter, r *http.Request)
+}
+
+// GetEveryTypeOptional operation middleware
+func GetEveryTypeOptionalCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 // GetSimple operation middleware
@@ -272,6 +287,15 @@ func GetWithContentTypeCtx(next http.Handler) http.Handler {
 	})
 }
 
+// GetReservedKeyword operation middleware
+func GetReservedKeywordCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // CreateResource operation middleware
 func CreateResourceCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -359,6 +383,15 @@ func UpdateResource3Ctx(next http.Handler) http.Handler {
 	})
 }
 
+// GetResponseWithReference operation middleware
+func GetResponseWithReferenceCtx(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
 	return HandlerFromMux(si, chi.NewRouter())
@@ -366,6 +399,10 @@ func Handler(si ServerInterface) http.Handler {
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	r.Group(func(r chi.Router) {
+		r.Use(GetEveryTypeOptionalCtx)
+		r.Get("/every-type-optional", si.GetEveryTypeOptional)
+	})
 	r.Group(func(r chi.Router) {
 		r.Use(GetSimpleCtx)
 		r.Get("/get-simple", si.GetSimple)
@@ -383,6 +420,10 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 		r.Get("/get-with-type/{content_type}", si.GetWithContentType)
 	})
 	r.Group(func(r chi.Router) {
+		r.Use(GetReservedKeywordCtx)
+		r.Get("/reserved-keyword", si.GetReservedKeyword)
+	})
+	r.Group(func(r chi.Router) {
 		r.Use(CreateResourceCtx)
 		r.Post("/resource/{argument}", si.CreateResource)
 	})
@@ -393,6 +434,10 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(UpdateResource3Ctx)
 		r.Put("/resource3/{fallthrough}", si.UpdateResource3)
+	})
+	r.Group(func(r chi.Router) {
+		r.Use(GetResponseWithReferenceCtx)
+		r.Get("/response-with-reference", si.GetResponseWithReference)
 	})
 
 	return r

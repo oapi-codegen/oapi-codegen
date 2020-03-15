@@ -5,6 +5,38 @@ info:
   license:
     name: MIT
 paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      description: |
+        This endpoint exists so that components can be created in this
+        spec and not be pruned
+    # TODO: figure out why uncommenting this causes failures
+    #   parameters:
+    #     - $ref: "#/components/parameters/ParameterObject"
+      requestBody:
+        $ref: "#/components/requestBodies/RequestBody"
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  one:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject1"
+                  two:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject2"
+                  three:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject3"
+                  four:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject4"
+                  five:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject5"
+                  jsonField:
+                    $ref: "#/components/schemas/ObjectWithJsonField"
+        default:
+          $ref: "#/components/responses/ResponseObject"
   /params_with_add_props:
     get:
       operationId: ParamsWithAddProps
