@@ -350,10 +350,10 @@ func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) err
 	}
 
 	// TODO: for some reason linkRef.Value.Headers is a `map[string]*Schema` instead of a `map[string]*SchemaRef`
-	// so we can't walk it like all the other SchemaRef's we find.
+	// so we can't walk it like all the other refs.
 
-	// for _, schema := range ref.Value.Headers {
-	// 	walkSchemaRef(schema, doFn)
+	// for _, header := range ref.Value.Headers {
+	// 	walkHeaderRef(header, doFn)
 	// }
 
 	return nil
