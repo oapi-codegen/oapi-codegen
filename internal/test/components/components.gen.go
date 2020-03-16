@@ -720,7 +720,7 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -802,7 +802,7 @@ func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPr
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -817,7 +817,7 @@ func (c *Client) BodyWithAddPropsWithBody(ctx context.Context, contentType strin
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -832,7 +832,7 @@ func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSON
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -848,7 +848,13 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/params_with_add_props"))
+
+	basePath := fmt.Sprintf("/params_with_add_props")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +914,13 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/params_with_add_props"))
+
+	basePath := fmt.Sprintf("/params_with_add_props")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -1060,8 +1072,10 @@ func ParseBodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsRespons
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /params_with_add_props)
 	ParamsWithAddProps(ctx echo.Context, params ParamsWithAddPropsParams) error
+
 	// (POST /params_with_add_props)
 	BodyWithAddProps(ctx echo.Context) error
 }
@@ -1078,11 +1092,6 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ParamsWithAddPropsParams
 	// ------------- Required query parameter "p1" -------------
-	if paramValue := ctx.QueryParam("p1"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p1 is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("simple", true, true, "p1", ctx.QueryParams(), &params.P1)
 	if err != nil {
@@ -1090,11 +1099,6 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	}
 
 	// ------------- Required query parameter "p2" -------------
-	if paramValue := ctx.QueryParam("p2"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument p2 is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("form", true, true, "p2", ctx.QueryParams(), &params.P2)
 	if err != nil {

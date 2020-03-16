@@ -1,5 +1,5 @@
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -91,7 +91,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -107,7 +107,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -164,7 +164,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if err != nil {
         return nil, err
     }
-    queryUrl, err = queryUrl.Parse(fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+
+    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if basePath[0] == '/' {
+        basePath = basePath[1:]
+    }
+
+    queryUrl, err = queryUrl.Parse(basePath)
     if err != nil {
         return nil, err
     }

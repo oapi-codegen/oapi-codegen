@@ -235,7 +235,8 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParam("deepObject", true, "id", array)
-	assert.Error(t, err)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[0]=3&id[1]=4&id[2]=5", result)
 
 	result, err = StyleParam("deepObject", false, "id", object)
 	assert.Error(t, err)

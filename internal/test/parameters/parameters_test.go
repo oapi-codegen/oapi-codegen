@@ -121,6 +121,12 @@ func (t *testServer) GetPassThrough(ctx echo.Context, param string) error {
 	return nil
 }
 
+// (GET /queryDeepObject)
+func (t *testServer) GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error {
+	t.complexObject = &params.DeepObj
+	return nil
+}
+
 //  (GET /simplePrimitive/{param})
 func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 	t.primitive = &param
@@ -220,8 +226,9 @@ func TestParameterBinding(t *testing.T) {
 	}
 
 	expectedComplexObject := ComplexObject{
-		Object: expectedObject,
-		Id:     "12345",
+		Object:  expectedObject,
+		Id:      12345,
+		IsAdmin: true,
 	}
 
 	expectedArray := []int32{3, 4, 5}
@@ -372,6 +379,15 @@ func TestParameterBinding(t *testing.T) {
 	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
 	ts.reset()
 
+	// complex object via deepObject
+	do := `deepObj[Id]=12345&deepObj[IsAdmin]=true&deepObj[Object][firstName]=Alex&deepObj[Object][role]=admin`
+	q = "/queryDeepObject?" + do
+	result = testutil.NewRequest().Get(q).Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
+	ts.reset()
+
+
 	// ---------------------- Test Header Query Parameters --------------------
 
 	// unexploded header primitive.
@@ -462,8 +478,9 @@ func TestClientPathParams(t *testing.T) {
 	}
 
 	expectedComplexObject := ComplexObject{
-		Object: expectedObject,
-		Id:     "12345",
+		Object:  expectedObject,
+		Id:      12345,
+		IsAdmin: true,
 	}
 
 	expectedArray := []int32{3, 4, 5}
@@ -582,8 +599,9 @@ func TestClientQueryParams(t *testing.T) {
 	}
 
 	expectedComplexObject := ComplexObject{
-		Object: expectedObject2,
-		Id:     "12345",
+		Object:  expectedObject2,
+		Id:      12345,
+		IsAdmin: true,
 	}
 
 	expectedArray1 := []int32{3, 4, 5}

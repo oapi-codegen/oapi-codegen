@@ -249,7 +249,7 @@ type Client struct {
 
     // A callback for modifying requests which are generated before sending over
     // the network.
-    RequestEditor func(req *http.Request, ctx context.Context) error
+    RequestEditor func(ctx context.Context, req *http.Request) error
 }
 ```
 
@@ -454,4 +454,16 @@ Go file.
 Afterwards you should run `go generate ./...`, and the templates will be updated
  accordingly.
 
+Alternatively, you can provide custom templates to override built-in ones using
+the `-templates` flag specifying a path to a directory containing templates
+files. These files **must** be named identically to built-in template files
+(see `pkg/codegen/templates/*.tmpl` in the source code), and will be interpreted
+on-the-fly at run time. Example:
 
+    $ ls -1 my-templates/
+    client.tmpl
+    typedef.tmpl
+    $ oapi-codegen \
+        -templates my-templates/ \
+        -generate types,client \
+        petstore-expanded.yaml

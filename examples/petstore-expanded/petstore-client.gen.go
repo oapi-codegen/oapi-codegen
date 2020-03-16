@@ -18,14 +18,22 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-	Code    int32  `json:"code"`
+
+	// Error code
+	Code int32 `json:"code"`
+
+	// Error message
 	Message string `json:"message"`
 }
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-	Name string  `json:"name"`
-	Tag  *string `json:"tag,omitempty"`
+
+	// Name of the pet
+	Name string `json:"name"`
+
+	// Type of the pet
+	Tag *string `json:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
@@ -33,6 +41,8 @@ type Pet struct {
 	// Embedded struct due to allOf(#/components/schemas/NewPet)
 	NewPet
 	// Embedded fields due to inline allOf schema
+
+	// Unique id of the pet
 	Id int64 `json:"id"`
 }
 
@@ -53,7 +63,7 @@ type AddPetJSONBody NewPet
 type AddPetJSONRequestBody AddPetJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -141,7 +151,7 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Re
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +166,7 @@ func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +181,7 @@ func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +196,7 @@ func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -201,7 +211,7 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -217,7 +227,13 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets"))
+
+	basePath := fmt.Sprintf("/pets")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +301,13 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets"))
+
+	basePath := fmt.Sprintf("/pets")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -314,7 +336,13 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/pets/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +370,13 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/pets/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/pets/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -535,16 +569,18 @@ func ParseFindPetsResponse(rsp *http.Response) (*findPetsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest []Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -566,16 +602,18 @@ func ParseAddPetResponse(rsp *http.Response) (*addPetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -597,10 +635,11 @@ func ParseDeletePetResponse(rsp *http.Response) (*deletePetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 
@@ -622,16 +661,18 @@ func ParseFindPetByIdResponse(rsp *http.Response) (*findPetByIdResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Pet{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Pet
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
-		response.JSONDefault = &Error{}
-		if err := json.Unmarshal(bodyBytes, response.JSONDefault); err != nil {
+		var dest Error
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSONDefault = &dest
 
 	}
 

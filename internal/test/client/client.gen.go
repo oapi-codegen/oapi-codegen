@@ -38,7 +38,7 @@ type PostBothJSONRequestBody PostBothJSONBody
 type PostJsonJSONRequestBody PostJsonJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -137,7 +137,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -152,7 +152,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +167,7 @@ func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +182,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +197,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -227,7 +227,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -242,7 +242,7 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -257,7 +257,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, 
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -284,7 +284,13 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_both_bodies"))
+
+	basePath := fmt.Sprintf("/with_both_bodies")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -306,7 +312,13 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_both_responses"))
+
+	basePath := fmt.Sprintf("/with_both_responses")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +350,13 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_json_body"))
+
+	basePath := fmt.Sprintf("/with_json_body")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -360,7 +378,13 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_json_response"))
+
+	basePath := fmt.Sprintf("/with_json_response")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -381,7 +405,13 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_other_body"))
+
+	basePath := fmt.Sprintf("/with_other_body")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -403,7 +433,13 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_other_response"))
+
+	basePath := fmt.Sprintf("/with_other_response")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +460,13 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/with_trailing_slash/"))
+
+	basePath := fmt.Sprintf("/with_trailing_slash/")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -828,18 +870,25 @@ func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*getJsonWithTrai
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (POST /with_both_bodies)
 	PostBoth(ctx echo.Context) error
+
 	// (GET /with_both_responses)
 	GetBoth(ctx echo.Context) error
+
 	// (POST /with_json_body)
 	PostJson(ctx echo.Context) error
+
 	// (GET /with_json_response)
 	GetJson(ctx echo.Context) error
+
 	// (POST /with_other_body)
 	PostOther(ctx echo.Context) error
+
 	// (GET /with_other_response)
 	GetOther(ctx echo.Context) error
+
 	// (GET /with_trailing_slash/)
 	GetJsonWithTrailingSlash(ctx echo.Context) error
 }

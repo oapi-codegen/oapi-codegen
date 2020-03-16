@@ -20,9 +20,12 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/labstack/echo/v4"
 )
 
 // This function binds a parameter as described in the Path Parameters
@@ -391,31 +394,10 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		}
 		return nil
 	case "deepObject":
-		// Loop through all queryParams and fill the objectMap with all key/value pairs having paramName as key
-		objectMap := map[string]string{}
-		for k, v := range queryParams {
-			if !strings.HasPrefix(k, paramName+"[") {
-				continue
-			}
-			split := strings.Split(k, "[")
-			if len(split) != 2 {
-				return echo.NewHTTPError(http.StatusBadRequest,
-					fmt.Sprintf("parameter '%s=%s' does not match deepObject style", k, v))
-			}
-
-			k = strings.TrimSuffix(split[1], "]")
-			objectMap[k] = v[0]
+		if !explode {
+			return errors.New("deepObjects must be exploded")
 		}
-
-		// Marshal and unmarshal the objectMap into dest
-		data, err := json.Marshal(objectMap)
-		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(data, dest); err != nil {
-			return err
-		}
-		return nil
+		return UnmarshalDeepObject(dest, paramName, queryParams)
 	case "spaceDelimited", "pipeDelimited":
 		return echo.NewHTTPError(http.StatusNotImplemented,
 			fmt.Sprintf("query arguments of style '%s' aren't yet supported", style))
@@ -436,6 +418,9 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 	switch dest.(type) {
 	case *types.Date:
 		return BindStringToObject(values.Get(paramName), dest)
+	case *time.Time:
+		return BindStringToObject(values.Get(paramName), dest)
+
 	}
 
 	v := reflect.Indirect(reflect.ValueOf(dest))

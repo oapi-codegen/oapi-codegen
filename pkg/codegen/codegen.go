@@ -32,14 +32,15 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateChiServer  bool     // GenerateChiServer specifies whether to generate chi server boilerplate
-	GenerateEchoServer bool     // GenerateEchoServer specifies whether to generate echo server boilerplate
-	GenerateClient     bool     // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes      bool     // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec          bool     // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool     // Whether to skip go fmt on the generated code
-	IncludeTags        []string // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags        []string // Exclude operations that have one of these tags. Ignored when empty.
+	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
+	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
+	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
+	SkipFmt            bool              // Whether to skip go fmt on the generated code
+	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
+	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
+	UserTemplates      map[string]string // Override built-in templates from user-provided files
 }
 
 type goImport struct {
@@ -97,6 +98,16 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	t, err := templates.Parse(t)
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing oapi-codegen templates")
+	}
+
+	// Override built-in templates with user-provided versions
+	for _, tpl := range t.Templates() {
+		if _, ok := opts.UserTemplates[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			if _, err := utpl.Parse(opts.UserTemplates[tpl.Name()]); err != nil {
+				return "", errors.Wrapf(err, "error parsing user-provided template %q", tpl.Name())
+			}
+		}
 	}
 
 	ops, err := OperationDefinitions(swagger)

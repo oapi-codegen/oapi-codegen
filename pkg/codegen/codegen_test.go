@@ -44,11 +44,50 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	// Check that the client method signatures return response structs:
 	assert.Contains(t, code, "func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {")
 
+	// Check that the property comments were generated
+	assert.Contains(t, code, "// Unique id of the pet")
+
+	// Check that the summary comment contains newlines
+	assert.Contains(t, code, `// Deletes a pet by ID
+	// (DELETE /pets/{id})
+`)
+
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
 	problems, err := linter.Lint("test.gen.go", []byte(code))
 	assert.NoError(t, err)
 	assert.Len(t, problems, 0)
+}
+
+func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
+
+	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Options{
+		GenerateTypes: true,
+		UserTemplates: userTemplates,
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, packageName, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "//blah")
 }
 
 func TestExamplePetStoreParseFunction(t *testing.T) {

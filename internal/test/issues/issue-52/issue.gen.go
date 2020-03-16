@@ -92,7 +92,7 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -169,7 +169,7 @@ func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -185,7 +185,13 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl, err = queryUrl.Parse(fmt.Sprintf("/example"))
+
+	basePath := fmt.Sprintf("/example")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
 	if err != nil {
 		return nil, err
 	}
@@ -274,10 +280,11 @@ func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Document{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Document
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	}
 
@@ -286,6 +293,7 @@ func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /example)
 	ExampleGet(ctx echo.Context) error
 }

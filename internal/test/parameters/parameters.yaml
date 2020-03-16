@@ -314,6 +314,18 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
+  /queryDeepObject:
+    get:
+      operationId: getDeepObject
+      parameters:
+        - name: deepObj
+          description: deep object
+          in: query
+          required: true
+          style: deepObject
+          explode: true
+          schema:
+            $ref: "#/components/schemas/ComplexObject"
   /header:
     get:
       operationId: getHeader
@@ -454,10 +466,13 @@ components:
         Object:
           $ref: "#/components/schemas/Object"
         Id:
-          type: string
+          type: integer
+        IsAdmin:
+          type: boolean
       required:
         - Object
         - Id
+        - IsAdmin
   responses:
     SimpleResponse:
       description: A simple response object

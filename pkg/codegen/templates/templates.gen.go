@@ -79,7 +79,7 @@ func Handler(si ServerInterface) http.Handler {
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *chi.Mux) http.Handler {
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 {{range .}}r.Group(func(r chi.Router) {
   r.Use({{.OperationId}}Ctx)
   r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
@@ -376,7 +376,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -468,7 +468,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -484,7 +484,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -541,7 +541,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if err != nil {
         return nil, err
     }
-    queryUrl, err = queryUrl.Parse(fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+
+    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if basePath[0] == '/' {
+        basePath = basePath[1:]
+    }
+
+    queryUrl, err = queryUrl.Parse(basePath)
     if err != nil {
         return nil, err
     }
@@ -719,7 +725,7 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{.SummaryAsComment -}}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
@@ -765,6 +771,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
 {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{if .IsStyled}}
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+    }
+    {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
     params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
@@ -780,11 +792,6 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
     }{{end}}
-    {{if .IsStyled}}
-    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
-    }
     {{end}}
 {{end}}
 
