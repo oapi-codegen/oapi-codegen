@@ -47,6 +47,54 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type DoFn func(r *http.Request) (*http.Response, error)
+
+// RoundTripMiddleware lets you define functions that can intercept and manipulate
+// the round trip of a single HTTP transaction
+type RoundTripMiddleware func(next DoFn) DoFn
+
+// DoFn returns the result of applying the middleware to the provided DoFn
+func (rtm RoundTripMiddleware) DoFn(doFn DoFn) DoFn {
+	return rtm(doFn)
+}
+
+func joinMiddleware(mw ...RoundTripMiddleware) RoundTripMiddleware {
+	middleware := mw[len(mw)-1]
+	for i := len(mw) - 2; i >= 0; i-- {
+		middleware = middleware.Wrap(mw[i])
+	}
+	return middleware
+}
+
+func (mw RoundTripMiddleware) Wrap(wrapMw RoundTripMiddleware) RoundTripMiddleware {
+	return func(doFn DoFn) DoFn {
+		return wrapMw(mw(doFn))
+	}
+}
+
+// RoundTripMiddlewares allows configuring a RoundTripMiddleware for individual endpoints
+type RoundTripMiddlewares struct {
+	PostBoth                 RoundTripMiddleware
+	GetBoth                  RoundTripMiddleware
+	PostJson                 RoundTripMiddleware
+	GetJson                  RoundTripMiddleware
+	PostOther                RoundTripMiddleware
+	GetOther                 RoundTripMiddleware
+	GetJsonWithTrailingSlash RoundTripMiddleware
+}
+
+// operationDoFunctions lets the client store Do functions using different
+// middleware for each operation
+type operationDoFunctions struct {
+	PostBoth                 DoFn
+	GetBoth                  DoFn
+	PostJson                 DoFn
+	GetJson                  DoFn
+	PostOther                DoFn
+	GetOther                 DoFn
+	GetJsonWithTrailingSlash DoFn
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -60,6 +108,18 @@ type Client struct {
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+
+	// SharedRoundTripMiddleware lets you apply a RoundTripMiddleware on all
+	// operations.
+	SharedRoundTripMiddleware RoundTripMiddleware
+
+	// RoundTripMiddlewares lets you apply a RoundTripMiddleware on specific
+	// operations.
+	RoundTripMiddlewares RoundTripMiddlewares
+
+	// operationDoers is the set of Do functions for each operation that is created
+	// for the client.
+	operationDoers *operationDoFunctions
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -85,7 +145,108 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if client.Client == nil {
 		client.Client = http.DefaultClient
 	}
+
+	client.operationDoers = setupoperationDoers(&client, client.RoundTripMiddlewares)
+
 	return &client, nil
+}
+
+func setupoperationDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *operationDoFunctions {
+
+	sharedMiddlewares := []RoundTripMiddleware{}
+
+	if c.RequestEditor != nil {
+		mw := newRequestEditorMiddleware(c.RequestEditor)
+		sharedMiddlewares = append(sharedMiddlewares, mw)
+	}
+
+	if c.SharedRoundTripMiddleware != nil {
+		sharedMiddlewares = append(sharedMiddlewares, c.SharedRoundTripMiddleware)
+	}
+
+	sharedMiddleware := joinMiddleware(sharedMiddlewares...)
+
+	operationDoers := operationDoFunctions{}
+
+	// PostBoth
+	if rtMiddlewares.PostBoth != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostBoth)
+		operationDoers.PostBoth = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.PostBoth = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// GetBoth
+	if rtMiddlewares.GetBoth != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetBoth)
+		operationDoers.GetBoth = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.GetBoth = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// PostJson
+	if rtMiddlewares.PostJson != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostJson)
+		operationDoers.PostJson = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.PostJson = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// GetJson
+	if rtMiddlewares.GetJson != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetJson)
+		operationDoers.GetJson = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.GetJson = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// PostOther
+	if rtMiddlewares.PostOther != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.PostOther)
+		operationDoers.PostOther = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.PostOther = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// GetOther
+	if rtMiddlewares.GetOther != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetOther)
+		operationDoers.GetOther = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.GetOther = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// GetJsonWithTrailingSlash
+	if rtMiddlewares.GetJsonWithTrailingSlash != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.GetJsonWithTrailingSlash)
+		operationDoers.GetJsonWithTrailingSlash = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.GetJsonWithTrailingSlash = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	return &operationDoers
+}
+
+func newRequestEditorMiddleware(requestEditorFn RequestEditorFn) RoundTripMiddleware {
+	return func(next DoFn) DoFn {
+		return func(r *http.Request) (*http.Response, error) {
+			err := requestEditorFn(r.Context(), r)
+			if err != nil {
+				return nil, err
+			}
+			return next(r)
+		}
+	}
+}
+
+// WithSharedRoundTripMiddleware add a middleware that applies to all routes
+func WithSharedRoundTripMiddleware(rtm RoundTripMiddleware) ClientOption {
+	return func(c *Client) error {
+		c.SharedRoundTripMiddleware = rtm
+		return nil
+	}
+}
+
+// WithRoundTripMiddlewares Add middlewares that apply to specific routes
+func WithRoundTripMiddlewares(rtMiddlewares RoundTripMiddlewares) ClientOption {
+	return func(c *Client) error {
+		c.RoundTripMiddlewares = rtMiddlewares
+		return nil
+	}
 }
 
 // WithHTTPClient allows overriding the default Doer, which is
@@ -140,13 +301,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.PostBoth(req)
 }
 
 func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error) {
@@ -155,13 +310,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*h
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.PostBoth(req)
 }
 
 func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
@@ -170,13 +319,7 @@ func (c *Client) GetBoth(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.GetBoth(req)
 }
 
 func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -185,13 +328,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.PostJson(req)
 }
 
 func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error) {
@@ -200,13 +337,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*h
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.PostJson(req)
 }
 
 func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
@@ -215,13 +346,7 @@ func (c *Client) GetJson(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.GetJson(req)
 }
 
 func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -230,13 +355,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.PostOther(req)
 }
 
 func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
@@ -245,13 +364,7 @@ func (c *Client) GetOther(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.GetOther(req)
 }
 
 func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error) {
@@ -260,13 +373,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, 
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.GetJsonWithTrailingSlash(req)
 }
 
 // NewPostBothRequest calls the generic PostBoth builder with application/json body

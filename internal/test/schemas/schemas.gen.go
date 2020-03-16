@@ -58,6 +58,48 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type DoFn func(r *http.Request) (*http.Response, error)
+
+// RoundTripMiddleware lets you define functions that can intercept and manipulate
+// the round trip of a single HTTP transaction
+type RoundTripMiddleware func(next DoFn) DoFn
+
+// DoFn returns the result of applying the middleware to the provided DoFn
+func (rtm RoundTripMiddleware) DoFn(doFn DoFn) DoFn {
+	return rtm(doFn)
+}
+
+func joinMiddleware(mw ...RoundTripMiddleware) RoundTripMiddleware {
+	middleware := mw[len(mw)-1]
+	for i := len(mw) - 2; i >= 0; i-- {
+		middleware = middleware.Wrap(mw[i])
+	}
+	return middleware
+}
+
+func (mw RoundTripMiddleware) Wrap(wrapMw RoundTripMiddleware) RoundTripMiddleware {
+	return func(doFn DoFn) DoFn {
+		return wrapMw(mw(doFn))
+	}
+}
+
+// RoundTripMiddlewares allows configuring a RoundTripMiddleware for individual endpoints
+type RoundTripMiddlewares struct {
+	Issue127 RoundTripMiddleware
+	Issue30  RoundTripMiddleware
+	Issue41  RoundTripMiddleware
+	Issue9   RoundTripMiddleware
+}
+
+// operationDoFunctions lets the client store Do functions using different
+// middleware for each operation
+type operationDoFunctions struct {
+	Issue127 DoFn
+	Issue30  DoFn
+	Issue41  DoFn
+	Issue9   DoFn
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -71,6 +113,18 @@ type Client struct {
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+
+	// SharedRoundTripMiddleware lets you apply a RoundTripMiddleware on all
+	// operations.
+	SharedRoundTripMiddleware RoundTripMiddleware
+
+	// RoundTripMiddlewares lets you apply a RoundTripMiddleware on specific
+	// operations.
+	RoundTripMiddlewares RoundTripMiddlewares
+
+	// operationDoers is the set of Do functions for each operation that is created
+	// for the client.
+	operationDoers *operationDoFunctions
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -96,7 +150,87 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if client.Client == nil {
 		client.Client = http.DefaultClient
 	}
+
+	client.operationDoers = setupoperationDoers(&client, client.RoundTripMiddlewares)
+
 	return &client, nil
+}
+
+func setupoperationDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *operationDoFunctions {
+
+	sharedMiddlewares := []RoundTripMiddleware{}
+
+	if c.RequestEditor != nil {
+		mw := newRequestEditorMiddleware(c.RequestEditor)
+		sharedMiddlewares = append(sharedMiddlewares, mw)
+	}
+
+	if c.SharedRoundTripMiddleware != nil {
+		sharedMiddlewares = append(sharedMiddlewares, c.SharedRoundTripMiddleware)
+	}
+
+	sharedMiddleware := joinMiddleware(sharedMiddlewares...)
+
+	operationDoers := operationDoFunctions{}
+
+	// Issue127
+	if rtMiddlewares.Issue127 != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.Issue127)
+		operationDoers.Issue127 = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.Issue127 = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// Issue30
+	if rtMiddlewares.Issue30 != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.Issue30)
+		operationDoers.Issue30 = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.Issue30 = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// Issue41
+	if rtMiddlewares.Issue41 != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.Issue41)
+		operationDoers.Issue41 = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.Issue41 = sharedMiddleware.DoFn(c.Client.Do)
+	}
+	// Issue9
+	if rtMiddlewares.Issue9 != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.Issue9)
+		operationDoers.Issue9 = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.Issue9 = sharedMiddleware.DoFn(c.Client.Do)
+	}
+
+	return &operationDoers
+}
+
+func newRequestEditorMiddleware(requestEditorFn RequestEditorFn) RoundTripMiddleware {
+	return func(next DoFn) DoFn {
+		return func(r *http.Request) (*http.Response, error) {
+			err := requestEditorFn(r.Context(), r)
+			if err != nil {
+				return nil, err
+			}
+			return next(r)
+		}
+	}
+}
+
+// WithSharedRoundTripMiddleware add a middleware that applies to all routes
+func WithSharedRoundTripMiddleware(rtm RoundTripMiddleware) ClientOption {
+	return func(c *Client) error {
+		c.SharedRoundTripMiddleware = rtm
+		return nil
+	}
+}
+
+// WithRoundTripMiddlewares Add middlewares that apply to specific routes
+func WithRoundTripMiddlewares(rtMiddlewares RoundTripMiddlewares) ClientOption {
+	return func(c *Client) error {
+		c.RoundTripMiddlewares = rtMiddlewares
+		return nil
+	}
 }
 
 // WithHTTPClient allows overriding the default Doer, which is
@@ -140,13 +274,7 @@ func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.Issue127(req)
 }
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
@@ -155,13 +283,7 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Respon
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.Issue30(req)
 }
 
 func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http.Response, error) {
@@ -170,13 +292,7 @@ func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.Issue41(req)
 }
 
 func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error) {
@@ -185,13 +301,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.Issue9(req)
 }
 
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error) {
@@ -200,13 +310,7 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 		return nil, err
 	}
 	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return c.Client.Do(req)
+	return c.operationDoers.Issue9(req)
 }
 
 // NewIssue127Request generates requests for Issue127

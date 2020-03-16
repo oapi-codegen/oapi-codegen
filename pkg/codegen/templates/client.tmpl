@@ -8,6 +8,48 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+type DoFn func(r *http.Request) (*http.Response, error)
+
+// RoundTripMiddleware lets you define functions that can intercept and manipulate
+// the round trip of a single HTTP transaction
+type RoundTripMiddleware func(next DoFn) DoFn
+
+// DoFn returns the result of applying the middleware to the provided DoFn
+func (rtm RoundTripMiddleware) DoFn(doFn DoFn) DoFn {
+	return rtm(doFn)
+}
+
+func joinMiddleware(mw ...RoundTripMiddleware) RoundTripMiddleware {
+	middleware := mw[len(mw) - 1]
+	for i := len(mw) - 2; i >= 0; i-- {
+		middleware = middleware.Wrap(mw[i])
+	}
+	return middleware
+}
+
+func (mw RoundTripMiddleware) Wrap(wrapMw RoundTripMiddleware) RoundTripMiddleware {
+	return func(doFn DoFn) DoFn {
+		return wrapMw(mw(doFn))
+	}
+}
+
+// RoundTripMiddlewares allows configuring a RoundTripMiddleware for individual endpoints
+type RoundTripMiddlewares struct {
+{{range . -}}
+{{$opid := .OperationId -}}
+    {{$opid}} RoundTripMiddleware
+{{end}}
+}
+
+// operationDoFunctions lets the client store Do functions using different
+// middleware for each operation
+type operationDoFunctions struct {
+{{range . -}}
+{{$opid := .OperationId -}}
+    {{$opid}} DoFn
+{{end}}
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -21,6 +63,18 @@ type Client struct {
 	// A callback for modifying requests which are generated before sending over
 	// the network.
 	RequestEditor RequestEditorFn
+
+    // SharedRoundTripMiddleware lets you apply a RoundTripMiddleware on all
+    // operations.
+	SharedRoundTripMiddleware RoundTripMiddleware
+
+    // RoundTripMiddlewares lets you apply a RoundTripMiddleware on specific
+    // operations.
+	RoundTripMiddlewares RoundTripMiddlewares
+
+    // operationDoers is the set of Do functions for each operation that is created
+    // for the client.
+	operationDoers *operationDoFunctions
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -46,7 +100,69 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
     if client.Client == nil {
         client.Client = http.DefaultClient
     }
+
+    client.operationDoers = setupoperationDoers(&client, client.RoundTripMiddlewares)
+
     return &client, nil
+}
+
+func setupoperationDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *operationDoFunctions {
+
+	sharedMiddlewares := []RoundTripMiddleware{}
+
+	if c.RequestEditor != nil {
+		mw := newRequestEditorMiddleware(c.RequestEditor)
+		sharedMiddlewares = append(sharedMiddlewares, mw)
+	}
+
+	if c.SharedRoundTripMiddleware != nil {
+		sharedMiddlewares = append(sharedMiddlewares, c.SharedRoundTripMiddleware)
+	}
+
+	sharedMiddleware := joinMiddleware(sharedMiddlewares...)
+
+	operationDoers := operationDoFunctions{}
+
+{{range . -}}
+{{$opid := .OperationId -}}
+	// {{$opid}}
+	if rtMiddlewares.{{$opid}} != nil {
+		mw := joinMiddleware(sharedMiddleware, rtMiddlewares.{{$opid}})
+		operationDoers.{{$opid}} = mw.DoFn(c.Client.Do)
+	} else {
+		operationDoers.{{$opid}} = sharedMiddleware.DoFn(c.Client.Do)
+	}
+{{end}}
+
+	return &operationDoers
+}
+
+func newRequestEditorMiddleware(requestEditorFn RequestEditorFn) RoundTripMiddleware {
+	return func(next DoFn) DoFn {
+		return func(r *http.Request) (*http.Response, error) {
+			err := requestEditorFn(r.Context(), r)
+			if err != nil {
+				return nil, err
+			}
+			return next(r)
+		}
+	}
+}
+
+// WithSharedRoundTripMiddleware add a middleware that applies to all routes
+func WithSharedRoundTripMiddleware(rtm RoundTripMiddleware) ClientOption {
+	return func(c *Client) error {
+		c.SharedRoundTripMiddleware = rtm
+		return nil
+	}
+}
+
+// WithRoundTripMiddlewares Add middlewares that apply to specific routes
+func WithRoundTripMiddlewares(rtMiddlewares RoundTripMiddlewares) ClientOption {
+	return func(c *Client) error {
+		c.RoundTripMiddlewares = rtMiddlewares
+		return nil
+	}
 }
 
 // WithHTTPClient allows overriding the default Doer, which is
@@ -94,13 +210,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
         return nil, err
     }
     req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-        err = c.RequestEditor(ctx, req)
-        if err != nil {
-            return nil, err
-        }
-    }
-    return c.Client.Do(req)
+    return c.operationDoers.{{$opid}}(req)
 }
 
 {{range .Bodies}}
@@ -110,13 +220,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
         return nil, err
     }
     req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-        err = c.RequestEditor(ctx, req)
-        if err != nil {
-            return nil, err
-        }
-    }
-    return c.Client.Do(req)
+    return c.operationDoers.{{$opid}}(req)
 }
 {{end}}{{/* range .Bodies */}}
 {{end}}
