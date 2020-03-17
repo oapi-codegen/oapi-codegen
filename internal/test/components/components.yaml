@@ -173,6 +173,7 @@ components:
             type: string
   parameters:
     ParameterObject:
+      name: ParameterObject
       description: a parameter
       in: query
       content:
