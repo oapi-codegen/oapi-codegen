@@ -36,6 +36,9 @@ func TestBindStringToObject(t *testing.T) {
 	assert.NoError(t, BindStringToObject("124", &i64))
 	assert.Equal(t, int64(124), i64)
 
+	assert.NoError(t, BindStringToObject("-124", &i64))
+	assert.Equal(t, int64(-124), i64)
+
 	assert.Error(t, BindStringToObject("5.7", &i64))
 	assert.Error(t, BindStringToObject("foo", &i64))
 	assert.Error(t, BindStringToObject("1,2,3", &i64))
@@ -44,9 +47,30 @@ func TestBindStringToObject(t *testing.T) {
 	assert.NoError(t, BindStringToObject("12", &i32))
 	assert.Equal(t, int32(12), i32)
 
+	assert.NoError(t, BindStringToObject("-12", &i32))
+	assert.Equal(t, int32(-12), i32)
+
 	assert.Error(t, BindStringToObject("5.7", &i32))
 	assert.Error(t, BindStringToObject("foo", &i32))
 	assert.Error(t, BindStringToObject("1,2,3", &i32))
+
+	var ui64 uint64
+	assert.NoError(t, BindStringToObject("124", &ui64))
+	assert.Equal(t, uint64(124), ui64)
+
+	assert.Error(t, BindStringToObject("-124", &ui64))
+	assert.Error(t, BindStringToObject("5.7", &ui64))
+	assert.Error(t, BindStringToObject("foo", &ui64))
+	assert.Error(t, BindStringToObject("1,2,3", &ui64))
+
+	var ui32 uint32
+	assert.NoError(t, BindStringToObject("12", &ui32))
+	assert.Equal(t, uint32(12), ui32)
+
+	assert.Error(t, BindStringToObject("-12", &ui32))
+	assert.Error(t, BindStringToObject("5.7", &ui32))
+	assert.Error(t, BindStringToObject("foo", &ui32))
+	assert.Error(t, BindStringToObject("1,2,3", &ui32))
 
 	var b bool
 	assert.NoError(t, BindStringToObject("True", &b))
