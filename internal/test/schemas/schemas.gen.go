@@ -151,12 +151,12 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 		client.Client = http.DefaultClient
 	}
 
-	client.operationDoers = setupoperationDoers(&client, client.RoundTripMiddlewares)
+	client.operationDoers = setupOperationDoers(&client, client.RoundTripMiddlewares)
 
 	return &client, nil
 }
 
-func setupoperationDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *operationDoFunctions {
+func setupOperationDoers(c *Client, rtMiddlewares RoundTripMiddlewares) *operationDoFunctions {
 
 	sharedMiddlewares := []RoundTripMiddleware{}
 
