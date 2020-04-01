@@ -50,11 +50,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 			return err
 		}
 
-		err = bindSplitPartsToDestinationStruct(paramName, parts, explode, dest)
-		if err != nil {
-			return err
-		}
-		return nil
+		return bindSplitPartsToDestinationStruct(paramName, parts, explode, dest)
 	}
 
 	if t.Kind() == reflect.Slice {
@@ -64,11 +60,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 			return fmt.Errorf("error splitting input '%s' into parts: %s", value, err)
 		}
 
-		err = bindSplitPartsToDestinationArray(parts, dest)
-		if err != nil {
-			return err
-		}
-		return nil
+		return bindSplitPartsToDestinationArray(parts, dest)
 	}
 
 	// Try to bind the remaining types as a base type.
