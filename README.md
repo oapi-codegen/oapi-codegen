@@ -369,7 +369,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         //
         // WithHTTPClient(httpClient *http.Client)
         //
-        client, clientErr := NewClient(context.Background(), []ClientOption{
+        client, clientErr := NewClient("https://api.deepmap.com", []ClientOption{
             WithBaseURL("https://api.deepmap.com"),
             WithRequestEditorFn(apiKeyProvider.Edit),
         }...,

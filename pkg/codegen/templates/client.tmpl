@@ -38,6 +38,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
             return nil, err
         }
     }
+    // ensure the server URL always has a trailing slash
+    if !strings.HasSuffix(client.Server, "/") {
+        client.Server += "/"
+    }
     // create httpClient, if not already present
     if client.Client == nil {
         client.Client = http.DefaultClient

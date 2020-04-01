@@ -102,6 +102,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 			return nil, err
 		}
 	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
+	}
 	// create httpClient, if not already present
 	if client.Client == nil {
 		client.Client = http.DefaultClient
@@ -407,9 +411,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
