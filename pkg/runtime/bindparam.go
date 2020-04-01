@@ -16,13 +16,11 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -35,7 +33,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 	value string, dest interface{}) error {
 
 	if value == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "parameter '%s' is empty, can't bind its value", paramName)
+		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}
 
 	// Everything comes in by pointer, dereference it
@@ -49,14 +47,10 @@ func BindStyledParameter(style string, explode bool, paramName string,
 		// of the input value, and let the json library deal with the unmarshaling
 		parts, err := splitStyledParameter(style, explode, true, paramName, value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+			return err
 		}
 
-		err = bindSplitPartsToDestinationStruct(paramName, parts, explode, dest)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
-		return nil
+		return bindSplitPartsToDestinationStruct(paramName, parts, explode, dest)
 	}
 
 	if t.Kind() == reflect.Slice {
@@ -66,11 +60,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 			return fmt.Errorf("error splitting input '%s' into parts: %s", value, err)
 		}
 
-		err = bindSplitPartsToDestinationArray(parts, dest)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-		}
-		return nil
+		return bindSplitPartsToDestinationArray(parts, dest)
 	}
 
 	// Try to bind the remaining types as a base type.
@@ -242,7 +232,7 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // (exploded) /users?role=admin&firstName=Alex
 // (unexploded) /users?id=role,admin,firstName,Alex
 //
-// In the first case, we can pull the "id" parameter off the echo context,
+// In the first case, we can pull the "id" parameter off the context,
 // and unmarshal via json as an intermediate. Easy. In the second case, we
 // don't have the id QueryParam present, but must find "role", and "firstName".
 // what if there is another parameter similar to "ID" named "role"? We can't
@@ -310,8 +300,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 				// http library.
 				if !found {
 					if required {
-						return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf(
-							"query parameter '%s' is required", paramName))
+						return fmt.Errorf("query parameter '%s' is required", paramName)
 					} else {
 						return nil
 					}
@@ -328,15 +317,13 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 				// unmarshal.
 				if len(values) == 0 {
 					if required {
-						return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf(
-							"query parameter '%s' is required", paramName))
+						return fmt.Errorf("query parameter '%s' is required", paramName)
 					} else {
 						return nil
 					}
 				}
 				if len(values) != 1 {
-					return echo.NewHTTPError(http.StatusBadRequest,
-						fmt.Sprintf("multiple values for single value parameter '%s'", paramName))
+					return fmt.Errorf("multiple values for single value parameter '%s'", paramName)
 				}
 				err = BindStringToObject(values[0], output)
 			}
@@ -353,15 +340,13 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			values, found := queryParams[paramName]
 			if !found {
 				if required {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf(
-						"query parameter '%s' is required", paramName))
+					return fmt.Errorf("query parameter '%s' is required", paramName)
 				} else {
 					return nil
 				}
 			}
 			if len(values) != 1 {
-				return echo.NewHTTPError(http.StatusBadRequest,
-					fmt.Sprintf("parameter '%s' is not exploded, but is specified multiple times", paramName))
+				return fmt.Errorf("parameter '%s' is not exploded, but is specified multiple times", paramName)
 			}
 			parts = strings.Split(values[0], ",")
 		}
@@ -374,15 +359,13 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		default:
 			if len(parts) == 0 {
 				if required {
-					return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf(
-						"query parameter '%s' is required", paramName))
+					return fmt.Errorf("query parameter '%s' is required", paramName)
 				} else {
 					return nil
 				}
 			}
 			if len(parts) != 1 {
-				return echo.NewHTTPError(http.StatusBadRequest,
-					fmt.Sprintf("multiple values for single value parameter '%s'", paramName))
+				return fmt.Errorf("multiple values for single value parameter '%s'", paramName)
 			}
 			err = BindStringToObject(parts[0], output)
 		}
@@ -399,11 +382,9 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		}
 		return UnmarshalDeepObject(dest, paramName, queryParams)
 	case "spaceDelimited", "pipeDelimited":
-		return echo.NewHTTPError(http.StatusNotImplemented,
-			fmt.Sprintf("query arguments of style '%s' aren't yet supported", style))
+		return fmt.Errorf("query arguments of style '%s' aren't yet supported", style)
 	default:
-		return echo.NewHTTPError(http.StatusBadRequest,
-			fmt.Sprintf("style '%s' on parameter '%s' is invalid", style, paramName))
+		return fmt.Errorf("style '%s' on parameter '%s' is invalid", style, paramName)
 
 	}
 }
@@ -425,8 +406,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 
 	v := reflect.Indirect(reflect.ValueOf(dest))
 	if v.Type().Kind() != reflect.Struct {
-		return echo.NewHTTPError(http.StatusInternalServerError,
-			"unmarshaling query arg '%s' into wrong type", paramName)
+		return fmt.Errorf("unmarshaling query arg '%s' into wrong type", paramName)
 	}
 
 	t := v.Type()
@@ -455,13 +435,11 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 		fieldVal, found := values[fieldName]
 		if found {
 			if len(fieldVal) != 1 {
-				return echo.NewHTTPError(http.StatusBadRequest,
-					fmt.Sprintf("field '%s' specified multiple times for param '%s'", fieldName, paramName))
+				return fmt.Errorf("field '%s' specified multiple times for param '%s'", fieldName, paramName)
 			}
 			err := BindStringToObject(fieldVal[0], v.Field(i).Addr().Interface())
 			if err != nil {
-				return echo.NewHTTPError(http.StatusBadRequest,
-					fmt.Sprintf("could not bind query arg '%s' to request object: %s", paramName, err))
+				return fmt.Errorf("could not bind query arg '%s' to request object: %s'", paramName, err)
 			}
 		}
 	}
