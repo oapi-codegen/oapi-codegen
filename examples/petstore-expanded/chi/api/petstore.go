@@ -109,9 +109,7 @@ func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request, id int64)
 	json.NewEncoder(w).Encode(pet)
 }
 
-func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("id").(int64)
-
+func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
