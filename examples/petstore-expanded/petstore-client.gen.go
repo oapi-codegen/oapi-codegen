@@ -84,6 +84,11 @@ func (rtm RoundTripMiddleware) DoFn(doFn DoFn) DoFn {
 }
 
 func joinMiddleware(mw ...RoundTripMiddleware) RoundTripMiddleware {
+	if len(mw) < 1 {
+		return func(doFn DoFn) DoFn {
+			return doFn
+		}
+	}
 	middleware := mw[len(mw)-1]
 	for i := len(mw) - 2; i >= 0; i-- {
 		middleware = middleware.Wrap(mw[i])

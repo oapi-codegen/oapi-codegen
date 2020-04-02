@@ -14,9 +14,10 @@ paths:
       - OpenId: [json.read, json.admin]
       responses:
         200:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SchemaObject'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaObject'
   /with_trailing_slash/:
     get:
       operationId: GetJsonWithTrailingSlash
@@ -24,30 +25,33 @@ paths:
         - OpenId: [json.read, json.admin]
       responses:
         200:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SchemaObject'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaObject'
   /with_other_response:
     get:
       operationId: GetOther
       responses:
         200:
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /with_both_responses:
     get:
       operationId: GetBoth
       responses:
         200:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SchemaObject'
-          application/octet-stream:
-            schema:
-              type: string
-              format: binary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaObject'
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
   /with_json_body:
     post:
       operationId: PostJson
