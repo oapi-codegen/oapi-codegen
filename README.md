@@ -398,6 +398,8 @@ you can specify any combination of those.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
 - `skip-fmt`: skip running `go fmt` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
+- `skip-prune`: skip pruning unused components from the spec prior to generating
+ the code.
 
 So, for example, if you would like to produce only the server code, you could
 run `oapi-generate -generate types,server`. You could generate `types` and
