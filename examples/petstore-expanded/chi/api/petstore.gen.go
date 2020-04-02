@@ -6,7 +6,6 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
@@ -66,16 +65,16 @@ type AddPetJSONRequestBody AddPetJSONBody
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(ctx context.Context, params FindPetsParams)
+	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(ctx context.Context)
+	AddPet(w http.ResponseWriter, r *http.Request)
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(ctx context.Context, id int64)
+	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetById(ctx context.Context, id int64)
+	FindPetById(w http.ResponseWriter, r *http.Request, id int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -114,14 +113,14 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	siw.Handler.FindPets(ctx, params)
+	siw.Handler.FindPets(w, r.WithContext(ctx), params)
 }
 
 // AddPet operation middleware
 func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.AddPet(ctx)
+	siw.Handler.AddPet(w, r.WithContext(ctx))
 }
 
 // DeletePet operation middleware
@@ -139,7 +138,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	siw.Handler.DeletePet(ctx, id)
+	siw.Handler.DeletePet(w, r.WithContext(ctx), id)
 }
 
 // FindPetById operation middleware
@@ -157,7 +156,7 @@ func (siw *ServerInterfaceWrapper) FindPetById(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	siw.Handler.FindPetById(ctx, id)
+	siw.Handler.FindPetById(w, r.WithContext(ctx), id)
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.

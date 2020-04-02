@@ -4,7 +4,6 @@
 package server
 
 import (
-	"context"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
@@ -129,26 +128,26 @@ type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 type ServerInterface interface {
 	// Get resource via simple path
 	// (GET /get-simple)
-	GetSimple(ctx context.Context)
+	GetSimple(w http.ResponseWriter, r *http.Request)
 	// Getter with referenced parameter and referenced response
 	// (GET /get-with-args)
-	GetWithArgs(ctx context.Context, params GetWithArgsParams)
+	GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
 	// Getter with referenced parameter and referenced response
 	// (GET /get-with-references/{global_argument}/{argument})
-	GetWithReferences(ctx context.Context, globalArgument int64, argument Argument)
+	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
 	// Get an object by ID
 	// (GET /get-with-type/{content_type})
-	GetWithContentType(ctx context.Context, contentType string)
+	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string)
 	// Create a resource
 	// (POST /resource/{argument})
-	CreateResource(ctx context.Context, argument Argument)
+	CreateResource(w http.ResponseWriter, r *http.Request, argument Argument)
 	// Create a resource with inline parameter
 	// (POST /resource2/{inline_argument})
-	CreateResource2(ctx context.Context, inlineArgument int, params CreateResource2Params)
+	CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)
 	// Update a resource with inline body. The parameter name is a reserved
 	// keyword, so make sure that gets prefixed to avoid syntax errors
 	// (PUT /resource3/{fallthrough})
-	UpdateResource3(ctx context.Context, pFallthrough int)
+	UpdateResource3(w http.ResponseWriter, r *http.Request, pFallthrough int)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -160,7 +159,7 @@ type ServerInterfaceWrapper struct {
 func (siw *ServerInterfaceWrapper) GetSimple(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.GetSimple(ctx)
+	siw.Handler.GetSimple(w, r.WithContext(ctx))
 }
 
 // GetWithArgs operation middleware
@@ -218,7 +217,7 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 
 	}
 
-	siw.Handler.GetWithArgs(ctx, params)
+	siw.Handler.GetWithArgs(w, r.WithContext(ctx), params)
 }
 
 // GetWithReferences operation middleware
@@ -245,7 +244,7 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 		return
 	}
 
-	siw.Handler.GetWithReferences(ctx, globalArgument, argument)
+	siw.Handler.GetWithReferences(w, r.WithContext(ctx), globalArgument, argument)
 }
 
 // GetWithContentType operation middleware
@@ -263,7 +262,7 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 		return
 	}
 
-	siw.Handler.GetWithContentType(ctx, contentType)
+	siw.Handler.GetWithContentType(w, r.WithContext(ctx), contentType)
 }
 
 // CreateResource operation middleware
@@ -281,7 +280,7 @@ func (siw *ServerInterfaceWrapper) CreateResource(w http.ResponseWriter, r *http
 		return
 	}
 
-	siw.Handler.CreateResource(ctx, argument)
+	siw.Handler.CreateResource(w, r.WithContext(ctx), argument)
 }
 
 // CreateResource2 operation middleware
@@ -313,7 +312,7 @@ func (siw *ServerInterfaceWrapper) CreateResource2(w http.ResponseWriter, r *htt
 		return
 	}
 
-	siw.Handler.CreateResource2(ctx, inlineArgument, params)
+	siw.Handler.CreateResource2(w, r.WithContext(ctx), inlineArgument, params)
 }
 
 // UpdateResource3 operation middleware
@@ -331,7 +330,7 @@ func (siw *ServerInterfaceWrapper) UpdateResource3(w http.ResponseWriter, r *htt
 		return
 	}
 
-	siw.Handler.UpdateResource3(ctx, pFallthrough)
+	siw.Handler.UpdateResource3(w, r.WithContext(ctx), pFallthrough)
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
