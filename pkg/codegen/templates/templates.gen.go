@@ -88,8 +88,11 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 `,
 	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-  r := chi.NewRouter()
+  return HandlerFromMux(si, chi.NewRouter())
+}
 
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 {{range .}}r.Group(func(r chi.Router) {
   r.Use({{.OperationId}}Ctx)
   r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
@@ -143,8 +146,12 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
     }
     {{end}}
 
-    ctx = context.WithValue(r.Context(), "{{$varName}}", {{$varName}})
+    ctx = context.WithValue(ctx, "{{$varName}}", {{$varName}})
     {{end}}
+
+{{range .SecurityDefinitions}}
+    ctx = context.WithValue(ctx, "{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+{{end}}
 
     {{if .RequiresParamObject}}
       // Parameter object where we will unmarshal all parameters from the context
@@ -294,9 +301,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -343,7 +347,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid}}(rsp)
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 
 {{$hasParams := .RequiresParamObject -}}
@@ -355,7 +359,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid}}(rsp)
+    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 {{end}}
 
@@ -364,8 +368,8 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
 
-// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
-func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+// Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := ioutil.ReadAll(rsp.Body)
     defer rsp.Body.Close()
     if err != nil {
@@ -382,7 +386,7 @@ func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeN
 
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -420,6 +424,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
         if err := o(&client); err != nil {
             return nil, err
         }
+    }
+    // ensure the server URL always has a trailing slash
+    if !strings.HasSuffix(client.Server, "/") {
+        client.Server += "/"
     }
     // create httpClient, if not already present
     if client.Client == nil {
@@ -474,7 +482,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -490,7 +498,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -547,7 +555,16 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if err != nil {
         return nil, err
     }
-    queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}}))
+
+    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if basePath[0] == '/' {
+        basePath = basePath[1:]
+    }
+
+    queryUrl, err = queryUrl.Parse(basePath)
+    if err != nil {
+        return nil, err
+    }
 {{if .QueryParams}}
     queryValues := queryUrl.Query()
 {{range $paramIdx, $param := .QueryParams}}
@@ -692,18 +709,23 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 `,
 	"register.tmpl": `
 
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}
+
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
-                             	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             }, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
@@ -722,7 +744,7 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{.SummaryAsComment -}}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
@@ -768,6 +790,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
 {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{if .IsStyled}}
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+    }
+    {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
     params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
@@ -783,11 +811,6 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
     }{{end}}
-    {{if .IsStyled}}
-    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
-    if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
-    }
     {{end}}
 {{end}}
 

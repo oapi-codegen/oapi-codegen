@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
+	"regexp"
 	"sort"
 	"strings"
 	"text/template"
@@ -31,12 +32,15 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateChiServer  bool // GenerateChiServer specifies whether to generate chi server boilerplate
-	GenerateEchoServer bool // GenerateEchoServer specifies whether to generate echo server boilerplate
-	GenerateClient     bool // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes      bool // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec          bool // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool // Whether to skip go fmt on the generated code
+	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
+	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
+	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
+	SkipFmt            bool              // Whether to skip go fmt on the generated code
+	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
+	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
+	UserTemplates      map[string]string // Override built-in templates from user-provided files
 }
 
 type goImport struct {
@@ -56,28 +60,28 @@ type goImports []goImport
 
 var (
 	allGoImports = goImports{
-		{lookFor: "base64.", packageName: "encoding/base64"},
-		{lookFor: "bytes.", packageName: "bytes"},
-		{lookFor: "chi.", packageName: "github.com/go-chi/chi"},
-		{lookFor: "context.", packageName: "context"},
-		{lookFor: "echo.", packageName: "github.com/labstack/echo/v4"},
-		{lookFor: "errors.", packageName: "github.com/pkg/errors"},
-		{lookFor: "fmt.", packageName: "fmt"},
-		{lookFor: "gzip.", packageName: "compress/gzip"},
-		{lookFor: "http.", packageName: "net/http"},
-		{lookFor: "io.", packageName: "io"},
-		{lookFor: "ioutil.", packageName: "io/ioutil"},
-		{lookFor: "json.", packageName: "encoding/json"},
-		{lookFor: "openapi3.", packageName: "github.com/getkin/kin-openapi/openapi3"},
-		{lookFor: "openapi_types.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
-		{lookFor: "path.", packageName: "path"},
-		{lookFor: "runtime.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
-		{lookFor: "strings.", packageName: "strings"},
-		{lookFor: "time.Duration", packageName: "time"},
-		{lookFor: "time.Time", packageName: "time"},
-		{lookFor: "url.", packageName: "net/url"},
-		{lookFor: "xml.", packageName: "encoding/xml"},
-		{lookFor: "yaml.", packageName: "gopkg.in/yaml.v2"},
+		{lookFor: "base64\\.", packageName: "encoding/base64"},
+		{lookFor: "bytes\\.", packageName: "bytes"},
+		{lookFor: "chi\\.", packageName: "github.com/go-chi/chi"},
+		{lookFor: "context\\.", packageName: "context"},
+		{lookFor: "echo\\.", packageName: "github.com/labstack/echo/v4"},
+		{lookFor: "errors\\.", packageName: "github.com/pkg/errors"},
+		{lookFor: "fmt\\.", packageName: "fmt"},
+		{lookFor: "gzip\\.", packageName: "compress/gzip"},
+		{lookFor: "http\\.", packageName: "net/http"},
+		{lookFor: "io\\.", packageName: "io"},
+		{lookFor: "ioutil\\.", packageName: "io/ioutil"},
+		{lookFor: "json\\.", packageName: "encoding/json"},
+		{lookFor: "openapi3\\.", packageName: "github.com/getkin/kin-openapi/openapi3"},
+		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
+		{lookFor: "path\\.", packageName: "path"},
+		{lookFor: "runtime\\.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
+		{lookFor: "strings\\.", packageName: "strings"},
+		{lookFor: "time\\.Duration", packageName: "time"},
+		{lookFor: "time\\.Time", packageName: "time"},
+		{lookFor: "url\\.", packageName: "net/url"},
+		{lookFor: "xml\\.", packageName: "encoding/xml"},
+		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
 	}
 )
 
@@ -85,6 +89,8 @@ var (
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+	filterOperationsByTag(swagger, opts)
+
 	// This creates the golang templates text package
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
@@ -92,6 +98,16 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	t, err := templates.Parse(t)
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing oapi-codegen templates")
+	}
+
+	// Override built-in templates with user-provided versions
+	for _, tpl := range t.Templates() {
+		if _, ok := opts.UserTemplates[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			if _, err := utpl.Parse(opts.UserTemplates[tpl.Name()]); err != nil {
+				return "", errors.Wrapf(err, "error parsing user-provided template %q", tpl.Name())
+			}
+		}
 	}
 
 	ops, err := OperationDefinitions(swagger)
@@ -154,10 +170,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	w := bufio.NewWriter(&buf)
 
 	// Based on module prefixes, figure out which optional imports are required.
-	// TODO: this is error prone, use tighter matches
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
 		for _, goImport := range allGoImports {
-			if strings.Contains(str, goImport.lookFor) {
+			match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), str)
+			if err != nil {
+				return "", errors.Wrap(err, "error figuring out imports")
+			}
+			if match {
 				imports = append(imports, goImport.String())
 			}
 		}
@@ -495,4 +514,47 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
+}
+
+func filterOperationsByTag(swagger *openapi3.Swagger, opts Options) {
+	if len(opts.ExcludeTags) > 0 {
+		excludeOperationsWithTags(swagger.Paths, opts.ExcludeTags)
+	}
+	if len(opts.IncludeTags) > 0 {
+		includeOperationsWithTags(swagger.Paths, opts.IncludeTags, false)
+	}
+}
+
+func excludeOperationsWithTags(paths openapi3.Paths, tags []string) {
+	includeOperationsWithTags(paths, tags, true)
+}
+
+func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
+	for _, pathItem := range paths {
+		ops := pathItem.Operations()
+		names := make([]string, 0, len(ops))
+		for name, op := range ops {
+			if operationHasTag(op, tags) == exclude {
+				names = append(names, name)
+			}
+		}
+		for _, name := range names {
+			pathItem.SetOperation(name, nil)
+		}
+	}
+}
+
+//operationHasTag returns true if the operation is tagged with any of tags
+func operationHasTag(op *openapi3.Operation, tags []string) bool {
+	if op == nil {
+		return false
+	}
+	for _, hasTag := range op.Tags {
+		for _, wantTag := range tags {
+			if hasTag == wantTag {
+				return true
+			}
+		}
+	}
+	return false
 }

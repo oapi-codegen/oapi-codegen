@@ -9,15 +9,16 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -48,7 +49,7 @@ type Issue9Params struct {
 type Issue9JSONRequestBody Issue9JSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -87,6 +88,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 			return nil, err
 		}
 	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
+	}
 	// create httpClient, if not already present
 	if client.Client == nil {
 		client.Client = http.DefaultClient
@@ -114,6 +119,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// Issue127 request
+	Issue127(ctx context.Context) (*http.Response, error)
+
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
@@ -126,6 +134,21 @@ type ClientInterface interface {
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
 }
 
+func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
+	req, err := NewIssue127Request(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Response, error) {
 	req, err := NewIssue30Request(c.Server, pFallthrough)
 	if err != nil {
@@ -133,7 +156,7 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string) (*http.Respon
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -148,7 +171,7 @@ func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +186,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -178,12 +201,39 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return c.Client.Do(req)
+}
+
+// NewIssue127Request generates requests for Issue127
+func NewIssue127Request(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/issues/127")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewIssue30Request generates requests for Issue30
@@ -201,7 +251,16 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/30/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/issues/30/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -226,7 +285,16 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/41/%s", pathParam0))
+
+	basePath := fmt.Sprintf("/issues/41/%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -255,7 +323,16 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/issues/9"))
+
+	basePath := fmt.Sprintf("/issues/9")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -300,9 +377,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -310,6 +384,31 @@ func WithBaseURL(baseURL string) ClientOption {
 		c.Server = newBaseURL.String()
 		return nil
 	}
+}
+
+type issue127Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *GenericObject
+	XML200       *GenericObject
+	YAML200      *GenericObject
+	JSONDefault  *GenericObject
+}
+
+// Status returns HTTPResponse.Status
+func (r issue127Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r issue127Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type issue30Response struct {
@@ -375,13 +474,22 @@ func (r issue9Response) StatusCode() int {
 	return 0
 }
 
+// Issue127WithResponse request returning *Issue127Response
+func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*issue127Response, error) {
+	rsp, err := c.Issue127(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue127Response(rsp)
+}
+
 // Issue30WithResponse request returning *Issue30Response
 func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue30Response(rsp)
+	return ParseIssue30Response(rsp)
 }
 
 // Issue41WithResponse request returning *Issue41Response
@@ -390,7 +498,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue41Response(rsp)
+	return ParseIssue41Response(rsp)
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
@@ -399,7 +507,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
 func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
@@ -407,11 +515,64 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	if err != nil {
 		return nil, err
 	}
-	return Parseissue9Response(rsp)
+	return ParseIssue9Response(rsp)
 }
 
-// Parseissue30Response parses an HTTP response from a Issue30WithResponse call
-func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
+// ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
+func ParseIssue127Response(rsp *http.Response) (*issue127Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &issue127Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
+		var dest GenericObject
+		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.YAML200 = &dest
+
+	case rsp.StatusCode == 200:
+	// Content-type (text/markdown) unsupported
+
+	default:
+		// Content-type (text/markdown) unsupported
+
+	}
+
+	return response, nil
+}
+
+// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
+func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -429,8 +590,8 @@ func Parseissue30Response(rsp *http.Response) (*issue30Response, error) {
 	return response, nil
 }
 
-// Parseissue41Response parses an HTTP response from a Issue41WithResponse call
-func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
+// ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
+func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -448,8 +609,8 @@ func Parseissue41Response(rsp *http.Response) (*issue41Response, error) {
 	return response, nil
 }
 
-// Parseissue9Response parses an HTTP response from a Issue9WithResponse call
-func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
+// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
+func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -469,10 +630,16 @@ func Parseissue9Response(rsp *http.Response) (*issue9Response, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (GET /issues/127)
+	Issue127(ctx echo.Context) error
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
+
 	// (GET /issues/41/{1param})
 	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
+
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
 }
@@ -480,6 +647,15 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// Issue127 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue127(ctx)
+	return err
 }
 
 // Issue30 converts echo context to params.
@@ -521,11 +697,6 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
-	if paramValue := ctx.QueryParam("foo"); paramValue != "" {
-
-	} else {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument foo is required, but not found"))
-	}
 
 	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
 	if err != nil {
@@ -537,8 +708,10 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	return err
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
 	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
@@ -548,12 +721,16 @@ func RegisterHandlers(router interface {
 	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}, si ServerInterface) {
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
+	router.GET("/issues/127", wrapper.Issue127)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
@@ -563,17 +740,18 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5STQVPbMBCF/8rOtkePnRR6QLeWQ4dLYQozPRQOirWORW1JSKtQj8f/vSM5IaZAO70p",
-	"jlbvfW93R6xt76whwwHFiKFuqZf5+PGapefwXXP7NfYb8umjolB77VhbgwJvWh1gLgEje4KQS+BRcwsS",
-	"zFxWIA+OUKDd3FPNOBX4yQw3g6M1ivH468NbAq2NnYINgTSgDZNvZE3jlB46j4Ftf81em+1NVhmxsb6X",
-	"jALr/OdRP+RrqewLGfK6vpwNifFPh9NUoDaNfcURBYZaBgrQWA876bWNAXQIMX+KRoHdkQfWPZVw1ZEM",
-	"BFIpkMCH2lR6a6QZYBO30OhfpMpbk4xq7uigck1+l+PbkQ+z+rpclasEYB0Z6TQKPClX5RoLdJLb3Ldq",
-	"9lKdrKqxkV3Hrbdx204vWb5RSBIKftLwaL1aRu08ZV+gTYaUm45yj8PsdEs5N+vIy/TchUKBF0n5JBt0",
-	"0suemHxA8WNEnfSSRSwwvYICF96wQE8PUXtSKNhHKvaDuGjNoXnT3VQ8MZ6uq3GdpTLe3tRzyquDk8WI",
-	"arOdh/RpRF8BOZ1j/RfHrP9XhPeeGhT4rjouW7XftOrlmiXEBePZm2TnnSbDkPUDpJxAm9p6TzV3Qzp3",
-	"UZHKg5rMpaHK1BurBpBG3Zoj3tzWV2I4eyOFh0h+WLTT2v9r43yZAn+2akg3amuYTOaUznW6zkaq+5Bg",
-	"x+NTeTufJ3GZD7LLZM9sNLILNOWSPOx7gug7FNgyO1FV+2VK61kqItdLV0qN0930OwAA///Z/BiYHwUA",
-	"AA==",
+	"H4sIAAAAAAAC/7RVwW7jNhD9lcG0QC+CZCdbFKtbu4diD+0umgA9NDnQ4sjihiIZcuhEEPTvBSm7VuI4",
+	"RZD2ZErizLw3M+95xMb2zhoyHLAeMTQd9SIff7xi4Tn8qbj7PfYb8umlpNB45VhZgzVedyrAHAJG9AQh",
+	"h8CD4g4EmDmsQB4cYY12840axqnAn81wPThaYz0eny7OFehs1BI2BMKAMky+FQ2NU0r0KQa2/RV7ZbbX",
+	"ucqIrfW9YKyxyR+P9UO+lsJ+JUNeNV9mQPX4HOE0FahMa19ARIGhEYECtNbDTnhlYwAVQsyvopFgd+SB",
+	"VU8lfNUkAoGQEgTwITaF3hhhBtjELbTqkWR5YxJQxZoOVa7I73L7duTDXH1drspVImAdGeEU1nhZrso1",
+	"FugEd3lu1YylWl/8lB63xKcsfhN3BCF6gmhCdM56JgmNNUyPDKkZAaQ1PzA4T9Q7huOt/HWGax15kVJ+",
+	"lljj51Q3VS3QU3DWBMqALlar9JOzmwxGOKdVkyOrbyEhOmxeOn3vqcUav6uOq1nt97J6Org0pmWux16/",
+	"J1UiX/XC30n7YN6daBDvQZPSSGpF1Pw/Nu8/YjzNeA+bd7mqxlZozZ23cdtNp/v3B4W03BLuaHiwXi5F",
+	"7jxlRYAyWV5ioym7y37p9gv9wu5drp6unolaT0kZXvTE5APWf42oEoCkFiwwpcUaF2BzhvuoPEms2Ucq",
+	"Fj155iPT7YL0h3U1rnOp6azsvh6QLNxSme3sl/+45QvMPswK/zcec/1XKbw21lPHn6bb044uSH88S/WT",
+	"VmQYMqCQPQOUaaz31LAe0llHSTKbaEKbDC+3YWPlAMLIG3Pke9ZtPp5py30kPyzma+3b5jpfpsC/WDm8",
+	"RX973S478SUfhM7Mknef9HMqMMthzyB6jTV2zK6uqr3Rp7+OUhK5XrhSKJxup78DAAD//8VdLP27BwAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

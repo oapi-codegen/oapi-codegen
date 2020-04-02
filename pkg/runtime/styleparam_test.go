@@ -15,6 +15,7 @@ package runtime
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -30,6 +31,10 @@ func TestStyleParam(t *testing.T) {
 		FirstName: "Alex",
 		Role:      "admin",
 	}
+	dict := map[string]interface{}{}
+	dict["firstName"] = "Alex"
+	dict["role"] = "admin"
+	timestamp, _ := time.Parse(time.RFC3339, "2020-01-01T22:00:00Z")
 
 	// ---------------------------- Simple Style -------------------------------
 
@@ -57,6 +62,30 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
 
+	result, err = StyleParam("simple", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("simple", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Alex,role=admin", result)
+
+	result, err = StyleParam("simple", false, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("simple", true, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("simple", false, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("simple", true, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+
 	// ----------------------------- Label Style -------------------------------
 
 	result, err = StyleParam("label", false, "id", primitive)
@@ -82,6 +111,30 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("label", true, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
+
+	result, err = StyleParam("label", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("label", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
+
+	result, err = StyleParam("label", false, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("label", true, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("label", false, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("label", true, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
 
 	// ----------------------------- Matrix Style ------------------------------
 
@@ -109,6 +162,30 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
 
+	result, err = StyleParam("matrix", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("matrix", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
+
+	result, err = StyleParam("matrix", false, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("matrix", true, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("matrix", false, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("matrix", true, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+
 	// ------------------------------ Form Style -------------------------------
 	result, err = StyleParam("form", false, "id", primitive)
 	assert.NoError(t, err)
@@ -134,6 +211,30 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
 
+	result, err = StyleParam("form", false, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=firstName,Alex,role,admin", result)
+
+	result, err = StyleParam("form", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "firstName=Alex&role=admin", result)
+
+	result, err = StyleParam("form", false, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("form", true, "id", timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("form", false, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+
+	result, err = StyleParam("form", true, "id", &timestamp)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+
 	// ------------------------  spaceDelimited Style --------------------------
 
 	result, err = StyleParam("spaceDelimited", false, "id", primitive)
@@ -154,6 +255,24 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParam("spaceDelimited", true, "id", object)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", false, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", true, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", false, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", true, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", false, "id", &timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("spaceDelimited", true, "id", &timestamp)
 	assert.Error(t, err)
 
 	// -------------------------  pipeDelimited Style --------------------------
@@ -178,6 +297,24 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("pipeDelimited", true, "id", object)
 	assert.Error(t, err)
 
+	result, err = StyleParam("pipeDelimited", false, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", true, "id", dict)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", false, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", true, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", false, "id", &timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("pipeDelimited", true, "id", &timestamp)
+	assert.Error(t, err)
+
 	// ---------------------------  deepObject Style ---------------------------
 	result, err = StyleParam("deepObject", false, "id", primitive)
 	assert.Error(t, err)
@@ -189,7 +326,8 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParam("deepObject", true, "id", array)
-	assert.Error(t, err)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[0]=3&id[1]=4&id[2]=5", result)
 
 	result, err = StyleParam("deepObject", false, "id", object)
 	assert.Error(t, err)
@@ -197,6 +335,23 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("deepObject", true, "id", object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
+
+	result, err = StyleParam("deepObject", true, "id", dict)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
+
+	result, err = StyleParam("deepObject", false, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("deepObject", true, "id", timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("deepObject", false, "id", &timestamp)
+	assert.Error(t, err)
+
+	result, err = StyleParam("deepObject", true, "id", &timestamp)
+	assert.Error(t, err)
+
 
 	// Misc tests
 	// Test type aliases

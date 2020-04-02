@@ -16,7 +16,9 @@ package runtime
 import (
 	"net/url"
 	"testing"
+	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -229,24 +231,43 @@ func TestSplitParameter(t *testing.T) {
 }
 
 func TestBindQueryParameter(t *testing.T) {
-	type ID struct {
-		FirstName *string `json:"firstName"`
-		LastName  *string `json:"lastName"`
-		Role      string  `json:"role"`
-	}
+	t.Run("deepObject", func(t *testing.T) {
+		type ID struct {
+			FirstName *string     `json:"firstName"`
+			LastName  *string     `json:"lastName"`
+			Role      string      `json:"role"`
+			Birthday  *types.Date `json:"birthday"`
+		}
 
-	expectedName := "Alex"
-	expectedDeepObject := &ID{FirstName: &expectedName, Role: "admin"}
+		expectedName := "Alex"
+		expectedDeepObject := &ID{
+			FirstName: &expectedName,
+			Role:      "admin",
+			Birthday:  &types.Date{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)},
+		}
 
-	actual := new(ID)
-	paramName := "id"
-	queryParams := url.Values{
-		"id[firstName]": {"Alex"},
-		"id[role]":      {"admin"},
-		"foo":           {"bar"},
-	}
+		actual := new(ID)
+		paramName := "id"
+		queryParams := url.Values{
+			"id[firstName]": {"Alex"},
+			"id[role]":      {"admin"},
+			"foo":           {"bar"},
+			"id[birthday]":  {"2020-01-01"},
+		}
 
-	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
-	assert.NoError(t, err)
-	assert.Equal(t, expectedDeepObject, actual)
+		err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+		assert.NoError(t, err)
+		assert.Equal(t, expectedDeepObject, actual)
+	})
+
+	t.Run("form", func(t *testing.T) {
+		expected := &types.Date{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
+		birthday := &types.Date{}
+		queryParams := url.Values{
+			"birthday": {"2020-01-01"},
+		}
+		err := BindQueryParameter("form", true, false, "birthday", queryParams, &birthday)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, birthday)
+	})
 }

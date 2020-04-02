@@ -17,7 +17,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 )
 
@@ -104,7 +103,7 @@ func (a Document_Fields) MarshalXML(e *xml.Encoder, start xml.StartElement) erro
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -142,6 +141,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 		if err := o(&client); err != nil {
 			return nil, err
 		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
 	}
 	// create httpClient, if not already present
 	if client.Client == nil {
@@ -181,7 +184,7 @@ func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +200,16 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	queryUrl.Path = path.Join(queryUrl.Path, fmt.Sprintf("/example"))
+
+	basePath := fmt.Sprintf("/example")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -225,9 +237,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -265,11 +274,11 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*exam
 	if err != nil {
 		return nil, err
 	}
-	return ParseexampleGetResponse(rsp)
+	return ParseExampleGetResponse(rsp)
 }
 
-// ParseexampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
-func ParseexampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
+// ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
+func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
@@ -283,10 +292,11 @@ func ParseexampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &Document{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+		var dest Document
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
+		response.JSON200 = &dest
 
 	}
 
@@ -295,6 +305,7 @@ func ParseexampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
 	// (GET /example)
 	ExampleGet(ctx echo.Context) error
 }
@@ -313,8 +324,10 @@ func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 	return err
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
 	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
@@ -324,7 +337,10 @@ func RegisterHandlers(router interface {
 	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}, si ServerInterface) {
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -337,12 +353,12 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5RST0v8MBD9KmV+v2No63rrTRBERPTkycuYzG6zpklIpovL0u8uk+5fFMVTkse8N29e",
-	"Zgc6DDF48pyh20HWPQ1Yrjcp4fYF3UjyskxDgf8nWkIH/5oTsdmzmrl6UsDbSNABioS8b4MeB/IsAjGF",
-	"SIktFbmlJWfKDY2xbINH93xR8ZeG4W1NmmH6iig4jnJpAC/G/KnZWSCTgszJ+tWRuG83o98ZEMj6ZZBi",
-	"QznrZKOMCx084jtVeUxUcY9cJdJjynZDlUjkChNVPXrjyFSzd7d99aCALTtpQR84REegYEMpz5pt3dZX",
-	"4jNE8hgtdHBdt/UCFETkvozeHIjdDlZUPkfUUWzdm5PwHTEoSJRj8HlObdG2cujgef+tGKOzunCbdRYP",
-	"h236LdfjcpSMDJ1H8/Qg6DRNnwEAAP//F7YifqkCAAA=",
+	"H4sIAAAAAAAC/5RSQU/zMAz9K5W/71i1ZdxyQwIhhBCcOHExibdmpEmUuBPT1P+OnG5jEwjEqcmr3/Pz",
+	"i3egwxCDJ88Z1A6y7mnAcrxKCbfP6EaSm2UaCvw/0RIU/Gs/ie2e1c7VUw28jQQKUCTkfh30OJBnEYgp",
+	"REpsqcgtLTlTTmiMZRs8uqezir80DK9r0gzTV6SG4yjnBvBszJ+anQQy1ZA5Wb86EvftZvQ7AwJZvwxS",
+	"bChnnWyUcUHBA75RlcdEFffIVSI9pmw3VIlErjBR1aM3jkw1e3fbFw81sGUnLegdh+gIathQyrNm13TN",
+	"hfgMkTxGCwoum65ZQA0RuS+jtwei2sGKyuOIOoqtOwMKbub/t8RQQ6Icg89zaouuk48OnvfPijE6qwu3",
+	"XWfxcNim33I9LkfJyNBpNI/3gk7T9BEAAP//t/QkwqkCAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

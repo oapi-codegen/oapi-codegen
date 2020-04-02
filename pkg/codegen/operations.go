@@ -385,7 +385,6 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
-
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
@@ -393,6 +392,9 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
+				op.OperationID = op.OperationID
+			} else {
+				op.OperationID = ToCamelCase(op.OperationID)
 			}
 
 			// These are parameters defined for the specific path method that

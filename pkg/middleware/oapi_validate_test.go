@@ -87,6 +87,15 @@ paths:
       responses:
         '204':
           description: no content
+  /protected_resource_401:
+    get:
+      operationId: getProtectedResource
+      security:
+        - BearerAuth:
+          - unauthorized
+      responses:
+        '401':
+          description: no content
 components:
   securitySchemes:
     BearerAuth:
@@ -126,6 +135,9 @@ func TestOapiRequestValidator(t *testing.T) {
 				for _, s := range input.Scopes {
 					if s == "someScope" {
 						return nil
+					}
+					if s == "unauthorized" {
+						return echo.ErrUnauthorized
 					}
 				}
 				return errors.New("forbidden")
@@ -231,6 +243,18 @@ func TestOapiRequestValidator(t *testing.T) {
 	{
 		rec := doGet(t, e, "http://deepmap.ai/protected_resource2")
 		assert.Equal(t, http.StatusForbidden, rec.Code)
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+
+	e.GET("/protected_resource_401", func(c echo.Context) error {
+		called = true
+		return c.NoContent(http.StatusNoContent)
+	})
+	// Call a protected function without credentials
+	{
+		rec := doGet(t, e, "http://deepmap.ai/protected_resource_401")
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}

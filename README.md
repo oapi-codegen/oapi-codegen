@@ -249,7 +249,7 @@ type Client struct {
 
     // A callback for modifying requests which are generated before sending over
     // the network.
-    RequestEditor func(req *http.Request, ctx context.Context) error
+    RequestEditor func(ctx context.Context, req *http.Request) error
 }
 ```
 
@@ -369,7 +369,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         //
         // WithHTTPClient(httpClient *http.Client)
         //
-        client, clientErr := NewClient(context.Background(), []ClientOption{
+        client, clientErr := NewClient("https://api.deepmap.com", []ClientOption{
             WithBaseURL("https://api.deepmap.com"),
             WithRequestEditorFn(apiKeyProvider.Edit),
         }...,
@@ -400,8 +400,16 @@ you can specify any combination of those.
  the generated file in case the spec contains weird strings.
 
 So, for example, if you would like to produce only the server code, you could
-run `oapi-generate --generate types,server`. You could generate `types` and `server`
-into separate files, but both are required for the server code.  
+run `oapi-generate -generate types,server`. You could generate `types` and
+`server` into separate files, but both are required for the server code.
+
+`oapi-codegen` can filter paths base on their tags in the openapi definition.
+Use either `-include-tags` or `-exclude-tags` followed by a comma-separated list
+of tags. For instance, to generate a server that serves all paths except those
+tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
+To generate a server that only handles `admin` paths, use the argument
+`-include-tags="admin"`. When neither of these arguments is present, all paths
+are generated.
 
 ## What's missing or incomplete
 
@@ -446,4 +454,16 @@ Go file.
 Afterwards you should run `go generate ./...`, and the templates will be updated
  accordingly.
 
+Alternatively, you can provide custom templates to override built-in ones using
+the `-templates` flag specifying a path to a directory containing templates
+files. These files **must** be named identically to built-in template files
+(see `pkg/codegen/templates/*.tmpl` in the source code), and will be interpreted
+on-the-fly at run time. Example:
 
+    $ ls -1 my-templates/
+    client.tmpl
+    typedef.tmpl
+    $ oapi-codegen \
+        -templates my-templates/ \
+        -generate types,client \
+        petstore-expanded.yaml
