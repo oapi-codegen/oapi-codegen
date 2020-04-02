@@ -21,97 +21,97 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id      int    `json:"Id"`
-	IsAdmin bool   `json:"IsAdmin"`
-	Object  Object `json:"Object"`
+	Id      int    `json:"Id" xml:"Id"`
+	IsAdmin bool   `json:"IsAdmin" xml:"IsAdmin"`
+	Object  Object `json:"Object" xml:"Object"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" xml:"firstName"`
+	Role      string `json:"role" xml:"role"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 
 	// primitive
-	P *int32 `json:"p,omitempty"`
+	P *int32 `json:"p,omitempty" xml:"p,omitempty"`
 
 	// primitive
-	Ep *int32 `json:"ep,omitempty"`
+	Ep *int32 `json:"ep,omitempty" xml:"ep,omitempty"`
 
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea *[]int32 `json:"ea,omitempty" xml:"ea-list>ea,omitempty"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A *[]int32 `json:"a,omitempty" xml:"a-list>a,omitempty"`
 
 	// exploded object
-	Eo *Object `json:"eo,omitempty"`
+	Eo *Object `json:"eo,omitempty" xml:"eo,omitempty"`
 
 	// object
-	O *Object `json:"o,omitempty"`
+	O *Object `json:"o,omitempty" xml:"o,omitempty"`
 
 	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Co *ComplexObject `json:"co,omitempty" xml:"co,omitempty"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
 
 	// primitive
-	XPrimitive *int32 `json:"X-Primitive,omitempty"`
+	XPrimitive *int32 `json:"X-Primitive,omitempty" xml:"X-Primitive,omitempty"`
 
 	// primitive
-	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
+	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty" xml:"X-Primitive-Exploded,omitempty"`
 
 	// exploded array
-	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty" xml:"X-Array-Exploded-list>X-Array-Exploded,omitempty"`
 
 	// array
-	XArray *[]int32 `json:"X-Array,omitempty"`
+	XArray *[]int32 `json:"X-Array,omitempty" xml:"X-Array-list>X-Array,omitempty"`
 
 	// exploded object
-	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
+	XObjectExploded *Object `json:"X-Object-Exploded,omitempty" xml:"X-Object-Exploded,omitempty"`
 
 	// object
-	XObject *Object `json:"X-Object,omitempty"`
+	XObject *Object `json:"X-Object,omitempty" xml:"X-Object,omitempty"`
 
 	// complex object
-	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty" xml:"X-Complex-Object,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
 
 	// deep object
-	DeepObj ComplexObject `json:"deepObj"`
+	DeepObj ComplexObject `json:"deepObj" xml:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea *[]int32 `json:"ea,omitempty" xml:"ea-list>ea,omitempty"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A *[]int32 `json:"a,omitempty" xml:"a-list>a,omitempty"`
 
 	// exploded object
-	Eo *Object `json:"eo,omitempty"`
+	Eo *Object `json:"eo,omitempty" xml:"eo,omitempty"`
 
 	// object
-	O *Object `json:"o,omitempty"`
+	O *Object `json:"o,omitempty" xml:"o,omitempty"`
 
 	// exploded primitive
-	Ep *int32 `json:"ep,omitempty"`
+	Ep *int32 `json:"ep,omitempty" xml:"ep,omitempty"`
 
 	// primitive
-	P *int32 `json:"p,omitempty"`
+	P *int32 `json:"p,omitempty" xml:"p,omitempty"`
 
 	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Co *ComplexObject `json:"co,omitempty" xml:"co,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

@@ -20,20 +20,20 @@ import (
 type Error struct {
 
 	// Error code
-	Code int32 `json:"code"`
+	Code int32 `json:"code" xml:"code"`
 
 	// Error message
-	Message string `json:"message"`
+	Message string `json:"message" xml:"message"`
 }
 
 // NewPet defines model for NewPet.
 type NewPet struct {
 
 	// Name of the pet
-	Name string `json:"name"`
+	Name string `json:"name" xml:"name"`
 
 	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
+	Tag *string `json:"tag,omitempty" xml:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
@@ -43,17 +43,17 @@ type Pet struct {
 	// Embedded fields due to inline allOf schema
 
 	// Unique id of the pet
-	Id int64 `json:"id"`
+	Id int64 `json:"id" xml:"id"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `json:"tags,omitempty" xml:"tags-list>tags,omitempty"`
 
 	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+	Limit *int32 `json:"limit,omitempty" xml:"limit,omitempty"`
 }
 
 // AddPetJSONBody defines parameters for AddPet.
