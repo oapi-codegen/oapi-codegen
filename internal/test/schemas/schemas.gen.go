@@ -317,15 +317,15 @@ type ClientWithResponsesInterface interface {
 	ClientInterface
 
 	// Issue30WithResponse request returning *Issue30Response
-	Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error)
+	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
 
 	// Issue41WithResponse request returning *Issue41Response
-	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*issue41Response, error)
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error)
 
 	// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*issue9Response, error)
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
 
-	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error)
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
 }
 
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
@@ -353,13 +353,13 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-type issue30Response struct {
+type Issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue30Response) Status() string {
+func (r Issue30Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -367,20 +367,20 @@ func (r issue30Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue30Response) StatusCode() int {
+func (r Issue30Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type issue41Response struct {
+type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue41Response) Status() string {
+func (r Issue41Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -388,20 +388,20 @@ func (r issue41Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue41Response) StatusCode() int {
+func (r Issue41Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type issue9Response struct {
+type Issue9Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue9Response) Status() string {
+func (r Issue9Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -409,7 +409,7 @@ func (r issue9Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue9Response) StatusCode() int {
+func (r Issue9Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -417,7 +417,7 @@ func (r issue9Response) StatusCode() int {
 }
 
 // Issue30WithResponse request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
 	if err != nil {
 		return nil, err
@@ -426,7 +426,7 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 }
 
 // Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*issue41Response, error) {
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error) {
 	rsp, err := c.Issue41(ctx, n1param)
 	if err != nil {
 		return nil, err
@@ -435,7 +435,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error) {
 	rsp, err := c.Issue9WithBody(ctx, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -443,7 +443,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	return ParseIssue9Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err
@@ -452,14 +452,14 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 }
 
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
-func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
+func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue30Response{
+	response := &Issue30Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -471,14 +471,14 @@ func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
 }
 
 // ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
-func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
+func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue41Response{
+	response := &Issue41Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -490,14 +490,14 @@ func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
 }
 
 // ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
-func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
+func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue9Response{
+	response := &Issue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

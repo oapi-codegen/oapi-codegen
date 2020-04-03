@@ -943,12 +943,12 @@ type ClientWithResponsesInterface interface {
 	ClientInterface
 
 	// ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
-	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error)
+	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error)
 
 	// BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
-	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*bodyWithAddPropsResponse, error)
+	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error)
 
-	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*bodyWithAddPropsResponse, error)
+	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error)
 }
 
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
@@ -976,13 +976,13 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-type paramsWithAddPropsResponse struct {
+type ParamsWithAddPropsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r paramsWithAddPropsResponse) Status() string {
+func (r ParamsWithAddPropsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -990,20 +990,20 @@ func (r paramsWithAddPropsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r paramsWithAddPropsResponse) StatusCode() int {
+func (r ParamsWithAddPropsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type bodyWithAddPropsResponse struct {
+type BodyWithAddPropsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r bodyWithAddPropsResponse) Status() string {
+func (r BodyWithAddPropsResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1011,7 +1011,7 @@ func (r bodyWithAddPropsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r bodyWithAddPropsResponse) StatusCode() int {
+func (r BodyWithAddPropsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1019,7 +1019,7 @@ func (r bodyWithAddPropsResponse) StatusCode() int {
 }
 
 // ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
-func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error) {
+func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error) {
 	rsp, err := c.ParamsWithAddProps(ctx, params)
 	if err != nil {
 		return nil, err
@@ -1028,7 +1028,7 @@ func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context
 }
 
 // BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
-func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*bodyWithAddPropsResponse, error) {
+func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -1036,7 +1036,7 @@ func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.C
 	return ParseBodyWithAddPropsResponse(rsp)
 }
 
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*bodyWithAddPropsResponse, error) {
+func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddProps(ctx, body)
 	if err != nil {
 		return nil, err
@@ -1045,14 +1045,14 @@ func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, 
 }
 
 // ParseParamsWithAddPropsResponse parses an HTTP response from a ParamsWithAddPropsWithResponse call
-func ParseParamsWithAddPropsResponse(rsp *http.Response) (*paramsWithAddPropsResponse, error) {
+func ParseParamsWithAddPropsResponse(rsp *http.Response) (*ParamsWithAddPropsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &paramsWithAddPropsResponse{
+	response := &ParamsWithAddPropsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1064,14 +1064,14 @@ func ParseParamsWithAddPropsResponse(rsp *http.Response) (*paramsWithAddPropsRes
 }
 
 // ParseBodyWithAddPropsResponse parses an HTTP response from a BodyWithAddPropsWithResponse call
-func ParseBodyWithAddPropsResponse(rsp *http.Response) (*bodyWithAddPropsResponse, error) {
+func ParseBodyWithAddPropsResponse(rsp *http.Response) (*BodyWithAddPropsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &bodyWithAddPropsResponse{
+	response := &BodyWithAddPropsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

@@ -320,7 +320,7 @@ func WithBaseURL(baseURL string) ClientOption {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
-type {{$opid | lcFirst}}Response struct {
+type {{$opid | ucFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range getResponseTypeDefinitions .}}
@@ -329,7 +329,7 @@ type {{$opid | lcFirst}}Response struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r {{$opid | lcFirst}}Response) Status() string {
+func (r {{$opid | ucFirst}}Response) Status() string {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.Status
     }
@@ -337,7 +337,7 @@ func (r {{$opid | lcFirst}}Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r {{$opid | lcFirst}}Response) StatusCode() int {
+func (r {{$opid | ucFirst}}Response) StatusCode() int {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.StatusCode
     }
