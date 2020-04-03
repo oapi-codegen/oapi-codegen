@@ -162,7 +162,7 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "type GetTestByNameParams struct {")
 	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*GetTestByNameResponse, error) {")
+	assert.Contains(t, code, "func (c *Client) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*GetTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)

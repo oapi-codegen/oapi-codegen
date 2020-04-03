@@ -73,6 +73,8 @@ type Client struct {
 	RequestEditor RequestEditorFn
 }
 
+var _ ClientInterface = &Client{}
+
 // ClientOption allows setting custom parameters during construction
 type ClientOption func(*Client) error
 
@@ -133,20 +135,33 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// EnsureEverythingIsReferenced request
 	EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error)
+	// EnsureEverythingIsReferencedWithResponse request  and parse response
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error)
 
 	// Issue127 request
 	Issue127(ctx context.Context) (*http.Response, error)
+	// Issue127WithResponse request  and parse response
+	Issue127WithResponse(ctx context.Context) (*Issue127Response, error)
 
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
+	// Issue30WithResponse request  and parse response
+	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
 
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber) (*http.Response, error)
+	// Issue41WithResponse request  and parse response
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error)
 
-	// Issue9 request  with any body
+	// Issue9WithBody request  with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*http.Response, error)
+	// Issue9WithBodyWithResponse request  with any body and parse response
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
 
+	// Issue9
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
+	// Issue9WithResponse
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
 }
 
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error) {
@@ -416,41 +431,6 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	return req, nil
 }
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-	client, err := NewClient(server, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &ClientWithResponses{client}, nil
-}
-
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferenced request
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error)
-
-	// Issue127 request
-	Issue127WithResponse(ctx context.Context) (*Issue127Response, error)
-
-	// Issue30 request
-	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
-
-	// Issue41 request
-	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error)
-
-	// Issue9 request  with any body
-	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
-
-	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
-}
-
 type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -568,7 +548,7 @@ func (r Issue9Response) StatusCode() int {
 }
 
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error) {
+func (c *Client) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx)
 	if err != nil {
 		return nil, err
@@ -577,7 +557,7 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx conte
 }
 
 // Issue127WithResponse request returning *Issue127Response
-func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue127Response, error) {
+func (c *Client) Issue127WithResponse(ctx context.Context) (*Issue127Response, error) {
 	rsp, err := c.Issue127(ctx)
 	if err != nil {
 		return nil, err
@@ -586,7 +566,7 @@ func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue1
 }
 
 // Issue30WithResponse request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error) {
+func (c *Client) Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
 	if err != nil {
 		return nil, err
@@ -595,7 +575,7 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 }
 
 // Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error) {
+func (c *Client) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error) {
 	rsp, err := c.Issue41(ctx, n1param)
 	if err != nil {
 		return nil, err
@@ -604,7 +584,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error) {
+func (c *Client) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error) {
 	rsp, err := c.Issue9WithBody(ctx, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -612,7 +592,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	return ParseIssue9Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error) {
+func (c *Client) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err

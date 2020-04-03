@@ -116,6 +116,8 @@ type Client struct {
 	RequestEditor RequestEditorFn
 }
 
+var _ ClientInterface = &Client{}
+
 // ClientOption allows setting custom parameters during construction
 type ClientOption func(*Client) error
 
@@ -176,6 +178,8 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// ExampleGet request
 	ExampleGet(ctx context.Context) (*http.Response, error)
+	// ExampleGetWithResponse request  and parse response
+	ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error)
 }
 
 func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
@@ -220,27 +224,6 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-	client, err := NewClient(server, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &ClientWithResponses{client}, nil
-}
-
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
-	// ExampleGet request
-	ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error)
-}
-
 type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -264,7 +247,7 @@ func (r ExampleGetResponse) StatusCode() int {
 }
 
 // ExampleGetWithResponse request returning *ExampleGetResponse
-func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error) {
+func (c *Client) ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error) {
 	rsp, err := c.ExampleGet(ctx)
 	if err != nil {
 		return nil, err

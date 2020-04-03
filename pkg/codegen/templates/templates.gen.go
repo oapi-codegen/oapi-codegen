@@ -270,52 +270,16 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
 
 
 `,
-	"client-with-responses.tmpl": `{{$clientWithResponses := "ClientWithResponses" -}}
-{{$clientWithResponsesInterface := "ClientWithResponsesInterface" -}}
-{{$newClientWithResponsesFn := "NewClientWithResponses" -}}
-{{if .PrivateClientWithResponses}}
-    {{$clientWithResponses = "clientWithResponses" -}}
-    {{$clientWithResponsesInterface = "clientWithResponsesInterface" -}}
-    {{$newClientWithResponsesFn = "newClientWithResponses" -}}
-{{end}}
-
+	"client-with-responses.tmpl": `{{$clientStruct := "Client" -}}
 {{$clientInterface := "ClientInterface" -}}
-{{$clientOption := "ClientOption" -}}
 {{$newClientFn := "NewClient" -}}
-{{if .PrivateClient}}
+{{$clientOption := "ClientOption" -}}
+{{if .MakeClientPrivate}}
+    {{$clientStruct = "client" -}}
     {{$clientInterface = "clientInterface" -}}
-    {{$clientOption = "clientOption" -}}
     {{$newClientFn = "newClient" -}}
+    {{$clientOption = "clientOption" -}}
 {{end}}
-
-// {{$clientWithResponses}} builds on {{$clientInterface}} to offer response payloads
-type {{$clientWithResponses}} struct {
-    {{$clientInterface}}
-}
-
-// {{$newClientWithResponsesFn}} creates a new {{$clientWithResponses}}, which wraps
-// Client with return type handling
-func {{$newClientWithResponsesFn}}(server string, opts ...{{$clientOption}}) (*{{$clientWithResponses}}, error) {
-    client, err := {{$newClientFn}}(server, opts...)
-    if err != nil {
-        return nil, err
-    }
-    return &{{$clientWithResponses}}{client}, nil
-}
-
-// {{$clientWithResponsesInterface}} is the interface specification for the client with responses above.
-type {{$clientWithResponsesInterface}} interface {
-{{range .Operations -}}
-{{$hasParams := .RequiresParamObject -}}
-{{$pathParams := .PathParams -}}
-{{$opid := .OperationId -}}
-    // {{$opid}} request {{if .HasBody}} with any body{{end}}
-    {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error)
-{{range .Bodies}}
-    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
-{{end}}{{/* range .Bodies */}}
-{{end}}{{/* range .Operations $opid := .OperationId */}}
-}
 
 {{range .Operations}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | ucFirst}}Response struct {
@@ -349,7 +313,7 @@ func (r {{$opid | ucFirst}}Response) StatusCode() int {
 {{/* Generate client methods (with responses)*/}}
 
 // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}Response
-func (c *{{$clientWithResponses}}) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
+func (c *{{$clientStruct}}) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
     rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
@@ -361,7 +325,7 @@ func (c *{{$clientWithResponses}}) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRe
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
-func (c *{{$clientWithResponses}}) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error) {
+func (c *{{$clientStruct}}) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error) {
     rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
@@ -397,7 +361,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 {{$clientInterface := "ClientInterface" -}}
 {{$newClientFn := "NewClient" -}}
 {{$clientOption := "ClientOption" -}}
-{{if .PrivateClientWithResponses}}
+{{if .MakeClientPrivate}}
     {{$clientStruct = "client" -}}
     {{$clientInterface = "clientInterface" -}}
     {{$newClientFn = "newClient" -}}
@@ -428,6 +392,7 @@ type {{$clientStruct}} struct {
 	// the network.
 	RequestEditor RequestEditorFn
 }
+var _ {{$clientInterface}} = &{{$clientStruct}}{}
 
 // {{$clientOption}} allows setting custom parameters during construction
 type {{$clientOption}} func(*{{$clientStruct}}) error
@@ -491,12 +456,18 @@ type {{$clientInterface}} interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} request {{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
+    // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request {{if .HasBody}} with any body{{end}} and parse response
+    {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
+    // {{$opid}}{{.Suffix}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
+    // {{$opid}}{{.Suffix}}WithResponse
+    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range .Operations $opid := .OperationId */}}
+
 }
 
 

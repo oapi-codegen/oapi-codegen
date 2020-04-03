@@ -754,9 +754,8 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 }
 
 type clientGenArgs struct {
-	Operations                 []OperationDefinition
-	PrivateClient              bool
-	PrivateClientWithResponses bool
+	Operations        []OperationDefinition
+	MakeClientPrivate bool
 }
 
 // Uses the template engine to generate the function which registers our wrappers
@@ -777,8 +776,7 @@ func GenerateClient(t *template.Template, args clientGenArgs) (string, error) {
 	return buf.String(), nil
 }
 
-// This generates a client which extends the basic client which does response
-// unmarshaling.
+// GenerateClientWithResponses generates extra methods on the client which support response unmarshaling.
 func GenerateClientWithResponses(t *template.Template, args clientGenArgs) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)

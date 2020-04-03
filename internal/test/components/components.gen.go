@@ -744,6 +744,8 @@ type Client struct {
 	RequestEditor RequestEditorFn
 }
 
+var _ ClientInterface = &Client{}
+
 // ClientOption allows setting custom parameters during construction
 type ClientOption func(*Client) error
 
@@ -802,18 +804,30 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// EnsureEverythingIsReferenced request  with any body
+	// EnsureEverythingIsReferencedWithBody request  with any body
 	EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// EnsureEverythingIsReferencedWithBodyWithResponse request  with any body and parse response
+	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error)
 
+	// EnsureEverythingIsReferenced
 	EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*http.Response, error)
+	// EnsureEverythingIsReferencedWithResponse
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error)
 
 	// ParamsWithAddProps request
 	ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams) (*http.Response, error)
+	// ParamsWithAddPropsWithResponse request  and parse response
+	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error)
 
-	// BodyWithAddProps request  with any body
+	// BodyWithAddPropsWithBody request  with any body
 	BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// BodyWithAddPropsWithBodyWithResponse request  with any body and parse response
+	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error)
 
+	// BodyWithAddProps
 	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*http.Response, error)
+	// BodyWithAddPropsWithResponse
+	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error)
 }
 
 func (c *Client) EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
@@ -1024,37 +1038,6 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-	client, err := NewClient(server, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &ClientWithResponses{client}, nil
-}
-
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferenced request  with any body
-	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error)
-
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error)
-
-	// ParamsWithAddProps request
-	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error)
-
-	// BodyWithAddProps request  with any body
-	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error)
-
-	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error)
-}
-
 type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1140,7 +1123,7 @@ func (r BodyWithAddPropsResponse) StatusCode() int {
 }
 
 // EnsureEverythingIsReferencedWithBodyWithResponse request with arbitrary body returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error) {
+func (c *Client) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferencedWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -1148,7 +1131,7 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(c
 	return ParseEnsureEverythingIsReferencedResponse(rsp)
 }
 
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error) {
+func (c *Client) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx, body)
 	if err != nil {
 		return nil, err
@@ -1157,7 +1140,7 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx conte
 }
 
 // ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
-func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error) {
+func (c *Client) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error) {
 	rsp, err := c.ParamsWithAddProps(ctx, params)
 	if err != nil {
 		return nil, err
@@ -1166,7 +1149,7 @@ func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context
 }
 
 // BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
-func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error) {
+func (c *Client) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -1174,7 +1157,7 @@ func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.C
 	return ParseBodyWithAddPropsResponse(rsp)
 }
 
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error) {
+func (c *Client) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error) {
 	rsp, err := c.BodyWithAddProps(ctx, body)
 	if err != nil {
 		return nil, err
