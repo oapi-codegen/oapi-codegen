@@ -316,12 +316,6 @@ type ClientWithResponses struct {
 type ClientWithResponsesInterface interface {
 	ClientInterface
 
-	// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*ensureEverythingIsReferencedResponse, error)
-
-	// Issue127WithResponse request returning *Issue127Response
-	Issue127WithResponse(ctx context.Context) (*issue127Response, error)
-
 	// Issue30WithResponse request returning *Issue30Response
 	Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error)
 

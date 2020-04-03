@@ -942,11 +942,6 @@ type ClientWithResponses struct {
 type ClientWithResponsesInterface interface {
 	ClientInterface
 
-	// EnsureEverythingIsReferencedWithBodyWithResponse request with arbitrary body returning *EnsureEverythingIsReferencedResponse
-	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ensureEverythingIsReferencedResponse, error)
-
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*ensureEverythingIsReferencedResponse, error)
-
 	// ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
 	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*paramsWithAddPropsResponse, error)
 
