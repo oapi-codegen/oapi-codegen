@@ -275,6 +275,25 @@ type ClientWithResponses struct {
     ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+  ClientInterface
+  {{range .}}
+  {{$opid := .OperationId -}}
+  {{/* Generate client methods (with responses)*/}}
+
+  // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+  {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error)
+
+  {{$hasParams := .RequiresParamObject -}}
+  {{$pathParams := .PathParams -}}
+  {{$bodyRequired := .BodyRequired -}}
+  {{range .Bodies}}
+  {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error) 
+  {{end}}
+
+  {{end}}{{/* operations */}}
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {

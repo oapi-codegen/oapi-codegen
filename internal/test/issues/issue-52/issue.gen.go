@@ -209,6 +209,13 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+	ClientInterface
+
+	// ExampleGetWithResponse request returning *ExampleGetResponse
+	ExampleGetWithResponse(ctx context.Context) (*exampleGetResponse, error)
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {

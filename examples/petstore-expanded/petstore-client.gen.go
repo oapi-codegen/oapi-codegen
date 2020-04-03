@@ -394,6 +394,24 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+	ClientInterface
+
+	// FindPetsWithResponse request returning *FindPetsResponse
+	FindPetsWithResponse(ctx context.Context, params *FindPetsParams) (*findPetsResponse, error)
+
+	// AddPetWithBodyWithResponse request with arbitrary body returning *AddPetResponse
+	AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*addPetResponse, error)
+
+	AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody) (*addPetResponse, error)
+
+	// DeletePetWithResponse request returning *DeletePetResponse
+	DeletePetWithResponse(ctx context.Context, id int64) (*deletePetResponse, error)
+
+	// FindPetByIdWithResponse request returning *FindPetByIdResponse
+	FindPetByIdWithResponse(ctx context.Context, id int64) (*findPetByIdResponse, error)
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {

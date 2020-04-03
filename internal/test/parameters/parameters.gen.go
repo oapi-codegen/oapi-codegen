@@ -1458,6 +1458,67 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+	ClientInterface
+
+	// GetContentObjectWithResponse request returning *GetContentObjectResponse
+	GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*getContentObjectResponse, error)
+
+	// GetCookieWithResponse request returning *GetCookieResponse
+	GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*getCookieResponse, error)
+
+	// GetHeaderWithResponse request returning *GetHeaderResponse
+	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*getHeaderResponse, error)
+
+	// GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
+	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelExplodeArrayResponse, error)
+
+	// GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
+	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelExplodeObjectResponse, error)
+
+	// GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
+	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getLabelNoExplodeArrayResponse, error)
+
+	// GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
+	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getLabelNoExplodeObjectResponse, error)
+
+	// GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
+	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixExplodeArrayResponse, error)
+
+	// GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
+	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixExplodeObjectResponse, error)
+
+	// GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
+	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*getMatrixNoExplodeArrayResponse, error)
+
+	// GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
+	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*getMatrixNoExplodeObjectResponse, error)
+
+	// GetPassThroughWithResponse request returning *GetPassThroughResponse
+	GetPassThroughWithResponse(ctx context.Context, param string) (*getPassThroughResponse, error)
+
+	// GetDeepObjectWithResponse request returning *GetDeepObjectResponse
+	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams) (*getDeepObjectResponse, error)
+
+	// GetQueryFormWithResponse request returning *GetQueryFormResponse
+	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*getQueryFormResponse, error)
+
+	// GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
+	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleExplodeArrayResponse, error)
+
+	// GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
+	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleExplodeObjectResponse, error)
+
+	// GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
+	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*getSimpleNoExplodeArrayResponse, error)
+
+	// GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
+	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*getSimpleNoExplodeObjectResponse, error)
+
+	// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
+	GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*getSimplePrimitiveResponse, error)
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {

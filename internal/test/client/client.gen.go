@@ -484,6 +484,35 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+	ClientInterface
+
+	// PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
+	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postBothResponse, error)
+
+	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*postBothResponse, error)
+
+	// GetBothWithResponse request returning *GetBothResponse
+	GetBothWithResponse(ctx context.Context) (*getBothResponse, error)
+
+	// PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
+	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postJsonResponse, error)
+
+	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*postJsonResponse, error)
+
+	// GetJsonWithResponse request returning *GetJsonResponse
+	GetJsonWithResponse(ctx context.Context) (*getJsonResponse, error)
+
+	// PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
+	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*postOtherResponse, error)
+
+	// GetOtherWithResponse request returning *GetOtherResponse
+	GetOtherWithResponse(ctx context.Context) (*getOtherResponse, error)
+
+	// GetJsonWithTrailingSlashWithResponse request returning *GetJsonWithTrailingSlashResponse
+	GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*getJsonWithTrailingSlashResponse, error)
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {

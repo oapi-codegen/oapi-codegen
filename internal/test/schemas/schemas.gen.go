@@ -313,6 +313,27 @@ type ClientWithResponses struct {
 	ClientInterface
 }
 
+type ClientWithResponsesInterface interface {
+	ClientInterface
+
+	// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*ensureEverythingIsReferencedResponse, error)
+
+	// Issue127WithResponse request returning *Issue127Response
+	Issue127WithResponse(ctx context.Context) (*issue127Response, error)
+
+	// Issue30WithResponse request returning *Issue30Response
+	Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error)
+
+	// Issue41WithResponse request returning *Issue41Response
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*issue41Response, error)
+
+	// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*issue9Response, error)
+
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error)
+}
+
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
