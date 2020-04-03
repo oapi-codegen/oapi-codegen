@@ -32,16 +32,18 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
-	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
-	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
-	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool              // Whether to skip go fmt on the generated code
-	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
-	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
-	UserTemplates      map[string]string // Override built-in templates from user-provided files
+	GenerateChiServer              bool              // GenerateChiServer specifies whether to generate chi server boilerplate
+	GenerateEchoServer             bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
+	GenerateClient                 bool              // GenerateClient specifies whether to generate client boilerplate
+	GenerateTypes                  bool              // GenerateTypes specifies whether to generate type definitions
+	EmbedSpec                      bool              // Whether to embed the swagger spec in the generated code
+	SkipFmt                        bool              // Whether to skip go fmt on the generated code
+	SkipPrune                      bool              // Whether to skip pruning unused components on the generated code
+	MakeClientPrivate              bool              // Whether to make the generated API client private to the package it is generated into
+	MakeClientWithResponsesPrivate bool              // Whether to make the generated API client with responses private to the package it is generated into
+	IncludeTags                    []string          // Only include operations that have one of these tags. Ignored when empty.
+	ExcludeTags                    []string          // Exclude operations that have one of these tags. Ignored when empty.
+	UserTemplates                  map[string]string // Override built-in templates from user-provided files
 }
 
 type goImport struct {
@@ -143,9 +145,15 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
+	args := clientGenArgs{
+		Operations:                 ops,
+		PrivateClient:              opts.MakeClientPrivate,
+		PrivateClientWithResponses: opts.MakeClientWithResponsesPrivate,
+	}
+
 	var clientOut string
 	if opts.GenerateClient {
-		clientOut, err = GenerateClient(t, ops)
+		clientOut, err = GenerateClient(t, args)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client")
 		}
@@ -153,7 +161,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var clientWithResponsesOut string
 	if opts.GenerateClient {
-		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
+		clientWithResponsesOut, err = GenerateClientWithResponses(t, args)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating client with responses")
 		}

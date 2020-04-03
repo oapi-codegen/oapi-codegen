@@ -38,6 +38,7 @@ func main() {
 		outputFile   string
 		includeTags  string
 		excludeTags  string
+		makePrivate  string
 		templatesDir string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
@@ -46,6 +47,7 @@ func main() {
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
+	flag.StringVar(&makePrivate, "make-private", "", `Comma-separated list of code to make private to the package; valid options: "client", "client-with-responses"`)
 	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing user templates")
 	flag.Parse()
 
@@ -83,6 +85,19 @@ func main() {
 			opts.SkipPrune = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+	}
+
+	for _, g := range splitCSVArg(makePrivate) {
+		switch g {
+		case "client":
+			opts.MakeClientPrivate = true
+		case "client-with-responses":
+			opts.MakeClientWithResponsesPrivate = true
+		default:
+			fmt.Printf("unknown make-private option %s\n", g)
 			flag.PrintDefaults()
 			os.Exit(1)
 		}

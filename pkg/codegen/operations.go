@@ -753,13 +753,19 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 	return buf.String(), nil
 }
 
+type clientGenArgs struct {
+	Operations                 []OperationDefinition
+	PrivateClient              bool
+	PrivateClientWithResponses bool
+}
+
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClient(t *template.Template, args clientGenArgs) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "client.tmpl", ops)
+	err := t.ExecuteTemplate(w, "client.tmpl", args)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating client bindings: %s", err)
@@ -773,11 +779,11 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 
 // This generates a client which extends the basic client which does response
 // unmarshaling.
-func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClientWithResponses(t *template.Template, args clientGenArgs) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ops)
+	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", args)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating client bindings: %s", err)
