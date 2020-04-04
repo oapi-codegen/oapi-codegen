@@ -3,9 +3,9 @@
 {{$newClientFn := "NewClient" -}}
 {{$clientOption := "ClientOption" -}}
 {{if .MakeClientPrivate}}
-    {{$clientStruct = "client" -}}
-    {{$clientInterface = "clientInterface" -}}
-    {{$newClientFn = "newClient" -}}
+    {{$clientStruct = "generatedClient" -}}
+    {{$clientInterface = "generatedClientInterface" -}}
+    {{$newClientFn = "newGeneratedClient" -}}
     {{$clientOption = "clientOption" -}}
 {{end}}
 

@@ -47,8 +47,8 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// client which conforms to the OpenAPI3 specification for this service.
-type client struct {
+// generatedClient which conforms to the OpenAPI3 specification for this service.
+type generatedClient struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example.
 	Server string
@@ -62,15 +62,15 @@ type client struct {
 	RequestEditor RequestEditorFn
 }
 
-var _ clientInterface = &client{}
+var _ generatedClientInterface = &generatedClient{}
 
 // clientOption allows setting custom parameters during construction
-type clientOption func(*client) error
+type clientOption func(*generatedClient) error
 
-// newClient Creates a new Client, with reasonable defaults
-func newClient(server string, opts ...clientOption) (*client, error) {
+// newGeneratedClient Creates a new Client, with reasonable defaults
+func newGeneratedClient(server string, opts ...clientOption) (*generatedClient, error) {
 	// create a client with sane default values
-	client := client{
+	client := generatedClient{
 		Server: server,
 	}
 	// mutate client and add all optional params
@@ -93,7 +93,7 @@ func newClient(server string, opts ...clientOption) (*client, error) {
 // WithHTTPClient allows overriding the default Doer, which is
 // automatically created using http.Client. This is useful for tests.
 func WithHTTPClient(doer HttpRequestDoer) clientOption {
-	return func(c *client) error {
+	return func(c *generatedClient) error {
 		c.Client = doer
 		return nil
 	}
@@ -101,7 +101,7 @@ func WithHTTPClient(doer HttpRequestDoer) clientOption {
 
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) clientOption {
-	return func(c *client) error {
+	return func(c *generatedClient) error {
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -114,14 +114,14 @@ func WithBaseURL(baseURL string) clientOption {
 // WithRequestEditorFn allows setting up a callback function, which will be
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) clientOption {
-	return func(c *client) error {
+	return func(c *generatedClient) error {
 		c.RequestEditor = fn
 		return nil
 	}
 }
 
 // The interface specification for the client above.
-type clientInterface interface {
+type generatedClientInterface interface {
 	// PostBothWithBody request  with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 	// PostBothWithBodyWithResponse request  with any body and parse response
@@ -168,7 +168,7 @@ type clientInterface interface {
 	GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*GetJsonWithTrailingSlashResponse, error)
 }
 
-func (c *client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *generatedClient) PostBothWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewPostBothRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (c *client) PostBothWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
-func (c *client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error) {
+func (c *generatedClient) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*http.Response, error) {
 	req, err := NewPostBothRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -198,7 +198,7 @@ func (c *client) PostBoth(ctx context.Context, body PostBothJSONRequestBody) (*h
 	return c.Client.Do(req)
 }
 
-func (c *client) GetBoth(ctx context.Context) (*http.Response, error) {
+func (c *generatedClient) GetBoth(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetBothRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -213,7 +213,7 @@ func (c *client) GetBoth(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-func (c *client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *generatedClient) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewPostJsonRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -228,7 +228,7 @@ func (c *client) PostJsonWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
-func (c *client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error) {
+func (c *generatedClient) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*http.Response, error) {
 	req, err := NewPostJsonRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -243,7 +243,7 @@ func (c *client) PostJson(ctx context.Context, body PostJsonJSONRequestBody) (*h
 	return c.Client.Do(req)
 }
 
-func (c *client) GetJson(ctx context.Context) (*http.Response, error) {
+func (c *generatedClient) GetJson(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetJsonRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -258,7 +258,7 @@ func (c *client) GetJson(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-func (c *client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *generatedClient) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
 	req, err := NewPostOtherRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -273,7 +273,7 @@ func (c *client) PostOtherWithBody(ctx context.Context, contentType string, body
 	return c.Client.Do(req)
 }
 
-func (c *client) GetOther(ctx context.Context) (*http.Response, error) {
+func (c *generatedClient) GetOther(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetOtherRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -288,7 +288,7 @@ func (c *client) GetOther(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-func (c *client) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error) {
+func (c *generatedClient) GetJsonWithTrailingSlash(ctx context.Context) (*http.Response, error) {
 	req, err := NewGetJsonWithTrailingSlashRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -668,7 +668,7 @@ func (r GetJsonWithTrailingSlashResponse) StatusCode() int {
 }
 
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
-func (c *client) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostBothResponse, error) {
+func (c *generatedClient) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostBothResponse, error) {
 	rsp, err := c.PostBothWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -676,7 +676,7 @@ func (c *client) PostBothWithBodyWithResponse(ctx context.Context, contentType s
 	return ParsePostBothResponse(rsp)
 }
 
-func (c *client) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*PostBothResponse, error) {
+func (c *generatedClient) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*PostBothResponse, error) {
 	rsp, err := c.PostBoth(ctx, body)
 	if err != nil {
 		return nil, err
@@ -685,7 +685,7 @@ func (c *client) PostBothWithResponse(ctx context.Context, body PostBothJSONRequ
 }
 
 // GetBothWithResponse request returning *GetBothResponse
-func (c *client) GetBothWithResponse(ctx context.Context) (*GetBothResponse, error) {
+func (c *generatedClient) GetBothWithResponse(ctx context.Context) (*GetBothResponse, error) {
 	rsp, err := c.GetBoth(ctx)
 	if err != nil {
 		return nil, err
@@ -694,7 +694,7 @@ func (c *client) GetBothWithResponse(ctx context.Context) (*GetBothResponse, err
 }
 
 // PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
-func (c *client) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJsonResponse, error) {
+func (c *generatedClient) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJsonResponse, error) {
 	rsp, err := c.PostJsonWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -702,7 +702,7 @@ func (c *client) PostJsonWithBodyWithResponse(ctx context.Context, contentType s
 	return ParsePostJsonResponse(rsp)
 }
 
-func (c *client) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*PostJsonResponse, error) {
+func (c *generatedClient) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*PostJsonResponse, error) {
 	rsp, err := c.PostJson(ctx, body)
 	if err != nil {
 		return nil, err
@@ -711,7 +711,7 @@ func (c *client) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequ
 }
 
 // GetJsonWithResponse request returning *GetJsonResponse
-func (c *client) GetJsonWithResponse(ctx context.Context) (*GetJsonResponse, error) {
+func (c *generatedClient) GetJsonWithResponse(ctx context.Context) (*GetJsonResponse, error) {
 	rsp, err := c.GetJson(ctx)
 	if err != nil {
 		return nil, err
@@ -720,7 +720,7 @@ func (c *client) GetJsonWithResponse(ctx context.Context) (*GetJsonResponse, err
 }
 
 // PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
-func (c *client) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostOtherResponse, error) {
+func (c *generatedClient) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostOtherResponse, error) {
 	rsp, err := c.PostOtherWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
@@ -729,7 +729,7 @@ func (c *client) PostOtherWithBodyWithResponse(ctx context.Context, contentType 
 }
 
 // GetOtherWithResponse request returning *GetOtherResponse
-func (c *client) GetOtherWithResponse(ctx context.Context) (*GetOtherResponse, error) {
+func (c *generatedClient) GetOtherWithResponse(ctx context.Context) (*GetOtherResponse, error) {
 	rsp, err := c.GetOther(ctx)
 	if err != nil {
 		return nil, err
@@ -738,7 +738,7 @@ func (c *client) GetOtherWithResponse(ctx context.Context) (*GetOtherResponse, e
 }
 
 // GetJsonWithTrailingSlashWithResponse request returning *GetJsonWithTrailingSlashResponse
-func (c *client) GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*GetJsonWithTrailingSlashResponse, error) {
+func (c *generatedClient) GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*GetJsonWithTrailingSlashResponse, error) {
 	rsp, err := c.GetJsonWithTrailingSlash(ctx)
 	if err != nil {
 		return nil, err
@@ -1035,15 +1035,15 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9SUz4oTQRDGX2UoPY6ZrN7mqAdZQVdMwEMMS6enku5lprutquwyhHl3qU7WTHBZI0hg",
-	"L6E69Yevvl9P78DGLsWAQRjqHbB12JkcznJ4s7pDK3pOFBOSeMzZtSeWL6ZDPUifEGpgIR82MJRAsX0q",
-	"oRn8ufWEDdSLfVU5GrUctMSHddTmBtmST+JjgBrmznMhyMLFg0NxSIU4LD60HoMUJjSH8LsX9w05xcDI",
-	"hSEsNhiQjGBT2EiEVtr+R4ASWm8xcNYZ8iLw+Xqu6sWLyoc5shQzpHskKOEeifdSribTyVQLY8Jgkoca",
-	"3k2mkysoIRlx2Z/qwYu7XcX80xxMS5GzlWqk0b2uG6jha2R5H8XB3h3UU9NrnY1BMOQWk1LrbW6q7lhl",
-	"PMLS6DXhGmp4VR1pVgeU1QlH9Xc8KlpBecNCaLrTketInRGoYeWDoR7KP2Ce0BTaYv7j4DzUYdu2WjNy",
-	"YpTdwQaf8OIjHq0Y1b6dTl+AH8Nw3Fc1Kfn+ee6fVPpFuP8Traz+MfscrN/6LwMrr8Fot+Slh3qxg5uE",
-	"WcwCdPCE0DRQ7mPTdD7Aclge94r6bpyB5UbrzuZysY9oL/8cLscFzgbz366+kPGtD5tbbg276m/XRx/s",
-	"+aFlph0v4D4Nw68AAAD//7fdvjU5BwAA",
+	"H4sIAAAAAAAC/9SUT2vbTBDGv4qY9z2qltPedGwPJYU2hRh6cE1Yr8bWBGl3OzNOEEbfvczaqW0aUheK",
+	"IRcz6/mjZ57fSlvwsU8xYFCBegviW+xdDm9zeLO8R692ThwTshLm7IpY9Ivr0Q46JIQaRJnCGsYSOHbP",
+	"JSyDPzbE2EA931WVR6MWo5VQWEVrblA8U1KKAWqYtSSFoqgUjy1qi1xoi8WHjjBoQVKsMSA7xabwkRm9",
+	"dsP3ACV05DFIlhOyXvh8PTORSmoqYYaixS3yAzKU8IAsuydeTaaTqRXGhMElghreTaaTKyghOW2zDdUj",
+	"aXu3jPmn2XuTomTHzC9n8q8bqOFrFH0ftYWdCWinZrA6H4NiyC0upY58bqruxWQ8MbHof8YV1PBfdYBW",
+	"7YlVJ7jMxuNR0SvqG1FG15+OXEXunUINSwqOByh/Y3YCTXmD+Q9JMYitGzZdZzVHThxlt7DGZ7z4iAcr",
+	"jmrfTqevwI9xPOxrmoz88DL3Tyb9Itz/ilZW/5R9CdYv/ZeBldcQ9BsmHaCeb+EmYRYzBxs8YXQNlLvY",
+	"NT0FWIyLw17RPg9nYLmxurO5XOwl2sk/h8thgbPB/LOrr+yoo7C+k85JW/3p+nwjbWf7llvreAX3aRx/",
+	"BgAA//+NBURdIAcAAA==",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

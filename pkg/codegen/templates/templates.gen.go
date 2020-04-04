@@ -275,9 +275,9 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
 {{$newClientFn := "NewClient" -}}
 {{$clientOption := "ClientOption" -}}
 {{if .MakeClientPrivate}}
-    {{$clientStruct = "client" -}}
-    {{$clientInterface = "clientInterface" -}}
-    {{$newClientFn = "newClient" -}}
+    {{$clientStruct = "generatedClient" -}}
+    {{$clientInterface = "generatedClientInterface" -}}
+    {{$newClientFn = "newGeneratedClient" -}}
     {{$clientOption = "clientOption" -}}
 {{end}}
 
@@ -356,15 +356,14 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 {{end}}{{/* range .Operations $opid := .OperationId */}}
 
 `,
-	"client.tmpl": `
-{{$clientStruct := "Client" -}}
+	"client.tmpl": `{{$clientStruct := "Client" -}}
 {{$clientInterface := "ClientInterface" -}}
 {{$newClientFn := "NewClient" -}}
 {{$clientOption := "ClientOption" -}}
 {{if .MakeClientPrivate}}
-    {{$clientStruct = "client" -}}
-    {{$clientInterface = "clientInterface" -}}
-    {{$newClientFn = "newClient" -}}
+    {{$clientStruct = "generatedClient" -}}
+    {{$clientInterface = "generatedClientInterface" -}}
+    {{$newClientFn = "newGeneratedClient" -}}
     {{$clientOption = "clientOption" -}}
 {{end}}
 

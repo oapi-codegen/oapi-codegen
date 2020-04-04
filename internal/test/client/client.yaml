@@ -5,7 +5,7 @@ info:
   license:
     name: MIT
   description: |
-    This tests whether the Client and ClientWithResponses are generated correctly
+    This tests whether the Client is generated correctly
 paths:
   /with_json_response:
     get:
