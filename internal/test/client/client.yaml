@@ -61,6 +61,18 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SchemaObject'
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchemaObject'
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /with_other_body:
     post:
       operationId: PostOther
@@ -95,3 +107,15 @@ components:
       required:
         - role
         - firstName
+    Error:
+      properties:
+        httpStatusCode:
+          type: integer
+        errorCode:
+          type: string
+        message:
+          type: string
+      required:
+        - httpStatusCode
+        - errorCode
+        - message
