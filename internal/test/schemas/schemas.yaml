@@ -8,6 +8,25 @@ info:
 servers:
   - url: http://openapitest.deepmap.ai
 paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      description: |
+        This endpoint exists so that components can be created in this
+        spec and not be pruned
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  anyType1:
+                    $ref: "#/components/schemas/AnyType1"
+                  anyType2:
+                    $ref: "#/components/schemas/AnyType2"
+                  customStringType:
+                    $ref: "#/components/schemas/CustomStringType"
   /issues/9:
     get:
       operationId: Issue9
@@ -47,6 +66,34 @@ paths:
           required: true
           schema:
             $ref: "#/components/schemas/5StartsWithNumber"
+  /issues/127:
+    get:
+      operationId: Issue127
+      description: |
+        Make sure unsupported context types don't preempt supported types.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/yaml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
 components:
   schemas:
     GenericObject:

@@ -307,9 +307,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -395,7 +392,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -433,6 +430,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
         if err := o(&client); err != nil {
             return nil, err
         }
+    }
+    // ensure the server URL always has a trailing slash
+    if !strings.HasSuffix(client.Server, "/") {
+        client.Server += "/"
     }
     // create httpClient, if not already present
     if client.Client == nil {
@@ -487,7 +488,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -503,7 +504,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     req = req.WithContext(ctx)
     if c.RequestEditor != nil {
-        err = c.RequestEditor(req, ctx)
+        err = c.RequestEditor(ctx, req)
         if err != nil {
             return nil, err
         }
@@ -714,18 +715,23 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 `,
 	"register.tmpl": `
 
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}
+
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
-                             	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-                             }, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,

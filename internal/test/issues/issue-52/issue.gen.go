@@ -92,7 +92,7 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -130,6 +130,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 		if err := o(&client); err != nil {
 			return nil, err
 		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
 	}
 	// create httpClient, if not already present
 	if client.Client == nil {
@@ -169,7 +173,7 @@ func (c *Client) ExampleGet(ctx context.Context) (*http.Response, error) {
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -229,9 +233,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -319,8 +320,10 @@ func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 	return err
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
 	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
@@ -330,7 +333,10 @@ func RegisterHandlers(router interface {
 	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}, si ServerInterface) {
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,

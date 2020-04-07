@@ -63,7 +63,7 @@ type AddPetJSONBody NewPet
 type AddPetJSONRequestBody AddPetJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -101,6 +101,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 		if err := o(&client); err != nil {
 			return nil, err
 		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
 	}
 	// create httpClient, if not already present
 	if client.Client == nil {
@@ -151,7 +155,7 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Re
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -166,7 +170,7 @@ func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -181,7 +185,7 @@ func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -196,7 +200,7 @@ func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -211,7 +215,7 @@ func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, err
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -425,9 +429,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err

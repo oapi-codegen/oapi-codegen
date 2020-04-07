@@ -249,7 +249,7 @@ type Client struct {
 
     // A callback for modifying requests which are generated before sending over
     // the network.
-    RequestEditor func(req *http.Request, ctx context.Context) error
+    RequestEditor func(ctx context.Context, req *http.Request) error
 }
 ```
 
@@ -369,7 +369,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         //
         // WithHTTPClient(httpClient *http.Client)
         //
-        client, clientErr := NewClient(context.Background(), []ClientOption{
+        client, clientErr := NewClient("https://api.deepmap.com", []ClientOption{
             WithBaseURL("https://api.deepmap.com"),
             WithRequestEditorFn(apiKeyProvider.Edit),
         }...,
@@ -398,6 +398,8 @@ you can specify any combination of those.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
 - `skip-fmt`: skip running `go fmt` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
+- `skip-prune`: skip pruning unused components from the spec prior to generating
+ the code.
 
 So, for example, if you would like to produce only the server code, you could
 run `oapi-generate -generate types,server`. You could generate `types` and

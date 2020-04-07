@@ -115,7 +115,7 @@ type GetQueryFormParams struct {
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(req *http.Request, ctx context.Context) error
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
 //
@@ -153,6 +153,10 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 		if err := o(&client); err != nil {
 			return nil, err
 		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
 	}
 	// create httpClient, if not already present
 	if client.Client == nil {
@@ -246,7 +250,7 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -261,7 +265,7 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -276,7 +280,7 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams) (*http.
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -291,7 +295,7 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -306,7 +310,7 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -321,7 +325,7 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +340,7 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object) (*ht
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -351,7 +355,7 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.R
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -366,7 +370,7 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object) (*http.R
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -381,7 +385,7 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +400,7 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -411,7 +415,7 @@ func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Respon
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -426,7 +430,7 @@ func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams)
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -441,7 +445,7 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams) (
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -456,7 +460,7 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32) (*htt
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -471,7 +475,7 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object) (*htt
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -486,7 +490,7 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -501,7 +505,7 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object) (*h
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -516,7 +520,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Res
 	}
 	req = req.WithContext(ctx)
 	if c.RequestEditor != nil {
-		err = c.RequestEditor(req, ctx)
+		err = c.RequestEditor(ctx, req)
 		if err != nil {
 			return nil, err
 		}
@@ -1532,9 +1536,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *Client) error {
-		if !strings.HasSuffix(baseURL, "/") {
-			baseURL += "/"
-		}
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -3075,8 +3076,10 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 	return err
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router interface {
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
 	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
@@ -3086,7 +3089,10 @@ func RegisterHandlers(router interface {
 	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}, si ServerInterface) {
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -3117,24 +3123,23 @@ func RegisterHandlers(router interface {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xaS2/bOBD+K8bsnhaq5bY33YLuK8D2sescFihyYKRxzK4ksiQdxDD03xd82LIelilH",
-	"lt3cGmk4883Hj9PhyBuIWcZZjrmSEG1AoOQsl2j+mNOMp/iPe6SfxCxXmCv9T4XPKuQpobn+S8ZLzIh5",
-	"vuYIEUglaP4IRVEEkKCMBeWKshwiuJlI43eyjTVhD98wVqBNrR8T/QPTVs+f7ctoA1wwjkJRC+422YtG",
-	"c4WPKKAI4FbeJJkF5V4+MJYiyfXL0tnPAhcQwU9hmX/ogoefSzwCv6+owASir9vFgQ5dxrmvuK1iXFAh",
-	"1SeSYQsxAQiWtr2oRTVWwZ6re8MpzRdML05pjG5zchMIPt7eae+KKu0e7lCqyRzFEwoI4AmFtNvwdjqb",
-	"zrQh45gTTiGC99PZ9C0EwIlaGvyh22+bX7jhRJCs0G8e0aSrkyV6X/VuwB+oPuwvMK4EyVChkBB9reiH",
-	"cJ7S2CwOv0lWU1HX9lSF4diAyMCGYEuDiQz7XCqxwuI+qGr83Wx2KN7OLqwdhMLEDGPG/qPYzYaxaNBQ",
-	"PRBc0Iwq+qQN8ZmnLEGIFiSV6BKLt262qVXScpYldwsmMqLsqXj/DoLGISkCLwiarwMIcHgILmwyIUKQ",
-	"tS8O0o2DKsykF6DdExu+BWADV9cWjYhrRxzbHjov5lg3Qr/6WMfShNBF0kAQzlVUqqnF1qBkuTWluCWn",
-	"4t6UiyWSBEVXufjTWry0XCy3bhymf9982VsybuHowPLmNyfcy5SSJrIbbe2JarTCcgDmtZWXJkx7kjzp",
-	"PEe1OQTpxy86zcyco4MZuhKUkgdM3Y4YGYWbqak1v3Q2dX/VlzVLVJsmfPqxYVQbgFRr0+2aDGGgLi8A",
-	"ucoyItYQ5as0bVC4bYv7cnioOx6CRB/9jk3XJ9amueN0Vdd18LV/7F+v6nZ0VHXXg8ejwnsJkVemvIwo",
-	"QZ9rwqNJ9yn92Fh0yimlydkVZ7Mbjb+d4noReHqdO8JgP6mNxVWjzNHEg6sBitwr0luzxvUj8QUV7gfT",
-	"HCdS3i0FWz0ufQZzX0rzzrFcj7HuRYZu31co1r8i8nLmeijlPasjV+oEkXffb0zYMs/Euj5ZMLXGv9RN",
-	"UmJ2PbuJ/DsTWVeqf++MjmTqdTWuJXu+IVuZt14KPa/GNZiXQ+l3Ra6zeoEBXA3CWRDsyDg2GqrzMdJU",
-	"u4OPIRBcci5QS6d9FjlcKbaf8ao9j8dNeN5Ydr3jBJviOf8br5BY+c7Wg8XrGSiMRVi91z7eAM1b1l3x",
-	"SGF0Iv2/8c7bFl7FUGEs0nbfMPzp2v8EUyPqJGI8pHUeVkztl+b3BBb+SqQQwVIpHoWh+zGBQqmmupfN",
-	"CJ8SqnvZ/wMAAP//xqb11moiAAA=",
+	"H4sIAAAAAAAC/9xZS2/jNhD+K8a0p0JreXdvugXbV4Duo3UOBRY5MNI45lYSuSQdJDD03wuSelIPS7aV",
+	"OHuzpeF8832cGQypPYQs4SzFVEkI9iBQcpZKNH/WNOEx/pM/0k9ClipMlf6p8FH5PCY01f9kuMWEmOdP",
+	"HCEAqQRN7yHLMg8ilKGgXFGWQgBXC2n8LgqsBbv7hqECbWr9GPQPTFs9frYvgz1wwTgKRW1w11ENjaYK",
+	"71FA5sG1vIoSG1T+8o6xGEmqX1bOfha4gQB+8iv+fg7uf67iEfh9RwVGEHwtFnsausK5bbhtxrihQqpP",
+	"JMEOYTwQLO564aAaK6/m6tZoStMN04tjGmK+OakBgo/XN9q7okq7hxuUarFG8YACPHhAIe02vF2ulitt",
+	"yDimhFMI4P1ytXwLHnCitiZ+P99vy8/fcyJIkuk392joarJE76veDfgD1Yf6AuNKkAQVCgnB10b+EM5j",
+	"GprF/jfJnCwa2p5mYuRqQGDCBq+QwSBDXUsldpjdes0cf7da9eGVdr5TCJnB9EPG/qM4rIaxaMnQLAgu",
+	"aEIVfdCG+MhjFiEEGxJLzImFhZuCGng1qTZMJETZInj/DrxWTWTeKEQtTw8gnoyYo0QLIgR5GgtLGrBU",
+	"YSJH4ZdPLFpHPK0whvSeL4xSFlYUzChdWCOgca3MhW4jDklwHOJc5d5kElqDSsNOBiEDp/jTXRybQt4i",
+	"iVAMFfKf1uLUQt4WbvKY/n3zpbZk1pIegH7zW56Fz1Lk7UCutHV3EM9W8j1RvXDht6OyVdAt1hx9oC+C",
+	"V9cO2kRyRwWhvuYQkzuMc71NTvj7pekCvwwOQn+5y9rNo2vHx8ww58lJD6R6MhOiYQjnnIzqmhWz41TR",
+	"+kbIc6g2JmFn1+cT68qqw/o01w0IVK/jHyivSv7NzJog3MHUOkW5l86thChBH53UotFw4X1sLTqm8Gg0",
+	"e05ZdvMJVubUJMWO71UHJJuWTLOJ02pVNBohzhka1WvOqHafmqbaCV3q0rOKEylvtoLt7rdjLpW+VOaD",
+	"V0oTriRf5MLo+w7F06+IvLov7KNcszpw6IwQ+fApwsBWPCPr+ugMcQbwKlGiKua+YdqE8jsTyRD3v0uj",
+	"A9RHnTcd9me7U6p466Uw8bzpRPVsQY07d7qazX/f5CCeA7CkeuhqxGU7z/XqANsjAF/yKO1E375YO6lJ",
+	"2o9DzXljxNFx3Vp2uQduS3E+1RqfaybIdjlH7tkUcifZw8PHumPdBR+651du/MfAddfCizh2z6ZSeak+",
+	"Xp/6JwBHmaOUGJE8c8mgXZsvzTb8nYghgK1SPPD9/DOzQqmWelJMCF8SCtlt9n8AAAD//xeCHE2EIAAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

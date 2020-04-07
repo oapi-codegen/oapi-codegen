@@ -38,6 +38,7 @@ type Options struct {
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go fmt on the generated code
+	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
@@ -90,6 +91,9 @@ var (
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
 	filterOperationsByTag(swagger, opts)
+	if !opts.SkipPrune {
+		pruneUnusedComponents(swagger)
+	}
 
 	// This creates the golang templates text package
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
@@ -510,47 +514,4 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
-}
-
-func filterOperationsByTag(swagger *openapi3.Swagger, opts Options) {
-	if len(opts.ExcludeTags) > 0 {
-		excludeOperationsWithTags(swagger.Paths, opts.ExcludeTags)
-	}
-	if len(opts.IncludeTags) > 0 {
-		includeOperationsWithTags(swagger.Paths, opts.IncludeTags, false)
-	}
-}
-
-func excludeOperationsWithTags(paths openapi3.Paths, tags []string) {
-	includeOperationsWithTags(paths, tags, true)
-}
-
-func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
-	for _, pathItem := range paths {
-		ops := pathItem.Operations()
-		names := make([]string, 0, len(ops))
-		for name, op := range ops {
-			if operationHasTag(op, tags) == exclude {
-				names = append(names, name)
-			}
-		}
-		for _, name := range names {
-			pathItem.SetOperation(name, nil)
-		}
-	}
-}
-
-//operationHasTag returns true if the operation is tagged with any of tags
-func operationHasTag(op *openapi3.Operation, tags []string) bool {
-	if op == nil {
-		return false
-	}
-	for _, hasTag := range op.Tags {
-		for _, wantTag := range tags {
-			if hasTag == wantTag {
-				return true
-			}
-		}
-	}
-	return false
 }
