@@ -138,12 +138,12 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "package testswagger")
 
 	// Check that response structs are generated correctly:
-	assert.Contains(t, code, "type getTestByNameResponse struct {")
+	assert.Contains(t, code, "type GetTestByNameResponse struct {")
 
 	// Check that response structs contains fallbacks to interface for invalid types:
 	// Here an invalid array with no items.
 	assert.Contains(t, code, `
-type getTestByNameResponse struct {
+type GetTestByNameResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]Test
@@ -154,15 +154,15 @@ type getTestByNameResponse struct {
 }`)
 
 	// Check that the helper methods are generated correctly:
-	assert.Contains(t, code, "func (r getTestByNameResponse) Status() string {")
-	assert.Contains(t, code, "func (r getTestByNameResponse) StatusCode() int {")
-	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*getTestByNameResponse, error) {")
+	assert.Contains(t, code, "func (r GetTestByNameResponse) Status() string {")
+	assert.Contains(t, code, "func (r GetTestByNameResponse) StatusCode() int {")
+	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {")
 
 	// Check the client method signatures:
 	assert.Contains(t, code, "type GetTestByNameParams struct {")
 	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*getTestByNameResponse, error) {")
+	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams) (*GetTestByNameResponse, error) {")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
