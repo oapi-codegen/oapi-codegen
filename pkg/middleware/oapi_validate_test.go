@@ -21,12 +21,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 var testSchema = `openapi: "3.0.0"
@@ -258,4 +258,18 @@ func TestOapiRequestValidator(t *testing.T) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
+}
+
+func TestGetSkipperFromOptions(t *testing.T) {
+
+	options := new(Options)
+	assert.NotNil(t, getSkipperFromOptions(options))
+
+	options = &Options{}
+	assert.NotNil(t, getSkipperFromOptions(options))
+
+	options = &Options{
+		Skipper: echomiddleware.DefaultSkipper,
+	}
+	assert.NotNil(t, getSkipperFromOptions(options))
 }
