@@ -81,6 +81,8 @@ func main() {
 			opts.SkipFmt = true
 		case "skip-prune":
 			opts.SkipPrune = true
+		case "graphql":
+			opts.GenerateGraphQL = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
