@@ -22,6 +22,7 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/swag"
 	"github.com/pkg/errors"
 )
 
@@ -50,6 +51,18 @@ func (pd *ParameterDefinition) JsonTag() string {
 	} else {
 		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
 	}
+}
+
+func (pd *ParameterDefinition) MimeType() *string {
+	if strings.HasSuffix(pd.ParamName, "Body") {
+		if strings.Contains(pd.ParamName, "Multipart") {
+			return swag.String("multipart/form-data")
+		}
+		if strings.Contains(pd.ParamName, "JSON") {
+			return swag.String("application/json")
+		}
+	}
+	return nil
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
@@ -227,6 +240,101 @@ func (o *OperationDefinition) AllParams() []ParameterDefinition {
 	return result
 }
 
+// Return all parameters for graphql query
+func (o *OperationDefinition) GetParams() []ParameterDefinition {
+	result := append(o.QueryParams, o.PathParams...)
+	return result
+}
+
+// MutationParams return all pararmeter for graphql mutation
+func (o *OperationDefinition) MutationParams() []ParameterDefinition {
+	result := append(o.QueryParams, o.PathParams...)
+	if o.BodyParams() != nil {
+		result = append(result, o.BodyParams()...)
+	}
+	return result
+}
+
+// BodyParam return the firt body as a parameter defition (as it is most often the case), to be used with graphql
+func (o *OperationDefinition) BodyParam() *ParameterDefinition {
+	pds := []ParameterDefinition{}
+	for _, b := range o.Bodies {
+		pds = append(pds, ParameterDefinition{
+			In:        "body",
+			ParamName: b.Schema.RefType,
+			Required:  b.Required,
+			Schema:    b.Schema,
+		})
+	}
+	if len(pds) > 0 {
+		return &pds[0]
+	}
+	return nil
+}
+
+// BodyParams return the body as a parameter defition, to be used with graphql
+func (o *OperationDefinition) BodyParams() []ParameterDefinition {
+	pds := []ParameterDefinition{}
+	for _, b := range o.Bodies {
+		pds = append(pds, ParameterDefinition{
+			In:        "body",
+			ParamName: b.Schema.RefType,
+			Required:  b.Required,
+			Schema:    b.Schema,
+		})
+	}
+	return pds
+}
+
+type GraphQLResponse struct {
+	IsArray  bool
+	GoType   string
+	Required bool
+}
+
+// GetGraphQLResponse return a response that is valid for graphql
+func (o *OperationDefinition) GetGraphQLResponse() (*GraphQLResponse, error) {
+	responses := o.Spec.Responses
+	valid := responses["200"]
+	if valid.Value != nil {
+		sortedContentKeys := SortedContentKeys(valid.Value.Content)
+		for _, contentTypeName := range sortedContentKeys {
+			contentType := valid.Value.Content[contentTypeName]
+			if contentType.Schema != nil {
+				if contentType.Schema.Value.Type == "object" && contentType.Schema.Ref == "" {
+					return &GraphQLResponse{
+						IsArray:  false,
+						GoType:   o.OperationId + "GQLResponse",
+						Required: false,
+					}, nil
+				}
+				if contentType.Schema.Value.Type == "array" {
+					if contentType.Schema.Value.Type == "object" && contentType.Schema.Ref == "" {
+						return &GraphQLResponse{
+							IsArray:  true,
+							GoType:   o.OperationId + "GQLResponse",
+							Required: false,
+						}, nil
+					}
+				}
+			}
+		}
+	}
+	// Get the normal response
+	res, err := o.GetResponseTypeDefinitions()
+	if err != nil {
+		return nil, err
+	}
+	// first response is the valid one
+	response := res[0]
+	sp := strings.SplitN(response.Schema.GoType, "[]", 2)
+	return &GraphQLResponse{
+		IsArray:  len(sp) > 1,
+		GoType:   strings.TrimPrefix(response.Schema.GoType, "[]"),
+		Required: false,
+	}, nil
+}
+
 // If we have parameters other than path parameters, they're bundled into an
 // object. Returns true if we have any of those. This is used from the template
 // engine.
@@ -288,8 +396,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 					// XML:
 					case StringInArray(contentTypeName, contentTypesXML):
 						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
-					default:
-						continue
+						// default:
+						// 	continue
 					}
 
 					td := TypeDefinition{
@@ -500,6 +608,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var defaultBody bool
 
 		switch contentType {
+		case "multipart/form-data":
+			tag = "Multipart"
+			defaultBody = true
 		case "application/json":
 			tag = "JSON"
 			defaultBody = true
