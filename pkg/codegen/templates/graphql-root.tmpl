@@ -1,0 +1,35 @@
+{{- if .HasQuery }}
+extend type Query {
+	{{- range .Operations -}}
+		{{- if eq .Method "GET" }}
+		{{-  if .Summary }}
+	# {{.Summary}} {{ end }}
+	{{ .OperationId}}
+			{{- if .GetParams -}}(
+			{{- range $i, $v := .GetParams -}}
+				{{- if ne $i 0}}, {{end -}}
+				{{- .ParamName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+			{{- end -}})
+			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
+		{{- end -}}
+	{{ end }}
+}
+{{- end }}
+
+{{- if .HasMutation }}
+extend type Mutation {
+	{{- range .Operations -}}
+		{{- if ne .Method "GET" }}
+			{{-  if .Summary }}
+	# {{.Summary}} {{ end }}
+	{{ .OperationId}}
+			{{- if .MutationParams -}}(
+			{{- range $i, $v := .MutationParams -}}
+				{{- if ne $i 0}},{{end -}}
+				{{- .ParamName}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
+			{{- end -}})
+			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
+		{{- end -}}
+	{{- end }}
+}
+{{- end }}

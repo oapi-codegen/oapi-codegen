@@ -1,0 +1,71 @@
+package graph
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"strconv"
+	"time"
+
+	"github.com/99designs/gqlgen/graphql"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+)
+
+// MarshalDate is a function that returns a marshaller we use it to encode and decode
+// onto any existing go type.
+func MarshalDate(a openapi_types.Date) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		t := a.Time
+		io.WriteString(w, strconv.Quote(t.Format(openapi_types.DateFormat)))
+	})
+}
+
+// UnmarshalDate is only required if the scalar appears as an input. The raw values have already been decoded
+func UnmarshalDate(v interface{}) (openapi_types.Date, error) {
+	if tmpStr, ok := v.(string); ok {
+		d := openapi_types.Date{}
+		t, err := time.Parse(openapi_types.DateFormat, tmpStr)
+		d.Time = t
+		if err != nil {
+			return openapi_types.Date{}, errors.New("Date input should be of type string and format 2006-01-02")
+		}
+		return d, nil
+	}
+	return openapi_types.Date{}, errors.New("Date input should be of type string and format 2006-01-02")
+}
+
+// MarshalFloat32 is a function that returns a marshaller we use it to encode and decode
+// onto any existing go type.
+func MarshalFloat32(f float32) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		io.WriteString(w, strconv.Quote(fmt.Sprintf("%v", f)))
+	})
+}
+
+// UnmarshalFloat32 is only required if the scalar appears as an input. The raw values have already been decoded
+func UnmarshalFloat32(v interface{}) (float32, error) {
+	if f, ok := v.(float32); ok {
+		return f, nil
+	}
+	return float32(0), errors.New("Input is not of type Float32")
+}
+
+// // MarshalDateTime is a function that returns a marshaller we use it to encode and decode
+// // onto any existing go type.
+// func MarshalDateTime(a time.Time) graphql.Marshaler {
+// 	return graphql.WriterFunc(func(w io.Writer) {
+// 		io.WriteString(w, strconv.Quote(a.Format(time.RFC3339))
+// 	})
+// }
+
+// // UnmarshalDateTime is only required if the scalar appears as an input. The raw values have already been decoded
+// func UnmarshalDateTime(v interface{}) (time.Time, error) {
+// 	if tmpStr, ok := v.(string); ok {
+// 		t, err := time.Parse(time.RFC3339, tmpStr)
+// 		if err != nil {
+// 			return time.Time{}, errors.New("DateTime input should be of type string and format time.RFC3339")
+// 		}
+// 		return t, nil
+// 	}
+// 	return time.Time{}, errors.New("DateTime input should be of type string and format time.RFC3339")
+// }

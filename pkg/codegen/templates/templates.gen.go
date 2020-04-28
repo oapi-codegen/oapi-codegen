@@ -660,6 +660,283 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
 {{end}}{{/* Range */}}
 `,
+	"go-scalars.tmpl": `package graph
+
+import (
+	"errors"
+	"fmt"
+	"io"
+	"strconv"
+	"time"
+
+	"github.com/99designs/gqlgen/graphql"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+)
+
+// MarshalDate is a function that returns a marshaller we use it to encode and decode
+// onto any existing go type.
+func MarshalDate(a openapi_types.Date) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		t := a.Time
+		io.WriteString(w, strconv.Quote(t.Format(openapi_types.DateFormat)))
+	})
+}
+
+// UnmarshalDate is only required if the scalar appears as an input. The raw values have already been decoded
+func UnmarshalDate(v interface{}) (openapi_types.Date, error) {
+	if tmpStr, ok := v.(string); ok {
+		d := openapi_types.Date{}
+		t, err := time.Parse(openapi_types.DateFormat, tmpStr)
+		d.Time = t
+		if err != nil {
+			return openapi_types.Date{}, errors.New("Date input should be of type string and format 2006-01-02")
+		}
+		return d, nil
+	}
+	return openapi_types.Date{}, errors.New("Date input should be of type string and format 2006-01-02")
+}
+
+// MarshalFloat32 is a function that returns a marshaller we use it to encode and decode
+// onto any existing go type.
+func MarshalFloat32(f float32) graphql.Marshaler {
+	return graphql.WriterFunc(func(w io.Writer) {
+		io.WriteString(w, strconv.Quote(fmt.Sprintf("%v", f)))
+	})
+}
+
+// UnmarshalFloat32 is only required if the scalar appears as an input. The raw values have already been decoded
+func UnmarshalFloat32(v interface{}) (float32, error) {
+	if f, ok := v.(float32); ok {
+		return f, nil
+	}
+	return float32(0), errors.New("Input is not of type Float32")
+}
+
+// // MarshalDateTime is a function that returns a marshaller we use it to encode and decode
+// // onto any existing go type.
+// func MarshalDateTime(a time.Time) graphql.Marshaler {
+// 	return graphql.WriterFunc(func(w io.Writer) {
+// 		io.WriteString(w, strconv.Quote(a.Format(time.RFC3339))
+// 	})
+// }
+
+// // UnmarshalDateTime is only required if the scalar appears as an input. The raw values have already been decoded
+// func UnmarshalDateTime(v interface{}) (time.Time, error) {
+// 	if tmpStr, ok := v.(string); ok {
+// 		t, err := time.Parse(time.RFC3339, tmpStr)
+// 		if err != nil {
+// 			return time.Time{}, errors.New("DateTime input should be of type string and format time.RFC3339")
+// 		}
+// 		return t, nil
+// 	}
+// 	return time.Time{}, errors.New("DateTime input should be of type string and format time.RFC3339")
+// }
+`,
+	"graphql-resolver.tmpl": `package graph
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"{{.CurrentModule}}/{{.ClientPackage}}"
+	{{if ne .ClientPackage .TypePackage}}"{{.CurrentModule}}/{{.TypePackage}}"{{end -}}
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+)
+
+{{$clientpackage := .ClientPackage}}
+{{$typepackage := .TypePackage}}
+
+// Resolver implement ResolverRoot
+type Resolver struct {
+	Client *{{$clientpackage}}.Client
+}
+
+{{- if .HasQuery }}
+// Query agregate all query resolvers
+func (r *Resolver) Query() QueryResolver {
+	return &Query{
+		Client: r.Client,
+	}
+}
+{{- end }}
+
+{{- if .HasMutation }}
+// Mutation aggregate all mutations resolvers
+func (r *Resolver) Mutation() MutationResolver {
+	return &Mutation{
+		Client: r.Client,
+	}
+}
+{{- end }}
+
+// New return a config with added resolvers
+func New(uri string) (*Config, error) {
+	cl, err := {{$clientpackage}}.NewClient(uri)
+	if err != nil {
+		return nil, err
+	}
+	return &Config{
+		Resolvers: &Resolver{
+			Client: cl,
+		},
+	}, nil
+}
+
+{{- if .HasMutation}}
+type Mutation struct {
+	Client *{{$clientpackage}}.Client
+}
+{{range .Operations}}
+{{if ne .Method "GET"}}
+{{if .Summary}}// {{.OperationId|toGo}} {{.Summary}}{{end}}
+func (m *Mutation) {{.OperationId|toGo}}(ctx context.Context{{range .MutationParams}}, {{.ParamName|lcFirst}} {{if not .Required}}*{{end}}{{if not .Schema.RefType}}{{isImport .Schema.GoType $typepackage}}{{end}}{{if .Schema.RefType}}{{isImport .Schema.RefType $typepackage}}{{end}}{{end}})({{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}, error) {
+	var result {{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}
+	{{- if .BodyParam}}
+	body, err := json.Marshal({{.BodyParam.ParamName|lcFirst}})
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.Client.{{.OperationId}}WithBody(ctx, "{{.BodyParam.MimeType}}"
+	{{- range .PathParams -}}
+	, {{.ParamName}}
+	{{- end -}}
+	, bytes.NewReader({{if .BodyParam}}body{{end}}{{if not .BodyParam}}[]byte{}{{end}}))
+	if err != nil {
+		return result, err
+	}
+	{{- end}}
+	{{- if not .BodyParam}}
+	res, err := m.Client.{{.OperationId}}(ctx{{range .PathParams}}, {{.ParamName}}{{end}}
+		{{- if .QueryParams}},
+		&{{$clientpackage}}.{{.OperationId}}Params{
+		{{- range .QueryParams}}
+			{{.ParamName|ucFirst}}: {{.ParamName}},
+		{{- end}}
+		}
+		{{- end -}})
+	if err != nil {
+		return result, err
+	}
+	{{- end}}
+	defer res.Body.Close()
+	if res.StatusCode == 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return result, err
+		}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			return result, err
+		}
+	}
+	return result, nil
+}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- if .HasQuery }}
+type Query struct {
+	Client *{{$clientpackage}}.Client
+}
+{{range .Operations}}
+{{if eq .Method "GET"}}
+{{if .Summary}}// {{.OperationId|toGo}} {{.Summary}}{{end}}
+func (q *Query) {{.OperationId|toGo}}(ctx context.Context{{range .GetParams}}, {{.ParamName}} {{if not .Required}}*{{end}}{{isImport .Schema.GoType $typepackage}}{{end}})({{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}, error) {
+	var result {{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}
+	res, err := q.Client.{{.OperationId}}(ctx{{range .PathParams}}, {{.ParamName}}{{end}}
+		{{- if .QueryParams}},
+		&{{$clientpackage}}.{{.OperationId}}Params{
+		{{- range .QueryParams}}
+			{{.ParamName|ucFirst}}: {{.ParamName}},
+		{{- end}}
+		}
+		{{- end -}})
+	if err != nil {
+		return result, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode == 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return result, err
+		}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			return result, err
+		}
+	}
+	return result, nil
+}
+{{end}}
+{{end}}
+{{- end }}`,
+	"graphql-root.tmpl": `{{- if .HasQuery }}
+extend type Query {
+	{{- range .Operations -}}
+		{{- if eq .Method "GET" }}
+		{{-  if .Summary }}
+	# {{.Summary}} {{ end }}
+	{{ .OperationId}}
+			{{- if .GetParams -}}(
+			{{- range $i, $v := .GetParams -}}
+				{{- if ne $i 0}}, {{end -}}
+				{{- .ParamName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+			{{- end -}})
+			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
+		{{- end -}}
+	{{ end }}
+}
+{{- end }}
+
+{{- if .HasMutation }}
+extend type Mutation {
+	{{- range .Operations -}}
+		{{- if ne .Method "GET" }}
+			{{-  if .Summary }}
+	# {{.Summary}} {{ end }}
+	{{ .OperationId}}
+			{{- if .MutationParams -}}(
+			{{- range $i, $v := .MutationParams -}}
+				{{- if ne $i 0}},{{end -}}
+				{{- .ParamName}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
+			{{- end -}})
+			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
+		{{- end -}}
+	{{- end }}
+}
+{{- end }}`,
+	"graphql-scalar.tmpl": `scalar Any
+scalar Date
+scalar Time
+scalar Float32`,
+	"graphql-types.tmpl": `{{- $kind := .Kind}}
+{{- range .Types}}
+{{- if eq $kind "type"}}
+
+{{- if .Schema.Properties}}
+type {{.TypeName}} {
+	{{- range .Schema.Properties}}
+	{{- if .Description}} 
+	# {{.Description}}{{end}}
+	{{.JsonFieldName|schemaNameToTypeName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+	{{- end }}
+}
+{{- end }}
+
+{{- end }}
+{{- if eq $kind "input"}}
+{{- if .Schema.Properties}}
+input {{.TypeName}}{{if not .IsBody}}Input{{end}} {
+	{{- range .Schema.Properties}}
+	{{- if .Description}} 
+	# {{.Description}}{{end}}
+	{{.JsonFieldName|schemaNameToTypeName}}: {{.Schema.GoType|toGraphQLInputType}}{{if .Required}}!{{end}}
+	{{- end }}
+}
+{{- end -}}
+{{- end -}}
+{{- end -}}`,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
 //
 // Code generated by github.com/deepmap/oapi-codegen DO NOT EDIT.

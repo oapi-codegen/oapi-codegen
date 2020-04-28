@@ -1,0 +1,27 @@
+{{- $kind := .Kind}}
+{{- range .Types}}
+{{- if eq $kind "type"}}
+
+{{- if .Schema.Properties}}
+type {{.TypeName}} {
+	{{- range .Schema.Properties}}
+	{{- if .Description}} 
+	# {{.Description}}{{end}}
+	{{.JsonFieldName|schemaNameToTypeName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+	{{- end }}
+}
+{{- end }}
+
+{{- end }}
+{{- if eq $kind "input"}}
+{{- if .Schema.Properties}}
+input {{.TypeName}}{{if not .IsBody}}Input{{end}} {
+	{{- range .Schema.Properties}}
+	{{- if .Description}} 
+	# {{.Description}}{{end}}
+	{{.JsonFieldName|schemaNameToTypeName}}: {{.Schema.GoType|toGraphQLInputType}}{{if .Required}}!{{end}}
+	{{- end }}
+}
+{{- end -}}
+{{- end -}}
+{{- end -}}

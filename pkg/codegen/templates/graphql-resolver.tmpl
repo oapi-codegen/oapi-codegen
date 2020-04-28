@@ -1,0 +1,139 @@
+package graph
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"io/ioutil"
+	"{{.CurrentModule}}/{{.ClientPackage}}"
+	{{if ne .ClientPackage .TypePackage}}"{{.CurrentModule}}/{{.TypePackage}}"{{end -}}
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+)
+
+{{$clientpackage := .ClientPackage}}
+{{$typepackage := .TypePackage}}
+
+// Resolver implement ResolverRoot
+type Resolver struct {
+	Client *{{$clientpackage}}.Client
+}
+
+{{- if .HasQuery }}
+// Query agregate all query resolvers
+func (r *Resolver) Query() QueryResolver {
+	return &Query{
+		Client: r.Client,
+	}
+}
+{{- end }}
+
+{{- if .HasMutation }}
+// Mutation aggregate all mutations resolvers
+func (r *Resolver) Mutation() MutationResolver {
+	return &Mutation{
+		Client: r.Client,
+	}
+}
+{{- end }}
+
+// New return a config with added resolvers
+func New(uri string) (*Config, error) {
+	cl, err := {{$clientpackage}}.NewClient(uri)
+	if err != nil {
+		return nil, err
+	}
+	return &Config{
+		Resolvers: &Resolver{
+			Client: cl,
+		},
+	}, nil
+}
+
+{{- if .HasMutation}}
+type Mutation struct {
+	Client *{{$clientpackage}}.Client
+}
+{{range .Operations}}
+{{if ne .Method "GET"}}
+{{if .Summary}}// {{.OperationId|toGo}} {{.Summary}}{{end}}
+func (m *Mutation) {{.OperationId|toGo}}(ctx context.Context{{range .MutationParams}}, {{.ParamName|lcFirst}} {{if not .Required}}*{{end}}{{if not .Schema.RefType}}{{isImport .Schema.GoType $typepackage}}{{end}}{{if .Schema.RefType}}{{isImport .Schema.RefType $typepackage}}{{end}}{{end}})({{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}, error) {
+	var result {{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}
+	{{- if .BodyParam}}
+	body, err := json.Marshal({{.BodyParam.ParamName|lcFirst}})
+	if err != nil {
+		return nil, err
+	}
+	res, err := m.Client.{{.OperationId}}WithBody(ctx, "{{.BodyParam.MimeType}}"
+	{{- range .PathParams -}}
+	, {{.ParamName}}
+	{{- end -}}
+	, bytes.NewReader({{if .BodyParam}}body{{end}}{{if not .BodyParam}}[]byte{}{{end}}))
+	if err != nil {
+		return result, err
+	}
+	{{- end}}
+	{{- if not .BodyParam}}
+	res, err := m.Client.{{.OperationId}}(ctx{{range .PathParams}}, {{.ParamName}}{{end}}
+		{{- if .QueryParams}},
+		&{{$clientpackage}}.{{.OperationId}}Params{
+		{{- range .QueryParams}}
+			{{.ParamName|ucFirst}}: {{.ParamName}},
+		{{- end}}
+		}
+		{{- end -}})
+	if err != nil {
+		return result, err
+	}
+	{{- end}}
+	defer res.Body.Close()
+	if res.StatusCode == 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return result, err
+		}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			return result, err
+		}
+	}
+	return result, nil
+}
+{{- end}}
+{{- end}}
+{{- end}}
+{{- if .HasQuery }}
+type Query struct {
+	Client *{{$clientpackage}}.Client
+}
+{{range .Operations}}
+{{if eq .Method "GET"}}
+{{if .Summary}}// {{.OperationId|toGo}} {{.Summary}}{{end}}
+func (q *Query) {{.OperationId|toGo}}(ctx context.Context{{range .GetParams}}, {{.ParamName}} {{if not .Required}}*{{end}}{{isImport .Schema.GoType $typepackage}}{{end}})({{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}, error) {
+	var result {{if.GetGraphQLResponse.IsArray}}[]{{end}}*{{isImport .GetGraphQLResponse.GoType $typepackage}}
+	res, err := q.Client.{{.OperationId}}(ctx{{range .PathParams}}, {{.ParamName}}{{end}}
+		{{- if .QueryParams}},
+		&{{$clientpackage}}.{{.OperationId}}Params{
+		{{- range .QueryParams}}
+			{{.ParamName|ucFirst}}: {{.ParamName}},
+		{{- end}}
+		}
+		{{- end -}})
+	if err != nil {
+		return result, err
+	}
+	defer res.Body.Close()
+	if res.StatusCode == 200 {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return result, err
+		}
+		err = json.Unmarshal(body, &result)
+		if err != nil {
+			return result, err
+		}
+	}
+	return result, nil
+}
+{{end}}
+{{end}}
+{{- end }}
