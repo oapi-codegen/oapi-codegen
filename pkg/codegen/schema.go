@@ -78,6 +78,10 @@ type TypeDefinition struct {
 	Schema       Schema
 }
 
+func (td TypeDefinition) IsBody() bool {
+	return strings.HasSuffix(td.TypeName, "Body")
+}
+
 func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
@@ -191,6 +195,37 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
+				}
+				// in case the property is an object with no references, generate a separate type instead of an inline struct
+				if p.Value.Type == "object" && p.Ref == "" {
+					pathName := PathToTypeName(path) + pName
+					outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, TypeDefinition{
+						TypeName: pathName,
+						JsonName: pName,
+						Schema:   pSchema,
+					})
+					prop.Schema = Schema{
+						GoType: pathName,
+					}
+				}
+				// in case the property is an array with items with no references, generate a separate type instead of an inline struct
+				if p.Value.Type == "array" && p.Value.Items.Value.Type == "object" && p.Value.Items.Ref == "" {
+					pathName := PathToTypeName(path) + pName
+					// remove the [] from GoType
+					// pSchema.GoType = strings.TrimPrefix(pSchema.GoType, "[]")
+					subSchema, _ := GenerateGoSchema(p.Value.Items, []string{pathName})
+					// if err != nil {
+					// 	return
+					// }
+					outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, TypeDefinition{
+						TypeName: pathName,
+						JsonName: pName,
+						Schema:   subSchema,
+					})
+					prop.Required = true
+					prop.Schema = Schema{
+						GoType: "[]*" + pathName,
+					}
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
