@@ -36,6 +36,7 @@ type Options struct {
 	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
 	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
+	GenerateGraphQL    bool              // Generate GraphQL types, resolvers and server using gqlgen
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go fmt on the generated code
 	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
@@ -167,6 +168,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
+	if opts.GenerateGraphQL {
+		_, err := GenerateGraphQL(t, swagger)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating graphql")
+		}
+	}
+
 	// Imports needed for the generated code to compile
 	var imports []string
 
@@ -256,28 +264,34 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, ops []OperationDefinition) (string, error) {
-	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas)
+	schemaTypes, err := GenerateTypesForSchemas(swagger.Components.Schemas)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component schemas")
 	}
 
-	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+	paramTypes, err := GenerateTypesForParameters(swagger.Components.Parameters)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component parameters")
 	}
 	allTypes := append(schemaTypes, paramTypes...)
 
-	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+	responseTypes, err := GenerateTypesForResponses(swagger.Components.Responses)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component responses")
 	}
 	allTypes = append(allTypes, responseTypes...)
 
-	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+	bodyTypes, err := GenerateTypesForRequestBodies(swagger.Components.RequestBodies)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component request bodies")
 	}
 	allTypes = append(allTypes, bodyTypes...)
+
+	customResponses, err := GenerateGraphQLCustomResponses(ops)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating graphql custome responses")
+	}
+	allTypes = append(allTypes, customResponses...)
 
 	paramTypesOut, err := GenerateTypesForOperations(t, ops)
 	if err != nil {
@@ -300,7 +314,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
-func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef) ([]TypeDefinition, error) {
+func GenerateTypesForSchemas(schemas map[string]*openapi3.SchemaRef) ([]TypeDefinition, error) {
 	types := make([]TypeDefinition, 0)
 	// We're going to define Go types for every object under components/schemas
 	for _, schemaName := range SortedSchemaKeys(schemas) {
@@ -324,7 +338,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 
 // Generates type definitions for any custom types defined in the
 // components/parameters section of the Swagger spec.
-func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
+func GenerateTypesForParameters(params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 	for _, paramName := range SortedParameterKeys(params) {
 		paramOrRef := params[paramName]
@@ -356,7 +370,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 // Generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
+func GenerateTypesForResponses(responses openapi3.Responses) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
 	for _, responseName := range SortedResponsesKeys(responses) {
@@ -395,7 +409,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 // Generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
-func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
+func GenerateTypesForRequestBodies(bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
