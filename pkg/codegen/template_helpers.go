@@ -20,6 +20,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/99designs/gqlgen/codegen/templates"
 	"github.com/labstack/echo/v4"
 )
 
@@ -257,6 +258,79 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+func ToGraphQLType(s string) string {
+	s = strings.Replace(s, "*", "", -1)
+	if sp := strings.Split(s, "[]"); len(sp) > 1 {
+		return "[" + ToGraphQLType(sp[1]) + "]"
+	}
+	switch s {
+	case "interface{}":
+		return "Any"
+	case "string":
+		return "String"
+	case "float32": // Float32 need to be handled with a special scalar
+		return "Float32"
+	case "float", "float64":
+		return "Float"
+	case "int", "int32", "int64":
+		return "Int"
+	case "bool":
+		return "Boolean"
+	case "time.Time":
+		return "Time"
+	case "openapi_types.Date":
+		return "Date"
+	default:
+		return s
+	}
+}
+
+func ToGraphQLInputType(s string) string {
+	s = strings.Replace(s, "*", "", -1)
+	if sp := strings.Split(s, "[]"); len(sp) > 1 {
+		return "[" + ToGraphQLInputType(sp[1]) + "]"
+	}
+	switch s {
+	case "interface{}":
+		return "Any"
+	case "string":
+		return "String"
+	case "float32": // Float32 need to be handled with a special scalar
+		return "Float32"
+	case "float", "float64":
+		return "Float"
+	case "int", "int32", "int64":
+		return "Int"
+	case "bool":
+		return "Boolean"
+	case "time.Time":
+		return "Time"
+	case "openapi_types.Date":
+		return "Date"
+	default:
+		return s + "Input"
+	}
+}
+
+func isInput(value string, inputs []string) bool {
+	for _, b := range inputs {
+		if b == value {
+			return true
+		}
+	}
+	return false
+}
+
+// IsImport check if the type is raw or needs to be concatenated with an imported package
+func IsImport(value string, packageName string) string {
+	switch value {
+	case "string", "float", "float32", "float64", "interface{}", "int", "int32", "int64", "bool", "time.Time", "openapi_types.Date":
+		return value
+	default:
+		return packageName + "." + value
+	}
+}
+
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -264,6 +338,8 @@ var TemplateFunctions = template.FuncMap{
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
 	"genParamFmtString":          genParamFmtString,
+	"isInput":                    isInput,
+	"isImport":                   IsImport,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"lcFirst":                    LowercaseFirstCharacter,
@@ -275,6 +351,10 @@ var TemplateFunctions = template.FuncMap{
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
+	"schemaNameToTypeName":       SchemaNameToTypeName,
 	"title":                      strings.Title,
+	"toGo":                       templates.ToGo,
 	"stripNewLines":              stripNewLines,
+	"toGraphQLType":              ToGraphQLType,
+	"toGraphQLInputType":         ToGraphQLInputType,
 }
