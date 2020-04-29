@@ -1,3 +1,9 @@
+{{- if eq .Kind "type"}}
+type {{.Module|schemaNameToTypeName}}Workaround @key(fields: "id") {
+  id: Int
+}
+{{- end}}
+
 {{- $kind := .Kind}}
 {{- range .Types}}
 {{- if eq $kind "type"}}

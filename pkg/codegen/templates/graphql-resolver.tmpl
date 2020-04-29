@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"{{.CurrentModule}}/{{.ClientPackage}}"
 	{{if ne .ClientPackage .TypePackage}}"{{.CurrentModule}}/{{.TypePackage}}"{{end -}}
@@ -12,10 +13,21 @@ import (
 
 {{$clientpackage := .ClientPackage}}
 {{$typepackage := .TypePackage}}
+{{$module := .Module|schemaNameToTypeName}}
 
 // Resolver implement ResolverRoot
 type Resolver struct {
 	Client *{{$clientpackage}}.Client
+}
+
+type Entity struct{}
+
+func (r *Resolver) Entity() EntityResolver {
+	return &Entity{}
+}
+
+func (e *Entity) Find{{$module}}WorkaroundByID(ctx context.Context, id *int) (*{{$module}}Workaround, error) {
+	return nil, errors.New("This is a workaround to enable federaiton")
 }
 
 {{- if .HasQuery }}

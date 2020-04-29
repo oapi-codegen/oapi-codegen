@@ -8,7 +8,7 @@ extend type Query {
 			{{- if .GetParams -}}(
 			{{- range $i, $v := .GetParams -}}
 				{{- if ne $i 0}}, {{end -}}
-				{{- .ParamName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+				{{- .ParamName|lcFirst}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
 			{{- end -}})
 			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
 		{{- end -}}
@@ -26,7 +26,7 @@ extend type Mutation {
 			{{- if .MutationParams -}}(
 			{{- range $i, $v := .MutationParams -}}
 				{{- if ne $i 0}},{{end -}}
-				{{- .ParamName}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
+				{{- .ParamName|lcFirst}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
 			{{- end -}})
 			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
 		{{- end -}}

@@ -738,6 +738,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"{{.CurrentModule}}/{{.ClientPackage}}"
 	{{if ne .ClientPackage .TypePackage}}"{{.CurrentModule}}/{{.TypePackage}}"{{end -}}
@@ -746,10 +747,21 @@ import (
 
 {{$clientpackage := .ClientPackage}}
 {{$typepackage := .TypePackage}}
+{{$module := .Module|schemaNameToTypeName}}
 
 // Resolver implement ResolverRoot
 type Resolver struct {
 	Client *{{$clientpackage}}.Client
+}
+
+type Entity struct{}
+
+func (r *Resolver) Entity() EntityResolver {
+	return &Entity{}
+}
+
+func (e *Entity) Find{{$module}}WorkaroundByID(ctx context.Context, id *int) (*{{$module}}Workaround, error) {
+	return nil, errors.New("This is a workaround to enable federaiton")
 }
 
 {{- if .HasQuery }}
@@ -881,7 +893,7 @@ extend type Query {
 			{{- if .GetParams -}}(
 			{{- range $i, $v := .GetParams -}}
 				{{- if ne $i 0}}, {{end -}}
-				{{- .ParamName}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
+				{{- .ParamName|lcFirst}}: {{.Schema.GoType|toGraphQLType}}{{if .Required}}!{{end}}
 			{{- end -}})
 			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
 		{{- end -}}
@@ -899,7 +911,7 @@ extend type Mutation {
 			{{- if .MutationParams -}}(
 			{{- range $i, $v := .MutationParams -}}
 				{{- if ne $i 0}},{{end -}}
-				{{- .ParamName}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
+				{{- .ParamName|lcFirst}}: {{if .Schema.RefType}}{{.Schema.RefType|toGraphQLType}}{{end}}{{if not .Schema.RefType}}{{.Schema.GoType|toGraphQLType}}{{end}}{{if .Required}}!{{end -}}
 			{{- end -}})
 			{{- end -}}: {{if.GetGraphQLResponse.IsArray}}[{{end}}{{.GetGraphQLResponse.GoType|toGraphQLType}}{{if.GetGraphQLResponse.IsArray}}]{{end}}{{if.GetGraphQLResponse.Required}}!{{end}}
 		{{- end -}}
@@ -910,7 +922,13 @@ extend type Mutation {
 scalar Date
 scalar Time
 scalar Float32`,
-	"graphql-types.tmpl": `{{- $kind := .Kind}}
+	"graphql-types.tmpl": `{{- if eq .Kind "type"}}
+type {{.Module|schemaNameToTypeName}}Workaround @key(fields: "id") {
+  id: Int
+}
+{{- end}}
+
+{{- $kind := .Kind}}
 {{- range .Types}}
 {{- if eq $kind "type"}}
 
