@@ -119,7 +119,9 @@ func main() {
 			errExit("error writing generated code to file: %s", err)
 		}
 	} else {
-		fmt.Println(code)
+		if !opts.GenerateGraphQL { // graphql do not require outputFile
+			fmt.Println(code)
+		}
 	}
 }
 
