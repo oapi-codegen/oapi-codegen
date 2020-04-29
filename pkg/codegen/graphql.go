@@ -18,6 +18,7 @@ import (
 )
 
 var rootPath string
+var module string
 
 func init() {
 	rep, err := find.Repo()
@@ -25,9 +26,13 @@ func init() {
 		panic(err)
 	}
 	rootPath = rep.Path
+	module, err = util.GetCurrentModule()
+	if err != nil {
+		panic(err)
+	}
 }
 
-func GenerateGraphQL(t *template.Template, swagger *openapi3.Swagger) (string, error) {
+func GenerateGraphQL(t *template.Template, swagger *openapi3.Swagger, packageName string) (string, error) {
 	// if err != nil {
 	// 	return "", err
 	// }
@@ -51,11 +56,11 @@ func GenerateGraphQL(t *template.Template, swagger *openapi3.Swagger) (string, e
 	if err != nil {
 		return s, err
 	}
-	s, err = GenerateResolvers(t, ops)
+	s, err = GenerateResolvers(t, ops, packageName)
 	if err != nil {
 		return s, err
 	}
-	err = GenerateGQLGen(swagger, ops)
+	err = GenerateGQLGen(swagger, ops, packageName)
 	if err != nil {
 		return "", errors.Wrap(err, "Error generating gqlgen")
 	}
@@ -96,14 +101,13 @@ func GenerateGraphQLSchema(t *template.Template, ops []OperationDefinition) (str
 	if err != nil {
 		return "", err
 	}
-	s := buf.String()
-	println(s)
 	return buf.String(), nil
 }
 
 type TypeConfig struct {
-	Kind  string
-	Types map[string]TypeDefinition
+	Module string
+	Kind   string
+	Types  map[string]TypeDefinition
 }
 
 func GetTypeDefinitions(swagger *openapi3.Swagger, ops []OperationDefinition) (map[string]TypeDefinition, error) {
@@ -152,8 +156,9 @@ func GenerateGraphQLTypes(t *template.Template, swagger *openapi3.Swagger, ops [
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	config := TypeConfig{
-		Kind:  "type",
-		Types: allTypes,
+		Module: module,
+		Kind:   "type",
+		Types:  allTypes,
 	}
 	err = t.ExecuteTemplate(w, "graphql-types.tmpl", config)
 	if err != nil {
@@ -230,8 +235,9 @@ func GenerateGraphQLInputs(t *template.Template, swagger *openapi3.Swagger, ops 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	config := TypeConfig{
-		Kind:  "input",
-		Types: inputs,
+		Module: module,
+		Kind:   "input",
+		Types:  inputs,
 	}
 	err = t.ExecuteTemplate(w, "graphql-types.tmpl", config)
 	if err != nil {
@@ -285,6 +291,7 @@ func GenerateScalars(t *template.Template) (string, error) {
 }
 
 type ResolverConfig struct {
+	Module        string
 	HasMutation   bool
 	HasQuery      bool
 	ClientPackage string
@@ -294,7 +301,7 @@ type ResolverConfig struct {
 }
 
 // GenerateResolvers generate resolvers for graphql
-func GenerateResolvers(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateResolvers(t *template.Template, ops []OperationDefinition, packageName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	m, err := util.GetCurrentModule()
@@ -311,10 +318,11 @@ func GenerateResolvers(t *template.Template, ops []OperationDefinition) (string,
 		}
 	}
 	cfg := ResolverConfig{
+		Module:        module,
 		HasQuery:      hasQuery,
 		HasMutation:   hasMutation,
-		ClientPackage: "codegen",
-		TypePackage:   "codegen",
+		ClientPackage: packageName,
+		TypePackage:   packageName,
 		CurrentModule: m,
 		Operations:    ops,
 	}
@@ -370,7 +378,7 @@ func GenerateGraphQLCustomResponses(ops []OperationDefinition) ([]TypeDefinition
 }
 
 // GenerateGQLGen generate the graphql server using github.com/99designs/gqlgen
-func GenerateGQLGen(swagger *openapi3.Swagger, ops []OperationDefinition) error {
+func GenerateGQLGen(swagger *openapi3.Swagger, ops []OperationDefinition, packageName string) error {
 	m, err := util.GetCurrentModule()
 	if err != nil {
 		return err
@@ -380,12 +388,17 @@ func GenerateGQLGen(swagger *openapi3.Swagger, ops []OperationDefinition) error 
 			Filename: rootPath + "/graph/main.go",
 			Package:  "graph",
 		},
+		Model: config.PackageConfig{
+			Filename: rootPath + "/graph/models.go",
+			Package:  "graph",
+		},
 		Directives: map[string]config.DirectiveConfig{},
-		AutoBind:   []string{m + "/codegen"},
-		// Federation: config.PackageConfig{
-		// 	Filename: rootPath + "/graph/federation.go",
-		// 	Package:  "graph",
-		// },
+		AutoBind:   []string{m + "/" + packageName},
+		Federation: config.PackageConfig{
+			Filename: rootPath + "/graph/federation.go",
+			Package:  "graph",
+		},
+		SkipValidation: true,
 	}
 	models := config.TypeMap{
 		"Float32": {Model: config.StringList{m + "/graph.Float32"}},
@@ -396,7 +409,7 @@ func GenerateGQLGen(swagger *openapi3.Swagger, ops []OperationDefinition) error 
 		return err
 	}
 	for _, t := range inputTypes {
-		models[t.TypeName+"Input"] = config.TypeMapEntry{Model: config.StringList{m + "/codegen." + t.TypeName}}
+		models[t.TypeName+"Input"] = config.TypeMapEntry{Model: config.StringList{m + "/" + packageName + "." + t.TypeName}}
 	}
 	cfg.Models = models
 	// @todo, add collected input gql types

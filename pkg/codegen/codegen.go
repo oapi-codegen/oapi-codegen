@@ -169,7 +169,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	if opts.GenerateGraphQL {
-		_, err := GenerateGraphQL(t, swagger)
+		_, err := GenerateGraphQL(t, swagger, packageName)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating graphql")
 		}
