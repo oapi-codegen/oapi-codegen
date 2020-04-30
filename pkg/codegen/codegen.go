@@ -114,14 +114,14 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	ops, err := OperationDefinitions(swagger)
+	ops, err := GenerateOperations(swagger)
 	if err != nil {
 		return "", errors.Wrap(err, "error creating operation definitions")
 	}
 
 	var typeDefinitions string
 	if opts.GenerateTypes {
-		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops)
+		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops.Definitions)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}

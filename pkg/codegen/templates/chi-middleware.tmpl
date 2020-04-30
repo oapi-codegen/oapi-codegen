@@ -1,5 +1,5 @@
 
-{{range .}}{{$opid := .OperationId}}
+{{range .Definitions}}{{$opid := .OperationId}}
 
 {{if .RequiresParamObject}}
 // ParamsFor{{.OperationId}} operation parameters from context

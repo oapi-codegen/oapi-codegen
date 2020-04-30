@@ -27,7 +27,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -36,10 +36,10 @@ type ClientWithResponsesInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .Definitions */}}
 }
 
-{{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{range .Definitions}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | ucFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
@@ -63,10 +63,10 @@ func (r {{$opid | ucFirst}}Response) StatusCode() int {
     }
     return 0
 }
-{{end}}
+{{end}}{{/* range .Definitions */}}
 
 
-{{range .}}
+{{range .Definitions}}
 {{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
 
@@ -92,10 +92,10 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 }
 {{end}}
 
-{{end}}{{/* operations */}}
+{{end}}{{/* range .Definitions */}}
 
 {{/* Generate parse functions for responses*/}}
-{{range .}}{{$opid := .OperationId}}
+{{range .Definitions}}{{$opid := .OperationId}}
 
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
@@ -111,5 +111,4 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
     return response, nil
 }
-{{end}}{{/* range . $opid := .OperationId */}}
-
+{{end}}{{/* range .Definitions */}}

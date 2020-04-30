@@ -193,6 +193,19 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
+// This structure describes an Operations
+type Operations struct {
+	Groups      []OperationGroup
+	Definitions []OperationDefinition
+}
+
+// This structure describes an OperationGroup
+type OperationGroup struct {
+	Name        string
+	Summary     string
+	Definitions []OperationDefinition
+}
+
 // This structure describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
@@ -206,6 +219,7 @@ type OperationDefinition struct {
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
 	Summary             string                  // Summary string from Swagger, used to generate a comment
+	Tags                []string                // Tags string array from Swagger, used in template for grouping
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
@@ -367,6 +381,62 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 	return out
 }
 
+func GenerateOperations(swagger *openapi3.Swagger) (Operations, error) {
+	defs, err := OperationDefinitions(swagger)
+	if err != nil {
+		return Operations{}, errors.Wrap(err, "error creating operation definitions")
+	}
+
+	grps := OperationGroups(swagger, defs)
+
+	ops := Operations{
+		Groups:      grps,
+		Definitions: defs,
+	}
+	return ops, nil
+}
+
+// OperationGroups returns all operation groups for a swagger definition.
+func OperationGroups(swagger *openapi3.Swagger, definitions []OperationDefinition) []OperationGroup {
+	var groups []OperationGroup
+
+	for _, tag := range swagger.Tags {
+		name := ToCamelCase(tag.Name)
+
+		var defs []OperationDefinition
+		for _, e := range definitions {
+			for _, t := range e.Tags {
+				if t == name {
+					defs = append(defs, e)
+				}
+			}
+		}
+
+		grp := OperationGroup{
+			Name:        name,
+			Summary:     tag.Description,
+			Definitions: defs,
+		}
+		groups = append(groups, grp)
+	}
+
+	// Default group for OperationDefinitions without tag.
+	var defs []OperationDefinition
+	for _, e := range definitions {
+		if len(e.Tags) == 0 {
+			defs = append(defs, e)
+		}
+	}
+
+	grp := OperationGroup{
+		Summary:     "Operations without tag",
+		Definitions: defs,
+	}
+	groups = append(groups, grp)
+
+	return groups
+}
+
 // OperationDefinitions returns all operations for a swagger definition.
 func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
@@ -417,6 +487,11 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				return nil, err
 			}
 
+			// All Tags to CamelCase.
+			for i := range op.Tags {
+				op.Tags[i] = ToCamelCase(op.Tags[i])
+			}
+
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
 				return nil, errors.Wrap(err, "error generating body definitions")
@@ -430,6 +505,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				OperationId:  ToCamelCase(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
+				Tags:            op.Tags,
 				Method:          opName,
 				Path:            requestPath,
 				Spec:            op,
@@ -652,7 +728,7 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateChiServer(t *template.Template, operations Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -681,7 +757,7 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateEchoServer(t *template.Template, operations Operations) (string, error) {
 	si, err := GenerateServerInterface(t, operations)
 	if err != nil {
 		return "", fmt.Errorf("Error generating server types and interface: %s", err)
@@ -700,7 +776,7 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 }
 
 // Uses the template engine to generate the server interface
-func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateServerInterface(t *template.Template, ops Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -719,7 +795,7 @@ func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (s
 // Uses the template engine to generate all the wrappers which wrap our simple
 // interface functions and perform marshallin/unmarshalling from HTTP
 // request objects.
-func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateWrappers(t *template.Template, ops Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -737,7 +813,7 @@ func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, 
 
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateRegistration(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateRegistration(t *template.Template, ops Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -755,7 +831,7 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClient(t *template.Template, ops Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -773,7 +849,7 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 
 // This generates a client which extends the basic client which does response
 // unmarshaling.
-func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClientWithResponses(t *template.Template, ops Operations) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 

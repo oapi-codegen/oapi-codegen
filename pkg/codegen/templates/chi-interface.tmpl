@@ -1,5 +1,5 @@
 type ServerInterface interface {
-{{range .}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
+{{range .Definitions}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
 }

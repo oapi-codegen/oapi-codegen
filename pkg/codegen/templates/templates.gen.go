@@ -80,7 +80,7 @@ func Handler(si ServerInterface) http.Handler {
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-{{range .}}r.Group(func(r chi.Router) {
+{{range .Definitions}}r.Group(func(r chi.Router) {
   r.Use({{.OperationId}}Ctx)
   r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", si.{{.OperationId}})
 })
@@ -89,13 +89,13 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 }
 `,
 	"chi-interface.tmpl": `type ServerInterface interface {
-{{range .}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
+{{range .Definitions}}// {{.Summary | stripNewLines }} ({{.Method}} {{.Path}})
 {{.OperationId}}(w http.ResponseWriter, r *http.Request)
 {{end}}
 }
 `,
 	"chi-middleware.tmpl": `
-{{range .}}{{$opid := .OperationId}}
+{{range .Definitions}}{{$opid := .OperationId}}
 
 {{if .RequiresParamObject}}
 // ParamsFor{{.OperationId}} operation parameters from context
@@ -299,7 +299,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -308,10 +308,10 @@ type ClientWithResponsesInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .Definitions */}}
 }
 
-{{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{range .Definitions}}{{$opid := .OperationId}}{{$op := .}}
 type {{$opid | ucFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
@@ -335,10 +335,10 @@ func (r {{$opid | ucFirst}}Response) StatusCode() int {
     }
     return 0
 }
-{{end}}
+{{end}}{{/* range .Definitions */}}
 
 
-{{range .}}
+{{range .Definitions}}
 {{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
 
@@ -364,10 +364,10 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 }
 {{end}}
 
-{{end}}{{/* operations */}}
+{{end}}{{/* range .Definitions */}}
 
 {{/* Generate parse functions for responses*/}}
-{{range .}}{{$opid := .OperationId}}
+{{range .Definitions}}{{$opid := .OperationId}}
 
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
@@ -383,8 +383,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
 
     return response, nil
 }
-{{end}}{{/* range . $opid := .OperationId */}}
-
+{{end}}{{/* range .Definitions */}}
 `,
 	"client.tmpl": `// RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -457,7 +456,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -466,12 +465,12 @@ type ClientInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .Definitions */}}
 }
 
 
 {{/* Generate client methods */}}
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -507,10 +506,10 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     return c.Client.Do(req)
 }
 {{end}}{{/* range .Bodies */}}
-{{end}}
+{{end}}{{/* range .Definitions}}}
 
 {{/* Generate request builders */}}
-{{range .}}
+{{range .Definitions}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
@@ -658,7 +657,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     return req, nil
 }
 
-{{end}}{{/* Range */}}
+{{end}}{{/* Range .Definitions*/}}
 `,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
 //
@@ -727,12 +726,12 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
-{{if .}}
+{{if .Definitions}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .Definitions}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
 `,
@@ -745,7 +744,7 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 `,
 	"server-interface.tmpl": `// ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{.SummaryAsComment }}
+{{range .Definitions}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
@@ -761,7 +760,7 @@ type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+{{range .Definitions}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------

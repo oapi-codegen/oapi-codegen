@@ -69,7 +69,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -78,12 +78,12 @@ type ClientInterface interface {
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{end}}{{/* range .Definitions */}}
 }
 
 
 {{/* Generate client methods */}}
-{{range . -}}
+{{range .Definitions -}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
@@ -119,10 +119,10 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     return c.Client.Do(req)
 }
 {{end}}{{/* range .Bodies */}}
-{{end}}
+{{end}}{{/* range .Definitions}}}
 
 {{/* Generate request builders */}}
-{{range .}}
+{{range .Definitions}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
@@ -270,4 +270,4 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     return req, nil
 }
 
-{{end}}{{/* Range */}}
+{{end}}{{/* Range .Definitions*/}}
