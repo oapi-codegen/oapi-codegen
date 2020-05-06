@@ -754,6 +754,15 @@ type ServerInterface interface {
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
+{{- if gt (len .Schema.EnumValues) 0 }}
+// List of {{ .TypeName }}
+const (
+	{{- $typeName := .TypeName }}
+    {{- range .Schema.EnumValues }}
+    {{ $typeName }}_{{ . }} {{ $typeName }} = "{{ . }}"
+    {{- end }}
+)
+{{- end }}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
