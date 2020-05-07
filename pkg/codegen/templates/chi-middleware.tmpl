@@ -113,7 +113,7 @@ func {{$opid}}Ctx(next http.Handler) http.Handler {
             params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
           } {{if .Required}}else {
-              http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found", err), http.StatusBadRequest)
+              http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
               return
           }{{end}}
 
