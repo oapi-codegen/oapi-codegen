@@ -24,6 +24,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 const EchoContextKey = "oapi-codegen/echo-context"
@@ -59,13 +60,19 @@ type Options struct {
 	Options      openapi3filter.Options
 	ParamDecoder openapi3filter.ContentParameterDecoder
 	UserData     interface{}
+	Skipper      echomiddleware.Skipper
 }
 
 // Create a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) echo.MiddlewareFunc {
 	router := openapi3filter.NewRouter().WithSwagger(swagger)
+	skipper := getSkipperFromOptions(options)
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
+			if skipper(c) {
+				return next(c)
+			}
+
 			err := ValidateRequestFromContext(c, router, options)
 			if err != nil {
 				return err
@@ -166,4 +173,17 @@ func GetEchoContext(c context.Context) echo.Context {
 
 func GetUserData(c context.Context) interface{} {
 	return c.Value(UserDataKey)
+}
+
+// attempt to get the skipper from the options whether it is set or not
+func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
+	if options == nil {
+		return echomiddleware.DefaultSkipper
+	}
+
+	if options.Skipper == nil {
+		return echomiddleware.DefaultSkipper
+	}
+
+	return options.Skipper
 }
