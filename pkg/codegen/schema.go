@@ -57,6 +57,7 @@ type Property struct {
 	JsonFieldName string
 	Schema        Schema
 	Required      bool
+	Nullable      bool
 }
 
 func (p Property) GoFieldName() string {
@@ -65,7 +66,7 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && !p.Required {
+	if !p.Schema.SkipOptionalPointer && (!p.Required || p.Nullable) {
 		typeDef = "*" + typeDef
 	}
 	return typeDef
@@ -191,6 +192,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
+					Nullable:      p.Value.Nullable,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -299,7 +301,7 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required {
+		if p.Required || p.Nullable {
 			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {
 			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)

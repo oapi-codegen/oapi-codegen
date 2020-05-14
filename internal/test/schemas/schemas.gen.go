@@ -37,6 +37,17 @@ type CustomStringType string
 // GenericObject defines model for GenericObject.
 type GenericObject map[string]interface{}
 
+// NullableProperties defines model for NullableProperties.
+type NullableProperties struct {
+	Optional            *string `json:"optional,omitempty"`
+	OptionalAndNullable *string `json:"optionalAndNullable"`
+	Required            string  `json:"required"`
+	RequiredAndNullable *string `json:"requiredAndNullable"`
+}
+
+// Issue185JSONBody defines parameters for Issue185.
+type Issue185JSONBody NullableProperties
+
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody interface{}
 
@@ -44,6 +55,9 @@ type Issue9JSONBody interface{}
 type Issue9Params struct {
 	Foo string `json:"foo"`
 }
+
+// Issue185RequestBody defines body for Issue185 for application/json ContentType.
+type Issue185JSONRequestBody Issue185JSONBody
 
 // Issue9RequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody Issue9JSONBody
@@ -125,6 +139,11 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context) (*http.Response, error)
 
+	// Issue185 request  with any body
+	Issue185WithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error)
+
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
@@ -154,6 +173,36 @@ func (c *Client) EnsureEverythingIsReferenced(ctx context.Context) (*http.Respon
 
 func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
 	req, err := NewIssue127Request(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewIssue185RequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error) {
+	req, err := NewIssue185Request(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +327,45 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	return req, nil
+}
+
+// NewIssue185Request calls the generic Issue185 builder with application/json body
+func NewIssue185Request(server string, body Issue185JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIssue185RequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewIssue185RequestWithBody generates requests for Issue185 with any type of body
+func NewIssue185RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/issues/185")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -439,6 +527,11 @@ type ClientWithResponsesInterface interface {
 	// Issue127 request
 	Issue127WithResponse(ctx context.Context) (*Issue127Response, error)
 
+	// Issue185 request  with any body
+	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error)
+
+	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error)
+
 	// Issue30 request
 	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
 
@@ -498,6 +591,27 @@ func (r Issue127Response) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r Issue127Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type Issue185Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r Issue185Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r Issue185Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -583,6 +697,23 @@ func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue1
 		return nil, err
 	}
 	return ParseIssue127Response(rsp)
+}
+
+// Issue185WithBodyWithResponse request with arbitrary body returning *Issue185Response
+func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error) {
+	rsp, err := c.Issue185WithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue185Response(rsp)
+}
+
+func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error) {
+	rsp, err := c.Issue185(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue185Response(rsp)
 }
 
 // Issue30WithResponse request returning *Issue30Response
@@ -705,6 +836,25 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	return response, nil
 }
 
+// ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
+func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue185Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
 func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -771,6 +921,9 @@ type ServerInterface interface {
 	// (GET /issues/127)
 	Issue127(ctx echo.Context) error
 
+	// (GET /issues/185)
+	Issue185(ctx echo.Context) error
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
 
@@ -801,6 +954,15 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue127(ctx)
+	return err
+}
+
+// Issue185 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue185(ctx)
 	return err
 }
 
@@ -878,6 +1040,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 
 	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
 	router.GET("/issues/127", wrapper.Issue127)
+	router.GET("/issues/185", wrapper.Issue185)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
@@ -887,21 +1050,22 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RWwW4bNxD9lQFboBdZK8kpiuytDYLChzZBbKCH2gdqOdIy3h0y5FD2Qth/L4YrWRtL",
-	"chu4OZmWODPvzTy+0VZVrvWOkDiqcqtiVWOr8/Hna9aB41+W6z9Tu8QgHxqMVbCerSNVqpvaRhhCgHSL",
-	"EHMIPFiuQQMNYRPFnUdVKrf8jBWrfqJ+pe6m8zhX5fbw3+JcgdqlxsASQRNYYgwrXeG2l0TvUmTXXnOw",
-	"tL7JVbZq5UKrWZWqyl8e6sd8TcJ+R8Jgqw8DoHL7HGHfT5SllTuBCCNDpSNGWLkAGx2sSxFsjCl/lMiA",
-	"22AAti1O4WODOiJoY0AD72Ml9JY0dbBMa1jZRzTTWxKglhvcV7nGsMnt22CIQ/X5dDadCQHnkbS3qlSX",
-	"09l0ribKa67z3AqkmAJe4AZDx7Wl9YWNFwFXGJAqNHJnjXym2UjGO0sM+GgjR4gOuNYMB5lApUmGUQXU",
-	"jAYsAdc23lL0WIEmA+RYLviQCE3m5TwGLWWujCrV+wzw/RO+q/jpgG6iAkbvKGJms5jN5E/liJEyaO19",
-	"Y6ucrfgcBfletnLyQWqxHaL1QWfqx4ArVaofigOVYif34kmP/WQfs/iPMQuJqU7I8KXYI9mK4I402Gcd",
-	"FoO2ivnil7Oj+0PfI0hTIVFM3rsgk8lNe2SQxBGMo58YfEBsPcPhVv52emJMV1JXqr5yJC814uuHKHTH",
-	"uR7b5jWphHzR6nBv3AO9OlGnX4NG0hhc6dTwd2ze/8T4mfIuZ8V2pZuG6+DSuu6P9fcJo5iVgXvsHlww",
-	"Y9P2AbPDiVGIXeplg3lb7ES3E/QJ7V3OvpYepabpxemCbpExRFX+vVVWAIj7qYmStKpUI7A5w5dkgxgf",
-	"h4STUU+e7YX+bkT6zbzYznOp/uyz+7hHMtp+ltbD/nvafieYvRkc+994DPVfpPDSWI83eN/fHXd0RPrt",
-	"WarvGovEkAHF7BlgqXIhYMVNJ+cmGTR5KQpaWWC5DUtnOtkKt3Tge9Zt3p5py5eEoRvN17lvm+twGSP/",
-	"5kz3Le9v927HnfiQD7rJzMT8j/rZT1R+DjsGKTSqVDWzL4tit7jlp8DUIPpW+6m2qr/r/wkAAP//q2vq",
-	"DYsJAAA=",
+	"H4sIAAAAAAAC/7RW32/bNhD+Vw7cgL04lp00WKu3riiGPKwNmgB7aPJAi2eLjXRkyWMSwdD/PpCyIqWW",
+	"vXVpnyxLvLvv++4Xt6IwtTWExF7kW+GLEmuZHs+vWDr2f2suP4R6hS6+VOgLpy1rQyIX16X20JkAyRrB",
+	"JxN40FyCBOrMZoIbiyIXZvUFCxbtTLyl5rqxuBT5dvh3eihAaUKlYIUgCTQxurUscNtGR++CZ1NfsdO0",
+	"uU5RtmJtXC1Z5KJIH4f4Ph2LZn8iodPFxw5Qvt1H+CFUlVxVeOmMRccakyb22T+TYMpq5GAI0X98S6r3",
+	"Fc/R0zO7gBPQHH4N2qGadNp//D6nz7x+Hp6n/d3u5Ss60LQ2E/lBz1BIjx7WxsG9dNoED9r7kF4FUmDu",
+	"0QHrGudwWaH0CFIpkMC9bTS9IUkNrMIG1voR1fyGYto0R05dlCt096mY7tH5LvpyvpgvOq2RpNUiF2fz",
+	"xXwpZsJKLlOOMiQfHJ7gPbqGS02bE+1PHK7RIRWdzBvkA6WHpKzRxICP2rMHb4BLyTA0DRSSYmkWDiWj",
+	"Ak3ApfY35C0WIEkBGY4HrAuEKvGKNSRjmAslcvE+AXz/hO/CfxrQxRR5a8h3FXe6WMSfwhAjJdDS2koX",
+	"yVv2xUfkfRPv16scuk786nAtcvFLNlDJds2fPXVnO+ttTv+jzWm0KSaa8pjtXhPHgturwTbVYdbVVrY8",
+	"/f1g6v6SdwhRVAjkg7XGxcwk0R4ZomMPytBvDNYh1pZhOJW+zifSdBHjxqgvTMkxIZ6PpUh37Ouxrl7i",
+	"KpLPaunulHmgFztq5EvQRDcK1zJU/BPF+0GMv6281+eHh0ZjETbRPjGAhxIJ+k2Q9dMWhrYE6RD68X24",
+	"7F6f74Y1ev7DqOaHiTax5jq2oxqP8MYCnC2y7VpWFZfOhE3Z7svwCX2c1grusHkwTo13uHWYRnyclHFf",
+	"xOjp8rDrup2uEyqcLcQ+rjjqnayR0XmRf94KHQHE8S9mIroVuRiBFeNV2C3LQahv1+btiPSrZbZdplDt",
+	"wexf9khGlyFNm+469HQZmmD2qltZ/8aji3+UwrFc71/o2vb2aKbfHKT6rtJIDAmQT0MTNBXGOSy4auJz",
+	"FRSqdCvY1W0nw8qoJq7FGxr4Hqz7Nwdk+RrQNaP8GvN9ef3fvbQbXGMlPu66OzETU53TzkRqhx2D4CqR",
+	"i5LZ5lm2u7nEu9BcIdpa2rnUor1t/wkAAP//DG3tepoLAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
