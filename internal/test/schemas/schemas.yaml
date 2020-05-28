@@ -94,6 +94,16 @@ paths:
             text/markdown:
               schema:
                 $ref: "#/components/schemas/GenericObject"
+  /issues/185:
+    get:
+      operationId: Issue185
+      description: |
+        Type generation when optional/required properties are nullable.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NullableProperties"
 components:
   schemas:
     GenericObject:
@@ -104,6 +114,22 @@ components:
     CustomStringType:
       type: string
       format: custom
+    NullableProperties:
+      type: object
+      properties:
+        optional:
+          type: string
+          nullable: false
+        optionalAndNullable:
+          type: string
+          nullable: true
+        required:
+          type: string
+          nullable: false
+        requiredAndNullable:
+          type: string
+          nullable: true
+      required: [required, requiredAndNullable]
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
