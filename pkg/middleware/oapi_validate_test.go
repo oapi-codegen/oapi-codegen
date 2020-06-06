@@ -48,6 +48,7 @@ paths:
             maximum: 100
       responses:
         '200':
+            description: No content
             content:
               application/json:
                 schema:
