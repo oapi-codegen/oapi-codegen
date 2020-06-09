@@ -302,9 +302,9 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 		if p.Required || p.Nullable {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
+                        field += fmt.Sprintf(" `json:\"%s\" bson:\"%s\"`", p.JsonFieldName, p.JsonFieldName)
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+                        field += fmt.Sprintf(" `json:\"%s,omitempty\" bson:\"%s,omitempty\"`", p.JsonFieldName, p.JsonFieldName)
 		}
 		fields = append(fields, field)
 	}
@@ -405,7 +405,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 			objectParts = append(objectParts,
 				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
 			objectParts = append(objectParts,
-				fmt.Sprintf("   %s", goType))
+                                fmt.Sprintf("   %s `bson:\",inline\"`", goType))
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
