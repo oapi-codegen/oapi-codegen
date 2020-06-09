@@ -12,7 +12,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/tidepool-org/oapi-codegen/pkg/types"
 )
 
 func marshalDeepObject(in interface{}, path []string) ([]string, error) {

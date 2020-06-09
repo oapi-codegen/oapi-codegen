@@ -9,7 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/tidepool-org/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
 	"net/http"

@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
+	"github.com/tidepool-org/oapi-codegen/examples/petstore-expanded/chi/api"
 )
 
 func DoJson(handler http.Handler, method string, url string, body interface{}) *httptest.ResponseRecorder {

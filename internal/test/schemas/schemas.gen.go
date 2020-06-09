@@ -11,7 +11,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/tidepool-org/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/yaml.v2"
