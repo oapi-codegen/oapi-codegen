@@ -10,7 +10,3 @@ script:
   - go generate ./pkg/codegen/templates
   - go generate ./...
   - go mod tidy
-  - git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
-notifications:
-  email:
-    on_success: never
