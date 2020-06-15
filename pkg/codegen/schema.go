@@ -13,6 +13,8 @@ type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
 
+	EnumValues []string // Enum values
+
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
@@ -251,6 +253,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 			outSchema.GoType = "bool"
 		case "string":
+			for _, enumValue := range schema.Enum {
+				outSchema.EnumValues = append(outSchema.EnumValues, enumValue.(string))
+			}
 			// Special case string formats here.
 			switch f {
 			case "byte":
