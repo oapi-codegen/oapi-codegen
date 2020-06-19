@@ -284,7 +284,8 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -299,7 +300,8 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	var req *http.Request
+	req, err = http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +314,8 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 func NewGetBothRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +330,8 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	var req *http.Request
+	req, err = http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -350,7 +354,8 @@ func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Requ
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +370,8 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	var req *http.Request
+	req, err = http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -378,7 +384,8 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 func NewGetJsonRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -393,7 +400,8 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	var req *http.Request
+	req, err = http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +413,8 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -420,7 +429,8 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	var req *http.Request
+	req, err = http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +443,8 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 func NewGetOtherRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +459,8 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	var req *http.Request
+	req, err = http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -460,7 +472,8 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	var queryUrl *url.URL
+	queryUrl, err = url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +488,8 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	var req *http.Request
+	req, err = http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
 		return nil, err
 	}

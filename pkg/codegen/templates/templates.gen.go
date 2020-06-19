@@ -552,7 +552,8 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
     {{end}}
 {{end}}
-    queryUrl, err := url.Parse(server)
+    var queryUrl *url.URL
+    queryUrl, err = url.Parse(server)
     if err != nil {
         return nil, err
     }
@@ -568,13 +569,20 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
 {{if .QueryParams}}
     queryValues := queryUrl.Query()
+
+    var queryFrag string
+    var parsed url.Values
+    var queryParamBuf []byte
+    _ = queryFrag
+    _ = parsed
+    _ = queryParamBuf
 {{range $paramIdx, $param := .QueryParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     {{if .IsPassThrough}}
     queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
     {{end}}
     {{if .IsJson}}
-    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryParamBuf, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else {
         queryValues.Add("{{.ParamName}}", string(queryParamBuf))
@@ -582,9 +590,9 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryFrag, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+    } else if parsed, err = url.ParseQuery(queryFrag); err != nil {
        return nil, err
     } else {
        for k, v := range parsed {
@@ -598,7 +606,8 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{end}}
     queryUrl.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    var req *http.Request
+    req, err = http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
