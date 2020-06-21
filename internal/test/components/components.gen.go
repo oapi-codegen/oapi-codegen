@@ -1352,15 +1352,15 @@ type EchoRouter interface {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface, m ...echo.MiddlewareFunc) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET("/params_with_add_props", wrapper.ParamsWithAddProps)
-	router.POST("/params_with_add_props", wrapper.BodyWithAddProps)
+	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, m...)
+	router.GET("/params_with_add_props", wrapper.ParamsWithAddProps, m...)
+	router.POST("/params_with_add_props", wrapper.BodyWithAddProps, m...)
 
 }
 

@@ -1032,18 +1032,18 @@ type EchoRouter interface {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface, m ...echo.MiddlewareFunc) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET("/issues/127", wrapper.Issue127)
-	router.GET("/issues/185", wrapper.Issue185)
-	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET("/issues/41/:1param", wrapper.Issue41)
-	router.GET("/issues/9", wrapper.Issue9)
+	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, m...)
+	router.GET("/issues/127", wrapper.Issue127, m...)
+	router.GET("/issues/185", wrapper.Issue185, m...)
+	router.GET("/issues/30/:fallthrough", wrapper.Issue30, m...)
+	router.GET("/issues/41/:1param", wrapper.Issue41, m...)
+	router.GET("/issues/9", wrapper.Issue9, m...)
 
 }
 

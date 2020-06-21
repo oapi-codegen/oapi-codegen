@@ -37,12 +37,11 @@ func main() {
 	e := echo.New()
 	// Log all requests
 	e.Use(echomiddleware.Logger())
-	// Use our validation middleware to check all requests against the
-	// OpenAPI schema.
-	e.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
-	api.RegisterHandlers(e, petStore)
+	// and use the validation middleware to check all requests against the
+	// OpenAPI schema.
+	api.RegisterHandlers(e, petStore, middleware.OapiRequestValidator(swagger))
 
 	// And we serve HTTP until the world ends.
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))

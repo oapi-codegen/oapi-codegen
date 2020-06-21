@@ -3091,31 +3091,31 @@ type EchoRouter interface {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface, m ...echo.MiddlewareFunc) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/contentObject/:param", wrapper.GetContentObject)
-	router.GET("/cookie", wrapper.GetCookie)
-	router.GET("/header", wrapper.GetHeader)
-	router.GET("/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
-	router.GET("/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
-	router.GET("/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
-	router.GET("/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
-	router.GET("/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
-	router.GET("/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
-	router.GET("/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
-	router.GET("/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
-	router.GET("/passThrough/:param", wrapper.GetPassThrough)
-	router.GET("/queryDeepObject", wrapper.GetDeepObject)
-	router.GET("/queryForm", wrapper.GetQueryForm)
-	router.GET("/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
-	router.GET("/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
-	router.GET("/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
-	router.GET("/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
-	router.GET("/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+	router.GET("/contentObject/:param", wrapper.GetContentObject, m...)
+	router.GET("/cookie", wrapper.GetCookie, m...)
+	router.GET("/header", wrapper.GetHeader, m...)
+	router.GET("/labelExplodeArray/:param", wrapper.GetLabelExplodeArray, m...)
+	router.GET("/labelExplodeObject/:param", wrapper.GetLabelExplodeObject, m...)
+	router.GET("/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray, m...)
+	router.GET("/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject, m...)
+	router.GET("/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray, m...)
+	router.GET("/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject, m...)
+	router.GET("/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray, m...)
+	router.GET("/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject, m...)
+	router.GET("/passThrough/:param", wrapper.GetPassThrough, m...)
+	router.GET("/queryDeepObject", wrapper.GetDeepObject, m...)
+	router.GET("/queryForm", wrapper.GetQueryForm, m...)
+	router.GET("/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray, m...)
+	router.GET("/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject, m...)
+	router.GET("/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray, m...)
+	router.GET("/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject, m...)
+	router.GET("/simplePrimitive/:param", wrapper.GetSimplePrimitive, m...)
 
 }
 

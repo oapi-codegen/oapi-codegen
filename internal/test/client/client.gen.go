@@ -1010,19 +1010,19 @@ type EchoRouter interface {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
+func RegisterHandlers(router EchoRouter, si ServerInterface, m ...echo.MiddlewareFunc) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.POST("/with_both_bodies", wrapper.PostBoth)
-	router.GET("/with_both_responses", wrapper.GetBoth)
-	router.POST("/with_json_body", wrapper.PostJson)
-	router.GET("/with_json_response", wrapper.GetJson)
-	router.POST("/with_other_body", wrapper.PostOther)
-	router.GET("/with_other_response", wrapper.GetOther)
-	router.GET("/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash)
+	router.POST("/with_both_bodies", wrapper.PostBoth, m...)
+	router.GET("/with_both_responses", wrapper.GetBoth, m...)
+	router.POST("/with_json_body", wrapper.PostJson, m...)
+	router.GET("/with_json_response", wrapper.GetJson, m...)
+	router.POST("/with_other_body", wrapper.PostOther, m...)
+	router.GET("/with_other_response", wrapper.GetOther, m...)
+	router.GET("/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash, m...)
 
 }
 
