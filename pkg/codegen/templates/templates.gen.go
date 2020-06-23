@@ -705,6 +705,13 @@ func GetSwagger() (*openapi3.Swagger, error) {
 {{range .TypeDefinitions}}
 // {{.TypeName}} defines parameters for {{$opid}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
+
+{{if .Schema.GoValidationCall}}
+// Validate performs validation on the current {{.TypeName}}.
+func (s {{.TypeName}}) Validate() error {
+    return {{.Schema.GoValidationCall}}
+}
+{{end}}
 {{end}}
 {{end}}
 `,
@@ -763,6 +770,13 @@ const (
     {{- end }}
 )
 {{- end }}
+
+{{if .Schema.GoValidationCall}}
+// Validate performs validation on the current {{.TypeName}}.
+func (s {{.TypeName}}) Validate() error {
+    return {{.Schema.GoValidationCall}}
+}
+{{end}}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.

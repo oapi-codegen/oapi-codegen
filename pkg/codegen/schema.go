@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -12,6 +13,9 @@ import (
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
+
+	GoValidationCall string
+	ValidationTag    string // validation tags, for using github.com/go-ozzo/ozzo-validation/v4.
 
 	EnumValues []string // Enum values
 
@@ -209,13 +213,23 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
 				}
 				outSchema.AdditionalPropertiesType = &additionalSchema
+				// Validation rules:
+				if schema.MinProps > 0 || schema.MaxProps != nil {
+					maxProps := 0
+					if schema.MaxItems != nil {
+						maxProps = int(*schema.MaxProps)
+					}
+					outSchema.AdditionalPropertiesType.ValidationTag = fmt.Sprintf("validation.Length(%d, %d)", schema.MinProps, maxProps)
+				}
 			}
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
+			outSchema.GoValidationCall = GenStructValidationCall(outSchema)
 		}
 		return outSchema, nil
 	} else {
 		f := schema.Format
+		var validations []string
 
 		switch t {
 		case "array":
@@ -227,6 +241,17 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 			outSchema.GoType = "[]" + arrayType.TypeDecl()
 			outSchema.Properties = arrayType.Properties
+			if schema.MinItems > 0 || schema.MaxItems != nil {
+				maxItems := 0
+				if schema.MaxItems != nil {
+					maxItems = int(*schema.MaxItems)
+				}
+				validations = append(validations, fmt.Sprintf("validation.Length(%d, %d)", schema.MinItems, maxItems))
+			}
+			if arrayType.ValidationTag != "" {
+				validations = append(validations, fmt.Sprintf("validation.Each(%s)", arrayType.ValidationTag))
+			}
+
 		case "integer":
 			// We default to int if format doesn't ask for something else.
 			if f == "int64" {
@@ -238,6 +263,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				return Schema{}, fmt.Errorf("invalid integer format: %s", f)
 			}
+			if schema.Min != nil {
+				validations = append(validations, fmt.Sprintf("validation.Min(%v)", *schema.Min))
+			}
+			if schema.Max != nil {
+				validations = append(validations, fmt.Sprintf("validation.Max(%v)", *schema.Max))
+			}
+			if schema.MultipleOf != nil {
+				validations = append(validations, fmt.Sprintf("validation.MultipleOf(%v)", *schema.MultipleOf))
+			}
 		case "number":
 			// We default to float for "number"
 			if f == "double" {
@@ -247,6 +281,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				return Schema{}, fmt.Errorf("invalid number format: %s", f)
 			}
+			if schema.Min != nil {
+				validations = append(validations, fmt.Sprintf("validation.Min(%v)", *schema.Min))
+			}
+			if schema.Max != nil {
+				validations = append(validations, fmt.Sprintf("validation.Max(%v)", *schema.Max))
+			}
+			if schema.MultipleOf != nil {
+				validations = append(validations, fmt.Sprintf("validation.MultipleOf(%v)", *schema.MultipleOf))
+			}
 		case "boolean":
 			if f != "" {
 				return Schema{}, fmt.Errorf("invalid format (%s) for boolean", f)
@@ -255,6 +298,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		case "string":
 			for _, enumValue := range schema.Enum {
 				outSchema.EnumValues = append(outSchema.EnumValues, enumValue.(string))
+			}
+			if len(schema.Enum) > 0 {
+				var goValues []string
+				for _, value := range outSchema.EnumValues {
+					goValues = append(goValues, fmt.Sprintf("%#v", value))
+				}
+				validations = append(validations, fmt.Sprintf("validation.In(%s)", strings.Join(goValues, ", ")))
 			}
 			// Special case string formats here.
 			switch f {
@@ -270,10 +320,25 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			default:
 				// All unrecognized formats are simply a regular string.
 				outSchema.GoType = "string"
+				if schema.MinLength > 0 || schema.MaxLength != nil {
+					maxLength := 0
+					if schema.MaxLength != nil {
+						maxLength = int(*schema.MaxLength)
+					}
+					validations = append(validations, fmt.Sprintf("validation.Length(%d, %d)", schema.MinLength, maxLength))
+				}
+				if schema.Pattern != "" {
+					// Try to compile it first
+					if _, err := regexp.Compile(schema.Pattern); err == nil {
+						validations = append(validations, fmt.Sprintf("validation.Match(regexp.MustCompile(%#v))", schema.Pattern))
+					}
+				}
 			}
 		default:
 			return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
 		}
+		outSchema.ValidationTag = strings.Join(validations, ", ")
+		outSchema.GoValidationCall = fmt.Sprintf("validation.Validate(s, %s)", strings.Join(append(validations, "validation.Skip"), ", "))
 	}
 	return outSchema, nil
 }
@@ -335,9 +400,33 @@ func GenStructFromSchema(schema Schema) string {
 	return strings.Join(objectParts, "\n")
 }
 
+func GenStructValidationCall(schema Schema, embeddedFields ...string) string {
+	// Start out with the validation struct call
+	callParts := []string{"validation.ValidateStruct(&s, "}
+	for _, field := range embeddedFields {
+		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.%s),", field))
+	}
+	// Append all the field validations
+	for _, prop := range schema.Properties {
+		var validations []string
+		if prop.Required {
+			validations = append(validations, "validation.Required")
+		}
+		validations = append(validations, prop.Schema.ValidationTag)
+		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.%s, %s),", prop.GoFieldName(), strings.Join(validations, ", ")))
+	}
+	// Close the struct
+	if schema.HasAdditionalProperties {
+		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.AdditionalProperties, %s),", schema.AdditionalPropertiesType.ValidationTag))
+	}
+	callParts = append(callParts, ")")
+	return strings.Join(callParts, "\n")
+}
+
 // Merge all the fields in the schemas supplied into one giant schema.
 func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var outSchema Schema
+	var refs []string
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
 
@@ -348,6 +437,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			if err != nil {
 				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
 			}
+			refs = append(refs, refType)
 		}
 
 		schema, err := GenerateGoSchema(schemaOrRef, path)
@@ -382,6 +472,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	// Now, we generate the struct which merges together all the fields.
 	var err error
 	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	outSchema.GoValidationCall = GenStructValidationCall(outSchema, refs...)
 	if err != nil {
 		return Schema{}, errors.Wrap(err, "unable to generate aggregate type for AllOf")
 	}

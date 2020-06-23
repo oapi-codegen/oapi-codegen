@@ -83,6 +83,7 @@ var (
 		{lookFor: "url\\.", packageName: "net/url"},
 		{lookFor: "xml\\.", packageName: "encoding/xml"},
 		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
+		{lookFor: "validation\\.", packageName: "github.com/go-ozzo/ozzo-validation/v4"},
 	}
 )
 
