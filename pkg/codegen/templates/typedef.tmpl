@@ -10,11 +10,4 @@ const (
     {{- end }}
 )
 {{- end }}
-
-{{if .Schema.GoValidationCall}}
-// Validate performs validation on the current {{.TypeName}}.
-func (s {{.TypeName}}) Validate() error {
-    return {{.Schema.GoValidationCall}}
-}
-{{end}}
 {{end}}

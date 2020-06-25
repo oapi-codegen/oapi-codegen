@@ -598,7 +598,6 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	}
 
 	s.GoType = GenStructFromSchema(s)
-	s.GoValidationCall = GenStructValidationCall(s)
 
 	td := TypeDefinition{
 		TypeName: typeName,
