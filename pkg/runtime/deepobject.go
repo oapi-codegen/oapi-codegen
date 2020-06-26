@@ -231,6 +231,17 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			}
 			iv.Set(reflect.ValueOf(tm))
 		}
+		// If struct only contains a map, we handle it here.
+		if iv.NumField() == 1 && iv.Field(0).Kind() == reflect.Map {
+			field := iv.Field(0)
+			mapType := reflect.MapOf(reflect.TypeOf(""), reflect.TypeOf(""))
+			mapValue := reflect.MakeMap(mapType)
+			for key, value := range pathValues.fields {
+				mapValue.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value.value))
+			}
+			field.Set(mapValue)
+			return nil
+		}
 
 		fieldMap, err := fieldIndicesByJsonTag(iv.Interface())
 		if err != nil {
