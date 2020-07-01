@@ -65,7 +65,7 @@ func ToCamelCase(str string) string {
 		if unicode.IsUpper(v) {
 			n += string(v)
 		}
-			if unicode.IsDigit(v) {
+		if unicode.IsDigit(v) {
 			n += string(v)
 		}
 		if unicode.IsLower(v) {
@@ -76,7 +76,7 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		 if strings.ContainsRune(separators, v) {
+		if strings.ContainsRune(separators, v) {
 			capNext = true
 		} else {
 			capNext = false

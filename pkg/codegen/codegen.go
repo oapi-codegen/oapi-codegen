@@ -373,6 +373,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in response %s", responseName))
 			}
 
+			goType.DefinedComp = ComponentTypeResponse
+
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
@@ -411,6 +413,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in body %s", bodyName))
 			}
 
+			goType.DefinedComp = ComponentTypeRequestBody
+
 			typeDef := TypeDefinition{
 				JsonName: bodyName,
 				Schema:   goType,
@@ -436,6 +440,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
+
+	types = FixDuplicateTypeNames(types)
 
 	context := struct {
 		Types []TypeDefinition
