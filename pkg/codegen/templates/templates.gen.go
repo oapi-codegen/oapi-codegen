@@ -783,8 +783,8 @@ func (r *Resolver) Mutation() MutationResolver {
 {{- end }}
 
 // New return a config with added resolvers
-func New(uri string) (*Config, error) {
-	cl, err := {{$clientpackage}}.NewClient(uri)
+func New(uri string, opts ...{{$clientpackage}}.ClientOption) (*Config, error) {
+	cl, err := {{$clientpackage}}.NewClient(uri, opts...)
 	if err != nil {
 		return nil, err
 	}
