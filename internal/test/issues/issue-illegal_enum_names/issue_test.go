@@ -4,24 +4,15 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-yaml/yaml"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIllegalEnumNames(t *testing.T) {
-	spec, err := ioutil.ReadFile("spec.yaml")
-	require.NoError(t, err)
-
-	var yamlObj interface{}
-	err = yaml.Unmarshal(spec, &yamlObj)
-	require.NoError(t, err)
-
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(spec)
+	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("spec.yaml")
 	require.NoError(t, err)
 
 	opts := codegen.Options{

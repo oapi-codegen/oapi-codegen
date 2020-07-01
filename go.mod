@@ -5,7 +5,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/getkin/kin-openapi v0.13.0
 	github.com/go-chi/chi v4.0.2+incompatible
-	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/labstack/echo/v4 v4.1.11
