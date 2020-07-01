@@ -168,22 +168,36 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	// Imports needed for the generated code to compile
-	var imports []string
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
 	// Based on module prefixes, figure out which optional imports are required.
+	pkgs := make(map[string]int)
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
-		for _, goImport := range allGoImports {
-			match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), str)
-			if err != nil {
-				return "", errors.Wrap(err, "error figuring out imports")
+		for _, line := range strings.Split(strings.TrimSpace(str), "\n") {
+			line = strings.TrimSpace(line)
+
+			if line == "" || strings.HasPrefix(line, "//") {
+				continue
 			}
-			if match {
-				imports = append(imports, goImport.String())
+
+			for _, goImport := range allGoImports {
+				match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), line)
+				if err != nil {
+					return "", errors.Wrap(err, "error figuring out imports")
+				}
+
+				if match {
+					pkgs[goImport.String()]++
+				}
 			}
 		}
+	}
+
+	imports := make([]string, 0, len(pkgs))
+	for k := range pkgs {
+		imports = append(imports, k)
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)
