@@ -19,7 +19,7 @@ func TestLineComments(t *testing.T) {
 		EmbedSpec:          true,
 	}
 
-	code, err := codegen.Generate(swagger, "duplicate_type_names", opts)
+	code, err := codegen.Generate(swagger, "grab_import_names", opts)
 	require.NoError(t, err)
 	require.NotContains(t, code, `"openapi_types"`)
 }
