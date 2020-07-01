@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -65,7 +66,7 @@ func ToCamelCase(str string) string {
 		if unicode.IsUpper(v) {
 			n += string(v)
 		}
-			if unicode.IsDigit(v) {
+		if unicode.IsDigit(v) {
 			n += string(v)
 		}
 		if unicode.IsLower(v) {
@@ -76,7 +77,7 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		 if strings.ContainsRune(separators, v) {
+		if strings.ContainsRune(separators, v) {
 			capNext = true
 		} else {
 			capNext = false
@@ -315,6 +316,155 @@ func IsGoKeyword(str string) bool {
 		}
 	}
 	return false
+}
+
+// IsPredeclaredGoIdentifier returns whether the given string
+// is a predefined go indentifier.
+//
+// See https://golang.org/ref/spec#Predeclared_identifiers
+func IsPredeclaredGoIdentifier(str string) bool {
+	predeclaredIdentifiers := []string{
+		// Types
+		"bool",
+		"byte",
+		"complex64",
+		"complex128",
+		"error",
+		"float32",
+		"float64",
+		"int",
+		"int8",
+		"int16",
+		"int32",
+		"int64",
+		"rune",
+		"string",
+		"uint",
+		"uint8",
+		"uint16",
+		"uint32",
+		"uint64",
+		"uintptr",
+		// Constants
+		"true",
+		"false",
+		"iota",
+		// Zero value
+		"nil",
+		// Functions
+		"append",
+		"cap",
+		"close",
+		"complex",
+		"copy",
+		"delete",
+		"imag",
+		"len",
+		"make",
+		"new",
+		"panic",
+		"print",
+		"println",
+		"real",
+		"recover",
+	}
+
+	for _, k := range predeclaredIdentifiers {
+		if k == str {
+			return true
+		}
+	}
+
+	return false
+}
+
+// IsGoIdentity checks if the given string can be used as an identity
+// in the generated code like a type name or constant name.
+//
+// See https://golang.org/ref/spec#Identifiers
+func IsGoIdentity(str string) bool {
+	for i, c := range str {
+		if !isValidRuneForGoID(i, c) {
+			return false
+		}
+	}
+
+	return IsGoKeyword(str)
+}
+
+func isValidRuneForGoID(index int, char rune) bool {
+	if index == 0 && unicode.IsNumber(char) {
+		return false
+	}
+
+	return unicode.IsLetter(char) || char == '_' || unicode.IsNumber(char)
+}
+
+// IsValidGoIdentity checks if the given string can be used as a
+// name of variable, constant, or type.
+func IsValidGoIdentity(str string) bool {
+	if IsGoIdentity(str) {
+		return false
+	}
+
+	return !IsPredeclaredGoIdentifier(str)
+}
+
+// SanitizeGoIdentity deletes and replaces the illegal runes in the given
+// string to use the string as a valid identity.
+func SanitizeGoIdentity(str string) string {
+	sanitized := []rune(str)
+
+	for i, c := range sanitized {
+		if !isValidRuneForGoID(i, c) {
+			sanitized[i] = '_'
+		} else {
+			sanitized[i] = c
+		}
+	}
+
+	str = string(sanitized)
+
+	if IsGoKeyword(str) || IsPredeclaredGoIdentifier(str) {
+		str = "_" + str
+	}
+
+	if !IsValidGoIdentity(str) {
+		panic("here is a bug")
+	}
+
+	return str
+}
+
+// SanitizeEnumNames fixes illegal chars in the enum names
+// and removes duplicates
+func SanitizeEnumNames(enumNames []string) map[string]string {
+	dupCheck := make(map[string]int, len(enumNames))
+	deDup := make([]string, 0, len(enumNames))
+
+	for _, n := range enumNames {
+		if _, dup := dupCheck[n]; !dup {
+			deDup = append(deDup, n)
+		}
+
+		dupCheck[n] = 0
+	}
+
+	dupCheck = make(map[string]int, len(deDup))
+	sanitizedDeDup := make(map[string]string, len(deDup))
+
+	for _, n := range deDup {
+		sanitized := SanitizeGoIdentity(n)
+
+		if _, dup := dupCheck[sanitized]; !dup {
+			sanitizedDeDup[sanitized] = n
+			dupCheck[sanitized]++
+		} else {
+			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
+		}
+	}
+
+	return sanitizedDeDup
 }
 
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is

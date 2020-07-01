@@ -5,8 +5,8 @@ type {{.TypeName}} {{.Schema.TypeDecl}}
 // List of {{ .TypeName }}
 const (
 	{{- $typeName := .TypeName }}
-    {{- range .Schema.EnumValues }}
-    {{ $typeName }}_{{ . }} {{ $typeName }} = "{{ . }}"
+    {{- range $key, $value := .Schema.EnumValues }}
+    {{ $typeName }}_{{ $key }} {{ $typeName }} = "{{ $value }}"
     {{- end }}
 )
 {{- end }}
