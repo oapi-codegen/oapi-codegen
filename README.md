@@ -480,6 +480,8 @@ need it. We've not yet implemented several things:
  knows how to parse them, but they're not part of OpenAPI 3.0, so we've left
  them out, as support is very complicated.
 
+- Defining parameters in global `#/components/parameters` section like described in Swagger-UI's section _Common Parameters for Various Paths_ [here](https://swagger.io/docs/specification/describing-parameters/) doesn't work, so far.
+
 
 ## Making changes to code generation
 
