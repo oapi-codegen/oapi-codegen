@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -371,4 +372,87 @@ func StringToGoComment(in string) string {
 	// empty-line-comments, like `// `. Therefore remove this line comment.
 	in = strings.TrimSuffix(in, "\n// ")
 	return in
+}
+
+// FixDuplicateTypeNames renames duplicate type names.
+func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	// try to fix duplicate type names with their definition section
+	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	const maxIter = 100
+	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
+		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
+	}
+
+	if hasDuplicatedTypeNames(typeDefs) {
+		panic("too much duplicate type names")
+	}
+
+	return typeDefs
+}
+
+func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
+	dupCheck := make(map[string]int, len(typeDefs))
+
+	for _, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			switch d.Schema.DefinedComp {
+			case ComponentTypeSchema:
+				d.TypeName += "Schema"
+			case ComponentTypeParameter:
+				d.TypeName += "Param"
+			case ComponentTypeRequestBody:
+				d.TypeName += "ReqBody"
+			case ComponentTypeResponse:
+				d.TypeName += "Resp"
+			case ComponentTypeHeader:
+				d.TypeName += "Header"
+			}
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
+}
+
+func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
 }
