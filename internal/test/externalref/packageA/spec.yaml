@@ -1,0 +1,8 @@
+components:
+  schemas:
+    ObjectA:
+      properties:
+        name:
+          type: string
+        object_b:
+          $ref: ../packageB/spec.yaml#/components/schemas/ObjectB
