@@ -169,6 +169,9 @@ type GetTestByNameResponse struct {
 	problems, err := linter.Lint("test.gen.go", []byte(code))
 	assert.NoError(t, err)
 	assert.Len(t, problems, 0)
+
+	// Make sure that slices are generated without references
+	assert.Contains(t, code, "Cases []TestCase")
 }
 
 const testOpenAPIDefinition = `

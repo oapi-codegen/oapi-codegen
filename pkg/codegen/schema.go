@@ -227,6 +227,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 			outSchema.GoType = "[]" + arrayType.TypeDecl()
 			outSchema.Properties = arrayType.Properties
+			outSchema.SkipOptionalPointer = true
 		case "integer":
 			// We default to int if format doesn't ask for something else.
 			if f == "int64" {
