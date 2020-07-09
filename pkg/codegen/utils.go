@@ -65,7 +65,7 @@ func ToCamelCase(str string) string {
 		if unicode.IsUpper(v) {
 			n += string(v)
 		}
-			if unicode.IsDigit(v) {
+		if unicode.IsDigit(v) {
 			n += string(v)
 		}
 		if unicode.IsLower(v) {
@@ -76,7 +76,7 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		 if strings.ContainsRune(separators, v) {
+		if strings.ContainsRune(separators, v) {
 			capNext = true
 		} else {
 			capNext = false
@@ -197,20 +197,31 @@ func StringInArray(str string, array []string) bool {
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
-// Remote components (document.json#/Foo) are not yet supported
-// URL components (http://deepmap.com/schemas/document.json#Foo) are not yet
-// supported
-// We only support flat components for now, so no components in a schema under
-// components.
+// Remote components (document.json#/Foo) are supported if they present in --import-mapping
+// URL components (http://deepmap.com/schemas/document.json#Foo) are supported if they present in --import-mapping
+//
 func RefPathToGoType(refPath string) (string, error) {
-	pathParts := strings.Split(refPath, "/")
-	if pathParts[0] != "#" {
-		return "", errors.New("Only local document components are supported")
+	if refPath[0] == '#' {
+		pathParts := strings.Split(refPath, "/")
+		if len(pathParts) != 4 {
+			return "", errors.New("Parameter nesting is deeper than supported")
+		}
+		return SchemaNameToTypeName(pathParts[3]), nil
 	}
-	if len(pathParts) != 4 {
-		return "", errors.New("Parameter nesting is deeper than supported")
+	pathParts := strings.Split(refPath, "#")
+	if len(pathParts) != 2 {
+		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
-	return SchemaNameToTypeName(pathParts[3]), nil
+	remoteComponent, flatComponent := pathParts[0], pathParts[1]
+	if goImport, ok := importMapping[remoteComponent]; !ok {
+		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
+	} else {
+		goType, err := RefPathToGoType("#" + flatComponent)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%s.%s", goImport.alias, goType), nil
+	}
 }
 
 // This function converts a swagger style path URI with parameters to a

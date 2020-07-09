@@ -42,6 +42,7 @@ type Options struct {
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
+	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 }
 
 type goImport struct {
@@ -84,12 +85,41 @@ var (
 		{lookFor: "xml\\.", packageName: "encoding/xml"},
 		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
 	}
+
+	importMapping = map[string]goImport{}
 )
+
+func constructImportMapping(input map[string]string) map[string]goImport {
+	var (
+		nameToAlias = map[string]string{}
+		result      = map[string]goImport{}
+	)
+
+	{
+		var packagePaths []string
+		for _, packageName := range input {
+			packagePaths = append(packagePaths, packageName)
+		}
+		sort.Strings(packagePaths)
+
+		for _, packageName := range packagePaths {
+			if _, ok := nameToAlias[packageName]; !ok {
+				nameToAlias[packageName] = fmt.Sprintf("externalRef%d", len(nameToAlias))
+			}
+		}
+	}
+	for urlOrPath, packageName := range input {
+		result[urlOrPath] = goImport{alias: nameToAlias[packageName], packageName: packageName}
+	}
+	return result
+}
 
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+	importMapping = constructImportMapping(opts.ImportMapping)
+
 	filterOperationsByTag(swagger, opts)
 	if !opts.SkipPrune {
 		pruneUnusedComponents(swagger)
@@ -169,6 +199,9 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Imports needed for the generated code to compile
 	var imports []string
+	for _, importGo := range importMapping {
+		imports = append(imports, importGo.String())
+	}
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
