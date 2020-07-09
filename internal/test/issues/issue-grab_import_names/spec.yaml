@@ -1,0 +1,30 @@
+openapi: 3.0.2
+
+info:
+  title: ...
+  version: 0.0.0
+
+paths:
+  /foo:
+    get:
+      parameters:
+        - name: Foo
+          in: header
+          description: base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.
+          schema:
+            type: string
+          required: false
+        - name: Bar
+          in: header
+          description: openapi_types. path. runtime. strings. time.Duration time.Time url. xml. yaml.
+          schema:
+            type: string
+          required: false
+      description: ...
+      responses:
+        200:
+          description: ...
+          content:
+            application/json:
+              schema:
+                type: string
