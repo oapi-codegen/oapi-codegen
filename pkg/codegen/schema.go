@@ -260,6 +260,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			switch f {
 			case "byte":
 				outSchema.GoType = "[]byte"
+			case "email":
+				outSchema.GoType = "openapi_types.Email"
 			case "date":
 				outSchema.GoType = "openapi_types.Date"
 			case "date-time":

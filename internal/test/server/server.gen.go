@@ -37,14 +37,15 @@ type EveryTypeOptional struct {
 
 // EveryTypeRequired defines model for EveryTypeRequired.
 type EveryTypeRequired struct {
-	ArrayInlineField     []int              `json:"array_inline_field"`
-	ArrayReferencedField []SomeObject       `json:"array_referenced_field"`
-	BoolField            bool               `json:"bool_field"`
-	ByteField            []byte             `json:"byte_field"`
-	DateField            openapi_types.Date `json:"date_field"`
-	DateTimeField        time.Time          `json:"date_time_field"`
-	DoubleField          float64            `json:"double_field"`
-	FloatField           float32            `json:"float_field"`
+	ArrayInlineField     []int                `json:"array_inline_field"`
+	ArrayReferencedField []SomeObject         `json:"array_referenced_field"`
+	BoolField            bool                 `json:"bool_field"`
+	ByteField            []byte               `json:"byte_field"`
+	DateField            openapi_types.Date   `json:"date_field"`
+	DateTimeField        time.Time            `json:"date_time_field"`
+	DoubleField          float64              `json:"double_field"`
+	EmailField           *openapi_types.Email `json:"email_field,omitempty"`
+	FloatField           float32              `json:"float_field"`
 	InlineObjectField    struct {
 		Name   string `json:"name"`
 		Number int    `json:"number"`

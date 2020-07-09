@@ -248,6 +248,9 @@ components:
           type: boolean
         string_field:
           type: string
+        email_field:
+          type: string
+          format: email
         date_field:
           type: string
           format: date
