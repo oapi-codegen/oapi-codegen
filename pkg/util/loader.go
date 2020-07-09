@@ -10,3 +10,4 @@ func LoadSwagger(filePath string) (swagger *openapi3.Swagger, err error) {
 	swagger, err = loader.LoadSwaggerFromFile(filePath)
 	return
 }
+
