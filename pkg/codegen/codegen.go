@@ -229,7 +229,6 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	imports := make([]string, 0, len(pkgs))
 	for k := range pkgs {
 		imports = append(imports, k)
 	}
