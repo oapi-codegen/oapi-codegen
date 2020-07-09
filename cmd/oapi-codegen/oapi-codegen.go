@@ -14,7 +14,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -109,9 +108,9 @@ func main() {
 	}
 	opts.UserTemplates = templates
 
-	opts.ImportMapping = map[string]string{}
 	if len(importMapping) > 0 {
-		if err = json.Unmarshal([]byte(importMapping), &opts.ImportMapping); err != nil {
+		opts.ImportMapping, err = util.ParseCommandlineMap(importMapping)
+		if err != nil {
 			errExit("error parsing import-mapping: %s\n", err)
 		}
 	}
@@ -169,3 +168,4 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 
 	return templates, nil
 }
+
