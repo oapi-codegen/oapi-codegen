@@ -455,6 +455,12 @@ To generate a server that only handles `admin` paths, use the argument
 `-include-tags="admin"`. When neither of these arguments is present, all paths
 are generated.
 
+`oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
+a comma separated list of schema names. For instance, `--exclude-tags=Pet,NewPet`
+will exclude from generation schemas `Pet` and `NewPet`. This allow to have a
+in the same package a manually defined structure or interface and refer to it 
+in the openapi spec. 
+
 ### Import Mappings
 
 OpenAPI specifications may contain references to other OpenAPI specifications,
