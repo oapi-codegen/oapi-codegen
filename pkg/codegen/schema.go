@@ -427,6 +427,17 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
 			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
+			if goSchema.HasAdditionalProperties {
+				addPropsType := goSchema.AdditionalPropertiesType.GoType
+				if goSchema.AdditionalPropertiesType.RefType != "" {
+					addPropsType = goSchema.AdditionalPropertiesType.RefType
+				}
+
+				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
+				if !StringInArray(additionalPropertiesPart, objectParts) {
+					objectParts = append(objectParts, additionalPropertiesPart)
+				}
+			}
 		}
 	}
 	objectParts = append(objectParts, "}")
