@@ -27,6 +27,9 @@ func walkSwagger(swagger *openapi3.Swagger, doFn func(RefWrapper) (bool, error))
 	}
 
 	for _, p := range swagger.Paths {
+		for _, param := range p.Parameters {
+			walkParameterRef(param, doFn)
+		}
 		for _, op := range p.Operations() {
 			walkOperation(op, doFn)
 		}

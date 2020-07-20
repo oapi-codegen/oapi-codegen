@@ -45,6 +45,9 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
+// StringInPath defines model for StringInPath.
+type StringInPath string
+
 // Issue185JSONBody defines parameters for Issue185.
 type Issue185JSONBody NullableProperties
 
@@ -144,6 +147,9 @@ type ClientInterface interface {
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error)
 
+	// Issue209 request
+	Issue209(ctx context.Context, str StringInPath) (*http.Response, error)
+
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
 
@@ -203,6 +209,21 @@ func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body 
 
 func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error) {
 	req, err := NewIssue185Request(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue209(ctx context.Context, str StringInPath) (*http.Response, error) {
+	req, err := NewIssue209Request(c.Server, str)
 	if err != nil {
 		return nil, err
 	}
@@ -369,6 +390,40 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
+// NewIssue209Request generates requests for Issue209
+func NewIssue209Request(server string, str StringInPath) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "str", str)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/issues/209/$%s", pathParam0)
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewIssue30Request generates requests for Issue30
 func NewIssue30Request(server string, pFallthrough string) (*http.Request, error) {
 	var err error
@@ -532,6 +587,9 @@ type ClientWithResponsesInterface interface {
 
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error)
 
+	// Issue209 request
+	Issue209WithResponse(ctx context.Context, str StringInPath) (*Issue209Response, error)
+
 	// Issue30 request
 	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
 
@@ -612,6 +670,27 @@ func (r Issue185Response) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r Issue185Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type Issue209Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r Issue209Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r Issue209Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -714,6 +793,15 @@ func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Iss
 		return nil, err
 	}
 	return ParseIssue185Response(rsp)
+}
+
+// Issue209WithResponse request returning *Issue209Response
+func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath) (*Issue209Response, error) {
+	rsp, err := c.Issue209(ctx, str)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue209Response(rsp)
 }
 
 // Issue30WithResponse request returning *Issue30Response
@@ -855,6 +943,25 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	return response, nil
 }
 
+// ParseIssue209Response parses an HTTP response from a Issue209WithResponse call
+func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue209Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
 func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
@@ -924,6 +1031,9 @@ type ServerInterface interface {
 	// (GET /issues/185)
 	Issue185(ctx echo.Context) error
 
+	// (GET /issues/209/${str})
+	Issue209(ctx echo.Context, str StringInPath) error
+
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
 
@@ -963,6 +1073,22 @@ func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue185(ctx)
+	return err
+}
+
+// Issue209 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "str" -------------
+	var str StringInPath
+
+	err = runtime.BindStyledParameter("simple", false, "str", ctx.Param("str"), &str)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue209(ctx, str)
 	return err
 }
 
@@ -1041,6 +1167,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
 	router.GET("/issues/127", wrapper.Issue127)
 	router.GET("/issues/185", wrapper.Issue185)
+	router.GET("/issues/209/$:str", wrapper.Issue209)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
@@ -1050,22 +1177,23 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/7RX32/bNhD+Vw5cgb24lu00WKO3rCiGPKwNmgB7aPJAi2eLjUSy5CmJYOh/H46yLXmW",
+	"vGbpniKZuh/fd98dLxuR2dJZg4aCSDfCSS9LJPTx7Ya8Nusrcy0p53eFIfPakbZGpOISQjwHJymHvaWY",
+	"CM3H/KuYCCNLFKkIxAcev1faoxIp+QonImQ5lpJdU+22n2mzFk3T7A5jIuc3JD2FvzTln6pyif44m9tc",
+	"B2hNgGNCiCbwpCkHCaY1m+wC2eU3zEg0E3Fp6tva4Vykm+5tMRYgt1WhYIkgDWhD6Fcyw03Djj5UgWzZ",
+	"cnYbo2zEyvpSkkhFFg+7+DugE/EHGvQ6+9wm1FHRZfipKgq5LPDaW4eeNLalOnizMU1ZDHA52R9eGrXz",
+	"xd+Z/XNbjSO7rlyb8cOXOT3w+rV7HvZ3f1QvdqDNyg7UBwNBJgMGWFkPj9JrWwXQIVTxp8oosI/ogXSJ",
+	"U7guUAYEqRRIoJ0tm94ZaWpYVmtY6WdU0zvDZdPEmNooN+gfo5ge0Yc2+nw6m85artFIp0Uqzqaz6VxM",
+	"YiPEGiVoQuXxLT6irynXZv1Wh7ceV+jRZC3Na6QR6aFRzmpDgM86UIBggXJJ0DUwZNKwNDOPklCBNkC5",
+	"DncmOMxAGgXGEn/gfGVQRVysIclhrpRIxceY4Md9flfhS5cdlyg4a0KruMVsxn8yawhNTFo6V+gseku+",
+	"Bc580+vwQ73KruvEG48rkYpfkg5Ksm3+ZN+dzWRns/hBmwXbZANNecr2qIlZcEcabKIOk1ZbyXzx22jp",
+	"/pQPCEwqVCZUzlnPlYmkPROw4wDKml8JnEcsHUH3VTydDpTpiuNy1FeW5BQRh2OJ4fZ9PZfFa1wx+KSU",
+	"/kHZJ/NqR7V8TTbsRuFKVgX9j+T9JMT/VN778/GhUTuENdtHBPCUo4HdTZDspi10bQnSI+zG97js3p9v",
+	"hzUG+t2q+qeRNnDNtWh7Guf0+gQsZhfJm00g34zy8CHH7CGAXnUrSgtVYVbIjoKiHga8mF2I4xwmB6vS",
+	"12Fk3SfJwSrV3PcgnM2SzUoWBeXeVuu8OUbwBQNfOAoesH6yXvXXEOcx3lI87PnKYwLj/rMdHFtKBnCd",
+	"zX4E1sAq10v2RStdH/S7ebKZx1DjhbveZdLb53jdjBvdfp8bQPauvXX/DUcb/ySEU3I93kmb5v6kWC/G",
+	"NVpoNNQKNMS5D9pk1nvMqKj5uagUqrjYbFuvpWFpVc03+53p8I627sUILd8r9HWvvta+rK7/eRxsZ2+f",
+	"ic/bARWRiaHm5/8M4v7VIqh8IVKRE7k0SbbLF69zU4XoSummUnO//R0AAP//Wanza+kMAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
