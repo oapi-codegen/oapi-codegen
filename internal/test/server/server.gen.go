@@ -127,40 +127,49 @@ type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get every type optional (GET /every-type-optional)
+	// get every type optional
+	// (GET /every-type-optional)
 	GetEveryTypeOptional(w http.ResponseWriter, r *http.Request)
-	// Get resource via simple path (GET /get-simple)
+	// Get resource via simple path
+	// (GET /get-simple)
 	GetSimple(w http.ResponseWriter, r *http.Request)
-	// Getter with referenced parameter and referenced response (GET /get-with-args)
-	GetWithArgs(w http.ResponseWriter, r *http.Request)
-	// Getter with referenced parameter and referenced response (GET /get-with-references/{global_argument}/{argument})
-	GetWithReferences(w http.ResponseWriter, r *http.Request)
-	// Get an object by ID (GET /get-with-type/{content_type})
-	GetWithContentType(w http.ResponseWriter, r *http.Request)
-	// get with reserved keyword (GET /reserved-keyword)
+	// Getter with referenced parameter and referenced response
+	// (GET /get-with-args)
+	GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
+	// Getter with referenced parameter and referenced response
+	// (GET /get-with-references/{global_argument}/{argument})
+	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
+	// Get an object by ID
+	// (GET /get-with-type/{content_type})
+	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string)
+	// get with reserved keyword
+	// (GET /reserved-keyword)
 	GetReservedKeyword(w http.ResponseWriter, r *http.Request)
-	// Create a resource (POST /resource/{argument})
-	CreateResource(w http.ResponseWriter, r *http.Request)
-	// Create a resource with inline parameter (POST /resource2/{inline_argument})
-	CreateResource2(w http.ResponseWriter, r *http.Request)
-	// Update a resource with inline body. The parameter name is a reservedkeyword, so make sure that gets prefixed to avoid syntax errors (PUT /resource3/{fallthrough})
-	UpdateResource3(w http.ResponseWriter, r *http.Request)
-	// get response with reference (GET /response-with-reference)
+	// Create a resource
+	// (POST /resource/{argument})
+	CreateResource(w http.ResponseWriter, r *http.Request, argument Argument)
+	// Create a resource with inline parameter
+	// (POST /resource2/{inline_argument})
+	CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)
+	// Update a resource with inline body. The parameter name is a reserved
+	// keyword, so make sure that gets prefixed to avoid syntax errors
+	// (PUT /resource3/{fallthrough})
+	UpdateResource3(w http.ResponseWriter, r *http.Request, pFallthrough int)
+	// get response with reference
+	// (GET /response-with-reference)
 	GetResponseWithReference(w http.ResponseWriter, r *http.Request)
-}
-
-// GetEveryTypeOptional operation middleware
-func GetEveryTypeOptionalCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetEveryTypeOptional operation middleware
+func (siw *ServerInterfaceWrapper) GetEveryTypeOptional(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	siw.Handler.GetEveryTypeOptional(w, r.WithContext(ctx))
 }
 
 // GetSimple operation middleware
@@ -274,12 +283,10 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 }
 
 // GetReservedKeyword operation middleware
-func GetReservedKeywordCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) GetReservedKeyword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.GetReservedKeyword(w, r.WithContext(ctx))
 }
 
 // CreateResource operation middleware
@@ -351,12 +358,10 @@ func (siw *ServerInterfaceWrapper) UpdateResource3(w http.ResponseWriter, r *htt
 }
 
 // GetResponseWithReference operation middleware
-func GetResponseWithReferenceCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) GetResponseWithReference(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.GetResponseWithReference(w, r.WithContext(ctx))
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
@@ -371,12 +376,10 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Use(GetEveryTypeOptionalCtx)
-		r.Get("/every-type-optional", si.GetEveryTypeOptional)
+		r.Get("/every-type-optional", wrapper.GetEveryTypeOptional)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(GetSimpleCtx)
-		r.Get("/get-simple", si.GetSimple)
+		r.Get("/get-simple", wrapper.GetSimple)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get("/get-with-args", wrapper.GetWithArgs)
@@ -388,12 +391,10 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 		r.Get("/get-with-type/{content_type}", wrapper.GetWithContentType)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(GetReservedKeywordCtx)
-		r.Get("/reserved-keyword", si.GetReservedKeyword)
+		r.Get("/reserved-keyword", wrapper.GetReservedKeyword)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(CreateResourceCtx)
-		r.Post("/resource/{argument}", si.CreateResource)
+		r.Post("/resource/{argument}", wrapper.CreateResource)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post("/resource2/{inline_argument}", wrapper.CreateResource2)
@@ -402,8 +403,7 @@ func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 		r.Put("/resource3/{fallthrough}", wrapper.UpdateResource3)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(GetResponseWithReferenceCtx)
-		r.Get("/response-with-reference", si.GetResponseWithReference)
+		r.Get("/response-with-reference", wrapper.GetResponseWithReference)
 	})
 
 	return r

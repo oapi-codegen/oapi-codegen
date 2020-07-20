@@ -159,12 +159,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-          } {{if .Required}}else {
-              http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
-              return
-          }{{end}}
-
-        {{end}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
           http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
@@ -214,7 +209,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found", err), http.StatusBadRequest)
+            http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
             return
         }{{end}}
 
