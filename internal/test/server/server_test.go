@@ -11,12 +11,9 @@ import (
 func TestParameters(t *testing.T) {
 	m := ServerInterfaceMock{}
 
-	m.CreateResource2Func = func(w http.ResponseWriter, r *http.Request) {
-		params := ParamsForCreateResource2(r.Context())
-		arg := r.Context().Value("inlineArgument").(int)
-
+	m.CreateResource2Func = func(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params) {
 		assert.Equal(t, 99, *params.InlineQueryArgument)
-		assert.Equal(t, 1, arg)
+		assert.Equal(t, 1, inlineArgument)
 	}
 
 	h := Handler(&m)

@@ -34,9 +34,7 @@ func sendPetstoreError(w http.ResponseWriter, code int, message string) {
 }
 
 // Here, we implement all of the handlers in the ServerInterface
-func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request) {
-	params := ParamsForFindPets(r.Context())
-
+func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -97,9 +95,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pet)
 }
 
-func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("id").(int64)
-
+func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request, id int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -113,9 +109,7 @@ func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pet)
 }
 
-func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("id").(int64)
-
+func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
