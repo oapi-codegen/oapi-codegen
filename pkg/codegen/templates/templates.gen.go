@@ -159,7 +159,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          } {{if .Required}}else {
+              http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+              return
+          }{{end}}
+
+        {{end}}
       {{end}}
       }{{if .Required}} else {
           http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
@@ -294,8 +299,22 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
+// ClientWithResponsesInterface is the interface specification for the client with responses above.
+type ClientWithResponsesInterface interface {
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$pathParams := .PathParams -}}
+{{$opid := .OperationId -}}
+    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error)
+{{range .Bodies}}
+    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
+{{end}}{{/* range .Bodies */}}
+{{end}}{{/* range . $opid := .OperationId */}}
+}
+
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
-type {{$opid | lcFirst}}Response struct {
+type {{$opid | ucFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range getResponseTypeDefinitions .}}
@@ -304,7 +323,7 @@ type {{$opid | lcFirst}}Response struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r {{$opid | lcFirst}}Response) Status() string {
+func (r {{$opid | ucFirst}}Response) Status() string {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.Status
     }
@@ -312,7 +331,7 @@ func (r {{$opid | lcFirst}}Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r {{$opid | lcFirst}}Response) StatusCode() int {
+func (r {{$opid | ucFirst}}Response) StatusCode() int {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.StatusCode
     }
@@ -737,6 +756,15 @@ type ServerInterface interface {
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
+{{- if gt (len .Schema.EnumValues) 0 }}
+// List of {{ .TypeName }}
+const (
+	{{- $typeName := .TypeName }}
+    {{- range $key, $value := .Schema.EnumValues }}
+    {{ $typeName }}_{{ $key }} {{ $typeName }} = "{{ $value }}"
+    {{- end }}
+)
+{{- end }}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.

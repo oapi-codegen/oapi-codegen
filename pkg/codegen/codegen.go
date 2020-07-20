@@ -38,9 +38,11 @@ type Options struct {
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go fmt on the generated code
+	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
+	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 }
 
 type goImport struct {
@@ -83,13 +85,45 @@ var (
 		{lookFor: "xml\\.", packageName: "encoding/xml"},
 		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
 	}
+
+	importMapping = map[string]goImport{}
 )
+
+func constructImportMapping(input map[string]string) map[string]goImport {
+	var (
+		nameToAlias = map[string]string{}
+		result      = map[string]goImport{}
+	)
+
+	{
+		var packagePaths []string
+		for _, packageName := range input {
+			packagePaths = append(packagePaths, packageName)
+		}
+		sort.Strings(packagePaths)
+
+		for _, packageName := range packagePaths {
+			if _, ok := nameToAlias[packageName]; !ok {
+				nameToAlias[packageName] = fmt.Sprintf("externalRef%d", len(nameToAlias))
+			}
+		}
+	}
+	for urlOrPath, packageName := range input {
+		result[urlOrPath] = goImport{alias: nameToAlias[packageName], packageName: packageName}
+	}
+	return result
+}
 
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+	importMapping = constructImportMapping(opts.ImportMapping)
+
 	filterOperationsByTag(swagger, opts)
+	if !opts.SkipPrune {
+		pruneUnusedComponents(swagger)
+	}
 
 	// This creates the golang templates text package
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
@@ -165,21 +199,38 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	// Imports needed for the generated code to compile
 	var imports []string
+	for _, importGo := range importMapping {
+		imports = append(imports, importGo.String())
+	}
 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
 	// Based on module prefixes, figure out which optional imports are required.
+	pkgs := make(map[string]int)
 	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
-		for _, goImport := range allGoImports {
-			match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), str)
-			if err != nil {
-				return "", errors.Wrap(err, "error figuring out imports")
+		for _, line := range strings.Split(strings.TrimSpace(str), "\n") {
+			line = strings.TrimSpace(line)
+
+			if line == "" || strings.HasPrefix(line, "//") {
+				continue
 			}
-			if match {
-				imports = append(imports, goImport.String())
+
+			for _, goImport := range allGoImports {
+				match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), line)
+				if err != nil {
+					return "", errors.Wrap(err, "error figuring out imports")
+				}
+
+				if match {
+					pkgs[goImport.String()]++
+				}
 			}
 		}
+	}
+
+	for k := range pkgs {
+		imports = append(imports, k)
 	}
 
 	importsOut, err := GenerateImports(t, imports, packageName)
@@ -510,47 +561,4 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
-}
-
-func filterOperationsByTag(swagger *openapi3.Swagger, opts Options) {
-	if len(opts.ExcludeTags) > 0 {
-		excludeOperationsWithTags(swagger.Paths, opts.ExcludeTags)
-	}
-	if len(opts.IncludeTags) > 0 {
-		includeOperationsWithTags(swagger.Paths, opts.IncludeTags, false)
-	}
-}
-
-func excludeOperationsWithTags(paths openapi3.Paths, tags []string) {
-	includeOperationsWithTags(paths, tags, true)
-}
-
-func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
-	for _, pathItem := range paths {
-		ops := pathItem.Operations()
-		names := make([]string, 0, len(ops))
-		for name, op := range ops {
-			if operationHasTag(op, tags) == exclude {
-				names = append(names, name)
-			}
-		}
-		for _, name := range names {
-			pathItem.SetOperation(name, nil)
-		}
-	}
-}
-
-//operationHasTag returns true if the operation is tagged with any of tags
-func operationHasTag(op *openapi3.Operation, tags []string) bool {
-	if op == nil {
-		return false
-	}
-	for _, hasTag := range op.Tags {
-		for _, wantTag := range tags {
-			if hasTag == wantTag {
-				return true
-			}
-		}
-	}
-	return false
 }

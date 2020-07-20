@@ -236,7 +236,7 @@ func buildUnmarshalCase(typeDefinition TypeDefinition, caseAction string, conten
 
 // genResponseTypeName creates the name of generated response types (given the operationID):
 func genResponseTypeName(operationID string) string {
-	return fmt.Sprintf("%s%s", LowercaseFirstCharacter(operationID), responseTypeSuffix)
+	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
 func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {

@@ -162,6 +162,14 @@ func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 // ResponseRecorder with some nice helper functions.
 type CompletedRequest struct {
 	Recorder *httptest.ResponseRecorder
+
+	// When set to true, decoders will be more strict. In the default JSON
+	// recorder, unknown fields will cause errors.
+	Strict bool
+}
+
+func (c *CompletedRequest) DisallowUnknownFields() {
+	c.Strict = true
 }
 
 // This function takes a destination object as input, and unmarshals the object
@@ -177,7 +185,7 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 		return fmt.Errorf("unhandled content: %s", content)
 	}
 
-	return handler(ctype, c.Recorder.Body, obj)
+	return handler(ctype, c.Recorder.Body, obj, c.Strict)
 }
 
 // This function assumes that the response contains JSON and unmarshals it

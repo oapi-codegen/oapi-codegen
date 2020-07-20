@@ -33,20 +33,22 @@ func errExit(format string, args ...interface{}) {
 
 func main() {
 	var (
-		packageName  string
-		generate     string
-		outputFile   string
-		includeTags  string
-		excludeTags  string
-		templatesDir string
+		packageName   string
+		generate      string
+		outputFile    string
+		includeTags   string
+		excludeTags   string
+		templatesDir  string
+		importMapping string
 	)
 	flag.StringVar(&packageName, "package", "", "The package name for generated code")
 	flag.StringVar(&generate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "skip-fmt", "spec"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&outputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&includeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&excludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&templatesDir, "templates", "", "Path to directory containing user templates")
+	flag.StringVar(&importMapping, "import-mapping", "", "A dict from the external reference to golang package path")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -79,6 +81,8 @@ func main() {
 			opts.EmbedSpec = true
 		case "skip-fmt":
 			opts.SkipFmt = true
+		case "skip-prune":
+			opts.SkipPrune = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
@@ -103,6 +107,13 @@ func main() {
 		errExit("error loading template overrides: %s\n", err)
 	}
 	opts.UserTemplates = templates
+
+	if len(importMapping) > 0 {
+		opts.ImportMapping, err = util.ParseCommandlineMap(importMapping)
+		if err != nil {
+			errExit("error parsing import-mapping: %s\n", err)
+		}
+	}
 
 	code, err := codegen.Generate(swagger, packageName, opts)
 	if err != nil {
@@ -157,3 +168,4 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 
 	return templates, nil
 }
+

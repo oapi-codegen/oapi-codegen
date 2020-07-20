@@ -235,14 +235,20 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-type exampleGetResponse struct {
+// ClientWithResponsesInterface is the interface specification for the client with responses above.
+type ClientWithResponsesInterface interface {
+	// ExampleGet request
+	ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error)
+}
+
+type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Document
 }
 
 // Status returns HTTPResponse.Status
-func (r exampleGetResponse) Status() string {
+func (r ExampleGetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -250,7 +256,7 @@ func (r exampleGetResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r exampleGetResponse) StatusCode() int {
+func (r ExampleGetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -258,7 +264,7 @@ func (r exampleGetResponse) StatusCode() int {
 }
 
 // ExampleGetWithResponse request returning *ExampleGetResponse
-func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*exampleGetResponse, error) {
+func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error) {
 	rsp, err := c.ExampleGet(ctx)
 	if err != nil {
 		return nil, err
@@ -267,14 +273,14 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*exam
 }
 
 // ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
-func ParseExampleGetResponse(rsp *http.Response) (*exampleGetResponse, error) {
+func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &exampleGetResponse{
+	response := &ExampleGetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

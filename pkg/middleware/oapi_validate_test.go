@@ -21,12 +21,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
+	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/stretchr/testify/require"
 )
 
 var testSchema = `openapi: "3.0.0"
@@ -48,6 +49,7 @@ paths:
             maximum: 100
       responses:
         '200':
+            description: success
             content:
               application/json:
                 schema:
@@ -116,7 +118,7 @@ func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httpt
 
 func TestOapiRequestValidator(t *testing.T) {
 	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
-	assert.NoError(t, err, "Error initializing swagger")
+	require.NoError(t, err, "Error initializing swagger")
 
 	// Create a new echo router
 	e := echo.New()
@@ -258,4 +260,18 @@ func TestOapiRequestValidator(t *testing.T) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
+}
+
+func TestGetSkipperFromOptions(t *testing.T) {
+
+	options := new(Options)
+	assert.NotNil(t, getSkipperFromOptions(options))
+
+	options = &Options{}
+	assert.NotNil(t, getSkipperFromOptions(options))
+
+	options = &Options{
+		Skipper: echomiddleware.DefaultSkipper,
+	}
+	assert.NotNil(t, getSkipperFromOptions(options))
 }

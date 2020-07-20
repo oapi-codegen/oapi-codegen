@@ -37,6 +37,17 @@ type CustomStringType string
 // GenericObject defines model for GenericObject.
 type GenericObject map[string]interface{}
 
+// NullableProperties defines model for NullableProperties.
+type NullableProperties struct {
+	Optional            *string `json:"optional,omitempty"`
+	OptionalAndNullable *string `json:"optionalAndNullable"`
+	Required            string  `json:"required"`
+	RequiredAndNullable *string `json:"requiredAndNullable"`
+}
+
+// Issue185JSONBody defines parameters for Issue185.
+type Issue185JSONBody NullableProperties
+
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody interface{}
 
@@ -44,6 +55,9 @@ type Issue9JSONBody interface{}
 type Issue9Params struct {
 	Foo string `json:"foo"`
 }
+
+// Issue185RequestBody defines body for Issue185 for application/json ContentType.
+type Issue185JSONRequestBody Issue185JSONBody
 
 // Issue9RequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody Issue9JSONBody
@@ -119,8 +133,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// EnsureEverythingIsReferenced request
+	EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error)
+
 	// Issue127 request
 	Issue127(ctx context.Context) (*http.Response, error)
+
+	// Issue185 request  with any body
+	Issue185WithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+
+	Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error)
 
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string) (*http.Response, error)
@@ -134,8 +156,53 @@ type ClientInterface interface {
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*http.Response, error)
 }
 
+func (c *Client) EnsureEverythingIsReferenced(ctx context.Context) (*http.Response, error) {
+	req, err := NewEnsureEverythingIsReferencedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) Issue127(ctx context.Context) (*http.Response, error) {
 	req, err := NewIssue127Request(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewIssue185RequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(ctx, req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody) (*http.Response, error) {
+	req, err := NewIssue185Request(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -209,6 +276,33 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 	return c.Client.Do(req)
 }
 
+// NewEnsureEverythingIsReferencedRequest generates requests for EnsureEverythingIsReferenced
+func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/ensure-everything-is-referenced")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewIssue127Request generates requests for Issue127
 func NewIssue127Request(server string) (*http.Request, error) {
 	var err error
@@ -233,6 +327,45 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	return req, nil
+}
+
+// NewIssue185Request calls the generic Issue185 builder with application/json body
+func NewIssue185Request(server string, body Issue185JSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewIssue185RequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewIssue185RequestWithBody generates requests for Issue185 with any type of body
+func NewIssue185RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/issues/185")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -386,7 +519,60 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-type issue127Response struct {
+// ClientWithResponsesInterface is the interface specification for the client with responses above.
+type ClientWithResponsesInterface interface {
+	// EnsureEverythingIsReferenced request
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error)
+
+	// Issue127 request
+	Issue127WithResponse(ctx context.Context) (*Issue127Response, error)
+
+	// Issue185 request  with any body
+	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error)
+
+	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error)
+
+	// Issue30 request
+	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
+
+	// Issue41 request
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error)
+
+	// Issue9 request  with any body
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
+
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
+}
+
+type EnsureEverythingIsReferencedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+		// This should be an interface{}
+		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+		CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r EnsureEverythingIsReferencedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type Issue127Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GenericObject
@@ -396,7 +582,7 @@ type issue127Response struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r issue127Response) Status() string {
+func (r Issue127Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -404,20 +590,20 @@ func (r issue127Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue127Response) StatusCode() int {
+func (r Issue127Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type issue30Response struct {
+type Issue185Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue30Response) Status() string {
+func (r Issue185Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -425,20 +611,20 @@ func (r issue30Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue30Response) StatusCode() int {
+func (r Issue185Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type issue41Response struct {
+type Issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue41Response) Status() string {
+func (r Issue30Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -446,20 +632,20 @@ func (r issue41Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue41Response) StatusCode() int {
+func (r Issue30Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type issue9Response struct {
+type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r issue9Response) Status() string {
+func (r Issue41Response) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -467,15 +653,45 @@ func (r issue9Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r issue9Response) StatusCode() int {
+func (r Issue41Response) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+type Issue9Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r Issue9Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r Issue9Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferenced(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnsureEverythingIsReferencedResponse(rsp)
 }
 
 // Issue127WithResponse request returning *Issue127Response
-func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*issue127Response, error) {
+func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue127Response, error) {
 	rsp, err := c.Issue127(ctx)
 	if err != nil {
 		return nil, err
@@ -483,8 +699,25 @@ func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*issue1
 	return ParseIssue127Response(rsp)
 }
 
+// Issue185WithBodyWithResponse request with arbitrary body returning *Issue185Response
+func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error) {
+	rsp, err := c.Issue185WithBody(ctx, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue185Response(rsp)
+}
+
+func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error) {
+	rsp, err := c.Issue185(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue185Response(rsp)
+}
+
 // Issue30WithResponse request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*issue30Response, error) {
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough)
 	if err != nil {
 		return nil, err
@@ -493,7 +726,7 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 }
 
 // Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*issue41Response, error) {
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error) {
 	rsp, err := c.Issue41(ctx, n1param)
 	if err != nil {
 		return nil, err
@@ -502,7 +735,7 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error) {
 	rsp, err := c.Issue9WithBody(ctx, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -510,7 +743,7 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	return ParseIssue9Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body)
 	if err != nil {
 		return nil, err
@@ -518,15 +751,47 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	return ParseIssue9Response(rsp)
 }
 
-// ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
-func ParseIssue127Response(rsp *http.Response) (*issue127Response, error) {
+// ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
+func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue127Response{
+	response := &EnsureEverythingIsReferencedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+			// This should be an interface{}
+			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+			CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
+func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue127Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -571,15 +836,34 @@ func ParseIssue127Response(rsp *http.Response) (*issue127Response, error) {
 	return response, nil
 }
 
-// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
-func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
+// ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
+func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue30Response{
+	response := &Issue185Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
+func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue30Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -591,14 +875,14 @@ func ParseIssue30Response(rsp *http.Response) (*issue30Response, error) {
 }
 
 // ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
-func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
+func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue41Response{
+	response := &Issue41Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -610,14 +894,14 @@ func ParseIssue41Response(rsp *http.Response) (*issue41Response, error) {
 }
 
 // ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
-func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
+func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &issue9Response{
+	response := &Issue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -631,8 +915,14 @@ func ParseIssue9Response(rsp *http.Response) (*issue9Response, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /ensure-everything-is-referenced)
+	EnsureEverythingIsReferenced(ctx echo.Context) error
+
 	// (GET /issues/127)
 	Issue127(ctx echo.Context) error
+
+	// (GET /issues/185)
+	Issue185(ctx echo.Context) error
 
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
@@ -649,12 +939,30 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// EnsureEverythingIsReferenced converts echo context to params.
+func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.EnsureEverythingIsReferenced(ctx)
+	return err
+}
+
 // Issue127 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue127(ctx)
+	return err
+}
+
+// Issue185 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue185(ctx)
 	return err
 }
 
@@ -730,7 +1038,9 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
+	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
 	router.GET("/issues/127", wrapper.Issue127)
+	router.GET("/issues/185", wrapper.Issue185)
 	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET("/issues/41/:1param", wrapper.Issue41)
 	router.GET("/issues/9", wrapper.Issue9)
@@ -740,18 +1050,22 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RVwW7jNhD9lcG0QC+CZCdbFKtbu4diD+0umgA9NDnQ4sjihiIZcuhEEPTvBSm7VuI4",
-	"RZD2ZErizLw3M+95xMb2zhoyHLAeMTQd9SIff7xi4Tn8qbj7PfYb8umlpNB45VhZgzVedyrAHAJG9AQh",
-	"h8CD4g4EmDmsQB4cYY12840axqnAn81wPThaYz0eny7OFehs1BI2BMKAMky+FQ2NU0r0KQa2/RV7ZbbX",
-	"ucqIrfW9YKyxyR+P9UO+lsJ+JUNeNV9mQPX4HOE0FahMa19ARIGhEYECtNbDTnhlYwAVQsyvopFgd+SB",
-	"VU8lfNUkAoGQEgTwITaF3hhhBtjELbTqkWR5YxJQxZoOVa7I73L7duTDXH1drspVImAdGeEU1nhZrso1",
-	"FugEd3lu1YylWl/8lB63xKcsfhN3BCF6gmhCdM56JgmNNUyPDKkZAaQ1PzA4T9Q7huOt/HWGax15kVJ+",
-	"lljj51Q3VS3QU3DWBMqALlar9JOzmwxGOKdVkyOrbyEhOmxeOn3vqcUav6uOq1nt97J6Org0pmWux16/",
-	"J1UiX/XC30n7YN6daBDvQZPSSGpF1Pw/Nu8/YjzNeA+bd7mqxlZozZ23cdtNp/v3B4W03BLuaHiwXi5F",
-	"7jxlRYAyWV5ioym7y37p9gv9wu5drp6unolaT0kZXvTE5APWf42oEoCkFiwwpcUaF2BzhvuoPEms2Ucq",
-	"Fj155iPT7YL0h3U1rnOp6azsvh6QLNxSme3sl/+45QvMPswK/zcec/1XKbw21lPHn6bb044uSH88S/WT",
-	"VmQYMqCQPQOUaaz31LAe0llHSTKbaEKbDC+3YWPlAMLIG3Pke9ZtPp5py30kPyzma+3b5jpfpsC/WDm8",
-	"RX973S478SUfhM7Mknef9HMqMMthzyB6jTV2zK6uqr3Rp7+OUhK5XrhSKJxup78DAAD//8VdLP27BwAA",
+	"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",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

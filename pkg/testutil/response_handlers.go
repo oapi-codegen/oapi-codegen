@@ -17,7 +17,7 @@ var (
 	knownHandlers   map[string]ResponseHandler
 )
 
-type ResponseHandler func(contentType string, raw io.Reader, obj interface{}) error
+type ResponseHandler func(contentType string, raw io.Reader, obj interface{}, strict bool) error
 
 func RegisterResponseHandler(mime string, handler ResponseHandler) {
 	knownHandlersMu.Lock()
@@ -35,6 +35,10 @@ func getHandler(mime string) ResponseHandler {
 
 // This function assumes that the response contains JSON and unmarshals it
 // into the specified object.
-func jsonHandler(_ string, r io.Reader, obj interface{}) error {
+func jsonHandler(_ string, r io.Reader, obj interface{}, strict bool) error {
+	d := json.NewDecoder(r)
+	if strict {
+		d.DisallowUnknownFields()
+	}
 	return json.NewDecoder(r).Decode(obj)
 }

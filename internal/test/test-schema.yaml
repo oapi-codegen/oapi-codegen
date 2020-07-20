@@ -7,6 +7,35 @@ info:
 servers:
   - url: http://openapitest.deepmap.ai
 paths:
+  /response-with-reference:
+    get:
+      summary: get response with reference
+      operationId: getResponseWithReference
+      responses:
+        '200':
+          $ref: "#/components/responses/ResponseWithReference"
+  /reserved-keyword:
+    get:
+      summary: get with reserved keyword
+      operationId: getReservedKeyword
+      responses:
+        '200':
+          description: example of a response with a reserved keyword
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReservedKeyword"
+  /every-type-optional:
+    get:
+      summary: get every type optional
+      operationId: getEveryTypeOptional
+      responses:
+        '200':
+          description: a example of every type with an optional value
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EveryTypeOptional"
   /get-simple:
     get:
       summary: Get resource via simple path
@@ -176,6 +205,10 @@ components:
       schema:
         type: string
   schemas:
+    ThisShouldBePruned:
+      properties:
+        name:
+          type: string
     # This is intentionally named in snake case
     some_object:
       properties:
@@ -215,6 +248,9 @@ components:
           type: boolean
         string_field:
           type: string
+        email_field:
+          type: string
+          format: email
         date_field:
           type: string
           format: date

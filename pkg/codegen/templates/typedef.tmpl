@@ -1,4 +1,13 @@
 {{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
+{{- if gt (len .Schema.EnumValues) 0 }}
+// List of {{ .TypeName }}
+const (
+	{{- $typeName := .TypeName }}
+    {{- range $key, $value := .Schema.EnumValues }}
+    {{ $typeName }}_{{ $key }} {{ $typeName }} = "{{ $value }}"
+    {{- end }}
+)
+{{- end }}
 {{end}}

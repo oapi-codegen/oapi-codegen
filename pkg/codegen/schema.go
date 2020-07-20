@@ -13,6 +13,8 @@ type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
 
+	EnumValues map[string]string // Enum values
+
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
@@ -57,6 +59,7 @@ type Property struct {
 	JsonFieldName string
 	Schema        Schema
 	Required      bool
+	Nullable      bool
 }
 
 func (p Property) GoFieldName() string {
@@ -65,7 +68,7 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && !p.Required {
+	if !p.Schema.SkipOptionalPointer && (!p.Required || p.Nullable) {
 		typeDef = "*" + typeDef
 	}
 	return typeDef
@@ -191,6 +194,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
+					Nullable:      p.Value.Nullable,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -222,6 +226,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				return Schema{}, errors.Wrap(err, "error generating type for array")
 			}
 			outSchema.GoType = "[]" + arrayType.TypeDecl()
+			outSchema.Properties = arrayType.Properties
 		case "integer":
 			// We default to int if format doesn't ask for something else.
 			if f == "int64" {
@@ -248,10 +253,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 			outSchema.GoType = "bool"
 		case "string":
+			enumValues := make([]string, len(schema.Enum))
+			for i, enumValue := range schema.Enum {
+				enumValues[i] = enumValue.(string)
+			}
+
+			outSchema.EnumValues = SanitizeEnumNames(enumValues)
+
 			// Special case string formats here.
 			switch f {
 			case "byte":
 				outSchema.GoType = "[]byte"
+			case "email":
+				outSchema.GoType = "openapi_types.Email"
 			case "date":
 				outSchema.GoType = "openapi_types.Date"
 			case "date-time":
@@ -298,7 +312,7 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required {
+		if p.Required || p.Nullable {
 			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {
 			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)

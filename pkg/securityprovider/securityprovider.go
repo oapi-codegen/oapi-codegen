@@ -41,7 +41,7 @@ type SecurityProviderBasicAuth struct {
 
 // Intercept will attach an Authorization header to the request and ensures that
 // the username, password are base64 encoded and attached to the header.
-func (s *SecurityProviderBasicAuth) Intercept(req *http.Request, ctx context.Context) error {
+func (s *SecurityProviderBasicAuth) Intercept(ctx context.Context, req *http.Request) error {
 	req.SetBasicAuth(s.username, s.password)
 	return nil
 }
@@ -62,7 +62,7 @@ type SecurityProviderBearerToken struct {
 
 // Intercept will attach an Authorization header to the request
 // and ensures that the bearer token is attached to the header.
-func (s *SecurityProviderBearerToken) Intercept(req *http.Request, ctx context.Context) error {
+func (s *SecurityProviderBearerToken) Intercept(ctx context.Context, req *http.Request) error {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", s.token))
 	return nil
 }
@@ -70,16 +70,16 @@ func (s *SecurityProviderBearerToken) Intercept(req *http.Request, ctx context.C
 // NewSecurityProviderApiKey will attach a generic apiKey for a given name
 // either to a cookie, header or as a query parameter.
 func NewSecurityProviderApiKey(in, name, apiKey string) (*SecurityProviderApiKey, error) {
-	interceptors := map[string]func(req *http.Request, ctx context.Context) error{
-		"cookie": func(req *http.Request, ctx context.Context) error {
+	interceptors := map[string]func(ctx context.Context, req *http.Request) error{
+		"cookie": func(ctx context.Context, req *http.Request) error {
 			req.AddCookie(&http.Cookie{Name: name, Value: apiKey})
 			return nil
 		},
-		"header": func(req *http.Request, ctx context.Context) error {
+		"header": func(ctx context.Context, req *http.Request) error {
 			req.Header.Add(name, apiKey)
 			return nil
 		},
-		"query": func(req *http.Request, ctx context.Context) error {
+		"query": func(ctx context.Context, req *http.Request) error {
 			query := req.URL.Query()
 			query.Add(name, apiKey)
 			req.URL.RawQuery = query.Encode()
@@ -100,11 +100,11 @@ func NewSecurityProviderApiKey(in, name, apiKey string) (*SecurityProviderApiKey
 // SecurityProviderApiKey will attach an apiKey either to a
 // cookie, header or query.
 type SecurityProviderApiKey struct {
-	interceptor func(req *http.Request, ctx context.Context) error
+	interceptor func(ctx context.Context, req *http.Request) error
 }
 
 // Intercept will attach a cookie, header or query param for the configured
 // name and apiKey.
-func (s *SecurityProviderApiKey) Intercept(req *http.Request, ctx context.Context) error {
-	return s.interceptor(req, ctx)
+func (s *SecurityProviderApiKey) Intercept(ctx context.Context, req *http.Request) error {
+	return s.interceptor(ctx, req)
 }
