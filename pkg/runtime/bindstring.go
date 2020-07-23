@@ -48,11 +48,17 @@ func BindStringToObject(src string, dst interface{}) error {
 	}
 
 	switch t.Kind() {
-	case reflect.Int, reflect.Int32, reflect.Int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var val int64
 		val, err = strconv.ParseInt(src, 10, 64)
 		if err == nil {
 			v.SetInt(val)
+		}
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		var val uint64
+		val, err = strconv.ParseUint(src, 10, 64)
+		if err == nil {
+			v.SetUint(val)
 		}
 	case reflect.String:
 		v.SetString(src)
