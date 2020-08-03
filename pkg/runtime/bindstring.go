@@ -54,6 +54,12 @@ func BindStringToObject(src string, dst interface{}) error {
 		if err == nil {
 			v.SetInt(val)
 		}
+	case reflect.Uint32, reflect.Uint64:
+		var val uint64
+		val, err = strconv.ParseUint(src, 10, 64)
+		if err == nil {
+			v.SetUint(val)
+		}
 	case reflect.String:
 		v.SetString(src)
 		err = nil
