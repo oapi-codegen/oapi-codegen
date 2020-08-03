@@ -32,13 +32,21 @@ func TestBindStringToObject(t *testing.T) {
 	assert.Error(t, BindStringToObject("foo", &i))
 	assert.Error(t, BindStringToObject("1,2,3", &i))
 
-	var i64 int64
-	assert.NoError(t, BindStringToObject("124", &i64))
-	assert.Equal(t, int64(124), i64)
+	var i8 int8
+	assert.NoError(t, BindStringToObject("12", &i8))
+	assert.Equal(t, int8(12), i8)
 
-	assert.Error(t, BindStringToObject("5.7", &i64))
-	assert.Error(t, BindStringToObject("foo", &i64))
-	assert.Error(t, BindStringToObject("1,2,3", &i64))
+	assert.Error(t, BindStringToObject("5.7", &i8))
+	assert.Error(t, BindStringToObject("foo", &i8))
+	assert.Error(t, BindStringToObject("1,2,3", &i8))
+
+	var i16 int16
+	assert.NoError(t, BindStringToObject("12", &i16))
+	assert.Equal(t, int16(12), i16)
+
+	assert.Error(t, BindStringToObject("5.7", &i16))
+	assert.Error(t, BindStringToObject("foo", &i16))
+	assert.Error(t, BindStringToObject("1,2,3", &i16))
 
 	var i32 int32
 	assert.NoError(t, BindStringToObject("12", &i32))
@@ -47,6 +55,54 @@ func TestBindStringToObject(t *testing.T) {
 	assert.Error(t, BindStringToObject("5.7", &i32))
 	assert.Error(t, BindStringToObject("foo", &i32))
 	assert.Error(t, BindStringToObject("1,2,3", &i32))
+
+	var i64 int64
+	assert.NoError(t, BindStringToObject("124", &i64))
+	assert.Equal(t, int64(124), i64)
+
+	assert.Error(t, BindStringToObject("5.7", &i64))
+	assert.Error(t, BindStringToObject("foo", &i64))
+	assert.Error(t, BindStringToObject("1,2,3", &i64))
+
+	var u uint
+	assert.NoError(t, BindStringToObject("5", &u))
+	assert.Equal(t, uint(5), u)
+
+	assert.Error(t, BindStringToObject("5.7", &u))
+	assert.Error(t, BindStringToObject("foo", &u))
+	assert.Error(t, BindStringToObject("1,2,3", &u))
+
+	var u8 uint8
+	assert.NoError(t, BindStringToObject("12", &u8))
+	assert.Equal(t, uint8(12), u8)
+
+	assert.Error(t, BindStringToObject("5.7", &u8))
+	assert.Error(t, BindStringToObject("foo", &u8))
+	assert.Error(t, BindStringToObject("1,2,3", &u8))
+
+	var u16 uint16
+	assert.NoError(t, BindStringToObject("12", &u16))
+	assert.Equal(t, uint16(12), u16)
+
+	assert.Error(t, BindStringToObject("5.7", &u16))
+	assert.Error(t, BindStringToObject("foo", &u16))
+	assert.Error(t, BindStringToObject("1,2,3", &u16))
+
+	var u32 uint32
+	assert.NoError(t, BindStringToObject("12", &u32))
+	assert.Equal(t, uint32(12), u32)
+
+	assert.Error(t, BindStringToObject("5.7", &u32))
+	assert.Error(t, BindStringToObject("foo", &u32))
+	assert.Error(t, BindStringToObject("1,2,3", &u32))
+
+	var u64 uint64
+	assert.NoError(t, BindStringToObject("124", &u64))
+	assert.Equal(t, uint64(124), u64)
+
+	assert.Error(t, BindStringToObject("5.7", &u64))
+	assert.Error(t, BindStringToObject("foo", &u64))
+	assert.Error(t, BindStringToObject("1,2,3", &u64))
 
 	var b bool
 	assert.NoError(t, BindStringToObject("True", &b))
