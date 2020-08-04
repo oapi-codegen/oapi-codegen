@@ -1,0 +1,33 @@
+openapi: 3.0.2
+
+info:
+  title: ...
+  version: 0.0.0
+
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          description: ...
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bar'
+
+components:
+  schemas:
+    Bar:
+      type: string
+      enum: 
+        - Foo
+        - Bar
+        - Foo Bar
+        - Foo-Bar
+        - 1Foo
+        - Bar
+        - ' Foo'
+        - ' Foo '
+        - _Foo_

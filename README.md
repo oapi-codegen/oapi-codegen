@@ -440,6 +440,8 @@ you can specify any combination of those.
  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating
  the code.
+- `import-mapping`: specifies a map of references external OpenAPI specs to go
+ Go include paths. Please see below.
 
 So, for example, if you would like to produce only the server code, you could
 run `oapi-generate -generate types,server`. You could generate `types` and
@@ -453,6 +455,34 @@ To generate a server that only handles `admin` paths, use the argument
 `-include-tags="admin"`. When neither of these arguments is present, all paths
 are generated.
 
+`oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
+a comma separated list of schema names. For instance, `--exclude-tags=Pet,NewPet`
+will exclude from generation schemas `Pet` and `NewPet`. This allow to have a
+in the same package a manually defined structure or interface and refer to it 
+in the openapi spec. 
+
+### Import Mappings
+
+OpenAPI specifications may contain references to other OpenAPI specifications,
+and we need some additional information in order to be able to generate correct
+Go code.
+
+An external reference looks like this:
+
+    $ref: ./some_spec.yaml#/components/schemas/Type
+    
+We assume that you have already generated the boilerplate code for `./some_spec.yaml`
+using `oapi-codegen`, and you have a package which contains the generated code,
+let's call it `github.com/deepmap/some-package`. You need to tell `oapi-codegen` that
+`some_spec.yaml` corresponds to this package, and you would do it by specifying
+this command line argument:
+
+    -import-mapping=./some_spec.yaml:github.com/deepmap/some-package
+    
+This tells us that in order to resolve references generated from `some_spec.yaml` we
+need to import `github.com/deepmap/some-package`. You may specify multiple mappings
+by comma separating them in the form `key1:value1,key2:value2`.
+    
 ## What's missing or incomplete
 
 This code is still young, and not complete, since we're filling it in as we

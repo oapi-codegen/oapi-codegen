@@ -31,10 +31,10 @@ var _ ServerInterface = &ServerInterfaceMock{}
 //
 //         // make and configure a mocked ServerInterface
 //         mockedServerInterface := &ServerInterfaceMock{
-//             CreateResourceFunc: func(w http.ResponseWriter, r *http.Request)  {
+//             CreateResourceFunc: func(w http.ResponseWriter, r *http.Request, argument Argument)  {
 // 	               panic("mock out the CreateResource method")
 //             },
-//             CreateResource2Func: func(w http.ResponseWriter, r *http.Request)  {
+//             CreateResource2Func: func(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)  {
 // 	               panic("mock out the CreateResource2 method")
 //             },
 //             GetEveryTypeOptionalFunc: func(w http.ResponseWriter, r *http.Request)  {
@@ -49,16 +49,16 @@ var _ ServerInterface = &ServerInterfaceMock{}
 //             GetSimpleFunc: func(w http.ResponseWriter, r *http.Request)  {
 // 	               panic("mock out the GetSimple method")
 //             },
-//             GetWithArgsFunc: func(w http.ResponseWriter, r *http.Request)  {
+//             GetWithArgsFunc: func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)  {
 // 	               panic("mock out the GetWithArgs method")
 //             },
-//             GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request)  {
+//             GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request, contentType string)  {
 // 	               panic("mock out the GetWithContentType method")
 //             },
-//             GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request)  {
+//             GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)  {
 // 	               panic("mock out the GetWithReferences method")
 //             },
-//             UpdateResource3Func: func(w http.ResponseWriter, r *http.Request)  {
+//             UpdateResource3Func: func(w http.ResponseWriter, r *http.Request, pFallthrough int)  {
 // 	               panic("mock out the UpdateResource3 method")
 //             },
 //         }
@@ -69,10 +69,10 @@ var _ ServerInterface = &ServerInterfaceMock{}
 //     }
 type ServerInterfaceMock struct {
 	// CreateResourceFunc mocks the CreateResource method.
-	CreateResourceFunc func(w http.ResponseWriter, r *http.Request)
+	CreateResourceFunc func(w http.ResponseWriter, r *http.Request, argument Argument)
 
 	// CreateResource2Func mocks the CreateResource2 method.
-	CreateResource2Func func(w http.ResponseWriter, r *http.Request)
+	CreateResource2Func func(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)
 
 	// GetEveryTypeOptionalFunc mocks the GetEveryTypeOptional method.
 	GetEveryTypeOptionalFunc func(w http.ResponseWriter, r *http.Request)
@@ -87,16 +87,16 @@ type ServerInterfaceMock struct {
 	GetSimpleFunc func(w http.ResponseWriter, r *http.Request)
 
 	// GetWithArgsFunc mocks the GetWithArgs method.
-	GetWithArgsFunc func(w http.ResponseWriter, r *http.Request)
+	GetWithArgsFunc func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
 
 	// GetWithContentTypeFunc mocks the GetWithContentType method.
-	GetWithContentTypeFunc func(w http.ResponseWriter, r *http.Request)
+	GetWithContentTypeFunc func(w http.ResponseWriter, r *http.Request, contentType string)
 
 	// GetWithReferencesFunc mocks the GetWithReferences method.
-	GetWithReferencesFunc func(w http.ResponseWriter, r *http.Request)
+	GetWithReferencesFunc func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
 
 	// UpdateResource3Func mocks the UpdateResource3 method.
-	UpdateResource3Func func(w http.ResponseWriter, r *http.Request)
+	UpdateResource3Func func(w http.ResponseWriter, r *http.Request, pFallthrough int)
 
 	// calls tracks calls to the methods.
 	calls struct {
@@ -106,6 +106,8 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// Argument is the argument argument value.
+			Argument Argument
 		}
 		// CreateResource2 holds details about calls to the CreateResource2 method.
 		CreateResource2 []struct {
@@ -113,6 +115,10 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// InlineArgument is the inlineArgument argument value.
+			InlineArgument int
+			// Params is the params argument value.
+			Params CreateResource2Params
 		}
 		// GetEveryTypeOptional holds details about calls to the GetEveryTypeOptional method.
 		GetEveryTypeOptional []struct {
@@ -148,6 +154,8 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// Params is the params argument value.
+			Params GetWithArgsParams
 		}
 		// GetWithContentType holds details about calls to the GetWithContentType method.
 		GetWithContentType []struct {
@@ -155,6 +163,8 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// ContentType is the contentType argument value.
+			ContentType string
 		}
 		// GetWithReferences holds details about calls to the GetWithReferences method.
 		GetWithReferences []struct {
@@ -162,6 +172,10 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// GlobalArgument is the globalArgument argument value.
+			GlobalArgument int64
+			// Argument is the argument argument value.
+			Argument Argument
 		}
 		// UpdateResource3 holds details about calls to the UpdateResource3 method.
 		UpdateResource3 []struct {
@@ -169,38 +183,44 @@ type ServerInterfaceMock struct {
 			W http.ResponseWriter
 			// R is the r argument value.
 			R *http.Request
+			// PFallthrough is the pFallthrough argument value.
+			PFallthrough int
 		}
 	}
 }
 
 // CreateResource calls CreateResourceFunc.
-func (mock *ServerInterfaceMock) CreateResource(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) CreateResource(w http.ResponseWriter, r *http.Request, argument Argument) {
 	if mock.CreateResourceFunc == nil {
 		panic("ServerInterfaceMock.CreateResourceFunc: method is nil but ServerInterface.CreateResource was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W        http.ResponseWriter
+		R        *http.Request
+		Argument Argument
 	}{
-		W: w,
-		R: r,
+		W:        w,
+		R:        r,
+		Argument: argument,
 	}
 	lockServerInterfaceMockCreateResource.Lock()
 	mock.calls.CreateResource = append(mock.calls.CreateResource, callInfo)
 	lockServerInterfaceMockCreateResource.Unlock()
-	mock.CreateResourceFunc(w, r)
+	mock.CreateResourceFunc(w, r, argument)
 }
 
 // CreateResourceCalls gets all the calls that were made to CreateResource.
 // Check the length with:
 //     len(mockedServerInterface.CreateResourceCalls())
 func (mock *ServerInterfaceMock) CreateResourceCalls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W        http.ResponseWriter
+	R        *http.Request
+	Argument Argument
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W        http.ResponseWriter
+		R        *http.Request
+		Argument Argument
 	}
 	lockServerInterfaceMockCreateResource.RLock()
 	calls = mock.calls.CreateResource
@@ -209,33 +229,41 @@ func (mock *ServerInterfaceMock) CreateResourceCalls() []struct {
 }
 
 // CreateResource2 calls CreateResource2Func.
-func (mock *ServerInterfaceMock) CreateResource2(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params) {
 	if mock.CreateResource2Func == nil {
 		panic("ServerInterfaceMock.CreateResource2Func: method is nil but ServerInterface.CreateResource2 was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W              http.ResponseWriter
+		R              *http.Request
+		InlineArgument int
+		Params         CreateResource2Params
 	}{
-		W: w,
-		R: r,
+		W:              w,
+		R:              r,
+		InlineArgument: inlineArgument,
+		Params:         params,
 	}
 	lockServerInterfaceMockCreateResource2.Lock()
 	mock.calls.CreateResource2 = append(mock.calls.CreateResource2, callInfo)
 	lockServerInterfaceMockCreateResource2.Unlock()
-	mock.CreateResource2Func(w, r)
+	mock.CreateResource2Func(w, r, inlineArgument, params)
 }
 
 // CreateResource2Calls gets all the calls that were made to CreateResource2.
 // Check the length with:
 //     len(mockedServerInterface.CreateResource2Calls())
 func (mock *ServerInterfaceMock) CreateResource2Calls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W              http.ResponseWriter
+	R              *http.Request
+	InlineArgument int
+	Params         CreateResource2Params
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W              http.ResponseWriter
+		R              *http.Request
+		InlineArgument int
+		Params         CreateResource2Params
 	}
 	lockServerInterfaceMockCreateResource2.RLock()
 	calls = mock.calls.CreateResource2
@@ -384,33 +412,37 @@ func (mock *ServerInterfaceMock) GetSimpleCalls() []struct {
 }
 
 // GetWithArgs calls GetWithArgsFunc.
-func (mock *ServerInterfaceMock) GetWithArgs(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams) {
 	if mock.GetWithArgsFunc == nil {
 		panic("ServerInterfaceMock.GetWithArgsFunc: method is nil but ServerInterface.GetWithArgs was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W      http.ResponseWriter
+		R      *http.Request
+		Params GetWithArgsParams
 	}{
-		W: w,
-		R: r,
+		W:      w,
+		R:      r,
+		Params: params,
 	}
 	lockServerInterfaceMockGetWithArgs.Lock()
 	mock.calls.GetWithArgs = append(mock.calls.GetWithArgs, callInfo)
 	lockServerInterfaceMockGetWithArgs.Unlock()
-	mock.GetWithArgsFunc(w, r)
+	mock.GetWithArgsFunc(w, r, params)
 }
 
 // GetWithArgsCalls gets all the calls that were made to GetWithArgs.
 // Check the length with:
 //     len(mockedServerInterface.GetWithArgsCalls())
 func (mock *ServerInterfaceMock) GetWithArgsCalls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W      http.ResponseWriter
+	R      *http.Request
+	Params GetWithArgsParams
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W      http.ResponseWriter
+		R      *http.Request
+		Params GetWithArgsParams
 	}
 	lockServerInterfaceMockGetWithArgs.RLock()
 	calls = mock.calls.GetWithArgs
@@ -419,33 +451,37 @@ func (mock *ServerInterfaceMock) GetWithArgsCalls() []struct {
 }
 
 // GetWithContentType calls GetWithContentTypeFunc.
-func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string) {
 	if mock.GetWithContentTypeFunc == nil {
 		panic("ServerInterfaceMock.GetWithContentTypeFunc: method is nil but ServerInterface.GetWithContentType was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W           http.ResponseWriter
+		R           *http.Request
+		ContentType string
 	}{
-		W: w,
-		R: r,
+		W:           w,
+		R:           r,
+		ContentType: contentType,
 	}
 	lockServerInterfaceMockGetWithContentType.Lock()
 	mock.calls.GetWithContentType = append(mock.calls.GetWithContentType, callInfo)
 	lockServerInterfaceMockGetWithContentType.Unlock()
-	mock.GetWithContentTypeFunc(w, r)
+	mock.GetWithContentTypeFunc(w, r, contentType)
 }
 
 // GetWithContentTypeCalls gets all the calls that were made to GetWithContentType.
 // Check the length with:
 //     len(mockedServerInterface.GetWithContentTypeCalls())
 func (mock *ServerInterfaceMock) GetWithContentTypeCalls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W           http.ResponseWriter
+	R           *http.Request
+	ContentType string
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W           http.ResponseWriter
+		R           *http.Request
+		ContentType string
 	}
 	lockServerInterfaceMockGetWithContentType.RLock()
 	calls = mock.calls.GetWithContentType
@@ -454,33 +490,41 @@ func (mock *ServerInterfaceMock) GetWithContentTypeCalls() []struct {
 }
 
 // GetWithReferences calls GetWithReferencesFunc.
-func (mock *ServerInterfaceMock) GetWithReferences(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument) {
 	if mock.GetWithReferencesFunc == nil {
 		panic("ServerInterfaceMock.GetWithReferencesFunc: method is nil but ServerInterface.GetWithReferences was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W              http.ResponseWriter
+		R              *http.Request
+		GlobalArgument int64
+		Argument       Argument
 	}{
-		W: w,
-		R: r,
+		W:              w,
+		R:              r,
+		GlobalArgument: globalArgument,
+		Argument:       argument,
 	}
 	lockServerInterfaceMockGetWithReferences.Lock()
 	mock.calls.GetWithReferences = append(mock.calls.GetWithReferences, callInfo)
 	lockServerInterfaceMockGetWithReferences.Unlock()
-	mock.GetWithReferencesFunc(w, r)
+	mock.GetWithReferencesFunc(w, r, globalArgument, argument)
 }
 
 // GetWithReferencesCalls gets all the calls that were made to GetWithReferences.
 // Check the length with:
 //     len(mockedServerInterface.GetWithReferencesCalls())
 func (mock *ServerInterfaceMock) GetWithReferencesCalls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W              http.ResponseWriter
+	R              *http.Request
+	GlobalArgument int64
+	Argument       Argument
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W              http.ResponseWriter
+		R              *http.Request
+		GlobalArgument int64
+		Argument       Argument
 	}
 	lockServerInterfaceMockGetWithReferences.RLock()
 	calls = mock.calls.GetWithReferences
@@ -489,33 +533,37 @@ func (mock *ServerInterfaceMock) GetWithReferencesCalls() []struct {
 }
 
 // UpdateResource3 calls UpdateResource3Func.
-func (mock *ServerInterfaceMock) UpdateResource3(w http.ResponseWriter, r *http.Request) {
+func (mock *ServerInterfaceMock) UpdateResource3(w http.ResponseWriter, r *http.Request, pFallthrough int) {
 	if mock.UpdateResource3Func == nil {
 		panic("ServerInterfaceMock.UpdateResource3Func: method is nil but ServerInterface.UpdateResource3 was just called")
 	}
 	callInfo := struct {
-		W http.ResponseWriter
-		R *http.Request
+		W            http.ResponseWriter
+		R            *http.Request
+		PFallthrough int
 	}{
-		W: w,
-		R: r,
+		W:            w,
+		R:            r,
+		PFallthrough: pFallthrough,
 	}
 	lockServerInterfaceMockUpdateResource3.Lock()
 	mock.calls.UpdateResource3 = append(mock.calls.UpdateResource3, callInfo)
 	lockServerInterfaceMockUpdateResource3.Unlock()
-	mock.UpdateResource3Func(w, r)
+	mock.UpdateResource3Func(w, r, pFallthrough)
 }
 
 // UpdateResource3Calls gets all the calls that were made to UpdateResource3.
 // Check the length with:
 //     len(mockedServerInterface.UpdateResource3Calls())
 func (mock *ServerInterfaceMock) UpdateResource3Calls() []struct {
-	W http.ResponseWriter
-	R *http.Request
+	W            http.ResponseWriter
+	R            *http.Request
+	PFallthrough int
 } {
 	var calls []struct {
-		W http.ResponseWriter
-		R *http.Request
+		W            http.ResponseWriter
+		R            *http.Request
+		PFallthrough int
 	}
 	lockServerInterfaceMockUpdateResource3.RLock()
 	calls = mock.calls.UpdateResource3

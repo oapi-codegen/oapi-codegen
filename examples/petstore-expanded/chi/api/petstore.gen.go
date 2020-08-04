@@ -6,7 +6,6 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"fmt"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
@@ -62,111 +61,102 @@ type AddPetJSONBody NewPet
 // AddPetRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody AddPetJSONBody
 
+// ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets (GET /pets)
-	FindPets(w http.ResponseWriter, r *http.Request)
-	// Creates a new pet (POST /pets)
+	// Returns all pets
+	// (GET /pets)
+	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
+	// Creates a new pet
+	// (POST /pets)
 	AddPet(w http.ResponseWriter, r *http.Request)
-	// Deletes a pet by ID (DELETE /pets/{id})
-	DeletePet(w http.ResponseWriter, r *http.Request)
-	// Returns a pet by ID (GET /pets/{id})
-	FindPetById(w http.ResponseWriter, r *http.Request)
+	// Deletes a pet by ID
+	// (DELETE /pets/{id})
+	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
+	// Returns a pet by ID
+	// (GET /pets/{id})
+	FindPetById(w http.ResponseWriter, r *http.Request, id int64)
 }
 
-// ParamsForFindPets operation parameters from context
-func ParamsForFindPets(ctx context.Context) *FindPetsParams {
-	return ctx.Value("FindPetsParams").(*FindPetsParams)
+// ServerInterfaceWrapper converts contexts to parameters.
+type ServerInterfaceWrapper struct {
+	Handler ServerInterface
 }
 
 // FindPets operation middleware
-func FindPetsCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		var err error
+	var err error
 
-		// Parameter object where we will unmarshal all parameters from the context
-		var params FindPetsParams
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FindPetsParams
 
-		// ------------- Optional query parameter "tags" -------------
-		if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
+	// ------------- Optional query parameter "tags" -------------
+	if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
 
-		}
+	}
 
-		err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
-			return
-		}
+	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
+		return
+	}
 
-		// ------------- Optional query parameter "limit" -------------
-		if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
-		}
+	}
 
-		err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
-			return
-		}
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+		return
+	}
 
-		ctx = context.WithValue(ctx, "FindPetsParams", &params)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.FindPets(w, r.WithContext(ctx), params)
 }
 
 // AddPet operation middleware
-func AddPetCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.AddPet(w, r.WithContext(ctx))
 }
 
 // DeletePet operation middleware
-func DeletePetCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		var err error
+	var err error
 
-		// ------------- Path parameter "id" -------------
-		var id int64
+	// ------------- Path parameter "id" -------------
+	var id int64
 
-		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-			return
-		}
+	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		return
+	}
 
-		ctx = context.WithValue(ctx, "id", id)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.DeletePet(w, r.WithContext(ctx), id)
 }
 
 // FindPetById operation middleware
-func FindPetByIdCtx(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
+func (siw *ServerInterfaceWrapper) FindPetById(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 
-		var err error
+	var err error
 
-		// ------------- Path parameter "id" -------------
-		var id int64
+	// ------------- Path parameter "id" -------------
+	var id int64
 
-		err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
-			return
-		}
+	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		return
+	}
 
-		ctx = context.WithValue(ctx, "id", id)
-
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+	siw.Handler.FindPetById(w, r.WithContext(ctx), id)
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
@@ -176,21 +166,21 @@ func Handler(si ServerInterface) http.Handler {
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+
 	r.Group(func(r chi.Router) {
-		r.Use(FindPetsCtx)
-		r.Get("/pets", si.FindPets)
+		r.Get("/pets", wrapper.FindPets)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(AddPetCtx)
-		r.Post("/pets", si.AddPet)
+		r.Post("/pets", wrapper.AddPet)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(DeletePetCtx)
-		r.Delete("/pets/{id}", si.DeletePet)
+		r.Delete("/pets/{id}", wrapper.DeletePet)
 	})
 	r.Group(func(r chi.Router) {
-		r.Use(FindPetByIdCtx)
-		r.Get("/pets/{id}", si.FindPetById)
+		r.Get("/pets/{id}", wrapper.FindPetById)
 	})
 
 	return r

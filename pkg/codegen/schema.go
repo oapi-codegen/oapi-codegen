@@ -16,7 +16,7 @@ type Schema struct {
 
 	Validations Validations
 
-	EnumValues []string // Enum values
+	EnumValues map[string]string // Enum values
 
 	ItemType *Schema // For an array, the item's schema.
 
@@ -164,12 +164,22 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
-	// Schema type and format, eg. string / binary
-	t := schema.Type
-
 	outSchema := Schema{
 		RefType: refType,
 	}
+
+	// Check for custom Go type extension
+	if extension, ok := schema.Extensions[extPropGoType]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return outSchema, errors.Wrapf(err, "invalid value for %q", extPropGoType)
+		}
+		outSchema.GoType = typeName
+		return outSchema, nil
+	}
+
+	// Schema type and format, eg. string / binary
+	t := schema.Type
 	// Handle objects and empty schemas first as a special case
 	if t == "" || t == "object" {
 		var outType string
@@ -296,16 +306,24 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 			outSchema.GoType = "bool"
 		case "string":
-			for _, enumValue := range schema.Enum {
-				outSchema.EnumValues = append(outSchema.EnumValues, enumValue.(string))
+			enumValues := make([]string, len(schema.Enum))
+			for i, enumValue := range schema.Enum {
+				enumValues[i] = enumValue.(string)
 			}
-			if len(schema.Enum) > 0 {
-				outSchema.Validations.Values = outSchema.EnumValues
+			outSchema.EnumValues = SanitizeEnumNames(enumValues)
+			if len(outSchema.EnumValues) > 0 {
+				outSchema.Validations.Values = make([]string, 0, len(outSchema.EnumValues))
+				for _, value := range outSchema.EnumValues {
+					outSchema.Validations.Values = append(outSchema.Validations.Values, value)
+				}
 			}
+
 			// Special case string formats here.
 			switch f {
 			case "byte":
 				outSchema.GoType = "[]byte"
+			case "email":
+				outSchema.GoType = "openapi_types.Email"
 			case "date":
 				outSchema.GoType = "openapi_types.Date"
 			case "date-time":
@@ -499,6 +517,17 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
 			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
+			if goSchema.HasAdditionalProperties {
+				addPropsType := goSchema.AdditionalPropertiesType.GoType
+				if goSchema.AdditionalPropertiesType.RefType != "" {
+					addPropsType = goSchema.AdditionalPropertiesType.RefType
+				}
+
+				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
+				if !StringInArray(additionalPropertiesPart, objectParts) {
+					objectParts = append(objectParts, additionalPropertiesPart)
+				}
+			}
 		}
 	}
 	objectParts = append(objectParts, "}")

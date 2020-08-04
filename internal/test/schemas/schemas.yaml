@@ -104,6 +104,14 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/NullableProperties"
+  /issues/209/${str}:
+    parameters:
+      - $ref: '#/components/parameters/StringInPath'
+    get:
+      operationId: Issue209
+      description: Checks if parameters are declared properly
+
+
 components:
   schemas:
     GenericObject:
@@ -133,3 +141,11 @@ components:
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
+  parameters:
+    StringInPath:
+      name: str
+      description: A string path parameter
+      in: path
+      required: true
+      schema:
+        type: string
