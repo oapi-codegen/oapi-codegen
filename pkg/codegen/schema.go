@@ -14,6 +14,7 @@ type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
 
+	IsExternal  bool // Whether it was defined externally, i.e. "x-go-type"
 	Validations Validations
 
 	EnumValues map[string]string // Enum values
@@ -142,6 +143,20 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}, nil
 	}
 
+	outSchema := Schema{
+		RefType: refType,
+	}
+	// Check for custom Go type extension
+	if extension, ok := schema.Extensions[extPropGoType]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return outSchema, errors.Wrapf(err, "invalid value for %q", extPropGoType)
+		}
+		outSchema.GoType = typeName
+		outSchema.IsExternal = true
+		return outSchema, nil
+	}
+
 	// We can't support this in any meaningful way
 	if schema.AnyOf != nil {
 		return Schema{GoType: "interface{}", RefType: refType}, nil
@@ -162,20 +177,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		mergedSchema.RefType = refType
 		return mergedSchema, nil
-	}
-
-	outSchema := Schema{
-		RefType: refType,
-	}
-
-	// Check for custom Go type extension
-	if extension, ok := schema.Extensions[extPropGoType]; ok {
-		typeName, err := extTypeName(extension)
-		if err != nil {
-			return outSchema, errors.Wrapf(err, "invalid value for %q", extPropGoType)
-		}
-		outSchema.GoType = typeName
-		return outSchema, nil
 	}
 
 	// Schema type and format, eg. string / binary
