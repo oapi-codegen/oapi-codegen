@@ -246,7 +246,7 @@ func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
 all of them are tested via the `internal/test/components` schemas and tests. Please
-look through those tests for more usage examples. 
+look through those tests for more usage examples.
 
 ## Generated Client Boilerplate
 
@@ -319,7 +319,7 @@ The Client object above is fairly flexible, since you can pass in your own
 headers. In our middleware stack, we annotate the context with additional
 information such as the request ID and function tracing information, and we
 use the callback to propagate that information into the request headers. Still, we
-can't foresee all possible usages, so those functions call through to helper 
+can't foresee all possible usages, so those functions call through to helper
 functions which create requests. In the case of the pet store, we have:
 
 ```go
@@ -456,10 +456,10 @@ To generate a server that only handles `admin` paths, use the argument
 are generated.
 
 `oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
-a comma separated list of schema names. For instance, `--exclude-tags=Pet,NewPet`
+a comma separated list of schema names. For instance, `--exclude-schemas=Pet,NewPet`
 will exclude from generation schemas `Pet` and `NewPet`. This allow to have a
-in the same package a manually defined structure or interface and refer to it 
-in the openapi spec. 
+in the same package a manually defined structure or interface and refer to it
+in the openapi spec.
 
 ### Import Mappings
 
@@ -470,7 +470,7 @@ Go code.
 An external reference looks like this:
 
     $ref: ./some_spec.yaml#/components/schemas/Type
-    
+
 We assume that you have already generated the boilerplate code for `./some_spec.yaml`
 using `oapi-codegen`, and you have a package which contains the generated code,
 let's call it `github.com/deepmap/some-package`. You need to tell `oapi-codegen` that
@@ -478,11 +478,11 @@ let's call it `github.com/deepmap/some-package`. You need to tell `oapi-codegen`
 this command line argument:
 
     -import-mapping=./some_spec.yaml:github.com/deepmap/some-package
-    
+
 This tells us that in order to resolve references generated from `some_spec.yaml` we
 need to import `github.com/deepmap/some-package`. You may specify multiple mappings
 by comma separating them in the form `key1:value1,key2:value2`.
-    
+
 ## What's missing or incomplete
 
 This code is still young, and not complete, since we're filling it in as we
