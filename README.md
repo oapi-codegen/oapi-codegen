@@ -419,6 +419,13 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
     }
 ```
 
+## Extensions
+
+`oapi-codegen` supports the following properties to extend the behavior.
+
+- `x-go-type`: specifies Go type name. It allows you to use type what you want in the generated code.
+See [PR](https://github.com/deepmap/oapi-codegen/pull/212) for details.
+
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,
