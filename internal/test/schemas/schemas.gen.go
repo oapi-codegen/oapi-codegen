@@ -892,7 +892,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 		}
 		response.YAML200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest GenericObject
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -916,7 +916,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	case rsp.StatusCode == 200:
 	// Content-type (text/markdown) unsupported
 
-	default:
+	case true:
 		// Content-type (text/markdown) unsupported
 
 	}

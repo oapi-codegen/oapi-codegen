@@ -1220,7 +1220,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest struct {
 			Field SchemaObject `json:"Field"`
 		}
@@ -1229,7 +1229,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 		}
 		response.JSONDefault = &dest
 
-	default:
+	case true:
 		// Content-type (text/plain) unsupported
 
 	}
