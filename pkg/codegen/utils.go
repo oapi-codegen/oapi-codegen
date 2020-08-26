@@ -22,7 +22,6 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
 )
 
 var pathParamRE *regexp.Regexp
@@ -204,8 +203,8 @@ func StringInArray(str string, array []string) bool {
 func RefPathToGoType(refPath string) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
-		if len(pathParts) != 4 {
-			return "", errors.New("Parameter nesting is deeper than supported")
+		if depth := len(pathParts); depth != 4 {
+			return "", fmt.Errorf("Parameter nesting is deeper than supported: %s has %d", refPath, depth)
 		}
 		return SchemaNameToTypeName(pathParts[3]), nil
 	}
