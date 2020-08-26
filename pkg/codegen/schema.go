@@ -410,29 +410,6 @@ func GenStructFromSchema(schema Schema) string {
 	return strings.Join(objectParts, "\n")
 }
 
-// func GenStructValidationCall(schema Schema, embeddedFields ...string) string {
-// 	// Start out with the validation struct call
-// 	callParts := []string{"validation.ValidateStruct(&s, "}
-// 	for _, field := range embeddedFields {
-// 		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.%s),", field))
-// 	}
-// 	// Append all the field validations
-// 	for _, prop := range schema.Properties {
-// 		var validations []string
-// 		if prop.Required {
-// 			validations = append(validations, "validation.Required")
-// 		}
-// 		validations = append(validations, prop.Schema.ValidationTag)
-// 		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.%s, %s),", prop.GoFieldName(), strings.Join(validations, ", ")))
-// 	}
-// 	// Close the struct
-// 	if schema.HasAdditionalProperties {
-// 		callParts = append(callParts, fmt.Sprintf("validation.Field(&s.AdditionalProperties, %s),", schema.AdditionalPropertiesType.ValidationTag))
-// 	}
-// 	callParts = append(callParts, ")")
-// 	return strings.Join(callParts, "\n")
-// }
-
 // Merge all the fields in the schemas supplied into one giant schema.
 func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var outSchema Schema
