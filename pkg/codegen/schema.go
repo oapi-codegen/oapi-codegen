@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -317,6 +318,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				for _, value := range outSchema.EnumValues {
 					outSchema.Validations.Values = append(outSchema.Validations.Values, value)
 				}
+				sort.Sort(sort.StringSlice(outSchema.Validations.Values))
 			}
 
 			// Special case string formats here.
