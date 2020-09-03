@@ -18,14 +18,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"go/format"
-	"regexp"
 	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pkg/errors"
+	"golang.org/x/tools/imports"
 
 	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 )
@@ -37,7 +36,7 @@ type Options struct {
 	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool              // Whether to skip go fmt on the generated code
+	SkipFmt            bool              // Whether to skip go imports on the generated code
 	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
@@ -46,54 +45,38 @@ type Options struct {
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 }
 
+// goImport represents a go package to be imported in the generated code
 type goImport struct {
-	lookFor     string
-	alias       string
-	packageName string
+	Name string // package name
+	Path string // package path
 }
 
-func (i goImport) String() string {
-	if i.alias != "" {
-		return fmt.Sprintf("%s %q", i.alias, i.packageName)
+// String returns a go import statement
+func (gi goImport) String() string {
+	if gi.Name != "" {
+		return fmt.Sprintf("%s %q", gi.Name, gi.Path)
 	}
-	return fmt.Sprintf("%q", i.packageName)
+	return fmt.Sprintf("%q", gi.Path)
 }
 
-type goImports []goImport
+// importMap maps external OpenAPI specifications files/urls to external go packages
+type importMap map[string]goImport
 
-var (
-	allGoImports = goImports{
-		{lookFor: "base64\\.", packageName: "encoding/base64"},
-		{lookFor: "bytes\\.", packageName: "bytes"},
-		{lookFor: "chi\\.", packageName: "github.com/go-chi/chi"},
-		{lookFor: "context\\.", packageName: "context"},
-		{lookFor: "echo\\.", packageName: "github.com/labstack/echo/v4"},
-		{lookFor: "errors\\.", packageName: "github.com/pkg/errors"},
-		{lookFor: "fmt\\.", packageName: "fmt"},
-		{lookFor: "gzip\\.", packageName: "compress/gzip"},
-		{lookFor: "http\\.", packageName: "net/http"},
-		{lookFor: "io\\.", packageName: "io"},
-		{lookFor: "ioutil\\.", packageName: "io/ioutil"},
-		{lookFor: "json\\.", packageName: "encoding/json"},
-		{lookFor: "openapi3\\.", packageName: "github.com/getkin/kin-openapi/openapi3"},
-		{lookFor: "openapi_types\\.", alias: "openapi_types", packageName: "github.com/deepmap/oapi-codegen/pkg/types"},
-		{lookFor: "path\\.", packageName: "path"},
-		{lookFor: "runtime\\.", packageName: "github.com/deepmap/oapi-codegen/pkg/runtime"},
-		{lookFor: "strings\\.", packageName: "strings"},
-		{lookFor: "time\\.Duration", packageName: "time"},
-		{lookFor: "time\\.Time", packageName: "time"},
-		{lookFor: "url\\.", packageName: "net/url"},
-		{lookFor: "xml\\.", packageName: "encoding/xml"},
-		{lookFor: "yaml\\.", packageName: "gopkg.in/yaml.v2"},
+// GoImports returns a slice of go import statements
+func (im importMap) GoImports() []string {
+	goImports := make([]string, 0, len(im))
+	for _, v := range im {
+		goImports = append(goImports, v.String())
 	}
+	return goImports
+}
 
-	importMapping = map[string]goImport{}
-)
+var importMapping importMap
 
-func constructImportMapping(input map[string]string) map[string]goImport {
+func constructImportMapping(input map[string]string) importMap {
 	var (
-		nameToAlias = map[string]string{}
-		result      = map[string]goImport{}
+		pathToName = map[string]string{}
+		result     = importMap{}
 	)
 
 	{
@@ -103,14 +86,14 @@ func constructImportMapping(input map[string]string) map[string]goImport {
 		}
 		sort.Strings(packagePaths)
 
-		for _, packageName := range packagePaths {
-			if _, ok := nameToAlias[packageName]; !ok {
-				nameToAlias[packageName] = fmt.Sprintf("externalRef%d", len(nameToAlias))
+		for _, packagePath := range packagePaths {
+			if _, ok := pathToName[packagePath]; !ok {
+				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 			}
 		}
 	}
-	for urlOrPath, packageName := range input {
-		result[urlOrPath] = goImport{alias: nameToAlias[packageName], packageName: packageName}
+	for specPath, packagePath := range input {
+		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
 	}
 	return result
 }
@@ -198,43 +181,11 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		}
 	}
 
-	// Imports needed for the generated code to compile
-	var imports []string
-	for _, importGo := range importMapping {
-		imports = append(imports, importGo.String())
-	}
-
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	// Based on module prefixes, figure out which optional imports are required.
-	pkgs := make(map[string]int)
-	for _, str := range []string{typeDefinitions, chiServerOut, echoServerOut, clientOut, clientWithResponsesOut, inlinedSpec} {
-		for _, line := range strings.Split(strings.TrimSpace(str), "\n") {
-			line = strings.TrimSpace(line)
-
-			if line == "" || strings.HasPrefix(line, "//") {
-				continue
-			}
-
-			for _, goImport := range allGoImports {
-				match, err := regexp.MatchString(fmt.Sprintf("[^a-zA-Z0-9_]%s", goImport.lookFor), line)
-				if err != nil {
-					return "", errors.Wrap(err, "error figuring out imports")
-				}
-
-				if match {
-					pkgs[goImport.String()]++
-				}
-			}
-		}
-	}
-
-	for k := range pkgs {
-		imports = append(imports, k)
-	}
-
-	importsOut, err := GenerateImports(t, imports, packageName)
+	externalImports := importMapping.GoImports()
+	importsOut, err := GenerateImports(t, externalImports, packageName)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating imports")
 	}
@@ -290,12 +241,13 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	// remove any byte-order-marks which break Go-Code
 	goCode := SanitizeCode(buf.String())
 
-	// The generation code produces unindented horrors. Use the Go formatter
+	// The generation code produces unindented horrors. Use the Go Imports
 	// to make it all pretty.
 	if opts.SkipFmt {
 		return goCode, nil
 	}
-	outBytes, err := format.Source([]byte(goCode))
+
+	outBytes, err := imports.Process(packageName+".go", []byte(goCode), nil)
 	if err != nil {
 		fmt.Println(goCode)
 		return "", errors.Wrap(err, "error formatting Go code")
@@ -510,17 +462,15 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // Generate our import statements and package definition.
-func GenerateImports(t *template.Template, imports []string, packageName string) (string, error) {
-	sort.Strings(imports)
-
+func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	context := struct {
-		Imports     []string
-		PackageName string
+		ExternalImports []string
+		PackageName     string
 	}{
-		Imports:     imports,
-		PackageName: packageName,
+		ExternalImports: externalImports,
+		PackageName:     packageName,
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {

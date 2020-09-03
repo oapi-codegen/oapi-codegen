@@ -5,11 +5,12 @@ package server
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/go-chi/chi"
-	"net/http"
-	"time"
 )
 
 // EveryTypeOptional defines model for EveryTypeOptional.

@@ -436,7 +436,7 @@ you can specify any combination of those.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
-- `skip-fmt`: skip running `go fmt` on the generated code. This is useful for debugging
+- `skip-fmt`: skip running `goimports` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating
  the code.

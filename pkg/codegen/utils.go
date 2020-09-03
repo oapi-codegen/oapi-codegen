@@ -220,7 +220,7 @@ func RefPathToGoType(refPath string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("%s.%s", goImport.alias, goType), nil
+		return fmt.Sprintf("%s.%s", goImport.Name, goType), nil
 	}
 }
 
