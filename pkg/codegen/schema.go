@@ -134,12 +134,22 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
-	// Schema type and format, eg. string / binary
-	t := schema.Type
-
 	outSchema := Schema{
 		RefType: refType,
 	}
+
+	// Check for custom Go type extension
+	if extension, ok := schema.Extensions[extPropGoType]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return outSchema, errors.Wrapf(err, "invalid value for %q", extPropGoType)
+		}
+		outSchema.GoType = typeName
+		return outSchema, nil
+	}
+
+	// Schema type and format, eg. string / binary
+	t := schema.Type
 	// Handle objects and empty schemas first as a special case
 	if t == "" || t == "object" {
 		var outType string
