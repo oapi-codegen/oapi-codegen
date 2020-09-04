@@ -421,10 +421,12 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ## Extensions
 
-`oapi-codegen` supports the following properties to extend the behavior.
+`oapi-codegen` supports the following extended properties:
 
-- `x-go-type`: specifies Go type name. It allows you to use type what you want in the generated code.
-See [PR](https://github.com/deepmap/oapi-codegen/pull/212) for details.
+- `x-go-type`: specifies Go type name. It allows you to specify the type name for a schema, and
+ will override any default value. This extended property isn't supported in all parts of
+ OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
+ flag incorrect usage of this property.
 
 ## Using `oapi-codegen`
 
