@@ -50,9 +50,9 @@ type Client struct {
 	// customized settings, such as certificate chains.
 	Client HttpRequestDoer
 
-	// A callback for modifying requests which are generated before sending over
+	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditor RequestEditorFn
+	RequestEditors []RequestEditorFn
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -94,7 +94,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
-		c.RequestEditor = fn
+		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
 }
@@ -102,20 +102,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// GetFoo request
-	GetFoo(ctx context.Context, params *GetFooParams) (*http.Response, error)
+	GetFoo(ctx context.Context, params *GetFooParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetFoo(ctx context.Context, params *GetFooParams) (*http.Response, error) {
+func (c *Client) GetFoo(ctx context.Context, params *GetFooParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetFooRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
@@ -167,6 +163,21 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 	}
 
 	return req, nil
+}
+
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	req = req.WithContext(ctx)
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ClientWithResponses builds on ClientInterface to offer response payloads

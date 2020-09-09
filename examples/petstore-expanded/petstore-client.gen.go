@@ -83,9 +83,9 @@ type Client struct {
 	// customized settings, such as certificate chains.
 	Client HttpRequestDoer
 
-	// A callback for modifying requests which are generated before sending over
+	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditor RequestEditorFn
+	RequestEditors []RequestEditorFn
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -127,7 +127,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
-		c.RequestEditor = fn
+		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
 }
@@ -135,91 +135,71 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// FindPets request
-	FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error)
+	FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// AddPet request  with any body
-	AddPetWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	AddPet(ctx context.Context, body AddPetJSONRequestBody) (*http.Response, error)
+	AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeletePet request
-	DeletePet(ctx context.Context, id int64) (*http.Response, error)
+	DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindPetById request
-	FindPetById(ctx context.Context, id int64) (*http.Response, error)
+	FindPetById(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error) {
+func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindPetsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddPetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody) (*http.Response, error) {
+func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddPetRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) DeletePet(ctx context.Context, id int64) (*http.Response, error) {
+func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeletePetRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindPetById(ctx context.Context, id int64) (*http.Response, error) {
+func (c *Client) FindPetById(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindPetByIdRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
@@ -392,6 +372,21 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 	}
 
 	return req, nil
+}
+
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	req = req.WithContext(ctx)
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ClientWithResponses builds on ClientInterface to offer response payloads

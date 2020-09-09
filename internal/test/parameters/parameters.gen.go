@@ -135,9 +135,9 @@ type Client struct {
 	// customized settings, such as certificate chains.
 	Client HttpRequestDoer
 
-	// A callback for modifying requests which are generated before sending over
+	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditor RequestEditorFn
+	RequestEditors []RequestEditorFn
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -179,7 +179,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
-		c.RequestEditor = fn
+		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
 }
@@ -187,344 +187,268 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 	// GetContentObject request
-	GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error)
+	GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetCookie request
-	GetCookie(ctx context.Context, params *GetCookieParams) (*http.Response, error)
+	GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetHeader request
-	GetHeader(ctx context.Context, params *GetHeaderParams) (*http.Response, error)
+	GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLabelExplodeArray request
-	GetLabelExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+	GetLabelExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLabelExplodeObject request
-	GetLabelExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+	GetLabelExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLabelNoExplodeArray request
-	GetLabelNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+	GetLabelNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLabelNoExplodeObject request
-	GetLabelNoExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+	GetLabelNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMatrixExplodeArray request
-	GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.Response, error)
+	GetMatrixExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMatrixExplodeObject request
-	GetMatrixExplodeObject(ctx context.Context, id Object) (*http.Response, error)
+	GetMatrixExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMatrixNoExplodeArray request
-	GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http.Response, error)
+	GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetMatrixNoExplodeObject request
-	GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http.Response, error)
+	GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetPassThrough request
-	GetPassThrough(ctx context.Context, param string) (*http.Response, error)
+	GetPassThrough(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDeepObject request
-	GetDeepObject(ctx context.Context, params *GetDeepObjectParams) (*http.Response, error)
+	GetDeepObject(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetQueryForm request
-	GetQueryForm(ctx context.Context, params *GetQueryFormParams) (*http.Response, error)
+	GetQueryForm(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSimpleExplodeArray request
-	GetSimpleExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+	GetSimpleExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSimpleExplodeObject request
-	GetSimpleExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+	GetSimpleExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSimpleNoExplodeArray request
-	GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error)
+	GetSimpleNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSimpleNoExplodeObject request
-	GetSimpleNoExplodeObject(ctx context.Context, param Object) (*http.Response, error)
+	GetSimpleNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSimplePrimitive request
-	GetSimplePrimitive(ctx context.Context, param int32) (*http.Response, error)
+	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetContentObject(ctx context.Context, param ComplexObject) (*http.Response, error) {
+func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetContentObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams) (*http.Response, error) {
+func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCookieRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams) (*http.Response, error) {
+func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHeaderRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
+func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
+func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
+func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
+func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32) (*http.Response, error) {
+func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeArrayRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object) (*http.Response, error) {
+func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeObjectRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32) (*http.Response, error) {
+func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeArrayRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object) (*http.Response, error) {
+func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeObjectRequest(c.Server, id)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetPassThrough(ctx context.Context, param string) (*http.Response, error) {
+func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPassThroughRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams) (*http.Response, error) {
+func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDeepObjectRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams) (*http.Response, error) {
+func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetQueryFormRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
+func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
+func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32) (*http.Response, error) {
+func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object) (*http.Response, error) {
+func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetSimplePrimitive(ctx context.Context, param int32) (*http.Response, error) {
+func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
-	req = req.WithContext(ctx)
-	if c.RequestEditor != nil {
-		err = c.RequestEditor(ctx, req)
-		if err != nil {
-			return nil, err
-		}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
 	}
 	return c.Client.Do(req)
 }
@@ -1456,6 +1380,21 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	}
 
 	return req, nil
+}
+
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	req = req.WithContext(ctx)
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // ClientWithResponses builds on ClientInterface to offer response payloads
