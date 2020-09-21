@@ -262,16 +262,16 @@ The interface for the pet store looks like this:
 type ClientInterface interface {
 
 	// FindPets request
-	FindPets(ctx context.Context, params *FindPetsParams) (*http.Response, error)
+	FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// AddPet request with JSON body
-	AddPet(ctx context.Context, body NewPet) (*http.Response, error)
+	AddPet(ctx context.Context, body NewPet, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeletePet request
-	DeletePet(ctx context.Context, id int64) (*http.Response, error)
+	DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindPetById request
-	FindPetById(ctx context.Context, id int64) (*http.Response, error)
+	FindPetById(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 ```
 
@@ -289,7 +289,7 @@ type Client struct {
 
     // A callback for modifying requests which are generated before sending over
     // the network.
-    RequestEditor func(ctx context.Context, req *http.Request) error
+    RequestEditors []func(ctx context.Context, req *http.Request) error
 }
 ```
 
