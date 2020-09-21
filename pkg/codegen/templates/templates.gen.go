@@ -765,7 +765,7 @@ func GetSwagger() (*openapi3.Swagger, error) {
 	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .TypeDefinitions}}
 // {{.TypeName}} defines parameters for {{$opid}}.
-type {{.TypeName}} {{.Schema.TypeDecl}}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 `,
@@ -805,8 +805,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 `,
 	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .Bodies}}
-// {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
-type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
+{{with .TypeDef $opid}}
+// {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
 {{end}}
 {{end}}
 `,
@@ -820,7 +822,7 @@ type ServerInterface interface {
 `,
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
-type {{.TypeName}} {{.Schema.TypeDecl}}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{- if gt (len .Schema.EnumValues) 0 }}
 // List of {{ .TypeName }}
 const (
