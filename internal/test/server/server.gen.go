@@ -117,13 +117,13 @@ type UpdateResource3JSONBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// CreateResourceRequestBody defines body for CreateResource for application/json ContentType.
+// CreateResourceJSONRequestBody defines body for CreateResource for application/json ContentType.
 type CreateResourceJSONRequestBody CreateResourceJSONBody
 
-// CreateResource2RequestBody defines body for CreateResource2 for application/json ContentType.
+// CreateResource2JSONRequestBody defines body for CreateResource2 for application/json ContentType.
 type CreateResource2JSONRequestBody CreateResource2JSONBody
 
-// UpdateResource3RequestBody defines body for UpdateResource3 for application/json ContentType.
+// UpdateResource3JSONRequestBody defines body for UpdateResource3 for application/json ContentType.
 type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
 // ServerInterface represents all server handlers.
