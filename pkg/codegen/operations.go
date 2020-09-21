@@ -333,8 +333,11 @@ type RequestBodyDefinition struct {
 }
 
 // Returns the Go type definition for a request body
-func (r RequestBodyDefinition) TypeDef() string {
-	return r.Schema.TypeDecl()
+func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:   r.Schema,
+	}
 }
 
 // Returns whether the body is a custom inline type, or pre-defined. This is
