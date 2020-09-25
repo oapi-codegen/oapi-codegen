@@ -1,0 +1,25 @@
+
+
+// This is a simple interface which specifies buffalo.RouteInfo addition functions which
+// are present on both buffalo.App and buffalo.Group, since we want to allow using
+// either of them for path registration
+type BuffaloRouter interface {
+	GET(p string, h buffalo.Handler) *buffalo.RouteInfo
+    POST(p string, h buffalo.Handler) *buffalo.RouteInfo
+    PUT(p string, h buffalo.Handler) *buffalo.RouteInfo
+    DELETE(p string, h buffalo.Handler) *buffalo.RouteInfo
+    HEAD(p string, h buffalo.Handler) *buffalo.RouteInfo
+    OPTIONS(p string, h buffalo.Handler) *buffalo.RouteInfo
+    PATCH(p string, h buffalo.Handler) *buffalo.RouteInfo
+}
+
+// RegisterHandlers adds each server route to the BuffaloRouter.
+func RegisterHandlers(router BuffaloRouter, si ServerInterface) {
+{{if .}}
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{end}}
+{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{end}}
+}

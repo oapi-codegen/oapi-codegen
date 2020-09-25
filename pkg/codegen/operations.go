@@ -679,6 +679,35 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 	return buf.String(), nil
 }
 
+// GenerateBuffaloServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateBuffaloServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "buffalo-interface.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = t.ExecuteTemplate(w, "buffalo-wrappers.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = t.ExecuteTemplate(w, "buffalo-register.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for server")
+	}
+
+	return buf.String(), nil
+}
+
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -733,6 +762,10 @@ func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, 
 		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
 	}
 	return buf.String(), nil
+}
+
+func (o *OperationDefinition) Resource() string {
+	return strings.Title(strings.ToLower(strings.Trim(o.Path, "/")))
 }
 
 // Uses the template engine to generate the function which registers our wrappers

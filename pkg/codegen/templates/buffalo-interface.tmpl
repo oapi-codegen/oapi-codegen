@@ -1,0 +1,12 @@
+//{{$varName := (index . 0).Resource }} {{$varName}}Resource is the resource for the {{$varName}} model
+type {{$varName}}Resource struct {
+	buffalo.Resource
+}
+
+//{{$varName := (index . 0).Resource }} ServerInterface represents all server handlers for the {{$varName}}Resource.
+type ServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx buffalo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{end}}
+}
