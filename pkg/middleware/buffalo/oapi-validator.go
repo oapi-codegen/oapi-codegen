@@ -26,8 +26,8 @@ func New(s *openapi3.Swagger) {
 	router = openapi3filter.NewRouter().WithSwagger(swagger)
 }
 
-// OAPIMiddleware validates against the Swagger definition
-func OAPIMiddleware(next buffalo.Handler) buffalo.Handler {
+// BuffaloOAPIMiddleware validates against the Swagger definition
+func BuffaloOAPIMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(ctx buffalo.Context) error {
 		req := ctx.Request()
 		route, pathParams, err := router.FindRoute(req.Method, req.URL)

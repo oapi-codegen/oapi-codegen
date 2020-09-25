@@ -73,7 +73,8 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `,
-	"buffalo-interface.tmpl": `//{{$varName := (index . 0).Resource }} {{$varName}}Resource is the resource for the {{$varName}} model
+	"buffalo-interface.tmpl": `{{if gt (len .) 0}}
+//{{$varName := (index . 0).Resource }} {{$varName}}Resource is the resource for the {{$varName}} model
 type {{$varName}}Resource struct {
 	buffalo.Resource
 }
@@ -85,6 +86,7 @@ type ServerInterface interface {
 {{.OperationId}}(ctx buffalo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
+{{end}}
 `,
 	"buffalo-register.tmpl": `
 

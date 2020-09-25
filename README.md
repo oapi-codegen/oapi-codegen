@@ -123,7 +123,7 @@ type FindPetsParams struct {
 ```
 
 ### Registering handlers
-There are a few ways of registering your http handler based on the type of server generated i.e. `-generate server` or `-generate chi-server`
+There are a few ways of registering your http handler based on the type of server generated i.e. `-generate server`, `-generate chi-server` or `-generate buffalo-server`
 
 <details><summary><code>Echo</code></summary>
 
@@ -170,6 +170,46 @@ func SetupHandler() {
 
     r := chi.Router()
     r.Mount("/", Handler(&myApi))
+}
+```
+</summary></details>
+
+<details><summary><code>Buffalo</code></summary>
+
+Create a new handler in the actions directory:
+
+```go
+// Returns all pets
+// (GET /pets)
+type PetsHandler struct {}
+func (ph PetsHandler) FindPets(ctx buffalo.Context, params FindPetsParams) error {
+    // Implement me
+    ctx.Render(200, r.JSON(pet))
+	return nil
+}
+
+func SetupHandler() {
+    // Don't modify the path
+    petsGroup := app.Group("")
+    
+    // Get Swagger definition
+	swagger, err := GetSwagger()
+	if err != nil {
+		_, _ = fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		os.Exit(1)
+	}
+
+	// Clear out the servers array in the swagger spec, that skips validating
+	// that server names match. We don't know how this thing will be run.
+	swagger.Servers = nil
+
+    oapimiddleware.New(swagger)
+    // Optionally use our validation middleware to check all requests against the
+	// OpenAPI schema.
+    petsGroup.Use(BuffaloOAPIMiddleware)
+
+	petsHadler := PetsHandler{}
+	RegisterHandlers(petsGroup, petsHadler)
 }
 ```
 </summary></details>
