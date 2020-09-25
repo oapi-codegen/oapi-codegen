@@ -73,6 +73,174 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 }
 {{end}}
 `,
+	"buffalo-interface.tmpl": `//{{$varName := (index . 0).Resource }} {{$varName}}Resource is the resource for the {{$varName}} model
+type {{$varName}}Resource struct {
+	buffalo.Resource
+}
+
+//{{$varName := (index . 0).Resource }} ServerInterface represents all server handlers for the {{$varName}}Resource.
+type ServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx buffalo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{end}}
+}
+`,
+	"buffalo-register.tmpl": `
+
+// This is a simple interface which specifies buffalo.RouteInfo addition functions which
+// are present on both buffalo.App and buffalo.Group, since we want to allow using
+// either of them for path registration
+type BuffaloRouter interface {
+	GET(p string, h buffalo.Handler) *buffalo.RouteInfo
+    POST(p string, h buffalo.Handler) *buffalo.RouteInfo
+    PUT(p string, h buffalo.Handler) *buffalo.RouteInfo
+    DELETE(p string, h buffalo.Handler) *buffalo.RouteInfo
+    HEAD(p string, h buffalo.Handler) *buffalo.RouteInfo
+    OPTIONS(p string, h buffalo.Handler) *buffalo.RouteInfo
+    PATCH(p string, h buffalo.Handler) *buffalo.RouteInfo
+}
+
+// RegisterHandlers adds each server route to the BuffaloRouter.
+func RegisterHandlers(router BuffaloRouter, si ServerInterface) {
+{{if .}}
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{end}}
+{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{end}}
+}
+`,
+	"buffalo-wrappers.tmpl": `// ServerInterfaceWrapper converts buffalo contexts to parameters.
+type ServerInterfaceWrapper struct {
+    Handler ServerInterface
+}
+
+{{range .}}{{$opid := .OperationId}}// {{$opid}} converts buffalo context to params.
+func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx buffalo.Context) error {
+    var err error
+{{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+{{if .IsPassThrough}}
+    {{$varName}} = ctx.Param("{{.ParamName}}")
+{{end}}
+{{if .IsJson}}
+    err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New("Error unmarshaling parameter '{{.ParamName}}' as JSON"))
+    }
+{{end}}
+{{if .IsStyled}}
+    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)))
+    }
+{{end}}
+{{end}}
+
+{{range .SecurityDefinitions}}
+    ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+{{end}}
+
+{{if .RequiresParamObject}}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+{{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{if .IsStyled}}
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)))
+    }
+    {{else}}
+    if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    err = json.Unmarshal([]byte(paramValue), &value)
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New("Error unmarshaling parameter '{{.ParamName}}' as JSON"))
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Query argument {{.ParamName}} is required, but not found")))
+    }{{end}}
+    {{end}}
+{{end}}
+
+{{if .HeaderParams}}
+    headers := ctx.Request().Header
+{{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+    if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+        var {{.GoName}} {{.TypeDef}}
+        n := len(valueList)
+        if n != 1 {
+            return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n)))
+        }
+{{if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+{{end}}
+{{if .IsJson}}
+        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        if err != nil {
+            return ctx.Error(http.StatusBadRequest, errors.New("Error unmarshaling parameter '{{.ParamName}}' as JSON"))
+        }
+{{end}}
+{{if .IsStyled}}
+        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+        if err != nil {
+            return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)))
+        }
+{{end}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        } {{if .Required}}else {
+            return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found")))
+        }{{end}}
+{{end}}
+{{end}}
+
+{{range .CookieParams}}
+    if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    var decoded string
+    decoded, err := url.QueryUnescape(cookie.Value)
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New("Error unescaping cookie parameter '{{.ParamName}}'"))
+    }
+    err = json.Unmarshal([]byte(decoded), &value)
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New("Error unmarshaling parameter '{{.ParamName}}' as JSON"))
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    {{if .IsStyled}}
+    var value {{.TypeDef}}
+    err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+    if err != nil {
+        return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)))
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        return ctx.Error(http.StatusBadRequest, errors.New(fmt.Sprintf("Query argument {{.ParamName}} is required, but not found")))
+    }{{end}}
+
+{{end}}{{/* .CookieParams */}}
+
+{{end}}{{/* .RequiresParamObject */}}
+    // Invoke the callback with all the unmarshalled arguments
+    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+    return err
+}
+{{end}}
+`,
 	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
   return HandlerFromMux(si, chi.NewRouter())
@@ -683,6 +851,7 @@ import (
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi"
+	"github.com/gobuffalo/buffalo"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	{{- range .ExternalImports}}
