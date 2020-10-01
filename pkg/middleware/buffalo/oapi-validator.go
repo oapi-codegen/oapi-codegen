@@ -13,33 +13,24 @@ import (
 	"github.com/gobuffalo/buffalo"
 )
 
-type BuffaloOAPIMiddleware struct {
-	swagger *openapi3.Swagger
-	router  *openapi3filter.Router
-}
-
 const BuffaloContextKey = "oapi-codegen/buffalo-context"
 
 var (
-	buffaloOAPIMiddleware BuffaloOAPIMiddleware
+	swagger *openapi3.Swagger
+	router  *openapi3filter.Router
 )
 
 // Create a validator from a swagger object.
-func New(swagger *openapi3.Swagger) BuffaloOAPIMiddleware {
-	buffaloOAPIMiddleware := BuffaloOAPIMiddleware{}
-	buffaloOAPIMiddleware.swagger = swagger
-
-	buffaloOAPIMiddleware.router = openapi3filter.NewRouter().WithSwagger(swagger)
-	//buffaloOAPIMiddleware.skipper := getSkipperFromOptions(options)
-
-	return buffaloOAPIMiddleware
+func New(s *openapi3.Swagger) {
+	swagger = s
+	router = openapi3filter.NewRouter().WithSwagger(swagger)
 }
 
-// OAPIMiddleware validates against the Swagger definition
-func OAPIMiddleware(next buffalo.Handler) buffalo.Handler {
+// BuffaloOAPIMiddleware validates against the Swagger definition
+func BuffaloOAPIMiddleware(next buffalo.Handler) buffalo.Handler {
 	return func(ctx buffalo.Context) error {
 		req := ctx.Request()
-		route, pathParams, err := buffaloOAPIMiddleware.router.FindRoute(req.Method, req.URL)
+		route, pathParams, err := router.FindRoute(req.Method, req.URL)
 		// We failed to find a matching route for the request.
 		if err != nil {
 			switch e := err.(type) {
