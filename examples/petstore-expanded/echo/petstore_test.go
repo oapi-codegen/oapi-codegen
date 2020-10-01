@@ -24,9 +24,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/egonz/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/egonz/oapi-codegen/pkg/middleware"
+	"github.com/egonz/oapi-codegen/pkg/testutil"
 )
 
 func TestPetStore(t *testing.T) {

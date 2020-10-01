@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/egonz/oapi-codegen/pkg/codegen"
+	"github.com/egonz/oapi-codegen/pkg/util"
 )
 
 func errExit(format string, args ...interface{}) {

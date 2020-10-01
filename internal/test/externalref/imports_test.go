@@ -3,8 +3,8 @@ package externalref
 import (
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/internal/test/externalref/packageA"
-	"github.com/deepmap/oapi-codegen/internal/test/externalref/packageB"
+	"github.com/egonz/oapi-codegen/internal/test/externalref/packageA"
+	"github.com/egonz/oapi-codegen/internal/test/externalref/packageB"
 )
 
 func TestParameters(t *testing.T) {

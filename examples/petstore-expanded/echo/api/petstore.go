@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go ../../petstore-expanded.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go ../../petstore-expanded.yaml
+//go:generate go run github.com/egonz/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go ../../petstore-expanded.yaml
+//go:generate go run github.com/egonz/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go ../../petstore-expanded.yaml
 
 package api
 

@@ -23,7 +23,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/egonz/oapi-codegen/pkg/types"
 )
 
 // This function binds a parameter as described in the Path Parameters
