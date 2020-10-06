@@ -110,7 +110,7 @@ func RegisterHandlers(router BuffaloRouter, si ServerInterface) {
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .}}router.{{.Method}}("{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
 `,
