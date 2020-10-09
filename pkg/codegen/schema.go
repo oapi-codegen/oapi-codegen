@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -55,11 +56,12 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description   string
-	JsonFieldName string
-	Schema        Schema
-	Required      bool
-	Nullable      bool
+	Description    string
+	JsonFieldName  string
+	Schema         Schema
+	Required       bool
+	Nullable       bool
+	validationTags string
 }
 
 func (p Property) GoFieldName() string {
@@ -199,12 +201,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if p.Value != nil {
 					description = p.Value.Description
 				}
+				var validationTags string
+				if p.Value.Type == "array" {
+					validationTags = goPlaygroundValidator(p.Value.Items.Value, required)
+				} else {
+					validationTags = goPlaygroundValidator(p.Value, required)
+				}
 				prop := Property{
-					JsonFieldName: pName,
-					Schema:        pSchema,
-					Required:      required,
-					Description:   description,
-					Nullable:      p.Value.Nullable,
+					JsonFieldName:  pName,
+					Schema:         pSchema,
+					Required:       required,
+					Description:    description,
+					Nullable:       p.Value.Nullable,
+					validationTags: validationTags,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -326,14 +335,130 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required || p.Nullable {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
-		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+		var validationTags string
+		if len(p.validationTags) > 0 {
+			validationTags = " " + p.validationTags
 		}
+		field += fmt.Sprintf(" `json:\"%s\"%s`", jsonTag(p), validationTags)
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+func jsonTag(p Property) string {
+	if p.Required || p.Nullable {
+		return p.JsonFieldName
+	} else {
+		return fmt.Sprintf("%s,omitempty", p.JsonFieldName)
+	}
+}
+
+// adds validation tags
+// https://github.com/go-playground/validator
+func goPlaygroundValidator(s *openapi3.Schema, required bool) string {
+	var values []string
+
+	if required {
+		values = append(values, "required")
+	}
+
+	addMin := func(min float64) {
+		exclusiveMin := s.ExclusiveMin
+		if s.Type == "integer" {
+			// the "validator" panic when compare int with float
+			if min != math.Ceil(min) {
+				min = math.Ceil(min)
+				exclusiveMin = false
+			}
+		}
+		if exclusiveMin {
+			values = append(values, fmt.Sprintf("gt=%g", min))
+		} else {
+			values = append(values, fmt.Sprintf("gte=%g", min))
+		}
+	}
+
+	addMax := func(max float64) {
+		exclusiveMax := s.ExclusiveMax
+		if s.Type == "integer" {
+			// the "validator" panic when compare int with float
+			if max != math.Floor(max) {
+				max = math.Floor(max)
+				exclusiveMax = false
+			}
+		}
+		if exclusiveMax {
+			values = append(values, fmt.Sprintf("lt=%g", max))
+		} else {
+			values = append(values, fmt.Sprintf("lte=%g", max))
+		}
+	}
+
+	if s.Min != nil {
+		addMin(*s.Min)
+	} else if s.MinLength != 0 {
+		addMin(float64(s.MinLength))
+	} else if s.MinItems != 0 {
+		addMin(float64(s.MinItems))
+	}
+
+	if s.Max != nil {
+		addMax(*s.Max)
+	} else if s.MaxLength != nil {
+		addMax(float64(*s.MaxLength))
+	} else if s.MaxItems != nil {
+		addMax(float64(*s.MaxItems))
+	}
+
+	if s.MultipleOf != nil {
+		// todo: generate custom validation function MultipleOf
+	}
+
+	if s.Format != "" {
+		switch s.Format {
+		case "int32":
+		case "int64":
+		case "float":
+		case "double":
+		case "byte":
+		case "binary":
+		case "date":
+		case "date-time":
+		case "password":
+		default:
+			values = append(values, s.Format)
+		}
+	}
+
+	if s.Pattern != "" {
+		// todo: generate custom validation function with precompiled regex
+	}
+
+	if len(s.Enum) > 0 {
+		var items []string
+		for _, item := range s.Enum {
+			typed := item.(string)
+			if strings.Contains(typed, " ") {
+				typed = fmt.Sprintf("'%s'", item)
+			}
+			items = append(items, typed)
+		}
+		values = append(values, "oneof="+strings.Join(items, " "))
+	}
+
+	if s.UniqueItems {
+		values = append(values, "unique")
+	}
+
+	if s.MinProps > 0 {
+		// todo
+	}
+
+	if s.MaxProps != nil {
+		// todo
+	}
+
+	return fmt.Sprintf(`validate:"%s"`, strings.Join(values, ","))
 }
 
 func GenStructFromSchema(schema Schema) string {
