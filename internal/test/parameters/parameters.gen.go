@@ -22,15 +22,15 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id      int    `json:"Id"`
-	IsAdmin bool   `json:"IsAdmin"`
-	Object  Object `json:"Object"`
+	Id      int    `json:"Id" validate:"required"`
+	IsAdmin bool   `json:"IsAdmin" validate:"required"`
+	Object  Object `json:"Object" validate:"required"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" validate:"required"`
+	Role      string `json:"role" validate:"required"`
 }
 
 // GetCookieParams defines parameters for GetCookie.

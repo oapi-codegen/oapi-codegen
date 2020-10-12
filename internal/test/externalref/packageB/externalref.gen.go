@@ -5,5 +5,5 @@ package packageB
 
 // ObjectB defines model for ObjectB.
 type ObjectB struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" validate:""`
 }
