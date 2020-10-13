@@ -766,10 +766,13 @@ type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{.OperationId}}(ctx {{.OperationId}}Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
-`,
+
+{{ range .}}
+{{ genResponseContext . }}
+{{ end }}`,
 	"typedef.tmpl": `{{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
 type {{.TypeName}} {{.Schema.TypeDecl}}
@@ -908,7 +911,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 
 {{end}}{{/* .RequiresParamObject */}}
     // Invoke the callback with all the unmarshalled arguments
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+    err = w.Handler.{{.OperationId}}({{$opid}}Context{ctx}{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
     return err
 }
 {{end}}

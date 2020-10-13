@@ -38,103 +38,103 @@ func (t *testServer) reset() {
 }
 
 //  (GET /contentObject/{param})
-func (t *testServer) GetContentObject(ctx echo.Context, param ComplexObject) error {
+func (t *testServer) GetContentObject(ctx GetContentObjectContext, param ComplexObject) error {
 	t.complexObject = &param
 	return nil
 }
 
 //  (GET /labelExplodeArray/{.param*})
-func (t *testServer) GetLabelExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetLabelExplodeArray(ctx GetLabelExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /labelExplodeObject/{.param*})
-func (t *testServer) GetLabelExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetLabelExplodeObject(ctx GetLabelExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /labelNoExplodeArray/{.param})
-func (t *testServer) GetLabelNoExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetLabelNoExplodeArray(ctx GetLabelNoExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /labelNoExplodeObject/{.param})
-func (t *testServer) GetLabelNoExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetLabelNoExplodeObject(ctx GetLabelNoExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /matrixExplodeArray/{.param*})
-func (t *testServer) GetMatrixExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetMatrixExplodeArray(ctx GetMatrixExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /matrixExplodeObject/{.param*})
-func (t *testServer) GetMatrixExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetMatrixExplodeObject(ctx GetMatrixExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /matrixNoExplodeArray/{.param})
-func (t *testServer) GetMatrixNoExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetMatrixNoExplodeArray(ctx GetMatrixNoExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /matrixNoExplodeObject/{.param})
-func (t *testServer) GetMatrixNoExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetMatrixNoExplodeObject(ctx GetMatrixNoExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /simpleExplodeArray/{param*})
-func (t *testServer) GetSimpleExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetSimpleExplodeArray(ctx GetSimpleExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /simpleExplodeObject/{param*})
-func (t *testServer) GetSimpleExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetSimpleExplodeObject(ctx GetSimpleExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /simpleNoExplodeArray/{param})
-func (t *testServer) GetSimpleNoExplodeArray(ctx echo.Context, param []int32) error {
+func (t *testServer) GetSimpleNoExplodeArray(ctx GetSimpleNoExplodeArrayContext, param []int32) error {
 	t.array = param
 	return nil
 }
 
 //  (GET /simpleNoExplodeObject/{param})
-func (t *testServer) GetSimpleNoExplodeObject(ctx echo.Context, param Object) error {
+func (t *testServer) GetSimpleNoExplodeObject(ctx GetSimpleNoExplodeObjectContext, param Object) error {
 	t.object = &param
 	return nil
 }
 
 //  (GET /passThrough/{param})
-func (t *testServer) GetPassThrough(ctx echo.Context, param string) error {
+func (t *testServer) GetPassThrough(ctx GetPassThroughContext, param string) error {
 	t.passThrough = &param
 	return nil
 }
 
 // (GET /queryDeepObject)
-func (t *testServer) GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error {
+func (t *testServer) GetDeepObject(ctx GetDeepObjectContext, params GetDeepObjectParams) error {
 	t.complexObject = &params.DeepObj
 	return nil
 }
 
 //  (GET /simplePrimitive/{param})
-func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
+func (t *testServer) GetSimplePrimitive(ctx GetSimplePrimitiveContext, param int32) error {
 	t.primitive = &param
 	return nil
 }
 
 //  (GET /queryForm)
-func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) error {
+func (t *testServer) GetQueryForm(ctx GetQueryFormContext, params GetQueryFormParams) error {
 	t.queryParams = &params
 	if params.Ea != nil {
 		t.array = *params.Ea
@@ -161,7 +161,7 @@ func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) e
 }
 
 //  (GET /header)
-func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
+func (t *testServer) GetHeader(ctx GetHeaderContext, params GetHeaderParams) error {
 	t.headerParams = &params
 	if params.XPrimitive != nil {
 		t.primitive = params.XPrimitive
@@ -188,7 +188,7 @@ func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 }
 
 //  (GET /cookie)
-func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
+func (t *testServer) GetCookie(ctx GetCookieContext, params GetCookieParams) error {
 	t.cookieParams = &params
 	if params.Ea != nil {
 		t.array = *params.Ea

@@ -20,16 +20,56 @@ import (
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(ctx echo.Context, params FindPetsParams) error
+	FindPets(ctx FindPetsContext, params FindPetsParams) error
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(ctx echo.Context) error
+	AddPet(ctx AddPetContext) error
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(ctx echo.Context, id int64) error
+	DeletePet(ctx DeletePetContext, id int64) error
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetById(ctx echo.Context, id int64) error
+	FindPetById(ctx FindPetByIdContext, id int64) error
+}
+
+type FindPetsContext struct {
+	echo.Context
+}
+
+func (c *FindPetsContext) JSON200(resp []Pet) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
+}
+
+type AddPetContext struct {
+	echo.Context
+}
+
+func (c *AddPetContext) JSON200(resp Pet) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
+}
+
+type DeletePetContext struct {
+	echo.Context
+}
+
+type FindPetByIdContext struct {
+	echo.Context
+}
+
+func (c *FindPetByIdContext) JSON200(resp Pet) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -58,7 +98,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.FindPets(ctx, params)
+	err = w.Handler.FindPets(FindPetsContext{ctx}, params)
 	return err
 }
 
@@ -67,7 +107,7 @@ func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.AddPet(ctx)
+	err = w.Handler.AddPet(AddPetContext{ctx})
 	return err
 }
 
@@ -83,7 +123,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.DeletePet(ctx, id)
+	err = w.Handler.DeletePet(DeletePetContext{ctx}, id)
 	return err
 }
 
@@ -99,7 +139,7 @@ func (w *ServerInterfaceWrapper) FindPetById(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.FindPetById(ctx, id)
+	err = w.Handler.FindPetById(FindPetByIdContext{ctx}, id)
 	return err
 }
 

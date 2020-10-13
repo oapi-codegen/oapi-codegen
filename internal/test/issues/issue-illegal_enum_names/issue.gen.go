@@ -245,7 +245,19 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 type ServerInterface interface {
 
 	// (GET /foo)
-	GetFoo(ctx echo.Context) error
+	GetFoo(ctx GetFooContext) error
+}
+
+type GetFooContext struct {
+	echo.Context
+}
+
+func (c *GetFooContext) JSON200(resp []Bar) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -258,7 +270,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetFoo(ctx)
+	err = w.Handler.GetFoo(GetFooContext{ctx})
 	return err
 }
 

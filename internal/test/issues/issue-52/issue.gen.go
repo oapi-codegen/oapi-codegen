@@ -303,7 +303,19 @@ func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 type ServerInterface interface {
 
 	// (GET /example)
-	ExampleGet(ctx echo.Context) error
+	ExampleGet(ctx ExampleGetContext) error
+}
+
+type ExampleGetContext struct {
+	echo.Context
+}
+
+func (c *ExampleGetContext) JSON200(resp Document) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -316,7 +328,7 @@ func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ExampleGet(ctx)
+	err = w.Handler.ExampleGet(ExampleGetContext{ctx})
 	return err
 }
 

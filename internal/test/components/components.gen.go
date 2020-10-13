@@ -1280,13 +1280,50 @@ func ParseBodyWithAddPropsResponse(rsp *http.Response) (*BodyWithAddPropsRespons
 type ServerInterface interface {
 
 	// (GET /ensure-everything-is-referenced)
-	EnsureEverythingIsReferenced(ctx echo.Context) error
+	EnsureEverythingIsReferenced(ctx EnsureEverythingIsReferencedContext) error
 
 	// (GET /params_with_add_props)
-	ParamsWithAddProps(ctx echo.Context, params ParamsWithAddPropsParams) error
+	ParamsWithAddProps(ctx ParamsWithAddPropsContext, params ParamsWithAddPropsParams) error
 
 	// (POST /params_with_add_props)
-	BodyWithAddProps(ctx echo.Context) error
+	BodyWithAddProps(ctx BodyWithAddPropsContext) error
+}
+
+type EnsureEverythingIsReferencedContext struct {
+	echo.Context
+}
+
+func (c *EnsureEverythingIsReferencedContext) JSON200(resp struct {
+
+	// Has additional properties with schema for dictionaries
+	Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+
+	// Has anonymous field which has additional properties
+	Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
+	JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+
+	// Has additional properties of type int
+	One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+	// Allows any additional property
+	Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+
+	// Does not allow additional properties
+	Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+}) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.JSON(200, resp)
+}
+
+type ParamsWithAddPropsContext struct {
+	echo.Context
+}
+
+type BodyWithAddPropsContext struct {
+	echo.Context
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1299,7 +1336,7 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.EnsureEverythingIsReferenced(ctx)
+	err = w.Handler.EnsureEverythingIsReferenced(EnsureEverythingIsReferencedContext{ctx})
 	return err
 }
 
@@ -1324,7 +1361,7 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ParamsWithAddProps(ctx, params)
+	err = w.Handler.ParamsWithAddProps(ParamsWithAddPropsContext{ctx}, params)
 	return err
 }
 
@@ -1333,7 +1370,7 @@ func (w *ServerInterfaceWrapper) BodyWithAddProps(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.BodyWithAddProps(ctx)
+	err = w.Handler.BodyWithAddProps(BodyWithAddPropsContext{ctx})
 	return err
 }
 
