@@ -50,7 +50,7 @@ func sendPetstoreError(ctx echo.Context, code int, message string) error {
 }
 
 // Here, we implement all of the handlers in the ServerInterface
-func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
+func (p *PetStore) FindPets(ctx FindPetsContext, params FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -77,10 +77,10 @@ func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
 			}
 		}
 	}
-	return ctx.JSON(http.StatusOK, result)
+	return ctx.JSON200(result)
 }
 
-func (p *PetStore) AddPet(ctx echo.Context) error {
+func (p *PetStore) AddPet(ctx AddPetContext) error {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
 	err := ctx.Bind(&newPet)
@@ -119,7 +119,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	return nil
 }
 
-func (p *PetStore) FindPetById(ctx echo.Context, petId int64) error {
+func (p *PetStore) FindPetById(ctx FindPetByIdContext, petId int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -128,10 +128,10 @@ func (p *PetStore) FindPetById(ctx echo.Context, petId int64) error {
 		return sendPetstoreError(ctx, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", petId))
 	}
-	return ctx.JSON(http.StatusOK, pet)
+	return ctx.JSON200(pet)
 }
 
-func (p *PetStore) DeletePet(ctx echo.Context, id int64) error {
+func (p *PetStore) DeletePet(ctx DeletePetContext, id int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 

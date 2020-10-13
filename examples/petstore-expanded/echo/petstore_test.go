@@ -29,10 +29,23 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
+type (
+	Validator struct {
+
+	}
+)
+
+func (Validator) Validate(i interface{}) error {
+	return nil
+}
+
+
 func TestPetStore(t *testing.T) {
 	var err error
 	// Here, we Initialize echo
 	e := echo.New()
+
+	e.Validator = Validator{}
 
 	// Now, we create our empty pet store
 	store := api.NewPetStore()

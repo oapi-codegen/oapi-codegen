@@ -16,6 +16,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"strings"
 	"text/template"
@@ -93,6 +94,83 @@ func genResponsePayload(operationID string) string {
 	fmt.Fprintf(buffer, "Body: bodyBytes,\n")
 	fmt.Fprintf(buffer, "HTTPResponse: rsp,\n")
 	fmt.Fprintf(buffer, "}")
+
+	return buffer.String()
+}
+
+func genResponseContext(op *OperationDefinition) string {
+	var buffer = bytes.NewBufferString("")
+
+	buffer.WriteString(fmt.Sprintf(`type %sContext struct {
+	echo.Context
+}`, op.OperationId))
+
+	responses := op.Spec.Responses
+	sortedResponsesKeys := SortedResponsesKeys(responses)
+	for _, responseName := range sortedResponsesKeys {
+		responseRef := responses[responseName]
+
+		if responseName == "default" {
+			continue
+		}
+
+		// We can only generate a type if we have a value:
+		if responseRef.Value != nil {
+			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			for _, contentTypeName := range sortedContentKeys {
+				contentType := responseRef.Value.Content[contentTypeName]
+				// We can only generate a type if we have a schema:
+				if contentType.Schema != nil {
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					if err != nil {
+						err = errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", op.OperationId, contentTypeName))
+						panic(err)
+					}
+
+					var typeName string
+					switch {
+
+					case StringInArray(contentTypeName, contentTypesJSON):
+						typeName = "JSON"
+
+					case StringInArray(contentTypeName, contentTypesXML):
+						typeName = "XML"
+
+					case StringInArray(contentTypeName, contentTypesYAML):
+						buffer.WriteString(fmt.Sprintf(`
+func (c *%sContext) YAML%s(resp %s) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	var out []byte
+	out, err = yaml.Marshal(resp)
+	if err != nil {
+		return err
+	}
+	return c.Blob(%s, "%s", out)
+}
+`, op.OperationId, responseName, responseSchema.TypeDecl(), responseName, contentTypeName))
+						continue
+
+					default:
+						continue
+					}
+
+					buffer.WriteString(fmt.Sprintf(`
+func (c *%sContext) %s(resp %s) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.%s(%s, resp)
+}
+`, op.OperationId, typeName + responseName, responseSchema.TypeDecl(), typeName, responseName))
+
+				}
+			}
+		}
+	}
 
 	return buffer.String()
 }
@@ -271,6 +349,7 @@ var TemplateFunctions = template.FuncMap{
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
+	"genResponseContext":         genResponseContext,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
