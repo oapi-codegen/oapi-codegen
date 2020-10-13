@@ -93,6 +93,165 @@ func genResponsePayload(operationID string) string {
 	return buffer.String()
 }
 
+func genOperationContext(op *OperationDefinition) string {
+	var buffer = bytes.NewBufferString("")
+
+	buffer.WriteString(fmt.Sprintf(`type %sContext struct {
+	echo.Context
+}`, op.OperationId))
+
+	buffer.WriteString(genResponseHelpers(op))
+	buffer.WriteString(genRequestHelpers(op))
+
+	return buffer.String()
+}
+
+func genResponseHelpers(op *OperationDefinition) string {
+	var buffer = bytes.NewBufferString("")
+
+	responses := op.Spec.Responses
+	sortedResponsesKeys := SortedResponsesKeys(responses)
+	for _, responseName := range sortedResponsesKeys {
+		responseRef := responses[responseName]
+
+		if responseName == "default" {
+			continue
+		}
+
+		// We can only generate a type if we have a value:
+		if responseRef.Value != nil {
+			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			for _, contentTypeName := range sortedContentKeys {
+				contentType := responseRef.Value.Content[contentTypeName]
+				// We can only generate a type if we have a schema:
+				if contentType.Schema != nil {
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					if err != nil {
+						err = fmt.Errorf("Unable to determine Go type for %s.%s %w", op.OperationId, contentTypeName, err)
+						panic(err)
+					}
+
+					var typeName string
+					switch {
+
+					case StringInArray(contentTypeName, contentTypesJSON):
+						typeName = "JSON"
+
+					case StringInArray(contentTypeName, contentTypesXML):
+						typeName = "XML"
+
+					case StringInArray(contentTypeName, contentTypesYAML):
+						buffer.WriteString(fmt.Sprintf(`
+func (c *%sContext) YAML%s(resp %s) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	var out []byte
+	var err error
+	out, err = yaml.Marshal(resp)
+	if err != nil {
+		return err
+	}
+	return c.Blob(%s, "%s", out)
+}
+`, op.OperationId, responseName, responseSchema.TypeDecl(), responseName, contentTypeName))
+						continue
+
+					default:
+						continue
+					}
+
+					buffer.WriteString(fmt.Sprintf(`
+func (c *%sContext) %s(resp %s) error {
+	err := c.Validate(resp)
+	if err != nil {
+		return err
+	}
+	return c.%s(%s, resp)
+}
+`, op.OperationId, typeName+responseName, responseSchema.TypeDecl(), typeName, responseName))
+
+				}
+			}
+		}
+	}
+	return buffer.String()
+}
+
+func genRequestHelpers(op *OperationDefinition) string {
+	var buffer = bytes.NewBufferString("")
+
+	requestBody := op.Spec.RequestBody
+	if requestBody == nil || requestBody.Value == nil {
+		return ""
+	}
+
+	included := map[string]string{}
+
+	requestBodyDefinitions, _, err := GenerateBodyDefinitions(op.OperationId, requestBody)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, rbd := range requestBodyDefinitions {
+		contentTypeName := rbd.ContentType
+		var typeName string
+		switch {
+
+		// JSON:
+		case StringInArray(contentTypeName, contentTypesJSON):
+			typeName = "JSON"
+		case StringInArray(contentTypeName, contentTypesXML):
+			typeName = "XML"
+		default:
+			continue
+		}
+		if previousCT, ok := included[typeName]; ok {
+			panic(fmt.Sprintf("%s: failed to add %s because of %s", typeName, contentTypeName, previousCT))
+		} else {
+			included[typeName] = contentTypeName
+		}
+
+		fmt.Fprintf(buffer, `
+func (c *%sContext) Bind%s() (*%s, error) {
+	var err error
+`, op.OperationId, typeName, rbd.Schema.TypeDecl())
+		buffer.WriteString(`
+	// optional
+	if c.Request().ContentLength == 0 {`)
+		if !requestBody.Value.Required {
+			buffer.WriteString(`return nil, nil`)
+		} else {
+			buffer.WriteString(`return nil, errors.New("the request body should not be empty")`)
+		}
+		buffer.WriteString("\t}\n")
+
+		fmt.Fprintf(buffer, `
+	ctype := c.Request().Header.Get(echo.HeaderContentType)
+	if ctype != "%s" {
+		err = errors.New(fmt.Sprintf("incorrect content type: %%s", ctype))
+		return nil, err
+	}
+
+	var result %s
+	if err = c.Bind(&result); err != nil {
+		return nil, err
+	}
+
+	if err = c.Validate(result); err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+`, contentTypeName, rbd.Schema.TypeDecl())
+
+	}
+
+	return buffer.String()
+}
+
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var handledCaseClauses = make(map[string]string)
@@ -283,6 +442,7 @@ var TemplateFunctions = template.FuncMap{
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
+	"genOperationContext":        genOperationContext,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
