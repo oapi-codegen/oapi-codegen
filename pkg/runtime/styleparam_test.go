@@ -34,7 +34,7 @@ func TestStyleParam(t *testing.T) {
 	dict := map[string]interface{}{}
 	dict["firstName"] = "Alex"
 	dict["role"] = "admin"
-	timestamp, _ := time.Parse(time.RFC3339, "2020-01-01T22:00:00Z")
+	timestamp, _ := time.Parse(time.RFC3339, "2020-01-01T22:00:00+02:00")
 
 	// ---------------------------- Simple Style -------------------------------
 
@@ -72,19 +72,19 @@ func TestStyleParam(t *testing.T) {
 
 	result, err = StyleParam("simple", false, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("simple", true, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("simple", false, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("simple", true, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	// ----------------------------- Label Style -------------------------------
 
@@ -122,19 +122,19 @@ func TestStyleParam(t *testing.T) {
 
 	result, err = StyleParam("label", false, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("label", true, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("label", false, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("label", true, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ".2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	// ----------------------------- Matrix Style ------------------------------
 
@@ -172,19 +172,19 @@ func TestStyleParam(t *testing.T) {
 
 	result, err = StyleParam("matrix", false, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("matrix", true, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("matrix", false, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("matrix", true, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, ";id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	// ------------------------------ Form Style -------------------------------
 	result, err = StyleParam("form", false, "id", primitive)
@@ -221,19 +221,19 @@ func TestStyleParam(t *testing.T) {
 
 	result, err = StyleParam("form", false, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("form", true, "id", timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("form", false, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	result, err = StyleParam("form", true, "id", &timestamp)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "id=2020-01-01T22:00:00Z", result)
+	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
 	// ------------------------  spaceDelimited Style --------------------------
 
@@ -351,7 +351,6 @@ func TestStyleParam(t *testing.T) {
 
 	result, err = StyleParam("deepObject", true, "id", &timestamp)
 	assert.Error(t, err)
-
 
 	// Misc tests
 	// Test type aliases
