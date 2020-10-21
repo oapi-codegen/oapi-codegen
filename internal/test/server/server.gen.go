@@ -98,6 +98,9 @@ type GetWithArgsParams struct {
 	HeaderArgument *int32 `json:"header_argument,omitempty"`
 }
 
+// GetWithContentTypeParamsContentType defines parameters for GetWithContentType.
+type GetWithContentTypeParamsContentType string
+
 // CreateResourceJSONBody defines parameters for CreateResource.
 type CreateResourceJSONBody EveryTypeRequired
 
@@ -142,7 +145,7 @@ type ServerInterface interface {
 	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
 	// Get an object by ID
 	// (GET /get-with-type/{content_type})
-	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string)
+	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)
 	// get with reserved keyword
 	// (GET /reserved-keyword)
 	GetReservedKeyword(w http.ResponseWriter, r *http.Request)
@@ -307,7 +310,7 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 	var err error
 
 	// ------------- Path parameter "content_type" -------------
-	var contentType string
+	var contentType GetWithContentTypeParamsContentType
 
 	err = runtime.BindStyledParameter("simple", false, "content_type", chi.URLParam(r, "content_type"), &contentType)
 	if err != nil {

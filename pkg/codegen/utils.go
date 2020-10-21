@@ -489,7 +489,6 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 		if _, dup := dupCheck[n]; !dup {
 			deDup = append(deDup, n)
 		}
-
 		dupCheck[n] = 0
 	}
 
@@ -497,14 +496,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
 	for _, n := range deDup {
-		sanitized := SanitizeGoIdentity(n)
+		sanitized := SchemaNameToTypeName(SanitizeGoIdentity(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = n
-			dupCheck[sanitized]++
 		} else {
 			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
 		}
+		dupCheck[sanitized]++
 	}
 
 	return sanitizedDeDup
