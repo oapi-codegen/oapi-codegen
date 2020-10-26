@@ -276,5 +276,4 @@ var TemplateFunctions = template.FuncMap{
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
 	"stripNewLines":              stripNewLines,
-	"hasValidatingUnmarshal":     hasValidatingUnmarshal,
 }

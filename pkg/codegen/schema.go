@@ -520,3 +520,10 @@ func hasValidatingUnmarshal(schema Schema) bool {
 	}
 	return false
 }
+
+func optHasValidatingUnmarshal(validatingUnmarshal bool) func(Schema) bool {
+	if validatingUnmarshal {
+		return hasValidatingUnmarshal
+	}
+	return func(Schema) bool { return false }
+}

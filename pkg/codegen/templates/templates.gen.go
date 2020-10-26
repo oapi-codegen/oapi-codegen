@@ -782,8 +782,47 @@ const (
     {{- end }}
 )
 {{- end }}
-{{end}}
-`,
+{{if hasValidatingUnmarshal .Schema -}}
+    func (t *{{.TypeName}}) UnmarshalJSON(data []byte) error {
+    inner := struct {
+    {{- range .Schema.EmbeddedTypes}}
+        {{. -}}
+    {{end -}}
+    {{- range .Schema.Properties -}}
+        {{- if eq (slice .GoTypeDef 0 1) "*"}}
+        {{.GoFieldName}} {{.GoTypeDef}} {{"\x60"}}json:"{{.JsonFieldName}},omitempty"{{"\x60"}}
+        {{- else}}
+        {{.GoFieldName}} *{{.GoTypeDef}} {{"\x60"}}json:"{{.JsonFieldName}},omitempty"{{"\x60"}}
+        {{- end -}}
+    {{end}}
+    }{}
+    err := json.Unmarshal(data, &inner)
+    if err != nil {
+        return err
+    }
+    {{- range .Schema.Properties -}}
+    {{- if and .Required (not .Nullable)}}
+        if inner.{{.GoFieldName}} == nil {
+            return errors.New("{{.JsonFieldName}} is required")
+        }
+    {{- end -}}
+    {{end}}
+    *t = {{.TypeName}}{
+    {{- range .Schema.EmbeddedTypes}}
+        {{.}}: inner.{{.}},{{"" -}}
+    {{end -}}
+    {{- range .Schema.Properties -}}
+        {{- if eq (slice .GoTypeDef 0 1) "*"}}
+        {{.GoFieldName}}: inner.{{.GoFieldName}},
+        {{- else}}
+        {{.GoFieldName}}: *inner.{{.GoFieldName}},
+        {{- end -}}
+    {{end}}
+    }
+    return nil
+    }
+{{end -}}
+{{end -}}`,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
