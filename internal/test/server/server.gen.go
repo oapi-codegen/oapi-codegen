@@ -372,39 +372,43 @@ func Handler(si ServerInterface) http.Handler {
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerFromMuxWithBaseURL(si, r, "")
+}
+
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get("/every-type-optional", wrapper.GetEveryTypeOptional)
+		r.Get(baseURL+"/every-type-optional", wrapper.GetEveryTypeOptional)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/get-simple", wrapper.GetSimple)
+		r.Get(baseURL+"/get-simple", wrapper.GetSimple)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/get-with-args", wrapper.GetWithArgs)
+		r.Get(baseURL+"/get-with-args", wrapper.GetWithArgs)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
+		r.Get(baseURL+"/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/get-with-type/{content_type}", wrapper.GetWithContentType)
+		r.Get(baseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/reserved-keyword", wrapper.GetReservedKeyword)
+		r.Get(baseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post("/resource/{argument}", wrapper.CreateResource)
+		r.Post(baseURL+"/resource/{argument}", wrapper.CreateResource)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post("/resource2/{inline_argument}", wrapper.CreateResource2)
+		r.Post(baseURL+"/resource2/{inline_argument}", wrapper.CreateResource2)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put("/resource3/{fallthrough}", wrapper.UpdateResource3)
+		r.Put(baseURL+"/resource3/{fallthrough}", wrapper.UpdateResource3)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get("/response-with-reference", wrapper.GetResponseWithReference)
+		r.Get(baseURL+"/response-with-reference", wrapper.GetResponseWithReference)
 	})
 
 	return r

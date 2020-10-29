@@ -733,7 +733,9 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
@@ -1354,14 +1356,20 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET("/params_with_add_props", wrapper.ParamsWithAddProps)
-	router.POST("/params_with_add_props", wrapper.BodyWithAddProps)
+	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
+	router.GET(baseURL+"/params_with_add_props", wrapper.ParamsWithAddProps)
+	router.POST(baseURL+"/params_with_add_props", wrapper.BodyWithAddProps)
 
 }
 

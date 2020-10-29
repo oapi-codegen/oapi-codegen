@@ -11,7 +11,9 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any

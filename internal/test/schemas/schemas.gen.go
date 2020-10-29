@@ -80,7 +80,9 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
@@ -1161,18 +1163,24 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET("/issues/127", wrapper.Issue127)
-	router.GET("/issues/185", wrapper.Issue185)
-	router.GET("/issues/209/$:str", wrapper.Issue209)
-	router.GET("/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET("/issues/41/:1param", wrapper.Issue41)
-	router.GET("/issues/9", wrapper.Issue9)
+	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
+	router.GET(baseURL+"/issues/127", wrapper.Issue127)
+	router.GET(baseURL+"/issues/185", wrapper.Issue185)
+	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
+	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
+	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
+	router.GET(baseURL+"/issues/9", wrapper.Issue9)
 
 }
 

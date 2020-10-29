@@ -128,7 +128,9 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
@@ -3093,30 +3095,36 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET("/contentObject/:param", wrapper.GetContentObject)
-	router.GET("/cookie", wrapper.GetCookie)
-	router.GET("/header", wrapper.GetHeader)
-	router.GET("/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
-	router.GET("/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
-	router.GET("/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
-	router.GET("/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
-	router.GET("/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
-	router.GET("/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
-	router.GET("/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
-	router.GET("/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
-	router.GET("/passThrough/:param", wrapper.GetPassThrough)
-	router.GET("/queryDeepObject", wrapper.GetDeepObject)
-	router.GET("/queryForm", wrapper.GetQueryForm)
-	router.GET("/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
-	router.GET("/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
-	router.GET("/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
-	router.GET("/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
-	router.GET("/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+	router.GET(baseURL+"/contentObject/:param", wrapper.GetContentObject)
+	router.GET(baseURL+"/cookie", wrapper.GetCookie)
+	router.GET(baseURL+"/header", wrapper.GetHeader)
+	router.GET(baseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
+	router.GET(baseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
+	router.GET(baseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
+	router.GET(baseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
+	router.GET(baseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
+	router.GET(baseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
+	router.GET(baseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
+	router.GET(baseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
+	router.GET(baseURL+"/passThrough/:param", wrapper.GetPassThrough)
+	router.GET(baseURL+"/queryDeepObject", wrapper.GetDeepObject)
+	router.GET(baseURL+"/queryForm", wrapper.GetQueryForm)
+	router.GET(baseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
+	router.GET(baseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
+	router.GET(baseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
+	router.GET(baseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
+	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
 
 }
 

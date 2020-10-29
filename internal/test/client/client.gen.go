@@ -51,7 +51,9 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
@@ -1012,18 +1014,24 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.POST("/with_both_bodies", wrapper.PostBoth)
-	router.GET("/with_both_responses", wrapper.GetBoth)
-	router.POST("/with_json_body", wrapper.PostJson)
-	router.GET("/with_json_response", wrapper.GetJson)
-	router.POST("/with_other_body", wrapper.PostOther)
-	router.GET("/with_other_response", wrapper.GetOther)
-	router.GET("/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash)
+	router.POST(baseURL+"/with_both_bodies", wrapper.PostBoth)
+	router.GET(baseURL+"/with_both_responses", wrapper.GetBoth)
+	router.POST(baseURL+"/with_json_body", wrapper.PostJson)
+	router.GET(baseURL+"/with_json_response", wrapper.GetJson)
+	router.POST(baseURL+"/with_other_body", wrapper.PostOther)
+	router.GET(baseURL+"/with_other_response", wrapper.GetOther)
+	router.GET(baseURL+"/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash)
 
 }
 
