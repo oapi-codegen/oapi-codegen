@@ -14,7 +14,6 @@
 package runtime
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -23,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	errorsw "github.com/pkg/errors"
+	"github.com/pkg/errors"
 )
 
 // Given an input value, such as a primitive type, array or object, turn it
@@ -153,7 +152,7 @@ func styleStruct(style string, explode bool, paramName string, value interface{}
 	if timeVal, ok := marshalTimeValue(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, url.QueryEscape(timeVal))
 		if err != nil {
-			return "", errorsw.Wrap(err, "failed to style time")
+			return "", errors.Wrap(err, "failed to style time")
 		}
 		return styledVal, nil
 	}
