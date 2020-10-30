@@ -3,7 +3,7 @@ module github.com/deepmap/oapi-codegen
 require (
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/getkin/kin-openapi v0.13.0
+	github.com/getkin/kin-openapi v0.26.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/kr/pretty v0.1.0 // indirect
