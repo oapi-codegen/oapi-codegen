@@ -470,6 +470,26 @@ will exclude from generation schemas `Pet` and `NewPet`. This allow to have a
 in the same package a manually defined structure or interface and refer to it
 in the openapi spec.
 
+Since `go generate` commands must be one line, all the options above can make
+them pretty unwieldy, so one it's possible to specify all of them in a configuration
+file via the `--config` option. Please see the test under `/internal/test/externalref/`
+for an example. The structure of the file is as follows:
+    
+```yaml
+output:
+  externalref.gen.go
+package: externalref
+generate:
+  - types
+  - skip-prune
+import-mapping:
+  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+```
+
+Have a look at `cmd/oapi-codegen/oapi-codegen.go` to see all the fields on the
+configuration structure.
+
 ### Import Mappings
 
 OpenAPI specifications may contain references to other OpenAPI specifications,

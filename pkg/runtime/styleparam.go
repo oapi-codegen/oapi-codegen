@@ -132,7 +132,6 @@ func sortedKeys(strMap map[string]string) []string {
 	return keys
 }
 
-
 // This is a special case. The struct may be a time, in which case, marshal
 // it in RFC3339 format.
 func marshalTimeValue(value interface{}) (string, bool) {

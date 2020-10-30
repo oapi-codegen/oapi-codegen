@@ -387,7 +387,6 @@ func TestParameterBinding(t *testing.T) {
 	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
 	ts.reset()
 
-
 	// ---------------------- Test Header Query Parameters --------------------
 
 	// unexploded header primitive.

@@ -1,0 +1,9 @@
+output:
+  externalref.gen.go
+package: externalref
+generate:
+  - types
+  - skip-prune
+import-mapping:
+  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB

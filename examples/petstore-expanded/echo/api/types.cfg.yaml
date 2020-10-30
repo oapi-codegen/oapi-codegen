@@ -1,0 +1,5 @@
+output:
+  petstore-types.gen.go
+generate:
+  - types
+package: api

@@ -352,7 +352,6 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("deepObject", true, "id", &timestamp)
 	assert.Error(t, err)
 
-
 	// Misc tests
 	// Test type aliases
 	type StrType string
