@@ -656,17 +656,17 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
+	err := t.ExecuteTemplate(w, "chi/interface.tmpl", operations)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server interface")
 	}
 
-	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
+	err = t.ExecuteTemplate(w, "chi/middleware.tmpl", operations)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server middleware")
 	}
 
-	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
+	err = t.ExecuteTemplate(w, "chi/handler.tmpl", operations)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating server http handler")
 	}
@@ -704,7 +704,7 @@ func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (s
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "server-interface.tmpl", ops)
+	err := t.ExecuteTemplate(w, "echo/server-interface.tmpl", ops)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating server interface: %s", err)
@@ -723,7 +723,7 @@ func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, 
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "wrappers.tmpl", ops)
+	err := t.ExecuteTemplate(w, "echo/wrappers.tmpl", ops)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating server interface: %s", err)
@@ -741,7 +741,7 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "register.tmpl", ops)
+	err := t.ExecuteTemplate(w, "echo/register.tmpl", ops)
 
 	if err != nil {
 		return "", fmt.Errorf("error generating route registration: %s", err)
