@@ -18,8 +18,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 func TestSplitParameter(t *testing.T) {
@@ -270,4 +272,112 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
+}
+
+func TestBindParameterViaAlias(t *testing.T) {
+	// We don't need to check every parameter format type here, since the binding
+	// code is identical irrespective of parameter type, buy we do want to test
+	// a bunch of types.
+	type AString string
+	type Aint int
+	type Afloat float64
+	type Atime time.Time
+	type Adate types.Date
+
+	type AliasTortureTest struct {
+		S  AString  `json:"s"`
+		Sp *AString `json:"sp,omitempty"`
+		I  Aint     `json:"i"`
+		Ip *Aint    `json:"ip,omitempty"`
+		F  Afloat   `json:"f"`
+		Fp *Afloat  `json:"fp,omitempty"`
+		T  Atime    `json:"t"`
+		Tp *Atime   `json:"tp,omitempty"`
+		D  Adate    `json:"d"`
+		Dp *Adate   `json:"dp,omitempty"`
+	}
+
+	now := time.Now().UTC()
+	later := now.Add(time.Hour)
+
+	queryParams := url.Values{
+		"alias[s]":  {"str"},
+		"alias[sp]": {"strp"},
+		"alias[i]":  {"1"},
+		"alias[ip]": {"2"},
+		"alias[f]":  {"3.5"},
+		"alias[fp]": {"4.5"},
+		"alias[t]":  {now.Format(time.RFC3339Nano)},
+		"alias[tp]": {later.Format(time.RFC3339Nano)},
+		"alias[d]":  {"2020-11-06"},
+		"alias[dp]": {"2020-11-07"},
+	}
+
+	dst := new(AliasTortureTest)
+
+	err := BindQueryParameter("deepObject", true, false, "alias", queryParams, &dst)
+	require.NoError(t, err)
+
+	var sp AString = "strp"
+	var ip Aint = 2
+	var fp Afloat = 4.5
+	dp := Adate{Time: time.Date(2020, 11, 7, 0, 0, 0, 0, time.UTC)}
+
+	expected := AliasTortureTest{
+		S:  "str",
+		Sp: &sp,
+		I:  1,
+		Ip: &ip,
+		F:  3.5,
+		Fp: &fp,
+		T:  Atime(now),
+		Tp: (*Atime)(&later),
+		D:  Adate{Time: time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)},
+		Dp: &dp,
+	}
+
+	// Compare field by field, makes errors easier to track.
+	assert.EqualValues(t, expected.S, dst.S)
+	assert.EqualValues(t, expected.Sp, dst.Sp)
+	assert.EqualValues(t, expected.I, dst.I)
+	assert.EqualValues(t, expected.Ip, dst.Ip)
+	assert.EqualValues(t, expected.F, dst.F)
+	assert.EqualValues(t, expected.Fp, dst.Fp)
+	assert.EqualValues(t, expected.T, dst.T)
+	assert.EqualValues(t, expected.Tp, dst.Tp)
+	assert.EqualValues(t, expected.D, dst.D)
+	assert.EqualValues(t, expected.Dp, dst.Dp)
+}
+
+// bindParamsToExplodedObject has to special case some types. Make sure that
+// these non-object types are handled correctly. The other parts of the functionality
+// are tested via more generic code above.
+func TestBindParamsToExplodedObject(t *testing.T) {
+	now := time.Now().UTC()
+	values := url.Values{
+		"time": {now.Format(time.RFC3339Nano)},
+		"date": {"2020-11-06"},
+	}
+
+	var dstTime time.Time
+	err := bindParamsToExplodedObject("time", values, &dstTime)
+	assert.NoError(t, err)
+	assert.EqualValues(t, now, dstTime)
+
+	type AliasedTime time.Time
+	var aDstTime AliasedTime
+	err = bindParamsToExplodedObject("time", values, &aDstTime)
+	assert.NoError(t, err)
+	assert.EqualValues(t, now, aDstTime)
+
+	var dstDate types.Date
+	expectedDate := types.Date{time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)}
+	err = bindParamsToExplodedObject("date", values, &dstDate)
+	assert.EqualValues(t, expectedDate, dstDate)
+
+	type AliasedDate types.Date
+	var aDstDate AliasedDate
+	err = bindParamsToExplodedObject("date", values, &aDstDate)
+	assert.EqualValues(t, expectedDate, aDstDate)
+
 }

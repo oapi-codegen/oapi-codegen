@@ -212,24 +212,46 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 		return nil
 	case reflect.Struct:
 		// Some special types we care about are structs. Handle them
-		// here.
-		if _, isDate := iv.Interface().(types.Date); isDate {
+		// here. They may be aliased, so we need to do some hoop
+		// jumping. If the types are aliased, we need to type convert
+		// the pointer, then set the value of the dereferenced pointer.
+		if it.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 			var date types.Date
 			var err error
 			date.Time, err = time.Parse(types.DateFormat, pathValues.value)
 			if err != nil {
 				return errors.Wrap(err, "invalid date format")
 			}
-			iv.Set(reflect.ValueOf(date))
+			dst := iv
+			if it != reflect.TypeOf(types.Date{}) {
+				// Types are aliased, convert the pointers.
+				ivPtr := iv.Addr()
+				aPtr := ivPtr.Convert(reflect.TypeOf(&types.Date{}))
+				dst = reflect.Indirect(aPtr)
+			}
+			dst.Set(reflect.ValueOf(date))
 		}
-		if _, isTime := iv.Interface().(time.Time); isTime {
+
+		if it.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			var tm time.Time
 			var err error
-			tm, err = time.Parse(types.DateFormat, pathValues.value)
+			tm, err = time.Parse(time.RFC3339Nano, pathValues.value)
 			if err != nil {
+				// Fall back to parsing it as a date.
+				tm, err = time.Parse(types.DateFormat, pathValues.value)
+				if err != nil {
+					return fmt.Errorf("error parsing tim as RFC3339 or 2006-01-02 time: %s", err)
+				}
 				return errors.Wrap(err, "invalid date format")
 			}
-			iv.Set(reflect.ValueOf(tm))
+			dst := iv
+			if it != reflect.TypeOf(time.Time{}) {
+				// Types are aliased, convert the pointers.
+				ivPtr := iv.Addr()
+				aPtr := ivPtr.Convert(reflect.TypeOf(&time.Time{}))
+				dst = reflect.Indirect(aPtr)
+			}
+			dst.Set(reflect.ValueOf(tm))
 		}
 
 		fieldMap, err := fieldIndicesByJsonTag(iv.Interface())
