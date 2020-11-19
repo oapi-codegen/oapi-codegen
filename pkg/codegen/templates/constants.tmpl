@@ -1,1 +1,5 @@
-package templates
+type contextKey string
+
+{{range .SecurityDefinitions}}
+    {{.ProviderName | ucFirst}}Scopes contextKey = "{{.ProviderName}}.Scopes"
+{{end}}
