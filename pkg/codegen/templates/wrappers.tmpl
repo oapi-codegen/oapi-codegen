@@ -26,7 +26,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 
 {{range .SecurityDefinitions}}
-    ctx.Set({{.ProviderName}}Scopes, {{toStringArray .Scopes}})
+    ctx.Set({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}

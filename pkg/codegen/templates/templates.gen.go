@@ -141,7 +141,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  ctx = context.WithValue(ctx, {{.ProviderName}}Scopes, {{toStringArray .Scopes}})
+  ctx = context.WithValue(ctx, {{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -664,19 +664,19 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{end}}{{/* Range */}}
 `,
 	"constants.tmpl": `
-type contextKey string
+type (
+    contextKey string
 
-type operationIDs struct {
-{{range $OperationID := .OperationIDs}}
-    {{- $OperationID | ucFirst}} string
-{{end}}
-}
+    OperationID string
 
-type operationPaths struct {
-{{range $OperationID := .OperationIDs}}
-    {{- $OperationID | ucFirst}} string
-{{end}}
-}
+    operationIDs struct {
+    {{range $OperationID := .OperationIDs}}
+        {{- $OperationID | ucFirst}} OperationID
+    {{end}}
+    }
+
+    operationPaths map[OperationID]string
+)
 
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
@@ -692,8 +692,8 @@ var (
     }
 
     OperationPaths = operationPaths {
-    {{range $OperationID, $Path := .Paths}}
-        {{- $OperationID | ucFirst}}: "{{$Path -}}",
+    {{range $OperationID, $Path := .Paths -}}
+        OperationIDs.{{- $OperationID | ucFirst}}: "{{$Path -}}",
     {{end}}
     }
 )
@@ -859,7 +859,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 
 {{range .SecurityDefinitions}}
-    ctx.Set({{.ProviderName}}Scopes, {{toStringArray .Scopes}})
+    ctx.Set({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}

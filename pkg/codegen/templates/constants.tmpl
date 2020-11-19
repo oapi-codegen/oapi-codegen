@@ -1,17 +1,17 @@
 
-type contextKey string
+type (
+    contextKey string
 
-type operationIDs struct {
-{{range $OperationID := .OperationIDs}}
-    {{- $OperationID | ucFirst}} string
-{{end}}
-}
+    OperationID string
 
-type operationPaths struct {
-{{range $OperationID := .OperationIDs}}
-    {{- $OperationID | ucFirst}} string
-{{end}}
-}
+    operationIDs struct {
+    {{range $OperationID := .OperationIDs}}
+        {{- $OperationID | ucFirst}} OperationID
+    {{end}}
+    }
+
+    operationPaths map[OperationID]string
+)
 
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
@@ -27,8 +27,8 @@ var (
     }
 
     OperationPaths = operationPaths {
-    {{range $OperationID, $Path := .Paths}}
-        {{- $OperationID | ucFirst}}: "{{$Path -}}",
+    {{range $OperationID, $Path := .Paths -}}
+        OperationIDs.{{- $OperationID | ucFirst}}: "{{$Path -}}",
     {{end}}
     }
 )

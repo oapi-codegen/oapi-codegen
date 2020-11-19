@@ -133,17 +133,18 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error creating operation definitions")
 	}
 
-	constantsOut, err := GenerateConstants(t, ops)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating constants")
-	}
-
-	var typeDefinitions string
+	var typeDefinitions, constantDefinitions string
 	if opts.GenerateTypes {
 		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops, opts.ExcludeSchemas)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}
+
+		constantDefinitions, err = GenerateConstants(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating constants")
+		}
+
 	}
 
 	var echoServerOut string
@@ -200,7 +201,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error writing imports")
 	}
 
-	_, err = w.WriteString(constantsOut)
+	_, err = w.WriteString(constantDefinitions)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing constants")
 	}
