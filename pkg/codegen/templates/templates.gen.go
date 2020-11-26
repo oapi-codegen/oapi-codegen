@@ -678,11 +678,13 @@ type (
     operationPaths map[OperationID]string
 )
 
+{{- if gt (len .SecuritySchemeProviderNames) 0 }}
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
     {{- $ProviderName | ucFirst}}Scopes contextKey = "{{$ProviderName}}.Scopes"
 {{end}}
 )
+{{end}}
 
 var (
     OperationIDs = operationIDs {
