@@ -77,10 +77,6 @@ func (p Property) GoTypeDef() string {
 type Constants struct {
 	// SecuritySchemeProviderNames holds all provider names for security schemes.
 	SecuritySchemeProviderNames []string
-	// Paths maps operation id to operation path.
-	Paths map[string]string
-	// OperationIDs holds all operation ids.
-	OperationIDs []string
 }
 
 type TypeDefinition struct {

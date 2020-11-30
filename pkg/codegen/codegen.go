@@ -316,14 +316,10 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 
 	constants := Constants{
 		SecuritySchemeProviderNames: []string{},
-		Paths:                       map[string]string{},
-		OperationIDs:                []string{},
 	}
 
 	providerNames := map[string]struct{}{}
 	for _, op := range ops {
-		constants.OperationIDs = append(constants.OperationIDs, op.OperationId)
-		constants.Paths[op.OperationId] = op.Path
 		for _, def := range op.SecurityDefinitions {
 			providerNames[def.ProviderName] = struct{}{}
 		}

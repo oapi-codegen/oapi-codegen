@@ -663,42 +663,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
 {{end}}{{/* Range */}}
 `,
-	"constants.tmpl": `
-type (
-    contextKey string
-
-    OperationID string
-
-    operationIDs struct {
-    {{range $OperationID := .OperationIDs}}
-        {{- $OperationID | ucFirst}} OperationID
-    {{end}}
-    }
-
-    operationPaths map[OperationID]string
-)
-
-{{- if gt (len .SecuritySchemeProviderNames) 0 }}
+	"constants.tmpl": `{{- if gt (len .SecuritySchemeProviderNames) 0 }}
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
-    {{- $ProviderName | ucFirst}}Scopes contextKey = "{{$ProviderName}}.Scopes"
+    {{- $ProviderName | ucFirst}}Scopes = "{{$ProviderName}}.Scopes"
 {{end}}
 )
 {{end}}
-
-var (
-    OperationIDs = operationIDs {
-    {{range $OperationID := .OperationIDs}}
-        {{- $OperationID | ucFirst}}: "{{ $OperationID -}}",
-    {{end}}
-    }
-
-    OperationPaths = operationPaths {
-    {{range $OperationID, $Path := .Paths -}}
-        OperationIDs.{{- $OperationID | ucFirst}}: "{{$Path -}}",
-    {{end}}
-    }
-)
 `,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
 //
