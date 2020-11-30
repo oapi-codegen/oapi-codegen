@@ -20,6 +20,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	OpenIdScopes = "OpenId.Scopes"
+)
+
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
 	FirstName string `json:"firstName"`
@@ -961,7 +965,7 @@ func (w *ServerInterfaceWrapper) PostJson(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetJson(ctx echo.Context) error {
 	var err error
 
-	ctx.Set("OpenId.Scopes", []string{"json.read", "json.admin"})
+	ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetJson(ctx)
@@ -990,7 +994,7 @@ func (w *ServerInterfaceWrapper) GetOther(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetJsonWithTrailingSlash(ctx echo.Context) error {
 	var err error
 
-	ctx.Set("OpenId.Scopes", []string{"json.read", "json.admin"})
+	ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetJsonWithTrailingSlash(ctx)
