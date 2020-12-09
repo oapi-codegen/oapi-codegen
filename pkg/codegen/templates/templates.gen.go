@@ -128,10 +128,10 @@ type ServerInterface interface {
 	"chi-middleware.tmpl": `// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
-    HandlerMiddlewares []middlewareFunc
+    HandlerMiddlewares []MiddlewareFunc
 }
 
-type middlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 {{range .}}{{$opid := .OperationId}}
 

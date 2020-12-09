@@ -81,10 +81,10 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
-	HandlerMiddlewares []middlewareFunc
+	HandlerMiddlewares []MiddlewareFunc
 }
 
-type middlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 // FindPets operation middleware
 func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
