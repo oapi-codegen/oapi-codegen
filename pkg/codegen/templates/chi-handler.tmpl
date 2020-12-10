@@ -6,7 +6,7 @@ func Handler(si ServerInterface) http.Handler {
 type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
-    Middlewares []middlewareFunc
+    Middlewares []MiddlewareFunc
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
