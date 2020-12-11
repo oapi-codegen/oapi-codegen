@@ -210,7 +210,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// Now build the switch statement in order of most-to-least specific:
 	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
-	fmt.Fprintf(buffer, "switch {\n")
 	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
@@ -219,7 +218,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
-	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()
 }

@@ -1252,6 +1252,10 @@ func ParseParamsWithAddPropsResponse(rsp *http.Response) (*ParamsWithAddPropsRes
 		HTTPResponse: rsp,
 	}
 
+	switch {
+
+	}
+
 	return response, nil
 }
 
@@ -1266,6 +1270,10 @@ func ParseBodyWithAddPropsResponse(rsp *http.Response) (*BodyWithAddPropsRespons
 	response := &BodyWithAddPropsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	switch {
+
 	}
 
 	return response, nil
