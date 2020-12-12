@@ -161,4 +161,12 @@ func TestBindStringToObject(t *testing.T) {
 	type AliasedDate types.Date
 	var dstAliasedDate AliasedDate
 	assert.NoError(t, BindStringToObject(dateString, &dstAliasedDate))
+
+	// Checks whether a mock binder works and embedded types
+	var mockBinder MockBinder
+	assert.NoError(t, BindStringToObject(dateString, &mockBinder))
+	assert.EqualValues(t, dateString, mockBinder.Time.Format("2006-01-02"))
+	var dstEmbeddedMockBinder EmbeddedMockBinder
+	assert.NoError(t, BindStringToObject(dateString, &dstEmbeddedMockBinder))
+	assert.EqualValues(t, dateString, dstEmbeddedMockBinder.Time.Format("2006-01-02"))
 }
