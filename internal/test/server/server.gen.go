@@ -163,21 +163,40 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []MiddlewareFunc
 }
+
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 // GetEveryTypeOptional operation middleware
 func (siw *ServerInterfaceWrapper) GetEveryTypeOptional(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.GetEveryTypeOptional(w, r.WithContext(ctx))
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEveryTypeOptional(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetSimple operation middleware
 func (siw *ServerInterfaceWrapper) GetSimple(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.GetSimple(w, r.WithContext(ctx))
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSimple(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetWithArgs operation middleware
@@ -235,7 +254,15 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 
 	}
 
-	siw.Handler.GetWithArgs(w, r.WithContext(ctx), params)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWithArgs(w, r, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetWithReferences operation middleware
@@ -262,7 +289,15 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 		return
 	}
 
-	siw.Handler.GetWithReferences(w, r.WithContext(ctx), globalArgument, argument)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWithReferences(w, r, globalArgument, argument)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetWithContentType operation middleware
@@ -280,14 +315,30 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 		return
 	}
 
-	siw.Handler.GetWithContentType(w, r.WithContext(ctx), contentType)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWithContentType(w, r, contentType)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetReservedKeyword operation middleware
 func (siw *ServerInterfaceWrapper) GetReservedKeyword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.GetReservedKeyword(w, r.WithContext(ctx))
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReservedKeyword(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // CreateResource operation middleware
@@ -305,7 +356,15 @@ func (siw *ServerInterfaceWrapper) CreateResource(w http.ResponseWriter, r *http
 		return
 	}
 
-	siw.Handler.CreateResource(w, r.WithContext(ctx), argument)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateResource(w, r, argument)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // CreateResource2 operation middleware
@@ -337,7 +396,15 @@ func (siw *ServerInterfaceWrapper) CreateResource2(w http.ResponseWriter, r *htt
 		return
 	}
 
-	siw.Handler.CreateResource2(w, r.WithContext(ctx), inlineArgument, params)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateResource2(w, r, inlineArgument, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // UpdateResource3 operation middleware
@@ -355,60 +422,98 @@ func (siw *ServerInterfaceWrapper) UpdateResource3(w http.ResponseWriter, r *htt
 		return
 	}
 
-	siw.Handler.UpdateResource3(w, r.WithContext(ctx), pFallthrough)
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateResource3(w, r, pFallthrough)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // GetResponseWithReference operation middleware
 func (siw *ServerInterfaceWrapper) GetResponseWithReference(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	siw.Handler.GetResponseWithReference(w, r.WithContext(ctx))
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetResponseWithReference(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerFromMux(si, chi.NewRouter())
+	return HandlerWithOptions(si, ChiServerOptions{})
+}
+
+type ChiServerOptions struct {
+	BaseURL     string
+	BaseRouter  chi.Router
+	Middlewares []MiddlewareFunc
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-	return HandlerFromMuxWithBaseURL(si, r, "")
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseRouter: r,
+	})
 }
 
 func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseURL:    baseURL,
+		BaseRouter: r,
+	})
+}
+
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
+	r := options.BaseRouter
+
+	if r == nil {
+		r = chi.NewRouter()
+	}
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/every-type-optional", wrapper.GetEveryTypeOptional)
+		r.Get(options.BaseURL+"/every-type-optional", wrapper.GetEveryTypeOptional)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/get-simple", wrapper.GetSimple)
+		r.Get(options.BaseURL+"/get-simple", wrapper.GetSimple)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/get-with-args", wrapper.GetWithArgs)
+		r.Get(options.BaseURL+"/get-with-args", wrapper.GetWithArgs)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
+		r.Get(options.BaseURL+"/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
+		r.Get(options.BaseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
+		r.Get(options.BaseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(baseURL+"/resource/{argument}", wrapper.CreateResource)
+		r.Post(options.BaseURL+"/resource/{argument}", wrapper.CreateResource)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(baseURL+"/resource2/{inline_argument}", wrapper.CreateResource2)
+		r.Post(options.BaseURL+"/resource2/{inline_argument}", wrapper.CreateResource2)
 	})
 	r.Group(func(r chi.Router) {
-		r.Put(baseURL+"/resource3/{fallthrough}", wrapper.UpdateResource3)
+		r.Put(options.BaseURL+"/resource3/{fallthrough}", wrapper.UpdateResource3)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(baseURL+"/response-with-reference", wrapper.GetResponseWithReference)
+		r.Get(options.BaseURL+"/response-with-reference", wrapper.GetResponseWithReference)
 	})
 
 	return r
