@@ -221,7 +221,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
 
     {{range .CookieParams}}
-      if cookie, err := r.Cookie("{{.ParamName}}"); err == nil {
+      var cookie *http.Cookie
+
+      if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
@@ -945,4 +947,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-
