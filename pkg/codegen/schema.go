@@ -434,7 +434,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 			objectParts = append(objectParts,
 				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
 			objectParts = append(objectParts,
-				fmt.Sprintf("   %s", goType))
+				fmt.Sprintf("   %s `yaml:\",inline\"`", goType))
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.

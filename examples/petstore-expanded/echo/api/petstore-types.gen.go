@@ -26,7 +26,7 @@ type NewPet struct {
 // Pet defines model for Pet.
 type Pet struct {
 	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet
+	NewPet `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
 
 	// Unique id of the pet
