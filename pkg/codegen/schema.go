@@ -268,8 +268,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.GoType = "bool"
 		case "string":
 			enumValues := make([]string, len(schema.Enum))
+			var ok bool
 			for i, enumValue := range schema.Enum {
-				enumValues[i] = enumValue.(string)
+				enumValues[i], ok = enumValue.(string)
+				if !ok {
+					return Schema{}, fmt.Errorf("expected enum to contain strings, found a %T", enumValue)
+				}
 			}
 
 			outSchema.EnumValues = SanitizeEnumNames(enumValues)
