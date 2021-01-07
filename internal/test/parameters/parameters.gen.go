@@ -733,7 +733,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Primitive", headerParam0)
+		req.Header.Set("X-Primitive", headerParam0)
 	}
 
 	if params.XPrimitiveExploded != nil {
@@ -744,7 +744,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Primitive-Exploded", headerParam1)
+		req.Header.Set("X-Primitive-Exploded", headerParam1)
 	}
 
 	if params.XArrayExploded != nil {
@@ -755,7 +755,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Array-Exploded", headerParam2)
+		req.Header.Set("X-Array-Exploded", headerParam2)
 	}
 
 	if params.XArray != nil {
@@ -766,7 +766,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Array", headerParam3)
+		req.Header.Set("X-Array", headerParam3)
 	}
 
 	if params.XObjectExploded != nil {
@@ -777,7 +777,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Object-Exploded", headerParam4)
+		req.Header.Set("X-Object-Exploded", headerParam4)
 	}
 
 	if params.XObject != nil {
@@ -788,7 +788,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			return nil, err
 		}
 
-		req.Header.Add("X-Object", headerParam5)
+		req.Header.Set("X-Object", headerParam5)
 	}
 
 	if params.XComplexObject != nil {
@@ -801,7 +801,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		}
 		headerParam6 = string(headerParamBuf6)
 
-		req.Header.Add("X-Complex-Object", headerParam6)
+		req.Header.Set("X-Complex-Object", headerParam6)
 	}
 
 	return req, nil

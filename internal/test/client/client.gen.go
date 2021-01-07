@@ -308,6 +308,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -374,6 +375,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -429,6 +431,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
