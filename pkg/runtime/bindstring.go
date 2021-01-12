@@ -76,6 +76,11 @@ func BindStringToObject(src string, dst interface{}) error {
 			v.SetBool(val)
 		}
 	case reflect.Struct:
+		// if this is not of type Time or of type Date look to see if this is of type Binder.
+		if dstType, ok := dst.(Binder); ok {
+			return dstType.Bind(src)
+		}
+
 		if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			// Don't fail on empty string.
 			if src == "" {
@@ -122,10 +127,6 @@ func BindStringToObject(src string, dst interface{}) error {
 			}
 			v.Set(reflect.ValueOf(parsedDate))
 			return nil
-		}
-		// if this is not of type Time or of type Date look to see if this is of type Binder.
-		if dstType, ok := dst.(Binder); ok {
-			return dstType.Bind(src)
 		}
 
 		// We fall through to the error case below if we haven't handled the

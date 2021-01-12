@@ -214,6 +214,12 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 		// here. They may be redefined, so we need to do some hoop
 		// jumping. If the types are aliased, we need to type convert
 		// the pointer, then set the value of the dereference pointer.
+
+		// We check to see if the object implements the Binder interface first.
+		if dst, isBinder := v.Interface().(Binder); isBinder {
+			return dst.Bind(pathValues.value)
+		}
+		// Then check the legacy types
 		if it.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 			var date types.Date
 			var err error
@@ -250,11 +256,6 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 				dst = reflect.Indirect(aPtr)
 			}
 			dst.Set(reflect.ValueOf(tm))
-		}
-		// If we don't match those two standard cases we should check the Binder interface.
-		//
-		if dst, isBinder := v.Interface().(Binder); isBinder {
-			return dst.Bind(pathValues.value)
 		}
 		fieldMap, err := fieldIndicesByJsonTag(iv.Interface())
 		if err != nil {
