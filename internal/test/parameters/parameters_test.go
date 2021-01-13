@@ -16,14 +16,15 @@ import (
 )
 
 type testServer struct {
-	array         []int32
-	object        *Object
-	complexObject *ComplexObject
-	passThrough   *string
-	primitive     *int32
-	cookieParams  *GetCookieParams
-	queryParams   *GetQueryFormParams
-	headerParams  *GetHeaderParams
+	array           []int32
+	object          *Object
+	complexObject   *ComplexObject
+	passThrough     *string
+	primitive       *int32
+	primitiveString *string
+	cookieParams    *GetCookieParams
+	queryParams     *GetQueryFormParams
+	headerParams    *GetHeaderParams
 }
 
 func (t *testServer) reset() {
@@ -32,6 +33,7 @@ func (t *testServer) reset() {
 	t.complexObject = nil
 	t.passThrough = nil
 	t.primitive = nil
+	t.primitiveString = nil
 	t.cookieParams = nil
 	t.queryParams = nil
 	t.headerParams = nil
@@ -151,6 +153,9 @@ func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) e
 	if params.P != nil {
 		t.primitive = params.P
 	}
+	if params.Ps != nil {
+		t.primitiveString = params.Ps
+	}
 	if params.Ep != nil {
 		t.primitive = params.Ep
 	}
@@ -234,6 +239,8 @@ func TestParameterBinding(t *testing.T) {
 	expectedArray := []int32{3, 4, 5}
 
 	var expectedPrimitive int32 = 5
+
+	var expectedPrimitiveString string = "123;456"
 
 	// Check the passthrough case
 	//  (GET /passThrough/{param})
@@ -370,6 +377,12 @@ func TestParameterBinding(t *testing.T) {
 	result = testutil.NewRequest().Get("/queryForm?p=5").Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	// primitive string within reserved char, i.e., ';' escaped to '%3B'
+	result = testutil.NewRequest().Get("/queryForm?ps=123%3B456").Go(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitiveString, ts.primitiveString)
 	ts.reset()
 
 	// complex object
@@ -608,6 +621,7 @@ func TestClientQueryParams(t *testing.T) {
 
 	var expectedPrimitive1 int32 = 5
 	var expectedPrimitive2 int32 = 100
+	var expectedPrimitiveString string = "123;456"
 
 	// Check query params
 	qParams := GetQueryFormParams{
@@ -617,6 +631,7 @@ func TestClientQueryParams(t *testing.T) {
 		O:  &expectedObject2,
 		Ep: &expectedPrimitive1,
 		P:  &expectedPrimitive2,
+		Ps: &expectedPrimitiveString,
 		Co: &expectedComplexObject,
 	}
 
