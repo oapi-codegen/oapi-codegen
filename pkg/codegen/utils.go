@@ -504,6 +504,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 	}
 	return false
 }
+
 // This converts a path, like Object/field1/nestedField into a go
 // type name.
 func PathToTypeName(path []string) string {
