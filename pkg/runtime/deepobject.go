@@ -3,6 +3,7 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"net/url"
 	"reflect"
 	"sort"
@@ -11,8 +12,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-
-	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 func marshalDeepObject(in interface{}, path []string) ([]string, error) {
@@ -212,9 +211,15 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 		return nil
 	case reflect.Struct:
 		// Some special types we care about are structs. Handle them
-		// here. They may be aliased, so we need to do some hoop
+		// here. They may be redefined, so we need to do some hoop
 		// jumping. If the types are aliased, we need to type convert
-		// the pointer, then set the value of the dereferenced pointer.
+		// the pointer, then set the value of the dereference pointer.
+
+		// We check to see if the object implements the Binder interface first.
+		if dst, isBinder := v.Interface().(Binder); isBinder {
+			return dst.Bind(pathValues.value)
+		}
+		// Then check the legacy types
 		if it.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 			var date types.Date
 			var err error
@@ -231,7 +236,6 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			}
 			dst.Set(reflect.ValueOf(date))
 		}
-
 		if it.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			var tm time.Time
 			var err error
@@ -253,7 +257,6 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			}
 			dst.Set(reflect.ValueOf(tm))
 		}
-
 		fieldMap, err := fieldIndicesByJsonTag(iv.Interface())
 		if err != nil {
 			return errors.Wrap(err, "failed enumerating fields")

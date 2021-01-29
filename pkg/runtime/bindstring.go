@@ -76,6 +76,11 @@ func BindStringToObject(src string, dst interface{}) error {
 			v.SetBool(val)
 		}
 	case reflect.Struct:
+		// if this is not of type Time or of type Date look to see if this is of type Binder.
+		if dstType, ok := dst.(Binder); ok {
+			return dstType.Bind(src)
+		}
+
 		if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 			// Don't fail on empty string.
 			if src == "" {
@@ -90,7 +95,7 @@ func BindStringToObject(src string, dst interface{}) error {
 				}
 			}
 			// So, assigning this gets a little fun. We have a value to the
-			// dereferenced destination. We can't do a conversion to
+			// dereference destination. We can't do a conversion to
 			// time.Time because the result isn't assignable, so we need to
 			// convert pointers.
 			if t != reflect.TypeOf(time.Time{}) {

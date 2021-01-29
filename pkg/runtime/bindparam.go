@@ -396,18 +396,10 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 // set its value.
 func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) error {
 	// Dereference pointers to their destination values
-	v := reflect.Indirect(reflect.ValueOf(dest))
-	t := v.Type()
-	// special handling for custom types which might look like an object. We
-	// don't want to use object binding on them, but rather treat them as
-	// primitive types.
-	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+	binder, v, t := indirect(dest)
+	if binder != nil {
 		return BindStringToObject(values.Get(paramName), dest)
 	}
-	if t.ConvertibleTo(reflect.TypeOf(types.Date{})) {
-		return BindStringToObject(values.Get(paramName), dest)
-	}
-
 	if t.Kind() != reflect.Struct {
 		return fmt.Errorf("unmarshaling query arg '%s' into wrong type", paramName)
 	}
@@ -445,4 +437,27 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 		}
 	}
 	return nil
+}
+
+// indirect
+func indirect(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
+	v := reflect.ValueOf(dest)
+	if v.Type().NumMethod() > 0 && v.CanInterface() {
+		if u, ok := v.Interface().(Binder); ok {
+			return u, reflect.Value{}, nil
+		}
+	}
+	v = reflect.Indirect(v)
+	t := v.Type()
+	// special handling for custom types which might look like an object. We
+	// don't want to use object binding on them, but rather treat them as
+	// primitive types. time.Time{} is a unique case since we can't add a Binder
+	// to it without changing the underlying generated code.
+	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+		return dest, reflect.Value{}, nil
+	}
+	if t.ConvertibleTo(reflect.TypeOf(types.Date{})) {
+		return dest, reflect.Value{}, nil
+	}
+	return nil, v, t
 }

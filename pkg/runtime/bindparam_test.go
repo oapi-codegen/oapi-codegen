@@ -14,6 +14,8 @@
 package runtime
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 	"time"
@@ -23,6 +25,63 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
+
+// MockBinder is just an independent version of Binder that has the Bind implemented
+type MockBinder struct {
+	time.Time
+}
+
+func (d *MockBinder) Bind(src string) error {
+	// Don't fail on empty string.
+	if src == "" {
+		return nil
+	}
+	parsedTime, err := time.Parse(types.DateFormat, src)
+	if err != nil {
+		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+	}
+	d.Time = parsedTime
+	return nil
+}
+
+func (d MockBinder) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Time.Format(types.DateFormat))
+}
+
+func (d *MockBinder) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	err := json.Unmarshal(data, &dateStr)
+	if err != nil {
+		return err
+	}
+	parsed, err := time.Parse(types.DateFormat, dateStr)
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
+// EmbeddedMockBinder has an embedded MockBinder and so keeps the Binder Method from MockBinder.
+type EmbeddedMockBinder struct {
+	MockBinder
+}
+
+// AnotherMockBinder is an entirely new type we have to create a bind method with it to implement Binder as well.
+type AnotherMockBinder MockBinder
+
+func (b *AnotherMockBinder) Bind(src string) error {
+	// Don't fail on empty string.
+	if src == "" {
+		return nil
+	}
+	parsedTime, err := time.Parse(types.DateFormat, src)
+	if err != nil {
+		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+	}
+	b.Time = parsedTime
+	return nil
+}
 
 func TestSplitParameter(t *testing.T) {
 	// Please see the parameter serialization docs to understand these test
@@ -239,13 +298,15 @@ func TestBindQueryParameter(t *testing.T) {
 			LastName  *string     `json:"lastName"`
 			Role      string      `json:"role"`
 			Birthday  *types.Date `json:"birthday"`
+			Married   *MockBinder `json:"married"`
 		}
 
 		expectedName := "Alex"
 		expectedDeepObject := &ID{
 			FirstName: &expectedName,
 			Role:      "admin",
-			Birthday:  &types.Date{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)},
+			Birthday:  &types.Date{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)},
+			Married:   &MockBinder{time.Date(2020, 2, 2, 0, 0, 0, 0, time.UTC)},
 		}
 
 		actual := new(ID)
@@ -255,6 +316,7 @@ func TestBindQueryParameter(t *testing.T) {
 			"id[role]":      {"admin"},
 			"foo":           {"bar"},
 			"id[birthday]":  {"2020-01-01"},
+			"id[married]":   {"2020-02-02"},
 		}
 
 		err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
@@ -263,8 +325,8 @@ func TestBindQueryParameter(t *testing.T) {
 	})
 
 	t.Run("form", func(t *testing.T) {
-		expected := &types.Date{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
-		birthday := &types.Date{}
+		expected := &MockBinder{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
+		birthday := &MockBinder{}
 		queryParams := url.Values{
 			"birthday": {"2020-01-01"},
 		}
@@ -281,8 +343,8 @@ func TestBindParameterViaAlias(t *testing.T) {
 	type AString string
 	type Aint int
 	type Afloat float64
-	type Atime time.Time
-	type Adate types.Date
+	type Atime = time.Time
+	type Adate = MockBinder
 
 	type AliasTortureTest struct {
 		S  AString  `json:"s"`
@@ -330,8 +392,8 @@ func TestBindParameterViaAlias(t *testing.T) {
 		Ip: &ip,
 		F:  3.5,
 		Fp: &fp,
-		T:  Atime(now),
-		Tp: (*Atime)(&later),
+		T:  now,
+		Tp: &later,
 		D:  Adate{Time: time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)},
 		Dp: &dp,
 	}
@@ -370,14 +432,18 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, now, aDstTime)
 
-	var dstDate types.Date
-	expectedDate := types.Date{time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)}
+	expectedDate := MockBinder{Time: time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)}
+
+	var dstDate MockBinder
 	err = bindParamsToExplodedObject("date", values, &dstDate)
 	assert.EqualValues(t, expectedDate, dstDate)
 
-	type AliasedDate types.Date
-	var aDstDate AliasedDate
-	err = bindParamsToExplodedObject("date", values, &aDstDate)
-	assert.EqualValues(t, expectedDate, aDstDate)
+	var eDstDate EmbeddedMockBinder
+	err = bindParamsToExplodedObject("date", values, &eDstDate)
+	assert.EqualValues(t, expectedDate, dstDate)
+
+	var nTDstDate AnotherMockBinder
+	err = bindParamsToExplodedObject("date", values, &nTDstDate)
+	assert.EqualValues(t, expectedDate, nTDstDate)
 
 }
