@@ -24,6 +24,8 @@ import (
 
 func TestStyleParam(t *testing.T) {
 	primitive := 5
+	primitiveString := "123"
+	primitiveStringWithReservedChar := "123;456"
 	array := []int{3, 4, 5}
 	type TestObject struct {
 		FirstName string `json:"firstName"`
@@ -250,6 +252,22 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParam("form", true, "id", primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=5", result)
+
+	result, err = StyleParam("form", false, "id", primitiveString)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=123", result)
+
+	result, err = StyleParam("form", true, "id", primitiveString)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=123", result)
+
+	result, err = StyleParam("form", false, "id", primitiveStringWithReservedChar)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=123%3B456", result)
+
+	result, err = StyleParam("form", true, "id", primitiveStringWithReservedChar)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=123%3B456", result)
 
 	result, err = StyleParam("form", false, "id", array)
 	assert.NoError(t, err)

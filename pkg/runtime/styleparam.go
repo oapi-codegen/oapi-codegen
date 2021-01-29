@@ -158,8 +158,9 @@ func marshalDateTimeValue(value interface{}) (string, bool) {
 }
 
 func styleStruct(style string, explode bool, paramName string, value interface{}) (string, error) {
+
 	if timeVal, ok := marshalDateTimeValue(value); ok {
-		styledVal, err := stylePrimitive(style, explode, paramName, url.QueryEscape(timeVal))
+		styledVal, err := stylePrimitive(style, explode, paramName, timeVal)
 		if err != nil {
 			return "", errors.Wrap(err, "failed to style time")
 		}
@@ -318,7 +319,7 @@ func stylePrimitive(style string, explode bool, paramName string, value interfac
 	default:
 		return "", fmt.Errorf("unsupported style '%s'", style)
 	}
-	return prefix + strVal, nil
+	return prefix + url.QueryEscape(strVal), nil
 }
 
 // Converts a primitive value to a string. We need to do this based on the
