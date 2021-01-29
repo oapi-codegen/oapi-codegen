@@ -217,6 +217,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
 
+    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
 {{range $paramIdx, $param := .HeaderParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var headerParam{{$paramIdx}} string
@@ -237,7 +238,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
     {{end}}
-    req.Header.Add("{{.ParamName}}", headerParam{{$paramIdx}})
+    req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
 
@@ -268,7 +269,6 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     req.AddCookie(cookie{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
-    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
     return req, nil
 }
 

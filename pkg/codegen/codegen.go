@@ -38,6 +38,7 @@ type Options struct {
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go imports on the generated code
 	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
+	AliasTypes         bool              // Whether to alias types if possible
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
@@ -110,6 +111,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	// This creates the golang templates text package
+	TemplateFunctions["opts"] = func() Options { return opts }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above

@@ -32,10 +32,10 @@ type PostBothJSONBody SchemaObject
 // PostJsonJSONBody defines parameters for PostJson.
 type PostJsonJSONBody SchemaObject
 
-// PostBothRequestBody defines body for PostBoth for application/json ContentType.
+// PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
 type PostBothJSONRequestBody PostBothJSONBody
 
-// PostJsonRequestBody defines body for PostJson for application/json ContentType.
+// PostJsonJSONRequestBody defines body for PostJson for application/json ContentType.
 type PostJsonJSONRequestBody PostJsonJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -308,6 +308,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -374,6 +375,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -429,6 +431,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 

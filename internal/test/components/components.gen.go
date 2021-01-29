@@ -118,10 +118,10 @@ type BodyWithAddPropsJSONBody_Inner struct {
 	AdditionalProperties map[string]int `json:"-"`
 }
 
-// EnsureEverythingIsReferencedRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
+// EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
 type EnsureEverythingIsReferencedJSONRequestBody RequestBody
 
-// BodyWithAddPropsRequestBody defines body for BodyWithAddProps for application/json ContentType.
+// BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.
 type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody
 
 // Getter for additional properties for ParamsWithAddPropsParams_P1. Returns the specified
@@ -918,6 +918,7 @@ func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType s
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -1012,6 +1013,7 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 

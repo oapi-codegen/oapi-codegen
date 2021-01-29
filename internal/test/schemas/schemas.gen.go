@@ -61,10 +61,10 @@ type Issue9Params struct {
 	Foo string `json:"foo"`
 }
 
-// Issue185RequestBody defines body for Issue185 for application/json ContentType.
+// Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
 type Issue185JSONRequestBody Issue185JSONBody
 
-// Issue9RequestBody defines body for Issue9 for application/json ContentType.
+// Issue9JSONRequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody Issue9JSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -391,6 +391,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -548,6 +549,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 

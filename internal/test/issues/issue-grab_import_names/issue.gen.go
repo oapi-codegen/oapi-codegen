@@ -154,7 +154,7 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 			return nil, err
 		}
 
-		req.Header.Add("Foo", headerParam0)
+		req.Header.Set("Foo", headerParam0)
 	}
 
 	if params.Bar != nil {
@@ -165,7 +165,7 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 			return nil, err
 		}
 
-		req.Header.Add("Bar", headerParam1)
+		req.Header.Set("Bar", headerParam1)
 	}
 
 	return req, nil

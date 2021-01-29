@@ -60,7 +60,7 @@ type FindPetsParams struct {
 // AddPetJSONBody defines parameters for AddPet.
 type AddPetJSONBody NewPet
 
-// AddPetRequestBody defines body for AddPet for application/json ContentType.
+// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody AddPetJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -325,6 +325,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
