@@ -391,6 +391,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -548,6 +549,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 

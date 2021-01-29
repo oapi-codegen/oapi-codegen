@@ -918,6 +918,7 @@ func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType s
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
@@ -1012,6 +1013,7 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
 	return req, nil
 }
 
