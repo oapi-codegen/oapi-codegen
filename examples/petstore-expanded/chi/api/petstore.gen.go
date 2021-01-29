@@ -59,7 +59,7 @@ type FindPetsParams struct {
 // AddPetJSONBody defines parameters for AddPet.
 type AddPetJSONBody NewPet
 
-// AddPetRequestBody defines body for AddPet for application/json ContentType.
+// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody AddPetJSONBody
 
 // ServerInterface represents all server handlers.

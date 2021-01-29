@@ -1,6 +1,6 @@
 {{range .Types}}
 // {{.TypeName}} defines model for {{.JsonName}}.
-type {{.TypeName}} {{.Schema.TypeDecl}}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{- if gt (len .Schema.EnumValues) 0 }}
 // List of {{ .TypeName }}
 const (
