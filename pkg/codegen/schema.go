@@ -76,6 +76,11 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+type Constants struct {
+	// SecuritySchemeProviderNames holds all provider names for security schemes.
+	SecuritySchemeProviderNames []string
+}
+
 type TypeDefinition struct {
 	TypeName     string
 	JsonName     string

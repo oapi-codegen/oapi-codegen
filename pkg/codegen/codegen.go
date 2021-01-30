@@ -135,12 +135,18 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error creating operation definitions")
 	}
 
-	var typeDefinitions string
+	var typeDefinitions, constantDefinitions string
 	if opts.GenerateTypes {
 		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops, opts.ExcludeSchemas)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}
+
+		constantDefinitions, err = GenerateConstants(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating constants")
+		}
+
 	}
 
 	var echoServerOut string
@@ -195,6 +201,11 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	_, err = w.WriteString(importsOut)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing imports")
+	}
+
+	_, err = w.WriteString(constantDefinitions)
+	if err != nil {
+		return "", errors.Wrap(err, "error writing constants")
 	}
 
 	_, err = w.WriteString(typeDefinitions)
@@ -298,6 +309,38 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 
 	typeDefinitions := strings.Join([]string{typesOut, paramTypesOut, allOfBoilerplate}, "")
 	return typeDefinitions, nil
+}
+
+// Generates operation ids, context keys, paths, etc. to be exported as constants
+func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	constants := Constants{
+		SecuritySchemeProviderNames: []string{},
+	}
+
+	providerNames := map[string]struct{}{}
+	for _, op := range ops {
+		for _, def := range op.SecurityDefinitions {
+			providerNames[def.ProviderName] = struct{}{}
+		}
+	}
+
+	for providerName := range providerNames {
+		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
+	}
+
+	err := t.ExecuteTemplate(w, "constants.tmpl", constants)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating server interface: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
+	}
+	return buf.String(), nil
 }
 
 // Generates type definitions for any custom types defined in the
