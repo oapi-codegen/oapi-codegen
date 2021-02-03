@@ -73,8 +73,8 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
-// ResponseObject defines model for ResponseObject.
-type ResponseObject struct {
+// ResponseObjectResp defines model for ResponseObject.
+type ResponseObjectResp struct {
 	Field SchemaObject `json:"Field"`
 }
 
