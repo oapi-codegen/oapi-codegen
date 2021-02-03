@@ -77,11 +77,11 @@ type SomeObject struct {
 // Argument defines model for argument.
 type Argument string
 
-// ResponseWithReference defines model for ResponseWithReference.
-type ResponseWithReference SomeObject
+// ResponseWithReferenceResp defines model for ResponseWithReference.
+type ResponseWithReferenceResp SomeObject
 
-// SimpleResponse defines model for SimpleResponse.
-type SimpleResponse struct {
+// SimpleResponseResp defines model for SimpleResponse.
+type SimpleResponseResp struct {
 	Name string `json:"name"`
 }
 
