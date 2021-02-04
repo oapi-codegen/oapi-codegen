@@ -152,6 +152,10 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 				param.Name, err)
 		}
 
+		if IsParametersSectionRef(paramOrRef.Ref) {
+			goType.IsParameterSection = true
+		}
+
 		pd := ParameterDefinition{
 			ParamName: param.Name,
 			In:        param.In,
@@ -378,12 +382,12 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
+
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
 		}
-
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
@@ -588,7 +592,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			pSchema.RefType = propRefName
 			typeDefs = append(typeDefs, TypeDefinition{
 				TypeName: propRefName,
-				Schema:   param.Schema,
+				Schema:   pSchema,
 			})
 		}
 		prop := Property{

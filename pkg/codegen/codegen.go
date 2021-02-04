@@ -385,11 +385,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in parameter %s", paramName))
 		}
-
 		typeDef := TypeDefinition{
 			JsonName: paramName,
 			Schema:   goType,
-			TypeName: SchemaNameToTypeName(paramName),
+			TypeName: SchemaNameToTypeName(paramName) + parameterPostfix,
 		}
 
 		if paramOrRef.Ref != "" {

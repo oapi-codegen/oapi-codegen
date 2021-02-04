@@ -224,6 +224,10 @@ func RefPathToGoType(refPath string) (string, error) {
 	}
 }
 
+func IsParametersSectionRef(refPath string) bool {
+	return strings.Contains(refPath, "/parameters/")
+}
+
 // This function converts a swagger style path URI with parameters to a
 // Echo compatible path URI. We need to replace all of Swagger parameters with
 // ":param". Valid input parameters are:

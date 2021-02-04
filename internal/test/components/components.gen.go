@@ -84,9 +84,7 @@ type RequestBody struct {
 }
 
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
-type ParamsWithAddPropsParams_P1 struct {
-	AdditionalProperties map[string]interface{} `json:"-"`
-}
+type ParamsWithAddPropsParams_P1 ParamsWithAddPropsParams_P1
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {

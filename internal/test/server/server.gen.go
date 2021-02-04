@@ -74,8 +74,8 @@ type SomeObject struct {
 	Name string `json:"name"`
 }
 
-// Argument defines model for argument.
-type Argument string
+// ArgumentParam defines model for argument.
+type ArgumentParam string
 
 // ResponseWithReference defines model for ResponseWithReference.
 type ResponseWithReference SomeObject
@@ -139,7 +139,7 @@ type ServerInterface interface {
 	GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
 	// Getter with referenced parameter and referenced response
 	// (GET /get-with-references/{global_argument}/{argument})
-	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
+	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument ArgumentParam)
 	// Get an object by ID
 	// (GET /get-with-type/{content_type})
 	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string)
@@ -148,7 +148,7 @@ type ServerInterface interface {
 	GetReservedKeyword(w http.ResponseWriter, r *http.Request)
 	// Create a resource
 	// (POST /resource/{argument})
-	CreateResource(w http.ResponseWriter, r *http.Request, argument Argument)
+	CreateResource(w http.ResponseWriter, r *http.Request, argument ArgumentParam)
 	// Create a resource with inline parameter
 	// (POST /resource2/{inline_argument})
 	CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)
@@ -281,7 +281,7 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 	}
 
 	// ------------- Path parameter "argument" -------------
-	var argument Argument
+	var argument ArgumentParam
 
 	err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
 	if err != nil {
@@ -348,7 +348,7 @@ func (siw *ServerInterfaceWrapper) CreateResource(w http.ResponseWriter, r *http
 	var err error
 
 	// ------------- Path parameter "argument" -------------
-	var argument Argument
+	var argument ArgumentParam
 
 	err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
 	if err != nil {

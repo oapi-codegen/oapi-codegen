@@ -8,6 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	parameterPostfix = "Param"
+)
+
 // This describes a Schema, a type definition.
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
@@ -23,6 +27,8 @@ type Schema struct {
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
+
+	IsParameterSection bool
 }
 
 func (s Schema) IsRef() bool {
@@ -32,6 +38,9 @@ func (s Schema) IsRef() bool {
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
+	}
+	if s.IsParameterSection {
+		return s.GoType + parameterPostfix
 	}
 	return s.GoType
 }
