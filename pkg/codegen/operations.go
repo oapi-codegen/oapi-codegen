@@ -592,7 +592,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			pSchema.RefType = propRefName
 			typeDefs = append(typeDefs, TypeDefinition{
 				TypeName: propRefName,
-				Schema:   pSchema,
+				Schema:   param.Schema,
 			})
 		}
 		prop := Property{
