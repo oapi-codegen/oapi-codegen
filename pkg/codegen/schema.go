@@ -57,11 +57,12 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description   string
-	JsonFieldName string
-	Schema        Schema
-	Required      bool
-	Nullable      bool
+	Description    string
+	JsonFieldName  string
+	Schema         Schema
+	Required       bool
+	Nullable       bool
+	ExtensionProps *openapi3.ExtensionProps
 }
 
 func (p Property) GoFieldName() string {
@@ -212,11 +213,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					description = p.Value.Description
 				}
 				prop := Property{
-					JsonFieldName: pName,
-					Schema:        pSchema,
-					Required:      required,
-					Description:   description,
-					Nullable:      p.Value.Nullable,
+					JsonFieldName:  pName,
+					Schema:         pSchema,
+					Required:       required,
+					Description:    description,
+					Nullable:       p.Value.Nullable,
+					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -343,7 +345,16 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required || p.Nullable {
+
+		// Support x-omitempty
+		omitEmpty := true
+		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
+			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
+				omitEmpty = extOmitEmpty
+			}
+		}
+
+		if p.Required || p.Nullable || !omitEmpty {
 			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
 		} else {
 			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
