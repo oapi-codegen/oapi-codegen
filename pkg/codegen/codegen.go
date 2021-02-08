@@ -323,7 +323,8 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 	providerNames := map[string]struct{}{}
 	for _, op := range ops {
 		for _, def := range op.SecurityDefinitions {
-			providerNames[def.ProviderName] = struct{}{}
+			providerName := SanitizeGoIdentity(def.ProviderName)
+			providerNames[providerName] = struct{}{}
 		}
 	}
 

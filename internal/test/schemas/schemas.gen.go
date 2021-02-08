@@ -24,6 +24,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+const (
+	Access_tokenScopes = "access_token.Scopes"
+)
+
 // N5StartsWithNumber defines model for 5StartsWithNumber.
 type N5StartsWithNumber map[string]interface{}
 
@@ -1038,6 +1042,8 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
 
+	ctx.Set(Access_tokenScopes, []string{""})
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
 	return err
@@ -1047,6 +1053,8 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
+	ctx.Set(Access_tokenScopes, []string{""})
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue127(ctx)
 	return err
@@ -1055,6 +1063,8 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 // Issue185 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(Access_tokenScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue185(ctx)
@@ -1072,6 +1082,8 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
+	ctx.Set(Access_tokenScopes, []string{""})
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue209(ctx, str)
 	return err
@@ -1087,6 +1099,8 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
+
+	ctx.Set(Access_tokenScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
@@ -1104,6 +1118,8 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
+	ctx.Set(Access_tokenScopes, []string{""})
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue41(ctx, n1param)
 	return err
@@ -1112,6 +1128,8 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 // Issue9 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
+
+	ctx.Set(Access_tokenScopes, []string{""})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
@@ -1168,23 +1186,24 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"H4sIAAAAAAAC/7RW3W7bNhR+lQOuwG4cy3ZbrPFdVnRDBqwNmgC9SHJBk8cWG4lkyaMkguF3H0hKllxL",
+	"WbN0uYlo8vx83/ndMmFKazRq8my5ZZY7XiKhi6dLckpvzvUFpzycJXrhlCVlNFuyM/DxHiynHPaSbMJU",
+	"uA6/sgnTvES2ZJ7ChcNvlXIo2ZJchRPmRY4lD6qpts0zpTdst9u1l9GRt5fEHfkvivKPVblCd+zNVa48",
+	"JBEINsFHEXhQlAMHncQmrSGz+oqC2G7CznR9VVucs+W2Oy3GDOSmKiSsELgGpQndmgvc7oKi95UnUybO",
+	"rqKVLVsbV3JiSybiZWe/BTphf6JGp8Sn5FBHRefhx6oo+KrAC2csOlKYQnVwMtFNXgxwOdlfnmnZ6grv",
+	"9P47ReNIrgvXdvzyeUoPtF5338P6bo/iFfICReUU1Zch2Ak9FwK9PyFzhzqcV8gduj9a8v/6cnWSIgHp",
+	"JcSX0xvNmjQLJpJQF6KcyKZMVHptBhICPYHgHj2sjYN77pSpPCjvq/hTpSWYe3RAqsQpXBTIPQKXEjhQ",
+	"KxtEbzTXNayqDazVI8rkFikKJCYrl+juo2v36HyyPp/OprMUXNTcKrZkr6ez6ZxNYuVFWjLUvnJ4gvfo",
+	"asqV3pwof+JwjQ61SHHdII3kOmppjdIE+Kg8efAGKOcEXccAwXWoBeGQE0pQGihX/kZ7iwK4lqANhQfW",
+	"VRplxBWSlgcz55It2Yfo4Ie9f+f+c+ddyAlvjfYpyIvZLPwTRhPq6DS3tlAiasu+ehND37WUwwLhXZmz",
+	"Vw7XbMl+yTooWdNtsn072E1amcUPyiyCjBjoAk/JHnWNkHDfJ338m7As5VY2X/w2Grq/+R1CIBUq7Str",
+	"jQuRiaQ9EgTFHqTRvxJYh1hagu5VvJ0OhOk82A1WXxiSp4g47IMBbl/XY1m8RFUAn5Xc3UnzoF+sqOYv",
+	"8SaokbjmVUH/I3k/CfH3mffu7XjTqC3CJshHBPCQo4Z29GRte4euLIE7hHZejKfdu7fNdEBPvxtZ/zTS",
+	"BuZqQtvL8eBen4DF7DR7tfXkdqM8vM9R3HlQ624nSlAlioJ3FBT1MODF7JQd+zA52M2uh5F1T7KD3W13",
+	"24PwepZt17woKHem2uS7YwSf0YeBI+EO6wfjZH/vsQ7jlArNPoy8QGBcuJrG0VAygOv17EdgDeyOPWef",
+	"tUP2Qb+ZZ9t5NDUeuIvWk94CGfbbuELuF8gBZG/S1P03HMn+kxCeStfjJXi3u30yWU/Hc7RQqCklqI99",
+	"H5QWxjkUVNThu6gkyrjYNKWXaFgZWYfJfqM7vKOlezpCy7cKXd2LrzHPi+t/bgdN7+0z8alpUBEZGyr+",
+	"3soZIRwum9e3wZ9YLw3EyhXN9rjMsmY7C/veVCLaktspV6Eg/wkAAP//VxOrc3sNAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
