@@ -42,7 +42,7 @@ func main() {
 	e.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
-	api.RegisterHandlers(e, petStore)
+	api.RegisterHandlers(e, petStore, "")
 
 	// And we serve HTTP until the world ends.
 	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))

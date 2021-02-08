@@ -349,8 +349,8 @@ type EchoRouter interface {
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+func RegisterHandlers(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithBaseURL(router, si, baseURL)
 }
 
 // Registers handlers, and prepends BaseURL to the paths, so that the paths
