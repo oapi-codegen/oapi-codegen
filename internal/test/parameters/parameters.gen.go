@@ -254,6 +254,7 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqE
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -265,6 +266,7 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEdit
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -276,6 +278,7 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEdit
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -287,6 +290,7 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEdi
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -298,6 +302,7 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEdi
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -309,6 +314,7 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqE
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -320,6 +326,7 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqE
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -331,6 +338,7 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEdito
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -342,6 +350,7 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEdito
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -353,6 +362,7 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEdi
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -364,6 +374,7 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEdi
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -375,6 +386,7 @@ func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ..
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -386,6 +398,7 @@ func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams,
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -397,6 +410,7 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, r
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -408,6 +422,7 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEd
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -419,6 +434,7 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEd
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -430,6 +446,7 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -441,6 +458,7 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -452,6 +470,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -1404,7 +1423,6 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

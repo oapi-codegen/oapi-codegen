@@ -112,6 +112,7 @@ func (c *Client) GetFoo(ctx context.Context, params *GetFooParams, reqEditors ..
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -168,7 +169,6 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

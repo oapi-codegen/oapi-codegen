@@ -520,6 +520,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
     if err != nil {
         return nil, err
     }
+    req = req.WithContext(ctx)
     if err := c.applyEditors(ctx, req, reqEditors); err != nil {
         return nil, err
     }
@@ -532,6 +533,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     if err != nil {
         return nil, err
     }
+    req = req.WithContext(ctx)
     if err := c.applyEditors(ctx, req, reqEditors); err != nil {
         return nil, err
     }
@@ -692,7 +694,6 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{end}}{{/* Range */}}
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-    req = req.WithContext(ctx)
     for _, r := range c.RequestEditors {
         if err := r(ctx, req); err != nil {
             return err

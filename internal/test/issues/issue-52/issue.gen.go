@@ -174,6 +174,7 @@ func (c *Client) ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) 
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -208,7 +209,6 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

@@ -175,6 +175,7 @@ func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ..
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -186,6 +187,7 @@ func (c *Client) Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -197,6 +199,7 @@ func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body 
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -208,6 +211,7 @@ func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody, req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -219,6 +223,7 @@ func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...R
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -230,6 +235,7 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ..
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -241,6 +247,7 @@ func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEdi
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -252,6 +259,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -263,6 +271,7 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -522,7 +531,6 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

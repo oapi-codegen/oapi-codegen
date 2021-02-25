@@ -146,6 +146,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -157,6 +158,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -168,6 +170,7 @@ func (c *Client) GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -179,6 +182,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -190,6 +194,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody, req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -201,6 +206,7 @@ func (c *Client) GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -212,6 +218,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -223,6 +230,7 @@ func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -234,6 +242,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...Req
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -458,7 +467,6 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

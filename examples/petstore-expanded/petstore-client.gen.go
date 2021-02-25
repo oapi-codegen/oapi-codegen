@@ -156,6 +156,7 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditor
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -167,6 +168,7 @@ func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -178,6 +180,7 @@ func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEdit
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -189,6 +192,7 @@ func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestE
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -200,6 +204,7 @@ func (c *Client) FindPetById(ctx context.Context, id int64, reqEditors ...Reques
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -378,7 +383,6 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err

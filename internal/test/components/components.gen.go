@@ -812,6 +812,7 @@ func (c *Client) EnsureEverythingIsReferencedWithBody(ctx context.Context, conte
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -823,6 +824,7 @@ func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, body EnsureEv
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -834,6 +836,7 @@ func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPr
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -845,6 +848,7 @@ func (c *Client) BodyWithAddPropsWithBody(ctx context.Context, contentType strin
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -856,6 +860,7 @@ func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSON
 	if err != nil {
 		return nil, err
 	}
+	req = req.WithContext(ctx)
 	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
 		return nil, err
 	}
@@ -998,7 +1003,6 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 }
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err
