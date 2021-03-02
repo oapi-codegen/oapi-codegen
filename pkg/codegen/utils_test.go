@@ -152,6 +152,26 @@ func TestRefPathToGoType(t *testing.T) {
 	assert.Errorf(t, err, "Expected an error on reference depth")
 }
 
+func TestIsWholeDocumentReference(t *testing.T) {
+	assert.Equal(t, false, IsWholeDocumentReference(""))
+	assert.Equal(t, false, IsWholeDocumentReference("#/components/schemas/Foo"))
+	assert.Equal(t, false, IsWholeDocumentReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, true, IsWholeDocumentReference("doc.json"))
+	assert.Equal(t, true, IsWholeDocumentReference("../doc.json"))
+	assert.Equal(t, false, IsWholeDocumentReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, true, IsWholeDocumentReference("http://deepmap.com/doc.json"))
+}
+
+func TestIsGoTypeReference(t *testing.T) {
+	assert.Equal(t, false, IsGoTypeReference(""))
+	assert.Equal(t, true, IsGoTypeReference("#/components/schemas/Foo"))
+	assert.Equal(t, true, IsGoTypeReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, false, IsGoTypeReference("doc.json"))
+	assert.Equal(t, false, IsGoTypeReference("../doc.json"))
+	assert.Equal(t, true, IsGoTypeReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
+}
+
 func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path", SwaggerUriToEchoUri("/path"))
 	assert.Equal(t, "/path/:arg", SwaggerUriToEchoUri("/path/{arg}"))
