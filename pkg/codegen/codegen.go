@@ -320,15 +320,22 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		SecuritySchemeProviderNames: []string{},
 	}
 
-	providerNames := map[string]struct{}{}
+	providerNameMap := map[string]struct{}{}
 	for _, op := range ops {
 		for _, def := range op.SecurityDefinitions {
 			providerName := SanitizeGoIdentity(def.ProviderName)
-			providerNames[providerName] = struct{}{}
+			providerNameMap[providerName] = struct{}{}
 		}
 	}
 
-	for providerName := range providerNames {
+	var providerNames []string
+	for providerName := range providerNameMap {
+		providerNames = append(providerNames, providerName)
+	}
+
+	sort.Strings(providerNames)
+
+	for _, providerName := range providerNames {
 		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
 	}
 
