@@ -5,7 +5,7 @@ require (
 	github.com/getkin/kin-openapi v0.37.0
 	github.com/go-chi/chi v1.5.1
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
-	github.com/labstack/echo/v4 v4.1.17
+	github.com/labstack/echo/v4 v4.2.1
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/pkg/errors v0.8.1
