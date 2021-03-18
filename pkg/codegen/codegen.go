@@ -44,6 +44,7 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	SpecFileName           string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -183,7 +184,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var inlinedSpec string
 	if opts.EmbedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
+		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, opts)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}

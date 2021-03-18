@@ -123,10 +123,13 @@ func main() {
 		errExit("can not specify both server and chi-server targets simultaneously")
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	var pathToSpec = flag.Arg(0)
+	swagger, err := util.LoadSwagger(pathToSpec)
 	if err != nil {
 		errExit("error loading swagger spec\n: %s", err)
 	}
+
+	opts.SpecFileName = path.Base(pathToSpec)
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
