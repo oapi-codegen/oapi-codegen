@@ -220,10 +220,7 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	queryValues := queryUrl.Query()
 
@@ -294,10 +291,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -330,10 +324,7 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("DELETE", queryUrl.String(), nil)
 	if err != nil {
@@ -364,10 +355,7 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {

@@ -265,10 +265,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -294,10 +291,7 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -332,10 +326,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -361,10 +352,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -388,10 +376,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {
@@ -417,10 +402,7 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -444,10 +426,7 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
