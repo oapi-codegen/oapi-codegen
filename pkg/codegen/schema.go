@@ -111,7 +111,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	schema := sref.Value
 
-	if sref.Ref != "" {
+	if IsGoTypeReference(sref.Ref) {
 		var err error
 		// Convert the reference path to Go type
 		refType, err = RefPathToGoType(sref.Ref)
@@ -380,7 +380,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 
 		var refType string
 		var err error
-		if ref != "" {
+		if IsGoTypeReference(ref) {
 			refType, err = RefPathToGoType(ref)
 			if err != nil {
 				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
@@ -433,7 +433,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
-		if ref != "" {
+		if IsGoTypeReference(ref) {
 			// We have a referenced type, we will generate an inlined struct
 			// member.
 			// struct {

@@ -224,6 +224,27 @@ func RefPathToGoType(refPath string) (string, error) {
 	}
 }
 
+// This function takes a $ref value and checks if it has link to go type.
+// #/components/schemas/Foo                     -> true
+// ./local/file.yml#/components/parameters/Bar  -> true
+// ./local/file.yml                             -> false
+// The function can be used to check whether RefPathToGoType($ref) is possible.
+//
+func IsGoTypeReference(ref string) bool {
+	return ref != "" && !IsWholeDocumentReference(ref)
+}
+
+// This function takes a $ref value and checks if it is whole document reference.
+// #/components/schemas/Foo                             -> false
+// ./local/file.yml#/components/parameters/Bar          -> false
+// ./local/file.yml                                     -> true
+// http://deepmap.com/schemas/document.json             -> true
+// http://deepmap.com/schemas/document.json#/Foo        -> false
+//
+func IsWholeDocumentReference(ref string) bool {
+	return ref != "" && !strings.ContainsAny(ref, "#")
+}
+
 // This function converts a swagger style path URI with parameters to a
 // Echo compatible path URI. We need to replace all of Swagger parameters with
 // ":param". Valid input parameters are:

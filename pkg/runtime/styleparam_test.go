@@ -490,10 +490,15 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7", result)
 
-	type FloatType float64
-	result, err = StyleParam("simple", false, "foo", FloatType(7.5))
+	type FloatType64 float64
+	result, err = StyleParam("simple", false, "foo", FloatType64(7.5))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7.5", result)
+
+	type FloatType32 float32
+	result, err = StyleParam("simple", false, "foo", FloatType32(1.05))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1.05", result)
 
 	// Test that we handle optional fields
 	type TestObject2 struct {
