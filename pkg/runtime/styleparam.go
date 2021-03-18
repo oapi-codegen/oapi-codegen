@@ -335,8 +335,10 @@ func primitiveToString(value interface{}) (string, error) {
 	switch kind {
 	case reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
 		output = strconv.FormatInt(v.Int(), 10)
-	case reflect.Float32, reflect.Float64:
+	case reflect.Float64:
 		output = strconv.FormatFloat(v.Float(), 'f', -1, 64)
+	case reflect.Float32:
+		output = strconv.FormatFloat(v.Float(), 'f', -1, 32)
 	case reflect.Bool:
 		if v.Bool() {
 			output = "true"
