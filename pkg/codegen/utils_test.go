@@ -251,5 +251,15 @@ Line
 			assert.EqualValues(t, testCase.expected, result, testCase.message)
 		})
 	}
+}
 
+func TestEscapePathElements(t *testing.T) {
+	p := "/foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "/foo/bar:baz"
+	assert.Equal(t, "/foo/bar%3Abaz", EscapePathElements(p))
 }

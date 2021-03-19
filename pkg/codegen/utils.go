@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -286,7 +287,7 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// Replaces path parameters with %s
+// Replaces path parameters of the form {param} with %s
 func ReplacePathParamsWithStr(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "%s")
 }
@@ -553,4 +554,18 @@ func StringToGoComment(in string) string {
 	// empty-line-comments, like `// `. Therefore remove this line comment.
 	in = strings.TrimSuffix(in, "\n// ")
 	return in
+}
+
+// This function breaks apart a path, and looks at each element. If it's
+// not a path parameter, eg, {param}, it will URL-escape the element.
+func EscapePathElements(path string) string {
+	elems := strings.Split(path, "/")
+	for i, e := range elems {
+		if strings.HasPrefix(e, "{") && strings.HasSuffix(e, "}") {
+			// This is a path parameter, we don't want to mess with its value
+			continue
+		}
+		elems[i] = url.QueryEscape(e)
+	}
+	return strings.Join(elems, "/")
 }

@@ -123,22 +123,22 @@ func (c *Client) GetFoo(ctx context.Context, params *GetFooParams, reqEditors ..
 func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/foo")
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
+	operationPath := fmt.Sprintf("/foo")
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryUrl, err = queryUrl.Parse(basePath)
-	if err != nil {
-		return nil, err
-	}
+	queryURL := serverURL.ResolveReference(&operationURL)
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

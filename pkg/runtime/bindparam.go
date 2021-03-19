@@ -36,6 +36,13 @@ func BindStyledParameter(style string, explode bool, paramName string,
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}
 
+	// Queries coming in here may be escaped if they contain characters disallowed
+	// in URLs
+	value, err := url.QueryUnescape(value)
+	if err != nil {
+		return fmt.Errorf("failed to QueryUnescape parameter '%s': %v", paramName, err)
+	}
+
 	// Everything comes in by pointer, dereference it
 	v := reflect.Indirect(reflect.ValueOf(dest))
 

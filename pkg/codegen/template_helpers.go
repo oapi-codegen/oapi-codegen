@@ -80,10 +80,6 @@ func genParamNames(params []ParameterDefinition) string {
 	return ", " + strings.Join(parts, ", ")
 }
 
-func genParamFmtString(path string) string {
-	return ReplacePathParamsWithStr(path)
-}
-
 // genResponsePayload generates the payload returned at the end of each client request function
 func genResponsePayload(operationID string) string {
 	var buffer = bytes.NewBufferString("")
@@ -262,7 +258,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
-	"genParamFmtString":          genParamFmtString,
+	"genParamFmtString":          ReplacePathParamsWithStr,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"lcFirst":                    LowercaseFirstCharacter,

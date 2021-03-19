@@ -585,22 +585,23 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
     {{end}}
 {{end}}
-    queryUrl, err := url.Parse(server)
+    serverURL, err := url.Parse(server)
     if err != nil {
         return nil, err
     }
 
-    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
-    if basePath[0] == '/' {
-        basePath = basePath[1:]
+    operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if operationPath[0] == '/' {
+        operationPath = operationPath[1:]
+    }
+    operationURL := url.URL{
+    	Path: operationPath,
     }
 
-    queryUrl, err = queryUrl.Parse(basePath)
-    if err != nil {
-        return nil, err
-    }
+    queryURL := serverURL.ResolveReference(&operationURL)
+
 {{if .QueryParams}}
-    queryValues := queryUrl.Query()
+    queryValues := queryURL.Query()
 {{range $paramIdx, $param := .QueryParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     {{if .IsPassThrough}}
@@ -629,9 +630,9 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{end}}
     {{if not .Required}}}{{end}}
 {{end}}
-    queryUrl.RawQuery = queryValues.Encode()
+    queryURL.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

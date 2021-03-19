@@ -180,19 +180,22 @@ func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 		return nil, err
 	}
 
-	queryUrl, err := url.Parse(server)
+	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/pets/%s", pathParam0)
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
+	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryURL := serverURL.ResolveReference(&operationURL)
 
-	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -215,19 +218,22 @@ func NewValidatePetsRequest(server string, body ValidatePetsJSONRequestBody) (*h
 func NewValidatePetsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
-	queryUrl, err := url.Parse(server)
+	serverURL, err := url.Parse(server)
 	if err != nil {
 		return nil, err
 	}
 
-	basePath := fmt.Sprintf("/pets:validate")
-	if basePath[0] == '/' {
-		basePath = basePath[1:]
+	operationPath := fmt.Sprintf("/pets:validate")
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryURL := serverURL.ResolveReference(&operationURL)
 
-	req, err := http.NewRequest("POST", queryUrl.String(), body)
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -495,18 +501,15 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6xVzW7zRgx8lQXboyq5zk2npkVQGCi+GEjQS+ADK1HSBtqfLik7hqF3L3YlO3bsIIfm",
-	"FGX5M+RwSB+gcsY7S1YYygNw1ZHB9PkQggvxwwfnKYim9Fy5muLfmrgK2ot2FsrJWSVbBo0LBgVK0Fbu",
-	"lpCB7D1N/1JLAcYMDDFj+2mio/kUyhK0bWEcMwj076AD1VC+wAx4dN+MGaxJrou2aG5gPXekokW5RklH",
-	"ypPkX0KmVJuTl/vnlSqBCfgHmgnvGp0/h+czfI4FaCGT/D9UcgLFEHB/szK+UVr007Zx0/SsYJUYIoO6",
-	"j8m8FkLzG++wbSnk2kE2EwZP05u6X6/UM6GBDIYQgzoRXxbFWcyYfWjvXjEa31MKlg5FDUysMLUpLpBC",
-	"VmgVvU1u4lRNxlmWgEKqIZQhECttEzmPnmzMdJcvFHuqdKMrTFAZ9Loiy/Q+abj3WHWklvniomQui2K3",
-	"2+WYzLkLbTHHcvHX6o+HH08PvyzzRd6J6RPfFAw/Nk8UtrqiW30XyaWIstHSn3O2ntuEDLYUeCLl13yR",
-	"L2Jm58mi11DCXXrKwKN0aepFJKg4eJJVPcaHdpJ0lFTqeFVDCX+SRKnHuICGhAJD+XIAHWFirvcppkxw",
-	"LhYJA2Xzst8Q2riJzuxdJCbal4vFUT1kUzHofT8PoHjl2NvhLN/PgRoo4afi/boU82kpYtVJk5dy2WKv",
-	"66iNpGsejMGwn/qMr6rVW7JK12RFN5pCnvwSV2WKRUkC8I7letf+nj2S+CD7wOXRup6MkSdi+d3V++/s",
-	"eroO4+XaxkmM/5Pt0734kvarC/L5GHja6AaHXr6Nhek35QbsYOnNUyVUK5p9zkVwOb4UzxS2R81f3KTj",
-	"ecnPljRu2rgZ/wsAAP//WSF1Ge4GAAA=",
+	"H4sIAAAAAAAC/6xUPW/bMBD9K8S1o2A58aaxRVF4KTIUXQIPrHSSmZof5Z2MGgb/e3Gk7NqxjAzNFIX3",
+	"eO/de0cfofU2eIeOCZojULtFq/Pnlxh9lI8QfcDIBvNx6zuUvx1SG01g4x00BaxyrYLeR6sZGjCOV49Q",
+	"AR8Cln9xwAipAotEerjb6FQ+XyWOxg2QUgURf48mYgfNM0yEJ/gmVfCEfCvaaTvD9X2LSirK94q3qALy",
+	"4k3K3GpzRvmfL9gyFOJv2ha+W3a6T08X/CQCDKPN+FdKzqQ6Rn2YVUYz0gRnXO9vFXzeYvuLVFGrkFod",
+	"jBtETtBRW2SMJIYY3knDNdGIavXwqBiJoYI9RiqdHhbLxVIU+oBOBwMNrPJRBUHzNk9Ty3z1MSCvuyQH",
+	"Q4lKyLUoWnfQwFdkiVDunSU0z0cwQiO9oJrihNwJLk3gOGI1LfGMgWkjYAreUQnkcbksO+0YXRajQ9iZ",
+	"NsupX0hmO170+xixhwY+1P9eTT09mVpUZ6+vPd7rnekk2pwXjdbqeChzyqkazB6dMh06Nr3BuMi47FWT",
+	"72rOqxs88W2CPyZE3h2oXnl5qj6VoviExJ98d3jPqcvWp+t1lCTSf7p9fgdv2n7zMu7HQJBrvR53/G4u",
+	"lN/KGdrR4Z+ALWOncMJcLsF1fCml9DcAAP//Z6kfG5EFAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

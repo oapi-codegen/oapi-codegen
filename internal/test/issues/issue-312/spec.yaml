@@ -2,18 +2,8 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
-  description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
-  termsOfService: http://swagger.io/terms/
-  contact:
-    name: Swagger API Team
-    email: apiteam@swagger.io
-    url: http://swagger.io
-  license:
-    name: Apache 2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0.html
-servers:
-  - url: http://petstore.swagger.io/api
+  title: Issue 312 test
+  description: Checks proper escaping of parameters
 paths:
   /pets:validate:
     post:
