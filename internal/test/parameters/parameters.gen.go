@@ -1466,61 +1466,61 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetContentObject request
-	GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*GetContentObjectResponse, error)
+	GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error)
 
 	// GetCookie request
-	GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*GetCookieResponse, error)
+	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error)
 
 	// GetHeader request
-	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*GetHeaderResponse, error)
+	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error)
 
 	// GetLabelExplodeArray request
-	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelExplodeArrayResponse, error)
+	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error)
 
 	// GetLabelExplodeObject request
-	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelExplodeObjectResponse, error)
+	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error)
 
 	// GetLabelNoExplodeArray request
-	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelNoExplodeArrayResponse, error)
+	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error)
 
 	// GetLabelNoExplodeObject request
-	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelNoExplodeObjectResponse, error)
+	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error)
 
 	// GetMatrixExplodeArray request
-	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixExplodeArrayResponse, error)
+	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error)
 
 	// GetMatrixExplodeObject request
-	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixExplodeObjectResponse, error)
+	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error)
 
 	// GetMatrixNoExplodeArray request
-	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixNoExplodeArrayResponse, error)
+	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error)
 
 	// GetMatrixNoExplodeObject request
-	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixNoExplodeObjectResponse, error)
+	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error)
 
 	// GetPassThrough request
-	GetPassThroughWithResponse(ctx context.Context, param string) (*GetPassThroughResponse, error)
+	GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error)
 
 	// GetDeepObject request
-	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams) (*GetDeepObjectResponse, error)
+	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error)
 
 	// GetQueryForm request
-	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*GetQueryFormResponse, error)
+	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error)
 
 	// GetSimpleExplodeArray request
-	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleExplodeArrayResponse, error)
+	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error)
 
 	// GetSimpleExplodeObject request
-	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleExplodeObjectResponse, error)
+	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error)
 
 	// GetSimpleNoExplodeArray request
-	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleNoExplodeArrayResponse, error)
+	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error)
 
 	// GetSimpleNoExplodeObject request
-	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleNoExplodeObjectResponse, error)
+	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error)
 
 	// GetSimplePrimitive request
-	GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*GetSimplePrimitiveResponse, error)
+	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
 }
 
 type GetContentObjectResponse struct {
@@ -1923,8 +1923,8 @@ func (r GetSimplePrimitiveResponse) StatusCode() int {
 }
 
 // GetContentObjectWithResponse request returning *GetContentObjectResponse
-func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject) (*GetContentObjectResponse, error) {
-	rsp, err := c.GetContentObject(ctx, param)
+func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error) {
+	rsp, err := c.GetContentObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1932,8 +1932,8 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 }
 
 // GetCookieWithResponse request returning *GetCookieResponse
-func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams) (*GetCookieResponse, error) {
-	rsp, err := c.GetCookie(ctx, params)
+func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error) {
+	rsp, err := c.GetCookie(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1941,8 +1941,8 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 }
 
 // GetHeaderWithResponse request returning *GetHeaderResponse
-func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams) (*GetHeaderResponse, error) {
-	rsp, err := c.GetHeader(ctx, params)
+func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error) {
+	rsp, err := c.GetHeader(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1950,8 +1950,8 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 }
 
 // GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelExplodeArrayResponse, error) {
-	rsp, err := c.GetLabelExplodeArray(ctx, param)
+func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error) {
+	rsp, err := c.GetLabelExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1959,8 +1959,8 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 }
 
 // GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelExplodeObjectResponse, error) {
-	rsp, err := c.GetLabelExplodeObject(ctx, param)
+func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error) {
+	rsp, err := c.GetLabelExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1968,8 +1968,8 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 }
 
 // GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetLabelNoExplodeArrayResponse, error) {
-	rsp, err := c.GetLabelNoExplodeArray(ctx, param)
+func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error) {
+	rsp, err := c.GetLabelNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1977,8 +1977,8 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 }
 
 // GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetLabelNoExplodeObjectResponse, error) {
-	rsp, err := c.GetLabelNoExplodeObject(ctx, param)
+func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error) {
+	rsp, err := c.GetLabelNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1986,8 +1986,8 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 }
 
 // GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixExplodeArrayResponse, error) {
-	rsp, err := c.GetMatrixExplodeArray(ctx, id)
+func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error) {
+	rsp, err := c.GetMatrixExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1995,8 +1995,8 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 }
 
 // GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixExplodeObjectResponse, error) {
-	rsp, err := c.GetMatrixExplodeObject(ctx, id)
+func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error) {
+	rsp, err := c.GetMatrixExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2004,8 +2004,8 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 }
 
 // GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32) (*GetMatrixNoExplodeArrayResponse, error) {
-	rsp, err := c.GetMatrixNoExplodeArray(ctx, id)
+func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error) {
+	rsp, err := c.GetMatrixNoExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2013,8 +2013,8 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 }
 
 // GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object) (*GetMatrixNoExplodeObjectResponse, error) {
-	rsp, err := c.GetMatrixNoExplodeObject(ctx, id)
+func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error) {
+	rsp, err := c.GetMatrixNoExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2022,8 +2022,8 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 }
 
 // GetPassThroughWithResponse request returning *GetPassThroughResponse
-func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string) (*GetPassThroughResponse, error) {
-	rsp, err := c.GetPassThrough(ctx, param)
+func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error) {
+	rsp, err := c.GetPassThrough(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2031,8 +2031,8 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 }
 
 // GetDeepObjectWithResponse request returning *GetDeepObjectResponse
-func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams) (*GetDeepObjectResponse, error) {
-	rsp, err := c.GetDeepObject(ctx, params)
+func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error) {
+	rsp, err := c.GetDeepObject(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2040,8 +2040,8 @@ func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, par
 }
 
 // GetQueryFormWithResponse request returning *GetQueryFormResponse
-func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams) (*GetQueryFormResponse, error) {
-	rsp, err := c.GetQueryForm(ctx, params)
+func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error) {
+	rsp, err := c.GetQueryForm(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2049,8 +2049,8 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 }
 
 // GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleExplodeArrayResponse, error) {
-	rsp, err := c.GetSimpleExplodeArray(ctx, param)
+func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error) {
+	rsp, err := c.GetSimpleExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2058,8 +2058,8 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 }
 
 // GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleExplodeObjectResponse, error) {
-	rsp, err := c.GetSimpleExplodeObject(ctx, param)
+func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error) {
+	rsp, err := c.GetSimpleExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2067,8 +2067,8 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 }
 
 // GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32) (*GetSimpleNoExplodeArrayResponse, error) {
-	rsp, err := c.GetSimpleNoExplodeArray(ctx, param)
+func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error) {
+	rsp, err := c.GetSimpleNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2076,8 +2076,8 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 }
 
 // GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object) (*GetSimpleNoExplodeObjectResponse, error) {
-	rsp, err := c.GetSimpleNoExplodeObject(ctx, param)
+func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error) {
+	rsp, err := c.GetSimpleNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2085,8 +2085,8 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 }
 
 // GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
-func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32) (*GetSimplePrimitiveResponse, error) {
-	rsp, err := c.GetSimplePrimitive(ctx, param)
+func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error) {
+	rsp, err := c.GetSimplePrimitive(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

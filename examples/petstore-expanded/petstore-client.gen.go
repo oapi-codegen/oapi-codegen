@@ -426,18 +426,18 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// FindPets request
-	FindPetsWithResponse(ctx context.Context, params *FindPetsParams) (*FindPetsResponse, error)
+	FindPetsWithResponse(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*FindPetsResponse, error)
 
 	// AddPet request  with any body
-	AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*AddPetResponse, error)
+	AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
 
-	AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody) (*AddPetResponse, error)
+	AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
 
 	// DeletePet request
-	DeletePetWithResponse(ctx context.Context, id int64) (*DeletePetResponse, error)
+	DeletePetWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*DeletePetResponse, error)
 
 	// FindPetById request
-	FindPetByIdWithResponse(ctx context.Context, id int64) (*FindPetByIdResponse, error)
+	FindPetByIdWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*FindPetByIdResponse, error)
 }
 
 type FindPetsResponse struct {
@@ -532,8 +532,8 @@ func (r FindPetByIdResponse) StatusCode() int {
 }
 
 // FindPetsWithResponse request returning *FindPetsResponse
-func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *FindPetsParams) (*FindPetsResponse, error) {
-	rsp, err := c.FindPets(ctx, params)
+func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*FindPetsResponse, error) {
+	rsp, err := c.FindPets(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -541,16 +541,16 @@ func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *
 }
 
 // AddPetWithBodyWithResponse request with arbitrary body returning *AddPetResponse
-func (c *ClientWithResponses) AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*AddPetResponse, error) {
-	rsp, err := c.AddPetWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPetResponse, error) {
+	rsp, err := c.AddPetWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseAddPetResponse(rsp)
 }
 
-func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody) (*AddPetResponse, error) {
-	rsp, err := c.AddPet(ctx, body)
+func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*AddPetResponse, error) {
+	rsp, err := c.AddPet(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -558,8 +558,8 @@ func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body AddPe
 }
 
 // DeletePetWithResponse request returning *DeletePetResponse
-func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int64) (*DeletePetResponse, error) {
-	rsp, err := c.DeletePet(ctx, id)
+func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*DeletePetResponse, error) {
+	rsp, err := c.DeletePet(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -567,8 +567,8 @@ func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int6
 }
 
 // FindPetByIdWithResponse request returning *FindPetByIdResponse
-func (c *ClientWithResponses) FindPetByIdWithResponse(ctx context.Context, id int64) (*FindPetByIdResponse, error) {
-	rsp, err := c.FindPetById(ctx, id)
+func (c *ClientWithResponses) FindPetByIdWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*FindPetByIdResponse, error) {
+	rsp, err := c.FindPetById(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

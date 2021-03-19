@@ -1046,17 +1046,17 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// EnsureEverythingIsReferenced request  with any body
-	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error)
+	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error)
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
 	// ParamsWithAddProps request
-	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error)
+	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error)
 
 	// BodyWithAddProps request  with any body
-	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error)
+	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
 
-	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error)
+	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
 }
 
 type EnsureEverythingIsReferencedResponse struct {
@@ -1144,16 +1144,16 @@ func (r BodyWithAddPropsResponse) StatusCode() int {
 }
 
 // EnsureEverythingIsReferencedWithBodyWithResponse request with arbitrary body returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*EnsureEverythingIsReferencedResponse, error) {
-	rsp, err := c.EnsureEverythingIsReferencedWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferencedWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseEnsureEverythingIsReferencedResponse(rsp)
 }
 
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody) (*EnsureEverythingIsReferencedResponse, error) {
-	rsp, err := c.EnsureEverythingIsReferenced(ctx, body)
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferenced(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1161,8 +1161,8 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx conte
 }
 
 // ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
-func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams) (*ParamsWithAddPropsResponse, error) {
-	rsp, err := c.ParamsWithAddProps(ctx, params)
+func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error) {
+	rsp, err := c.ParamsWithAddProps(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1170,16 +1170,16 @@ func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context
 }
 
 // BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
-func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*BodyWithAddPropsResponse, error) {
-	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error) {
+	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseBodyWithAddPropsResponse(rsp)
 }
 
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody) (*BodyWithAddPropsResponse, error) {
-	rsp, err := c.BodyWithAddProps(ctx, body)
+func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error) {
+	rsp, err := c.BodyWithAddProps(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

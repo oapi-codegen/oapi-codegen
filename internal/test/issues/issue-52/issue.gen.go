@@ -252,7 +252,7 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// ExampleGet request
-	ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error)
+	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error)
 }
 
 type ExampleGetResponse struct {
@@ -278,8 +278,8 @@ func (r ExampleGetResponse) StatusCode() int {
 }
 
 // ExampleGetWithResponse request returning *ExampleGetResponse
-func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context) (*ExampleGetResponse, error) {
-	rsp, err := c.ExampleGet(ctx)
+func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error) {
+	rsp, err := c.ExampleGet(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

@@ -287,12 +287,12 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetPet request
-	GetPetWithResponse(ctx context.Context, petId string) (*GetPetResponse, error)
+	GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error)
 
 	// ValidatePets request  with any body
-	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ValidatePetsResponse, error)
+	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 
-	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody) (*ValidatePetsResponse, error)
+	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 }
 
 type GetPetResponse struct {
@@ -341,8 +341,8 @@ func (r ValidatePetsResponse) StatusCode() int {
 }
 
 // GetPetWithResponse request returning *GetPetResponse
-func (c *ClientWithResponses) GetPetWithResponse(ctx context.Context, petId string) (*GetPetResponse, error) {
-	rsp, err := c.GetPet(ctx, petId)
+func (c *ClientWithResponses) GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error) {
+	rsp, err := c.GetPet(ctx, petId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -350,16 +350,16 @@ func (c *ClientWithResponses) GetPetWithResponse(ctx context.Context, petId stri
 }
 
 // ValidatePetsWithBodyWithResponse request with arbitrary body returning *ValidatePetsResponse
-func (c *ClientWithResponses) ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*ValidatePetsResponse, error) {
-	rsp, err := c.ValidatePetsWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error) {
+	rsp, err := c.ValidatePetsWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseValidatePetsResponse(rsp)
 }
 
-func (c *ClientWithResponses) ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody) (*ValidatePetsResponse, error) {
-	rsp, err := c.ValidatePets(ctx, body)
+func (c *ClientWithResponses) ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error) {
+	rsp, err := c.ValidatePets(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

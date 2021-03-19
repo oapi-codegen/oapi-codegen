@@ -510,29 +510,29 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// PostBoth request  with any body
-	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostBothResponse, error)
+	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
-	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*PostBothResponse, error)
+	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
 	// GetBoth request
-	GetBothWithResponse(ctx context.Context) (*GetBothResponse, error)
+	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
 	// PostJson request  with any body
-	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJsonResponse, error)
+	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
-	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*PostJsonResponse, error)
+	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
 	// GetJson request
-	GetJsonWithResponse(ctx context.Context) (*GetJsonResponse, error)
+	GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error)
 
 	// PostOther request  with any body
-	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostOtherResponse, error)
+	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
 	// GetOther request
-	GetOtherWithResponse(ctx context.Context) (*GetOtherResponse, error)
+	GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error)
 
 	// GetJsonWithTrailingSlash request
-	GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*GetJsonWithTrailingSlashResponse, error)
+	GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error)
 }
 
 type PostBothResponse struct {
@@ -683,16 +683,16 @@ func (r GetJsonWithTrailingSlashResponse) StatusCode() int {
 }
 
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
-func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostBothResponse, error) {
-	rsp, err := c.PostBothWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
+	rsp, err := c.PostBothWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParsePostBothResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody) (*PostBothResponse, error) {
-	rsp, err := c.PostBoth(ctx, body)
+func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
+	rsp, err := c.PostBoth(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -700,8 +700,8 @@ func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body Pos
 }
 
 // GetBothWithResponse request returning *GetBothResponse
-func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context) (*GetBothResponse, error) {
-	rsp, err := c.GetBoth(ctx)
+func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error) {
+	rsp, err := c.GetBoth(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -709,16 +709,16 @@ func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context) (*GetBoth
 }
 
 // PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
-func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostJsonResponse, error) {
-	rsp, err := c.PostJsonWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error) {
+	rsp, err := c.PostJsonWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParsePostJsonResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody) (*PostJsonResponse, error) {
-	rsp, err := c.PostJson(ctx, body)
+func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error) {
+	rsp, err := c.PostJson(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -726,8 +726,8 @@ func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body Pos
 }
 
 // GetJsonWithResponse request returning *GetJsonResponse
-func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context) (*GetJsonResponse, error) {
-	rsp, err := c.GetJson(ctx)
+func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error) {
+	rsp, err := c.GetJson(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -735,8 +735,8 @@ func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context) (*GetJson
 }
 
 // PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
-func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*PostOtherResponse, error) {
-	rsp, err := c.PostOtherWithBody(ctx, contentType, body)
+func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error) {
+	rsp, err := c.PostOtherWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -744,8 +744,8 @@ func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context,
 }
 
 // GetOtherWithResponse request returning *GetOtherResponse
-func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context) (*GetOtherResponse, error) {
-	rsp, err := c.GetOther(ctx)
+func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error) {
+	rsp, err := c.GetOther(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -753,8 +753,8 @@ func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context) (*GetOth
 }
 
 // GetJsonWithTrailingSlashWithResponse request returning *GetJsonWithTrailingSlashResponse
-func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.Context) (*GetJsonWithTrailingSlashResponse, error) {
-	rsp, err := c.GetJsonWithTrailingSlash(ctx)
+func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error) {
+	rsp, err := c.GetJsonWithTrailingSlash(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

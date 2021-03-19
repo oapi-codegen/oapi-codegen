@@ -574,29 +574,29 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// EnsureEverythingIsReferenced request
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error)
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
 	// Issue127 request
-	Issue127WithResponse(ctx context.Context) (*Issue127Response, error)
+	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
 	// Issue185 request  with any body
-	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error)
+	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
-	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error)
+	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
 	// Issue209 request
-	Issue209WithResponse(ctx context.Context, str StringInPath) (*Issue209Response, error)
+	Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error)
 
 	// Issue30 request
-	Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error)
+	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error)
 
 	// Issue41 request
-	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error)
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
 	// Issue9 request  with any body
-	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
-	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 }
 
 type EnsureEverythingIsReferencedResponse struct {
@@ -758,8 +758,8 @@ func (r Issue9Response) StatusCode() int {
 }
 
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error) {
-	rsp, err := c.EnsureEverythingIsReferenced(ctx)
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferenced(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -767,8 +767,8 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx conte
 }
 
 // Issue127WithResponse request returning *Issue127Response
-func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue127Response, error) {
-	rsp, err := c.Issue127(ctx)
+func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error) {
+	rsp, err := c.Issue127(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -776,16 +776,16 @@ func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context) (*Issue1
 }
 
 // Issue185WithBodyWithResponse request with arbitrary body returning *Issue185Response
-func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*Issue185Response, error) {
-	rsp, err := c.Issue185WithBody(ctx, contentType, body)
+func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
+	rsp, err := c.Issue185WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseIssue185Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody) (*Issue185Response, error) {
-	rsp, err := c.Issue185(ctx, body)
+func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
+	rsp, err := c.Issue185(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -793,8 +793,8 @@ func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Iss
 }
 
 // Issue209WithResponse request returning *Issue209Response
-func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath) (*Issue209Response, error) {
-	rsp, err := c.Issue209(ctx, str)
+func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error) {
+	rsp, err := c.Issue209(ctx, str, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -802,8 +802,8 @@ func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str Stri
 }
 
 // Issue30WithResponse request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string) (*Issue30Response, error) {
-	rsp, err := c.Issue30(ctx, pFallthrough)
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error) {
+	rsp, err := c.Issue30(ctx, pFallthrough, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -811,8 +811,8 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 }
 
 // Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber) (*Issue41Response, error) {
-	rsp, err := c.Issue41(ctx, n1param)
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
+	rsp, err := c.Issue41(ctx, n1param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -820,16 +820,16 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 }
 
 // Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error) {
-	rsp, err := c.Issue9WithBody(ctx, params, contentType, body)
+func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+	rsp, err := c.Issue9WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
 	return ParseIssue9Response(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error) {
-	rsp, err := c.Issue9(ctx, params, body)
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+	rsp, err := c.Issue9(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
