@@ -892,7 +892,10 @@ func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType s
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), body)
 	if err != nil {
@@ -918,7 +921,10 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -981,7 +987,10 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryUrl.String(), body)
 	if err != nil {

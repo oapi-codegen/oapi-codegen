@@ -292,7 +292,10 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -316,7 +319,10 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -351,7 +357,10 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), body)
 	if err != nil {
@@ -384,7 +393,10 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -415,7 +427,10 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -446,7 +461,10 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -481,7 +499,10 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 

@@ -595,8 +595,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         basePath = basePath[1:]
     }
 
-    queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
-
+    queryUrl, err = queryUrl.Parse(basePath)
+    if err != nil {
+        return nil, err
+    }
 {{if .QueryParams}}
     queryValues := queryUrl.Query()
 {{range $paramIdx, $param := .QueryParams}}

@@ -500,7 +500,10 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -524,7 +527,10 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -655,7 +661,10 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -765,7 +774,10 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -796,7 +808,10 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -827,7 +842,10 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -858,7 +876,10 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -889,7 +910,10 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -920,7 +944,10 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -951,7 +978,10 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -982,7 +1012,10 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1010,7 +1043,10 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1034,7 +1070,10 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -1074,7 +1113,10 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryUrl.Query()
 
@@ -1231,7 +1273,10 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1262,7 +1307,10 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1293,7 +1341,10 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1324,7 +1375,10 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
@@ -1355,7 +1409,10 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		basePath = basePath[1:]
 	}
 
-	queryUrl = queryUrl.ResolveReference(&url.URL{Path: basePath})
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryUrl.String(), nil)
 	if err != nil {
