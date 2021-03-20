@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"sort"
 	"strings"
 	"text/template"
 	"unicode"
@@ -189,6 +190,10 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
 	}
+
+	sort.Slice(outDefs, func(i, j int) bool {
+		return outDefs[i].ProviderName < outDefs[j].ProviderName
+	})
 
 	return outDefs
 }
