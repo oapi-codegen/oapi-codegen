@@ -77,7 +77,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
@@ -93,7 +93,7 @@ func (w *ServerInterfaceWrapper) FindPetById(ctx echo.Context) error {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", ctx.Param("id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, ctx.Param("id"), &id)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}

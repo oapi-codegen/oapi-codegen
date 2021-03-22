@@ -175,7 +175,7 @@ func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "petId", petId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petId)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
-	err = runtime.BindStyledParameter("simple", false, "petId", ctx.Param("petId"), &petId)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "petId", runtime.ParamLocationPath, ctx.Param("petId"), &petId)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
 	}

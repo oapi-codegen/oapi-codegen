@@ -378,7 +378,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "str", str)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "str", runtime.ParamLocationPath, str)
 	if err != nil {
 		return nil, err
 	}
@@ -412,7 +412,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "fallthrough", pFallthrough)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, pFallthrough)
 	if err != nil {
 		return nil, err
 	}
@@ -446,7 +446,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "1param", n1param)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1param)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +506,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 
 	queryValues := queryURL.Query()
 
-	if queryFrag, err := runtime.StyleParam("form", true, "foo", params.Foo); err != nil {
+	if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
 		return nil, err
 	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 		return nil, err
@@ -1085,7 +1085,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameter("simple", false, "str", ctx.Param("str"), &str)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "str", runtime.ParamLocationPath, ctx.Param("str"), &str)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
@@ -1103,7 +1103,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameter("simple", false, "fallthrough", ctx.Param("fallthrough"), &pFallthrough)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, ctx.Param("fallthrough"), &pFallthrough)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
@@ -1121,7 +1121,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameter("simple", false, "1param", ctx.Param("1param"), &n1param)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "1param", runtime.ParamLocationPath, ctx.Param("1param"), &n1param)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}

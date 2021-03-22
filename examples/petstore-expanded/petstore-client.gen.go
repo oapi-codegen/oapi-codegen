@@ -234,7 +234,7 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 
 	if params.Tags != nil {
 
-		if queryFrag, err := runtime.StyleParam("form", true, "tags", *params.Tags); err != nil {
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "tags", runtime.ParamLocationQuery, *params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err
@@ -250,7 +250,7 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 
 	if params.Limit != nil {
 
-		if queryFrag, err := runtime.StyleParam("form", true, "limit", *params.Limit); err != nil {
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err
@@ -320,7 +320,7 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func NewFindPetByIdRequest(server string, id int64) (*http.Request, error) {
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "id", id)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
 	if err != nil {
 		return nil, err
 	}

@@ -928,7 +928,7 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 
 	queryValues := queryURL.Query()
 
-	if queryFrag, err := runtime.StyleParam("simple", true, "p1", params.P1); err != nil {
+	if queryFrag, err := runtime.StyleParamWithLocation("simple", true, "p1", runtime.ParamLocationQuery, params.P1); err != nil {
 		return nil, err
 	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 		return nil, err
@@ -940,7 +940,7 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 		}
 	}
 
-	if queryFrag, err := runtime.StyleParam("form", true, "p2", params.P2); err != nil {
+	if queryFrag, err := runtime.StyleParamWithLocation("form", true, "p2", runtime.ParamLocationQuery, params.P2); err != nil {
 		return nil, err
 	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 		return nil, err
