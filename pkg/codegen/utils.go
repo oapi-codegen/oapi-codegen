@@ -183,6 +183,17 @@ func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
 	return keys
 }
 
+func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
+	keys := make([]string, len(sr))
+	i := 0;
+	for key := range sr {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // This function checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {
