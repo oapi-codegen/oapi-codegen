@@ -34,6 +34,9 @@ const (
 	Bar__Foo_1   Bar = "_Foo_"
 )
 
+// GetFoo200JSON defines model for GetFoo200JSON.
+type GetFoo200JSON []Bar
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

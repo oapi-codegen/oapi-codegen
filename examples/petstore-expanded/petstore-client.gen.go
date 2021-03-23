@@ -39,13 +39,34 @@ type NewPet struct {
 
 // Pet defines model for Pet.
 type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
+	// Embedded struct due to allOf(NewPet)
 	NewPet `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
 
 	// Unique id of the pet
 	Id int64 `json:"id"`
 }
+
+// FindPets200JSON defines model for FindPets200JSON.
+type FindPets200JSON []Pet
+
+// FindPetsdefaultJSON defines model for FindPetsdefaultJSON.
+type FindPetsdefaultJSON Error
+
+// AddPet200JSON defines model for AddPet200JSON.
+type AddPet200JSON Pet
+
+// AddPetdefaultJSON defines model for AddPetdefaultJSON.
+type AddPetdefaultJSON Error
+
+// DeletePetdefaultJSON defines model for DeletePetdefaultJSON.
+type DeletePetdefaultJSON Error
+
+// FindPetById200JSON defines model for FindPetById200JSON.
+type FindPetById200JSON Pet
+
+// FindPetByIddefaultJSON defines model for FindPetByIddefaultJSON.
+type FindPetByIddefaultJSON Error
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {

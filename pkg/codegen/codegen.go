@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
 	"text/template"
@@ -292,6 +293,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 	}
 	allTypes = append(allTypes, bodyTypes...)
 
+	opRespTypes, err := GenerateTypesForOpResponses(t, ops)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating Go types for operation responses")
+	}
+	allTypes = append(allTypes, opRespTypes...)
+
 	paramTypesOut, err := GenerateTypesForOperations(t, ops)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for operation parameters")
@@ -358,18 +365,12 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		}
 		schemaRef := schemas[schemaName]
 
-		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
+		tds, err := GenerateTypesFromSchemaRef(schemaRef, schemaName)
 		if err != nil {
 			return nil, errors.Wrap(err, fmt.Sprintf("error converting Schema %s to Go type", schemaName))
 		}
 
-		types = append(types, TypeDefinition{
-			JsonName: schemaName,
-			TypeName: SchemaNameToTypeName(schemaName),
-			Schema:   goSchema,
-		})
-
-		types = append(types, goSchema.GetAdditionalTypeDefs()...)
+		types = append(types, tds...)
 	}
 	return types, nil
 }
@@ -481,6 +482,367 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		}
 	}
 	return types, nil
+}
+
+// Generates type definitions for any Operation/responses of the Swagger spec.
+func GenerateTypesForOpResponses(t *template.Template, ops []OperationDefinition) ([]TypeDefinition, error) {
+	tds := []TypeDefinition{}
+	for _, op := range ops {
+		for _, respName := range SortedResponsesKeys(op.Spec.Responses) {
+			response := op.Spec.Responses[respName]
+			if response.Ref != "" {
+				log.Println(op.OperationId + respName + " not supprt response ref")
+				continue
+			} else if response.Value == nil {
+				return nil, errors.New(op.OperationId + respName + " has neither a ref nor a value")
+			}
+			for _, contentTypeName := range SortedContentKeys(response.Value.Content) {
+				content := response.Value.Content[contentTypeName]
+				name := op.Spec.OperationID + respName
+				var typeName string
+				switch {
+				case StringInArray(contentTypeName, contentTypesJSON):
+					typeName = fmt.Sprintf("%sJSON", SchemaNameToTypeName(name))
+				// YAML:
+				case StringInArray(contentTypeName, contentTypesYAML):
+					typeName = fmt.Sprintf("%sYAML", SchemaNameToTypeName(name))
+				// XML:
+				case StringInArray(contentTypeName, contentTypesXML):
+					typeName = fmt.Sprintf("%sXML", SchemaNameToTypeName(name))
+				default:
+					ss := strings.Split(contentTypeName, "/")
+					typeName = fmt.Sprintf("%s%s", SchemaNameToTypeName(name), strings.ToUpper(ss[len(ss)-1]))
+				}
+				stds, err := GenerateTypesFromSchemaRef(content.Schema, typeName)
+				if err != nil {
+					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for %s", name))
+				}
+				tds = append(tds, stds...)
+			}
+		}
+	}
+	return tds, nil
+}
+
+// Generate type definitions from openapi3.SchemaRef recursively.
+func GenerateTypesFromSchemaRef(schemaref *openapi3.SchemaRef, name string) ([]TypeDefinition, error) {
+	tds := []TypeDefinition{
+		{
+			TypeName: SchemaNameToTypeName(name),
+			JsonName: name,
+		},
+	}
+	if schemaref == nil {
+		tds[0].Schema = Schema{GoType: "interface{}"}
+		return tds, nil
+	}
+	// GoType
+	if schemaref.Ref != "" {
+		refType, err := RefPathToGoType(schemaref.Ref)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for %s", name))
+		}
+		tds[0].Schema = Schema{GoType: refType}
+		return tds, nil
+	}
+	schema := schemaref.Value
+
+	// We can't support these in any meaningful way
+	if schema.AnyOf != nil || schema.OneOf != nil {
+		tds[0].Schema = Schema{GoType: "interface{}"}
+		return tds, nil
+	}
+	// AllOf is interesting, and useful. It's the union of a number of other
+	// schemas. A common usage is to create a union of an object with an ID,
+	// so that in a RESTful paradigm, the Create operation can return
+	// (object, id), so that other operations can refer to (id)
+	if schema.AllOf != nil {
+		mergedSchemaTypes, err := MergeSchemasAndGenerateTypes(schema.AllOf, name)
+		if err != nil {
+			return nil, errors.Wrap(err, "error merging schemas")
+		}
+		return mergedSchemaTypes, nil
+	}
+
+	// Check for custom Go type extension
+	if extension, ok := schema.Extensions[extPropGoType]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return nil, errors.Wrapf(err, "invalid value for %q", extPropGoType)
+		}
+		tds[0].Schema = Schema{GoType: typeName}
+		return tds, nil
+	}
+
+	// Schema type and format, eg. string / binary
+	t := schema.Type
+	// Handle objects and empty schemas first as a special case
+	if t == "" || t == "object" {
+		var outType string
+
+		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) {
+			// If the object has no properties or additional properties, we
+			// have some special cases for its type.
+			if t == "object" {
+				// We have an object with no properties. This is a generic object
+				// expressed as a map.
+				outType = "map[string]interface{}"
+			} else { // t == ""
+				// If we don't even have the object designator, we're a completely
+				// generic type.
+				outType = "interface{}"
+			}
+			tds[0].Schema = Schema{GoType: outType}
+		} else {
+			// We've got an object with some properties.
+			for _, pName := range SortedSchemaKeys(schema.Properties) {
+				p := schema.Properties[pName]
+				propertyName := name + SchemaNameToTypeName(pName)
+				propertyAndChildrenTypes, err := GenerateTypesFromSchemaRef(p, propertyName)
+				if err != nil {
+					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
+				}
+				pt := propertyAndChildrenTypes[0]
+				ptSchema := pt.Schema
+				if len(pt.Schema.Properties) != 0 {
+					// new struct
+					ptSchema = Schema{GoType: propertyName}
+					tds = append(tds, propertyAndChildrenTypes...)
+				} else if pt.Schema.ArrayType != nil {
+					tds = append(tds, propertyAndChildrenTypes[1:]...)
+				}
+
+				required := StringInArray(pName, schema.Required)
+
+				if pt.Schema.HasAdditionalProperties && pt.Schema.RefType == "" {
+					// If we have fields present which have additional properties,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeDef := TypeDefinition{
+						TypeName: propertyName,
+						JsonName: propertyName,
+						Schema:   pt.Schema,
+					}
+					pt.Schema.AdditionalTypes = append(pt.Schema.AdditionalTypes, typeDef)
+
+					pt.Schema.RefType = propertyName
+				}
+				description := ""
+				if p.Value != nil {
+					description = p.Value.Description
+				}
+				prop := Property{
+					JsonFieldName:  pName,
+					Schema:         ptSchema,
+					Required:       required,
+					Description:    description,
+					Nullable:       p.Value.Nullable,
+					ExtensionProps: &p.Value.ExtensionProps,
+				}
+				tds[0].Schema.Properties = append(tds[0].Schema.Properties, prop)
+			}
+
+			tds[0].Schema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
+			tds[0].Schema.AdditionalPropertiesType = &Schema{
+				GoType: "interface{}",
+			}
+			if schema.AdditionalProperties != nil {
+				additionalAndChildrenTypes, err := GenerateTypesFromSchemaRef(schema.AdditionalProperties, name)
+				if err != nil {
+					return nil, errors.Wrap(err, "error generating type for additional properties")
+				}
+				tds[0].Schema.AdditionalPropertiesType = &additionalAndChildrenTypes[0].Schema
+				if len(additionalAndChildrenTypes) > 1 {
+					tds = append(tds, additionalAndChildrenTypes[1:]...)
+				}
+			}
+		}
+		tds[0].Schema.GoType = GenStructFromSchema(tds[0].Schema)
+		return tds, nil
+	} else {
+		f := schema.Format
+
+		switch t {
+		case "array":
+			// For arrays, we'll get the type of the Items and throw a
+			// [] in front of it.
+			itemName := name + "Item"
+			arrAndChildrenTypes, err := GenerateTypesFromSchemaRef(schema.Items, itemName)
+			if err != nil {
+				return nil, errors.Wrap(err, "error generating type for array")
+			}
+			if len(arrAndChildrenTypes[0].Schema.Properties) != 0 {
+				// new struct
+				tds[0].Schema = Schema{GoType: "[]" + itemName, ArrayType: &arrAndChildrenTypes[0].Schema}
+				tds = append(tds, arrAndChildrenTypes...)
+			} else if arrAndChildrenTypes[0].Schema.ArrayType != nil {
+				return nil, errors.New("not supprt array of array: " + name)
+				// tds[0].Schema = Schema{GoType: "[]" + name, ArrayType: &arrAndChildrenTypes[0].Schema}
+				// tds = append(tds, arrAndChildrenTypes...)
+			} else {
+				// basic types or ref
+				tds[0].Schema = Schema{GoType: "[]" + arrAndChildrenTypes[0].Schema.GoType, ArrayType: &arrAndChildrenTypes[0].Schema}
+			}
+		case "integer":
+			// We default to int if format doesn't ask for something else.
+			if f == "int64" {
+				tds[0].Schema.GoType = "int64"
+			} else if f == "uint64" {
+				tds[0].Schema.GoType = "uint64"
+			} else if f == "int32" {
+				tds[0].Schema.GoType = "int32"
+			} else if f == "uint32" {
+				tds[0].Schema.GoType = "uint32"
+			} else if f == "" {
+				tds[0].Schema.GoType = "int"
+			} else {
+				return nil, fmt.Errorf("invalid integer format: %s", f)
+			}
+		case "number":
+			// We default to float for "number"
+			if f == "double" {
+				tds[0].Schema.GoType = "float64"
+			} else if f == "float" || f == "" {
+				tds[0].Schema.GoType = "float32"
+			} else {
+				return nil, fmt.Errorf("invalid number format: %s", f)
+			}
+		case "boolean":
+			if f != "" {
+				return nil, fmt.Errorf("invalid format (%s) for boolean", f)
+			}
+			tds[0].Schema.GoType = "bool"
+		case "string":
+			enumValues := make([]string, len(schema.Enum))
+			var ok bool
+			for i, enumValue := range schema.Enum {
+				enumValues[i], ok = enumValue.(string)
+				if !ok {
+					return nil, fmt.Errorf("expected enum to contain strings, found a %T", enumValue)
+				}
+			}
+
+			tds[0].Schema.EnumValues = SanitizeEnumNames(enumValues)
+
+			// Special case string formats here.
+			switch f {
+			case "byte":
+				tds[0].Schema.GoType = "[]byte"
+			case "email":
+				tds[0].Schema.GoType = "openapi_types.Email"
+			case "date":
+				tds[0].Schema.GoType = "openapi_types.Date"
+			case "date-time":
+				tds[0].Schema.GoType = "time.Time"
+			case "json":
+				tds[0].Schema.GoType = "json.RawMessage"
+				tds[0].Schema.SkipOptionalPointer = true
+			default:
+				// All unrecognized formats are simply a regular string.
+				tds[0].Schema.GoType = "string"
+			}
+		default:
+			return nil, fmt.Errorf("unhandled Schema type: %s", t)
+		}
+	}
+	return tds, nil
+}
+
+// Merge all the fields in the schemas supplied into one giant schema.
+func MergeSchemasAndGenerateTypes(allOf []*openapi3.SchemaRef, name string) ([]TypeDefinition, error) {
+	tds := []TypeDefinition{{TypeName: SchemaNameToTypeName(name), JsonName: name, Schema: Schema{}}}
+	subTDs := []TypeDefinition{}
+	for _, schemaOrRef := range allOf {
+		ref := schemaOrRef.Ref
+
+		var refType string
+		var err error
+		if ref != "" {
+			refType, err = RefPathToGoType(ref)
+			if err != nil {
+				return nil, errors.Wrap(err, "error converting reference path to a go type")
+			}
+		}
+
+		schemaAndChildrenTypes, err := GenerateTypesFromSchemaRef(schemaOrRef, name)
+		if err != nil {
+			return nil, errors.Wrap(err, "error generating Go schema in allOf")
+		}
+		schemaAndChildrenTypes[0].Schema.RefType = refType
+		if len(schemaAndChildrenTypes) > 1 {
+			tds = append(tds, schemaAndChildrenTypes[1:]...)
+		}
+
+		for _, p := range schemaAndChildrenTypes[0].Schema.Properties {
+			err = tds[0].Schema.MergeProperty(p)
+			if err != nil {
+				return nil, errors.Wrap(err, "error merging properties")
+			}
+		}
+
+		if schemaAndChildrenTypes[0].Schema.HasAdditionalProperties {
+			if tds[0].Schema.HasAdditionalProperties {
+				// Both this schema, and the aggregate schema have additional
+				// properties, they must match.
+				if schemaAndChildrenTypes[0].Schema.AdditionalPropertiesType.TypeDecl() != tds[0].Schema.AdditionalPropertiesType.TypeDecl() {
+					return nil, errors.New("additional properties in allOf have incompatible types")
+				}
+			} else {
+				// We're switching from having no additional properties to having
+				// them
+				tds[0].Schema.HasAdditionalProperties = true
+				tds[0].Schema.AdditionalPropertiesType = schemaAndChildrenTypes[0].Schema.AdditionalPropertiesType
+			}
+		}
+		subTDs = append(subTDs, schemaAndChildrenTypes[0])
+	}
+
+	// Now, we generate the struct which merges together all the fields.
+	tds[0].Schema.GoType = GenStructFromAllOfTypes(subTDs)
+	return tds, nil
+}
+
+// This function generates an object that is the union of the objects in the
+// input array. In the case of Ref objects, we use an embedded struct, otherwise,
+// we inline the fields.
+func GenStructFromAllOfTypes(allOf []TypeDefinition) string {
+	// Start out with struct {
+	objectParts := []string{"struct {"}
+	for _, td := range allOf {
+		ref := td.Schema.RefType
+		if ref != "" {
+			// We have a referenced type, we will generate an inlined struct
+			// member.
+			// struct {
+			//   InlinedMember
+			//   ...
+			// }
+			objectParts = append(objectParts,
+				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
+			objectParts = append(objectParts,
+				fmt.Sprintf("   %s `yaml:\",inline\"`", ref))
+		} else {
+			// Inline all the fields from the schema into the output struct,
+			// just like in the simple case of generating an object.
+			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
+			objectParts = append(objectParts, GenFieldsFromProperties(td.Schema.Properties)...)
+
+			if td.Schema.HasAdditionalProperties {
+				addPropsType := td.Schema.AdditionalPropertiesType.GoType
+				if td.Schema.AdditionalPropertiesType.RefType != "" {
+					addPropsType = td.Schema.AdditionalPropertiesType.RefType
+				}
+
+				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
+				if !StringInArray(additionalPropertiesPart, objectParts) {
+					objectParts = append(objectParts, additionalPropertiesPart)
+				}
+			}
+		}
+	}
+	objectParts = append(objectParts, "}")
+	return strings.Join(objectParts, "\n")
 }
 
 // Helper function to pass a bunch of types to the template engine, and buffer

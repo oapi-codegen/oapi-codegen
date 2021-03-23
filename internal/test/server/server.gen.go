@@ -15,47 +15,53 @@ import (
 
 // EveryTypeOptional defines model for EveryTypeOptional.
 type EveryTypeOptional struct {
-	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`
-	ArrayReferencedField *[]SomeObject       `json:"array_referenced_field,omitempty"`
-	BoolField            *bool               `json:"bool_field,omitempty"`
-	ByteField            *[]byte             `json:"byte_field,omitempty"`
-	DateField            *openapi_types.Date `json:"date_field,omitempty"`
-	DateTimeField        *time.Time          `json:"date_time_field,omitempty"`
-	DoubleField          *float64            `json:"double_field,omitempty"`
-	FloatField           *float32            `json:"float_field,omitempty"`
-	InlineObjectField    *struct {
-		Name   string `json:"name"`
-		Number int    `json:"number"`
-	} `json:"inline_object_field,omitempty"`
-	Int32Field      *int32      `json:"int32_field,omitempty"`
-	Int64Field      *int64      `json:"int64_field,omitempty"`
-	IntField        *int        `json:"int_field,omitempty"`
-	NumberField     *float32    `json:"number_field,omitempty"`
-	ReferencedField *SomeObject `json:"referenced_field,omitempty"`
-	StringField     *string     `json:"string_field,omitempty"`
+	ArrayInlineField     *[]int                              `json:"array_inline_field,omitempty"`
+	ArrayReferencedField *[]SomeObject                       `json:"array_referenced_field,omitempty"`
+	BoolField            *bool                               `json:"bool_field,omitempty"`
+	ByteField            *[]byte                             `json:"byte_field,omitempty"`
+	DateField            *openapi_types.Date                 `json:"date_field,omitempty"`
+	DateTimeField        *time.Time                          `json:"date_time_field,omitempty"`
+	DoubleField          *float64                            `json:"double_field,omitempty"`
+	FloatField           *float32                            `json:"float_field,omitempty"`
+	InlineObjectField    *EveryTypeOptionalInlineObjectField `json:"inline_object_field,omitempty"`
+	Int32Field           *int32                              `json:"int32_field,omitempty"`
+	Int64Field           *int64                              `json:"int64_field,omitempty"`
+	IntField             *int                                `json:"int_field,omitempty"`
+	NumberField          *float32                            `json:"number_field,omitempty"`
+	ReferencedField      *SomeObject                         `json:"referenced_field,omitempty"`
+	StringField          *string                             `json:"string_field,omitempty"`
+}
+
+// EveryTypeOptionalInlineObjectField defines model for EveryTypeOptionalInlineObjectField.
+type EveryTypeOptionalInlineObjectField struct {
+	Name   string `json:"name"`
+	Number int    `json:"number"`
 }
 
 // EveryTypeRequired defines model for EveryTypeRequired.
 type EveryTypeRequired struct {
-	ArrayInlineField     []int                `json:"array_inline_field"`
-	ArrayReferencedField []SomeObject         `json:"array_referenced_field"`
-	BoolField            bool                 `json:"bool_field"`
-	ByteField            []byte               `json:"byte_field"`
-	DateField            openapi_types.Date   `json:"date_field"`
-	DateTimeField        time.Time            `json:"date_time_field"`
-	DoubleField          float64              `json:"double_field"`
-	EmailField           *openapi_types.Email `json:"email_field,omitempty"`
-	FloatField           float32              `json:"float_field"`
-	InlineObjectField    struct {
-		Name   string `json:"name"`
-		Number int    `json:"number"`
-	} `json:"inline_object_field"`
-	Int32Field      int32      `json:"int32_field"`
-	Int64Field      int64      `json:"int64_field"`
-	IntField        int        `json:"int_field"`
-	NumberField     float32    `json:"number_field"`
-	ReferencedField SomeObject `json:"referenced_field"`
-	StringField     string     `json:"string_field"`
+	ArrayInlineField     []int                              `json:"array_inline_field"`
+	ArrayReferencedField []SomeObject                       `json:"array_referenced_field"`
+	BoolField            bool                               `json:"bool_field"`
+	ByteField            []byte                             `json:"byte_field"`
+	DateField            openapi_types.Date                 `json:"date_field"`
+	DateTimeField        time.Time                          `json:"date_time_field"`
+	DoubleField          float64                            `json:"double_field"`
+	EmailField           *openapi_types.Email               `json:"email_field,omitempty"`
+	FloatField           float32                            `json:"float_field"`
+	InlineObjectField    EveryTypeRequiredInlineObjectField `json:"inline_object_field"`
+	Int32Field           int32                              `json:"int32_field"`
+	Int64Field           int64                              `json:"int64_field"`
+	IntField             int                                `json:"int_field"`
+	NumberField          float32                            `json:"number_field"`
+	ReferencedField      SomeObject                         `json:"referenced_field"`
+	StringField          string                             `json:"string_field"`
+}
+
+// EveryTypeRequiredInlineObjectField defines model for EveryTypeRequiredInlineObjectField.
+type EveryTypeRequiredInlineObjectField struct {
+	Name   string `json:"name"`
+	Number int    `json:"number"`
 }
 
 // ReservedKeyword defines model for ReservedKeyword.
@@ -84,6 +90,21 @@ type ResponseWithReference SomeObject
 type SimpleResponse struct {
 	Name string `json:"name"`
 }
+
+// GetEveryTypeOptional200JSON defines model for GetEveryTypeOptional200JSON.
+type GetEveryTypeOptional200JSON EveryTypeOptional
+
+// GetSimple200JSON defines model for GetSimple200JSON.
+type GetSimple200JSON SomeObject
+
+// GetWithContentType200JSON defines model for GetWithContentType200JSON.
+type GetWithContentType200JSON SomeObject
+
+// GetWithContentType200PLAIN defines model for GetWithContentType200PLAIN.
+type GetWithContentType200PLAIN string
+
+// GetReservedKeyword200JSON defines model for GetReservedKeyword200JSON.
+type GetReservedKeyword200JSON ReservedKeyword
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {

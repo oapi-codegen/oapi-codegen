@@ -20,6 +20,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetFoo200JSON defines model for GetFoo200JSON.
+type GetFoo200JSON string
+
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
 
