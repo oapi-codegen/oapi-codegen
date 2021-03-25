@@ -25,19 +25,23 @@ import (
 )
 
 // N5StartsWithNumber defines model for 5StartsWithNumber.
-type N5StartsWithNumber map[string]interface{}
+type N5StartsWithNumber struct {
+}
 
 // AnyType1 defines model for AnyType1.
-type AnyType1 interface{}
+type AnyType1 struct {
+}
 
 // AnyType2 defines model for AnyType2.
-type AnyType2 interface{}
+type AnyType2 struct {
+}
 
 // CustomStringType defines model for CustomStringType.
 type CustomStringType string
 
 // GenericObject defines model for GenericObject.
-type GenericObject map[string]interface{}
+type GenericObject struct {
+}
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
@@ -49,6 +53,33 @@ type NullableProperties struct {
 
 // StringInPath defines model for StringInPath.
 type StringInPath string
+
+// EnsureEverythingIsReferenced200JSON defines model for EnsureEverythingIsReferenced200JSON.
+type EnsureEverythingIsReferenced200JSON struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+}
+
+// Issue127200JSON defines model for Issue127200JSON.
+type Issue127200JSON GenericObject
+
+// Issue127200XML defines model for Issue127200XML.
+type Issue127200XML GenericObject
+
+// Issue127200MARKDOWN defines model for Issue127200MARKDOWN.
+type Issue127200MARKDOWN GenericObject
+
+// Issue127200YAML defines model for Issue127200YAML.
+type Issue127200YAML GenericObject
+
+// Issue127defaultJSON defines model for Issue127defaultJSON.
+type Issue127defaultJSON GenericObject
+
+// Issue127defaultMARKDOWN defines model for Issue127defaultMARKDOWN.
+type Issue127defaultMARKDOWN GenericObject
 
 // Issue185JSONBody defines parameters for Issue185.
 type Issue185JSONBody NullableProperties

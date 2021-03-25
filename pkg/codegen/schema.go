@@ -39,7 +39,7 @@ func (s Schema) TypeDecl() string {
 func (s *Schema) MergeProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
-		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
+		if e.JsonFieldName == p.JsonFieldName || PropertiesEqual(e, p) {
 			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
 		}
 	}
