@@ -185,7 +185,7 @@ func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
 
 func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
 	keys := make([]string, len(sr))
-	i := 0;
+	i := 0
 	for key := range sr {
 		keys[i] = key
 		i++
@@ -513,10 +513,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	name = ToCamelCase(name)
-	// Prepend "N" to schemas starting with a number
-	if name != "" && unicode.IsDigit([]rune(name)[0]) {
-		name = "N" + name
+	if name == "$" {
+		name = "DollarSign"
+	} else {
+		name = ToCamelCase(name)
+		// Prepend "N" to schemas starting with a number
+		if name != "" && unicode.IsDigit([]rune(name)[0]) {
+			name = "N" + name
+		}
 	}
 	return name
 }
