@@ -657,8 +657,8 @@ func GenerateTypesFromSchemaRef(schemaref *openapi3.SchemaRef, name string) ([]T
 					tds = append(tds, additionalAndChildrenTypes[1:]...)
 				}
 			}
+			tds[0].Schema.GoType = GenStructFromSchema(tds[0].Schema)
 		}
-		tds[0].Schema.GoType = GenStructFromSchema(tds[0].Schema)
 		return tds, nil
 	} else {
 		f := schema.Format
