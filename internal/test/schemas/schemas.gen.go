@@ -25,23 +25,19 @@ import (
 )
 
 // N5StartsWithNumber defines model for 5StartsWithNumber.
-type N5StartsWithNumber struct {
-}
+type N5StartsWithNumber map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
-type AnyType1 struct {
-}
+type AnyType1 interface{}
 
 // AnyType2 defines model for AnyType2.
-type AnyType2 struct {
-}
+type AnyType2 interface{}
 
 // CustomStringType defines model for CustomStringType.
 type CustomStringType string
 
 // GenericObject defines model for GenericObject.
-type GenericObject struct {
-}
+type GenericObject map[string]interface{}
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
