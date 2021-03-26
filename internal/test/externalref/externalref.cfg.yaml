@@ -4,6 +4,7 @@ package: externalref
 generate:
   - types
   - skip-prune
+  - spec
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
