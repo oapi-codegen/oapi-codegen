@@ -23,6 +23,8 @@ type Schema struct {
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
+
+	Description string // The description of the element
 }
 
 func (s Schema) IsRef() bool {
