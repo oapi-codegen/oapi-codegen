@@ -484,11 +484,8 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	}
 
 	// We can process the schema through the generic schema processor
-	if s := param.Schema; s != nil {
-		if s.Value != nil && s.Value.Description == "" {
-			s.Value.Description = param.Description
-		}
-		return GenerateGoSchema(s, path)
+	if param.Schema != nil {
+		return GenerateGoSchema(param.Schema, path)
 	}
 
 	// At this point, we have a content type. We know how to deal with
