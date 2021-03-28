@@ -22,7 +22,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AdditionalPropertiesObject1 represents Has additional properties of type int.
+// Has additional properties of type int.
 type AdditionalPropertiesObject1 struct {
 	Id                   int            `json:"id"`
 	Name                 string         `json:"name"`
@@ -30,19 +30,19 @@ type AdditionalPropertiesObject1 struct {
 	AdditionalProperties map[string]int `json:"-"`
 }
 
-// AdditionalPropertiesObject2 represents Does not allow additional properties.
+// Does not allow additional properties.
 type AdditionalPropertiesObject2 struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// AdditionalPropertiesObject3 represents Allows any additional property.
+// Allows any additional property.
 type AdditionalPropertiesObject3 struct {
 	Name                 string                 `json:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// AdditionalPropertiesObject4 represents Has anonymous field which has additional properties.
+// Has anonymous field which has additional properties.
 type AdditionalPropertiesObject4 struct {
 	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
 	Name                 string                            `json:"name"`
@@ -55,7 +55,7 @@ type AdditionalPropertiesObject4_Inner struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// AdditionalPropertiesObject5 represents Has additional properties with schema for dictionaries.
+// Has additional properties with schema for dictionaries.
 type AdditionalPropertiesObject5 struct {
 	AdditionalProperties map[string]SchemaObject `json:"-"`
 }
