@@ -74,7 +74,7 @@ type SomeObject struct {
 	Name string `json:"name"`
 }
 
-// Some argument
+// Argument defines model for argument.
 type Argument string
 
 // ResponseWithReference defines model for ResponseWithReference.

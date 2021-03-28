@@ -51,7 +51,7 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
-// A string path parameter
+// StringInPath defines model for StringInPath.
 type StringInPath string
 
 // Issue185JSONBody defines parameters for Issue185.
