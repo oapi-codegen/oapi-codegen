@@ -28,13 +28,13 @@ const (
 	Access_tokenScopes = "access_token.Scopes"
 )
 
-// N5StartsWithNumber defines model for 5StartsWithNumber.
+// N5StartsWithNumber represents This schema name starts with a number.
 type N5StartsWithNumber map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
 type AnyType1 interface{}
 
-// AnyType2 defines model for AnyType2.
+// AnyType2 represents This should be an interface{}.
 type AnyType2 interface{}
 
 // CustomStringType defines model for CustomStringType.
