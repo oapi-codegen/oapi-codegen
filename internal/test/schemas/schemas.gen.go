@@ -28,13 +28,13 @@ const (
 	Access_tokenScopes = "access_token.Scopes"
 )
 
-// This schema name starts with a number.
+// This schema name starts with a number
 type N5StartsWithNumber map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
 type AnyType1 interface{}
 
-// This should be an interface{}.
+// This should be an interface{}
 type AnyType2 interface{}
 
 // CustomStringType defines model for CustomStringType.
@@ -51,7 +51,7 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
-// StringInPath defines model for StringInPath.
+// A string path parameter
 type StringInPath string
 
 // Issue185JSONBody defines parameters for Issue185.
