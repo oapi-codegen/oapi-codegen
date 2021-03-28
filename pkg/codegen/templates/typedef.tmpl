@@ -1,5 +1,5 @@
 {{range .Types}}
-// {{.TypeName}} defines model for {{.JsonName}}.
+// {{.TypeName}} {{ with .Description }}represents {{ . }}{{ else }}defines model for {{.JsonName}}{{ end }}.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{- if gt (len .Schema.EnumValues) 0 }}
 // List of {{ .TypeName }}
