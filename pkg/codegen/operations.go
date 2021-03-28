@@ -601,6 +601,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 		s.Properties = append(s.Properties, prop)
 	}
 
+	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{
