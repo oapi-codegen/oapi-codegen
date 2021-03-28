@@ -86,6 +86,7 @@ type TypeDefinition struct {
 	JsonName     string
 	ResponseName string
 	Schema       Schema
+	Description  string
 }
 
 func (t *TypeDefinition) CanAlias() bool {

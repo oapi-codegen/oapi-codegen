@@ -375,6 +375,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			JsonName: schemaName,
 			TypeName: SchemaNameToTypeName(schemaName),
 			Schema:   goSchema,
+			Description: schemaRef.Value.Description,
 		})
 
 		types = append(types, goSchema.GetAdditionalTypeDefs()...)
