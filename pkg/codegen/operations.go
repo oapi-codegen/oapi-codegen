@@ -294,9 +294,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 					}
 
 					td := TypeDefinition{
-						TypeName:     typeName,
-						Schema:       responseSchema,
-						ResponseName: responseName,
+						TypeName:        typeName,
+						Schema:          responseSchema,
+						ResponseName:    responseName,
+						ContentTypeName: contentTypeName,
 					}
 					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
