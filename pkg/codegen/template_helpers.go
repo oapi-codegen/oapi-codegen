@@ -130,63 +130,71 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		contentTypeName := typeDefinition.ContentTypeName
+		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		for _, contentTypeName := range sortedContentKeys {
 
-		// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-		if typeDefinition.TypeName == "interface{}" {
-			// Unable to unmarshal this, so we leave it out:
-			continue
-		}
+			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+			if typeDefinition.TypeName == "interface{}" {
+				// Unable to unmarshal this, so we leave it out:
+				continue
+			}
 
-		// Add content-types here (json / yaml / xml etc):
-		switch {
+			// Add content-types here (json / yaml / xml etc):
+			switch {
 
-		// JSON:
-		case StringInArray(contentTypeName, contentTypesJSON):
-			var caseAction string
+			// JSON:
+			case StringInArray(contentTypeName, contentTypesJSON):
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
 
-			caseAction = fmt.Sprintf("var dest %s\n"+
-				"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-				" return nil, err \n"+
-				"}\n"+
-				"response.%s = &dest",
-				typeDefinition.Schema.TypeDecl(),
-				typeDefinition.TypeName)
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
 
-			caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-			handledCaseClauses[caseKey] = caseClause
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
-		// YAML:
-		case StringInArray(contentTypeName, contentTypesYAML):
-			var caseAction string
-			caseAction = fmt.Sprintf("var dest %s\n"+
-				"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-				" return nil, err \n"+
-				"}\n"+
-				"response.%s = &dest",
-				typeDefinition.Schema.TypeDecl(),
-				typeDefinition.TypeName)
-			caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
-			handledCaseClauses[caseKey] = caseClause
+			// YAML:
+			case StringInArray(contentTypeName, contentTypesYAML):
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
-		// XML:
-		case StringInArray(contentTypeName, contentTypesXML):
-			var caseAction string
-			caseAction = fmt.Sprintf("var dest %s\n"+
-				"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-				" return nil, err \n"+
-				"}\n"+
-				"response.%s = &dest",
-				typeDefinition.Schema.TypeDecl(),
-				typeDefinition.TypeName)
-			caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
-			handledCaseClauses[caseKey] = caseClause
+			// XML:
+			case StringInArray(contentTypeName, contentTypesXML):
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
-		// Everything else:
-		default:
-			caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
-			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
-			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+			// Everything else:
+			default:
+				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
+				caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+			}
 		}
 	}
 
