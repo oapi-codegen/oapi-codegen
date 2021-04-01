@@ -82,7 +82,7 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	}
 	// create httpClient, if not already present
 	if client.Client == nil {
-		client.Client = http.DefaultClient
+		client.Client = &http.Client{}
 	}
 	return &client, nil
 }
