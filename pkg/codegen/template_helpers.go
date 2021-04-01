@@ -144,44 +144,50 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				var caseAction string
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
 
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
 
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-				handledCaseClauses[caseKey] = caseClause
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
-				var caseAction string
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
-				handledCaseClauses[caseKey] = caseClause
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
-				var caseAction string
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
-				handledCaseClauses[caseKey] = caseClause
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// Everything else:
 			default:

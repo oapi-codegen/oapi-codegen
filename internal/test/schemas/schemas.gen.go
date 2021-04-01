@@ -887,7 +887,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.YAML200 = &dest
+		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest GenericObject
@@ -901,7 +901,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
-		response.YAML200 = &dest
+		response.XML200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
 		var dest GenericObject

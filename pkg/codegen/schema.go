@@ -82,10 +82,11 @@ type Constants struct {
 }
 
 type TypeDefinition struct {
-	TypeName     string
-	JsonName     string
-	ResponseName string
-	Schema       Schema
+	TypeName        string
+	JsonName        string
+	ResponseName    string
+	Schema          Schema
+	ContentTypeName string
 }
 
 func (t *TypeDefinition) CanAlias() bool {
