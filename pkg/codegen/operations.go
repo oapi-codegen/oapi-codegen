@@ -259,8 +259,8 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
-	var tds []TypeDefinition
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
 	sortedResponsesKeys := SortedResponsesKeys(responses)
@@ -293,9 +293,11 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						continue
 					}
 
-					td := TypeDefinition{
-						TypeName:        typeName,
-						Schema:          responseSchema,
+					td := ResponseTypeDefinition{
+						TypeDefinition: TypeDefinition{
+							TypeName: typeName,
+							Schema:   responseSchema,
+						},
 						ResponseName:    responseName,
 						ContentTypeName: contentTypeName,
 					}

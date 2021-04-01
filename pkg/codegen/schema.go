@@ -83,12 +83,38 @@ type Constants struct {
 	SecuritySchemeProviderNames []string
 }
 
+// TypeDefinition describes a Go type definition in generated code.
+//
+// Let's use this example schema:
+// components:
+//  schemas:
+//    Person:
+//      type: object
+//      properties:
+//      name:
+//        type: string
 type TypeDefinition struct {
+	// The name of the type, eg, type <...> Person
 	TypeName        string
+
+	// The name of the corresponding JSON description, as it will sometimes
+	// differ due to invalid characters.
 	JsonName        string
-	ResponseName    string
+
+	// This is the Schema wrapper is used to populate the type description
 	Schema          Schema
+
+}
+
+// ResponseTypeDefinition is an extension of TypeDefinition, specifically for
+// response unmarshaling in ClientWithResponses.
+type ResponseTypeDefinition struct {
+	TypeDefinition
+	// The content type name where this is used, eg, application/json
 	ContentTypeName string
+
+	// The type name of a response model.
+	ResponseName    string
 }
 
 func (t *TypeDefinition) CanAlias() bool {

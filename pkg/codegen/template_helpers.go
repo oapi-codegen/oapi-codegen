@@ -216,7 +216,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 }
 
 // buildUnmarshalCase builds an unmarshalling case clause for different content-types:
-func buildUnmarshalCase(typeDefinition TypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", echo.HeaderContentType, contentType, caseClauseKey, caseAction)
@@ -228,7 +228,7 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
+func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
 	td, err := op.GetResponseTypeDefinitions()
 	if err != nil {
 		panic(err)
