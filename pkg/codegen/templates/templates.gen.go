@@ -838,7 +838,7 @@ type ServerInterface interface {
 }
 `,
 	"typedef.tmpl": `{{range .Types}}
-// {{.TypeName}} defines model for {{.JsonName}}.
+// {{ with .Schema.Description }}{{ . }}{{ else }}{{.TypeName}} defines model for {{.JsonName}}.{{ end }}
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{- if gt (len .Schema.EnumValues) 0 }}
 // List of {{ .TypeName }}
