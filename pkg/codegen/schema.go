@@ -23,6 +23,8 @@ type Schema struct {
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
+
+	Description string // The description of the element
 }
 
 func (s Schema) IsRef() bool {
@@ -82,11 +84,38 @@ type Constants struct {
 	SecuritySchemeProviderNames []string
 }
 
+// TypeDefinition describes a Go type definition in generated code.
+//
+// Let's use this example schema:
+// components:
+//  schemas:
+//    Person:
+//      type: object
+//      properties:
+//      name:
+//        type: string
 type TypeDefinition struct {
-	TypeName     string
-	JsonName     string
-	ResponseName string
-	Schema       Schema
+	// The name of the type, eg, type <...> Person
+	TypeName        string
+
+	// The name of the corresponding JSON description, as it will sometimes
+	// differ due to invalid characters.
+	JsonName        string
+
+	// This is the Schema wrapper is used to populate the type description
+	Schema          Schema
+
+}
+
+// ResponseTypeDefinition is an extension of TypeDefinition, specifically for
+// response unmarshaling in ClientWithResponses.
+type ResponseTypeDefinition struct {
+	TypeDefinition
+	// The content type name where this is used, eg, application/json
+	ContentTypeName string
+
+	// The type name of a response model.
+	ResponseName    string
 }
 
 func (t *TypeDefinition) CanAlias() bool {
@@ -99,39 +128,43 @@ func PropertiesEqual(a, b Property) bool {
 }
 
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
-	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
-	// another type. We're not de-referencing, so simply use the referenced type.
-	var refType string
-
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore we have at least valid Go-Code.
 	if sref == nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
+		return Schema{GoType: "interface{}"}, nil
 	}
 
 	schema := sref.Value
 
-	if sref.Ref != "" {
-		var err error
+	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
+	// another type. We're not de-referencing, so simply use the referenced type.
+	if IsGoTypeReference(sref.Ref) {
 		// Convert the reference path to Go type
-		refType, err = RefPathToGoType(sref.Ref)
+		refType, err := RefPathToGoType(sref.Ref)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType: refType,
+			GoType:      refType,
+			Description: schema.Description,
 		}, nil
+	}
+
+	outSchema := Schema{
+		Description: schema.Description,
 	}
 
 	// We can't support this in any meaningful way
 	if schema.AnyOf != nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
+		outSchema.GoType = "interface{}"
+		return outSchema, nil
 	}
 	// We can't support this in any meaningful way
 	if schema.OneOf != nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
+		outSchema.GoType = "interface{}"
+		return outSchema, nil
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -143,12 +176,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, errors.Wrap(err, "error merging schemas")
 		}
-		mergedSchema.RefType = refType
 		return mergedSchema, nil
-	}
-
-	outSchema := Schema{
-		RefType: refType,
 	}
 
 	// Check for custom Go type extension
@@ -391,7 +419,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 
 		var refType string
 		var err error
-		if ref != "" {
+		if IsGoTypeReference(ref) {
 			refType, err = RefPathToGoType(ref)
 			if err != nil {
 				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
@@ -444,7 +472,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
-		if ref != "" {
+		if IsGoTypeReference(ref) {
 			// We have a referenced type, we will generate an inlined struct
 			// member.
 			// struct {
@@ -504,6 +532,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if len(param.Content) > 1 {
 		return Schema{
 			GoType: "string",
+			Description: param.Description,
 		}, nil
 	}
 
@@ -513,6 +542,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		// If we don't have json, it's a string
 		return Schema{
 			GoType: "string",
+			Description: param.Description,
 		}, nil
 	}
 

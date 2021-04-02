@@ -163,7 +163,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// If this is a reference to a predefined type, simply use the reference
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
-		if paramOrRef.Ref != "" {
+		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
@@ -185,7 +185,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for k, v := range sr {
+		for _, k := range SortedSecurityRequirementKeys(sr) {
+			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
 	}
@@ -258,8 +259,8 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
-	var tds []TypeDefinition
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
 	sortedResponsesKeys := SortedResponsesKeys(responses)
@@ -292,12 +293,15 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						continue
 					}
 
-					td := TypeDefinition{
-						TypeName:     typeName,
-						Schema:       responseSchema,
-						ResponseName: responseName,
+					td := ResponseTypeDefinition{
+						TypeDefinition: TypeDefinition{
+							TypeName: typeName,
+							Schema:   responseSchema,
+						},
+						ResponseName:    responseName,
+						ContentTypeName: contentTypeName,
 					}
-					if contentType.Schema.Ref != "" {
+					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
 						if err != nil {
 							return nil, errors.Wrap(err, "error dereferencing response Ref")
@@ -517,7 +521,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if bodyOrRef.Ref != "" {
+		if IsGoTypeReference(bodyOrRef.Ref) {
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(bodyOrRef.Ref)
 			if err != nil {
@@ -601,6 +605,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 		s.Properties = append(s.Properties, prop)
 	}
 
+	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{

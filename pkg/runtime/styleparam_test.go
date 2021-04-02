@@ -48,452 +48,457 @@ func TestStyleParam(t *testing.T) {
 
 	// ---------------------------- Simple Style -------------------------------
 
-	result, err := StyleParam("simple", false, "id", primitive)
+	result, err := StyleParamWithLocation("simple", false, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "5", result)
 
-	result, err = StyleParam("simple", true, "id", primitive)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "5", result)
 
-	result, err = StyleParam("simple", false, "id", array)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "3,4,5", result)
 
-	result, err = StyleParam("simple", true, "id", array)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "3,4,5", result)
 
-	result, err = StyleParam("simple", false, "id", object)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("simple", true, "id", object)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
 
-	result, err = StyleParam("simple", false, "id", dict)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("simple", true, "id", dict)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex,role=admin", result)
 
-	result, err = StyleParam("simple", false, "id", timestamp)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("simple", true, "id", timestamp)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("simple", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("simple", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("simple", false, "id", date)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
 
-	result, err = StyleParam("simple", true, "id", date)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
 
-	result, err = StyleParam("simple", false, "id", &date)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
 
-	result, err = StyleParam("simple", true, "id", &date)
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
 
 	// ----------------------------- Label Style -------------------------------
 
-	result, err = StyleParam("label", false, "id", primitive)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".5", result)
 
-	result, err = StyleParam("label", true, "id", primitive)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".5", result)
 
-	result, err = StyleParam("label", false, "id", array)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".3,4,5", result)
 
-	result, err = StyleParam("label", true, "id", array)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".3.4.5", result)
 
-	result, err = StyleParam("label", false, "id", object)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("label", true, "id", object)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
 
-	result, err = StyleParam("label", false, "id", dict)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("label", true, "id", dict)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".firstName=Alex.role=admin", result)
 
-	result, err = StyleParam("label", false, "id", timestamp)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("label", true, "id", timestamp)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("label", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("label", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("label", false, "id", date)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
-	result, err = StyleParam("label", true, "id", date)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
-	result, err = StyleParam("label", false, "id", &date)
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
-	result, err = StyleParam("label", true, "id", &date)
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
 	// ----------------------------- Matrix Style ------------------------------
 
-	result, err = StyleParam("matrix", false, "id", primitive)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=5", result)
 
-	result, err = StyleParam("matrix", true, "id", primitive)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=5", result)
 
-	result, err = StyleParam("matrix", false, "id", array)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=3,4,5", result)
 
-	result, err = StyleParam("matrix", true, "id", array)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=3;id=4;id=5", result)
 
-	result, err = StyleParam("matrix", false, "id", object)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("matrix", true, "id", object)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
 
-	result, err = StyleParam("matrix", false, "id", dict)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("matrix", true, "id", dict)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";firstName=Alex;role=admin", result)
 
-	result, err = StyleParam("matrix", false, "id", timestamp)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("matrix", true, "id", timestamp)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("matrix", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("matrix", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("matrix", false, "id", date)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
 
-	result, err = StyleParam("matrix", true, "id", date)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
 
-	result, err = StyleParam("matrix", false, "id", &date)
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
 
-	result, err = StyleParam("matrix", true, "id", &date)
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
 
 	// ------------------------------ Form Style -------------------------------
-	result, err = StyleParam("form", false, "id", primitive)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=5", result)
 
-	result, err = StyleParam("form", true, "id", primitive)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, primitive)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=5", result)
 
-	result, err = StyleParam("form", false, "id", primitiveString)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, primitiveString)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=123", result)
 
-	result, err = StyleParam("form", true, "id", primitiveString)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, primitiveString)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=123", result)
 
-	result, err = StyleParam("form", false, "id", primitiveStringWithReservedChar)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, primitiveStringWithReservedChar)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=123%3B456", result)
 
-	result, err = StyleParam("form", true, "id", primitiveStringWithReservedChar)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, primitiveStringWithReservedChar)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=123%3B456", result)
 
-	result, err = StyleParam("form", false, "id", array)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3,4,5", result)
 
-	result, err = StyleParam("form", true, "id", array)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("form", false, "id", object)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("form", true, "id", object)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
 
-	result, err = StyleParam("form", false, "id", dict)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=firstName,Alex,role,admin", result)
 
-	result, err = StyleParam("form", true, "id", dict)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName=Alex&role=admin", result)
 
-	result, err = StyleParam("form", false, "id", timestamp)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("form", true, "id", timestamp)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("form", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("form", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, &timestamp)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01T22%3A00%3A00%2B02%3A00", result)
 
-	result, err = StyleParam("form", false, "id", date)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
-	result, err = StyleParam("form", true, "id", date)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
-	result, err = StyleParam("form", false, "id", &date)
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
-	result, err = StyleParam("form", true, "id", &date)
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
 	// ------------------------  spaceDelimited Style --------------------------
 
-	result, err = StyleParam("spaceDelimited", false, "id", primitive)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", primitive)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", array)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3 4 5", result)
 
-	result, err = StyleParam("spaceDelimited", true, "id", array)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("spaceDelimited", false, "id", object)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", object)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", dict)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", dict)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", timestamp)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", timestamp)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", date)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", date)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", false, "id", &date)
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("spaceDelimited", true, "id", &date)
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
 	// -------------------------  pipeDelimited Style --------------------------
 
-	result, err = StyleParam("pipeDelimited", false, "id", primitive)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", primitive)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", array)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3|4|5", result)
 
-	result, err = StyleParam("pipeDelimited", true, "id", array)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParam("pipeDelimited", false, "id", object)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", object)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", dict)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", dict)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", timestamp)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", timestamp)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", date)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", date)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", false, "id", &date)
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("pipeDelimited", true, "id", &date)
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
 	// ---------------------------  deepObject Style ---------------------------
-	result, err = StyleParam("deepObject", false, "id", primitive)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", primitive)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", array)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, array)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", array)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[0]=3&id[1]=4&id[2]=5", result)
 
-	result, err = StyleParam("deepObject", false, "id", object)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", object)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
-	result, err = StyleParam("deepObject", true, "id", dict)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
-	result, err = StyleParam("deepObject", false, "id", timestamp)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", timestamp)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", &timestamp)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", &timestamp)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", date)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", date)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", false, "id", &date)
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParam("deepObject", true, "id", &date)
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
 	// Misc tests
 	// Test type aliases
 	type StrType string
-	result, err = StyleParam("simple", false, "foo", StrType("test"))
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, StrType("test"))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "test", result)
 
 	type IntType int32
-	result, err = StyleParam("simple", false, "foo", IntType(7))
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, IntType(7))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7", result)
 
-	type FloatType float64
-	result, err = StyleParam("simple", false, "foo", FloatType(7.5))
+	type FloatType64 float64
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, FloatType64(7.5))
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7.5", result)
+
+	type FloatType32 float32
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, FloatType32(1.05))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1.05", result)
 
 	// Test that we handle optional fields
 	type TestObject2 struct {
@@ -506,13 +511,13 @@ func TestStyleParam(t *testing.T) {
 		FirstName: &name,
 		Role:      &role,
 	}
-	result, err = StyleParam("simple", false, "id", object2)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, object2)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex,role,admin", result)
 
 	// Nullable fields need to be excluded when null
 	object2.Role = nil
-	result, err = StyleParam("simple", false, "id", object2)
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, object2)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex", result)
 }

@@ -149,3 +149,14 @@ components:
       required: true
       schema:
         type: string
+  securitySchemes:
+    # This security scheme has a - in it, we need to make sure the name gets
+    # remapped to a valid Go id. See bug 
+    access-token:
+      type: http
+      scheme: bearer
+      bearerFormat: |
+        JWT-format access token.
+security:
+  - access-token: []
+

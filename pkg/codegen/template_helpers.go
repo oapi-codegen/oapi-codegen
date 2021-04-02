@@ -80,10 +80,6 @@ func genParamNames(params []ParameterDefinition) string {
 	return ", " + strings.Join(parts, ", ")
 }
 
-func genParamFmtString(path string) string {
-	return ReplacePathParamsWithStr(path)
-}
-
 // genResponsePayload generates the payload returned at the end of each client request function
 func genResponsePayload(operationID string) string {
 	var buffer = bytes.NewBufferString("")
@@ -148,44 +144,50 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
-				var caseAction string
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
 
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
 
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-				handledCaseClauses[caseKey] = caseClause
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
-				var caseAction string
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
-				handledCaseClauses[caseKey] = caseClause
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
-				var caseAction string
-				caseAction = fmt.Sprintf("var dest %s\n"+
-					"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-					" return nil, err \n"+
-					"}\n"+
-					"response.%s = &dest",
-					typeDefinition.Schema.TypeDecl(),
-					typeDefinition.TypeName)
-				caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
-				handledCaseClauses[caseKey] = caseClause
+				if typeDefinition.ContentTypeName == contentTypeName {
+					var caseAction string
+					caseAction = fmt.Sprintf("var dest %s\n"+
+						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						" return nil, err \n"+
+						"}\n"+
+						"response.%s = &dest",
+						typeDefinition.Schema.TypeDecl(),
+						typeDefinition.TypeName)
+					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+					handledCaseClauses[caseKey] = caseClause
+				}
 
 			// Everything else:
 			default:
@@ -214,7 +216,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 }
 
 // buildUnmarshalCase builds an unmarshalling case clause for different content-types:
-func buildUnmarshalCase(typeDefinition TypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", echo.HeaderContentType, contentType, caseClauseKey, caseAction)
@@ -226,7 +228,7 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []TypeDefinition {
+func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
 	td, err := op.GetResponseTypeDefinitions()
 	if err != nil {
 		panic(err)
@@ -262,7 +264,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
-	"genParamFmtString":          genParamFmtString,
+	"genParamFmtString":          ReplacePathParamsWithStr,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"lcFirst":                    LowercaseFirstCharacter,
@@ -276,4 +278,5 @@ var TemplateFunctions = template.FuncMap{
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
 	"stripNewLines":              stripNewLines,
+	"sanitizeGoIdentity":         SanitizeGoIdentity,
 }
