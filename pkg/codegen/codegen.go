@@ -183,7 +183,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var inlinedSpec string
 	if opts.EmbedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
+		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, swagger)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
