@@ -96,15 +96,14 @@ type Constants struct {
 //        type: string
 type TypeDefinition struct {
 	// The name of the type, eg, type <...> Person
-	TypeName        string
+	TypeName string
 
 	// The name of the corresponding JSON description, as it will sometimes
 	// differ due to invalid characters.
-	JsonName        string
+	JsonName string
 
 	// This is the Schema wrapper is used to populate the type description
-	Schema          Schema
-
+	Schema Schema
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for
@@ -115,7 +114,7 @@ type ResponseTypeDefinition struct {
 	ContentTypeName string
 
 	// The type name of a response model.
-	ResponseName    string
+	ResponseName string
 }
 
 func (t *TypeDefinition) CanAlias() bool {
@@ -148,12 +147,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:      refType,
-			Description: schema.Description,
+			Description: StringToGoComment(schema.Description),
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
+		Description: StringToGoComment(schema.Description),
 	}
 
 	// We can't support this in any meaningful way
@@ -531,8 +530,8 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	// so we'll return the parameter as a string, not bothering to decode it.
 	if len(param.Content) > 1 {
 		return Schema{
-			GoType: "string",
-			Description: param.Description,
+			GoType:      "string",
+			Description: StringToGoComment(param.Description),
 		}, nil
 	}
 
@@ -541,8 +540,8 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if !found {
 		// If we don't have json, it's a string
 		return Schema{
-			GoType: "string",
-			Description: param.Description,
+			GoType:      "string",
+			Description: StringToGoComment(param.Description),
 		}, nil
 	}
 
