@@ -118,7 +118,10 @@ components:
       type: object
     AnyType1: {}
     AnyType2:
-      description: This should be an interface{}
+      description: |
+        AnyType2 represents any type.    
+        
+        This should be an interface{}
     CustomStringType:
       type: string
       format: custom
