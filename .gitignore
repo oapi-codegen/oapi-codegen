@@ -1,3 +1,7 @@
 .idea
 .DS_Store
 .vscode/
+
+# bin
+cmd/oapi-codegen/oapi-codegen
+__debug_bin
