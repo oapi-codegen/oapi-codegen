@@ -44,6 +44,7 @@ var (
 	flagExcludeSchemas string
 	flagConfigFile     string
 	flagAliasTypes     bool
+	flagPrintVersion   bool
 )
 
 type configuration struct {
@@ -70,7 +71,13 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
+	flag.BoolVar(&flagPrintVersion, "version", false, "Print version.")
 	flag.Parse()
+
+	if flagPrintVersion {
+		printVersion()
+		return
+	}
 
 	if flag.NArg() < 1 {
 		fmt.Println("Please specify a path to a OpenAPI 3.0 spec file")
