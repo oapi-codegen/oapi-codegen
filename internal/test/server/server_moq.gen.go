@@ -52,7 +52,7 @@ var _ ServerInterface = &ServerInterfaceMock{}
 //             GetWithArgsFunc: func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)  {
 // 	               panic("mock out the GetWithArgs method")
 //             },
-//             GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request, contentType string)  {
+//             GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)  {
 // 	               panic("mock out the GetWithContentType method")
 //             },
 //             GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)  {
@@ -90,7 +90,7 @@ type ServerInterfaceMock struct {
 	GetWithArgsFunc func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
 
 	// GetWithContentTypeFunc mocks the GetWithContentType method.
-	GetWithContentTypeFunc func(w http.ResponseWriter, r *http.Request, contentType string)
+	GetWithContentTypeFunc func(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)
 
 	// GetWithReferencesFunc mocks the GetWithReferences method.
 	GetWithReferencesFunc func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
@@ -164,7 +164,7 @@ type ServerInterfaceMock struct {
 			// R is the r argument value.
 			R *http.Request
 			// ContentType is the contentType argument value.
-			ContentType string
+			ContentType GetWithContentTypeParamsContentType
 		}
 		// GetWithReferences holds details about calls to the GetWithReferences method.
 		GetWithReferences []struct {
@@ -451,14 +451,14 @@ func (mock *ServerInterfaceMock) GetWithArgsCalls() []struct {
 }
 
 // GetWithContentType calls GetWithContentTypeFunc.
-func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *http.Request, contentType string) {
+func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType) {
 	if mock.GetWithContentTypeFunc == nil {
 		panic("ServerInterfaceMock.GetWithContentTypeFunc: method is nil but ServerInterface.GetWithContentType was just called")
 	}
 	callInfo := struct {
 		W           http.ResponseWriter
 		R           *http.Request
-		ContentType string
+		ContentType GetWithContentTypeParamsContentType
 	}{
 		W:           w,
 		R:           r,
@@ -476,12 +476,12 @@ func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *ht
 func (mock *ServerInterfaceMock) GetWithContentTypeCalls() []struct {
 	W           http.ResponseWriter
 	R           *http.Request
-	ContentType string
+	ContentType GetWithContentTypeParamsContentType
 } {
 	var calls []struct {
 		W           http.ResponseWriter
 		R           *http.Request
-		ContentType string
+		ContentType GetWithContentTypeParamsContentType
 	}
 	lockServerInterfaceMockGetWithContentType.RLock()
 	calls = mock.calls.GetWithContentType

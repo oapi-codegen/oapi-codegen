@@ -297,6 +297,11 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating Go types for operation parameters")
 	}
 
+	enumsOut, err := GenerateEnums(t, allTypes)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating code for type enums")
+	}
+
 	typesOut, err := GenerateTypes(t, allTypes)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating code for type definitions")
@@ -307,7 +312,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating allOf boilerplate")
 	}
 
-	typeDefinitions := strings.Join([]string{typesOut, paramTypesOut, allOfBoilerplate}, "")
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -510,6 +515,36 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	err = w.Flush()
 	if err != nil {
 		return "", errors.Wrap(err, "error flushing output buffer for types")
+	}
+	return buf.String(), nil
+}
+
+func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	c := Constants{
+		EnumDefinitions: []EnumDefinition{},
+	}
+	for _, tp := range types {
+		if len(tp.Schema.EnumValues) > 0 {
+			wrapper := ""
+			if tp.Schema.GoType == "string" {
+				wrapper = `"`
+			}
+			c.EnumDefinitions = append(c.EnumDefinitions, EnumDefinition{
+				Schema:       tp.Schema,
+				TypeName:     tp.TypeName,
+				ValueWrapper: wrapper,
+			})
+		}
+	}
+	err := t.ExecuteTemplate(w, "constants.tmpl", c)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating enums")
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for enums")
 	}
 	return buf.String(), nil
 }

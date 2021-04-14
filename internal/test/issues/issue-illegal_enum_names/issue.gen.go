@@ -20,20 +20,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Defines values for Bar.
+const (
+	BarBar Bar = "Bar"
+
+	BarFoo Bar = "Foo"
+
+	BarFoo1 Bar = "1Foo"
+
+	BarFoo2 Bar = " Foo"
+
+	BarFoo3 Bar = " Foo "
+
+	BarFoo4 Bar = "_Foo_"
+
+	BarFooBar Bar = "Foo Bar"
+
+	BarFooBar1 Bar = "Foo-Bar"
+)
+
 // Bar defines model for Bar.
 type Bar string
-
-// List of Bar
-const (
-	Bar_Bar      Bar = "Bar"
-	Bar_Foo      Bar = "Foo"
-	Bar_Foo_Bar  Bar = "Foo Bar"
-	Bar_Foo_Bar1 Bar = "Foo-Bar"
-	Bar__Foo     Bar = "1Foo"
-	Bar__Foo1    Bar = " Foo"
-	Bar__Foo_    Bar = " Foo "
-	Bar__Foo_1   Bar = "_Foo_"
-)
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

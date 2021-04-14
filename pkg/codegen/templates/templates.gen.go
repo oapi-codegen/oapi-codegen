@@ -715,6 +715,16 @@ const (
 {{end}}
 )
 {{end}}
+{{if gt (len .EnumDefinitions) 0 }}
+{{range $Enum := .EnumDefinitions}}
+// Defines values for {{$Enum.TypeName}}.
+const (
+{{range $index, $value := $Enum.Schema.EnumValues}}
+  {{$index}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper}}
+{{end}}
+)
+{{end}}
+{{end}}
 `,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
 //
@@ -898,15 +908,6 @@ type ServerInterface interface {
 	"typedef.tmpl": `{{range .Types}}
 {{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
-{{- if gt (len .Schema.EnumValues) 0 }}
-// List of {{ .TypeName }}
-const (
-	{{- $typeName := .TypeName }}
-    {{- range $key, $value := .Schema.EnumValues }}
-    {{ $typeName }}_{{ $key }} {{ $typeName }} = "{{ $value }}"
-    {{- end }}
-)
-{{- end }}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
