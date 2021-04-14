@@ -906,7 +906,7 @@ type ServerInterface interface {
 }
 `,
 	"typedef.tmpl": `{{range .Types}}
-// {{ with .Schema.Description }}{{ . }}{{ else }}{{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `,

@@ -210,13 +210,13 @@ func TestStringToGoComment(t *testing.T) {
 	}{
 		{
 			input:    "",
-			expected: "// ",
-			message:  "blank string should be preserved with comment",
+			expected: "",
+			message:  "blank string should be ignored due to human unreadable",
 		},
 		{
 			input:    " ",
-			expected: "//  ",
-			message:  "whitespace should be preserved with comment",
+			expected: "",
+			message:  "whitespace should be ignored due to human unreadable",
 		},
 		{
 			input:    "Single Line",

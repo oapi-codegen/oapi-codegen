@@ -156,12 +156,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:      refType,
-			Description: schema.Description,
+			Description: StringToGoComment(schema.Description),
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
+		Description: StringToGoComment(schema.Description),
 	}
 
 	// We can't support this in any meaningful way
@@ -576,7 +576,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if len(param.Content) > 1 {
 		return Schema{
 			GoType:      "string",
-			Description: param.Description,
+			Description: StringToGoComment(param.Description),
 		}, nil
 	}
 
@@ -586,7 +586,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		// If we don't have json, it's a string
 		return Schema{
 			GoType:      "string",
-			Description: param.Description,
+			Description: StringToGoComment(param.Description),
 		}, nil
 	}
 
