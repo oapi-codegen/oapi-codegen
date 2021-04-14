@@ -169,8 +169,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		outSchema.GoType = "interface{}"
 		return outSchema, nil
 	}
-	// We can't support this in any meaningful way
-	if schema.OneOf != nil {
+	// We can't support this in any meaningful way,
+	// except if oneOf defines just restriction on properties via the "required" property
+	if schema.OneOf != nil && !(schema.OneOf[0].Value != nil && schema.OneOf[0].Value.Required != nil) {
 		outSchema.GoType = "interface{}"
 		return outSchema, nil
 	}
