@@ -18,6 +18,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 func TestBindStringToObject(t *testing.T) {
@@ -145,4 +147,26 @@ func TestBindStringToObject(t *testing.T) {
 	assert.NoError(t, BindStringToObject(strTime, &parsedTime))
 	parsedTime = parsedTime.UTC()
 	assert.EqualValues(t, now, parsedTime)
+
+	// Checks whether time binding works through a type alias.
+	type AliasedTime time.Time
+	var aliasedTime AliasedTime
+	assert.NoError(t, BindStringToObject(strTime, &aliasedTime))
+	assert.EqualValues(t, now, aliasedTime)
+
+	// Checks whether date binding works directly and through an alias.
+	dateString := "2020-11-05"
+	var dstDate types.Date
+	assert.NoError(t, BindStringToObject(dateString, &dstDate))
+	type AliasedDate types.Date
+	var dstAliasedDate AliasedDate
+	assert.NoError(t, BindStringToObject(dateString, &dstAliasedDate))
+
+	// Checks whether a mock binder works and embedded types
+	var mockBinder MockBinder
+	assert.NoError(t, BindStringToObject(dateString, &mockBinder))
+	assert.EqualValues(t, dateString, mockBinder.Time.Format("2006-01-02"))
+	var dstEmbeddedMockBinder EmbeddedMockBinder
+	assert.NoError(t, BindStringToObject(dateString, &dstEmbeddedMockBinder))
+	assert.EqualValues(t, dateString, dstEmbeddedMockBinder.Time.Format("2006-01-02"))
 }

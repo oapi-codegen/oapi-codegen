@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -26,6 +27,8 @@ type AllFields struct {
 	Oas *[]string    `json:"oas,omitempty"`
 	O   InnerObject  `json:"o"`
 	Oo  *InnerObject `json:"oo,omitempty"`
+	D   MockBinder   `json:"d"`
+	Od  *MockBinder  `json:"od,omitempty"`
 }
 
 func TestDeepObject(t *testing.T) {
@@ -37,6 +40,7 @@ func TestDeepObject(t *testing.T) {
 		Name: "Marcin Romaszewicz",
 		ID:   123,
 	}
+	d := MockBinder{Time: time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC)}
 
 	srcObj := AllFields{
 		I:   12,
@@ -52,6 +56,8 @@ func TestDeepObject(t *testing.T) {
 			ID:   456,
 		},
 		Oo: &oo,
+		D:  d,
+		Od: &d,
 	}
 
 	marshaled, err := MarshalDeepObject(srcObj, "p")

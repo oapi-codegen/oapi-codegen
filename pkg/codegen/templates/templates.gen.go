@@ -75,20 +75,46 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 `,
 	"chi-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-  return HandlerFromMux(si, chi.NewRouter())
+  return HandlerWithOptions(si, ChiServerOptions{})
+}
+
+type ChiServerOptions struct {
+    BaseURL string
+    BaseRouter chi.Router
+    Middlewares []MiddlewareFunc
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+    return HandlerWithOptions(si, ChiServerOptions {
+        BaseRouter: r,
+    })
+}
+
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+    return HandlerWithOptions(si, ChiServerOptions {
+        BaseURL: baseURL,
+        BaseRouter: r,
+    })
+}
+
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
+r := options.BaseRouter
+
+if r == nil {
+r = chi.NewRouter()
+}
 {{if .}}wrapper := ServerInterfaceWrapper{
-        Handler: si,
-    }
+Handler: si,
+HandlerMiddlewares: options.Middlewares,
+}
 {{end}}
 {{range .}}r.Group(func(r chi.Router) {
-  r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
+r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
 })
 {{end}}
-  return r
+return r
 }
 `,
 	"chi-interface.tmpl": `// ServerInterface represents all server handlers.
@@ -102,7 +128,10 @@ type ServerInterface interface {
 	"chi-middleware.tmpl": `// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
+    HandlerMiddlewares []MiddlewareFunc
 }
+
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -137,7 +166,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  ctx = context.WithValue(ctx, "{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+  ctx = context.WithValue(ctx, {{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -217,7 +246,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
 
     {{range .CookieParams}}
-      if cookie, err := r.Cookie("{{.ParamName}}"); err == nil {
+      var cookie *http.Cookie
+
+      if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
@@ -260,7 +291,16 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       {{- end}}
     {{end}}
   {{end}}
-  siw.Handler.{{.OperationId}}(w, r.WithContext(ctx){{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+
+  var handler = func(w http.ResponseWriter, r *http.Request) {
+    siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+}
+
+  for _, middleware := range siw.HandlerMiddlewares {
+    handler = middleware(handler)
+  }
+
+  handler(w, r.WithContext(ctx))
 }
 {{end}}
 
@@ -301,9 +341,9 @@ type ClientWithResponsesInterface interface {
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
     // {{$opid}} request {{if .HasBody}} with any body{{end}}
-    {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error)
+    {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
-    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error)
+    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
@@ -340,8 +380,8 @@ func (r {{$opid | ucFirst}}Response) StatusCode() int {
 {{/* Generate client methods (with responses)*/}}
 
 // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}Response
-func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*{{genResponseTypeName $opid}}, error){
-    rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
+func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error){
+    rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}}, reqEditors...)
     if err != nil {
         return nil, err
     }
@@ -352,8 +392,8 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
-func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*{{genResponseTypeName $opid}}, error) {
-    rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
+func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error) {
+    rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body, reqEditors...)
     if err != nil {
         return nil, err
     }
@@ -396,16 +436,18 @@ type HttpRequestDoer interface {
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example.
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
 	Server string
 
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
 	Client HttpRequestDoer
 
-	// A callback for modifying requests which are generated before sending over
+	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditor RequestEditorFn
+	RequestEditors []RequestEditorFn
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -429,7 +471,7 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
     }
     // create httpClient, if not already present
     if client.Client == nil {
-        client.Client = http.DefaultClient
+        client.Client = &http.Client{}
     }
     return &client, nil
 }
@@ -447,7 +489,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 	return func(c *Client) error {
-		c.RequestEditor = fn
+		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
 }
@@ -459,9 +501,9 @@ type ClientInterface interface {
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
     // {{$opid}} request {{if .HasBody}} with any body{{end}}
-    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error)
+    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
-    {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error)
+    {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
@@ -473,33 +515,27 @@ type ClientInterface interface {
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
 
-func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Response, error) {
+func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
     }
     req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-        err = c.RequestEditor(ctx, req)
-        if err != nil {
-            return nil, err
-        }
+    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+        return nil, err
     }
     return c.Client.Do(req)
 }
 
 {{range .Bodies}}
-func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Response, error) {
+func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}{{.Suffix}}Request(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
     }
     req = req.WithContext(ctx)
-    if c.RequestEditor != nil {
-        err = c.RequestEditor(ctx, req)
-        if err != nil {
-            return nil, err
-        }
+    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+        return nil, err
     }
     return c.Client.Do(req)
 }
@@ -543,28 +579,29 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}})
+    pathParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, {{.GoVariableName}})
     if err != nil {
         return nil, err
     }
     {{end}}
 {{end}}
-    queryUrl, err := url.Parse(server)
+    serverURL, err := url.Parse(server)
     if err != nil {
         return nil, err
     }
 
-    basePath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
-    if basePath[0] == '/' {
-        basePath = basePath[1:]
+    operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    if operationPath[0] == '/' {
+        operationPath = operationPath[1:]
+    }
+    operationURL := url.URL{
+    	Path: operationPath,
     }
 
-    queryUrl, err = queryUrl.Parse(basePath)
-    if err != nil {
-        return nil, err
-    }
+    queryURL := serverURL.ResolveReference(&operationURL)
+
 {{if .QueryParams}}
-    queryValues := queryUrl.Query()
+    queryValues := queryURL.Query()
 {{range $paramIdx, $param := .QueryParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     {{if .IsPassThrough}}
@@ -579,7 +616,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
        return nil, err
@@ -593,13 +630,14 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{end}}
     {{if not .Required}}}{{end}}
 {{end}}
-    queryUrl.RawQuery = queryValues.Encode()
+    queryURL.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryUrl.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
 
+    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
 {{range $paramIdx, $param := .HeaderParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var headerParam{{$paramIdx}} string
@@ -615,12 +653,12 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParam("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
     {{end}}
-    req.Header.Add("{{.ParamName}}", headerParam{{$paramIdx}})
+    req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
 
@@ -639,7 +677,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
     {{end}}
     {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParam("simple", {{.Explode}}, "{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -651,32 +689,85 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     req.AddCookie(cookie{{$paramIdx}})
     {{if not .Required}}}{{end}}
 {{end}}
-    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
     return req, nil
 }
 
 {{end}}{{/* Range */}}
+
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+    for _, r := range c.RequestEditors {
+        if err := r(ctx, req); err != nil {
+            return err
+        }
+    }
+    for _, r := range additionalEditors {
+        if err := r(ctx, req); err != nil {
+            return err
+        }
+    }
+    return nil
+}
 `,
-	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact the openapi HTTP API.
+	"constants.tmpl": `{{- if gt (len .SecuritySchemeProviderNames) 0 }}
+const (
+{{range $ProviderName := .SecuritySchemeProviderNames}}
+    {{- $ProviderName | ucFirst}}Scopes = "{{$ProviderName}}.Scopes"
+{{end}}
+)
+{{end}}
+{{if gt (len .EnumDefinitions) 0 }}
+{{range $Enum := .EnumDefinitions}}
+// Defines values for {{$Enum.TypeName}}.
+const (
+{{range $index, $value := $Enum.Schema.EnumValues}}
+  {{$index}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper}}
+{{end}}
+)
+{{end}}
+{{end}}
+`,
+	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
 //
 // Code generated by github.com/deepmap/oapi-codegen DO NOT EDIT.
 package {{.PackageName}}
 
-{{if .Imports}}
 import (
-{{range .Imports}} {{ . }}
-{{end}})
-{{end}}
+	"bytes"
+	"compress/gzip"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/xml"
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-chi/chi/v5"
+	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
+	{{- range .ExternalImports}}
+	{{ . }}
+	{{- end}}
+)
 `,
 	"inline.tmpl": `// Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
-{{range .}}
+{{range .SpecParts}}
     "{{.}}",{{end}}
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file.
-func GetSwagger() (*openapi3.Swagger, error) {
+// GetSwagger returns the content of the embedded swagger specification file
+// or error if failed to decode
+func decodeSpec() ([]byte, error) {
     zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
     if err != nil {
         return nil, fmt.Errorf("error base64 decoding spec: %s", err)
@@ -691,17 +782,75 @@ func GetSwagger() (*openapi3.Swagger, error) {
         return nil, fmt.Errorf("error decompressing spec: %s", err)
     }
 
-    swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(buf.Bytes())
-    if err != nil {
-        return nil, fmt.Errorf("error loading Swagger: %s", err)
+    return buf.Bytes(), nil
+}
+
+var rawSpec = decodeSpecCached()
+
+// a naive cached of a decoded swagger spec
+func decodeSpecCached() func() ([]byte, error) {
+	data, err := decodeSpec()
+	return func() ([]byte, error) {
+		return data, err
+	}
+}
+
+// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
+func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
+    var res = make(map[string]func() ([]byte, error))
+    if len(pathToFile) > 0 {
+        res[pathToFile] = rawSpec
     }
-    return swagger, nil
+    {{ if .ImportMapping }}
+    pathPrefix := path.Dir(pathToFile)
+    {{ end }}
+    {{ range $key, $value := .ImportMapping }}
+    for rawPath, rawFunc := range {{ $value.Name }}.PathToRawSpec(path.Join(pathPrefix, "{{ $key }}")) {
+        if _, ok := res[rawPath]; ok {
+            // it is not possible to compare functions in golang, so always overwrite the old value
+        }
+        res[rawPath] = rawFunc
+    }
+    {{- end }}
+    return res
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file. The external references of Swagger specification are resolved.
+// The logic of resolving external references is tightly connected to "import-mapping" feature.
+// Externally referenced files must be embedded in the corresponding golang packages.
+// Urls can be supported but this task was out of the scope.
+func GetSwagger() (swagger *openapi3.Swagger, err error) {
+    var resolvePath = PathToRawSpec("")
+
+    loader := openapi3.NewSwaggerLoader()
+    loader.IsExternalRefsAllowed = true
+    loader.ReadFromURIFunc = func(loader *openapi3.SwaggerLoader, url *url.URL) ([]byte, error) {
+        var pathToFile = url.String()
+        pathToFile = path.Clean(pathToFile)
+        getSpec, ok := resolvePath[pathToFile]
+        if !ok {
+            err1 := fmt.Errorf("path not found: %s", pathToFile)
+            return nil, err1
+        }
+        return getSpec()
+    }
+    var specData []byte
+    specData, err = rawSpec()
+    if err != nil {
+        return
+    }
+    swagger, err = loader.LoadSwaggerFromData(specData)
+    if err != nil {
+        return
+    }
+    return
 }
 `,
 	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .TypeDefinitions}}
 // {{.TypeName}} defines parameters for {{$opid}}.
-type {{.TypeName}} {{.Schema.TypeDecl}}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 `,
@@ -724,19 +873,27 @@ type EchoRouter interface {
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
+    RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 {{if .}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}("{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
 `,
 	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .Bodies}}
-// {{$opid}}RequestBody defines body for {{$opid}} for application/json ContentType.
-type {{$opid}}{{.NameTag}}RequestBody {{.TypeDef}}
+{{with .TypeDef $opid}}
+// {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
 {{end}}
 {{end}}
 `,
@@ -749,17 +906,8 @@ type ServerInterface interface {
 }
 `,
 	"typedef.tmpl": `{{range .Types}}
-// {{.TypeName}} defines model for {{.JsonName}}.
-type {{.TypeName}} {{.Schema.TypeDecl}}
-{{- if gt (len .Schema.EnumValues) 0 }}
-// List of {{ .TypeName }}
-const (
-	{{- $typeName := .TypeName }}
-    {{- range $key, $value := .Schema.EnumValues }}
-    {{ $typeName }}_{{ $key }} {{ $typeName }} = "{{ $value }}"
-    {{- end }}
-)
-{{- end }}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `,
 	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
@@ -782,7 +930,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }
 {{end}}
 {{if .IsStyled}}
-    err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.Param("{{.ParamName}}"), &{{$varName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
@@ -790,7 +938,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 
 {{range .SecurityDefinitions}}
-    ctx.Set("{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+    ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}
@@ -840,7 +988,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         }
 {{end}}
 {{if .IsStyled}}
-        err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+        err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
@@ -872,7 +1020,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
-    err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+    err = runtime.BindStyledParameterWithLocation("simple",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, cookie.Value, &value)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }

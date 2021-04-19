@@ -1,0 +1,84 @@
+
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 312 test
+  description: Checks proper escaping of parameters
+paths:
+  /pets:validate:
+    post:
+      summary: Validate pets
+      description: Validate pets
+      operationId: validatePets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetNames'
+      responses:
+        '200':
+          description: valid pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      operationId: getPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the pet.
+
+    PetNames:
+      type: object
+      required:
+        - names
+      properties:
+        names:
+          type: array
+          description: The names of the pets.
+          items:
+            type: string
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
