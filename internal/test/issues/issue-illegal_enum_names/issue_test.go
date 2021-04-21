@@ -8,6 +8,7 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -42,14 +43,13 @@ func TestIllegalEnumNames(t *testing.T) {
 			}
 		}
 	}
-
-	require.Equal(t, `"Bar"`, constDefs["BarBar"])
-	require.Equal(t, `"Foo"`, constDefs["BarFoo"])
-	require.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])
-	require.Equal(t, `"Foo-Bar"`, constDefs["BarFooBar1"])
-	require.Equal(t, `"1Foo"`, constDefs["BarN1Foo"])
-	require.Equal(t, `" Foo"`, constDefs["BarFoo1"])
-	require.Equal(t, `" Foo "`, constDefs["BarFoo2"])
-	require.Equal(t, `"_Foo_"`, constDefs["BarFoo3"])
-	require.Equal(t, `"1"`, constDefs["BarN1"])
+	assert.Equal(t, `"1"`, constDefs["Bar1"])
+	assert.Equal(t, `"Bar"`, constDefs["BarBar"])
+	assert.Equal(t, `"Foo"`, constDefs["BarFoo"])
+	assert.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])
+	assert.Equal(t, `"Foo-Bar"`, constDefs["BarFooBar1"])
+	assert.Equal(t, `"1Foo"`, constDefs["Bar1Foo"])
+	assert.Equal(t, `" Foo"`, constDefs["BarFoo1"])
+	assert.Equal(t, `" Foo "`, constDefs["BarFoo2"])
+	assert.Equal(t, `"_Foo_"`, constDefs["BarFoo3"])
 }

@@ -22,7 +22,13 @@ import (
 
 // Defines values for Bar.
 const (
+	Bar1 Bar = "1"
+
+	Bar1Foo Bar = "1Foo"
+
 	BarBar Bar = "Bar"
+
+	BarBar1 Bar = "Bar"
 
 	BarFoo Bar = "Foo"
 
@@ -35,10 +41,6 @@ const (
 	BarFooBar Bar = "Foo Bar"
 
 	BarFooBar1 Bar = "Foo-Bar"
-
-	BarN1 Bar = "1"
-
-	BarN1Foo Bar = "1Foo"
 )
 
 // Bar defines model for Bar.
@@ -320,11 +322,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/0xQQU4DMQz8SjVwDNml3HLkUMQbEKqirbcN6tpRYpCqKn9HzkIhl5kkHtszV0yyZGFi",
-	"rQhX1OlES+z0ORYD4s8F4Q07Ebj+6IxvbuxhZY//CzbrxWADh/1OZG81eHfQSyYEVC2Jj2itOSSexWZp",
-	"0rP9ee/h8EWlJmEEjH70I5qDZOKYEwKe/Oi3cMhRT33dYZbe40hqIJlK1CT8ekDAC+m6UaGahSt1yXYc",
-	"DSZhJe6qmPM5TV03fFSb/RuJsaS0dOF9oRkBd8NfeMNPcoMF0G4uYynxspo8UJ1KyrpaMoutn+8AAAD/",
-	"/y6OlsyDAQAA",
+	"H4sIAAAAAAAC/0yQzU4DMQyEX2U1cAzZtNxy5FDEMyBURVtvG9S1o8QgVVXeHSULpbnM5Gdif75ikiUJ",
+	"E2uBv6JMJ1pCty8hNyH+WuDfNwY7EZh+3P1wc0+r29w/GNZNkwEG+53IHh8GekkEj6I58hG1VoPIs7RK",
+	"GvXc7qy1MPimXKIwPJx11qEaSCIOKcLj2Tq7hUEKeurNjrP0P46kTSRRDhqF3w7weCVdu8lUknChHtk6",
+	"12QSVuKeCimd49Rz42dptf8G0lxUWnrwMdMMj4fxf3Tj79zGBl9vlCHncFkhD1SmHJOuSA2x9vUTAAD/",
+	"/35OGEmBAQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

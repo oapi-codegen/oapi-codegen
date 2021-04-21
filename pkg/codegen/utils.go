@@ -489,34 +489,33 @@ func SanitizeGoIdentity(str string) string {
 	return str
 }
 
-// SanitizeEnumNames fixes illegal chars in the enum names
-// and removes duplicates
-func SanitizeEnumNames(enumNames []string) map[string]string {
-	dupCheck := make(map[string]int, len(enumNames))
-	deDup := make([]string, 0, len(enumNames))
+// EnumConst holds initial enum cost definition
+type EnumConst struct {
+	Name string
+	Value string
+}
 
-	for _, n := range enumNames {
-		if _, dup := dupCheck[n]; !dup {
-			deDup = append(deDup, n)
-		}
-		dupCheck[n] = 0
+// DeDuplicateEnums creates unique enum const names
+func DeDuplicateEnums(enums []EnumConst) map[string]string {
+	dupCheck := make(map[string][]EnumConst, len(enums))
+
+	for _,n := range enums {
+		dupCheck[n.Name] = append(dupCheck[n.Name],n)
 	}
 
-	dupCheck = make(map[string]int, len(deDup))
-	sanitizedDeDup := make(map[string]string, len(deDup))
+	deDup := make(map[string]string, len(enums))
 
-	for _, n := range deDup {
-		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
-
-		if _, dup := dupCheck[sanitized]; !dup {
-			sanitizedDeDup[sanitized] = n
-		} else {
-			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
+	for n, a := range dupCheck {
+		for i, e := range a {
+			name := n
+			if i > 0 {
+				name = name + strconv.Itoa(i)
+			}
+			deDup[name] = e.Value
 		}
-		dupCheck[sanitized]++
 	}
 
-	return sanitizedDeDup
+	return deDup
 }
 
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is

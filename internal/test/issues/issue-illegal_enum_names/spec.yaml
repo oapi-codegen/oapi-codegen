@@ -21,7 +21,8 @@ components:
   schemas:
     Bar:
       type: string
-      enum: 
+      enum:
+        - 1
         - Foo
         - Bar
         - Foo Bar
@@ -31,4 +32,3 @@ components:
         - ' Foo'
         - ' Foo '
         - _Foo_
-        - "1"
