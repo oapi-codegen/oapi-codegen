@@ -22,13 +22,13 @@ type Options struct {
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidator(swagger *openapi3.Swagger) func(next http.Handler) http.Handler {
+func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) func(next http.Handler) http.Handler {
+func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
 	router, err := legacy.NewRouter(swagger)
 	if err != nil {
 		panic(err)

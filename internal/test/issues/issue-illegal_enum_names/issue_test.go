@@ -12,7 +12,7 @@ import (
 )
 
 func TestIllegalEnumNames(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("spec.yaml")
+	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
 	opts := codegen.Options{

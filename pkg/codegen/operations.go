@@ -375,7 +375,7 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
