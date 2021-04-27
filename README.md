@@ -165,14 +165,14 @@ Code generated using `-generate chi-server`.
 
 ```go
 type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(r *http.Request, w *http.ResponseWriter) {
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
     // Implement me
 }
 
 func SetupHandler() {
     var myApi PetStoreImpl
 
-    r := chi.Router()
+    r := chi.NewRouter()
     r.Mount("/", Handler(&myApi))
 }
 ```
