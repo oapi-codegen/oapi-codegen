@@ -441,7 +441,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
-				TypeName: SchemaNameToTypeName(responseName),
+				TypeName: "Resp" + SchemaNameToTypeName(responseName),
 			}
 
 			if responseOrRef.Ref != "" {

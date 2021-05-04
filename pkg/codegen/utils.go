@@ -521,7 +521,7 @@ func SchemaNameToTypeName(name string) string {
 			name = "N" + name
 		}
 	}
-	return name
+	return strings.ReplaceAll(name, "Id", "ID")
 }
 
 // According to the spec, additionalProperties may be true, false, or a
