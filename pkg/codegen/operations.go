@@ -116,6 +116,9 @@ func (pd ParameterDefinition) GoVariableName() string {
 	if unicode.IsNumber([]rune(name)[0]) {
 		name = "n" + name
 	}
+
+	// Lingio specific change
+	name = strings.ReplaceAll(name, "Id", "ID")
 	return name
 }
 
@@ -475,7 +478,7 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
+	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")

@@ -35,6 +35,7 @@ func errExit(format string, args ...interface{}) {
 
 var (
 	flagPackageName    string
+	flagServiceName    string
 	flagGenerate       string
 	flagOutputFile     string
 	flagIncludeTags    string
@@ -48,6 +49,7 @@ var (
 
 type configuration struct {
 	PackageName     string            `yaml:"package"`
+	ServiceName     string            `yaml:"service"`
 	GenerateTargets []string          `yaml:"generate"`
 	OutputFile      string            `yaml:"output"`
 	IncludeTags     []string          `yaml:"include-tags"`
@@ -60,6 +62,7 @@ type configuration struct {
 func main() {
 
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
+	flag.StringVar(&flagServiceName, "service", "", "The name of the service the code belongs to")
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
 		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
@@ -136,7 +139,7 @@ func main() {
 
 	opts.ImportMapping = cfg.ImportMapping
 
-	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
+	code, err := codegen.Generate(swagger, cfg.PackageName, cfg.ServiceName, opts)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}
@@ -195,6 +198,9 @@ func configFromFlags() *configuration {
 
 	if cfg.PackageName == "" {
 		cfg.PackageName = flagPackageName
+	}
+	if cfg.ServiceName == "" {
+		cfg.ServiceName = flagServiceName
 	}
 	if cfg.GenerateTargets == nil {
 		cfg.GenerateTargets = util.ParseCommandLineList(flagGenerate)

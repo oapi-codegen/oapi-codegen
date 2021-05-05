@@ -102,7 +102,7 @@ func constructImportMapping(input map[string]string) importMap {
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+func Generate(swagger *openapi3.Swagger, packageName string, serviceName string, opts Options) (string, error) {
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
@@ -193,7 +193,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	w := bufio.NewWriter(&buf)
 
 	externalImports := importMapping.GoImports()
-	importsOut, err := GenerateImports(t, externalImports, packageName)
+	importsOut, err := GenerateImports(t, externalImports, packageName, serviceName)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating imports")
 	}
@@ -550,15 +550,17 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // Generate our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, packageName string, serviceName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 	context := struct {
-		ExternalImports []string
-		PackageName     string
+		ExternalImports  []string
+		PackageName      string
+		ModelPackageName string
 	}{
-		ExternalImports: externalImports,
-		PackageName:     packageName,
+		ExternalImports:  externalImports,
+		PackageName:      packageName,
+		ModelPackageName: fmt.Sprintf("\"github.com/lingio/%s/models\"", serviceName),
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {
