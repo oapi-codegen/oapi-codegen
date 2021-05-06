@@ -43,17 +43,17 @@ func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 		return nil, fmt.Errorf("error reading %s: %s", path, err)
 	}
 
-	swagger, err := openapi3.NewLoader().LoadFromData(data)
+	spec, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
+		return nil, fmt.Errorf("error parsing %s as OpenAPI YAML: %s",
 			path, err)
 	}
-	return OapiRequestValidator(swagger), nil
+	return OapiRequestValidator(spec), nil
 }
 
-// Create a validator from a swagger object.
-func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
-	return OapiRequestValidatorWithOptions(swagger, nil)
+// Create a validator from an OpenAPI object.
+func OapiRequestValidator(spec *openapi3.T) echo.MiddlewareFunc {
+	return OapiRequestValidatorWithOptions(spec, nil)
 }
 
 // Options to customize request validation. These are passed through to
@@ -65,9 +65,9 @@ type Options struct {
 	Skipper      echomiddleware.Skipper
 }
 
-// Create a validator from a swagger object, with validation options
-func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
-	router, err := legacy.NewRouter(swagger)
+// Create a validator from an OpenAPI object, with validation options
+func OapiRequestValidatorWithOptions(spec *openapi3.T, options *Options) echo.MiddlewareFunc {
+	router, err := legacy.NewRouter(spec)
 	if err != nil {
 		panic(err)
 	}

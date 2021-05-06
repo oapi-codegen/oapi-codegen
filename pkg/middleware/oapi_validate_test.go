@@ -117,8 +117,8 @@ func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httpt
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
-	require.NoError(t, err, "Error initializing swagger")
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	require.NoError(t, err, "Error initializing OpenAPI")
 
 	// Create a new echo router
 	e := echo.New()
@@ -149,7 +149,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	}
 
 	// Install our OpenApi based request validator
-	e.Use(OapiRequestValidatorWithOptions(swagger, &options))
+	e.Use(OapiRequestValidatorWithOptions(spec, &options))
 
 	called := false
 

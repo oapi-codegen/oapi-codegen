@@ -196,7 +196,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 
 // This structure describes an Operation
 type OperationDefinition struct {
-	OperationId string // The operation_id description from Swagger, used to generate function names
+	OperationId string // The operation_id description from OpenAPI, used to generate function names
 
 	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
 	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
@@ -206,9 +206,9 @@ type OperationDefinition struct {
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
-	Summary             string                  // Summary string from Swagger, used to generate a comment
+	Summary             string                  // Summary string from OpenAPI, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
-	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Path                string                  // The OpenAPI path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
 }
 
@@ -374,12 +374,12 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 	return out
 }
 
-// OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+// OperationDefinitions returns all operations for a OpenAPI definition.
+func OperationDefinitions(spec *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[requestPath]
+	for _, requestPath := range SortedPathsKeys(spec.Paths) {
+		pathItem := spec.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
@@ -419,7 +419,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			allParams := append(globalParams, localParams...)
 
 			// Order the path parameters to match the order as specified in
-			// the path, not in the swagger spec, and validate that the parameter
+			// the path, not in the OpenAPI spec, and validate that the parameter
 			// names match, as downstream code depends on that.
 			pathParams := FilterParameterDefinitionByType(allParams, "path")
 			pathParams, err = SortParamsByPath(requestPath, pathParams)
@@ -457,7 +457,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				// globalSecurityDefinitions contains the top-level securityDefinitions.
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
-				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(spec.Security)
 
 			}
 
@@ -494,7 +494,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 	return ToCamelCase(operationId), nil
 }
 
-// This function turns the Swagger body definitions into a list of our body
+// This function turns the OpenAPI body definitions into a list of our body
 // definitions which will be used for code generation.
 func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {

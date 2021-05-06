@@ -22,18 +22,18 @@ type ObjectA struct {
 	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
+// Base64 encoded, gzipped, json marshaled OpenAPI object
+var openAPISpec = []string{
 
 	"H4sIAAAAAAAC/0SNQarDMAwF7/L+X5p4711zgR6hKEZJ3MaysN1FCLl7sVOoNhoYHnPAp6hJWGqBO1D8",
 	"ypE63qcn+3prqDkp5xq4C6HI7dddGQ6l5iALToPUF4+pyf/MMxyGwSr5Fy082qLsh53i9md/Ufst2is3",
 	"4mxnEGROcPLeNoOkLKQBDjBQqmu5zPkJAAD//0utOZO+AAAA",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
+// decodeSpec returns the content of the embedded OpenAPI specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(openAPISpec, ""))
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
 	}
@@ -52,7 +52,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// decodeSpecCached returns a naive cached of a decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -78,12 +78,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
+// GetSpec returns the OpenAPI specification corresponding to the generated code
+// in this file. The external references of OpenAPI specification are resolved.
 // The logic of resolving external references is tightly connected to "import-mapping" feature.
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+func GetSpec() (spec *openapi3.T, err error) {
 	var resolvePath = PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -103,7 +103,7 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 	if err != nil {
 		return
 	}
-	swagger, err = loader.LoadFromData(specData)
+	spec, err = loader.LoadFromData(specData)
 	if err != nil {
 		return
 	}

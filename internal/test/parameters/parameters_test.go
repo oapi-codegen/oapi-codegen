@@ -607,7 +607,7 @@ func TestClientQueryParams(t *testing.T) {
 	}
 	expectedObject2 := Object{
 		FirstName: "Marcin",
-		Role:      "annoyed_at_swagger",
+		Role:      "annoyed_at_openspi",
 	}
 
 	expectedComplexObject := ComplexObject{

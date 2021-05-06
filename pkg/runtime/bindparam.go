@@ -101,7 +101,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 // different packing strategies based on the explode flag. This function takes
 // as input any parameter format, and unpacks it to a simple list of strings
 // or key-values which we can then treat generically.
-// Why, oh why, great Swagger gods, did you have to make this so complicated?
+// Why, oh why, great OpenAPI gods, did you have to make this so complicated?
 func splitStyledParameter(style string, explode bool, object bool, paramName string, value string) ([]string, error) {
 	switch style {
 	case "simple":
@@ -215,7 +215,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 // in the exploded case, or a sequence of values which are interpreted as
 // tuples.
 // Given the struct Id { firstName string, role string }, as in the canonical
-// swagger examples, in the exploded case, we would pass
+// OpenAPI examples, in the exploded case, we would pass
 // ["firstName=Alex", "role=admin"], where in the non-exploded case, we would
 // pass "firstName", "Alex", "role", "admin"]
 //

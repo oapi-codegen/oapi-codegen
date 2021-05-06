@@ -26,11 +26,11 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	spec, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(spec, packageName, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -71,11 +71,11 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	spec, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(spec, packageName, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -86,7 +86,7 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 
@@ -113,7 +113,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
-	packageName := "testswagger"
+	packageName := "testspec"
 	opts := Options{
 		GenerateClient:     true,
 		GenerateEchoServer: true,
@@ -122,11 +122,11 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	}
 
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(spec, packageName, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -135,7 +135,7 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Check that we have a package:
-	assert.Contains(t, code, "package testswagger")
+	assert.Contains(t, code, "package "+packageName)
 
 	// Check that response structs are generated correctly:
 	assert.Contains(t, code, "type GetTestByNameResponse struct {")

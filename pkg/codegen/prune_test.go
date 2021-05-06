@@ -9,123 +9,123 @@ import (
 
 func TestFindReferences(t *testing.T) {
 	t.Run("unfiltered", func(t *testing.T) {
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
+		spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 
-		refs := findComponentRefs(swagger)
+		refs := findComponentRefs(spec)
 		assert.Len(t, refs, 14)
 	})
 	t.Run("only cat", func(t *testing.T) {
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
+		spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 		opts := Options{
 			IncludeTags: []string{"cat"},
 		}
 
-		filterOperationsByTag(swagger, opts)
+		filterOperationsByTag(spec, opts)
 
-		refs := findComponentRefs(swagger)
+		refs := findComponentRefs(spec)
 		assert.Len(t, refs, 7)
 	})
 	t.Run("only dog", func(t *testing.T) {
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
+		spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 
 		opts := Options{
 			IncludeTags: []string{"dog"},
 		}
 
-		filterOperationsByTag(swagger, opts)
+		filterOperationsByTag(spec, opts)
 
-		refs := findComponentRefs(swagger)
+		refs := findComponentRefs(spec)
 		assert.Len(t, refs, 7)
 	})
 }
 
 func TestFilterOnlyCat(t *testing.T) {
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
 	opts := Options{
 		IncludeTags: []string{"cat"},
 	}
 
-	refs := findComponentRefs(swagger)
+	refs := findComponentRefs(spec)
 	assert.Len(t, refs, 14)
 
-	assert.Len(t, swagger.Components.Schemas, 5)
+	assert.Len(t, spec.Components.Schemas, 5)
 
-	filterOperationsByTag(swagger, opts)
+	filterOperationsByTag(spec, opts)
 
-	refs = findComponentRefs(swagger)
+	refs = findComponentRefs(spec)
 	assert.Len(t, refs, 7)
 
-	assert.NotEmpty(t, swagger.Paths["/cat"], "/cat path should still be in spec")
-	assert.NotEmpty(t, swagger.Paths["/cat"].Get, "GET /cat operation should still be in spec")
-	assert.Empty(t, swagger.Paths["/dog"].Get, "GET /dog should have been removed from spec")
+	assert.NotEmpty(t, spec.Paths["/cat"], "/cat path should still be in spec")
+	assert.NotEmpty(t, spec.Paths["/cat"].Get, "GET /cat operation should still be in spec")
+	assert.Empty(t, spec.Paths["/dog"].Get, "GET /dog should have been removed from spec")
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(spec)
 
-	assert.Len(t, swagger.Components.Schemas, 3)
+	assert.Len(t, spec.Components.Schemas, 3)
 }
 
 func TestFilterOnlyDog(t *testing.T) {
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
 	opts := Options{
 		IncludeTags: []string{"dog"},
 	}
 
-	refs := findComponentRefs(swagger)
+	refs := findComponentRefs(spec)
 	assert.Len(t, refs, 14)
 
-	filterOperationsByTag(swagger, opts)
+	filterOperationsByTag(spec, opts)
 
-	refs = findComponentRefs(swagger)
+	refs = findComponentRefs(spec)
 	assert.Len(t, refs, 7)
 
-	assert.Len(t, swagger.Components.Schemas, 5)
+	assert.Len(t, spec.Components.Schemas, 5)
 
-	assert.NotEmpty(t, swagger.Paths["/dog"])
-	assert.NotEmpty(t, swagger.Paths["/dog"].Get)
-	assert.Empty(t, swagger.Paths["/cat"].Get)
+	assert.NotEmpty(t, spec.Paths["/dog"])
+	assert.NotEmpty(t, spec.Paths["/dog"].Get)
+	assert.Empty(t, spec.Paths["/cat"].Get)
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(spec)
 
-	assert.Len(t, swagger.Components.Schemas, 3)
+	assert.Len(t, spec.Components.Schemas, 3)
 }
 
 func TestPruningUnusedComponents(t *testing.T) {
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneComprehensiveTestFixture))
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(pruneComprehensiveTestFixture))
 	assert.NoError(t, err)
 
-	assert.Len(t, swagger.Components.Schemas, 8)
-	assert.Len(t, swagger.Components.Parameters, 1)
-	assert.Len(t, swagger.Components.SecuritySchemes, 2)
-	assert.Len(t, swagger.Components.RequestBodies, 1)
-	assert.Len(t, swagger.Components.Responses, 2)
-	assert.Len(t, swagger.Components.Headers, 3)
-	assert.Len(t, swagger.Components.Examples, 1)
-	assert.Len(t, swagger.Components.Links, 1)
-	assert.Len(t, swagger.Components.Callbacks, 1)
+	assert.Len(t, spec.Components.Schemas, 8)
+	assert.Len(t, spec.Components.Parameters, 1)
+	assert.Len(t, spec.Components.SecuritySchemes, 2)
+	assert.Len(t, spec.Components.RequestBodies, 1)
+	assert.Len(t, spec.Components.Responses, 2)
+	assert.Len(t, spec.Components.Headers, 3)
+	assert.Len(t, spec.Components.Examples, 1)
+	assert.Len(t, spec.Components.Links, 1)
+	assert.Len(t, spec.Components.Callbacks, 1)
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(spec)
 
-	assert.Len(t, swagger.Components.Schemas, 0)
-	assert.Len(t, swagger.Components.Parameters, 0)
+	assert.Len(t, spec.Components.Schemas, 0)
+	assert.Len(t, spec.Components.Parameters, 0)
 	// securitySchemes are an exception. definitions in securitySchemes
 	// are referenced directly by name. and not by $ref
-	assert.Len(t, swagger.Components.SecuritySchemes, 2)
-	assert.Len(t, swagger.Components.RequestBodies, 0)
-	assert.Len(t, swagger.Components.Responses, 0)
-	assert.Len(t, swagger.Components.Headers, 0)
-	assert.Len(t, swagger.Components.Examples, 0)
-	assert.Len(t, swagger.Components.Links, 0)
-	assert.Len(t, swagger.Components.Callbacks, 0)
+	assert.Len(t, spec.Components.SecuritySchemes, 2)
+	assert.Len(t, spec.Components.RequestBodies, 0)
+	assert.Len(t, spec.Components.Responses, 0)
+	assert.Len(t, spec.Components.Headers, 0)
+	assert.Len(t, spec.Components.Examples, 0)
+	assert.Len(t, spec.Components.Links, 0)
+	assert.Len(t, spec.Components.Callbacks, 0)
 }
 
 const pruneComprehensiveTestFixture = `

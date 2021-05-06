@@ -9,7 +9,7 @@ import (
 )
 
 func TestLineComments(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
+	spec, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
 	opts := codegen.Options{
@@ -19,7 +19,7 @@ func TestLineComments(t *testing.T) {
 		EmbedSpec:          true,
 	}
 
-	code, err := codegen.Generate(swagger, "grab_import_names", opts)
+	code, err := codegen.Generate(spec, "grab_import_names", opts)
 	require.NoError(t, err)
 	require.NotContains(t, code, `"openapi_types"`)
 }

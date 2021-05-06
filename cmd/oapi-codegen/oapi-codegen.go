@@ -80,7 +80,7 @@ func main() {
 	cfg := configFromFlags()
 
 	// If the package name has not been specified, we will use the name of the
-	// swagger file.
+	// OpenAPI file.
 	if cfg.PackageName == "" {
 		path := flag.Arg(0)
 		baseName := filepath.Base(path)
@@ -123,9 +123,9 @@ func main() {
 		errExit("can not specify both server and chi-server targets simultaneously")
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	spec, err := util.LoadSpec(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExit("error loading openapi spec\n: %s", err)
 	}
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
@@ -136,7 +136,7 @@ func main() {
 
 	opts.ImportMapping = cfg.ImportMapping
 
-	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
+	code, err := codegen.Generate(spec, cfg.PackageName, opts)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 func TestFilterOperationsByTag(t *testing.T) {
-	packageName := "testswagger"
+	packageName := "testopenapi"
 	t.Run("include tags", func(t *testing.T) {
 		opts := Options{
 			GenerateClient:     true,
@@ -19,11 +19,11 @@ func TestFilterOperationsByTag(t *testing.T) {
 		}
 
 		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+		spec, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:
-		code, err := Generate(swagger, packageName, opts)
+		code, err := Generate(spec, packageName, opts)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, code)
 		assert.NotContains(t, code, `"/test/:name"`)
@@ -40,11 +40,11 @@ func TestFilterOperationsByTag(t *testing.T) {
 		}
 
 		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+		spec, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:
-		code, err := Generate(swagger, packageName, opts)
+		code, err := Generate(spec, packageName, opts)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, code)
 		assert.Contains(t, code, `"/test/:name"`)
