@@ -438,6 +438,18 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
  are added are in addition to the regular json tags that are generated. If you attempt
  to put a custom json tag you will end up with json tags and undefined behaviour.
 
+```yaml
+components:
+  schemas:
+    Object:
+      properties:
+        name:
+          type: string
+          x-oapi-codegen-extra-tags:
+            - "tag1:\"value1\""
+            - "tag2:\"value2\""
+```
+
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,
