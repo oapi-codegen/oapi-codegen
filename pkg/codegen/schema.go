@@ -427,10 +427,16 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		if p.Required || p.Nullable || !omitEmpty {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
+			field += fmt.Sprintf(" `json:\"%s\"", p.JsonFieldName)
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+			field += fmt.Sprintf(" `json:\"%s,omitempty\"", p.JsonFieldName)
 		}
+		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
+			if tags, err := extTypeName(extension); err == nil {
+				field += " " + tags
+			}
+		}
+		field += "`"
 		fields = append(fields, field)
 	}
 	return fields

@@ -10,6 +10,7 @@ import (
 const (
 	extPropGoType    = "x-go-type"
 	extPropOmitEmpty = "x-omitempty"
+	extPropExtraTags = "x-oapi-codegen-extra-tags"
 )
 
 func extTypeName(extPropValue interface{}) (string, error) {
@@ -26,7 +27,6 @@ func extTypeName(extPropValue interface{}) (string, error) {
 }
 
 func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
-
 	raw, ok := extPropValue.(json.RawMessage)
 	if !ok {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
