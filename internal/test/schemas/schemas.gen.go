@@ -1160,6 +1160,18 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
+// RegisterOptions contains options that alter how routes get registered.
+type RegisterOptions struct {
+	// BaseURL is prepended to the registered paths, so that the paths
+	// can be served under a prefix.
+	BaseURL string
+
+	// Middlewares is a slice of middleware functions that get applied
+	// in sequence after the parameters get decoded and additional context
+	// (for instance, scopes) gets set by the ServerInterfaceWrapper.
+	Middlewares []echo.MiddlewareFunc
+}
+
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
 	RegisterHandlersWithBaseURL(router, si, "")
@@ -1168,18 +1180,23 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Registers handlers, and prepends BaseURL to the paths, so that the paths
 // can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterOptions{BaseURL: baseURL})
+}
+
+// Registers handlers using options.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts RegisterOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET(baseURL+"/issues/127", wrapper.Issue127)
-	router.GET(baseURL+"/issues/185", wrapper.Issue185)
-	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
-	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
-	router.GET(baseURL+"/issues/9", wrapper.Issue9)
+	router.GET(opts.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/127", wrapper.Issue127, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/185", wrapper.Issue185, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/209/$:str", wrapper.Issue209, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/41/:1param", wrapper.Issue41, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/issues/9", wrapper.Issue9, opts.Middlewares...)
 
 }
 

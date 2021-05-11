@@ -3211,6 +3211,18 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
+// RegisterOptions contains options that alter how routes get registered.
+type RegisterOptions struct {
+	// BaseURL is prepended to the registered paths, so that the paths
+	// can be served under a prefix.
+	BaseURL string
+
+	// Middlewares is a slice of middleware functions that get applied
+	// in sequence after the parameters get decoded and additional context
+	// (for instance, scopes) gets set by the ServerInterfaceWrapper.
+	Middlewares []echo.MiddlewareFunc
+}
+
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
 	RegisterHandlersWithBaseURL(router, si, "")
@@ -3219,31 +3231,36 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // Registers handlers, and prepends BaseURL to the paths, so that the paths
 // can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterOptions{BaseURL: baseURL})
+}
+
+// Registers handlers using options.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts RegisterOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/contentObject/:param", wrapper.GetContentObject)
-	router.GET(baseURL+"/cookie", wrapper.GetCookie)
-	router.GET(baseURL+"/header", wrapper.GetHeader)
-	router.GET(baseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
-	router.GET(baseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
-	router.GET(baseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
-	router.GET(baseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
-	router.GET(baseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
-	router.GET(baseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
-	router.GET(baseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
-	router.GET(baseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
-	router.GET(baseURL+"/passThrough/:param", wrapper.GetPassThrough)
-	router.GET(baseURL+"/queryDeepObject", wrapper.GetDeepObject)
-	router.GET(baseURL+"/queryForm", wrapper.GetQueryForm)
-	router.GET(baseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
-	router.GET(baseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
-	router.GET(baseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
-	router.GET(baseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
-	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
-	router.GET(baseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
+	router.GET(opts.BaseURL+"/contentObject/:param", wrapper.GetContentObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/cookie", wrapper.GetCookie, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/header", wrapper.GetHeader, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/passThrough/:param", wrapper.GetPassThrough, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/queryDeepObject", wrapper.GetDeepObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/queryForm", wrapper.GetQueryForm, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber, opts.Middlewares...)
 
 }
 
