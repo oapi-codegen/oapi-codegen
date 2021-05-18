@@ -247,7 +247,7 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 			return
 		}
 
-		err = runtime.BindStyledParameter("simple", false, "header_argument", valueList[0], &HeaderArgument)
+		err = runtime.BindStyledParameterWithLocation("simple", false, "header_argument", runtime.ParamLocationHeader, valueList[0], &HeaderArgument)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid format for parameter header_argument: %s", err), http.StatusBadRequest)
 			return
