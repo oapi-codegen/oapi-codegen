@@ -26,7 +26,7 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/tools/imports"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
+	"github.com/dmhdeveloper/oapi-codegen/pkg/codegen/templates"
 )
 
 // Options defines the optional code to generate.

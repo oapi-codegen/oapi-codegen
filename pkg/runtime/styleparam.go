@@ -24,7 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/dmhdeveloper/oapi-codegen/pkg/types"
 )
 
 // Parameter escaping works differently based on where a header is found
