@@ -202,17 +202,17 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetFoo request
-	GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooResponse, error)
+	GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooHTTPResponse, error)
 }
 
-type GetFooResponse struct {
+type GetFooHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]Bar
 }
 
 // Status returns HTTPResponse.Status
-func (r GetFooResponse) Status() string {
+func (r GetFooHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -220,31 +220,31 @@ func (r GetFooResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetFooResponse) StatusCode() int {
+func (r GetFooHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetFooWithResponse request returning *GetFooResponse
-func (c *ClientWithResponses) GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooResponse, error) {
+// GetFooWithResponse request returning *GetFooHTTPResponse
+func (c *ClientWithResponses) GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooHTTPResponse, error) {
 	rsp, err := c.GetFoo(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetFooResponse(rsp)
+	return ParseGetFooHTTPResponse(rsp)
 }
 
-// ParseGetFooResponse parses an HTTP response from a GetFooWithResponse call
-func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
+// ParseGetFooHTTPResponse parses an HTTP response from a GetFooWithResponse call
+func ParseGetFooHTTPResponse(rsp *http.Response) (*GetFooHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetFooResponse{
+	response := &GetFooHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

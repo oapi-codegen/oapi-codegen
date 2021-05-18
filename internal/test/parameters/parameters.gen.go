@@ -1467,70 +1467,70 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// GetContentObject request
-	GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error)
+	GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectHTTPResponse, error)
 
 	// GetCookie request
-	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error)
+	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieHTTPResponse, error)
 
 	// GetHeader request
-	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error)
+	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderHTTPResponse, error)
 
 	// GetLabelExplodeArray request
-	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error)
+	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayHTTPResponse, error)
 
 	// GetLabelExplodeObject request
-	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error)
+	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectHTTPResponse, error)
 
 	// GetLabelNoExplodeArray request
-	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error)
+	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayHTTPResponse, error)
 
 	// GetLabelNoExplodeObject request
-	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error)
+	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectHTTPResponse, error)
 
 	// GetMatrixExplodeArray request
-	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error)
+	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayHTTPResponse, error)
 
 	// GetMatrixExplodeObject request
-	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error)
+	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectHTTPResponse, error)
 
 	// GetMatrixNoExplodeArray request
-	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error)
+	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayHTTPResponse, error)
 
 	// GetMatrixNoExplodeObject request
-	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error)
+	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectHTTPResponse, error)
 
 	// GetPassThrough request
-	GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error)
+	GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughHTTPResponse, error)
 
 	// GetDeepObject request
-	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error)
+	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectHTTPResponse, error)
 
 	// GetQueryForm request
-	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error)
+	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormHTTPResponse, error)
 
 	// GetSimpleExplodeArray request
-	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error)
+	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayHTTPResponse, error)
 
 	// GetSimpleExplodeObject request
-	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error)
+	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectHTTPResponse, error)
 
 	// GetSimpleNoExplodeArray request
-	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error)
+	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayHTTPResponse, error)
 
 	// GetSimpleNoExplodeObject request
-	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error)
+	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectHTTPResponse, error)
 
 	// GetSimplePrimitive request
-	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
+	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveHTTPResponse, error)
 }
 
-type GetContentObjectResponse struct {
+type GetContentObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetContentObjectResponse) Status() string {
+func (r GetContentObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1538,20 +1538,20 @@ func (r GetContentObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetContentObjectResponse) StatusCode() int {
+func (r GetContentObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetCookieResponse struct {
+type GetCookieHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetCookieResponse) Status() string {
+func (r GetCookieHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1559,20 +1559,20 @@ func (r GetCookieResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetCookieResponse) StatusCode() int {
+func (r GetCookieHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetHeaderResponse struct {
+type GetHeaderHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHeaderResponse) Status() string {
+func (r GetHeaderHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1580,20 +1580,20 @@ func (r GetHeaderResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHeaderResponse) StatusCode() int {
+func (r GetHeaderHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetLabelExplodeArrayResponse struct {
+type GetLabelExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLabelExplodeArrayResponse) Status() string {
+func (r GetLabelExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1601,20 +1601,20 @@ func (r GetLabelExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLabelExplodeArrayResponse) StatusCode() int {
+func (r GetLabelExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetLabelExplodeObjectResponse struct {
+type GetLabelExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLabelExplodeObjectResponse) Status() string {
+func (r GetLabelExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1622,20 +1622,20 @@ func (r GetLabelExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLabelExplodeObjectResponse) StatusCode() int {
+func (r GetLabelExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetLabelNoExplodeArrayResponse struct {
+type GetLabelNoExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLabelNoExplodeArrayResponse) Status() string {
+func (r GetLabelNoExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1643,20 +1643,20 @@ func (r GetLabelNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLabelNoExplodeArrayResponse) StatusCode() int {
+func (r GetLabelNoExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetLabelNoExplodeObjectResponse struct {
+type GetLabelNoExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetLabelNoExplodeObjectResponse) Status() string {
+func (r GetLabelNoExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1664,20 +1664,20 @@ func (r GetLabelNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetLabelNoExplodeObjectResponse) StatusCode() int {
+func (r GetLabelNoExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetMatrixExplodeArrayResponse struct {
+type GetMatrixExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetMatrixExplodeArrayResponse) Status() string {
+func (r GetMatrixExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1685,20 +1685,20 @@ func (r GetMatrixExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetMatrixExplodeArrayResponse) StatusCode() int {
+func (r GetMatrixExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetMatrixExplodeObjectResponse struct {
+type GetMatrixExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetMatrixExplodeObjectResponse) Status() string {
+func (r GetMatrixExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1706,20 +1706,20 @@ func (r GetMatrixExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetMatrixExplodeObjectResponse) StatusCode() int {
+func (r GetMatrixExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetMatrixNoExplodeArrayResponse struct {
+type GetMatrixNoExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetMatrixNoExplodeArrayResponse) Status() string {
+func (r GetMatrixNoExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1727,20 +1727,20 @@ func (r GetMatrixNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetMatrixNoExplodeArrayResponse) StatusCode() int {
+func (r GetMatrixNoExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetMatrixNoExplodeObjectResponse struct {
+type GetMatrixNoExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetMatrixNoExplodeObjectResponse) Status() string {
+func (r GetMatrixNoExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1748,20 +1748,20 @@ func (r GetMatrixNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetMatrixNoExplodeObjectResponse) StatusCode() int {
+func (r GetMatrixNoExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetPassThroughResponse struct {
+type GetPassThroughHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetPassThroughResponse) Status() string {
+func (r GetPassThroughHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1769,20 +1769,20 @@ func (r GetPassThroughResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetPassThroughResponse) StatusCode() int {
+func (r GetPassThroughHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetDeepObjectResponse struct {
+type GetDeepObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetDeepObjectResponse) Status() string {
+func (r GetDeepObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1790,20 +1790,20 @@ func (r GetDeepObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetDeepObjectResponse) StatusCode() int {
+func (r GetDeepObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetQueryFormResponse struct {
+type GetQueryFormHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetQueryFormResponse) Status() string {
+func (r GetQueryFormHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1811,20 +1811,20 @@ func (r GetQueryFormResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetQueryFormResponse) StatusCode() int {
+func (r GetQueryFormHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSimpleExplodeArrayResponse struct {
+type GetSimpleExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSimpleExplodeArrayResponse) Status() string {
+func (r GetSimpleExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1832,20 +1832,20 @@ func (r GetSimpleExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSimpleExplodeArrayResponse) StatusCode() int {
+func (r GetSimpleExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSimpleExplodeObjectResponse struct {
+type GetSimpleExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSimpleExplodeObjectResponse) Status() string {
+func (r GetSimpleExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1853,20 +1853,20 @@ func (r GetSimpleExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSimpleExplodeObjectResponse) StatusCode() int {
+func (r GetSimpleExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSimpleNoExplodeArrayResponse struct {
+type GetSimpleNoExplodeArrayHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSimpleNoExplodeArrayResponse) Status() string {
+func (r GetSimpleNoExplodeArrayHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1874,20 +1874,20 @@ func (r GetSimpleNoExplodeArrayResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSimpleNoExplodeArrayResponse) StatusCode() int {
+func (r GetSimpleNoExplodeArrayHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSimpleNoExplodeObjectResponse struct {
+type GetSimpleNoExplodeObjectHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSimpleNoExplodeObjectResponse) Status() string {
+func (r GetSimpleNoExplodeObjectHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1895,20 +1895,20 @@ func (r GetSimpleNoExplodeObjectResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSimpleNoExplodeObjectResponse) StatusCode() int {
+func (r GetSimpleNoExplodeObjectHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type GetSimplePrimitiveResponse struct {
+type GetSimplePrimitiveHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r GetSimplePrimitiveResponse) Status() string {
+func (r GetSimplePrimitiveHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -1916,193 +1916,193 @@ func (r GetSimplePrimitiveResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetSimplePrimitiveResponse) StatusCode() int {
+func (r GetSimplePrimitiveHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetContentObjectWithResponse request returning *GetContentObjectResponse
-func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error) {
+// GetContentObjectWithResponse request returning *GetContentObjectHTTPResponse
+func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectHTTPResponse, error) {
 	rsp, err := c.GetContentObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetContentObjectResponse(rsp)
+	return ParseGetContentObjectHTTPResponse(rsp)
 }
 
-// GetCookieWithResponse request returning *GetCookieResponse
-func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error) {
+// GetCookieWithResponse request returning *GetCookieHTTPResponse
+func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieHTTPResponse, error) {
 	rsp, err := c.GetCookie(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetCookieResponse(rsp)
+	return ParseGetCookieHTTPResponse(rsp)
 }
 
-// GetHeaderWithResponse request returning *GetHeaderResponse
-func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error) {
+// GetHeaderWithResponse request returning *GetHeaderHTTPResponse
+func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderHTTPResponse, error) {
 	rsp, err := c.GetHeader(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHeaderResponse(rsp)
+	return ParseGetHeaderHTTPResponse(rsp)
 }
 
-// GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error) {
+// GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetLabelExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLabelExplodeArrayResponse(rsp)
+	return ParseGetLabelExplodeArrayHTTPResponse(rsp)
 }
 
-// GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error) {
+// GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetLabelExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLabelExplodeObjectResponse(rsp)
+	return ParseGetLabelExplodeObjectHTTPResponse(rsp)
 }
 
-// GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
-func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error) {
+// GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetLabelNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLabelNoExplodeArrayResponse(rsp)
+	return ParseGetLabelNoExplodeArrayHTTPResponse(rsp)
 }
 
-// GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
-func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error) {
+// GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetLabelNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetLabelNoExplodeObjectResponse(rsp)
+	return ParseGetLabelNoExplodeObjectHTTPResponse(rsp)
 }
 
-// GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error) {
+// GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetMatrixExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMatrixExplodeArrayResponse(rsp)
+	return ParseGetMatrixExplodeArrayHTTPResponse(rsp)
 }
 
-// GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error) {
+// GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetMatrixExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMatrixExplodeObjectResponse(rsp)
+	return ParseGetMatrixExplodeObjectHTTPResponse(rsp)
 }
 
-// GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error) {
+// GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMatrixNoExplodeArrayResponse(rsp)
+	return ParseGetMatrixNoExplodeArrayHTTPResponse(rsp)
 }
 
-// GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
-func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error) {
+// GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetMatrixNoExplodeObjectResponse(rsp)
+	return ParseGetMatrixNoExplodeObjectHTTPResponse(rsp)
 }
 
-// GetPassThroughWithResponse request returning *GetPassThroughResponse
-func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error) {
+// GetPassThroughWithResponse request returning *GetPassThroughHTTPResponse
+func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughHTTPResponse, error) {
 	rsp, err := c.GetPassThrough(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetPassThroughResponse(rsp)
+	return ParseGetPassThroughHTTPResponse(rsp)
 }
 
-// GetDeepObjectWithResponse request returning *GetDeepObjectResponse
-func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error) {
+// GetDeepObjectWithResponse request returning *GetDeepObjectHTTPResponse
+func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectHTTPResponse, error) {
 	rsp, err := c.GetDeepObject(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetDeepObjectResponse(rsp)
+	return ParseGetDeepObjectHTTPResponse(rsp)
 }
 
-// GetQueryFormWithResponse request returning *GetQueryFormResponse
-func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error) {
+// GetQueryFormWithResponse request returning *GetQueryFormHTTPResponse
+func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormHTTPResponse, error) {
 	rsp, err := c.GetQueryForm(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetQueryFormResponse(rsp)
+	return ParseGetQueryFormHTTPResponse(rsp)
 }
 
-// GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error) {
+// GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetSimpleExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSimpleExplodeArrayResponse(rsp)
+	return ParseGetSimpleExplodeArrayHTTPResponse(rsp)
 }
 
-// GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error) {
+// GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetSimpleExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSimpleExplodeObjectResponse(rsp)
+	return ParseGetSimpleExplodeObjectHTTPResponse(rsp)
 }
 
-// GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error) {
+// GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayHTTPResponse
+func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayHTTPResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSimpleNoExplodeArrayResponse(rsp)
+	return ParseGetSimpleNoExplodeArrayHTTPResponse(rsp)
 }
 
-// GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
-func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error) {
+// GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectHTTPResponse
+func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectHTTPResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSimpleNoExplodeObjectResponse(rsp)
+	return ParseGetSimpleNoExplodeObjectHTTPResponse(rsp)
 }
 
-// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
-func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error) {
+// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveHTTPResponse
+func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveHTTPResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetSimplePrimitiveResponse(rsp)
+	return ParseGetSimplePrimitiveHTTPResponse(rsp)
 }
 
-// ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
-func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectResponse, error) {
+// ParseGetContentObjectHTTPResponse parses an HTTP response from a GetContentObjectWithResponse call
+func ParseGetContentObjectHTTPResponse(rsp *http.Response) (*GetContentObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetContentObjectResponse{
+	response := &GetContentObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2113,15 +2113,15 @@ func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectRespons
 	return response, nil
 }
 
-// ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
-func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
+// ParseGetCookieHTTPResponse parses an HTTP response from a GetCookieWithResponse call
+func ParseGetCookieHTTPResponse(rsp *http.Response) (*GetCookieHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCookieResponse{
+	response := &GetCookieHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2132,15 +2132,15 @@ func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
 	return response, nil
 }
 
-// ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
-func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
+// ParseGetHeaderHTTPResponse parses an HTTP response from a GetHeaderWithResponse call
+func ParseGetHeaderHTTPResponse(rsp *http.Response) (*GetHeaderHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHeaderResponse{
+	response := &GetHeaderHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2151,15 +2151,15 @@ func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
 	return response, nil
 }
 
-// ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
-func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArrayResponse, error) {
+// ParseGetLabelExplodeArrayHTTPResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
+func ParseGetLabelExplodeArrayHTTPResponse(rsp *http.Response) (*GetLabelExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelExplodeArrayResponse{
+	response := &GetLabelExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2170,15 +2170,15 @@ func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArra
 	return response, nil
 }
 
-// ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
-func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObjectResponse, error) {
+// ParseGetLabelExplodeObjectHTTPResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
+func ParseGetLabelExplodeObjectHTTPResponse(rsp *http.Response) (*GetLabelExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelExplodeObjectResponse{
+	response := &GetLabelExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2189,15 +2189,15 @@ func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObj
 	return response, nil
 }
 
-// ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
-func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplodeArrayResponse, error) {
+// ParseGetLabelNoExplodeArrayHTTPResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
+func ParseGetLabelNoExplodeArrayHTTPResponse(rsp *http.Response) (*GetLabelNoExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelNoExplodeArrayResponse{
+	response := &GetLabelNoExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2208,15 +2208,15 @@ func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplode
 	return response, nil
 }
 
-// ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
-func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplodeObjectResponse, error) {
+// ParseGetLabelNoExplodeObjectHTTPResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
+func ParseGetLabelNoExplodeObjectHTTPResponse(rsp *http.Response) (*GetLabelNoExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelNoExplodeObjectResponse{
+	response := &GetLabelNoExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2227,15 +2227,15 @@ func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplod
 	return response, nil
 }
 
-// ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
-func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeArrayResponse, error) {
+// ParseGetMatrixExplodeArrayHTTPResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
+func ParseGetMatrixExplodeArrayHTTPResponse(rsp *http.Response) (*GetMatrixExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixExplodeArrayResponse{
+	response := &GetMatrixExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2246,15 +2246,15 @@ func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeAr
 	return response, nil
 }
 
-// ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
-func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeObjectResponse, error) {
+// ParseGetMatrixExplodeObjectHTTPResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
+func ParseGetMatrixExplodeObjectHTTPResponse(rsp *http.Response) (*GetMatrixExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixExplodeObjectResponse{
+	response := &GetMatrixExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2265,15 +2265,15 @@ func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeO
 	return response, nil
 }
 
-// ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
-func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplodeArrayResponse, error) {
+// ParseGetMatrixNoExplodeArrayHTTPResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
+func ParseGetMatrixNoExplodeArrayHTTPResponse(rsp *http.Response) (*GetMatrixNoExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixNoExplodeArrayResponse{
+	response := &GetMatrixNoExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2284,15 +2284,15 @@ func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplo
 	return response, nil
 }
 
-// ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
-func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExplodeObjectResponse, error) {
+// ParseGetMatrixNoExplodeObjectHTTPResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
+func ParseGetMatrixNoExplodeObjectHTTPResponse(rsp *http.Response) (*GetMatrixNoExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixNoExplodeObjectResponse{
+	response := &GetMatrixNoExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2303,15 +2303,15 @@ func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExpl
 	return response, nil
 }
 
-// ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
-func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, error) {
+// ParseGetPassThroughHTTPResponse parses an HTTP response from a GetPassThroughWithResponse call
+func ParseGetPassThroughHTTPResponse(rsp *http.Response) (*GetPassThroughHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetPassThroughResponse{
+	response := &GetPassThroughHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2322,15 +2322,15 @@ func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, e
 	return response, nil
 }
 
-// ParseGetDeepObjectResponse parses an HTTP response from a GetDeepObjectWithResponse call
-func ParseGetDeepObjectResponse(rsp *http.Response) (*GetDeepObjectResponse, error) {
+// ParseGetDeepObjectHTTPResponse parses an HTTP response from a GetDeepObjectWithResponse call
+func ParseGetDeepObjectHTTPResponse(rsp *http.Response) (*GetDeepObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetDeepObjectResponse{
+	response := &GetDeepObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2341,15 +2341,15 @@ func ParseGetDeepObjectResponse(rsp *http.Response) (*GetDeepObjectResponse, err
 	return response, nil
 }
 
-// ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
-func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error) {
+// ParseGetQueryFormHTTPResponse parses an HTTP response from a GetQueryFormWithResponse call
+func ParseGetQueryFormHTTPResponse(rsp *http.Response) (*GetQueryFormHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetQueryFormResponse{
+	response := &GetQueryFormHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2360,15 +2360,15 @@ func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error
 	return response, nil
 }
 
-// ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
-func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeArrayResponse, error) {
+// ParseGetSimpleExplodeArrayHTTPResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
+func ParseGetSimpleExplodeArrayHTTPResponse(rsp *http.Response) (*GetSimpleExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleExplodeArrayResponse{
+	response := &GetSimpleExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2379,15 +2379,15 @@ func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeAr
 	return response, nil
 }
 
-// ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
-func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeObjectResponse, error) {
+// ParseGetSimpleExplodeObjectHTTPResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
+func ParseGetSimpleExplodeObjectHTTPResponse(rsp *http.Response) (*GetSimpleExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleExplodeObjectResponse{
+	response := &GetSimpleExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2398,15 +2398,15 @@ func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeO
 	return response, nil
 }
 
-// ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
-func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplodeArrayResponse, error) {
+// ParseGetSimpleNoExplodeArrayHTTPResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
+func ParseGetSimpleNoExplodeArrayHTTPResponse(rsp *http.Response) (*GetSimpleNoExplodeArrayHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleNoExplodeArrayResponse{
+	response := &GetSimpleNoExplodeArrayHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2417,15 +2417,15 @@ func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplo
 	return response, nil
 }
 
-// ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
-func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExplodeObjectResponse, error) {
+// ParseGetSimpleNoExplodeObjectHTTPResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
+func ParseGetSimpleNoExplodeObjectHTTPResponse(rsp *http.Response) (*GetSimpleNoExplodeObjectHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleNoExplodeObjectResponse{
+	response := &GetSimpleNoExplodeObjectHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2436,15 +2436,15 @@ func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExpl
 	return response, nil
 }
 
-// ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
-func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveResponse, error) {
+// ParseGetSimplePrimitiveHTTPResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
+func ParseGetSimplePrimitiveHTTPResponse(rsp *http.Response) (*GetSimplePrimitiveHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimplePrimitiveResponse{
+	response := &GetSimplePrimitiveHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

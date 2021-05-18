@@ -349,7 +349,7 @@ type ClientWithResponsesInterface interface {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
-type {{$opid | ucFirst}}Response struct {
+type {{$opid | ucFirst}}HTTPResponse struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range getResponseTypeDefinitions .}}
@@ -358,7 +358,7 @@ type {{$opid | ucFirst}}Response struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r {{$opid | ucFirst}}Response) Status() string {
+func (r {{$opid | ucFirst}}HTTPResponse) Status() string {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.Status
     }
@@ -366,7 +366,7 @@ func (r {{$opid | ucFirst}}Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r {{$opid | ucFirst}}Response) StatusCode() int {
+func (r {{$opid | ucFirst}}HTTPResponse) StatusCode() int {
     if r.HTTPResponse != nil {
         return r.HTTPResponse.StatusCode
     }
@@ -379,7 +379,7 @@ func (r {{$opid | ucFirst}}Response) StatusCode() int {
 {{$opid := .OperationId -}}
 {{/* Generate client methods (with responses)*/}}
 
-// {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}Response
+// {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{$opid}}HTTPResponse
 func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error){
     rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}}, reqEditors...)
     if err != nil {

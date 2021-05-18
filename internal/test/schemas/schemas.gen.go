@@ -577,32 +577,32 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// EnsureEverythingIsReferenced request
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
+	EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedHTTPResponse, error)
 
 	// Issue127 request
-	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
+	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127HTTPResponse, error)
 
 	// Issue185 request  with any body
-	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
+	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185HTTPResponse, error)
 
-	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
+	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185HTTPResponse, error)
 
 	// Issue209 request
-	Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error)
+	Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209HTTPResponse, error)
 
 	// Issue30 request
-	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error)
+	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30HTTPResponse, error)
 
 	// Issue41 request
-	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41HTTPResponse, error)
 
 	// Issue9 request  with any body
-	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9HTTPResponse, error)
 
-	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9HTTPResponse, error)
 }
 
-type EnsureEverythingIsReferencedResponse struct {
+type EnsureEverythingIsReferencedHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
@@ -617,7 +617,7 @@ type EnsureEverythingIsReferencedResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r EnsureEverythingIsReferencedResponse) Status() string {
+func (r EnsureEverythingIsReferencedHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -625,14 +625,14 @@ func (r EnsureEverythingIsReferencedResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
+func (r EnsureEverythingIsReferencedHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue127Response struct {
+type Issue127HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GenericObject
@@ -642,7 +642,7 @@ type Issue127Response struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue127Response) Status() string {
+func (r Issue127HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -650,20 +650,20 @@ func (r Issue127Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue127Response) StatusCode() int {
+func (r Issue127HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue185Response struct {
+type Issue185HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue185Response) Status() string {
+func (r Issue185HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -671,20 +671,20 @@ func (r Issue185Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue185Response) StatusCode() int {
+func (r Issue185HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue209Response struct {
+type Issue209HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue209Response) Status() string {
+func (r Issue209HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -692,20 +692,20 @@ func (r Issue209Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue209Response) StatusCode() int {
+func (r Issue209HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue30Response struct {
+type Issue30HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue30Response) Status() string {
+func (r Issue30HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -713,20 +713,20 @@ func (r Issue30Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue30Response) StatusCode() int {
+func (r Issue30HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue41Response struct {
+type Issue41HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue41Response) Status() string {
+func (r Issue41HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -734,20 +734,20 @@ func (r Issue41Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue41Response) StatusCode() int {
+func (r Issue41HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type Issue9Response struct {
+type Issue9HTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r Issue9Response) Status() string {
+func (r Issue9HTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -755,101 +755,101 @@ func (r Issue9Response) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r Issue9Response) StatusCode() int {
+func (r Issue9HTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedHTTPResponse
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedHTTPResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseEnsureEverythingIsReferencedResponse(rsp)
+	return ParseEnsureEverythingIsReferencedHTTPResponse(rsp)
 }
 
-// Issue127WithResponse request returning *Issue127Response
-func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error) {
+// Issue127WithResponse request returning *Issue127HTTPResponse
+func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127HTTPResponse, error) {
 	rsp, err := c.Issue127(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue127Response(rsp)
+	return ParseIssue127HTTPResponse(rsp)
 }
 
-// Issue185WithBodyWithResponse request with arbitrary body returning *Issue185Response
-func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
+// Issue185WithBodyWithResponse request with arbitrary body returning *Issue185HTTPResponse
+func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185HTTPResponse, error) {
 	rsp, err := c.Issue185WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue185Response(rsp)
+	return ParseIssue185HTTPResponse(rsp)
 }
 
-func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
+func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185HTTPResponse, error) {
 	rsp, err := c.Issue185(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue185Response(rsp)
+	return ParseIssue185HTTPResponse(rsp)
 }
 
-// Issue209WithResponse request returning *Issue209Response
-func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error) {
+// Issue209WithResponse request returning *Issue209HTTPResponse
+func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209HTTPResponse, error) {
 	rsp, err := c.Issue209(ctx, str, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue209Response(rsp)
+	return ParseIssue209HTTPResponse(rsp)
 }
 
-// Issue30WithResponse request returning *Issue30Response
-func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error) {
+// Issue30WithResponse request returning *Issue30HTTPResponse
+func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30HTTPResponse, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue30Response(rsp)
+	return ParseIssue30HTTPResponse(rsp)
 }
 
-// Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
+// Issue41WithResponse request returning *Issue41HTTPResponse
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41HTTPResponse, error) {
 	rsp, err := c.Issue41(ctx, n1param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue41Response(rsp)
+	return ParseIssue41HTTPResponse(rsp)
 }
 
-// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
-func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9HTTPResponse
+func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9HTTPResponse, error) {
 	rsp, err := c.Issue9WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue9Response(rsp)
+	return ParseIssue9HTTPResponse(rsp)
 }
 
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9HTTPResponse, error) {
 	rsp, err := c.Issue9(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseIssue9Response(rsp)
+	return ParseIssue9HTTPResponse(rsp)
 }
 
-// ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
-func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
+// ParseEnsureEverythingIsReferencedHTTPResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
+func ParseEnsureEverythingIsReferencedHTTPResponse(rsp *http.Response) (*EnsureEverythingIsReferencedHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &EnsureEverythingIsReferencedResponse{
+	response := &EnsureEverythingIsReferencedHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -875,15 +875,15 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	return response, nil
 }
 
-// ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
-func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
+// ParseIssue127HTTPResponse parses an HTTP response from a Issue127WithResponse call
+func ParseIssue127HTTPResponse(rsp *http.Response) (*Issue127HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue127Response{
+	response := &Issue127HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -928,15 +928,15 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	return response, nil
 }
 
-// ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
-func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
+// ParseIssue185HTTPResponse parses an HTTP response from a Issue185WithResponse call
+func ParseIssue185HTTPResponse(rsp *http.Response) (*Issue185HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue185Response{
+	response := &Issue185HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -947,15 +947,15 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	return response, nil
 }
 
-// ParseIssue209Response parses an HTTP response from a Issue209WithResponse call
-func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
+// ParseIssue209HTTPResponse parses an HTTP response from a Issue209WithResponse call
+func ParseIssue209HTTPResponse(rsp *http.Response) (*Issue209HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue209Response{
+	response := &Issue209HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -966,15 +966,15 @@ func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	return response, nil
 }
 
-// ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
-func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
+// ParseIssue30HTTPResponse parses an HTTP response from a Issue30WithResponse call
+func ParseIssue30HTTPResponse(rsp *http.Response) (*Issue30HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue30Response{
+	response := &Issue30HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -985,15 +985,15 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	return response, nil
 }
 
-// ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
-func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
+// ParseIssue41HTTPResponse parses an HTTP response from a Issue41WithResponse call
+func ParseIssue41HTTPResponse(rsp *http.Response) (*Issue41HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue41Response{
+	response := &Issue41HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1004,15 +1004,15 @@ func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	return response, nil
 }
 
-// ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
-func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
+// ParseIssue9HTTPResponse parses an HTTP response from a Issue9WithResponse call
+func ParseIssue9HTTPResponse(rsp *http.Response) (*Issue9HTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue9Response{
+	response := &Issue9HTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

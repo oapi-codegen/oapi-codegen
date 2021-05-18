@@ -253,17 +253,17 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 	// ExampleGet request
-	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error)
+	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetHTTPResponse, error)
 }
 
-type ExampleGetResponse struct {
+type ExampleGetHTTPResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Document
 }
 
 // Status returns HTTPResponse.Status
-func (r ExampleGetResponse) Status() string {
+func (r ExampleGetHTTPResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -271,31 +271,31 @@ func (r ExampleGetResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ExampleGetResponse) StatusCode() int {
+func (r ExampleGetHTTPResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// ExampleGetWithResponse request returning *ExampleGetResponse
-func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error) {
+// ExampleGetWithResponse request returning *ExampleGetHTTPResponse
+func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetHTTPResponse, error) {
 	rsp, err := c.ExampleGet(ctx, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseExampleGetResponse(rsp)
+	return ParseExampleGetHTTPResponse(rsp)
 }
 
-// ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
-func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
+// ParseExampleGetHTTPResponse parses an HTTP response from a ExampleGetWithResponse call
+func ParseExampleGetHTTPResponse(rsp *http.Response) (*ExampleGetHTTPResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ExampleGetResponse{
+	response := &ExampleGetHTTPResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
