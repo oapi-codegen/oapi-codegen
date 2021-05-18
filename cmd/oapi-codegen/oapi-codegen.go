@@ -34,16 +34,17 @@ func errExit(format string, args ...interface{}) {
 }
 
 var (
-	flagPackageName    string
-	flagGenerate       string
-	flagOutputFile     string
-	flagIncludeTags    string
-	flagExcludeTags    string
-	flagTemplatesDir   string
-	flagImportMapping  string
-	flagExcludeSchemas string
-	flagConfigFile     string
-	flagAliasTypes     bool
+	flagPackageName     string
+	flagGenerate        string
+	flagOutputFile      string
+	flagIncludeTags     string
+	flagExcludeTags     string
+	flagTemplatesDir    string
+	flagImportMapping   string
+	flagExcludeSchemas  string
+	flagConfigFile      string
+	flagAliasTypes      bool
+	flagVendorJSONRegex string
 )
 
 type configuration struct {
@@ -55,6 +56,7 @@ type configuration struct {
 	TemplatesDir    string            `yaml:"templates"`
 	ImportMapping   map[string]string `yaml:"import-mapping"`
 	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	VendorJSONRegex string            `yaml:"vendor-json-regex"`
 }
 
 func main() {
@@ -70,6 +72,8 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
+	flag.StringVar(&flagVendorJSONRegex, "vendor-json-regex", codegen.DefaultVendorJSONRegex,
+		"Regex to recognize/match vendor-specific JSON media types. Use capture group to suffix generated types with a subexpression.")
 	flag.Parse()
 
 	if flag.NArg() < 1 {
@@ -88,6 +92,8 @@ func main() {
 		nameParts := strings.Split(baseName, ".")
 		cfg.PackageName = codegen.ToCamelCase(nameParts[0])
 	}
+
+	codegen.InitVendorJSONRegex(cfg.VendorJSONRegex)
 
 	opts := codegen.Options{
 		AliasTypes: flagAliasTypes,
@@ -221,5 +227,6 @@ func configFromFlags() *configuration {
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
+	cfg.VendorJSONRegex = flagVendorJSONRegex
 	return &cfg
 }

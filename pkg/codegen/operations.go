@@ -509,10 +509,12 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var tag string
 		var defaultBody bool
 
-		switch contentType {
-		case "application/json":
+		switch {
+		case isJSON(contentType):
 			tag = "JSON"
 			defaultBody = true
+		case isVendorJSON(contentType):
+			tag = getTagForVendorJSON(contentType)
 		default:
 			continue
 		}
@@ -530,7 +532,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			if err != nil {
 				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
 			}
+
 			bodySchema.RefType = refType
+			if isVendorJSON(contentType) {
+				bodySchema.RefType = getVendorJSONTypeName(refType, contentType)
+			}
 		}
 
 		// If the request has a body, but it's not a user defined

@@ -428,33 +428,50 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
+		// handle application/json and vendor-specific JSON media types here. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
+
+		for mediaType := range response.Content {
+			var typeName string
+
+			switch {
+			case isJSON(mediaType):
+				typeName = SchemaNameToTypeName(responseName)
+			case isVendorJSON(mediaType):
+				typeName = getVendorJSONTypeName(responseName, mediaType)
+			default:
+				continue
+			}
+
+			jsonResponse := response.Content[mediaType]
 			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in response %s", responseName))
+				return nil, errors.Wrap(err, fmt.Sprintf(
+					"error generating Go type for schema in response %s (media type=%s)",
+					responseName, mediaType))
 			}
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
-				TypeName: SchemaNameToTypeName(responseName),
+				TypeName: typeName,
 			}
 
 			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
+				// Generate a reference type for referenced response
 				refType, err := RefPathToGoType(responseOrRef.Ref)
 				if err != nil {
-					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in parameter %s", responseOrRef.Ref, responseName))
+					return nil, errors.Wrap(err, fmt.Sprintf(
+						"error generating Go type for (%s) in response %s (media type=%s)",
+						responseOrRef.Ref, responseName, mediaType))
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
 		}
 	}
+
 	return types, nil
 }
 
@@ -466,27 +483,43 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
 		bodyOrRef := bodies[bodyName]
 
-		// As for responses, we will only generate Go code for JSON bodies,
+		// As for requests, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
-		response := bodyOrRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
+		request := bodyOrRef.Value
+
+		for mediaType := range request.Content {
+			var typeName string
+
+			switch {
+			case isJSON(mediaType):
+				typeName = SchemaNameToTypeName(bodyName)
+			case isVendorJSON(mediaType):
+				typeName = getVendorJSONTypeName(bodyName, mediaType)
+			default:
+				continue
+			}
+
+			jsonBody := request.Content[mediaType]
 			goType, err := GenerateGoSchema(jsonBody.Schema, []string{bodyName})
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for schema in body %s", bodyName))
+				return nil, errors.Wrap(err, fmt.Sprintf(
+					"error generating Go type for schema in body %s (media type=%s)",
+					bodyName, mediaType))
 			}
 
 			typeDef := TypeDefinition{
 				JsonName: bodyName,
 				Schema:   goType,
-				TypeName: SchemaNameToTypeName(bodyName),
+				TypeName: typeName,
 			}
 
 			if bodyOrRef.Ref != "" {
 				// Generate a reference type for referenced bodies
 				refType, err := RefPathToGoType(bodyOrRef.Ref)
 				if err != nil {
-					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go type for (%s) in body %s", bodyOrRef.Ref, bodyName))
+					return nil, errors.Wrap(err, fmt.Sprintf(
+						"error generating Go type for (%s) in body %s (media type=%s)",
+						bodyOrRef.Ref, bodyName, mediaType))
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
