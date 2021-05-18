@@ -122,7 +122,7 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	}
 
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testOpenAPIDefinition))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
 	assert.NoError(t, err)
 
 	// Run our code generation:

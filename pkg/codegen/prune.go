@@ -21,7 +21,7 @@ type RefWrapper struct {
 	SourceRef interface{}
 }
 
-func walkSwagger(swagger *openapi3.Swagger, doFn func(RefWrapper) (bool, error)) error {
+func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
 	if swagger == nil {
 		return nil
 	}
@@ -377,7 +377,7 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
-func findComponentRefs(swagger *openapi3.Swagger) []string {
+func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
 
 	walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
@@ -391,7 +391,7 @@ func findComponentRefs(swagger *openapi3.Swagger) []string {
 	return refs
 }
 
-func removeOrphanedComponents(swagger *openapi3.Swagger, refs []string) int {
+func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 	countRemoved := 0
 
 	for key, _ := range swagger.Components.Schemas {
@@ -472,7 +472,7 @@ func removeOrphanedComponents(swagger *openapi3.Swagger, refs []string) int {
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.Swagger) {
+func pruneUnusedComponents(swagger *openapi3.T) {
 	for {
 		refs := findComponentRefs(swagger)
 		countRemoved := removeOrphanedComponents(swagger, refs)
