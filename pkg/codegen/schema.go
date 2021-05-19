@@ -25,6 +25,9 @@ type Schema struct {
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
 	Description string // The description of the element
+
+	// The original OpenAPIv3 Schema.
+	OAPISchema *openapi3.Schema
 }
 
 func (s Schema) IsRef() bool {
@@ -162,6 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
+		OAPISchema: schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -184,6 +188,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, errors.Wrap(err, "error merging schemas")
 		}
+		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
 	}
 
