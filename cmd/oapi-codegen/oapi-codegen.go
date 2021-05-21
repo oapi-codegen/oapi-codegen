@@ -17,7 +17,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -77,8 +76,13 @@ func main() {
 	flag.Parse()
 
 	if flagPrintVersion {
-		bi, _ := debug.ReadBuildInfo()
-		log.Println(bi.Main.Version)
+		bi, ok := debug.ReadBuildInfo()
+		if !ok {
+			fmt.Fprintln(os.Stderr, "error reading build info")
+			os.Exit(1)
+		}
+		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")
+		fmt.Println(bi.Main.Version)
 		return
 	}
 

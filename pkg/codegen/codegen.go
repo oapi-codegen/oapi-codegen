@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"text/template"
@@ -553,12 +554,23 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
+
+	// Read build version for incorporating into generated files
+	bi, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "", errors.New("failed to read build info")
+	}
+
 	context := struct {
 		ExternalImports []string
 		PackageName     string
+		ModuleName      string
+		Version         string
 	}{
 		ExternalImports: externalImports,
 		PackageName:     packageName,
+		ModuleName:      bi.Main.Path,
+		Version:         bi.Main.Version,
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {
