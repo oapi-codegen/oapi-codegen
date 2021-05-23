@@ -15,6 +15,10 @@ type PetStore struct {
 	Lock   sync.Mutex
 }
 
+// Make sure we conform to ServerInterface
+
+var _ ServerInterface = (*PetStore)(nil)
+
 func NewPetStore() *PetStore {
 	return &PetStore{
 		Pets:   make(map[int64]Pet),
@@ -95,7 +99,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pet)
 }
 
-func (p *PetStore) FindPetById(w http.ResponseWriter, r *http.Request, id int64) {
+func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
