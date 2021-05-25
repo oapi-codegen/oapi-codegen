@@ -117,7 +117,7 @@ func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httpt
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
 	require.NoError(t, err, "Error initializing swagger")
 
 	// Create a new echo router

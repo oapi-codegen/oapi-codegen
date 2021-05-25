@@ -303,6 +303,12 @@ paths:
           schema:
             type: integer
             format: int32
+        - name: ps
+          description: primitive string
+          in: query
+          required: false
+          schema:
+            type: string
         - name: co
           description: complex object
           in: query

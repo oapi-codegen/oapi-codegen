@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types -o petstore-types.gen.go ../../petstore-expanded.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate server,spec -o petstore-server.gen.go ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -119,7 +119,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	return nil
 }
 
-func (p *PetStore) FindPetById(ctx echo.Context, petId int64) error {
+func (p *PetStore) FindPetByID(ctx echo.Context, petId int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 

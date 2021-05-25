@@ -13,4 +13,4 @@ This is the structure:
 
 To generate the handler glue, run:
 
-    go run cmd/oapi-codegen/oapi-codegen.go --package petstore examples/oapi-codegen/api/petstore-expanded.yaml  > examples/oapi-codegen/api/petstore.gen.go
+    go run cmd/oapi-codegen/oapi-codegen.go --package petstore examples/petstore-expanded/petstore-expanded.yaml  > examples/petstore-expanded/petstore.gen.go

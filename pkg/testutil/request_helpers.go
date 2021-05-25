@@ -129,9 +129,9 @@ func (r *RequestBuilder) WithCookieNameValue(name, value string) *RequestBuilder
 	return r.WithCookie(&http.Cookie{Name: name, Value: value})
 }
 
-// This function performs the request, it takes a pointer to a testing context
-// to print messages, and a pointer to an echo context for request handling.
-func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
+// GoWithHTTPHandler performs the request, it takes a pointer to a testing context
+// to print messages, and a http handler for request handling.
+func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *CompletedRequest {
 	if r.Error != nil {
 		// Fail the test if we had an error
 		t.Errorf("error constructing request: %s", r.Error)
@@ -151,11 +151,17 @@ func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 	}
 
 	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, req)
+	handler.ServeHTTP(rec, req)
 
 	return &CompletedRequest{
 		Recorder: rec,
 	}
+}
+
+// Go performs the request, it takes a pointer to a testing context
+// to print messages, and a pointer to an echo context for request handling.
+func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
+	return r.GoWithHTTPHandler(t, e)
 }
 
 // This is the result of calling Go() on the request builder. We're wrapping the

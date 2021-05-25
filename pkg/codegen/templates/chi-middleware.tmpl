@@ -1,7 +1,10 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
+    HandlerMiddlewares []MiddlewareFunc
 }
+
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -36,7 +39,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  ctx = context.WithValue(ctx, "{{.ProviderName}}.Scopes", {{toStringArray .Scopes}})
+  ctx = context.WithValue(ctx, {{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -98,7 +101,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", valueList[0], &{{.GoName}})
+          err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
           if err != nil {
             http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
             return
@@ -116,7 +119,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
 
     {{range .CookieParams}}
-      if cookie, err := r.Cookie("{{.ParamName}}"); err == nil {
+      var cookie *http.Cookie
+
+      if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
@@ -159,7 +164,16 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       {{- end}}
     {{end}}
   {{end}}
-  siw.Handler.{{.OperationId}}(w, r.WithContext(ctx){{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+
+  var handler = func(w http.ResponseWriter, r *http.Request) {
+    siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+}
+
+  for _, middleware := range siw.HandlerMiddlewares {
+    handler = middleware(handler)
+  }
+
+  handler(w, r.WithContext(ctx))
 }
 {{end}}
 

@@ -28,10 +28,29 @@ func ParseCommandlineMap(src string) (map[string]string, error) {
 	return result, nil
 }
 
+// ParseCommandLineList parses comma separated string lists which are passed
+// in on the command line. Spaces are trimmed off both sides of result
+// strings.
+func ParseCommandLineList(input string) []string {
+	input = strings.TrimSpace(input)
+	if len(input) == 0 {
+		return nil
+	}
+	splitInput := strings.Split(input, ",")
+	args := make([]string, 0, len(splitInput))
+	for _, s := range splitInput {
+		s = strings.TrimSpace(s)
+		if len(s) > 0 {
+			args = append(args, s)
+		}
+	}
+	return args
+}
+
 // This function splits a string along the specifed separator, but it
 // ignores anything between double quotes for splitting. We do simple
 // inside/outside quote counting. Quotes are not stripped from output.
-func splitString(s string, sep rune) ([]string) {
+func splitString(s string, sep rune) []string {
 	const escapeChar rune = '"'
 
 	var parts []string
@@ -39,7 +58,7 @@ func splitString(s string, sep rune) ([]string) {
 	inQuotes := false
 
 	for _, c := range s {
-		if c == escapeChar{
+		if c == escapeChar {
 			if inQuotes {
 				inQuotes = false
 			} else {

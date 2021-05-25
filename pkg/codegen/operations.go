@@ -163,7 +163,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// If this is a reference to a predefined type, simply use the reference
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
-		if paramOrRef.Ref != "" {
+		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
@@ -185,7 +185,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for k, v := range sr {
+		for _, k := range SortedSecurityRequirementKeys(sr) {
+			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
 	}
@@ -258,8 +259,8 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
-	var tds []TypeDefinition
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
 	sortedResponsesKeys := SortedResponsesKeys(responses)
@@ -292,12 +293,15 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 						continue
 					}
 
-					td := TypeDefinition{
-						TypeName:     typeName,
-						Schema:       responseSchema,
-						ResponseName: responseName,
+					td := ResponseTypeDefinition{
+						TypeDefinition: TypeDefinition{
+							TypeName: typeName,
+							Schema:   responseSchema,
+						},
+						ResponseName:    responseName,
+						ContentTypeName: contentTypeName,
 					}
-					if contentType.Schema.Ref != "" {
+					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
 						if err != nil {
 							return nil, errors.Wrap(err, "error dereferencing response Ref")
@@ -333,8 +337,11 @@ type RequestBodyDefinition struct {
 }
 
 // Returns the Go type definition for a request body
-func (r RequestBodyDefinition) TypeDef() string {
-	return r.Schema.TypeDecl()
+func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:   r.Schema,
+	}
 }
 
 // Returns whether the body is a custom inline type, or pre-defined. This is
@@ -368,7 +375,7 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
@@ -385,6 +392,9 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
+			if pathItem.Servers != nil {
+				op.Servers = &pathItem.Servers
+			}
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
@@ -514,7 +524,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if bodyOrRef.Ref != "" {
+		if IsGoTypeReference(bodyOrRef.Ref) {
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(bodyOrRef.Ref)
 			if err != nil {
@@ -589,14 +599,16 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
-			Description:   param.Spec.Description,
-			JsonFieldName: param.ParamName,
-			Required:      param.Required,
-			Schema:        pSchema,
+			Description:    param.Spec.Description,
+			JsonFieldName:  param.ParamName,
+			Required:       param.Required,
+			Schema:         pSchema,
+			ExtensionProps: &param.Spec.ExtensionProps,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
 
+	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{

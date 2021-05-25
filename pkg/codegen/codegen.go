@@ -18,6 +18,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"text/template"
@@ -38,6 +39,7 @@ type Options struct {
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
 	SkipFmt            bool              // Whether to skip go imports on the generated code
 	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
+	AliasTypes         bool              // Whether to alias types if possible
 	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
@@ -101,7 +103,7 @@ func constructImportMapping(input map[string]string) importMap {
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
@@ -110,6 +112,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	}
 
 	// This creates the golang templates text package
+	TemplateFunctions["opts"] = func() Options { return opts }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -133,12 +136,18 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 		return "", errors.Wrap(err, "error creating operation definitions")
 	}
 
-	var typeDefinitions string
+	var typeDefinitions, constantDefinitions string
 	if opts.GenerateTypes {
 		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops, opts.ExcludeSchemas)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating type definitions")
 		}
+
+		constantDefinitions, err = GenerateConstants(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating constants")
+		}
+
 	}
 
 	var echoServerOut string
@@ -175,7 +184,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var inlinedSpec string
 	if opts.EmbedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
+		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, swagger)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
@@ -193,6 +202,11 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	_, err = w.WriteString(importsOut)
 	if err != nil {
 		return "", errors.Wrap(err, "error writing imports")
+	}
+
+	_, err = w.WriteString(constantDefinitions)
+	if err != nil {
+		return "", errors.Wrap(err, "error writing constants")
 	}
 
 	_, err = w.WriteString(typeDefinitions)
@@ -255,7 +269,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	return string(outBytes), nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, ops []OperationDefinition, excludeSchemas []string) (string, error) {
+func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
 	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component schemas")
@@ -284,6 +298,11 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating Go types for operation parameters")
 	}
 
+	enumsOut, err := GenerateEnums(t, allTypes)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating code for type enums")
+	}
+
 	typesOut, err := GenerateTypes(t, allTypes)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating code for type definitions")
@@ -294,8 +313,48 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating allOf boilerplate")
 	}
 
-	typeDefinitions := strings.Join([]string{typesOut, paramTypesOut, allOfBoilerplate}, "")
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate}, "")
 	return typeDefinitions, nil
+}
+
+// Generates operation ids, context keys, paths, etc. to be exported as constants
+func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	constants := Constants{
+		SecuritySchemeProviderNames: []string{},
+	}
+
+	providerNameMap := map[string]struct{}{}
+	for _, op := range ops {
+		for _, def := range op.SecurityDefinitions {
+			providerName := SanitizeGoIdentity(def.ProviderName)
+			providerNameMap[providerName] = struct{}{}
+		}
+	}
+
+	var providerNames []string
+	for providerName := range providerNameMap {
+		providerNames = append(providerNames, providerName)
+	}
+
+	sort.Strings(providerNames)
+
+	for _, providerName := range providerNames {
+		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
+	}
+
+	err := t.ExecuteTemplate(w, "constants.tmpl", constants)
+
+	if err != nil {
+		return "", fmt.Errorf("error generating server interface: %s", err)
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
+	}
+	return buf.String(), nil
 }
 
 // Generates type definitions for any custom types defined in the
@@ -461,16 +520,64 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	return buf.String(), nil
 }
 
+func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	c := Constants{
+		EnumDefinitions: []EnumDefinition{},
+	}
+	for _, tp := range types {
+		if len(tp.Schema.EnumValues) > 0 {
+			wrapper := ""
+			if tp.Schema.GoType == "string" {
+				wrapper = `"`
+			}
+			c.EnumDefinitions = append(c.EnumDefinitions, EnumDefinition{
+				Schema:       tp.Schema,
+				TypeName:     tp.TypeName,
+				ValueWrapper: wrapper,
+			})
+		}
+	}
+	err := t.ExecuteTemplate(w, "constants.tmpl", c)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating enums")
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for enums")
+	}
+	return buf.String(), nil
+}
+
 // Generate our import statements and package definition.
 func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
+
+	// Read build version for incorporating into generated files
+	var modulePath string
+	var moduleVersion string
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		modulePath = bi.Main.Path
+		moduleVersion = bi.Main.Version
+	} else {
+		// Unit tests have ok=false, so we'll just use "unknown" for the
+		// version if we can't read this.
+		modulePath = "unknown module path"
+		moduleVersion = "unknown version"
+	}
+
 	context := struct {
 		ExternalImports []string
 		PackageName     string
+		ModuleName      string
+		Version         string
 	}{
 		ExternalImports: externalImports,
 		PackageName:     packageName,
+		ModuleName:      modulePath,
+		Version:         moduleVersion,
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {
