@@ -340,12 +340,24 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
 			outSchema.GoType = "int64"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
 		} else if f == "int32" {
 			outSchema.GoType = "int32"
+		} else if f == "int16" {
+			outSchema.GoType = "int16"
+		} else if f == "int8" {
+			outSchema.GoType = "int8"
+		} else if f == "int" {
+			outSchema.GoType = "int"
+		} else if f == "uint64" {
+			outSchema.GoType = "uint64"
 		} else if f == "uint32" {
 			outSchema.GoType = "uint32"
+		} else if f == "uint16" {
+			outSchema.GoType = "uint16"
+		} else if f == "uint8" {
+			outSchema.GoType = "uint8"
+		} else if f == "uint" {
+			outSchema.GoType = "uint"
 		} else if f == "" {
 			outSchema.GoType = "int"
 		} else {
