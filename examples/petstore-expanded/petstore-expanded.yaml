@@ -83,7 +83,7 @@ paths:
     get:
       summary: Returns a pet by ID
       description: Returns a pet based on a single ID
-      operationId: find pet by id
+      operationId: findPetByID
       parameters:
         - name: id
           in: path

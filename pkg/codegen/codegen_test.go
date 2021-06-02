@@ -42,7 +42,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "package api")
 
 	// Check that the client method signatures return response structs:
-	assert.Contains(t, code, "func (c *Client) FindPetById(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {")
+	assert.Contains(t, code, "func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 
 	// Check that the property comments were generated
 	assert.Contains(t, code, "// Unique id of the pet")
@@ -101,7 +101,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")
 
-	findPetByIDResponse, err := examplePetstoreClient.ParseFindPetByIdResponse(cannedResponse)
+	findPetByIDResponse, err := examplePetstoreClient.ParseFindPetByIDResponse(cannedResponse)
 	assert.NoError(t, err)
 	assert.NotNil(t, findPetByIDResponse.JSON200)
 	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)

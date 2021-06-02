@@ -25,6 +25,9 @@ type Schema struct {
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
 	Description string // The description of the element
+
+	// The original OpenAPIv3 Schema.
+	OAPISchema *openapi3.Schema
 }
 
 func (s Schema) IsRef() bool {
@@ -162,6 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
+		OAPISchema: schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -184,6 +188,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, errors.Wrap(err, "error merging schemas")
 		}
+		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
 	}
 
@@ -340,12 +345,24 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
 			outSchema.GoType = "int64"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
 		} else if f == "int32" {
 			outSchema.GoType = "int32"
+		} else if f == "int16" {
+			outSchema.GoType = "int16"
+		} else if f == "int8" {
+			outSchema.GoType = "int8"
+		} else if f == "int" {
+			outSchema.GoType = "int"
+		} else if f == "uint64" {
+			outSchema.GoType = "uint64"
 		} else if f == "uint32" {
 			outSchema.GoType = "uint32"
+		} else if f == "uint16" {
+			outSchema.GoType = "uint16"
+		} else if f == "uint8" {
+			outSchema.GoType = "uint8"
+		} else if f == "uint" {
+			outSchema.GoType = "uint"
 		} else if f == "" {
 			outSchema.GoType = "int"
 		} else {
