@@ -144,11 +144,12 @@ func NewGetFooRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {

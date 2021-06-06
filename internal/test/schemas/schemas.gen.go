@@ -294,11 +294,12 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -321,11 +322,12 @@ func NewIssue127Request(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -359,11 +361,12 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -395,11 +398,12 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -429,11 +433,12 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -463,11 +468,12 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -501,11 +507,12 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL := url.URL{
-		Path: operationPath,
+	operationURL, err := url.Parse(operationPath)
+	if err != nil {
+		return nil, err
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL := serverURL.ResolveReference(operationURL)
 
 	queryValues := queryURL.Query()
 
