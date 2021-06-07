@@ -609,6 +609,14 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		// Support x-go-json-ignore
+		if _, ok := p.ExtensionProps.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(p.ExtensionProps.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+				fieldTags["json"] = "-"
+			}
+		}
+
+		// Support x-oapi-codegen-extra-tags
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
