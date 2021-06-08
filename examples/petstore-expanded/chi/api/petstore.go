@@ -47,7 +47,7 @@ func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindP
 	for _, pet := range p.Pets {
 		if params.Tags != nil {
 			// If we have tags,  filter pets by tag
-			for _, t := range *params.Tags {
+			for _, t := range params.Tags {
 				if pet.Tag != nil && (*pet.Tag == t) {
 					result = append(result, pet)
 				}

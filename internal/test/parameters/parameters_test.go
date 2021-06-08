@@ -139,10 +139,10 @@ func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) error {
 	t.queryParams = &params
 	if params.Ea != nil {
-		t.array = *params.Ea
+		t.array = params.Ea
 	}
 	if params.A != nil {
-		t.array = *params.A
+		t.array = params.A
 	}
 	if params.Eo != nil {
 		t.object = params.Eo
@@ -175,10 +175,10 @@ func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 		t.primitive = params.XPrimitiveExploded
 	}
 	if params.XArray != nil {
-		t.array = *params.XArray
+		t.array = params.XArray
 	}
 	if params.XArrayExploded != nil {
-		t.array = *params.XArrayExploded
+		t.array = params.XArrayExploded
 	}
 	if params.XObject != nil {
 		t.object = params.XObject
@@ -196,10 +196,10 @@ func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
 	t.cookieParams = &params
 	if params.Ea != nil {
-		t.array = *params.Ea
+		t.array = params.Ea
 	}
 	if params.A != nil {
-		t.array = *params.A
+		t.array = params.A
 	}
 	if params.Eo != nil {
 		t.object = params.Eo
@@ -625,8 +625,8 @@ func TestClientQueryParams(t *testing.T) {
 
 	// Check query params
 	qParams := GetQueryFormParams{
-		Ea: &expectedArray1,
-		A:  &expectedArray2,
+		Ea: expectedArray1,
+		A:  expectedArray2,
 		Eo: &expectedObject1,
 		O:  &expectedObject2,
 		Ep: &expectedPrimitive1,
@@ -644,8 +644,8 @@ func TestClientQueryParams(t *testing.T) {
 
 	// Check cookie params
 	cParams := GetCookieParams{
-		Ea: &expectedArray1,
-		A:  &expectedArray2,
+		Ea: expectedArray1,
+		A:  expectedArray2,
 		Eo: &expectedObject1,
 		O:  &expectedObject2,
 		Ep: &expectedPrimitive1,
@@ -661,8 +661,8 @@ func TestClientQueryParams(t *testing.T) {
 
 	// Check Header parameters
 	hParams := GetHeaderParams{
-		XArrayExploded:     &expectedArray1,
-		XArray:             &expectedArray2,
+		XArrayExploded:     expectedArray1,
+		XArray:             expectedArray2,
 		XObjectExploded:    &expectedObject1,
 		XObject:            &expectedObject2,
 		XPrimitiveExploded: &expectedPrimitive1,

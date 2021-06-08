@@ -51,7 +51,7 @@ type Pet struct {
 type FindPetsParams struct {
 
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// maximum number of results to return
 	Limit *int32 `json:"limit,omitempty"`
@@ -234,7 +234,7 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 
 	if params.Tags != nil {
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "tags", runtime.ParamLocationQuery, *params.Tags); err != nil {
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "tags", runtime.ParamLocationQuery, params.Tags); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err

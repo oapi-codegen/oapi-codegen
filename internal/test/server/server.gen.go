@@ -15,8 +15,8 @@ import (
 
 // EveryTypeOptional defines model for EveryTypeOptional.
 type EveryTypeOptional struct {
-	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`
-	ArrayReferencedField *[]SomeObject       `json:"array_referenced_field,omitempty"`
+	ArrayInlineField     []int               `json:"array_inline_field,omitempty"`
+	ArrayReferencedField []SomeObject        `json:"array_referenced_field,omitempty"`
 	BoolField            *bool               `json:"bool_field,omitempty"`
 	ByteField            *[]byte             `json:"byte_field,omitempty"`
 	DateField            *openapi_types.Date `json:"date_field,omitempty"`
