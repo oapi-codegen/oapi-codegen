@@ -180,10 +180,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{range $paramIdx, $param := .QueryParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     {{if .IsPassThrough}}
-    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    queryValues.Add("{{.ParamName}}", {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     {{end}}
     {{if .IsJson}}
-    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryParamBuf, err := json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else {
         queryValues.Add("{{.ParamName}}", string(queryParamBuf))
@@ -191,7 +191,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if .IndirectOptional}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
        return nil, err
@@ -217,18 +217,18 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var headerParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    headerParam{{$paramIdx}} = {{if .IndirectOptional}}*{{end}}params.{{.GoName}}
     {{end}}
     {{if .IsJson}}
     var headerParamBuf{{$paramIdx}} []byte
-    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
     headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
+    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -241,18 +241,18 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var cookieParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    cookieParam{{$paramIdx}} = {{if .IndirectOptional}}*{{end}}params.{{.GoName}}
     {{end}}
     {{if .IsJson}}
     var cookieParamBuf{{$paramIdx}} []byte
-    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
     cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
     {{end}}
     {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
+    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }

@@ -50,7 +50,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
 
       {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}paramValue
       {{end}}
 
       {{if .IsJson}}
@@ -61,7 +61,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
           http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
@@ -89,7 +89,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+          params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
@@ -108,7 +108,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           }
         {{end}}
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
@@ -124,7 +124,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}cookie.Value
       {{end}}
 
       {{- if .IsJson}}
@@ -142,7 +142,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
@@ -152,7 +152,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
           return
         }
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
 
       }

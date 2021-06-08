@@ -177,7 +177,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
 
       {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}paramValue
       {{end}}
 
       {{if .IsJson}}
@@ -188,7 +188,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
           http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
@@ -216,7 +216,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+          params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
@@ -235,7 +235,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           }
         {{end}}
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
@@ -251,7 +251,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}cookie.Value
       {{end}}
 
       {{- if .IsJson}}
@@ -269,7 +269,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
@@ -279,7 +279,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
           return
         }
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
       {{end}}
 
       }
@@ -605,10 +605,10 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{range $paramIdx, $param := .QueryParams}}
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     {{if .IsPassThrough}}
-    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+    queryValues.Add("{{.ParamName}}", {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     {{end}}
     {{if .IsJson}}
-    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryParamBuf, err := json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else {
         queryValues.Add("{{.ParamName}}", string(queryParamBuf))
@@ -616,7 +616,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     {{end}}
     {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if .IndirectOptional}}*{{end}}params.{{.GoName}}); err != nil {
         return nil, err
     } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
        return nil, err
@@ -642,18 +642,18 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var headerParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    headerParam{{$paramIdx}} = {{if .IndirectOptional}}*{{end}}params.{{.GoName}}
     {{end}}
     {{if .IsJson}}
     var headerParamBuf{{$paramIdx}} []byte
-    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
     headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
+    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -666,18 +666,18 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
     var cookieParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+    cookieParam{{$paramIdx}} = {{if .IndirectOptional}}*{{end}}params.{{.GoName}}
     {{end}}
     {{if .IsJson}}
     var cookieParamBuf{{$paramIdx}} []byte
-    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
     cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
     {{end}}
     {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
+    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if .IndirectOptional}}*{{end}}params.{{.GoName}})
     if err != nil {
         return nil, err
     }
@@ -953,7 +953,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}paramValue
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -961,7 +961,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
@@ -979,7 +979,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n))
         }
 {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}valueList[0]
 {{end}}
 {{if .IsJson}}
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
@@ -993,7 +993,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
 {{end}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}{{.GoName}}
         } {{if .Required}}else {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found"))
         }{{end}}
@@ -1003,7 +1003,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{range .CookieParams}}
     if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}cookie.Value
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -1016,7 +1016,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
@@ -1024,7 +1024,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .IndirectOptional}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))

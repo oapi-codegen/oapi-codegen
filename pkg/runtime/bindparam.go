@@ -279,6 +279,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 
 	// inner code will bind the string's value to this interface.
 	var output interface{}
+	var allocated bool
 
 	if required {
 		// If the parameter is required, then the generated code will pass us
@@ -290,14 +291,24 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		// parameter of type "int" will be *int on the struct. We pass that
 		// in by pointer, and have **int.
 
-		// If the destination, is a nil pointer, we need to allocate it.
 		if v.IsNil() {
-			t := v.Type()
-			newValue := reflect.New(t.Elem())
-			// for now, hang onto the output buffer separately from destination,
-			// as we don't want to write anything to destination until we can
-			// unmarshal successfully, and check whether a field is required.
-			output = newValue.Interface()
+			// If the destination, is a nil pointer, we need to allocate it.
+			if v.Kind() == reflect.Ptr {
+				t := v.Type()
+
+				newValue := reflect.New(t.Elem())
+
+				// for now, hang onto the output buffer separately from destination,
+				// as we don't want to write anything to destination until we can
+				// unmarshal successfully, and check whether a field is required.
+				output = newValue.Interface()
+				allocated = true
+			} else {
+				// Or else, the parameter is non-pointer nil (such as slice, etc..),
+				// then the generated code will pass us a pointer to it: &[]string,
+				// &map[string]interface{}, and so forth. We can also directly set to them.
+				output = dest
+			}
 		} else {
 			// If the destination isn't nil, just use that.
 			output = v.Interface()
@@ -361,7 +372,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			}
 			// If the parameter is required, and we've successfully unmarshaled
 			// it, this assigns the new object to the pointer pointer.
-			if !required {
+			if allocated {
 				dv.Set(reflect.ValueOf(output))
 			}
 			return nil
@@ -401,7 +412,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		if err != nil {
 			return err
 		}
-		if !required {
+		if allocated {
 			dv.Set(reflect.ValueOf(output))
 		}
 		return nil
