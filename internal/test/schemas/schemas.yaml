@@ -110,6 +110,15 @@ paths:
     get:
       operationId: Issue209
       description: Checks if parameters are declared properly
+  /lowerComponentsNameStart/:
+    get:
+      operationId: lowerComponentsNameStart
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/abcSound"
 
 
 components:
@@ -141,6 +150,14 @@ components:
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
+    abcSound:
+      type: object
+      properties:
+        sound:
+          type: object
+          properties:
+            uk:
+              type: string
   parameters:
     StringInPath:
       name: str

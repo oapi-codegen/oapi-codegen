@@ -47,6 +47,16 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
+// AbcSound defines model for abcSound.
+type AbcSound struct {
+	Sound *AbcSoundSound `json:"sound,omitempty"`
+}
+
+// AbcSoundSound defines model for AbcSoundSound.
+type AbcSoundSound struct {
+	Uk *string `json:"uk,omitempty"`
+}
+
 // StringInPath defines model for StringInPath.
 type StringInPath string
 
@@ -76,6 +86,9 @@ type Issue127defaultJSON GenericObject
 
 // Issue127defaultMARKDOWN defines model for Issue127defaultMARKDOWN.
 type Issue127defaultMARKDOWN GenericObject
+
+// LowerComponentsNameStart200JSON defines model for LowerComponentsNameStart200JSON.
+type LowerComponentsNameStart200JSON AbcSound
 
 // Issue185JSONBody defines parameters for Issue185.
 type Issue185JSONBody NullableProperties
@@ -191,6 +204,9 @@ type ClientInterface interface {
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// LowerComponentsNameStart request
+	LowerComponentsNameStart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -283,6 +299,17 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) LowerComponentsNameStart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewLowerComponentsNameStartRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -544,6 +571,33 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	return req, nil
 }
 
+// NewLowerComponentsNameStartRequest generates requests for LowerComponentsNameStart
+func NewLowerComponentsNameStartRequest(server string) (*http.Request, error) {
+	var err error
+
+	queryUrl, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	basePath := fmt.Sprintf("/lowerComponentsNameStart/")
+	if basePath[0] == '/' {
+		basePath = basePath[1:]
+	}
+
+	queryUrl, err = queryUrl.Parse(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryUrl.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	req = req.WithContext(ctx)
 	for _, r := range c.RequestEditors {
@@ -612,6 +666,9 @@ type ClientWithResponsesInterface interface {
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody) (*Issue9Response, error)
+
+	// LowerComponentsNameStart request
+	LowerComponentsNameStartWithResponse(ctx context.Context) (*LowerComponentsNameStartResponse, error)
 }
 
 type EnsureEverythingIsReferencedResponse struct {
@@ -772,6 +829,28 @@ func (r Issue9Response) StatusCode() int {
 	return 0
 }
 
+type LowerComponentsNameStartResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AbcSound
+}
+
+// Status returns HTTPResponse.Status
+func (r LowerComponentsNameStartResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r LowerComponentsNameStartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
 func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx)
@@ -849,6 +928,15 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 		return nil, err
 	}
 	return ParseIssue9Response(rsp)
+}
+
+// LowerComponentsNameStartWithResponse request returning *LowerComponentsNameStartResponse
+func (c *ClientWithResponses) LowerComponentsNameStartWithResponse(ctx context.Context) (*LowerComponentsNameStartResponse, error) {
+	rsp, err := c.LowerComponentsNameStart(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return ParseLowerComponentsNameStartResponse(rsp)
 }
 
 // ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
@@ -1031,6 +1119,32 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	return response, nil
 }
 
+// ParseLowerComponentsNameStartResponse parses an HTTP response from a LowerComponentsNameStartWithResponse call
+func ParseLowerComponentsNameStartResponse(rsp *http.Response) (*LowerComponentsNameStartResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &LowerComponentsNameStartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AbcSound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -1054,6 +1168,9 @@ type ServerInterface interface {
 
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
+
+	// (GET /lowerComponentsNameStart/)
+	LowerComponentsNameStart(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1154,6 +1271,15 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	return err
 }
 
+// LowerComponentsNameStart converts echo context to params.
+func (w *ServerInterfaceWrapper) LowerComponentsNameStart(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.LowerComponentsNameStart(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1189,29 +1315,31 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
 	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
 	router.GET(baseURL+"/issues/9", wrapper.Issue9)
+	router.GET(baseURL+"/lowerComponentsNameStart/", wrapper.LowerComponentsNameStart)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

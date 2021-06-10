@@ -597,7 +597,7 @@ func GenerateTypesFromSchemaRef(schemaref *openapi3.SchemaRef, name string) ([]T
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
-				propertyName := name + SchemaNameToTypeName(pName)
+				propertyName := SchemaNameToTypeName(name) + SchemaNameToTypeName(pName)
 				propertyAndChildrenTypes, err := GenerateTypesFromSchemaRef(p, propertyName)
 				if err != nil {
 					return nil, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
