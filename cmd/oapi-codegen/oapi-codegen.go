@@ -43,6 +43,7 @@ var (
 	flagTemplatesDir   string
 	flagImportMapping  string
 	flagExcludeSchemas string
+	flagTypesPackage   string
 	flagConfigFile     string
 	flagAliasTypes     bool
 	flagPrintVersion   bool
@@ -57,6 +58,7 @@ type configuration struct {
 	TemplatesDir    string            `yaml:"templates"`
 	ImportMapping   map[string]string `yaml:"import-mapping"`
 	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	TypesPackage    string            `yaml:"types-package"`
 }
 
 func main() {
@@ -70,6 +72,7 @@ func main() {
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates")
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
+	flag.StringVar(&flagTypesPackage, "types-package", "", "Package of types if types are generated separately")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
@@ -134,6 +137,7 @@ func main() {
 	opts.IncludeTags = cfg.IncludeTags
 	opts.ExcludeTags = cfg.ExcludeTags
 	opts.ExcludeSchemas = cfg.ExcludeSchemas
+	opts.TypesPackage = cfg.TypesPackage
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")
@@ -246,6 +250,9 @@ func configFromFlags() *configuration {
 	}
 	if cfg.ExcludeSchemas == nil {
 		cfg.ExcludeSchemas = util.ParseCommandLineList(flagExcludeSchemas)
+	}
+	if cfg.TypesPackage == "" {
+		cfg.TypesPackage = flagTypesPackage
 	}
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile

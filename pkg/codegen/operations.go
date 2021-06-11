@@ -202,6 +202,7 @@ type OperationDefinition struct {
 	QueryParams         []ParameterDefinition // Parameters in the query, /path?param
 	CookieParams        []ParameterDefinition // Parameters in cookies
 	TypeDefinitions     []TypeDefinition      // These are all the types we need to define for this operation
+	TypePackage         string                // Where the type is stored, if empty - the same package
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
@@ -232,6 +233,16 @@ func (o *OperationDefinition) AllParams() []ParameterDefinition {
 // engine.
 func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
+}
+
+// If the type are placed in separated module it's a way to get the package
+// name and prepend to the type in the template.
+func (o *OperationDefinition) TypePackagePrefix() string {
+	if len(o.TypePackage) > 0 {
+		return o.TypePackage + "."
+	}
+
+	return ""
 }
 
 // This is called by the template engine to determine whether to generate body
@@ -374,7 +385,7 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, typesPackage string) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
@@ -444,6 +455,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				TypeDefinitions: typeDefinitions,
+				TypePackage:     typesPackage,
 			}
 
 			// check for overrides of SecurityDefinitions.

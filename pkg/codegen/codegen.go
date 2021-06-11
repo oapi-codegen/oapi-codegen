@@ -49,6 +49,7 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	TypesPackage       string            // Types are placed in a separated package with this name. Ignored when empty.
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -135,7 +136,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		}
 	}
 
-	ops, err := OperationDefinitions(swagger)
+	ops, err := OperationDefinitions(swagger, opts.TypesPackage)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
