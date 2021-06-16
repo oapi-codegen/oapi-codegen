@@ -32,6 +32,7 @@ import (
 
 // Options defines the optional code to generate.
 type Options struct {
+	GenerateGinServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
 	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
 	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
 	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
@@ -150,6 +151,14 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 
 	}
 
+	var ginServerOut string
+	if opts.GenerateGinServer {
+		ginServerOut, err = GenerateGinServer(t, ops)
+		if err != nil {
+			return "", errors.Wrap(err, "error generating Go handlers for Paths")
+		}
+	}
+
 	var echoServerOut string
 	if opts.GenerateEchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
@@ -223,6 +232,13 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		_, err = w.WriteString(clientWithResponsesOut)
 		if err != nil {
 			return "", errors.Wrap(err, "error writing client")
+		}
+	}
+
+	if opts.GenerateGinServer {
+		_, err = w.WriteString(ginServerOut)
+		if err != nil {
+			return "", errors.Wrap(err, "error writing server path handlers")
 		}
 	}
 

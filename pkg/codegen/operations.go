@@ -664,6 +664,35 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
+func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	err := t.ExecuteTemplate(w, "gin-interface.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server interface")
+	}
+
+	err = t.ExecuteTemplate(w, "gin-middleware.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server middleware")
+	}
+
+	err = t.ExecuteTemplate(w, "gin-handler.tmpl", operations)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating server http handler")
+	}
+
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for server")
+	}
+
+	return buf.String(), nil
+}
+
+// GenerateChiServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)

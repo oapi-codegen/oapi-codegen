@@ -4,7 +4,7 @@ type ServerInterfaceWrapper struct {
     HandlerMiddlewares []MiddlewareFunc
 }
 
-type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(c *gin.Context)
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -24,14 +24,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{if .IsJson}}
   err = json.Unmarshal([]byte(c.Query("{{.ParamName}}")), &{{$varName}})
   if err != nil {
-    http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+    c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
     return
   }
   {{end}}
   {{if .IsStyled}}
   err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", c.Query("{{.ParamName}}"), &{{$varName}})
   if err != nil {
-    http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+    c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
     return
   }
   {{end}}
@@ -57,20 +57,20 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         var value {{.TypeDef}}
         err = json.Unmarshal([]byte(paramValue), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
           return
         }
 
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
-          http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
           return
       }{{end}}
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
       if err != nil {
-        http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+        c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
         return
       }
       {{end}}
@@ -84,7 +84,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           var {{.GoName}} {{.TypeDef}}
           n := len(valueList)
           if n != 1 {
-            http.Error(w, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n), http.StatusBadRequest)
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n)})
             return
           }
 
@@ -95,7 +95,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{if .IsJson}}
           err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
-            http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+            c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
             return
           }
         {{end}}
@@ -103,7 +103,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{if .IsStyled}}
           err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
           if err != nil {
-            http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
             return
           }
         {{end}}
@@ -111,7 +111,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err)})
             return
         }{{end}}
 
@@ -132,13 +132,13 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         var decoded string
         decoded, err := url.QueryUnescape(cookie.Value)
         if err != nil {
-          http.Error(w, "Error unescaping cookie parameter '{{.ParamName}}'", http.StatusBadRequest)
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unescaping cookie parameter '{{.ParamName}}'"})
           return
         }
 
         err = json.Unmarshal([]byte(decoded), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
           return
         }
 
@@ -149,7 +149,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         var value {{.TypeDef}}
         err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
         if err != nil {
-          http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid format for parameter {{.ParamName}}: %s"})
           return
         }
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -158,22 +158,18 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       }
 
       {{- if .Required}} else {
-        http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+        c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
         return
       }
       {{- end}}
     {{end}}
   {{end}}
 
-  var handler = func(c *gin.Context) {
-    siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-}
-
   for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
+    middleware(c)
   }
 
-  handler(c)
+  siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 {{end}}
 
