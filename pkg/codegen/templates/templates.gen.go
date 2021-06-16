@@ -727,7 +727,7 @@ const (
 {{end}}
 `,
 	"gin-handler.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
+func Handler(si ServerInterface) *gin.Engine {
   return HandlerWithOptions(si, GinServerOptions{})
 }
 
@@ -738,13 +738,13 @@ type GinServerOptions struct {
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *gin.Engine) http.Handler {
+func HandlerFromMux(si ServerInterface, r *gin.Engine) *gin.Engine {
     return HandlerWithOptions(si, GinServerOptions {
         BaseRouter: r,
     })
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string) http.Handler {
+func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string) *gin.Engine {
     return HandlerWithOptions(si, GinServerOptions {
         BaseURL: baseURL,
         BaseRouter: r,
@@ -752,7 +752,7 @@ func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GinServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options GinServerOptions) *gin.Engine {
 r := options.BaseRouter
 
 if r == nil {
@@ -764,7 +764,7 @@ HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
 {{range .}}
-{{.OperationId}}.{{.Method | upper }}(options.BaseURL+"{{.Path | swaggerUriToGinUri}}", wrapper.{{.OperationId}})
+r.{{.Method | upper }}(options.BaseURL+"{{.Path | swaggerUriToGinUri}}", wrapper.{{.OperationId}})
 {{end}}
 return r
 }
