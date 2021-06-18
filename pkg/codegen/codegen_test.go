@@ -306,8 +306,8 @@ components:
           type: string
           format: date-time
           x-oapi-codegen-extra-tags:
-            - "tag1:\"value1\""
-            - "tag2:\"value2\""
+            tag1: value1
+            tag2: value2
         cause:
           type: string
           enum: [car, dog, oldage]

@@ -443,19 +443,28 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		fieldTags := make(map[string]string)
+
 		if p.Required || p.Nullable || !omitEmpty {
-			field += fmt.Sprintf(" `json:\"%s\"", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 		}
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
-				for _, tag := range tags {
-					field += " " + tag
+				keys := SortedStringKeys(tags)
+				for _, k := range keys {
+					fieldTags[k] = tags[k]
 				}
 			}
 		}
-		field += "`"
+		// Convert the fieldTags map into Go field annotations.
+		keys := SortedStringKeys(fieldTags)
+		tags := make([]string, len(keys))
+		for i, k := range keys {
+			tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+		}
+		field += "`" + strings.Join(tags, " ") + "`"
 		fields = append(fields, field)
 	}
 	return fields

@@ -40,12 +40,12 @@ func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
 	return omitEmpty, nil
 }
 
-func extExtraTags(extPropValue interface{}) ([]string, error) {
+func extExtraTags(extPropValue interface{}) (map[string]string, error) {
 	raw, ok := extPropValue.(json.RawMessage)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var tags []string
+	var tags map[string]string
 	if err := json.Unmarshal(raw, &tags); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal json")
 	}
