@@ -7,7 +7,6 @@ help:
 	@echo "    tidy         tidy go mod"
 
 generate:
-	go generate ./pkg/...
 	go generate ./...
 
 test:

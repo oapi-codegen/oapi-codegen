@@ -660,19 +660,19 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"chi-interface.tmpl", "chi-middleware.tmpl", "chi-handler.tmpl"}, t, operations)
+	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo-interface.tmpl", "echo-wrappers.tmpl", "echo-register.tmpl"}, t, operations)
+	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
 // GenerateGinServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gin-interface.tmpl", "gin-wrappers.tmpl", "gin-register.tmpl"}, t, operations)
+	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
 // Uses the template engine to generate the function which registers our wrappers

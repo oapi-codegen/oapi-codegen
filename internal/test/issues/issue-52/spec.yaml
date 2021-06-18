@@ -2,7 +2,7 @@ openapi: 3.0.2
 info:
   version: '0.0.1'
   title: example
-  desscription: |
+  description: |
     Make sure that recursive types are handled properly
 paths:
   /example:
