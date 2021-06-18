@@ -274,12 +274,11 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -304,12 +303,11 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -343,12 +341,11 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -373,12 +370,11 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -401,12 +397,11 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -431,12 +426,11 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -459,12 +453,11 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {

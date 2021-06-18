@@ -169,12 +169,11 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     if operationPath[0] == '/' {
         operationPath = operationPath[1:]
     }
-    operationURL, err := url.Parse(operationPath)
-    if err != nil {
-        return nil, err
+    operationURL := url.URL{
+    	Path: operationPath,
     }
 
-    queryURL := serverURL.ResolveReference(operationURL)
+    queryURL := serverURL.ResolveReference(&operationURL)
 
 {{if .QueryParams}}
     queryValues := queryURL.Query()

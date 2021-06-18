@@ -195,12 +195,11 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 	if operationPath[0] == '/' {
 		operationPath = operationPath[1:]
 	}
-	operationURL, err := url.Parse(operationPath)
-	if err != nil {
-		return nil, err
+	operationURL := url.URL{
+		Path: operationPath,
 	}
 
-	queryURL := serverURL.ResolveReference(operationURL)
+	queryURL := serverURL.ResolveReference(&operationURL)
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
