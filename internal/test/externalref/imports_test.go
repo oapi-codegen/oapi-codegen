@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/internal/test/externalref/packageA"
-	"github.com/deepmap/oapi-codegen/internal/test/externalref/packageB"
+	"github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageA"
+	"github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageB"
 )
 
 func TestParameters(t *testing.T) {

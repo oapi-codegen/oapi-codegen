@@ -3,7 +3,7 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/deepmap/oapi-codegen/v2/pkg/types"
 	"net/url"
 	"reflect"
 	"sort"

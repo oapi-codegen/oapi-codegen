@@ -1,6 +1,27 @@
 OpenAPI Client and Server Code Generator
 ----------------------------------------
 
+# -- Unstable V2 development branch, DO NOT USE --
+This V2 Development Branch is a work in progress, unstable, and should
+not be used. Once development is complete, this will become the master branch
+and we'll create a V1 branch for backward compatibility.
+
+Planned improvements for V2 in no particular order:
+- Overhaul Go schema generation, to avoid extraneous indirects
+- Schema generation will reduce custom types to simple Go types where possible
+- Registration of content type handlers in response unmarshaling
+- General codebase cleanup and better testing, particularly around the escaping
+  of parameters to handlers. Right now it's very convoluted and fragile.
+- Pull in breaking PR's and improvements
+- Split versioning of oapi-codegen from that of templates, so we can use
+  package level semver for our runtime code, and template semver for generated
+  code
+- use `//go:embed` instead of template generation
+- ClientWithResponses is fragile, and the Go code it generates isn't too friendly. I'm
+  not sure how to handle it yet.
+- Allow users to provide their own templates, we can't foresee everything.
+  
+
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
@@ -29,7 +50,7 @@ write a lot of boilerplate code to perform all the marshalling and unmarshalling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
+    go get github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen
     oapi-codegen petstore-expanded.yaml  > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
@@ -376,7 +397,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ```
     import (
-        "github.com/deepmap/oapi-codegen/pkg/securityprovider"
+        "github.com/deepmap/oapi-codegen/v2/pkg/securityprovider"
     )
 
     func CreateSampleProviders() error {
@@ -502,7 +523,7 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/v2/blob/master/internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
     
 ```yaml
@@ -513,11 +534,11 @@ generate:
   - types
   - skip-prune
 import-mapping:
-  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
-  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageB
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/v2/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
 to see all the fields on the configuration structure.
 
 ### Import Mappings
