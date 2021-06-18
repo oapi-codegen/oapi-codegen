@@ -17,7 +17,9 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"embed"
 	"fmt"
+	"path/filepath"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -27,8 +29,12 @@ import (
 	"github.com/pkg/errors"
 	"golang.org/x/tools/imports"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen/templates"
+
 )
+
+// Embed the templates directory
+//go:embed templates
+var templates embed.FS
 
 // Options defines the optional code to generate.
 type Options struct {
@@ -116,7 +122,8 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
-	t, err := templates.Parse(t)
+	err := LoadTemplates(templates, t)
+
 	if err != nil {
 		return "", errors.Wrap(err, "error parsing oapi-codegen templates")
 	}
@@ -626,4 +633,27 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
+}
+
+
+// LoadTemplates loads all of our template files into a text/template. The
+// path of template is relative to the templates directory.
+func LoadTemplates(src embed.FS, t *template.Template) error {
+	entries, err := src.ReadDir("templates")
+	if err != nil {
+		return errors.Wrap(err, "reading template directory")
+	}
+	for _, e := range entries {
+		path := filepath.Join("templates", e.Name())
+		buf, err := src.ReadFile(path)
+		if err != nil {
+			return errors.Wrapf(err, "error reading file '%s'", path)
+		}
+		tmpl := t.New(e.Name())
+		_, err = tmpl.Parse(string(buf))
+		if err != nil {
+			return errors.Wrapf(err, "parsing template '%s'", path)
+		}
+	}
+	return nil
 }

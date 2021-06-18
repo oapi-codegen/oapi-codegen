@@ -5,7 +5,6 @@ help:
 	@echo "    test:        run all tests"
 
 generate:
-	go generate ./pkg/...
 	go generate ./...
 
 test:
