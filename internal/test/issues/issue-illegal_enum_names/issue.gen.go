@@ -26,17 +26,19 @@ const (
 
 	BarFoo Bar = "Foo"
 
-	BarFoo1 Bar = "1Foo"
+	BarFoo1 Bar = " Foo"
 
-	BarFoo2 Bar = " Foo"
+	BarFoo2 Bar = " Foo "
 
-	BarFoo3 Bar = " Foo "
-
-	BarFoo4 Bar = "_Foo_"
+	BarFoo3 Bar = "_Foo_"
 
 	BarFooBar Bar = "Foo Bar"
 
 	BarFooBar1 Bar = "Foo-Bar"
+
+	BarN1 Bar = "1"
+
+	BarN1Foo Bar = "1Foo"
 )
 
 // Bar defines model for Bar.
@@ -319,11 +321,11 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/0yQzU4DMQyEX6UaOIbsUm45cijiGRCqoq23DeraUWKQqirvjpyFQi4z+ZnYn6+YZMnC",
-	"xFoRrqjTiZbY7XMsJsSfC8IbdiJw/dCZ39zcw+oe/z/YrBuTDRz2O5E93h30kgkBVUviI1prDolnsTqa",
-	"9Gx33ns4fFGpSRgBox/9iOYgmTjmhIAnP/otHHLUU291mKX/cSQ1kUwlahJ+PSDghXTtplDNwpV6ZDuO",
-	"JpOwEvdUzPmcpp4bPqrV/h2HuaS09OB9oRkBd8Pf4IafqQ0G326UsZR4WSEPVKeSsq5Ihtj6+g4AAP//",
-	"Jkt64H8BAAA=",
+	"H4sIAAAAAAAC/0xQQU4DMQz8SjVwDNml3HLkUMQbEKqirbcN6tpRYpCqKn9HzkIhl5kkHtszV0yyZGFi",
+	"rQhX1OlES+z0ORYD4s8F4Q07Ebj+6IxvbuxhZY//CzbrxWADh/1OZG81eHfQSyYEVC2Jj2itOSSexWZp",
+	"0rP9ee/h8EWlJmEEjH70I5qDZOKYEwKe/Oi3cMhRT33dYZbe40hqIJlK1CT8ekDAC+m6UaGahSt1yXYc",
+	"DSZhJe6qmPM5TV03fFSb/RuJsaS0dOF9oRkBd8NfeMNPcoMF0G4uYynxspo8UJ1KyrpaMoutn+8AAAD/",
+	"/y6OlsyDAQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

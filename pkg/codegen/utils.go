@@ -496,7 +496,7 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
 	for _, n := range deDup {
-		sanitized := SchemaNameToTypeName(SanitizeGoIdentity(n))
+		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = n
