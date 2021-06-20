@@ -890,13 +890,13 @@ func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType s
 
 	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -919,13 +919,13 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 
 	operationPath := fmt.Sprintf("/params_with_add_props")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -985,13 +985,13 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 
 	operationPath := fmt.Sprintf("/params_with_add_props")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {

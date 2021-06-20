@@ -292,13 +292,13 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -319,13 +319,13 @@ func NewIssue127Request(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/issues/127")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -357,13 +357,13 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 
 	operationPath := fmt.Sprintf("/issues/185")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -393,13 +393,13 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	operationPath := fmt.Sprintf("/issues/209/$%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -427,13 +427,13 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/issues/30/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -461,13 +461,13 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	operationPath := fmt.Sprintf("/issues/41/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -499,13 +499,13 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 
 	operationPath := fmt.Sprintf("/issues/9")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 

@@ -592,13 +592,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
     if operationPath[0] == '/' {
-        operationPath = operationPath[1:]
-    }
-    operationURL := url.URL{
-    	Path: operationPath,
+        operationPath = "." + operationPath
     }
 
-    queryURL := serverURL.ResolveReference(&operationURL)
+    queryURL, err := serverURL.Parse(operationPath)
+    if err != nil {
+        return nil, err
+    }
 
 {{if .QueryParams}}
     queryValues := queryURL.Query()
