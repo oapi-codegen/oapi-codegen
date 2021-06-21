@@ -602,18 +602,20 @@ type ClientWithResponsesInterface interface {
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 }
 
+// EnsureEverythingIsReferencedResponseJSON200 represents a possible response for the EnsureEverythingIsReferenced request.
+type EnsureEverythingIsReferencedResponseJSON200 struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// AnyType2 represents any type.
+	//
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+}
 type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
-
-		// AnyType2 represents any type.
-		//
-		// This should be an interface{}
-		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
-	}
+	JSON200      *EnsureEverythingIsReferencedResponseJSON200
 }
 
 // Status returns HTTPResponse.Status
@@ -632,13 +634,24 @@ func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
 	return 0
 }
 
+// Issue127ResponseJSON200 represents a possible response for the Issue127 request.
+type Issue127ResponseJSON200 GenericObject
+
+// Issue127ResponseXML200 represents a possible response for the Issue127 request.
+type Issue127ResponseXML200 GenericObject
+
+// Issue127ResponseYAML200 represents a possible response for the Issue127 request.
+type Issue127ResponseYAML200 GenericObject
+
+// Issue127ResponseJSONDefault represents a possible response for the Issue127 request.
+type Issue127ResponseJSONDefault GenericObject
 type Issue127Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GenericObject
-	XML200       *GenericObject
-	YAML200      *GenericObject
-	JSONDefault  *GenericObject
+	JSON200      *Issue127ResponseJSON200
+	XML200       *Issue127ResponseXML200
+	YAML200      *Issue127ResponseYAML200
+	JSONDefault  *Issue127ResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -856,15 +869,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
-
-			// AnyType2 represents any type.
-			//
-			// This should be an interface{}
-			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
-		}
+		var dest EnsureEverythingIsReferencedResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -890,28 +895,28 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GenericObject
+		var dest Issue127ResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest GenericObject
+		var dest Issue127ResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
-		var dest GenericObject
+		var dest Issue127ResponseXML200
 		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.XML200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
-		var dest GenericObject
+		var dest Issue127ResponseYAML200
 		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

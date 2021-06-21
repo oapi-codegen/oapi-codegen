@@ -256,10 +256,12 @@ type ClientWithResponsesInterface interface {
 	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error)
 }
 
+// ExampleGetResponseJSON200 represents a possible response for the ExampleGet request.
+type ExampleGetResponseJSON200 Document
 type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Document
+	JSON200      *ExampleGetResponseJSON200
 }
 
 // Status returns HTTPResponse.Status
@@ -302,7 +304,7 @@ func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Document
+		var dest ExampleGetResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

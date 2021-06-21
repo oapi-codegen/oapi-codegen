@@ -440,11 +440,16 @@ type ClientWithResponsesInterface interface {
 	FindPetByIDWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*FindPetByIDResponse, error)
 }
 
+// FindPetsResponseJSON200 represents a possible response for the FindPets request.
+type FindPetsResponseJSON200 []Pet
+
+// FindPetsResponseJSONDefault represents a possible response for the FindPets request.
+type FindPetsResponseJSONDefault Error
 type FindPetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Pet
-	JSONDefault  *Error
+	JSON200      *FindPetsResponseJSON200
+	JSONDefault  *FindPetsResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -463,11 +468,16 @@ func (r FindPetsResponse) StatusCode() int {
 	return 0
 }
 
+// AddPetResponseJSON200 represents a possible response for the AddPet request.
+type AddPetResponseJSON200 Pet
+
+// AddPetResponseJSONDefault represents a possible response for the AddPet request.
+type AddPetResponseJSONDefault Error
 type AddPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
-	JSONDefault  *Error
+	JSON200      *AddPetResponseJSON200
+	JSONDefault  *AddPetResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -486,10 +496,12 @@ func (r AddPetResponse) StatusCode() int {
 	return 0
 }
 
+// DeletePetResponseJSONDefault represents a possible response for the DeletePet request.
+type DeletePetResponseJSONDefault Error
 type DeletePetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *Error
+	JSONDefault  *DeletePetResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -508,11 +520,16 @@ func (r DeletePetResponse) StatusCode() int {
 	return 0
 }
 
+// FindPetByIDResponseJSON200 represents a possible response for the FindPetByID request.
+type FindPetByIDResponseJSON200 Pet
+
+// FindPetByIDResponseJSONDefault represents a possible response for the FindPetByID request.
+type FindPetByIDResponseJSONDefault Error
 type FindPetByIDResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
-	JSONDefault  *Error
+	JSON200      *FindPetByIDResponseJSON200
+	JSONDefault  *FindPetByIDResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -590,14 +607,14 @@ func ParseFindPetsResponse(rsp *http.Response) (*FindPetsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Pet
+		var dest FindPetsResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
+		var dest FindPetsResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -623,14 +640,14 @@ func ParseAddPetResponse(rsp *http.Response) (*AddPetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Pet
+		var dest AddPetResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
+		var dest AddPetResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -656,7 +673,7 @@ func ParseDeletePetResponse(rsp *http.Response) (*DeletePetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
+		var dest DeletePetResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -682,14 +699,14 @@ func ParseFindPetByIDResponse(rsp *http.Response) (*FindPetByIDResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Pet
+		var dest FindPetByIDResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
+		var dest FindPetByIDResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

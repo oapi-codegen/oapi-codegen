@@ -296,10 +296,12 @@ type ClientWithResponsesInterface interface {
 	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 }
 
+// GetPetResponseJSON200 represents a possible response for the GetPet request.
+type GetPetResponseJSON200 Pet
 type GetPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
+	JSON200      *GetPetResponseJSON200
 }
 
 // Status returns HTTPResponse.Status
@@ -318,11 +320,16 @@ func (r GetPetResponse) StatusCode() int {
 	return 0
 }
 
+// ValidatePetsResponseJSON200 represents a possible response for the ValidatePets request.
+type ValidatePetsResponseJSON200 []Pet
+
+// ValidatePetsResponseJSONDefault represents a possible response for the ValidatePets request.
+type ValidatePetsResponseJSONDefault Error
 type ValidatePetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Pet
-	JSONDefault  *Error
+	JSON200      *ValidatePetsResponseJSON200
+	JSONDefault  *ValidatePetsResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -382,7 +389,7 @@ func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Pet
+		var dest GetPetResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -408,14 +415,14 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Pet
+		var dest ValidatePetsResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
+		var dest ValidatePetsResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

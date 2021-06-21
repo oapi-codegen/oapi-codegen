@@ -1060,30 +1060,35 @@ type ClientWithResponsesInterface interface {
 	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
 }
 
+// EnsureEverythingIsReferencedResponseJSON200 represents a possible response for the EnsureEverythingIsReferenced request.
+type EnsureEverythingIsReferencedResponseJSON200 struct {
+
+	// Has additional properties with schema for dictionaries
+	Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+
+	// Has anonymous field which has additional properties
+	Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
+	JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+
+	// Has additional properties of type int
+	One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+	// Allows any additional property
+	Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+
+	// Does not allow additional properties
+	Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+}
+
+// EnsureEverythingIsReferencedResponseJSONDefault represents a possible response for the EnsureEverythingIsReferenced request.
+type EnsureEverythingIsReferencedResponseJSONDefault struct {
+	Field SchemaObject `json:"Field"`
+}
 type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
-
-		// Has additional properties with schema for dictionaries
-		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
-
-		// Has anonymous field which has additional properties
-		Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-		JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
-
-		// Has additional properties of type int
-		One *AdditionalPropertiesObject1 `json:"one,omitempty"`
-
-		// Allows any additional property
-		Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
-
-		// Does not allow additional properties
-		Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
-	}
-	JSONDefault *struct {
-		Field SchemaObject `json:"Field"`
-	}
+	JSON200      *EnsureEverythingIsReferencedResponseJSON200
+	JSONDefault  *EnsureEverythingIsReferencedResponseJSONDefault
 }
 
 // Status returns HTTPResponse.Status
@@ -1202,33 +1207,14 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-
-			// Has additional properties with schema for dictionaries
-			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
-
-			// Has anonymous field which has additional properties
-			Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-			JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
-
-			// Has additional properties of type int
-			One *AdditionalPropertiesObject1 `json:"one,omitempty"`
-
-			// Allows any additional property
-			Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
-
-			// Does not allow additional properties
-			Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
-		}
+		var dest EnsureEverythingIsReferencedResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest struct {
-			Field SchemaObject `json:"Field"`
-		}
+		var dest EnsureEverythingIsReferencedResponseJSONDefault
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

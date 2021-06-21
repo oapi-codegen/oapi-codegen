@@ -349,11 +349,15 @@ type ClientWithResponsesInterface interface {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{- range getResponseTypeDefinitions .}}
+// {{$opid}}Response{{.TypeName}} represents a possible response for the {{$opid}} request.
+type {{$opid}}Response{{.TypeName}} {{if opts.AliasTypes}}= {{end}}{{.Schema.TypeDecl}}
+{{- end}}
 type {{$opid | ucFirst}}Response struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range getResponseTypeDefinitions .}}
-    {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{.TypeName}} *{{$opid}}Response{{.TypeName}}
     {{- end}}
 }
 

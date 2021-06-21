@@ -207,10 +207,12 @@ type ClientWithResponsesInterface interface {
 	GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooResponse, error)
 }
 
+// GetFooResponseJSON200 represents a possible response for the GetFoo request.
+type GetFooResponseJSON200 []Bar
 type GetFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Bar
+	JSON200      *GetFooResponseJSON200
 }
 
 // Status returns HTTPResponse.Status
@@ -253,7 +255,7 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Bar
+		var dest GetFooResponseJSON200
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
