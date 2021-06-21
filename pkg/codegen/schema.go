@@ -25,6 +25,9 @@ type Schema struct {
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
 	Description string // The description of the element
+
+	// The original OpenAPIv3 Schema.
+	OAPISchema *openapi3.Schema
 }
 
 func (s Schema) IsRef() bool {
@@ -162,6 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
+		OAPISchema: schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -184,6 +188,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, errors.Wrap(err, "error merging schemas")
 		}
+		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
 	}
 
@@ -340,12 +345,24 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
 			outSchema.GoType = "int64"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
 		} else if f == "int32" {
 			outSchema.GoType = "int32"
+		} else if f == "int16" {
+			outSchema.GoType = "int16"
+		} else if f == "int8" {
+			outSchema.GoType = "int8"
+		} else if f == "int" {
+			outSchema.GoType = "int"
+		} else if f == "uint64" {
+			outSchema.GoType = "uint64"
 		} else if f == "uint32" {
 			outSchema.GoType = "uint32"
+		} else if f == "uint16" {
+			outSchema.GoType = "uint16"
+		} else if f == "uint8" {
+			outSchema.GoType = "uint8"
+		} else if f == "uint" {
+			outSchema.GoType = "uint"
 		} else if f == "" {
 			outSchema.GoType = "int"
 		} else {
@@ -426,11 +443,28 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		fieldTags := make(map[string]string)
+
 		if p.Required || p.Nullable || !omitEmpty {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 		}
+		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				keys := SortedStringKeys(tags)
+				for _, k := range keys {
+					fieldTags[k] = tags[k]
+				}
+			}
+		}
+		// Convert the fieldTags map into Go field annotations.
+		keys := SortedStringKeys(fieldTags)
+		tags := make([]string, len(keys))
+		for i, k := range keys {
+			tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+		}
+		field += "`" + strings.Join(tags, " ") + "`"
 		fields = append(fields, field)
 	}
 	return fields
