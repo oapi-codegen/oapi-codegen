@@ -24,7 +24,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
@@ -67,7 +67,7 @@ type Options struct {
 
 // Create a validator from an OpenAPI object, with validation options
 func OapiRequestValidatorWithOptions(spec *openapi3.T, options *Options) echo.MiddlewareFunc {
-	router, err := legacy.NewRouter(spec)
+	router, err := gorillamux.NewRouter(spec)
 	if err != nil {
 		panic(err)
 	}

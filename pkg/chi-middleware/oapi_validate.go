@@ -12,7 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 // Options to customize request validation, openapi3filter specified options will be passed through.
@@ -29,7 +29,7 @@ func OapiRequestValidator(spec *openapi3.T) func(next http.Handler) http.Handler
 // OapiRequestValidatorWithOptions Creates middleware to validate request by OpenAPI spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
 func OapiRequestValidatorWithOptions(spec *openapi3.T, options *Options) func(next http.Handler) http.Handler {
-	router, err := legacy.NewRouter(spec)
+	router, err := gorillamux.NewRouter(spec)
 	if err != nil {
 		panic(err)
 	}
