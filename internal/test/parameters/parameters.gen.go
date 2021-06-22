@@ -44,10 +44,10 @@ type GetCookieParams struct {
 	Ep *int32 `json:"ep,omitempty"`
 
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea []int32 `json:"ea,omitempty"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A []int32 `json:"a,omitempty"`
 
 	// exploded object
 	Eo *Object `json:"eo,omitempty"`
@@ -69,10 +69,10 @@ type GetHeaderParams struct {
 	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
 
 	// exploded array
-	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+	XArrayExploded []int32 `json:"X-Array-Exploded,omitempty"`
 
 	// array
-	XArray *[]int32 `json:"X-Array,omitempty"`
+	XArray []int32 `json:"X-Array,omitempty"`
 
 	// exploded object
 	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
@@ -95,10 +95,10 @@ type GetDeepObjectParams struct {
 type GetQueryFormParams struct {
 
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea []int32 `json:"ea,omitempty"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A []int32 `json:"a,omitempty"`
 
 	// exploded object
 	Eo *Object `json:"eo,omitempty"`

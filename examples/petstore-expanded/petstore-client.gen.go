@@ -51,7 +51,7 @@ type Pet struct {
 type FindPetsParams struct {
 
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// maximum number of results to return
 	Limit *int32 `json:"limit,omitempty"`

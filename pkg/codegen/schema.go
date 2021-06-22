@@ -165,7 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
-		OAPISchema: schema,
+		OAPISchema:  schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -335,6 +335,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		}
 		outSchema.ArrayType = &arrayType
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.SkipOptionalPointer = true
 		additionalTypes := arrayType.GetAdditionalTypeDefs()
 		// Check also types defined in array item
 		if len(additionalTypes) > 0 {
