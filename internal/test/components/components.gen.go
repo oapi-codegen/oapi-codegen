@@ -91,7 +91,6 @@ type ParamsWithAddPropsParams_P1 struct {
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
-
 	// This parameter has additional properties
 	P1 ParamsWithAddPropsParams_P1 `json:"p1"`
 
@@ -1064,7 +1063,6 @@ type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-
 		// Has additional properties with schema for dictionaries
 		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
@@ -1203,7 +1201,6 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-
 			// Has additional properties with schema for dictionaries
 			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
