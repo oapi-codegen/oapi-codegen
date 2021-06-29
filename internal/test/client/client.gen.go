@@ -116,7 +116,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBoth request  with any body
+	// PostBoth request with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -124,7 +124,7 @@ type ClientInterface interface {
 	// GetBoth request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostJson request  with any body
+	// PostJson request with any body
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -132,7 +132,7 @@ type ClientInterface interface {
 	// GetJson request
 	GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOther request  with any body
+	// PostOther request with any body
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOther request
@@ -510,7 +510,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostBoth request  with any body
+	// PostBoth request with any body
 	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
 	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
@@ -518,7 +518,7 @@ type ClientWithResponsesInterface interface {
 	// GetBoth request
 	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
-	// PostJson request  with any body
+	// PostJson request with any body
 	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
 	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
@@ -526,7 +526,7 @@ type ClientWithResponsesInterface interface {
 	// GetJson request
 	GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error)
 
-	// PostOther request  with any body
+	// PostOther request with any body
 	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
 	// GetOther request

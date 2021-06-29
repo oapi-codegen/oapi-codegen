@@ -340,7 +340,7 @@ type ClientWithResponsesInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    // {{$opid}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
@@ -500,7 +500,7 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    // {{$opid}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)

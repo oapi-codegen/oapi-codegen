@@ -153,7 +153,7 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -167,7 +167,7 @@ type ClientInterface interface {
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -582,7 +582,7 @@ type ClientWithResponsesInterface interface {
 	// Issue127 request
 	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
@@ -596,7 +596,7 @@ type ClientWithResponsesInterface interface {
 	// Issue41 request
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
