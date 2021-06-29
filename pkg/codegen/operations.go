@@ -758,6 +758,23 @@ func GenerateRegistration(t *template.Template, ops []OperationDefinition) (stri
 	if err != nil {
 		return "", fmt.Errorf("error generating route registration: %s", err)
 	}
+
+	//Filter out only the security definitions containing OAuth2 in the name to build the OAuth2 registration function
+	for i, op := range ops {
+
+		var oAuth2SecurityDefinitions []SecurityDefinition
+		for _, sd := range op.SecurityDefinitions {
+			if strings.Contains(sd.ProviderName, "OAuth2") {
+				oAuth2SecurityDefinitions = append(oAuth2SecurityDefinitions, sd)
+			}
+		}
+		op.SecurityDefinitions = oAuth2SecurityDefinitions
+		ops[i] = op
+	}
+	err = t.ExecuteTemplate(w, "oauth2MiddlewareRegistration.tmpl", ops)
+	if err != nil {
+		return "", fmt.Errorf("error generating oauth2 route registration: %s", err)
+	}
 	err = w.Flush()
 	if err != nil {
 		return "", fmt.Errorf("error flushing output buffer for route registration: %s", err)

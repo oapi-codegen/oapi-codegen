@@ -847,6 +847,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
     return
 }
 `,
+	"oauth2MiddlewareRegistration.tmpl": `//A middleware function which is given the scopes for the route and can return an echo.MiddlewareFunc
+type ScopeValidatorMiddleware func (scopes []string) echo.MiddlewareFunc
+
+// Registers handlers with per handler OAuth2 scope validation.
+func RegisterHandlersWithOAuth2ScopeValidation(router EchoRouter, si ServerInterface, baseURL string, sv ScopeValidatorMiddleware) {
+{{if .}}
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{end}}
+
+{{range .}}{{if .SecurityDefinitions}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}}, sv({{range .SecurityDefinitions}}{{toStringArray .Scopes}}{{end}})){{end}}
+{{end}}
+{{range .}}{{if not .SecurityDefinitions}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}}, sv([]string{})){{end}}
+{{end}}
+}
+`,
 	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .TypeDefinitions}}
 // {{.TypeName}} defines parameters for {{$opid}}.
@@ -1059,4 +1076,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-
