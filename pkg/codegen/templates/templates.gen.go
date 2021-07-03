@@ -748,7 +748,7 @@ import (
 	"strings"
 	"time"
 
-	. {{.ModelPackageName}}
+	{{if eq .ModelPackageName "github.com/lingio//models"}} . {{.ModelPackageName}}{{end}}
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/getkin/kin-openapi/openapi3"
