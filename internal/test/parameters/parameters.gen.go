@@ -57,6 +57,9 @@ type GetCookieParams struct {
 
 	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
+
+	// name starting with number
+	N1s *string `json:"1s,omitempty"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
@@ -82,6 +85,9 @@ type GetHeaderParams struct {
 
 	// complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+
+	// name starting with number
+	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
@@ -117,6 +123,9 @@ type GetQueryFormParams struct {
 
 	// complex object
 	Co *ComplexObject `json:"co,omitempty"`
+
+	// name starting with number
+	N1s *string `json:"1s,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -248,6 +257,9 @@ type ClientInterface interface {
 
 	// GetSimplePrimitive request
 	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetStartingWithNumber request
+	GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -478,6 +490,18 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStartingWithNumberRequest(c.Server, n1param)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // NewGetContentObjectRequest generates requests for GetContentObject
 func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Request, error) {
 	var err error
@@ -645,6 +669,21 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		req.AddCookie(cookie6)
 	}
 
+	if params.N1s != nil {
+		var cookieParam7 string
+
+		cookieParam7, err = runtime.StyleParamWithLocation("simple", true, "1s", runtime.ParamLocationCookie, *params.N1s)
+		if err != nil {
+			return nil, err
+		}
+
+		cookie7 := &http.Cookie{
+			Name:  "1s",
+			Value: cookieParam7,
+		}
+		req.AddCookie(cookie7)
+	}
+
 	return req, nil
 }
 
@@ -749,6 +788,17 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		headerParam6 = string(headerParamBuf6)
 
 		req.Header.Set("X-Complex-Object", headerParam6)
+	}
+
+	if params.N1StartingWithNumber != nil {
+		var headerParam7 string
+
+		headerParam7, err = runtime.StyleParamWithLocation("simple", false, "1-Starting-With-Number", runtime.ParamLocationHeader, *params.N1StartingWithNumber)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("1-Starting-With-Number", headerParam7)
 	}
 
 	return req, nil
@@ -1243,6 +1293,22 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 
 	}
 
+	if params.N1s != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "1s", runtime.ParamLocationQuery, *params.N1s); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
 	queryURL.RawQuery = queryValues.Encode()
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -1423,6 +1489,37 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	return req, nil
 }
 
+// NewGetStartingWithNumberRequest generates requests for GetStartingWithNumber
+func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0 = n1param
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/startingWithNumber/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = operationPath[1:]
+	}
+	operationURL := url.URL{
+		Path: operationPath,
+	}
+
+	queryURL := serverURL.ResolveReference(&operationURL)
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -1522,6 +1619,9 @@ type ClientWithResponsesInterface interface {
 
 	// GetSimplePrimitive request
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
+
+	// GetStartingWithNumber request
+	GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error)
 }
 
 type GetContentObjectResponse struct {
@@ -1923,6 +2023,27 @@ func (r GetSimplePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
+type GetStartingWithNumberResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r GetStartingWithNumberResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetStartingWithNumberResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // GetContentObjectWithResponse request returning *GetContentObjectResponse
 func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error) {
 	rsp, err := c.GetContentObject(ctx, param, reqEditors...)
@@ -2092,6 +2213,15 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetSimplePrimitiveResponse(rsp)
+}
+
+// GetStartingWithNumberWithResponse request returning *GetStartingWithNumberResponse
+func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error) {
+	rsp, err := c.GetStartingWithNumber(ctx, n1param, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetStartingWithNumberResponse(rsp)
 }
 
 // ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
@@ -2455,6 +2585,25 @@ func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveRes
 	return response, nil
 }
 
+// ParseGetStartingWithNumberResponse parses an HTTP response from a GetStartingWithNumberWithResponse call
+func ParseGetStartingWithNumberResponse(rsp *http.Response) (*GetStartingWithNumberResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetStartingWithNumberResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -2514,6 +2663,9 @@ type ServerInterface interface {
 
 	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(ctx echo.Context, param int32) error
+
+	// (GET /startingWithNumber/{1param})
+	GetStartingWithNumber(ctx echo.Context, n1param string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -2623,6 +2775,17 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
 		}
 		params.Co = &value
+
+	}
+
+	if cookie, err := ctx.Cookie("1s"); err == nil {
+
+		var value string
+		err = runtime.BindStyledParameterWithLocation("simple", true, "1s", runtime.ParamLocationCookie, cookie.Value, &value)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
+		}
+		params.N1s = &value
 
 	}
 
@@ -2743,6 +2906,21 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XComplexObject = &XComplexObject
+	}
+	// ------------- Optional header parameter "1-Starting-With-Number" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("1-Starting-With-Number")]; found {
+		var N1StartingWithNumber string
+		n := len(valueList)
+		if n != 1 {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for 1-Starting-With-Number, got %d", n))
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "1-Starting-With-Number", runtime.ParamLocationHeader, valueList[0], &N1StartingWithNumber)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1-Starting-With-Number: %s", err))
+		}
+
+		params.N1StartingWithNumber = &N1StartingWithNumber
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -2977,6 +3155,13 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	}
 
+	// ------------- Optional query parameter "1s" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "1s", ctx.QueryParams(), &params.N1s)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
+	}
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetQueryForm(ctx, params)
 	return err
@@ -3062,6 +3247,19 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 	return err
 }
 
+// GetStartingWithNumber converts echo context to params.
+func (w *ServerInterfaceWrapper) GetStartingWithNumber(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "1param" -------------
+	var n1param string
+
+	n1param = ctx.Param("1param")
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetStartingWithNumber(ctx, n1param)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -3109,30 +3307,32 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
 	router.GET(baseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
 	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+	router.GET(baseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9xZS2/jOAz+KwF3TwtPnJm5+VbMvgrsPHbTwwKDHlSbaTRrWxpJKVoE/u8LSX7Kj9hJ",
-	"3KZzSyySH/mJJChpDyFLOEsxVRKCPQiUnKUSzZ81TXiM/+Sf9JeQpQpTpX8qfFQ+jwlN9T8ZbjEh5vsT",
-	"RwhAKkHTe8iyzIMIZSgoV5SlEMDVQhq7iwJrwe6+YahAi1o7Bv0D01KPn+1isAcuGEehqHXuOqqh0VTh",
-	"PQrIPLiWV1FincoX7xiLkaR6sTL2s8ANBPCTX8Xv5+D+58ofgd93VGAEwddC2dPQFc5tw2zTxw0VUn0i",
-	"CXYQ44FgcdeCg2qkvJqpW8MpTTdMK8c0xHxzUgMEH69vtHVFlTYPNyjVYo3iAQV48IBC2m14u1wtV1qQ",
-	"cUwJpxDA++Vq+RY84ERtjf9+vt82Pn/PiSBJplfu0YSrgyV6X/VuwB+oPtQVjClBElQoJARfG/lDOI9p",
-	"aJT9b5I5WTS0Pc3EyNmAwLgNXkGDQYY6l0rsMLv1mjn+brXqwyvlfKcQMoPph4z9R3GYDSPRoqFZEFzQ",
-	"hCr6oAXxkccsQgg2JJaYBxYWZorQwKtRtWEiIcoWwft34LVqIvNGIWp6egDxZMQcJVoQIcjTWFjSgKUK",
-	"EzkKv/xi0Tr8abkxxPd8bpS0sKJgRvHCGg6Na2UudBtxiILjEOcq92YkoRWoOOyMIGTgFH+6i2NTyFsk",
-	"EYqhQv7TSpxayNvCTO7Tv2++1FRmLekB6De/5Vn4LEXeduRKS3c78Wwl3+PVCxd+2ytbBd1kzdEH+jx4",
-	"de2gHUhuqAiorznE5A7jnG+TE/5+abrAL4OD0F+uWrt5dO34mBnmPDnpgVRPZkI0EcI5J6M6Z8XsOJW0",
-	"vhHyHKyNSdjZ+fnEurLqMD9NvQGC6nX8A+VVGX8zsyYQdzC1TmHupXMrIUrQRye1aDRceB9bSscUHo1m",
-	"zykb3XyElTk1ibHje9UByqYl02zktFoVjUaQc4ZG9Zozqt2nprF2Qpe69KziRMqbrWC7++2YS6Uvlfjg",
-	"ldKEK8kXuTD6vkPx9Csir+4L+0KuSR04dEaIfPgUYWCrOCNr+ugMcQbwKlGiyue+Ydq48jsTyVDsf5dC",
-	"B0Ifdd50oj/bnVIVt1aFiedNx6tnc2rcudPlbP77JgfxHIBlqIeuRtxo57leHYj2fICLvMf14MgGUOvd",
-	"4WVP6I6z7fu6k3qvfXNqjjEjTqTrltrlnuNtiPOx1ngFmkDb5ZzkZ2PIHZAPzzTrDr0LPsvPz9z4N8Z1",
-	"l+JFnOZnY6m8qx/PT/1lwWHmKCZGJM9cNGjT5gHbur8TMQSwVYoHvp+/XiuUaqkH0ITwJaGQ3Wb/BwAA",
-	"//8HeZ4w2yAAAA==",
+	"H4sIAAAAAAAC/9xa34+bOBD+V9DcPZ1ISNo33qrer5Wu295lpZ5U7YMXJsE9wK7t7O0q4n8/2UAAQwgk",
+	"YTe9ty7MzDfzefzVHrKDgCWcpZgqCf4OBErOUonmjxVNeIx/FY/0k4ClClOl/6nwSXk8JjTVf8kgwoSY",
+	"588cwQepBE03kGWZCyHKQFCuKEvBh3eONHGdEsthD18xUKBN8zgG/T3TVk8f85f+DrhgHIWieXI3YQ2N",
+	"pgo3KCBz4Ua+C5M8qeLlA2MxklS/rIL9KHANPvzgVfV7Bbj3scpH4LctFRiC/6V0djV0hXPfCNvMcU2F",
+	"VLckwQ5iXBAs7nphoRortxbq3nBK0zXTzjENsFic1ADBh5s7HV1RpcPDHUrlrFA8ogAXHlHIfBmW88V8",
+	"oQ0Zx5RwCj68nS/mS3CBExWZ/L1ivfP6vB0ngiSZfrNBU64uluh11asBv6F6X3cwoQRJUKGQ4H9p9A/h",
+	"PKaBcfa+SmZ1Ud/yNBujYAN8kza4JQ0GGepcKrHF7N5t9vibxeIQ3t7OszZCZjC9gLF/KPazYSxaNDQ3",
+	"BBc0oYo+akN84jELEfw1iSUWhQVlmLI0cGtUrZlIiMo3wds34Lb2ROYOQtT0HADEsxELlNAhQpDnobCk",
+	"AUsVJnIQ/v5JjtaRTyuNPr6nS2NPCys3zCBeWCOhYVJmQ7cR+yg4DXGq7d6sJMgNKg47KwgYtEnQ7xyp",
+	"iFA03Tj/UhU56TZ5MFLZGWUpG0TY0t1Ul3Qbx0YpIiQhij6l+D23OFcpojJMke7fs081l0k1owd69kvR",
+	"5i+iIu1E3mnr7iReTFMOZPXKytLOKt9m3WRNITSHMvju9KZdSBGoLOgE9bFjLmerwnr2mapodltaj1ak",
+	"mDxgXCyyaURvNzfS81Pv8e4P262tWF1tNuRkdpmN4IJUz+bcayqES5736pyVJ+KxpB06GF+CtSG7ZHJ+",
+	"bllXVx3np+nXQ1BdPP5HfbWvv9lZI4g72lrnMPfavZUQJeiT1Vo07N94H1pOp2w8Gk7eU3l10xG276lR",
+	"jJ2uVUcoG9dMk5HTkioaDiDnAkL1PXdUW6fGsXaGSl17V3Ei5V0k2HYTDRmVfarMewdlIwatrzIG+7ZF",
+	"8fwzIq+moIdKrlkduemGiLz/6mJgqzrDPPTJHWKd+qtGCaucDx2mTSq/MpH01f7n3uhI6YMuuVb1F5uU",
+	"VXVrVxh5ybWyerGkhl12bc6mn6JZiJcA3Jd6bB5jVzvN0Lin2ssBOoXGHcDpH8m98ljASva0KaQVZNQQ",
+	"8ixtz7/UNY9JA268q5bb9c4J8hJhMtYa385G0HY9k4LJGLIP4MfPTKsOvyueFUzP3PAvs6sux6uYFkzG",
+	"0v4DxHB+6p9LLGZOYmJA80xJQ/F/ymeqonxW7O2WA6houU14QVlOfEPRDJtfP+R5b0UMPkRKcd/zip8+",
+	"KJRqrs/5CeFzQiG7z/4LAAD//734if8YIwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
