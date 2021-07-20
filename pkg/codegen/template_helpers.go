@@ -250,6 +250,9 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 
 // This outputs a string array
 func toStringArray(sarr []string) string {
+	if len(sarr) == 0 {
+		return "[]string{}"
+	}
 	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
 }
 
