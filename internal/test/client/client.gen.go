@@ -116,7 +116,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBoth request  with any body
+	// PostBoth request with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -124,7 +124,7 @@ type ClientInterface interface {
 	// GetBoth request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostJson request  with any body
+	// PostJson request with any body
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -132,7 +132,7 @@ type ClientInterface interface {
 	// GetJson request
 	GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOther request  with any body
+	// PostOther request with any body
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOther request
@@ -272,13 +272,13 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 
 	operationPath := fmt.Sprintf("/with_both_bodies")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -301,13 +301,13 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/with_both_responses")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -339,13 +339,13 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 
 	operationPath := fmt.Sprintf("/with_json_body")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -368,13 +368,13 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/with_json_response")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -395,13 +395,13 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 
 	operationPath := fmt.Sprintf("/with_other_body")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -424,13 +424,13 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/with_other_response")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -451,13 +451,13 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/with_trailing_slash/")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -510,7 +510,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostBoth request  with any body
+	// PostBoth request with any body
 	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
 	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
@@ -518,7 +518,7 @@ type ClientWithResponsesInterface interface {
 	// GetBoth request
 	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
-	// PostJson request  with any body
+	// PostJson request with any body
 	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
 	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
@@ -526,7 +526,7 @@ type ClientWithResponsesInterface interface {
 	// GetJson request
 	GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error)
 
-	// PostOther request  with any body
+	// PostOther request with any body
 	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
 	// GetOther request
@@ -775,9 +775,6 @@ func ParsePostBothResponse(rsp *http.Response) (*PostBothResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -792,9 +789,6 @@ func ParseGetBothResponse(rsp *http.Response) (*GetBothResponse, error) {
 	response := &GetBothResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -813,9 +807,6 @@ func ParsePostJsonResponse(rsp *http.Response) (*PostJsonResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -830,9 +821,6 @@ func ParseGetJsonResponse(rsp *http.Response) (*GetJsonResponse, error) {
 	response := &GetJsonResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -851,9 +839,6 @@ func ParsePostOtherResponse(rsp *http.Response) (*PostOtherResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -870,9 +855,6 @@ func ParseGetOtherResponse(rsp *http.Response) (*GetOtherResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -887,9 +869,6 @@ func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*GetJsonWithTrai
 	response := &GetJsonWithTrailingSlashResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil

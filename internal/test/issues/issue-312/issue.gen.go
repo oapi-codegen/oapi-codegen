@@ -24,7 +24,6 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-
 	// Error code
 	Code int32 `json:"code"`
 
@@ -34,14 +33,12 @@ type Error struct {
 
 // Pet defines model for Pet.
 type Pet struct {
-
 	// The name of the pet.
 	Name string `json:"name"`
 }
 
 // PetNames defines model for PetNames.
 type PetNames struct {
-
 	// The names of the pets.
 	Names []string `json:"names"`
 }
@@ -128,7 +125,7 @@ type ClientInterface interface {
 	// GetPet request
 	GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ValidatePets request  with any body
+	// ValidatePets request with any body
 	ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -188,13 +185,13 @@ func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -226,13 +223,13 @@ func NewValidatePetsRequestWithBody(server string, contentType string, body io.R
 
 	operationPath := fmt.Sprintf("/pets:validate")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -290,7 +287,7 @@ type ClientWithResponsesInterface interface {
 	// GetPet request
 	GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error)
 
-	// ValidatePets request  with any body
+	// ValidatePets request with any body
 	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 
 	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)

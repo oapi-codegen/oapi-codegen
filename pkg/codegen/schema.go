@@ -165,7 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
-		OAPISchema: schema,
+		OAPISchema:  schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -425,13 +425,16 @@ type FieldDescriptor struct {
 // JSON annotations
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
-	for _, p := range props {
+	for i, p := range props {
 		field := ""
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.
 			// Make sure the actual field is separated by a newline.
-			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
+			if i != 0 {
+				field += "\n"
+			}
+			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 

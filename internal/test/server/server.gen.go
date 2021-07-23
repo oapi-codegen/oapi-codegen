@@ -87,7 +87,6 @@ type SimpleResponse struct {
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {
-
 	// An optional query argument
 	OptionalArgument *int64 `json:"optional_argument,omitempty"`
 
@@ -109,7 +108,6 @@ type CreateResource2JSONBody Resource
 
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
-
 	// Some query argument
 	InlineQueryArgument *int `json:"inline_query_argument,omitempty"`
 }
