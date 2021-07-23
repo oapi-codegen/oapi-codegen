@@ -205,10 +205,19 @@ func StringInArray(str string, array []string) bool {
 	return false
 }
 
+// these suffixes are used for avoiding naming conflicts in code generation, because all four
+// component types will be generated in the same package
+const (
+	componentNameSuffixParameters    = "Param"
+	componentNameSuffixResponses     = "Response"
+	componentNameSuffixRequestBodies = "Request"
+)
+
 // This function takes a $ref value and converts it to a Go typename.
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
+// #/components/requestBodies/Baz -> Baz
 // Remote components (document.json#/Foo) are supported if they present in --import-mapping
 // URL components (http://deepmap.com/schemas/document.json#Foo) are supported if they present in --import-mapping
 //
@@ -217,6 +226,14 @@ func RefPathToGoType(refPath string) (string, error) {
 		pathParts := strings.Split(refPath, "/")
 		if depth := len(pathParts); depth != 4 {
 			return "", fmt.Errorf("Parameter nesting is deeper than supported: %s has %d", refPath, depth)
+		}
+		switch pathParts[2] {
+		case "parameters":
+			pathParts[3] += componentNameSuffixParameters
+		case "responses":
+			pathParts[3] += componentNameSuffixResponses
+		case "requestBodies":
+			pathParts[3] += componentNameSuffixRequestBodies
 		}
 		return SchemaNameToTypeName(pathParts[3]), nil
 	}

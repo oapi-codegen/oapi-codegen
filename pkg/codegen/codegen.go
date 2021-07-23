@@ -394,6 +394,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 	var types []TypeDefinition
 	for _, paramName := range SortedParameterKeys(params) {
 		paramOrRef := params[paramName]
+		paramName += componentNameSuffixParameters
 
 		goType, err := paramToGoType(paramOrRef.Value, nil)
 		if err != nil {
@@ -427,6 +428,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 	for _, responseName := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[responseName]
+		responseName += componentNameSuffixResponses
 
 		// We have to generate the response object. We're only going to
 		// handle application/json media types here. Other responses should
@@ -466,6 +468,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 
 	for _, bodyName := range SortedRequestBodyKeys(bodies) {
 		bodyOrRef := bodies[bodyName]
+		bodyName += componentNameSuffixRequestBodies
 
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
