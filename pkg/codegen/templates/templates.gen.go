@@ -568,11 +568,11 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    pathParam{{$paramIdx}} = {{.ParamName}}
+    pathParam{{$paramIdx}} = {{.GoVariableName}}
     {{end}}
     {{if .IsJson}}
     var pathParamBuf{{$paramIdx}} []byte
-    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.ParamName}})
+    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.GoVariableName}})
     if err != nil {
         return nil, err
     }
