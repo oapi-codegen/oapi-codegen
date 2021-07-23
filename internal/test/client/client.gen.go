@@ -775,9 +775,6 @@ func ParsePostBothResponse(rsp *http.Response) (*PostBothResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -792,9 +789,6 @@ func ParseGetBothResponse(rsp *http.Response) (*GetBothResponse, error) {
 	response := &GetBothResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -813,9 +807,6 @@ func ParsePostJsonResponse(rsp *http.Response) (*PostJsonResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -830,9 +821,6 @@ func ParseGetJsonResponse(rsp *http.Response) (*GetJsonResponse, error) {
 	response := &GetJsonResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -851,9 +839,6 @@ func ParsePostOtherResponse(rsp *http.Response) (*PostOtherResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -870,9 +855,6 @@ func ParseGetOtherResponse(rsp *http.Response) (*GetOtherResponse, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -887,9 +869,6 @@ func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*GetJsonWithTrai
 	response := &GetJsonWithTrailingSlashResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
