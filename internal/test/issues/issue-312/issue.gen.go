@@ -125,7 +125,7 @@ type ClientInterface interface {
 	// GetPet request
 	GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ValidatePets request  with any body
+	// ValidatePets request with any body
 	ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -287,7 +287,7 @@ type ClientWithResponsesInterface interface {
 	// GetPet request
 	GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error)
 
-	// ValidatePets request  with any body
+	// ValidatePets request with any body
 	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 
 	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
