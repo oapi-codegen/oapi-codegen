@@ -218,13 +218,13 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 
 	operationPath := fmt.Sprintf("/pets")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -292,13 +292,13 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 
 	operationPath := fmt.Sprintf("/pets")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -328,13 +328,13 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
@@ -362,13 +362,13 @@ func NewFindPetByIDRequest(server string, id int64) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {

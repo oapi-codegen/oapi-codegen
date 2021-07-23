@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const hostname = "host"
+const hostname = "http://host"
 
 func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 	doer := &HTTPRequestDoerMock{}
@@ -23,7 +23,7 @@ func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
 		assert.True(t, ok)
-		assert.Equal(t, "/host/pets:validate", req.URL.Path)
+		assert.Equal(t, "http://host/pets:validate", req.URL.String())
 	})
 
 	client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
@@ -40,7 +40,7 @@ func TestClient_WhenPathHasId_RequestHasCorrectPath(t *testing.T) {
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
 		assert.True(t, ok)
-		assert.Equal(t, "/host/pets/id", req.URL.Path)
+		assert.Equal(t, "/pets/id", req.URL.Path)
 	})
 	petID := "id"
 	client.GetPetWithResponse(context.Background(), petID)
@@ -55,13 +55,12 @@ func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
 		assert.True(t, ok)
-		assert.Equal(t, "/host/pets/id1%2Fid2", req.URL.Path)
+		assert.Equal(t, "http://host/pets/id1%2Fid2", req.URL.String())
 	})
 	petID := "id1/id2"
 	client.GetPetWithResponse(context.Background(), petID)
 	doer.AssertExpectations(t)
 }
-
 
 func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
 
@@ -103,11 +102,10 @@ func (m *HTTPRequestDoerMock) Do(req *http.Request) (*http.Response, error) {
 	return args.Get(0).(*http.Response), args.Error(1)
 }
 
-
 // An implementation of the server interface which helps us check server
 // expectations for funky paths and parameters.
 type MockClient struct {
-	getPet func(ctx echo.Context, petId string) error
+	getPet       func(ctx echo.Context, petId string) error
 	validatePets func(ctx echo.Context) error
 }
 
