@@ -36,7 +36,6 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-
 	// primitive
 	P *int32 `json:"p,omitempty"`
 
@@ -61,7 +60,6 @@ type GetCookieParams struct {
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-
 	// primitive
 	XPrimitive *int32 `json:"X-Primitive,omitempty"`
 
@@ -86,14 +84,12 @@ type GetHeaderParams struct {
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
-
 	// deep object
 	DeepObj ComplexObject `json:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-
 	// exploded array
 	Ea *[]int32 `json:"ea,omitempty"`
 
