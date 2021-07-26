@@ -91,7 +91,6 @@ type ParamsWithAddPropsParams_P1 struct {
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
-
 	// This parameter has additional properties
 	P1 ParamsWithAddPropsParams_P1 `json:"p1"`
 
@@ -794,7 +793,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// EnsureEverythingIsReferenced request  with any body
+	// EnsureEverythingIsReferenced request with any body
 	EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -802,7 +801,7 @@ type ClientInterface interface {
 	// ParamsWithAddProps request
 	ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// BodyWithAddProps request  with any body
+	// BodyWithAddProps request with any body
 	BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -890,13 +889,13 @@ func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType s
 
 	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -919,13 +918,13 @@ func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParam
 
 	operationPath := fmt.Sprintf("/params_with_add_props")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -985,13 +984,13 @@ func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body 
 
 	operationPath := fmt.Sprintf("/params_with_add_props")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -1046,7 +1045,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferenced request  with any body
+	// EnsureEverythingIsReferenced request with any body
 	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
 	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
@@ -1054,7 +1053,7 @@ type ClientWithResponsesInterface interface {
 	// ParamsWithAddProps request
 	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error)
 
-	// BodyWithAddProps request  with any body
+	// BodyWithAddProps request with any body
 	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
 
 	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
@@ -1064,7 +1063,6 @@ type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-
 		// Has additional properties with schema for dictionaries
 		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
@@ -1203,7 +1201,6 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-
 			// Has additional properties with schema for dictionaries
 			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
@@ -1255,9 +1252,6 @@ func ParseParamsWithAddPropsResponse(rsp *http.Response) (*ParamsWithAddPropsRes
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -1272,9 +1266,6 @@ func ParseBodyWithAddPropsResponse(rsp *http.Response) (*BodyWithAddPropsRespons
 	response := &BodyWithAddPropsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil

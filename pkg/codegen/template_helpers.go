@@ -95,8 +95,6 @@ func genResponsePayload(operationID string) string {
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
-	var buffer = bytes.NewBufferString("")
-
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
 
@@ -106,7 +104,13 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		panic(err)
 	}
 
+	if len(typeDefinitions) == 0 {
+		// No types.
+		return ""
+	}
+
 	// Add a case for each possible response:
+	buffer := new(bytes.Buffer)
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
 
@@ -196,6 +200,11 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			}
 		}
+	}
+
+	if len(handledCaseClauses)+len(unhandledCaseClauses) == 0 {
+		// switch would be empty.
+		return ""
 	}
 
 	// Now build the switch statement in order of most-to-least specific:

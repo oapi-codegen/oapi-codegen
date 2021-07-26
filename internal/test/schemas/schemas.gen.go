@@ -153,7 +153,7 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -167,7 +167,7 @@ type ClientInterface interface {
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -292,13 +292,13 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -319,13 +319,13 @@ func NewIssue127Request(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/issues/127")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -357,13 +357,13 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 
 	operationPath := fmt.Sprintf("/issues/185")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -393,13 +393,13 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	operationPath := fmt.Sprintf("/issues/209/$%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -427,13 +427,13 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/issues/30/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -461,13 +461,13 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	operationPath := fmt.Sprintf("/issues/41/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -499,13 +499,13 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 
 	operationPath := fmt.Sprintf("/issues/9")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -582,7 +582,7 @@ type ClientWithResponsesInterface interface {
 	// Issue127 request
 	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
@@ -596,7 +596,7 @@ type ClientWithResponsesInterface interface {
 	// Issue41 request
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
@@ -941,9 +941,6 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -958,9 +955,6 @@ func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	response := &Issue209Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -979,9 +973,6 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -998,9 +989,6 @@ func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -1015,9 +1003,6 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	response := &Issue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
