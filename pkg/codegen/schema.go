@@ -165,7 +165,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
-		OAPISchema: schema,
+		OAPISchema:  schema,
 	}
 
 	// We can't support this in any meaningful way
@@ -427,13 +427,16 @@ type FieldDescriptor struct {
 // JSON annotations
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
-	for _, p := range props {
+	for i, p := range props {
 		field := ""
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.
 			// Make sure the actual field is separated by a newline.
-			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
+			if i != 0 {
+				field += "\n"
+			}
+			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
 		}
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 
@@ -445,11 +448,28 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		fieldTags := make(map[string]string)
+
 		if p.Required || p.Nullable || !omitEmpty {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName
 		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 		}
+		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				keys := SortedStringKeys(tags)
+				for _, k := range keys {
+					fieldTags[k] = tags[k]
+				}
+			}
+		}
+		// Convert the fieldTags map into Go field annotations.
+		keys := SortedStringKeys(fieldTags)
+		tags := make([]string, len(keys))
+		for i, k := range keys {
+			tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+		}
+		field += "`" + strings.Join(tags, " ") + "`"
 		fields = append(fields, field)
 	}
 	return fields

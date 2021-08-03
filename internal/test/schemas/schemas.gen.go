@@ -153,7 +153,7 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -167,7 +167,7 @@ type ClientInterface interface {
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -292,13 +292,13 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -319,13 +319,13 @@ func NewIssue127Request(server string) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/issues/127")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -357,13 +357,13 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 
 	operationPath := fmt.Sprintf("/issues/185")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {
@@ -393,13 +393,13 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	operationPath := fmt.Sprintf("/issues/209/$%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -427,13 +427,13 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/issues/30/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -461,13 +461,13 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	operationPath := fmt.Sprintf("/issues/41/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -499,13 +499,13 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 
 	operationPath := fmt.Sprintf("/issues/9")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -582,7 +582,7 @@ type ClientWithResponsesInterface interface {
 	// Issue127 request
 	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
-	// Issue185 request  with any body
+	// Issue185 request with any body
 	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
@@ -596,7 +596,7 @@ type ClientWithResponsesInterface interface {
 	// Issue41 request
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
-	// Issue9 request  with any body
+	// Issue9 request with any body
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
@@ -612,7 +612,7 @@ type EnsureEverythingIsReferencedResponse struct {
 		//
 		// This should be an interface{}
 		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-		CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
 	}
 }
 
@@ -863,7 +863,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 			//
 			// This should be an interface{}
 			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-			CustomStringType *CustomStringType `json:"customStringType,omitempty"`
+			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -941,9 +941,6 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -958,9 +955,6 @@ func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	response := &Issue209Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -979,9 +973,6 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -998,9 +989,6 @@ func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 		HTTPResponse: rsp,
 	}
 
-	switch {
-	}
-
 	return response, nil
 }
 
@@ -1015,9 +1003,6 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	response := &Issue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
@@ -1201,25 +1186,25 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RWX2/bNhD/KgeuwF4cy3YarPFbVnRDBqwNmgB9iPNAi2eLjXRkyVMSwfB3H0jKll3L",
-	"WbN0eYlo8v78fvd3JXJTWUNI7MV0Jax0skJGF0/X7DQtL+lKchHOCn3utGVtSEzFBfh4D1ZyAVtJMRA6",
-	"XIdfxUCQrFBMhedw4fBbrR0qMWVX40D4vMBKBtXc2PaZpqVYr9eby+jI2TVLx/6L5uJjXc3RHXpzU2gP",
-	"SQSCTfBRBB41FyCBkthgY8jMv2LOYj0QF9TcNBbHYrrqTpMeuO0NOLQOfWAMJDUQFA4BAGY0o+RFYepS",
-	"wRxBEmhidAuZ42o9o2Dvfe3ZVInam+jMSiyMqySLqcjjZefmho+B+BMJnc4/Jb87xjogH+uylPMSr5yx",
-	"6FhjiujeyUQ0suyhfLC9vCC10RXe0fY7Be1Arovq6vjly5Tuab3tvvv13R2ENaQP5rXT3FyHnEjoZZ6j",
-	"9yds7pHCeY7SoftjQ/5fX25OUiQgvYT4cjgj0WZjMJGEuhAVzDYlrKaF6UlM9Ay59OhhYRw8SKdN7UF7",
-	"X8efalJgHtAB6wqHcFWi9AhSKZDAG9kgOqOQbvN6CQv9hCq5xZoDicnKNbqH6NoDOp+sj4ej4SgFF0la",
-	"LabidDgajsUgFmikJUPytcMTfEDXcKFpeaL9icMFOqQ8xXWJfKTmkJQ1mhjwSXv24A1wIRm6xgK5pFAN",
-	"uUPJqEATcKH9jLzFHCQpIMPhgXU1oYq4QtLKYOZSian4EB38sPXv0n/uvAs54a0hn4I8GY3Cv9wQI0Wn",
-	"pbWlzqO27Ks3MfRd59kvENl1A/HG4UJMxS9ZByVrm1K27RrrwUZm8oMykyCT93SB52QPukZIuO+TPv4N",
-	"RJZyKxtPfjsaur/lPUIgFWrytbXGhchE0p449jQPytCvDNYhVpahexVvhz1hugx2g9VXhuQ5Ivb7YIC7",
-	"q+upKl+jKoDPKunulXmkVytq5Gu8CWoULmRd8v9I3k9C/H3mvTs73jQai7AM8hEBPBZIsBk92aa9Q1eW",
-	"IB3CZl4cT7t3Z+10QM+/G9X8NNJ65mpCu5Pjwb1dAiaj8+zNyrNbH+XhfYH5vQe96FanBFVhXsqOgrLp",
-	"BzwZnYtDHwZ7K9xtP7LuSba34q3vdiCcjrLVQpYlF87Uy2J9iOAz+jBwFNxj82ic2t18rMM4pUKzDyMv",
-	"EBj3srZxtJT04Dod/QisnhVzx9kXrZq7oN+Os9U4mjoeuKuNJzt7ZliD46a53TN7kL1NU/ffcCT7z0J4",
-	"Ll0Pd+X1+u7ZZD0/nqOlRuKUoD72fdCUG+cw57IJ32WtUMXFpi29RMPcqCZM9hl1eI+W7vkRWr7V6Jqd",
-	"+Brzsrj+53bQ9t5dJj61DSoiE33Fv7NyRgj7y+btXfAn1ksLsXZluz1Os6zdzsK+N1SItpJ2KHUoyH8C",
-	"AAD//ypj9OOiDQAA",
+	"H4sIAAAAAAAC/7RW32/bNhD+Vw5cgb3Ylu22WOO3ruiGDFgbNAH6UOeBFs8WG+nIkqfEguH/fSApW3Yt",
+	"Z83S5SWiyfvxfd/xeBuRm8oaQmIvZhthpZMVMrq4umanaXVJV5KLsFboc6cta0NiJt6Cj/tgJRewtxQD",
+	"ocN2+FUMBMkKxUx4DhsOv9XaoRIzdjUOhM8LrGRwzY1tj2laie12u9uMiby+ZunYf9ZcfKirBbrTbG4K",
+	"7SGZQIgJPprAg+YCJFAyG+wCmcVXzFlsB+ItNTeNxYmYbbrVtAduuwMOrUMfGANJDQSHoznNKWVQmLpU",
+	"sECQBJoY3VLmuNnOKcR6V3s2VaL1JiayEUvjKsliJvK42aXYcjEQ66GRVg9zo3CFNMQ1OzlkufLJ3IiZ",
+	"WEgnAmd/IqHT+ceEruO1g/uhLku5KPHKGYuONSbdj1YmYpZljzCD/eZbUjtf4Rztv5O0J3ad9pvzm09z",
+	"euT1S/fd7+/2RPxQZJjXTnNzHSonoZd5jt4P2dwhhfUCpUP3x06mvz7fDJNmkE5CPDmak2hrNoRIRp2Y",
+	"BbNNZa1paXrKFz1DLj16WBoH99JpU3vQ3tfxp5oUmHt0wLrCEVyVKD2CVAok8M42mM4pFOWiXsFSr1Gl",
+	"tFhzIDFFuUZ3H1O7R+dT9MloPBoncZGk1WImXo7Go4kYxGscacmQfO1wiPfoGi40rYbaDx0u0SHlSdcV",
+	"8pmbiaSs0cSAa+3ZgzfAhWTo2g/kksK9yR1KRgWagAvt5+Qt5iBJARkOB6yrCVXEFYpWhjCXSszE+5jg",
+	"+31+l/5Tl12oCW8N+STydDwO/3JDjBSTltaWOo/esq/eROm7/nR8QWTXM8QLh0sxE79kHZSsbV3Zvrds",
+	"Bzub6Q/aTINN3tMvHrM96S+h4L4v+vg3EFmqrWwy/e2sdH/LO4RAKtTka2uNC8pE0tYcO58HZehXBusQ",
+	"K8vQnYq7ox6ZLkPcEPWZkjxGxHEfDHAPfa2r8jmuAvisku5OmQd6tqNGPieb4EbhUtYl/4/k/STE31fe",
+	"m9fnm0ZjEVbBPiKAhwIJdk9Ptmvv0F1LkA5h916cL7s3r9vXAT3/blTz00jreVcT2oMaD+kdEjAdX2Qv",
+	"Np7d9iwP7wrM7zzoZTdgJagK81J2FJRNP+Dp+EKc5jA4GvS+9CPrjmRHg+D29gDCy3G2Wcqy5MKZelVs",
+	"TxF8Qh8eHAV32DwYpw5nJOswvlKh2YcnLxAYp7e2cbSU9OB6Of4RWD2D6EGyTxpID0G/mmSbSQx1Xrir",
+	"XSYH02gYluM8up9Ge5C9Sq/uv+FI8R+F8Fi5nk7U2+3to8V6cb5GS43EqUB97PugKTfOYc5lE77LWqGK",
+	"g0179RINC6Oa8LLPqcN79upenKHlW42uOdDXmKfp+p/bQdt7D5n42DaoiEz0Xf6DkTNCOB42v9yGfOJ9",
+	"aSHWrmynx1mWtdNZmPdGCtFW0o6kDhfynwAAAP//LJE8EMgNAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

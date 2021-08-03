@@ -23,7 +23,6 @@ import (
 
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
-
 	// base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.
 	Foo *string `json:"Foo,omitempty"`
 
@@ -131,13 +130,13 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 
 	operationPath := fmt.Sprintf("/foo")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {

@@ -20,7 +20,6 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-
 	// Error code
 	Code int32 `json:"code"`
 
@@ -30,7 +29,6 @@ type Error struct {
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-
 	// Name of the pet
 	Name string `json:"name"`
 
@@ -43,14 +41,12 @@ type Pet struct {
 	// Embedded struct due to allOf(#/components/schemas/NewPet)
 	NewPet `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
-
 	// Unique id of the pet
 	Id int64 `json:"id"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
-
 	// tags to filter by
 	Tags []string `json:"tags,omitempty"`
 

@@ -19,7 +19,6 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-
 	// Error code
 	Code int32 `json:"code"`
 
@@ -29,7 +28,6 @@ type Error struct {
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-
 	// Name of the pet
 	Name string `json:"name"`
 
@@ -42,14 +40,12 @@ type Pet struct {
 	// Embedded struct due to allOf(#/components/schemas/NewPet)
 	NewPet `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
-
 	// Unique id of the pet
 	Id int64 `json:"id"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
-
 	// tags to filter by
 	Tags []string `json:"tags,omitempty"`
 
@@ -139,7 +135,7 @@ type ClientInterface interface {
 	// FindPets request
 	FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddPet request  with any body
+	// AddPet request with any body
 	AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -222,13 +218,13 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 
 	operationPath := fmt.Sprintf("/pets")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	queryValues := queryURL.Query()
 
@@ -296,13 +292,13 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 
 	operationPath := fmt.Sprintf("/pets")
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
@@ -332,13 +328,13 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
 	if err != nil {
@@ -366,13 +362,13 @@ func NewFindPetByIDRequest(server string, id int64) (*http.Request, error) {
 
 	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -428,7 +424,7 @@ type ClientWithResponsesInterface interface {
 	// FindPets request
 	FindPetsWithResponse(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*FindPetsResponse, error)
 
-	// AddPet request  with any body
+	// AddPet request with any body
 	AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
 
 	AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
