@@ -3,8 +3,6 @@ package codegen
 import (
 	"encoding/json"
 	"fmt"
-
-	"github.com/pkg/errors"
 )
 
 const (
@@ -20,7 +18,7 @@ func extTypeName(extPropValue interface{}) (string, error) {
 	}
 	var name string
 	if err := json.Unmarshal(raw, &name); err != nil {
-		return "", errors.Wrap(err, "failed to unmarshal json")
+		return "", fmt.Errorf("failed to unmarshal json")
 	}
 
 	return name, nil
@@ -34,7 +32,7 @@ func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
 
 	var omitEmpty bool
 	if err := json.Unmarshal(raw, &omitEmpty); err != nil {
-		return false, errors.Wrap(err, "failed to unmarshal json")
+		return false, fmt.Errorf("failed to unmarshal json")
 	}
 
 	return omitEmpty, nil
@@ -47,7 +45,7 @@ func extExtraTags(extPropValue interface{}) (map[string]string, error) {
 	}
 	var tags map[string]string
 	if err := json.Unmarshal(raw, &tags); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal json")
+		return nil, fmt.Errorf("failed to unmarshal json")
 	}
 	return tags, nil
 }
