@@ -32,7 +32,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
     if raw, found := object["{{.JsonFieldName}}"]; found {
         err = json.Unmarshal(raw, &a.{{.GoFieldName}})
         if err != nil {
-            return fmt.Errorf("error reading '{{.JsonFieldName}}'")
+            return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
         }
         delete(object, "{{.JsonFieldName}}")
     }
@@ -43,7 +43,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
             var fieldVal {{$addType}}
             err := json.Unmarshal(fieldBuf, &fieldVal)
             if err != nil {
-                return fmt.Errorf("error unmarshaling field %s", fieldName)
+                return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
             }
             a.AdditionalProperties[fieldName] = fieldVal
         }
@@ -59,14 +59,14 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 {{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
     object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
     if err != nil {
-        return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}'")
+        return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
 {{if not .Required}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s'", fieldName)
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
 	return json.Marshal(object)

@@ -184,7 +184,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 	if timeVal, ok := marshalDateTimeValue(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
-			return "", fmt.Errorf("failed to style time")
+			return "", fmt.Errorf("failed to style time: %w", err)
 		}
 		return styledVal, nil
 	}
