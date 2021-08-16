@@ -34,6 +34,8 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 		panic(err)
 	}
 
+	addNoopAuthentication(options)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -48,6 +50,18 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 		})
 	}
 
+}
+
+// Sets a NoopAuthenticationFunction in the openapi3filter Options if no other is set
+// because it is not used by echo but lets the request validation pass even with security schemes
+func addNoopAuthentication(options *Options) *Options {
+	if options == nil {
+		options = &Options{Options: openapi3filter.Options{}}
+	}
+	if options.Options.AuthenticationFunc == nil {
+		options.Options.AuthenticationFunc = openapi3filter.NoopAuthenticationFunc
+	}
+	return options
 }
 
 // This function is called from the middleware above and actually does the work

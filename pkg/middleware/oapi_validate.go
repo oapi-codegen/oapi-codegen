@@ -73,6 +73,9 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 	}
 
 	skipper := getSkipperFromOptions(options)
+
+	options = addNoopAuthentication(options)
+
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if skipper(c) {
@@ -86,6 +89,18 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 			return next(c)
 		}
 	}
+}
+
+// Sets a NoopAuthenticationFunction in the openapi3filter Options if no other is set
+// because it is not used by echo but lets the request validation pass even with security schemes
+func addNoopAuthentication(options *Options) *Options {
+	if options == nil {
+		options = &Options{Options: openapi3filter.Options{}}
+	}
+	if options.Options.AuthenticationFunc == nil {
+		options.Options.AuthenticationFunc = openapi3filter.NoopAuthenticationFunc
+	}
+	return options
 }
 
 // This function is called from the middleware above and actually does the work
