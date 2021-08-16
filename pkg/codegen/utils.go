@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -182,6 +183,17 @@ func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
 	return keys
 }
 
+func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
+	keys := make([]string, len(sr))
+	i := 0
+	for key := range sr {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // This function checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {
@@ -198,15 +210,25 @@ func StringInArray(str string, array []string) bool {
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
 // Remote components (document.json#/Foo) are supported if they present in --import-mapping
-// URL components (http://deepmap.com/schemas/document.json#Foo) are supported if they present in --import-mapping
-//
+// URL components (http://deepmap.com/schemas/document.json#/Foo) are supported if they present in --import-mapping
+// Remote and URL also support standard local paths even though the spec doesn't mention them.
 func RefPathToGoType(refPath string) (string, error) {
+	return refPathToGoType(refPath, true)
+}
+
+// refPathToGoType returns the Go typename for refPath given its
+func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
-		if depth := len(pathParts); depth != 4 {
-			return "", fmt.Errorf("Parameter nesting is deeper than supported: %s has %d", refPath, depth)
+		depth := len(pathParts)
+		if local {
+			if depth != 4 {
+				return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+			}
+		} else if depth != 4 && depth != 2 {
+			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
 		}
-		return SchemaNameToTypeName(pathParts[3]), nil
+		return SchemaNameToTypeName(pathParts[len(pathParts)-1]), nil
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
@@ -216,12 +238,33 @@ func RefPathToGoType(refPath string) (string, error) {
 	if goImport, ok := importMapping[remoteComponent]; !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
-		goType, err := RefPathToGoType("#" + flatComponent)
+		goType, err := refPathToGoType("#"+flatComponent, false)
 		if err != nil {
 			return "", err
 		}
 		return fmt.Sprintf("%s.%s", goImport.Name, goType), nil
 	}
+}
+
+// This function takes a $ref value and checks if it has link to go type.
+// #/components/schemas/Foo                     -> true
+// ./local/file.yml#/components/parameters/Bar  -> true
+// ./local/file.yml                             -> false
+// The function can be used to check whether RefPathToGoType($ref) is possible.
+//
+func IsGoTypeReference(ref string) bool {
+	return ref != "" && !IsWholeDocumentReference(ref)
+}
+
+// This function takes a $ref value and checks if it is whole document reference.
+// #/components/schemas/Foo                             -> false
+// ./local/file.yml#/components/parameters/Bar          -> false
+// ./local/file.yml                                     -> true
+// http://deepmap.com/schemas/document.json             -> true
+// http://deepmap.com/schemas/document.json#/Foo        -> false
+//
+func IsWholeDocumentReference(ref string) bool {
+	return ref != "" && !strings.ContainsAny(ref, "#")
 }
 
 // This function converts a swagger style path URI with parameters to a
@@ -265,7 +308,7 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// Replaces path parameters with %s
+// Replaces path parameters of the form {param} with %s
 func ReplacePathParamsWithStr(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "%s")
 }
@@ -456,7 +499,6 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 		if _, dup := dupCheck[n]; !dup {
 			deDup = append(deDup, n)
 		}
-
 		dupCheck[n] = 0
 	}
 
@@ -464,14 +506,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
 	for _, n := range deDup {
-		sanitized := SanitizeGoIdentity(n)
+		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = n
-			dupCheck[sanitized]++
 		} else {
 			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
 		}
+		dupCheck[sanitized]++
 	}
 
 	return sanitizedDeDup
@@ -480,10 +522,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	name = ToCamelCase(name)
-	// Prepend "N" to schemas starting with a number
-	if name != "" && unicode.IsDigit([]rune(name)[0]) {
-		name = "N" + name
+	if name == "$" {
+		name = "DollarSign"
+	} else {
+		name = ToCamelCase(name)
+		// Prepend "N" to schemas starting with a number
+		if name != "" && unicode.IsDigit([]rune(name)[0]) {
+			name = "N" + name
+		}
 	}
 	return name
 }
@@ -517,6 +563,10 @@ func PathToTypeName(path []string) string {
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {
+	if len(in) == 0 || len(strings.TrimSpace(in)) == 0 { // ignore empty comment
+		return ""
+	}
+
 	// Normalize newlines from Windows/Mac to Linux
 	in = strings.Replace(in, "\r\n", "\n", -1)
 	in = strings.Replace(in, "\r", "\n", -1)
@@ -532,4 +582,18 @@ func StringToGoComment(in string) string {
 	// empty-line-comments, like `// `. Therefore remove this line comment.
 	in = strings.TrimSuffix(in, "\n// ")
 	return in
+}
+
+// This function breaks apart a path, and looks at each element. If it's
+// not a path parameter, eg, {param}, it will URL-escape the element.
+func EscapePathElements(path string) string {
+	elems := strings.Split(path, "/")
+	for i, e := range elems {
+		if strings.HasPrefix(e, "{") && strings.HasSuffix(e, "}") {
+			// This is a path parameter, we don't want to mess with its value
+			continue
+		}
+		elems[i] = url.QueryEscape(e)
+	}
+	return strings.Join(elems, "/")
 }

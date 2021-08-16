@@ -16,6 +16,7 @@ package runtime
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"net/url"
 	"testing"
 	"time"
@@ -446,4 +447,14 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	err = bindParamsToExplodedObject("date", values, &nTDstDate)
 	assert.EqualValues(t, expectedDate, nTDstDate)
 
+}
+
+func TestBindStyledParameterWithLocation(t *testing.T) {
+	expectedBig := big.NewInt(12345678910)
+
+	var dstBigNumber big.Int
+	err := BindStyledParameterWithLocation("simple", false, "id", ParamLocationUndefined,
+		"12345678910", &dstBigNumber)
+	assert.NoError(t, err)
+	assert.Equal(t, *expectedBig, dstBigNumber)
 }

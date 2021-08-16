@@ -11,6 +11,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
+	"github.com/getkin/kin-openapi/routers"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 // Options to customize request validation, openapi3filter specified options will be passed through.
@@ -20,14 +22,17 @@ type Options struct {
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidator(swagger *openapi3.Swagger) func(next http.Handler) http.Handler {
+func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) func(next http.Handler) http.Handler {
-	router := openapi3filter.NewRouter().WithSwagger(swagger)
+func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
+	router, err := gorillamux.NewRouter(swagger)
+	if err != nil {
+		panic(err)
+	}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -47,10 +52,10 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options
 
 // This function is called from the middleware above and actually does the work
 // of validating a request.
-func validateRequest(r *http.Request, router *openapi3filter.Router, options *Options) (int, error) {
+func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
 
 	// Find route
-	route, pathParams, err := router.FindRoute(r.Method, r.URL)
+	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
 		return http.StatusBadRequest, err // We failed to find a matching route for the request.
 	}

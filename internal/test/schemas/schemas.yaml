@@ -127,10 +127,15 @@ components:
       type: object
     AnyType1: {}
     AnyType2:
-      description: This should be an interface{}
+      description: |
+        AnyType2 represents any type.
+
+        This should be an interface{}
     CustomStringType:
       type: string
       format: custom
+      x-oapi-codegen-extra-tags:
+        foo: bar
     NullableProperties:
       type: object
       properties:
@@ -166,3 +171,14 @@ components:
       required: true
       schema:
         type: string
+  securitySchemes:
+    # This security scheme has a - in it, we need to make sure the name gets
+    # remapped to a valid Go id. See bug
+    access-token:
+      type: http
+      scheme: bearer
+      bearerFormat: |
+        JWT-format access token.
+security:
+  - access-token: []
+

@@ -5,12 +5,13 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ info:
   version: 1.0.0
   title: TestServer
 servers:
-  - url: http://deepmap.ai
+  - url: http://deepmap.ai/
 paths:
   /resource:
     get:
@@ -91,18 +92,28 @@ components:
       bearerFormat: JWT
 `
 
-func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, mux)
+func doGet(t *testing.T, mux *chi.Mux, rawURL string) *httptest.ResponseRecorder {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	response := testutil.NewRequest().Get(u.RequestURI()).WithHost(u.Host).WithAcceptJson().GoWithHTTPHandler(t, mux)
 	return response.Recorder
 }
 
-func doPost(t *testing.T, mux *chi.Mux, url string, jsonBody interface{}) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Post(url).WithJsonBody(jsonBody).GoWithHTTPHandler(t, mux)
+func doPost(t *testing.T, mux *chi.Mux, rawURL string, jsonBody interface{}) *httptest.ResponseRecorder {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	response := testutil.NewRequest().Post(u.RequestURI()).WithHost(u.Host).WithJsonBody(jsonBody).GoWithHTTPHandler(t, mux)
 	return response.Recorder
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -115,7 +126,7 @@ func TestOapiRequestValidator(t *testing.T) {
 }
 
 func TestOapiRequestValidatorWithOptions(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()

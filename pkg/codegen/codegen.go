@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"text/template"
@@ -103,7 +104,7 @@ func constructImportMapping(input map[string]string) importMap {
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (string, error) {
+func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
@@ -184,7 +185,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 
 	var inlinedSpec string
 	if opts.EmbedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, swagger)
+		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, swagger)
 		if err != nil {
 			return "", errors.Wrap(err, "error generating Go handlers for Paths")
 		}
@@ -269,7 +270,7 @@ func Generate(swagger *openapi3.Swagger, packageName string, opts Options) (stri
 	return string(outBytes), nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, ops []OperationDefinition, excludeSchemas []string) (string, error) {
+func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
 	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating Go types for component schemas")
@@ -304,6 +305,11 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating Go types for operation parameters")
 	}
 
+	enumsOut, err := GenerateEnums(t, allTypes)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating code for type enums")
+	}
+
 	typesOut, err := GenerateTypes(t, allTypes)
 	if err != nil {
 		return "", errors.Wrap(err, "error generating code for type definitions")
@@ -314,7 +320,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.Swagger, op
 		return "", errors.Wrap(err, "error generating allOf boilerplate")
 	}
 
-	typeDefinitions := strings.Join([]string{typesOut, paramTypesOut, allOfBoilerplate}, "")
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -327,14 +333,22 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		SecuritySchemeProviderNames: []string{},
 	}
 
-	providerNames := map[string]struct{}{}
+	providerNameMap := map[string]struct{}{}
 	for _, op := range ops {
 		for _, def := range op.SecurityDefinitions {
-			providerNames[def.ProviderName] = struct{}{}
+			providerName := SanitizeGoIdentity(def.ProviderName)
+			providerNameMap[providerName] = struct{}{}
 		}
 	}
 
-	for providerName := range providerNames {
+	var providerNames []string
+	for providerName := range providerNameMap {
+		providerNames = append(providerNames, providerName)
+	}
+
+	sort.Strings(providerNames)
+
+	for _, providerName := range providerNames {
 		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
 	}
 
@@ -576,6 +590,7 @@ func GenerateTypesFromSchemaRef(schemaref *openapi3.SchemaRef, name string) ([]T
 
 	// Schema type and format, eg. string / binary
 	t := schema.Type
+	var err error
 	// Handle objects and empty schemas first as a special case
 	if t == "" || t == "object" {
 		var outType string
@@ -660,91 +675,108 @@ func GenerateTypesFromSchemaRef(schemaref *openapi3.SchemaRef, name string) ([]T
 			tds[0].Schema.GoType = GenStructFromSchema(tds[0].Schema)
 		}
 		return tds, nil
-	} else {
-		f := schema.Format
-
-		switch t {
-		case "array":
-			// For arrays, we'll get the type of the Items and throw a
-			// [] in front of it.
-			itemName := name + "Item"
-			arrAndChildrenTypes, err := GenerateTypesFromSchemaRef(schema.Items, itemName)
-			if err != nil {
-				return nil, errors.Wrap(err, "error generating type for array")
-			}
-			if len(arrAndChildrenTypes[0].Schema.Properties) != 0 {
-				// new struct
-				tds[0].Schema = Schema{GoType: "[]" + itemName, ArrayType: &arrAndChildrenTypes[0].Schema}
-				tds = append(tds, arrAndChildrenTypes...)
-			} else if arrAndChildrenTypes[0].Schema.ArrayType != nil {
-				return nil, errors.New("not supprt array of array: " + name)
-				// tds[0].Schema = Schema{GoType: "[]" + name, ArrayType: &arrAndChildrenTypes[0].Schema}
-				// tds = append(tds, arrAndChildrenTypes...)
-			} else {
-				// basic types or ref
-				tds[0].Schema = Schema{GoType: "[]" + arrAndChildrenTypes[0].Schema.GoType, ArrayType: &arrAndChildrenTypes[0].Schema}
-			}
-		case "integer":
-			// We default to int if format doesn't ask for something else.
-			if f == "int64" {
-				tds[0].Schema.GoType = "int64"
-			} else if f == "uint64" {
-				tds[0].Schema.GoType = "uint64"
-			} else if f == "int32" {
-				tds[0].Schema.GoType = "int32"
-			} else if f == "uint32" {
-				tds[0].Schema.GoType = "uint32"
-			} else if f == "" {
-				tds[0].Schema.GoType = "int"
-			} else {
-				return nil, fmt.Errorf("invalid integer format: %s", f)
-			}
-		case "number":
-			// We default to float for "number"
-			if f == "double" {
-				tds[0].Schema.GoType = "float64"
-			} else if f == "float" || f == "" {
-				tds[0].Schema.GoType = "float32"
-			} else {
-				return nil, fmt.Errorf("invalid number format: %s", f)
-			}
-		case "boolean":
-			if f != "" {
-				return nil, fmt.Errorf("invalid format (%s) for boolean", f)
-			}
-			tds[0].Schema.GoType = "bool"
-		case "string":
-			enumValues := make([]string, len(schema.Enum))
-			var ok bool
-			for i, enumValue := range schema.Enum {
-				enumValues[i], ok = enumValue.(string)
-				if !ok {
-					return nil, fmt.Errorf("expected enum to contain strings, found a %T", enumValue)
-				}
-			}
-
-			tds[0].Schema.EnumValues = SanitizeEnumNames(enumValues)
-
-			// Special case string formats here.
-			switch f {
-			case "byte":
-				tds[0].Schema.GoType = "[]byte"
-			case "email":
-				tds[0].Schema.GoType = "openapi_types.Email"
-			case "date":
-				tds[0].Schema.GoType = "openapi_types.Date"
-			case "date-time":
-				tds[0].Schema.GoType = "time.Time"
-			case "json":
-				tds[0].Schema.GoType = "json.RawMessage"
-				tds[0].Schema.SkipOptionalPointer = true
-			default:
-				// All unrecognized formats are simply a regular string.
-				tds[0].Schema.GoType = "string"
-			}
-		default:
-			return nil, fmt.Errorf("unhandled Schema type: %s", t)
+	} else if len(schema.Enum) > 0 {
+		if tds, err = resolveTypeForSchemaRef(schemaref.Value, name, tds); err != nil {
+			return nil, err
 		}
+		enumValues := make([]string, len(schema.Enum))
+		for i, enumValue := range schema.Enum {
+			enumValues[i] = fmt.Sprintf("%v", enumValue)
+		}
+
+		sanitizedValues := SanitizeEnumNames(enumValues)
+		tds[0].Schema.EnumValues = make(map[string]string, len(sanitizedValues))
+		var constNamePath []string
+		for k, v := range sanitizedValues {
+			if v == "" {
+				constNamePath = []string{name, "Empty"}
+			} else {
+				constNamePath = []string{name, k}
+			}
+			tds[0].Schema.EnumValues[SchemaNameToTypeName(PathToTypeName(constNamePath))] = v
+		}
+	} else {
+		if tds, err = resolveTypeForSchemaRef(schemaref.Value, name, tds); err != nil {
+			return nil, err
+		}
+	}
+	return tds, nil
+}
+
+func resolveTypeForSchemaRef(schema *openapi3.Schema, name string, tds []TypeDefinition) ([]TypeDefinition, error) {
+	f := schema.Format
+	t := schema.Type
+
+	switch t {
+	case "array":
+		// For arrays, we'll get the type of the Items and throw a
+		// [] in front of it.
+		itemName := name + "Item"
+		arrAndChildrenTypes, err := GenerateTypesFromSchemaRef(schema.Items, itemName)
+		if err != nil {
+			return nil, errors.Wrap(err, "error generating type for array")
+		}
+		if len(arrAndChildrenTypes[0].Schema.Properties) != 0 {
+			// new struct
+			tds[0].Schema = Schema{GoType: "[]" + itemName, ArrayType: &arrAndChildrenTypes[0].Schema}
+			tds = append(tds, arrAndChildrenTypes...)
+		} else if arrAndChildrenTypes[0].Schema.ArrayType != nil {
+			return nil, errors.New("not supprt array of array: " + name)
+			// tds[0].Schema = Schema{GoType: "[]" + name, ArrayType: &arrAndChildrenTypes[0].Schema}
+			// tds = append(tds, arrAndChildrenTypes...)
+		} else {
+			// basic types or ref
+			tds[0].Schema = Schema{GoType: "[]" + arrAndChildrenTypes[0].Schema.GoType, ArrayType: &arrAndChildrenTypes[0].Schema}
+		}
+	case "integer":
+		// We default to int if format doesn't ask for something else.
+		if f == "int64" {
+			tds[0].Schema.GoType = "int64"
+		} else if f == "uint64" {
+			tds[0].Schema.GoType = "uint64"
+		} else if f == "int32" {
+			tds[0].Schema.GoType = "int32"
+		} else if f == "uint32" {
+			tds[0].Schema.GoType = "uint32"
+		} else if f == "" {
+			tds[0].Schema.GoType = "int"
+		} else {
+			return nil, fmt.Errorf("invalid integer format: %s", f)
+		}
+	case "number":
+		// We default to float for "number"
+		if f == "double" {
+			tds[0].Schema.GoType = "float64"
+		} else if f == "float" || f == "" {
+			tds[0].Schema.GoType = "float32"
+		} else {
+			return nil, fmt.Errorf("invalid number format: %s", f)
+		}
+	case "boolean":
+		if f != "" {
+			return nil, fmt.Errorf("invalid format (%s) for boolean", f)
+		}
+		tds[0].Schema.GoType = "bool"
+	case "string":
+		// Special case string formats here.
+		switch f {
+		case "byte":
+			tds[0].Schema.GoType = "[]byte"
+		case "email":
+			tds[0].Schema.GoType = "openapi_types.Email"
+		case "date":
+			tds[0].Schema.GoType = "openapi_types.Date"
+		case "date-time":
+			tds[0].Schema.GoType = "time.Time"
+		case "json":
+			tds[0].Schema.GoType = "json.RawMessage"
+			tds[0].Schema.SkipOptionalPointer = true
+		default:
+			// All unrecognized formats are simply a regular string.
+			tds[0].Schema.GoType = "string"
+		}
+	default:
+		return nil, fmt.Errorf("unhandled Schema type: %s", t)
 	}
 	return tds, nil
 }
@@ -868,16 +900,64 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	return buf.String(), nil
 }
 
+func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	c := Constants{
+		EnumDefinitions: []EnumDefinition{},
+	}
+	for _, tp := range types {
+		if len(tp.Schema.EnumValues) > 0 {
+			wrapper := ""
+			if tp.Schema.GoType == "string" {
+				wrapper = `"`
+			}
+			c.EnumDefinitions = append(c.EnumDefinitions, EnumDefinition{
+				Schema:       tp.Schema,
+				TypeName:     tp.TypeName,
+				ValueWrapper: wrapper,
+			})
+		}
+	}
+	err := t.ExecuteTemplate(w, "constants.tmpl", c)
+	if err != nil {
+		return "", errors.Wrap(err, "error generating enums")
+	}
+	err = w.Flush()
+	if err != nil {
+		return "", errors.Wrap(err, "error flushing output buffer for enums")
+	}
+	return buf.String(), nil
+}
+
 // Generate our import statements and package definition.
 func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
+
+	// Read build version for incorporating into generated files
+	var modulePath string
+	var moduleVersion string
+	if bi, ok := debug.ReadBuildInfo(); ok {
+		modulePath = bi.Main.Path
+		moduleVersion = bi.Main.Version
+	} else {
+		// Unit tests have ok=false, so we'll just use "unknown" for the
+		// version if we can't read this.
+		modulePath = "unknown module path"
+		moduleVersion = "unknown version"
+	}
+
 	context := struct {
 		ExternalImports []string
 		PackageName     string
+		ModuleName      string
+		Version         string
 	}{
 		ExternalImports: externalImports,
 		PackageName:     packageName,
+		ModuleName:      modulePath,
+		Version:         moduleVersion,
 	}
 	err := t.ExecuteTemplate(w, "imports.tmpl", context)
 	if err != nil {

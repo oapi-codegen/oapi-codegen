@@ -12,7 +12,7 @@ import (
 )
 
 func TestIllegalEnumNames(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromFile("spec.yaml")
+	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
 	opts := codegen.Options{
@@ -43,12 +43,13 @@ func TestIllegalEnumNames(t *testing.T) {
 		}
 	}
 
-	require.Equal(t, `"Bar"`, constDefs["Bar_Bar"])
-	require.Equal(t, `"Foo"`, constDefs["Bar_Foo"])
-	require.Equal(t, `"Foo Bar"`, constDefs["Bar_Foo_Bar"])
-	require.Equal(t, `"Foo-Bar"`, constDefs["Bar_Foo_Bar1"])
-	require.Equal(t, `"1Foo"`, constDefs["Bar__Foo"])
-	require.Equal(t, `" Foo"`, constDefs["Bar__Foo1"])
-	require.Equal(t, `" Foo "`, constDefs["Bar__Foo_"])
-	require.Equal(t, `"_Foo_"`, constDefs["Bar__Foo_1"])
+	require.Equal(t, `"Bar"`, constDefs["BarBar"])
+	require.Equal(t, `"Foo"`, constDefs["BarFoo"])
+	require.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])
+	require.Equal(t, `"Foo-Bar"`, constDefs["BarFooBar1"])
+	require.Equal(t, `"1Foo"`, constDefs["BarN1Foo"])
+	require.Equal(t, `" Foo"`, constDefs["BarFoo1"])
+	require.Equal(t, `" Foo "`, constDefs["BarFoo2"])
+	require.Equal(t, `"_Foo_"`, constDefs["BarFoo3"])
+	require.Equal(t, `"1"`, constDefs["BarN1"])
 }

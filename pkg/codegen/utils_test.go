@@ -134,22 +134,99 @@ func TestSortedRequestBodyKeys(t *testing.T) {
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	goType, err := RefPathToGoType("#/components/schemas/Foo")
-	assert.Equal(t, "Foo", goType)
-	assert.NoError(t, err, "Expecting no error")
+	old := importMapping
+	importMapping = constructImportMapping(map[string]string{
+		"doc.json":                    "externalref0",
+		"http://deepmap.com/doc.json": "externalref1",
+	})
+	defer func() { importMapping = old }()
 
-	goType, err = RefPathToGoType("#/components/parameters/foo_bar")
-	assert.Equal(t, "FooBar", goType)
-	assert.NoError(t, err, "Expecting no error")
+	tests := []struct {
+		name   string
+		path   string
+		goType string
+	}{
+		{
+			name:   "local-schemas",
+			path:   "#/components/schemas/Foo",
+			goType: "Foo",
+		},
+		{
+			name:   "local-parameters",
+			path:   "#/components/parameters/foo_bar",
+			goType: "FooBar",
+		},
+		{
+			name:   "local-responses",
+			path:   "#/components/responses/wibble",
+			goType: "Wibble",
+		},
+		{
+			name:   "remote-root",
+			path:   "doc.json#/foo",
+			goType: "externalRef0.Foo",
+		},
+		{
+			name:   "remote-pathed",
+			path:   "doc.json#/components/parameters/foo",
+			goType: "externalRef0.Foo",
+		},
+		{
+			name:   "url-root",
+			path:   "http://deepmap.com/doc.json#/foo_bar",
+			goType: "externalRef1.FooBar",
+		},
+		{
+			name:   "url-pathed",
+			path:   "http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			goType: "externalRef1.FooBar",
+		},
+		{
+			name: "local-too-deep",
+			path: "#/components/parameters/foo/components/bar",
+		},
+		{
+			name: "remote-too-deep",
+			path: "doc.json#/components/parameters/foo/foo_bar",
+		},
+		{
+			name: "url-too-deep",
+			path: "http://deepmap.com/doc.json#/components/parameters/foo/foo_bar",
+		},
+	}
 
-	_, err = RefPathToGoType("http://deepmap.com/doc.json#/components/parameters/foo_bar")
-	assert.Errorf(t, err, "Expected an error on URL reference")
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			goType, err := RefPathToGoType(tc.path)
+			if tc.goType == "" {
+				assert.Error(t, err)
+				return
+			}
 
-	_, err = RefPathToGoType("doc.json#/components/parameters/foo_bar")
-	assert.Errorf(t, err, "Expected an error on remote reference")
+			assert.NoError(t, err)
+			assert.Equal(t, tc.goType, goType)
+		})
+	}
+}
 
-	_, err = RefPathToGoType("#/components/parameters/foo/components/bar")
-	assert.Errorf(t, err, "Expected an error on reference depth")
+func TestIsWholeDocumentReference(t *testing.T) {
+	assert.Equal(t, false, IsWholeDocumentReference(""))
+	assert.Equal(t, false, IsWholeDocumentReference("#/components/schemas/Foo"))
+	assert.Equal(t, false, IsWholeDocumentReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, true, IsWholeDocumentReference("doc.json"))
+	assert.Equal(t, true, IsWholeDocumentReference("../doc.json"))
+	assert.Equal(t, false, IsWholeDocumentReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, true, IsWholeDocumentReference("http://deepmap.com/doc.json"))
+}
+
+func TestIsGoTypeReference(t *testing.T) {
+	assert.Equal(t, false, IsGoTypeReference(""))
+	assert.Equal(t, true, IsGoTypeReference("#/components/schemas/Foo"))
+	assert.Equal(t, true, IsGoTypeReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, false, IsGoTypeReference("doc.json"))
+	assert.Equal(t, false, IsGoTypeReference("../doc.json"))
+	assert.Equal(t, true, IsGoTypeReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
 }
 
 func TestSwaggerUriToEchoUri(t *testing.T) {
@@ -190,13 +267,13 @@ func TestStringToGoComment(t *testing.T) {
 	}{
 		{
 			input:    "",
-			expected: "// ",
-			message:  "blank string should be preserved with comment",
+			expected: "",
+			message:  "blank string should be ignored due to human unreadable",
 		},
 		{
 			input:    " ",
-			expected: "//  ",
-			message:  "whitespace should be preserved with comment",
+			expected: "",
+			message:  "whitespace should be ignored due to human unreadable",
 		},
 		{
 			input:    "Single Line",
@@ -231,5 +308,15 @@ Line
 			assert.EqualValues(t, testCase.expected, result, testCase.message)
 		})
 	}
+}
 
+func TestEscapePathElements(t *testing.T) {
+	p := "/foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "/foo/bar:baz"
+	assert.Equal(t, "/foo/bar%3Abaz", EscapePathElements(p))
 }

@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"encoding"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -29,11 +30,49 @@ import (
 // This function binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
+// It is a backward compatible function to clients generated with codegen
+// up to version v1.5.5. v1.5.6+ calls the function below.
 func BindStyledParameter(style string, explode bool, paramName string,
 	value string, dest interface{}) error {
+	return BindStyledParameterWithLocation(style, explode, paramName, ParamLocationUndefined, value, dest)
+}
+
+// This function binds a parameter as described in the Path Parameters
+// section here to a Go object:
+// https://swagger.io/docs/specification/serialization/
+func BindStyledParameterWithLocation(style string, explode bool, paramName string,
+	paramLocation ParamLocation, value string, dest interface{}) error {
 
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
+	}
+
+	// Based on the location of the parameter, we need to unescape it properly.
+	var err error
+	switch paramLocation {
+	case ParamLocationQuery, ParamLocationUndefined:
+		// We unescape undefined parameter locations here for older generated code,
+		// since prior to this refactoring, they always query unescaped.
+		value, err = url.QueryUnescape(value)
+		if err != nil {
+			return fmt.Errorf("error unescaping query parameter '%s': %v", paramName, err)
+		}
+	case ParamLocationPath:
+		value, err = url.PathUnescape(value)
+		if err != nil {
+			return fmt.Errorf("error unescaping path parameter '%s': %v", paramName, err)
+		}
+	default:
+		// Headers and cookies aren't escaped.
+	}
+
+	// If the destination implements encoding.TextUnmarshaler we use it for binding
+	if tu, ok := dest.(encoding.TextUnmarshaler); ok {
+		if err := tu.UnmarshalText([]byte(value)); err != nil {
+			return fmt.Errorf("error unmarshaling '%s' text as %T: %s", value, dest, err)
+		}
+
+		return nil
 	}
 
 	// Everything comes in by pointer, dereference it
