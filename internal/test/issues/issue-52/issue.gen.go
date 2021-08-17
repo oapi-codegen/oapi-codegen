@@ -18,7 +18,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 )
 
 // ArrayValue defines model for ArrayValue.
@@ -26,71 +25,13 @@ type ArrayValue []Value
 
 // Document defines model for Document.
 type Document struct {
-	Fields *Document_Fields `json:"fields,omitempty"`
-}
-
-// Document_Fields defines model for Document.Fields.
-type Document_Fields struct {
-	AdditionalProperties map[string]Value `json:"-"`
+	Fields *map[string]Value `json:"fields,omitempty"`
 }
 
 // Value defines model for Value.
 type Value struct {
 	ArrayValue  *ArrayValue `json:"arrayValue,omitempty"`
 	StringValue *string     `json:"stringValue,omitempty"`
-}
-
-// Getter for additional properties for Document_Fields. Returns the specified
-// element and whether it was found
-func (a Document_Fields) Get(fieldName string) (value Value, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for Document_Fields
-func (a *Document_Fields) Set(fieldName string, value Value) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]Value)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for Document_Fields to handle AdditionalProperties
-func (a *Document_Fields) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]Value)
-		for fieldName, fieldBuf := range object {
-			var fieldVal Value
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for Document_Fields to handle AdditionalProperties
-func (a Document_Fields) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
-		}
-	}
-	return json.Marshal(object)
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

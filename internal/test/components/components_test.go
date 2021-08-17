@@ -68,5 +68,5 @@ func TestAdditionalProperties(t *testing.T) {
 	var obj5 AdditionalPropertiesObject5
 	err = json.Unmarshal([]byte(buf2), &obj5)
 	assert.NoError(t, err)
-	assert.Equal(t, bossSchema, obj5.AdditionalProperties["boss"])
+	assert.Equal(t, bossSchema, obj5["boss"])
 }
