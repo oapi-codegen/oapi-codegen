@@ -223,6 +223,27 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.GoType = outType
 		} else {
 			// We've got an object with some properties.
+
+			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
+			outSchema.AdditionalPropertiesType = &Schema{
+				GoType: "interface{}",
+			}
+			if schema.AdditionalProperties != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+				if err != nil {
+					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
+				}
+				outSchema.AdditionalPropertiesType = &additionalSchema
+			}
+
+			if len(schema.Properties) == 0 {
+				// We have a dictionary here. Returns the goType to be just a map from
+				// string to the property type.
+				outSchema.HasAdditionalProperties = false
+				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				return outSchema, nil
+			}
+
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
 				propertyPath := append(path, pName)
@@ -262,18 +283,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
-			}
-
-			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
-			outSchema.AdditionalPropertiesType = &Schema{
-				GoType: "interface{}",
-			}
-			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
-				if err != nil {
-					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
-				}
-				outSchema.AdditionalPropertiesType = &additionalSchema
 			}
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
@@ -473,6 +482,14 @@ func GenFieldsFromProperties(props []Property) []string {
 	return fields
 }
 
+func additionalPropertiesType(schema Schema) string {
+	addPropsType := schema.AdditionalPropertiesType.GoType
+	if schema.AdditionalPropertiesType.RefType != "" {
+		addPropsType = schema.AdditionalPropertiesType.RefType
+	}
+	return addPropsType
+}
+
 func GenStructFromSchema(schema Schema) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
@@ -480,13 +497,8 @@ func GenStructFromSchema(schema Schema) string {
 	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
-		addPropsType := schema.AdditionalPropertiesType.GoType
-		if schema.AdditionalPropertiesType.RefType != "" {
-			addPropsType = schema.AdditionalPropertiesType.RefType
-		}
-
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", additionalPropertiesType(schema)))
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
