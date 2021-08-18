@@ -44,27 +44,6 @@ type Pet struct {
 	Id int64 `json:"id"`
 }
 
-// FindPets200JSON defines model for FindPets200JSON.
-type FindPets200JSON []Pet
-
-// FindPetsdefaultJSON defines model for FindPetsdefaultJSON.
-type FindPetsdefaultJSON Error
-
-// AddPet200JSON defines model for AddPet200JSON.
-type AddPet200JSON Pet
-
-// AddPetdefaultJSON defines model for AddPetdefaultJSON.
-type AddPetdefaultJSON Error
-
-// DeletePetdefaultJSON defines model for DeletePetdefaultJSON.
-type DeletePetdefaultJSON Error
-
-// FindPetByID200JSON defines model for FindPetByID200JSON.
-type FindPetByID200JSON Pet
-
-// FindPetByIDdefaultJSON defines model for FindPetByIDdefaultJSON.
-type FindPetByIDdefaultJSON Error
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by

@@ -45,7 +45,7 @@ var (
 	flagExcludeSchemas string
 	flagConfigFile     string
 	flagAliasTypes     bool
-	flagPrintVersion bool
+	flagPrintVersion   bool
 )
 
 type configuration struct {
@@ -62,8 +62,8 @@ type configuration struct {
 func main() {
 
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
-	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
+	flag.StringVar(&flagGenerate, "generate", "types,nested-types,client,server,spec",
+		`Comma-separated list of code to generate; valid options: "types", "nested-types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
@@ -116,6 +116,8 @@ func main() {
 			opts.GenerateEchoServer = true
 		case "types":
 			opts.GenerateTypes = true
+		case "nested-types":
+			opts.GenerateNestedTypes = true
 		case "spec":
 			opts.EmbedSpec = true
 		case "skip-fmt":

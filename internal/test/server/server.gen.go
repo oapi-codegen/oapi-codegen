@@ -91,21 +91,6 @@ type SimpleResponse struct {
 	Name string `json:"name"`
 }
 
-// GetEveryTypeOptional200JSON defines model for GetEveryTypeOptional200JSON.
-type GetEveryTypeOptional200JSON EveryTypeOptional
-
-// GetSimple200JSON defines model for GetSimple200JSON.
-type GetSimple200JSON SomeObject
-
-// GetWithContentType200JSON defines model for GetWithContentType200JSON.
-type GetWithContentType200JSON SomeObject
-
-// GetWithContentType200PLAIN defines model for GetWithContentType200PLAIN.
-type GetWithContentType200PLAIN string
-
-// GetReservedKeyword200JSON defines model for GetReservedKeyword200JSON.
-type GetReservedKeyword200JSON ReservedKeyword
-
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {
 	// An optional query argument
