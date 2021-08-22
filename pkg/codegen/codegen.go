@@ -319,9 +319,6 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 
 // Generates operation ids, context keys, paths, etc. to be exported as constants
 func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
 	constants := Constants{
 		SecuritySchemeProviderNames: []string{},
 	}
@@ -345,16 +342,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
 	}
 
-	err := t.ExecuteTemplate(w, "constants.tmpl", constants)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating server interface: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
 }
 
 // Generates type definitions for any custom types defined in the
@@ -500,29 +488,15 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 // Helper function to pass a bunch of types to the template engine, and buffer
 // its output into a string.
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
 	context := struct {
 		Types []TypeDefinition
 	}{
 		Types: types,
 	}
-
-	err := t.ExecuteTemplate(w, "typedef.tmpl", context)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating types")
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for types")
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"typedef.tmpl"}, t, context)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
 	c := Constants{
 		EnumDefinitions: []EnumDefinition{},
 	}
@@ -539,22 +513,11 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			})
 		}
 	}
-	err := t.ExecuteTemplate(w, "constants.tmpl", c)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating enums")
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for enums")
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
 }
 
 // Generate our import statements and package definition.
 func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
 	// Read build version for incorporating into generated files
 	var modulePath string
 	var moduleVersion string
@@ -579,23 +542,12 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName:      modulePath,
 		Version:         moduleVersion,
 	}
-	err := t.ExecuteTemplate(w, "imports.tmpl", context)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating imports")
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for imports")
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
 }
 
 // Generate all the glue code which provides the API for interacting with
 // additional properties and JSON-ification
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
 	var filteredTypes []TypeDefinition
 	for _, t := range typeDefs {
 		if t.Schema.HasAdditionalProperties {
@@ -609,15 +561,7 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 		Types: filteredTypes,
 	}
 
-	err := t.ExecuteTemplate(w, "additional-properties.tmpl", context)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties code")
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for additional properties")
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"additional-properties.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the
