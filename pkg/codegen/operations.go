@@ -22,7 +22,6 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
 )
 
 type ParameterDefinition struct {
@@ -276,7 +275,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				if contentType.Schema != nil {
 					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
 					if err != nil {
-						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
+						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
 
 					var typeName string
@@ -304,7 +303,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
 						if err != nil {
-							return nil, errors.Wrap(err, "error dereferencing response Ref")
+							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
 						td.Schema.RefType = refType
 					}
@@ -429,7 +428,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
-				return nil, errors.Wrap(err, "error generating body definitions")
+				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
 			opDef := OperationDefinition{
@@ -520,7 +519,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "error generating request body definition")
+			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
 		}
 
 		// If the body is a pre-defined type
@@ -528,7 +527,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(bodyOrRef.Ref)
 			if err != nil {
-				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", bodyOrRef.Ref, err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -625,12 +624,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	err := t.ExecuteTemplate(w, "param-types.tmpl", ops)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating types for params objects")
+		return "", fmt.Errorf("error generating types for params objects: %w", err)
 	}
 
 	err = t.ExecuteTemplate(w, "request-bodies.tmpl", ops)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating request bodies for operations")
+		return "", fmt.Errorf("error generating request bodies for operations: %w", err)
 	}
 
 	// Generate boiler plate for all additional types.
@@ -641,22 +640,22 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
 	_, err = w.WriteString("\n")
 	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
 	_, err = w.WriteString(addProps)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
 	err = w.Flush()
 	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server interface")
+		return "", fmt.Errorf("error flushing output buffer for server interface: %w", err)
 	}
 
 	return buf.String(), nil
@@ -670,22 +669,22 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 
 	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating server interface")
+		return "", fmt.Errorf("error generating server interface: %w", err)
 	}
 
 	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating server middleware")
+		return "", fmt.Errorf("error generating server middleware: %w", err)
 	}
 
 	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating server http handler")
+		return "", fmt.Errorf("error generating server http handler: %w", err)
 	}
 
 	err = w.Flush()
 	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server")
+		return "", fmt.Errorf("error flushing output buffer for server: %w", err)
 	}
 
 	return buf.String(), nil

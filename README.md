@@ -205,7 +205,7 @@ func SetupHandler() {
 
 ```go
 type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(r *http.Request, w *http.ResponseWriter) {
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
     // Implement me
 }
 
@@ -503,7 +503,7 @@ you can specify any combination of those.
  Go include paths. Please see below.
 
 So, for example, if you would like to produce only the server code, you could
-run `oapi-generate -generate types,server`. You could generate `types` and
+run `oapi-codegen -generate types,server`. You could generate `types` and
 `server` into separate files, but both are required for the server code.
 
 `oapi-codegen` can filter paths base on their tags in the openapi definition.

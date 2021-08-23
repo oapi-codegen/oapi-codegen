@@ -16,15 +16,15 @@ package runtime
 import (
 	"encoding"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/deepmap/oapi-codegen/v2/pkg/types"
+
 )
 
 // This function binds a parameter as described in the Path Parameters

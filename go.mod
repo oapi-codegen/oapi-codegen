@@ -8,7 +8,6 @@ require (
 	github.com/labstack/echo/v4 v4.3.0
 	github.com/matryer/moq v0.2.1
 	github.com/mattn/go-isatty v0.0.13 // indirect
-	github.com/pkg/errors v0.9.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
