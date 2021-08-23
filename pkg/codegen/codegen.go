@@ -113,8 +113,9 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Options { return opts }
-	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
+	tmplFns := TemplateFunctions(&opts)
+	tmplFns["opts"] = func() Options { return opts }
+	t := template.New("oapi-codegen").Funcs(tmplFns)
 	// This parses all of our own template files into the template object
 	// above
 	t, err := templates.Parse(t)

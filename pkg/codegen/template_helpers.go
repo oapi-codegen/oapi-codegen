@@ -94,134 +94,136 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(op *OperationDefinition) string {
-	var handledCaseClauses = make(map[string]string)
-	var unhandledCaseClauses = make(map[string]string)
+func genResponseUnmarshal(opts *Options) func(op *OperationDefinition) string {
+	return func(op *OperationDefinition) string {
+		var handledCaseClauses = make(map[string]string)
+		var unhandledCaseClauses = make(map[string]string)
 
-	// Get the type definitions from the operation:
-	typeDefinitions, err := op.GetResponseTypeDefinitions()
-	if err != nil {
-		panic(err)
-	}
-
-	if len(typeDefinitions) == 0 {
-		// No types.
-		return ""
-	}
-
-	// Add a case for each possible response:
-	buffer := new(bytes.Buffer)
-	responses := op.Spec.Responses
-	for _, typeDefinition := range typeDefinitions {
-
-		responseRef, ok := responses[typeDefinition.ResponseName]
-		if !ok {
-			continue
+		// Get the type definitions from the operation:
+		typeDefinitions, err := op.GetResponseTypeDefinitions(opts)
+		if err != nil {
+			panic(err)
 		}
 
-		// We can't do much without a value:
-		if responseRef.Value == nil {
-			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
-			continue
+		if len(typeDefinitions) == 0 {
+			// No types.
+			return ""
 		}
 
-		// If there is no content-type then we have no unmarshaling to do:
-		if len(responseRef.Value.Content) == 0 {
-			caseAction := "break // No content-type"
-			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
-			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
-			continue
-		}
+		// Add a case for each possible response:
+		buffer := new(bytes.Buffer)
+		responses := op.Spec.Responses
+		for _, typeDefinition := range typeDefinitions {
 
-		// If we made it this far then we need to handle unmarshaling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
-		for _, contentTypeName := range sortedContentKeys {
-
-			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if typeDefinition.TypeName == "interface{}" {
-				// Unable to unmarshal this, so we leave it out:
+			responseRef, ok := responses[typeDefinition.ResponseName]
+			if !ok {
 				continue
 			}
 
-			// Add content-types here (json / yaml / xml etc):
-			switch {
+			// We can't do much without a value:
+			if responseRef.Value == nil {
+				fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
+				continue
+			}
 
-			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON):
-				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-
-					caseAction = fmt.Sprintf("var dest %s\n"+
-						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-						" return nil, err \n"+
-						"}\n"+
-						"response.%s = &dest",
-						typeDefinition.Schema.TypeDecl(),
-						typeDefinition.TypeName)
-
-					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-					handledCaseClauses[caseKey] = caseClause
-				}
-
-			// YAML:
-			case StringInArray(contentTypeName, contentTypesYAML):
-				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
-						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-						" return nil, err \n"+
-						"}\n"+
-						"response.%s = &dest",
-						typeDefinition.Schema.TypeDecl(),
-						typeDefinition.TypeName)
-					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
-					handledCaseClauses[caseKey] = caseClause
-				}
-
-			// XML:
-			case StringInArray(contentTypeName, contentTypesXML):
-				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
-						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
-						" return nil, err \n"+
-						"}\n"+
-						"response.%s = &dest",
-						typeDefinition.Schema.TypeDecl(),
-						typeDefinition.TypeName)
-					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
-					handledCaseClauses[caseKey] = caseClause
-				}
-
-			// Everything else:
-			default:
-				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
+			// If there is no content-type then we have no unmarshaling to do:
+			if len(responseRef.Value.Content) == 0 {
+				caseAction := "break // No content-type"
 				caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
 				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+				continue
+			}
+
+			// If we made it this far then we need to handle unmarshaling for each content-type:
+			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			for _, contentTypeName := range sortedContentKeys {
+
+				// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+				if typeDefinition.TypeName == "interface{}" {
+					// Unable to unmarshal this, so we leave it out:
+					continue
+				}
+
+				// Add content-types here (json / yaml / xml etc):
+				switch {
+
+				// JSON:
+				case StringInArray(contentTypeName, contentTypesJSON):
+					if typeDefinition.ContentTypeName == contentTypeName {
+						var caseAction string
+
+						caseAction = fmt.Sprintf("var dest %s\n"+
+							"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+							" return nil, err \n"+
+							"}\n"+
+							"response.%s = &dest",
+							typeDefinition.Schema.TypeDecl(),
+							typeDefinition.TypeName)
+
+						caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+						handledCaseClauses[caseKey] = caseClause
+					}
+
+				// YAML:
+				case StringInArray(contentTypeName, contentTypesYAML):
+					if typeDefinition.ContentTypeName == contentTypeName {
+						var caseAction string
+						caseAction = fmt.Sprintf("var dest %s\n"+
+							"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+							" return nil, err \n"+
+							"}\n"+
+							"response.%s = &dest",
+							typeDefinition.Schema.TypeDecl(),
+							typeDefinition.TypeName)
+						caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
+						handledCaseClauses[caseKey] = caseClause
+					}
+
+				// XML:
+				case StringInArray(contentTypeName, contentTypesXML):
+					if typeDefinition.ContentTypeName == contentTypeName {
+						var caseAction string
+						caseAction = fmt.Sprintf("var dest %s\n"+
+							"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+							" return nil, err \n"+
+							"}\n"+
+							"response.%s = &dest",
+							typeDefinition.Schema.TypeDecl(),
+							typeDefinition.TypeName)
+						caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
+						handledCaseClauses[caseKey] = caseClause
+					}
+
+				// Everything else:
+				default:
+					caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
+					caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+					unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+				}
 			}
 		}
+
+		if len(handledCaseClauses)+len(unhandledCaseClauses) == 0 {
+			// switch would be empty.
+			return ""
+		}
+
+		// Now build the switch statement in order of most-to-least specific:
+		// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
+		// groups.
+		fmt.Fprintf(buffer, "switch {\n")
+		for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
+
+			fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
+		}
+		for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
+
+			fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
+		}
+		fmt.Fprintf(buffer, "}\n")
+
+		return buffer.String()
 	}
-
-	if len(handledCaseClauses)+len(unhandledCaseClauses) == 0 {
-		// switch would be empty.
-		return ""
-	}
-
-	// Now build the switch statement in order of most-to-least specific:
-	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
-	// groups.
-	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
-
-		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
-	}
-	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
-
-		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
-	}
-	fmt.Fprintf(buffer, "}\n")
-
-	return buffer.String()
 }
 
 // buildUnmarshalCase builds an unmarshalling case clause for different content-types:
@@ -237,12 +239,14 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
-	td, err := op.GetResponseTypeDefinitions()
-	if err != nil {
-		panic(err)
+func getResponseTypeDefinitions(opts *Options) func(op *OperationDefinition) []ResponseTypeDefinition {
+	return func(op *OperationDefinition) []ResponseTypeDefinition {
+		td, err := op.GetResponseTypeDefinitions(opts)
+		if err != nil {
+			panic(err)
+		}
+		return td
 	}
-	return td
 }
 
 // Return the statusCode comparison clause from the response name.
@@ -269,23 +273,25 @@ func stripNewLines(s string) string {
 
 // This function map is passed to the template engine, and we can call each
 // function here by keyName from the template code.
-var TemplateFunctions = template.FuncMap{
-	"genParamArgs":               genParamArgs,
-	"genParamTypes":              genParamTypes,
-	"genParamNames":              genParamNames,
-	"genParamFmtString":          ReplacePathParamsWithStr,
-	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
-	"swaggerUriToChiUri":         SwaggerUriToChiUri,
-	"lcFirst":                    LowercaseFirstCharacter,
-	"ucFirst":                    UppercaseFirstCharacter,
-	"camelCase":                  ToCamelCase,
-	"genResponsePayload":         genResponsePayload,
-	"genResponseTypeName":        genResponseTypeName,
-	"genResponseUnmarshal":       genResponseUnmarshal,
-	"getResponseTypeDefinitions": getResponseTypeDefinitions,
-	"toStringArray":              toStringArray,
-	"lower":                      strings.ToLower,
-	"title":                      strings.Title,
-	"stripNewLines":              stripNewLines,
-	"sanitizeGoIdentity":         SanitizeGoIdentity,
+func TemplateFunctions(opts *Options) template.FuncMap {
+	return template.FuncMap{
+		"genParamArgs":               genParamArgs,
+		"genParamTypes":              genParamTypes,
+		"genParamNames":              genParamNames,
+		"genParamFmtString":          ReplacePathParamsWithStr,
+		"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+		"swaggerUriToChiUri":         SwaggerUriToChiUri,
+		"lcFirst":                    LowercaseFirstCharacter,
+		"ucFirst":                    UppercaseFirstCharacter,
+		"camelCase":                  ToCamelCase,
+		"genResponsePayload":         genResponsePayload,
+		"genResponseTypeName":        genResponseTypeName,
+		"genResponseUnmarshal":       genResponseUnmarshal(opts),
+		"getResponseTypeDefinitions": getResponseTypeDefinitions(opts),
+		"toStringArray":              toStringArray,
+		"lower":                      strings.ToLower,
+		"title":                      strings.Title,
+		"stripNewLines":              stripNewLines,
+		"sanitizeGoIdentity":         SanitizeGoIdentity,
+	}
 }
