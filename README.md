@@ -542,6 +542,47 @@ This tells us that in order to resolve references generated from `some_spec.yaml
 need to import `github.com/deepmap/some-package`. You may specify multiple mappings
 by comma separating them in the form `key1:value1,key2:value2`.
 
+### Replacing primitive types
+
+Sometimes you would want to use a different type for the primitives (int, floats etc). 
+This can be done with the `primitive-mapping` option in the YAML configuration file.
+A list of supported primitives is shown below.
+
+If used inside a query parameter, the given replacement should implement `Binder`:
+```go
+type Binder interface {
+    Bind(string) error
+}
+```
+
+| Primitive | Default type used | 
+| -- | -- |
+| `int64` | `int64` |
+| `int32` | `int32` |
+| `int16` | `int16` |
+| `int` | `int` |
+| `uint64` | `uint64` |
+| `uint32` | `uint32` |
+| `uint16` | `uint16` |
+| `uint` | `uint` |
+| `double` | `float64` |
+| `float` | `float32` |
+| `bool` | `bool` |
+| `byte` | `[]byte` |
+| `email` | `openapi_types.Email` |
+| `date` | `openapi_types.Date` |
+| `date-time` | `time.Time` |
+| `json` | `json.RawMessage` |
+
+An example configuration:
+
+```yaml
+primitive-mapping:
+  int32: null.Int32
+  int64: null.Int64
+  int: float32
+```
+
 ## What's missing or incomplete
 
 This code is still young, and not complete, since we're filling it in as we
