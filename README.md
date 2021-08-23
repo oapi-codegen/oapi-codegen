@@ -184,7 +184,7 @@ func SetupHandler() {
 
 ```go
 type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(r *http.Request, w *http.ResponseWriter) {
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
     // Implement me
 }
 
