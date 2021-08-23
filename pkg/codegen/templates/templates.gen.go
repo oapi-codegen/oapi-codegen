@@ -32,7 +32,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
     if raw, found := object["{{.JsonFieldName}}"]; found {
         err = json.Unmarshal(raw, &a.{{.GoFieldName}})
         if err != nil {
-            return errors.Wrap(err, "error reading '{{.JsonFieldName}}'")
+            return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
         }
         delete(object, "{{.JsonFieldName}}")
     }
@@ -43,7 +43,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
             var fieldVal {{$addType}}
             err := json.Unmarshal(fieldBuf, &fieldVal)
             if err != nil {
-                return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+                return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
             }
             a.AdditionalProperties[fieldName] = fieldVal
         }
@@ -59,14 +59,14 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 {{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
     object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
     if err != nil {
-        return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '{{.JsonFieldName}}'"))
+        return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
 {{if not .Required}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
 	return json.Marshal(object)
@@ -738,6 +738,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
@@ -753,7 +754,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
 	{{- range .ExternalImports}}
 	{{ . }}
 	{{- end}}
