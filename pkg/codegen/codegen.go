@@ -45,6 +45,7 @@ type Options struct {
 	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
+	PrimitiveMapping   map[string]string // Override the primitive type with the given type.
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 }
 

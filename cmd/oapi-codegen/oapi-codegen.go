@@ -45,18 +45,19 @@ var (
 	flagExcludeSchemas string
 	flagConfigFile     string
 	flagAliasTypes     bool
-	flagPrintVersion bool
+	flagPrintVersion   bool
 )
 
 type configuration struct {
-	PackageName     string            `yaml:"package"`
-	GenerateTargets []string          `yaml:"generate"`
-	OutputFile      string            `yaml:"output"`
-	IncludeTags     []string          `yaml:"include-tags"`
-	ExcludeTags     []string          `yaml:"exclude-tags"`
-	TemplatesDir    string            `yaml:"templates"`
-	ImportMapping   map[string]string `yaml:"import-mapping"`
-	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	PackageName      string            `yaml:"package"`
+	GenerateTargets  []string          `yaml:"generate"`
+	OutputFile       string            `yaml:"output"`
+	IncludeTags      []string          `yaml:"include-tags"`
+	ExcludeTags      []string          `yaml:"exclude-tags"`
+	TemplatesDir     string            `yaml:"templates"`
+	ImportMapping    map[string]string `yaml:"import-mapping"`
+	PrimitiveMapping map[string]string `yaml:"primitive-mapping"`
+	ExcludeSchemas   []string          `yaml:"exclude-schemas"`
 }
 
 func main() {
@@ -104,7 +105,8 @@ func main() {
 	}
 
 	opts := codegen.Options{
-		AliasTypes: flagAliasTypes,
+		AliasTypes:       flagAliasTypes,
+		PrimitiveMapping: cfg.PrimitiveMapping,
 	}
 	for _, g := range cfg.GenerateTargets {
 		switch g {

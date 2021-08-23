@@ -344,36 +344,36 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema, opts
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
-			outSchema.GoType = "int64"
+			outSchema.GoType = primitive(opts, "int64", "int64")
 		} else if f == "int32" {
-			outSchema.GoType = "int32"
+			outSchema.GoType = primitive(opts, "int32", "int32")
 		} else if f == "int16" {
-			outSchema.GoType = "int16"
+			outSchema.GoType = primitive(opts, "int16", "int16")
 		} else if f == "int8" {
-			outSchema.GoType = "int8"
+			outSchema.GoType = primitive(opts, "int8", "int8")
 		} else if f == "int" {
-			outSchema.GoType = "int"
+			outSchema.GoType = primitive(opts, "int", "int")
 		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
+			outSchema.GoType = primitive(opts, "uint64", "uint64")
 		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
+			outSchema.GoType = primitive(opts, "uint32", "uint32")
 		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
+			outSchema.GoType = primitive(opts, "uint16", "uint16")
 		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
+			outSchema.GoType = primitive(opts, "uint8", "uint8")
 		} else if f == "uint" {
-			outSchema.GoType = "uint"
+			outSchema.GoType = primitive(opts, "uint", "uint")
 		} else if f == "" {
-			outSchema.GoType = "int"
+			outSchema.GoType = primitive(opts, "int", "int")
 		} else {
 			return fmt.Errorf("invalid integer format: %s", f)
 		}
 	case "number":
 		// We default to float for "number"
 		if f == "double" {
-			outSchema.GoType = "float64"
+			outSchema.GoType = primitive(opts, "double", "float64")
 		} else if f == "float" || f == "" {
-			outSchema.GoType = "float32"
+			outSchema.GoType = primitive(opts, "float", "float32")
 		} else {
 			return fmt.Errorf("invalid number format: %s", f)
 		}
@@ -386,24 +386,35 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema, opts
 		// Special case string formats here.
 		switch f {
 		case "byte":
-			outSchema.GoType = "[]byte"
+			outSchema.GoType = primitive(opts, "byte", "[]byte")
 		case "email":
-			outSchema.GoType = "openapi_types.Email"
+			outSchema.GoType = primitive(opts, "email", "openapi_types.Email")
 		case "date":
-			outSchema.GoType = "openapi_types.Date"
+			outSchema.GoType = primitive(opts, "date", "openapi_types.Date")
 		case "date-time":
-			outSchema.GoType = "time.Time"
+			outSchema.GoType = primitive(opts, "date-time", "time.Time")
 		case "json":
-			outSchema.GoType = "json.RawMessage"
+			outSchema.GoType = primitive(opts, "json", "json.RawMessage")
 			outSchema.SkipOptionalPointer = true
 		default:
 			// All unrecognized formats are simply a regular string.
-			outSchema.GoType = "string"
+			outSchema.GoType = primitive(opts, "string", "string")
 		}
 	default:
 		return fmt.Errorf("unhandled Schema type: %s", t)
 	}
 	return nil
+}
+
+func primitive(opts *Options, key string, defaultValue string) string {
+	if opts.PrimitiveMapping == nil {
+		return defaultValue
+	}
+	if val, ok := opts.PrimitiveMapping[key]; ok {
+		fmt.Println(opts, key, opts.PrimitiveMapping[key])
+		return val
+	}
+	return defaultValue
 }
 
 // This describes a Schema, a type definition.
