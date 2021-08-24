@@ -28,3 +28,7 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 	d.Time = parsed
 	return nil
 }
+
+func (d Date) String() string {
+	return d.Time.Format(DateFormat)
+}

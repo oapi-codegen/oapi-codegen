@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
@@ -21,8 +22,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -185,7 +184,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 	if timeVal, ok := marshalDateTimeValue(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to style time")
+			return "", fmt.Errorf("failed to style time: %w", err)
 		}
 		return styledVal, nil
 	}
