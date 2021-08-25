@@ -100,7 +100,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer rsp.Body.Close()
+    defer func() { _ = rsp.Body.Close() }()
     if err != nil {
         return nil, err
     }
