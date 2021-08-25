@@ -36,7 +36,7 @@ HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
 {{range .}}r.Group(func(r chi.Router) {
-r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
+r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | openAPIUriToChiUri}}", wrapper.{{.OperationId}})
 })
 {{end}}
 return r

@@ -20,15 +20,15 @@ func main() {
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 
-	swagger, err := api.GetSwagger()
+	spec, err := api.GetSpec()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		fmt.Fprintf(os.Stderr, "Error loading OpenAPI spec\n: %s", err)
 		os.Exit(1)
 	}
 
-	// Clear out the servers array in the swagger spec, that skips validating
+	// Clear out the servers array in the OpenAPI spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
+	spec.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
 	petStore := api.NewPetStore()
@@ -39,7 +39,7 @@ func main() {
 	e.Use(echomiddleware.Logger())
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
-	e.Use(middleware.OapiRequestValidator(swagger))
+	e.Use(middleware.OapiRequestValidator(spec))
 
 	// We now register our petStore above as the handler for the interface
 	api.RegisterHandlers(e, petStore)

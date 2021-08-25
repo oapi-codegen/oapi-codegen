@@ -50,7 +50,7 @@ components:
 `
 
 func TestIssue(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	loadedSpec, err := openapi3.NewLoader().LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
 	opts := codegen.Options{
@@ -60,6 +60,6 @@ func TestIssue(t *testing.T) {
 		EmbedSpec:          true,
 	}
 
-	_, err = codegen.Generate(swagger, "issue_52", opts)
+	_, err = codegen.Generate(loadedSpec, "issue_52", opts)
 	require.NoError(t, err)
 }

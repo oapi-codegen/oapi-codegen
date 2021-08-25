@@ -20,16 +20,16 @@ type Options struct {
 	Options openapi3filter.Options
 }
 
-// OapiRequestValidator Creates middleware to validate request by swagger spec.
+// OapiRequestValidator Creates middleware to validate request by OpenAPI spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
-	return OapiRequestValidatorWithOptions(swagger, nil)
+func OapiRequestValidator(spec *openapi3.T) func(next http.Handler) http.Handler {
+	return OapiRequestValidatorWithOptions(spec, nil)
 }
 
-// OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
+// OapiRequestValidatorWithOptions Creates middleware to validate request by OpenAPI spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
-	router, err := gorillamux.NewRouter(swagger)
+func OapiRequestValidatorWithOptions(spec *openapi3.T, options *Options) func(next http.Handler) http.Handler {
+	router, err := gorillamux.NewRouter(spec)
 	if err != nil {
 		panic(err)
 	}

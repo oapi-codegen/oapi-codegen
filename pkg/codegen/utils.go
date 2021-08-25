@@ -267,8 +267,8 @@ func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
 }
 
-// This function converts a swagger style path URI with parameters to a
-// Echo compatible path URI. We need to replace all of Swagger parameters with
+// This function converts a OpenAPI style path URI with parameters to a
+// Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
 //   {param}
 //   {param*}
@@ -278,12 +278,12 @@ func IsWholeDocumentReference(ref string) bool {
 //   {;param*}
 //   {?param}
 //   {?param*}
-func SwaggerUriToEchoUri(uri string) string {
+func OpenAPIUriToEchoUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
-// This function converts a swagger style path URI with parameters to a
-// Chi compatible path URI. We need to replace all of Swagger parameters with
+// This function converts a OpenAPI style path URI with parameters to a
+// Chi compatible path URI. We need to replace all of OpenAPI parameters with
 // "{param}". Valid input parameters are:
 //   {param}
 //   {param*}
@@ -293,7 +293,7 @@ func SwaggerUriToEchoUri(uri string) string {
 //   {;param*}
 //   {?param}
 //   {?param*}
-func SwaggerUriToChiUri(uri string) string {
+func OpenAPIUriToChiUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 

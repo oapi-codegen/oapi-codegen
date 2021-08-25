@@ -6,7 +6,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
+func LoadSpec(filePath string) (spec *openapi3.T, err error) {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

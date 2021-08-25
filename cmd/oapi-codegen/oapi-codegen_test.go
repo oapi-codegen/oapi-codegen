@@ -15,11 +15,11 @@ func TestLoader(t *testing.T) {
 
 	for _, v := range paths {
 
-		swagger, err := util.LoadSwagger(v)
+		spec, err := util.LoadSpec(v)
 		if err != nil {
 			t.Error(err)
 		}
-		if swagger == nil || swagger.Info == nil || swagger.Info.Version == "" {
+		if spec == nil || spec.Info == nil || spec.Info.Version == "" {
 			t.Error("missing data")
 		}
 	}

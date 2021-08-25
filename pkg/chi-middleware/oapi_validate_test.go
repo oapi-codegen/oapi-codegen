@@ -113,21 +113,21 @@ func doPost(t *testing.T, mux *chi.Mux, rawURL string, jsonBody interface{}) *ht
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
-	require.NoError(t, err, "Error initializing swagger")
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	require.NoError(t, err, "Error initializing OpenAPI")
 
 	r := chi.NewRouter()
 
 	// register middleware
-	r.Use(OapiRequestValidator(swagger))
+	r.Use(OapiRequestValidator(spec))
 
 	// basic cases
 	testRequestValidatorBasicFunctions(t, r)
 }
 
 func TestOapiRequestValidatorWithOptions(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
-	require.NoError(t, err, "Error initializing swagger")
+	spec, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	require.NoError(t, err, "Error initializing OpenAPI")
 
 	r := chi.NewRouter()
 
@@ -148,7 +148,7 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	}
 
 	// register middleware
-	r.Use(OapiRequestValidatorWithOptions(swagger, &options))
+	r.Use(OapiRequestValidatorWithOptions(spec, &options))
 
 	// basic cases
 	testRequestValidatorBasicFunctions(t, r)

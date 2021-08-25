@@ -21,12 +21,12 @@ type RefWrapper struct {
 	SourceRef interface{}
 }
 
-func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
-	if swagger == nil {
+func walkSpec(spec *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
+	if spec == nil {
 		return nil
 	}
 
-	for _, p := range swagger.Paths {
+	for _, p := range spec.Paths {
 		for _, param := range p.Parameters {
 			walkParameterRef(param, doFn)
 		}
@@ -35,7 +35,7 @@ func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error
 		}
 	}
 
-	walkComponents(&swagger.Components, doFn)
+	walkComponents(&spec.Components, doFn)
 
 	return nil
 }
@@ -377,10 +377,10 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
-func findComponentRefs(swagger *openapi3.T) []string {
+func findComponentRefs(spec *openapi3.T) []string {
 	refs := []string{}
 
-	walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
+	walkSpec(spec, func(ref RefWrapper) (bool, error) {
 		if ref.Ref != "" {
 			refs = append(refs, ref.Ref)
 			return false, nil
@@ -391,91 +391,91 @@ func findComponentRefs(swagger *openapi3.T) []string {
 	return refs
 }
 
-func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
+func removeOrphanedComponents(spec *openapi3.T, refs []string) int {
 	countRemoved := 0
 
-	for key, _ := range swagger.Components.Schemas {
+	for key, _ := range spec.Components.Schemas {
 		ref := fmt.Sprintf("#/components/schemas/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Schemas, key)
+			delete(spec.Components.Schemas, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Parameters {
+	for key, _ := range spec.Components.Parameters {
 		ref := fmt.Sprintf("#/components/parameters/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Parameters, key)
+			delete(spec.Components.Parameters, key)
 		}
 	}
 
 	// securitySchemes are an exception. definitions in securitySchemes
 	// are referenced directly by name. and not by $ref
 
-	// for key, _ := range swagger.Components.SecuritySchemes {
+	// for key, _ := range spec.Components.SecuritySchemes {
 	// 	ref := fmt.Sprintf("#/components/securitySchemes/%s", key)
 	// 	if !stringInSlice(ref, refs) {
 	// 		countRemoved++
-	// 		delete(swagger.Components.SecuritySchemes, key)
+	// 		delete(spec.Components.SecuritySchemes, key)
 	// 	}
 	// }
 
-	for key, _ := range swagger.Components.RequestBodies {
+	for key, _ := range spec.Components.RequestBodies {
 		ref := fmt.Sprintf("#/components/requestBodies/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.RequestBodies, key)
+			delete(spec.Components.RequestBodies, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Responses {
+	for key, _ := range spec.Components.Responses {
 		ref := fmt.Sprintf("#/components/responses/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Responses, key)
+			delete(spec.Components.Responses, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Headers {
+	for key, _ := range spec.Components.Headers {
 		ref := fmt.Sprintf("#/components/headers/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Headers, key)
+			delete(spec.Components.Headers, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Examples {
+	for key, _ := range spec.Components.Examples {
 		ref := fmt.Sprintf("#/components/examples/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Examples, key)
+			delete(spec.Components.Examples, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Links {
+	for key, _ := range spec.Components.Links {
 		ref := fmt.Sprintf("#/components/links/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Links, key)
+			delete(spec.Components.Links, key)
 		}
 	}
 
-	for key, _ := range swagger.Components.Callbacks {
+	for key, _ := range spec.Components.Callbacks {
 		ref := fmt.Sprintf("#/components/callbacks/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Callbacks, key)
+			delete(spec.Components.Callbacks, key)
 		}
 	}
 
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.T) {
+func pruneUnusedComponents(spec *openapi3.T) {
 	for {
-		refs := findComponentRefs(swagger)
-		countRemoved := removeOrphanedComponents(swagger, refs)
+		refs := findComponentRefs(spec)
+		countRemoved := removeOrphanedComponents(spec, refs)
 		if countRemoved < 1 {
 			break
 		}

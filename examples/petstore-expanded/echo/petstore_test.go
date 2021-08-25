@@ -37,16 +37,16 @@ func TestPetStore(t *testing.T) {
 	// Now, we create our empty pet store
 	store := api.NewPetStore()
 
-	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
+	// Get the OpenAPI description of our API
+	spec, err := api.GetSpec()
 	require.NoError(t, err)
 
-	// This disables swagger server name validation. It seems to work poorly,
+	// This disables OpenAPI server name validation. It seems to work poorly,
 	// and requires our test server to be in that list.
-	swagger.Servers = nil
+	spec.Servers = nil
 
 	// Validate requests against the OpenAPI spec
-	e.Use(middleware.OapiRequestValidator(swagger))
+	e.Use(middleware.OapiRequestValidator(spec))
 
 	// Log requests
 	e.Use(echo_middleware.Logger())

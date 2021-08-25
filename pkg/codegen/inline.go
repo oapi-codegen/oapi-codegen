@@ -25,12 +25,12 @@ import (
 )
 
 // This generates a gzipped, base64 encoded JSON representation of the
-// swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
+// OpenAPI definition, which we embed inside the generated code.
+func GenerateInlinedSpec(t *template.Template, importMapping importMap, spec *openapi3.T) (string, error) {
 	// Marshal to json
-	encoded, err := swagger.MarshalJSON()
+	encoded, err := spec.MarshalJSON()
 	if err != nil {
-		return "", fmt.Errorf("error marshaling swagger: %s", err)
+		return "", fmt.Errorf("error marshaling openapi: %s", err)
 	}
 
 	// gzip
@@ -41,11 +41,11 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 	}
 	_, err = zw.Write(encoded)
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping openapi file: %s", err)
 	}
 	err = zw.Close()
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping openapi file: %s", err)
 	}
 	str := base64.StdEncoding.EncodeToString(buf.Bytes())
 

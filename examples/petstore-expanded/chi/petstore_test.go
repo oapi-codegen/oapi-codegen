@@ -24,20 +24,20 @@ func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
 func TestPetStore(t *testing.T) {
 	var err error
 
-	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
+	// Get the OpenAPI description of our API
+	spec, err := api.GetSpec()
 	require.NoError(t, err)
 
-	// Clear out the servers array in the swagger spec, that skips validating
+	// Clear out the servers array in the OpenAPI spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
+	spec.Servers = nil
 
 	// This is how you set up a basic chi router
 	r := chi.NewRouter()
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
-	r.Use(middleware.OapiRequestValidator(swagger))
+	r.Use(middleware.OapiRequestValidator(spec))
 
 	store := api.NewPetStore()
 	api.HandlerFromMux(store, r)
