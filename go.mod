@@ -5,7 +5,7 @@ require (
 	github.com/getkin/kin-openapi v0.63.0
 	github.com/go-chi/chi/v5 v5.0.3
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
-	github.com/labstack/echo/v4 v4.3.0
+	github.com/labstack/echo/v4 v4.5.0
 	github.com/matryer/moq v0.2.1
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
