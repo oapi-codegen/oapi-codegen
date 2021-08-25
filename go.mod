@@ -8,7 +8,6 @@ require (
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
 	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/pkg/errors v0.8.1
 	github.com/stretchr/testify v1.5.1
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777 // indirect

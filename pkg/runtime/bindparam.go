@@ -16,13 +16,12 @@ package runtime
 import (
 	"encoding"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )

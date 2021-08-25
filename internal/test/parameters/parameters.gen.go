@@ -1500,13 +1500,13 @@ func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Reque
 
 	operationPath := fmt.Sprintf("/startingWithNumber/%s", pathParam0)
 	if operationPath[0] == '/' {
-		operationPath = operationPath[1:]
-	}
-	operationURL := url.URL{
-		Path: operationPath,
+		operationPath = "." + operationPath
 	}
 
-	queryURL := serverURL.ResolveReference(&operationURL)
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -2535,9 +2535,6 @@ func ParseGetStartingWithNumberResponse(rsp *http.Response) (*GetStartingWithNum
 	response := &GetStartingWithNumberResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
-	}
-
-	switch {
 	}
 
 	return response, nil
