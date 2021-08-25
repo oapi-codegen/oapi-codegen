@@ -289,7 +289,7 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEdi
 // ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
 func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
