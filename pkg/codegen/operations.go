@@ -638,6 +638,11 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 		td = append(td, op.TypeDefinitions...)
 	}
 
+	consts, err := GenerateEnums(t, td)
+	if err != nil {
+		return "", fmt.Errorf("error generating enums for operations: %w", err)
+	}
+
 	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
@@ -646,6 +651,16 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	_, err = w.WriteString("\n")
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
+	}
+
+	_, err = w.WriteString(consts)
+	if err != nil {
+		return "", fmt.Errorf("error generating enums for operations: %w", err)
+	}
+
+	_, err = w.WriteString("\n")
+	if err != nil {
+		return "", fmt.Errorf("error generating enums for operations: %w", err)
 	}
 
 	_, err = w.WriteString(addProps)

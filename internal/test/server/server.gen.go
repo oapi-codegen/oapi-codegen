@@ -127,6 +127,13 @@ type CreateResource2JSONRequestBody CreateResource2JSONBody
 // UpdateResource3JSONRequestBody defines body for UpdateResource3 for application/json ContentType.
 type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
+// Defines values for GetWithContentTypeParamsContentType.
+const (
+	GetWithContentTypeParamsContentTypeJson GetWithContentTypeParamsContentType = "json"
+
+	GetWithContentTypeParamsContentTypeText GetWithContentTypeParamsContentType = "text"
+)
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// get every type optional
