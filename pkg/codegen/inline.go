@@ -14,7 +14,6 @@
 package codegen
 
 import (
-	"bufio"
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
@@ -62,19 +61,14 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 		parts = append(parts, str)
 	}
 
-	// Generate inline code.
-	buf.Reset()
-	w := bufio.NewWriter(&buf)
-	err = t.ExecuteTemplate(w, "inline.tmpl", struct {
-		SpecParts     []string
-		ImportMapping importMap
-	}{SpecParts: parts, ImportMapping: importMapping})
-	if err != nil {
-		return "", fmt.Errorf("error generating inlined spec: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for inlined spec: %s", err)
-	}
-	return buf.String(), nil
+	return GenerateTemplates(
+		[]string{"inline.tmpl"},
+		t,
+		struct {
+			SpecParts     []string
+			ImportMapping importMap
+		}{
+			SpecParts:     parts,
+			ImportMapping: importMapping,
+		})
 }
