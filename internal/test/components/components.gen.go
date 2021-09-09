@@ -1288,18 +1288,36 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextEnsureEverythingIsReferenced sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextEnsureEverythingIsReferenced(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // EnsureEverythingIsReferenced converts echo context to params.
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
+
+	w.SetContextEnsureEverythingIsReferenced(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
 	return err
 }
 
+// SetContextParamsWithAddProps sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextParamsWithAddProps(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // ParamsWithAddProps converts echo context to params.
 func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	var err error
+
+	w.SetContextParamsWithAddProps(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params ParamsWithAddPropsParams
@@ -1322,9 +1340,18 @@ func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
 	return err
 }
 
+// SetContextBodyWithAddProps sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextBodyWithAddProps(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // BodyWithAddProps converts echo context to params.
 func (w *ServerInterfaceWrapper) BodyWithAddProps(ctx echo.Context) error {
 	var err error
+
+	w.SetContextBodyWithAddProps(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.BodyWithAddProps(ctx)
@@ -1376,9 +1403,9 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/params_with_add_props", wrapper.ParamsWithAddProps, opts.Middlewares...)
-	router.POST(opts.BaseURL+"/params_with_add_props", wrapper.BodyWithAddProps, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, append([]echo.MiddlewareFunc{wrapper.SetContextEnsureEverythingIsReferenced}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/params_with_add_props", wrapper.ParamsWithAddProps, append([]echo.MiddlewareFunc{wrapper.SetContextParamsWithAddProps}, opts.Middlewares...)...)
+	router.POST(opts.BaseURL+"/params_with_add_props", wrapper.BodyWithAddProps, append([]echo.MiddlewareFunc{wrapper.SetContextBodyWithAddProps}, opts.Middlewares...)...)
 
 }
 

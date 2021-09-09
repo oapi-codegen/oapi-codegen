@@ -39,9 +39,18 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextFindPets sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextFindPets(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // FindPets converts echo context to params.
 func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	var err error
+
+	w.SetContextFindPets(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
@@ -64,13 +73,29 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	return err
 }
 
+// SetContextAddPet sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextAddPet(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // AddPet converts echo context to params.
 func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 	var err error
 
+	w.SetContextAddPet(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.AddPet(ctx)
 	return err
+}
+
+// SetContextDeletePet sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextDeletePet(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // DeletePet converts echo context to params.
@@ -84,9 +109,18 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	w.SetContextDeletePet(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.DeletePet(ctx, id)
 	return err
+}
+
+// SetContextFindPetByID sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextFindPetByID(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // FindPetByID converts echo context to params.
@@ -99,6 +133,8 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
+
+	w.SetContextFindPetByID(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.FindPetByID(ctx, id)
@@ -150,10 +186,10 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/pets", wrapper.FindPets, opts.Middlewares...)
-	router.POST(opts.BaseURL+"/pets", wrapper.AddPet, opts.Middlewares...)
-	router.DELETE(opts.BaseURL+"/pets/:id", wrapper.DeletePet, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/pets/:id", wrapper.FindPetByID, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/pets", wrapper.FindPets, append([]echo.MiddlewareFunc{wrapper.SetContextFindPets}, opts.Middlewares...)...)
+	router.POST(opts.BaseURL+"/pets", wrapper.AddPet, append([]echo.MiddlewareFunc{wrapper.SetContextAddPet}, opts.Middlewares...)...)
+	router.DELETE(opts.BaseURL+"/pets/:id", wrapper.DeletePet, append([]echo.MiddlewareFunc{wrapper.SetContextDeletePet}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/pets/:id", wrapper.FindPetByID, append([]echo.MiddlewareFunc{wrapper.SetContextFindPetByID}, opts.Middlewares...)...)
 
 }
 

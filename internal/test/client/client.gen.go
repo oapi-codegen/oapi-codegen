@@ -904,67 +904,128 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextPostBoth sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextPostBoth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // PostBoth converts echo context to params.
 func (w *ServerInterfaceWrapper) PostBoth(ctx echo.Context) error {
 	var err error
+
+	w.SetContextPostBoth(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.PostBoth(ctx)
 	return err
 }
 
+// SetContextGetBoth sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetBoth(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetBoth converts echo context to params.
 func (w *ServerInterfaceWrapper) GetBoth(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetBoth(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetBoth(ctx)
 	return err
 }
 
+// SetContextPostJson sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextPostJson(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // PostJson converts echo context to params.
 func (w *ServerInterfaceWrapper) PostJson(ctx echo.Context) error {
 	var err error
+
+	w.SetContextPostJson(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.PostJson(ctx)
 	return err
 }
 
+// SetContextGetJson sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetJson(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
+		return next(ctx)
+	}
+}
+
 // GetJson converts echo context to params.
 func (w *ServerInterfaceWrapper) GetJson(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
+	w.SetContextGetJson(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetJson(ctx)
 	return err
 }
 
+// SetContextPostOther sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextPostOther(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // PostOther converts echo context to params.
 func (w *ServerInterfaceWrapper) PostOther(ctx echo.Context) error {
 	var err error
+
+	w.SetContextPostOther(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.PostOther(ctx)
 	return err
 }
 
+// SetContextGetOther sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetOther(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetOther converts echo context to params.
 func (w *ServerInterfaceWrapper) GetOther(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetOther(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetOther(ctx)
 	return err
 }
 
+// SetContextGetJsonWithTrailingSlash sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetJsonWithTrailingSlash(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
+		return next(ctx)
+	}
+}
+
 // GetJsonWithTrailingSlash converts echo context to params.
 func (w *ServerInterfaceWrapper) GetJsonWithTrailingSlash(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(OpenIdScopes, []string{"json.read", "json.admin"})
+	w.SetContextGetJsonWithTrailingSlash(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetJsonWithTrailingSlash(ctx)
@@ -1016,13 +1077,13 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.POST(opts.BaseURL+"/with_both_bodies", wrapper.PostBoth, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/with_both_responses", wrapper.GetBoth, opts.Middlewares...)
-	router.POST(opts.BaseURL+"/with_json_body", wrapper.PostJson, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/with_json_response", wrapper.GetJson, opts.Middlewares...)
-	router.POST(opts.BaseURL+"/with_other_body", wrapper.PostOther, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/with_other_response", wrapper.GetOther, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash, opts.Middlewares...)
+	router.POST(opts.BaseURL+"/with_both_bodies", wrapper.PostBoth, append([]echo.MiddlewareFunc{wrapper.SetContextPostBoth}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/with_both_responses", wrapper.GetBoth, append([]echo.MiddlewareFunc{wrapper.SetContextGetBoth}, opts.Middlewares...)...)
+	router.POST(opts.BaseURL+"/with_json_body", wrapper.PostJson, append([]echo.MiddlewareFunc{wrapper.SetContextPostJson}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/with_json_response", wrapper.GetJson, append([]echo.MiddlewareFunc{wrapper.SetContextGetJson}, opts.Middlewares...)...)
+	router.POST(opts.BaseURL+"/with_other_body", wrapper.PostOther, append([]echo.MiddlewareFunc{wrapper.SetContextPostOther}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/with_other_response", wrapper.GetOther, append([]echo.MiddlewareFunc{wrapper.SetContextGetOther}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash, append([]echo.MiddlewareFunc{wrapper.SetContextGetJsonWithTrailingSlash}, opts.Middlewares...)...)
 
 }
 

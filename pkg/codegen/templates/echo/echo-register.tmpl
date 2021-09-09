@@ -45,6 +45,6 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 {{end}}
-{{range .}}router.{{.Method}}(opts.BaseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}}, opts.Middlewares...)
+{{range .}}router.{{.Method}}(opts.BaseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}}, append([]echo.MiddlewareFunc{wrapper.SetContext{{.OperationId}}}, opts.Middlewares...)...)
 {{end}}
 }

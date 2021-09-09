@@ -284,9 +284,18 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextGetFoo sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetFoo(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetFoo converts echo context to params.
 func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetFoo(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetFooParams
@@ -373,7 +382,7 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/foo", wrapper.GetFoo, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/foo", wrapper.GetFoo, append([]echo.MiddlewareFunc{wrapper.SetContextGetFoo}, opts.Middlewares...)...)
 
 }
 

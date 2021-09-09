@@ -1038,37 +1038,69 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextEnsureEverythingIsReferenced sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextEnsureEverythingIsReferenced(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
+}
+
 // EnsureEverythingIsReferenced converts echo context to params.
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextEnsureEverythingIsReferenced(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
 	return err
 }
 
+// SetContextIssue127 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue127(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
+}
+
 // Issue127 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue127(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue127(ctx)
 	return err
 }
 
+// SetContextIssue185 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue185(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
+}
+
 // Issue185 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue185(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue185(ctx)
 	return err
+}
+
+// SetContextIssue209 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue209(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
 }
 
 // Issue209 converts echo context to params.
@@ -1082,11 +1114,19 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue209(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue209(ctx, str)
 	return err
+}
+
+// SetContextIssue30 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue30(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
 }
 
 // Issue30 converts echo context to params.
@@ -1100,11 +1140,19 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue30(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
 	return err
+}
+
+// SetContextIssue41 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue41(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
 }
 
 // Issue41 converts echo context to params.
@@ -1118,18 +1166,26 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue41(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue41(ctx, n1param)
 	return err
 }
 
+// SetContextIssue9 sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextIssue9(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		ctx.Set(Access_tokenScopes, []string{""})
+		return next(ctx)
+	}
+}
+
 // Issue9 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{""})
+	w.SetContextIssue9(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
@@ -1190,13 +1246,13 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/127", wrapper.Issue127, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/185", wrapper.Issue185, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/209/$:str", wrapper.Issue209, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/41/:1param", wrapper.Issue41, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/issues/9", wrapper.Issue9, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, append([]echo.MiddlewareFunc{wrapper.SetContextEnsureEverythingIsReferenced}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/127", wrapper.Issue127, append([]echo.MiddlewareFunc{wrapper.SetContextIssue127}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/185", wrapper.Issue185, append([]echo.MiddlewareFunc{wrapper.SetContextIssue185}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/209/$:str", wrapper.Issue209, append([]echo.MiddlewareFunc{wrapper.SetContextIssue209}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, append([]echo.MiddlewareFunc{wrapper.SetContextIssue30}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/41/:1param", wrapper.Issue41, append([]echo.MiddlewareFunc{wrapper.SetContextIssue41}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/issues/9", wrapper.Issue9, append([]echo.MiddlewareFunc{wrapper.SetContextIssue9}, opts.Middlewares...)...)
 
 }
 

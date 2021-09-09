@@ -324,9 +324,18 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextExampleGet sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextExampleGet(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // ExampleGet converts echo context to params.
 func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 	var err error
+
+	w.SetContextExampleGet(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ExampleGet(ctx)
@@ -378,7 +387,7 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/example", wrapper.ExampleGet, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/example", wrapper.ExampleGet, append([]echo.MiddlewareFunc{wrapper.SetContextExampleGet}, opts.Middlewares...)...)
 
 }
 

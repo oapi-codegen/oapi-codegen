@@ -438,6 +438,13 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextGetPet sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetPet(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetPet converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 	var err error
@@ -449,14 +456,25 @@ func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
 	}
 
+	w.SetContextGetPet(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetPet(ctx, petId)
 	return err
 }
 
+// SetContextValidatePets sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextValidatePets(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // ValidatePets converts echo context to params.
 func (w *ServerInterfaceWrapper) ValidatePets(ctx echo.Context) error {
 	var err error
+
+	w.SetContextValidatePets(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ValidatePets(ctx)
@@ -508,8 +526,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/pets/:petId", wrapper.GetPet, opts.Middlewares...)
-	router.POST(opts.BaseURL+"/pets:validate", wrapper.ValidatePets, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/pets/:petId", wrapper.GetPet, append([]echo.MiddlewareFunc{wrapper.SetContextGetPet}, opts.Middlewares...)...)
+	router.POST(opts.BaseURL+"/pets:validate", wrapper.ValidatePets, append([]echo.MiddlewareFunc{wrapper.SetContextValidatePets}, opts.Middlewares...)...)
 
 }
 

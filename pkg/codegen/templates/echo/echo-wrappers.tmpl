@@ -3,7 +3,18 @@ type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+{{range .}}{{$opid := .OperationId -}}
+// SetContext{{.OperationId}} sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContext{{.OperationId}} (next echo.HandlerFunc) echo.HandlerFunc {
+    return func(ctx echo.Context) error {
+{{- range .SecurityDefinitions}}
+        ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{- end}}
+        return next(ctx)
+    }
+}
+
+// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
@@ -25,9 +36,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}
 {{end}}
 
-{{range .SecurityDefinitions}}
-    ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
-{{end}}
+    {{- /* This rather ugly bit calls the per-handler middleware in order
+           to maintain backward-compatibility: if the Register functions
+           aren't called by the user, we still need to set the context
+           keys like authentication scopes that would normally get
+           set as part of the per-handler middleware. */}}
+    w.SetContext{{.OperationId}}(func (ctx echo.Context) error { return nil })(ctx)
 
 {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context

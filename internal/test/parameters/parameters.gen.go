@@ -2609,6 +2609,13 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
+// SetContextGetContentObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetContentObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetContentObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 	var err error
@@ -2620,14 +2627,25 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
 	}
 
+	w.SetContextGetContentObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetContentObject(ctx, param)
 	return err
 }
 
+// SetContextGetCookie sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetCookie(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetCookie converts echo context to params.
 func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetCookie(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetCookieParams
@@ -2730,9 +2748,18 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 	return err
 }
 
+// SetContextGetHeader sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetHeader(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetHeader converts echo context to params.
 func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetHeader(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetHeaderParams
@@ -2864,6 +2891,13 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 	return err
 }
 
+// SetContextGetLabelExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetLabelExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetLabelExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 	var err error
@@ -2875,9 +2909,18 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetLabelExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelExplodeArray(ctx, param)
 	return err
+}
+
+// SetContextGetLabelExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetLabelExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetLabelExplodeObject converts echo context to params.
@@ -2891,9 +2934,18 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetLabelExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelExplodeObject(ctx, param)
 	return err
+}
+
+// SetContextGetLabelNoExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetLabelNoExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetLabelNoExplodeArray converts echo context to params.
@@ -2907,9 +2959,18 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetLabelNoExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelNoExplodeArray(ctx, param)
 	return err
+}
+
+// SetContextGetLabelNoExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetLabelNoExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetLabelNoExplodeObject converts echo context to params.
@@ -2923,9 +2984,18 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetLabelNoExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelNoExplodeObject(ctx, param)
 	return err
+}
+
+// SetContextGetMatrixExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetMatrixExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetMatrixExplodeArray converts echo context to params.
@@ -2939,9 +3009,18 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	w.SetContextGetMatrixExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixExplodeArray(ctx, id)
 	return err
+}
+
+// SetContextGetMatrixExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetMatrixExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetMatrixExplodeObject converts echo context to params.
@@ -2955,9 +3034,18 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	w.SetContextGetMatrixExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixExplodeObject(ctx, id)
 	return err
+}
+
+// SetContextGetMatrixNoExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetMatrixNoExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetMatrixNoExplodeArray converts echo context to params.
@@ -2971,9 +3059,18 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	w.SetContextGetMatrixNoExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixNoExplodeArray(ctx, id)
 	return err
+}
+
+// SetContextGetMatrixNoExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetMatrixNoExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetMatrixNoExplodeObject converts echo context to params.
@@ -2987,9 +3084,18 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
+	w.SetContextGetMatrixNoExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixNoExplodeObject(ctx, id)
 	return err
+}
+
+// SetContextGetPassThrough sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetPassThrough(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetPassThrough converts echo context to params.
@@ -3000,14 +3106,25 @@ func (w *ServerInterfaceWrapper) GetPassThrough(ctx echo.Context) error {
 
 	param = ctx.Param("param")
 
+	w.SetContextGetPassThrough(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetPassThrough(ctx, param)
 	return err
 }
 
+// SetContextGetDeepObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetDeepObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetDeepObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetDeepObject(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetDeepObjectParams
@@ -3023,9 +3140,18 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 	return err
 }
 
+// SetContextGetQueryForm sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetQueryForm(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetQueryForm converts echo context to params.
 func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	var err error
+
+	w.SetContextGetQueryForm(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQueryFormParams
@@ -3103,6 +3229,13 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	return err
 }
 
+// SetContextGetSimpleExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetSimpleExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
+}
+
 // GetSimpleExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 	var err error
@@ -3114,9 +3247,18 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetSimpleExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleExplodeArray(ctx, param)
 	return err
+}
+
+// SetContextGetSimpleExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetSimpleExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetSimpleExplodeObject converts echo context to params.
@@ -3130,9 +3272,18 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetSimpleExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleExplodeObject(ctx, param)
 	return err
+}
+
+// SetContextGetSimpleNoExplodeArray sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetSimpleNoExplodeArray(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetSimpleNoExplodeArray converts echo context to params.
@@ -3146,9 +3297,18 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetSimpleNoExplodeArray(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleNoExplodeArray(ctx, param)
 	return err
+}
+
+// SetContextGetSimpleNoExplodeObject sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetSimpleNoExplodeObject(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetSimpleNoExplodeObject converts echo context to params.
@@ -3162,9 +3322,18 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetSimpleNoExplodeObject(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleNoExplodeObject(ctx, param)
 	return err
+}
+
+// SetContextGetSimplePrimitive sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetSimplePrimitive(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetSimplePrimitive converts echo context to params.
@@ -3178,9 +3347,18 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
+	w.SetContextGetSimplePrimitive(func(ctx echo.Context) error { return nil })(ctx)
+
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimplePrimitive(ctx, param)
 	return err
+}
+
+// SetContextGetStartingWithNumber sets route-specific data (like authentication scopes) in the echo Context.
+func (w *ServerInterfaceWrapper) SetContextGetStartingWithNumber(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(ctx echo.Context) error {
+		return next(ctx)
+	}
 }
 
 // GetStartingWithNumber converts echo context to params.
@@ -3190,6 +3368,8 @@ func (w *ServerInterfaceWrapper) GetStartingWithNumber(ctx echo.Context) error {
 	var n1param string
 
 	n1param = ctx.Param("1param")
+
+	w.SetContextGetStartingWithNumber(func(ctx echo.Context) error { return nil })(ctx)
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetStartingWithNumber(ctx, n1param)
@@ -3241,26 +3421,26 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, opts Reg
 		Handler: si,
 	}
 
-	router.GET(opts.BaseURL+"/contentObject/:param", wrapper.GetContentObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/cookie", wrapper.GetCookie, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/header", wrapper.GetHeader, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/passThrough/:param", wrapper.GetPassThrough, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/queryDeepObject", wrapper.GetDeepObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/queryForm", wrapper.GetQueryForm, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive, opts.Middlewares...)
-	router.GET(opts.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber, opts.Middlewares...)
+	router.GET(opts.BaseURL+"/contentObject/:param", wrapper.GetContentObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetContentObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/cookie", wrapper.GetCookie, append([]echo.MiddlewareFunc{wrapper.SetContextGetCookie}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/header", wrapper.GetHeader, append([]echo.MiddlewareFunc{wrapper.SetContextGetHeader}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetLabelExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetLabelExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetLabelNoExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetLabelNoExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetMatrixExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetMatrixExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetMatrixNoExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetMatrixNoExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/passThrough/:param", wrapper.GetPassThrough, append([]echo.MiddlewareFunc{wrapper.SetContextGetPassThrough}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/queryDeepObject", wrapper.GetDeepObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetDeepObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/queryForm", wrapper.GetQueryForm, append([]echo.MiddlewareFunc{wrapper.SetContextGetQueryForm}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetSimpleExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetSimpleExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray, append([]echo.MiddlewareFunc{wrapper.SetContextGetSimpleNoExplodeArray}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject, append([]echo.MiddlewareFunc{wrapper.SetContextGetSimpleNoExplodeObject}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive, append([]echo.MiddlewareFunc{wrapper.SetContextGetSimplePrimitive}, opts.Middlewares...)...)
+	router.GET(opts.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber, append([]echo.MiddlewareFunc{wrapper.SetContextGetStartingWithNumber}, opts.Middlewares...)...)
 
 }
 
