@@ -335,11 +335,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		}
 		outSchema.ArrayType = &arrayType
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
-		additionalTypes := arrayType.GetAdditionalTypeDefs()
-		// Check also types defined in array item
-		if len(additionalTypes) > 0 {
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalTypes...)
-		}
+		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 	case "integer":
 		// We default to int if format doesn't ask for something else.
