@@ -130,8 +130,16 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) CanAlias() bool {
+	// HACK - Allow more types to be aliased. Not sure where this could break.
 	return t.Schema.IsRef() || /* actual reference */
+		(t.Schema.OAPISchema == nil) || /* HACK: not a new complex type definition */
+		(IsPredeclaredGoIdentifier(t.Schema.GoType)) || /* HACK: alias primitive types */
 		(t.Schema.ArrayType != nil && t.Schema.ArrayType.IsRef()) /* array to ref */
+}
+
+func (t *TypeDefinition) CanBind() bool {
+	// HACK - Add new functions: req, err := BindMETHODPathNameJSONRequestBody()
+	return t.Schema.GoType != ""
 }
 
 func PropertiesEqual(a, b Property) bool {

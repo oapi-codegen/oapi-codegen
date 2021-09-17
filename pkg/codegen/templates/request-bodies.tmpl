@@ -3,6 +3,17 @@
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+
+{{if (.CanBind)}}
+// HACK: add convenience function to unmarshal json body
+func Bind{{.TypeName}}(ctx echo.Context) ({{.TypeName}}, error) {
+  var body {{.TypeName}}
+  if err := ctx.Bind(&body); err != nil {
+    return body, err
+  }
+  return body, nil
+}
+{{end}}
 {{end}}
 {{end}}
 {{end}}
