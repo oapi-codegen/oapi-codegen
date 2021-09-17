@@ -234,6 +234,16 @@ func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
 }
 
+// HACK: If we have a request body, pass it to the call back
+func (o *OperationDefinition) RequiresBodyParam() bool {
+	return len(o.Bodies) == 1 && o.Bodies[0].ContentType == "application/json" && o.Bodies[0].Required
+}
+
+// HACK: If we have a request body, pass it to the call back
+func (o *OperationDefinition) BodyTypeName() string {
+	return o.Bodies[0].TypeDef(o.OperationId).TypeName
+}
+
 // This is called by the template engine to determine whether to generate body
 // marshaling code on the client. This is true for all body types, whether or
 // not we generate types for them.
@@ -624,10 +634,10 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-    return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
+		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
-    return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
+		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 
 	}
 
@@ -641,12 +651,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
-	
-  if _, err := w.WriteString("\n"); err != nil {
+
+	if _, err := w.WriteString("\n"); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	  if _, err := w.WriteString(addProps); err != nil {
+	if _, err := w.WriteString(addProps); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 

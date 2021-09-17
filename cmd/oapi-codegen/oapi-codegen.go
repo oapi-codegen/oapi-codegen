@@ -45,7 +45,8 @@ var (
 	flagExcludeSchemas string
 	flagConfigFile     string
 	flagAliasTypes     bool
-	flagPrintVersion bool
+	flagBodyAsParam    bool
+	flagPrintVersion   bool
 )
 
 type configuration struct {
@@ -72,6 +73,7 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
+	flag.BoolVar(&flagBodyAsParam, "body-as-param", false, "Pass request body as parameter")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
 	flag.Parse()
 
@@ -104,7 +106,8 @@ func main() {
 	}
 
 	opts := codegen.Options{
-		AliasTypes: flagAliasTypes,
+		AliasTypes:  flagAliasTypes,
+		BodyAsParam: flagBodyAsParam,
 	}
 	for _, g := range cfg.GenerateTargets {
 		switch g {

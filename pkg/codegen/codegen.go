@@ -44,6 +44,7 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	BodyAsParam        bool              // Pass request bodies as parameters
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -514,7 +515,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-  return GenerateTemplates([]string{"constants.tmpl"}, t, c)
+	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
 
 }
 
@@ -545,7 +546,7 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		Version:         moduleVersion,
 	}
 
-  return GenerateTemplates([]string{"imports.tmpl"}, t, context)
+	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
 }
 
 // Generate all the glue code which provides the API for interacting with

@@ -121,8 +121,16 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}{{/* .CookieParams */}}
 
 {{end}}{{/* .RequiresParamObject */}}
+{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}
+    // HACK: Bind body and pass it to the callback directly
+    body, err := Bind{{.BodyTypeName}}(ctx)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Request body is required"))
+    }
+
+{{end}}
     // Invoke the callback with all the unmarshalled arguments
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
     return err
 }
 {{end}}
