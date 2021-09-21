@@ -730,7 +730,11 @@ const (
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{if (opts.ShouldCastContext)}}
+{{.OperationId}}(c {{(opts.CastContext)}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body {{.BodyTypeName}}{{end}}) error
+{{else}}
+{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body {{.BodyTypeName}}{{end}}) error
+{{end}}
 {{end}}
 }
 `,
@@ -891,8 +895,24 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}{{/* .CookieParams */}}
 
 {{end}}{{/* .RequiresParamObject */}}
+{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}
+    // HACK: Bind body and pass it to the callback directly
+    body, err := Bind{{.BodyTypeName}}(ctx)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Request body is required"))
+    }
+
+{{end}}
     // Invoke the callback with all the unmarshalled arguments
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+{{if (opts.ShouldCastContext)}}
+    c, ok := ctx.({{(opts.CastContext)}})
+    if !ok {
+        return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Invalid context type"))
+    }
+    err = w.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
+{{else}}
+    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
+{{end}}
     return err
 }
 {{end}}
@@ -1030,6 +1050,17 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+
+{{if (.CanBind)}}
+// HACK: add convenience function to unmarshal json body
+func Bind{{.TypeName}}(ctx echo.Context) ({{.TypeName}}, error) {
+  var body {{.TypeName}}
+  if err := ctx.Bind(&body); err != nil {
+    return body, err
+  }
+  return body, nil
+}
+{{end}}
 {{end}}
 {{end}}
 {{end}}

@@ -130,7 +130,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 
 {{end}}
     // Invoke the callback with all the unmarshalled arguments
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
+{{if (opts.ShouldCastContext)}}c, ok := ctx.({{(opts.CastContext)}})
+    if !ok {
+        return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Invalid context type"))
+    }
+    err = w.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
+{{else}}err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}}){{end}}
     return err
 }
 {{end}}

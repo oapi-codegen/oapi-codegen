@@ -26,7 +26,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
+	"github.com/jp-andre/oapi-codegen/pkg/codegen/templates"
 )
 
 // Options defines the optional code to generate.
@@ -45,6 +45,8 @@ type Options struct {
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 	BodyAsParam        bool              // Pass request bodies as parameters
+	CastContext        string            // Type name to cast the context to before calling the API handlers
+	ShouldCastContext  bool              // Bool flag for the context casting
 }
 
 // goImport represents a go package to be imported in the generated code

@@ -25,8 +25,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/jp-andre/oapi-codegen/pkg/codegen"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -44,6 +44,7 @@ var (
 	flagImportMapping  string
 	flagExcludeSchemas string
 	flagConfigFile     string
+	flagCastContext    string
 	flagAliasTypes     bool
 	flagBodyAsParam    bool
 	flagPrintVersion   bool
@@ -72,6 +73,7 @@ func main() {
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
+	flag.StringVar(&flagCastContext, "cast-context", "", "Cast the context to the given tybe before calling the handlers")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 	flag.BoolVar(&flagBodyAsParam, "body-as-param", false, "Pass request body as parameter")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
@@ -106,8 +108,10 @@ func main() {
 	}
 
 	opts := codegen.Options{
-		AliasTypes:  flagAliasTypes,
-		BodyAsParam: flagBodyAsParam,
+		AliasTypes:        flagAliasTypes,
+		BodyAsParam:       flagBodyAsParam,
+		CastContext:       flagCastContext,
+		ShouldCastContext: flagCastContext != "",
 	}
 	for _, g := range cfg.GenerateTargets {
 		switch g {
