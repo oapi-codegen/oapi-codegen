@@ -730,11 +730,7 @@ const (
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{if (opts.ShouldCastContext)}}
-{{.OperationId}}(c {{(opts.CastContext)}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body {{.BodyTypeName}}{{end}}) error
-{{else}}
-{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body {{.BodyTypeName}}{{end}}) error
-{{end}}
+{{.OperationId}}({{if (opts.ShouldCastContext)}}c {{(opts.CastContext)}}{{else}}ctx echo.Context{{end}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body {{.BodyTypeName}}{{end}}) error
 {{end}}
 }
 `,
@@ -904,15 +900,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 
 {{end}}
     // Invoke the callback with all the unmarshalled arguments
-{{if (opts.ShouldCastContext)}}
-    c, ok := ctx.({{(opts.CastContext)}})
+{{if (opts.ShouldCastContext)}}c, ok := ctx.({{(opts.CastContext)}})
     if !ok {
         return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Invalid context type"))
     }
     err = w.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
-{{else}}
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}})
-{{end}}
+{{else}}err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if and (opts.BodyAsParam) (.RequiresBodyParam)}}, body{{end}}){{end}}
     return err
 }
 {{end}}
