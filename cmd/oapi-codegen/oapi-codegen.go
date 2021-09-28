@@ -25,8 +25,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
-	"github.com/jp-andre/oapi-codegen/pkg/codegen"
 )
 
 func errExit(format string, args ...interface{}) {
