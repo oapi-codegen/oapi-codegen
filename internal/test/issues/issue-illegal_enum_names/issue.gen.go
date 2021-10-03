@@ -241,7 +241,7 @@ func (c *ClientWithResponses) GetFooWithResponse(ctx context.Context, reqEditors
 // ParseGetFooResponse parses an HTTP response from a GetFooWithResponse call
 func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}

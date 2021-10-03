@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -36,7 +37,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			// validate request
 			if statusCode, err := validateRequest(r, router, options); err != nil {
 				http.Error(w, err.Error(), statusCode)
@@ -47,13 +47,11 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 			next.ServeHTTP(w, r)
 		})
 	}
-
 }
 
 // This function is called from the middleware above and actually does the work
 // of validating a request.
 func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
-
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
@@ -72,20 +70,23 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 	}
 
 	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
-		switch e := err.(type) {
-		case *openapi3filter.RequestError:
+		var re *openapi3filter.RequestError
+		if errors.As(err, &re) {
 			// We've got a bad request
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
-			errorLines := strings.Split(e.Error(), "\n")
+			errorLines := strings.Split(re.Error(), "\n")
 			return http.StatusBadRequest, fmt.Errorf(errorLines[0])
-		case *openapi3filter.SecurityRequirementsError:
-			return http.StatusUnauthorized, err
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return http.StatusInternalServerError, fmt.Errorf("error validating route: %s", err.Error())
 		}
+
+		var sre *openapi3filter.SecurityRequirementsError
+		if errors.As(err, &sre) {
+			return http.StatusUnauthorized, err
+		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return http.StatusInternalServerError, fmt.Errorf("error validating route: %w", err)
 	}
 
 	return http.StatusOK, nil

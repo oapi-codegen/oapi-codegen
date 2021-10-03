@@ -16,6 +16,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -29,24 +30,28 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
-const EchoContextKey = "oapi-codegen/echo-context"
-const UserDataKey = "oapi-codegen/user-data"
+type echoContextKeyType string
+type userDataKeyType string
+
+const (
+	echoContextKey echoContextKeyType = "echo-context"
+	userDataKey    userDataKeyType    = "user-data"
+)
 
 // This is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400.
 
-// Create validator middleware from a YAML file path
+// Create validator middleware from a YAML file path.
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
@@ -65,7 +70,7 @@ type Options struct {
 	Skipper      echomiddleware.Skipper
 }
 
-// Create a validator from a swagger object, with validation options
+// Create a validator from a swagger object, with validation options.
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
@@ -96,17 +101,17 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 	// We failed to find a matching route for the request.
 	if err != nil {
-		switch e := err.(type) {
-		case *routers.RouteError:
+		var re *routers.RouteError
+		if errors.As(err, &re) {
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return echo.NewHTTPError(http.StatusInternalServerError,
-				fmt.Sprintf("error validating route: %s", err.Error()))
+			return echo.NewHTTPError(http.StatusBadRequest, re.Reason)
 		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return echo.NewHTTPError(http.StatusInternalServerError,
+			fmt.Sprintf("error validating route: %s", err.Error()))
 	}
 
 	validationInput := &openapi3filter.RequestValidationInput{
@@ -117,71 +122,72 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 	// Pass the Echo context into the request validator, so that any callbacks
 	// which it invokes make it available.
-	requestContext := context.WithValue(context.Background(), EchoContextKey, ctx)
+	requestContext := context.WithValue(context.Background(), echoContextKey, ctx)
 
 	if options != nil {
 		validationInput.Options = &options.Options
 		validationInput.ParamDecoder = options.ParamDecoder
-		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData)
+		requestContext = context.WithValue(requestContext, userDataKey, options.UserData)
 	}
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
-		switch e := err.(type) {
-		case *openapi3filter.RequestError:
+		var re *openapi3filter.RequestError
+		if errors.As(err, &re) {
 			// We've got a bad request
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
-			errorLines := strings.Split(e.Error(), "\n")
+			errorLines := strings.Split(re.Error(), "\n")
 			return &echo.HTTPError{
 				Code:     http.StatusBadRequest,
 				Message:  errorLines[0],
 				Internal: err,
 			}
-		case *openapi3filter.SecurityRequirementsError:
-			for _, err := range e.Errors {
-				httpErr, ok := err.(*echo.HTTPError)
-				if ok {
-					return httpErr
+		}
+
+		var sre *openapi3filter.SecurityRequirementsError
+		if errors.As(err, &sre) {
+			for _, err := range sre.Errors {
+				var he *echo.HTTPError
+				if errors.As(err, &he) {
+					return he
 				}
 			}
 			return &echo.HTTPError{
 				Code:     http.StatusForbidden,
-				Message:  e.Error(),
+				Message:  sre.Error(),
 				Internal: err,
 			}
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return &echo.HTTPError{
-				Code:     http.StatusInternalServerError,
-				Message:  fmt.Sprintf("error validating request: %s", err),
-				Internal: err,
-			}
+		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return &echo.HTTPError{
+			Code:     http.StatusInternalServerError,
+			Message:  fmt.Sprintf("error validating request: %s", err),
+			Internal: err,
 		}
 	}
 	return nil
 }
 
-// Helper function to get the echo context from within requests. It returns
+// GetEchoContents returns echo.Context from within requests. It returns
 // nil if not found or wrong type.
 func GetEchoContext(c context.Context) echo.Context {
-	iface := c.Value(EchoContextKey)
-	if iface == nil {
-		return nil
-	}
-	eCtx, ok := iface.(echo.Context)
+	eCtx, ok := c.Value(echoContextKey).(echo.Context)
 	if !ok {
 		return nil
 	}
 	return eCtx
 }
 
+// GetUserData returns user data from within requests. It returns
+// nil if not found.
 func GetUserData(c context.Context) interface{} {
-	return c.Value(UserDataKey)
+	return c.Value(userDataKey)
 }
 
-// attempt to get the skipper from the options whether it is set or not
+// attempt to get the skipper from the options whether it is set or not.
 func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 	if options == nil {
 		return echomiddleware.DefaultSkipper

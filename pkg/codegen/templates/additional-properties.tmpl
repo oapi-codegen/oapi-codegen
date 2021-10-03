@@ -62,7 +62,7 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			return nil, fmt.Errorf("error marshaling %q: %w", fieldName, err)
 		}
 	}
 	return json.Marshal(object)

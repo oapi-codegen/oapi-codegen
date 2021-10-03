@@ -11,7 +11,7 @@ import (
 
 const (
 	// ErrSecurityProviderApiKeyInvalidIn indicates a usage of an invalid In.
-	// Should be cookie, header or query
+	// Should be cookie, header or query.
 	ErrSecurityProviderApiKeyInvalidIn = SecurityProviderError("invalid 'in' specified for apiKey")
 )
 

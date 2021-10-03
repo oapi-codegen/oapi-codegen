@@ -86,7 +86,7 @@ func (a Document_Fields) MarshalJSON() ([]byte, error) {
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			return nil, fmt.Errorf("error marshaling %q: %w", fieldName, err)
 		}
 	}
 	return json.Marshal(object)
@@ -289,7 +289,7 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEdi
 // ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
 func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}

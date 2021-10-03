@@ -22,7 +22,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 		// For the array, we will use numerical subscripts of the form [x],
 		// in the same order as the array.
 		for i, iface := range t {
-			newPath := append(path, strconv.Itoa(i))
+			newPath := append(path, strconv.Itoa(i)) // nolint: gocritic
 			fields, err := marshalDeepObject(iface, newPath)
 			if err != nil {
 				return nil, fmt.Errorf("error traversing array: %w", err)
@@ -42,7 +42,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 
 		// Now, for each key, we recursively marshal it.
 		for _, k := range keys {
-			newPath := append(path, k)
+			newPath := append(path, k) // nolint: gocritic
 			fields, err := marshalDeepObject(t[k], newPath)
 			if err != nil {
 				return nil, fmt.Errorf("error traversing map: %w", err)
@@ -111,7 +111,6 @@ func (f *fieldOrValue) appendPathValue(path []string, value string) {
 }
 
 func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
-
 	f := fieldOrValue{
 		fields: make(map[string]fieldOrValue),
 	}
@@ -192,8 +191,7 @@ func fieldIndicesByJsonTag(i interface{}) (map[string]int, error) {
 	return fieldMap, nil
 }
 
-func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
-	//t := reflect.TypeOf(dst)
+func assignPathValues(dst interface{}, pathValues fieldOrValue) error { // nolint: gocyclo, cyclop
 	v := reflect.ValueOf(dst)
 
 	iv := reflect.Indirect(v)
@@ -244,9 +242,8 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 				// Fall back to parsing it as a date.
 				tm, err = time.Parse(types.DateFormat, pathValues.value)
 				if err != nil {
-					return fmt.Errorf("error parsing tim as RFC3339 or 2006-01-02 time: %s", err)
+					return fmt.Errorf("error parsing %q as RFC3339 or 2006-01-02: %w", pathValues.value, err)
 				}
-				return fmt.Errorf("invalid date format: %w", err)
 			}
 			dst := iv
 			if it != reflect.TypeOf(time.Time{}) {

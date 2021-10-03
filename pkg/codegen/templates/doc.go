@@ -1,3 +1,2 @@
+// Package templates provides templates supporting OpenAPI generation.
 package templates
-
-//go:generate go run github.com/cyberdelia/templates -s . -o templates.gen.go

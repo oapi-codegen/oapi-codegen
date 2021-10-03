@@ -52,7 +52,7 @@ type RequestBuilder struct {
 	Cookies []*http.Cookie
 }
 
-// Path operations
+// Path operations.
 func (r *RequestBuilder) WithMethod(method string, path string) *RequestBuilder {
 	r.Method = method
 	r.Path = path
@@ -79,7 +79,7 @@ func (r *RequestBuilder) Delete(path string) *RequestBuilder {
 	return r.WithMethod("DELETE", path)
 }
 
-// Header operations
+// Header operations.
 func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	r.Headers[header] = value
 	return r
@@ -118,17 +118,17 @@ func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 }
 
 // This function takes an object as input, marshals it to JSON, and sends it
-// as the body with Content-Type: application/json
+// as the body with Content-Type: application/json.
 func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
 	r.Body, err = json.Marshal(obj)
 	if err != nil {
-		r.Error = fmt.Errorf("failed to marshal json object: %s", err)
+		r.Error = fmt.Errorf("failed to marshal json object: %w", err)
 	}
 	return r.WithJsonContentType()
 }
 
-// Cookie operations
+// Cookie operations.
 func (r *RequestBuilder) WithCookie(c *http.Cookie) *RequestBuilder {
 	r.Cookies = append(r.Cookies, c)
 	return r
@@ -141,6 +141,7 @@ func (r *RequestBuilder) WithCookieNameValue(name, value string) *RequestBuilder
 // GoWithHTTPHandler performs the request, it takes a pointer to a testing context
 // to print messages, and a http handler for request handling.
 func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *CompletedRequest {
+	t.Helper()
 	if r.Error != nil {
 		// Fail the test if we had an error
 		t.Errorf("error constructing request: %s", r.Error)
@@ -173,6 +174,7 @@ func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *
 // Go performs the request, it takes a pointer to a testing context
 // to print messages, and a pointer to an echo context for request handling.
 func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
+	t.Helper()
 	return r.GoWithHTTPHandler(t, e)
 }
 
@@ -212,7 +214,7 @@ func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
-// Shortcut for response code
+// Shortcut for response code.
 func (c *CompletedRequest) Code() int {
 	return c.Recorder.Code
 }

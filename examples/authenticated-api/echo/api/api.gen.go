@@ -363,7 +363,7 @@ func (c *ClientWithResponses) AddThingWithResponse(ctx context.Context, body Add
 // ParseListThingsResponse parses an HTTP response from a ListThingsWithResponse call
 func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -389,7 +389,7 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 // ParseAddThingResponse parses an HTTP response from a AddThingWithResponse call
 func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}

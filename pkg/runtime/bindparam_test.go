@@ -21,13 +21,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
-// MockBinder is just an independent version of Binder that has the Bind implemented
+// MockBinder is just an independent version of Binder that has the Bind implemented.
 type MockBinder struct {
 	time.Time
 }
@@ -39,7 +38,7 @@ func (d *MockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing %q as date: %w", src, err)
 	}
 	d.Time = parsedTime
 	return nil
@@ -78,7 +77,7 @@ func (b *AnotherMockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing %q as date: %w", src, err)
 	}
 	b.Time = parsedTime
 	return nil
@@ -96,7 +95,7 @@ func TestSplitParameter(t *testing.T) {
 	var result []string
 	var err error
 	//  ------------------------ simple style ---------------------------------
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		false,
 		false,
 		"id",
@@ -104,7 +103,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		false,
 		false,
 		"id",
@@ -112,7 +111,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		false,
 		true,
 		"id",
@@ -120,7 +119,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		true,
 		false,
 		"id",
@@ -128,7 +127,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		true,
 		false,
 		"id",
@@ -136,7 +135,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(styleSimple,
 		true,
 		true,
 		"id",
@@ -145,7 +144,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	//  ------------------------ label style ---------------------------------
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		false,
 		false,
 		"id",
@@ -153,7 +152,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		false,
 		false,
 		"id",
@@ -161,7 +160,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		false,
 		true,
 		"id",
@@ -169,7 +168,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		true,
 		false,
 		"id",
@@ -177,7 +176,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		true,
 		false,
 		"id",
@@ -185,7 +184,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(styleLabel,
 		true,
 		true,
 		"id",
@@ -194,7 +193,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	//  ------------------------ matrix style ---------------------------------
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		false,
 		false,
 		"id",
@@ -202,7 +201,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		false,
 		false,
 		"id",
@@ -210,7 +209,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		false,
 		true,
 		"id",
@@ -218,7 +217,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		true,
 		false,
 		"id",
@@ -226,7 +225,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		true,
 		false,
 		"id",
@@ -234,7 +233,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(styleMatrix,
 		true,
 		true,
 		"id",
@@ -243,7 +242,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	// ------------------------ form style ---------------------------------
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		false,
 		false,
 		"id",
@@ -251,7 +250,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		false,
 		false,
 		"id",
@@ -259,7 +258,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		false,
 		true,
 		"id",
@@ -267,7 +266,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		true,
 		false,
 		"id",
@@ -275,7 +274,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		true,
 		false,
 		"id",
@@ -283,7 +282,7 @@ func TestSplitParameter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(styleForm,
 		true,
 		true,
 		"id",
@@ -293,7 +292,7 @@ func TestSplitParameter(t *testing.T) {
 }
 
 func TestBindQueryParameter(t *testing.T) {
-	t.Run("deepObject", func(t *testing.T) {
+	t.Run(styleDeepObject, func(t *testing.T) {
 		type ID struct {
 			FirstName *string     `json:"firstName"`
 			LastName  *string     `json:"lastName"`
@@ -320,18 +319,18 @@ func TestBindQueryParameter(t *testing.T) {
 			"id[married]":   {"2020-02-02"},
 		}
 
-		err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+		err := BindQueryParameter(styleDeepObject, true, false, paramName, queryParams, &actual)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedDeepObject, actual)
 	})
 
-	t.Run("form", func(t *testing.T) {
+	t.Run(styleForm, func(t *testing.T) {
 		expected := &MockBinder{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 		birthday := &MockBinder{}
 		queryParams := url.Values{
 			"birthday": {"2020-01-01"},
 		}
-		err := BindQueryParameter("form", true, false, "birthday", queryParams, &birthday)
+		err := BindQueryParameter(styleForm, true, false, "birthday", queryParams, &birthday)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
@@ -378,7 +377,7 @@ func TestBindParameterViaAlias(t *testing.T) {
 
 	dst := new(AliasTortureTest)
 
-	err := BindQueryParameter("deepObject", true, false, "alias", queryParams, &dst)
+	err := BindQueryParameter(styleDeepObject, true, false, "alias", queryParams, &dst)
 	require.NoError(t, err)
 
 	var sp AString = "strp"
@@ -430,21 +429,24 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	type AliasedTime time.Time
 	var aDstTime AliasedTime
 	err = bindParamsToExplodedObject("time", values, &aDstTime)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.EqualValues(t, now, aDstTime)
 
 	expectedDate := MockBinder{Time: time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)}
 
 	var dstDate MockBinder
 	err = bindParamsToExplodedObject("date", values, &dstDate)
+	require.NoError(t, err)
 	assert.EqualValues(t, expectedDate, dstDate)
 
 	var eDstDate EmbeddedMockBinder
 	err = bindParamsToExplodedObject("date", values, &eDstDate)
+	require.NoError(t, err)
 	assert.EqualValues(t, expectedDate, dstDate)
 
 	var nTDstDate AnotherMockBinder
 	err = bindParamsToExplodedObject("date", values, &nTDstDate)
+	require.NoError(t, err)
 	assert.EqualValues(t, expectedDate, nTDstDate)
 
 	type ObjectWithOptional struct {
@@ -461,7 +463,7 @@ func TestBindStyledParameterWithLocation(t *testing.T) {
 	expectedBig := big.NewInt(12345678910)
 
 	var dstBigNumber big.Int
-	err := BindStyledParameterWithLocation("simple", false, "id", ParamLocationUndefined,
+	err := BindStyledParameterWithLocation(styleSimple, false, "id", ParamLocationUndefined,
 		"12345678910", &dstBigNumber)
 	assert.NoError(t, err)
 	assert.Equal(t, *expectedBig, dstBigNumber)

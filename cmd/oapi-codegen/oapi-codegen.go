@@ -23,14 +23,13 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
+	"gopkg.in/yaml.v2"
 )
 
-func errExit(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+func errExitf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...) // nolint: errcheck
 	os.Exit(1)
 }
 
@@ -45,7 +44,7 @@ var (
 	flagExcludeSchemas string
 	flagConfigFile     string
 	flagAliasTypes     bool
-	flagPrintVersion bool
+	flagPrintVersion   bool
 )
 
 type configuration struct {
@@ -59,8 +58,8 @@ type configuration struct {
 	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
 }
 
-func main() {
-
+func main() { // nolint: cyclop
+	flag.CommandLine.SetOutput(os.Stderr)
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
 		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
@@ -78,17 +77,15 @@ func main() {
 	if flagPrintVersion {
 		bi, ok := debug.ReadBuildInfo()
 		if !ok {
-			fmt.Fprintln(os.Stderr, "error reading build info")
-			os.Exit(1)
+			errExitf("error reading build info")
 		}
-		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")
-		fmt.Println(bi.Main.Version)
+		fmt.Fprintln(os.Stdout, bi.Main.Path+"/cmd/oapi-codegen")
+		fmt.Fprintln(os.Stdout, bi.Main.Version)
 		return
 	}
 
 	if flag.NArg() < 1 {
-		fmt.Println("Please specify a path to a OpenAPI 3.0 spec file")
-		os.Exit(1)
+		errExitf("Please specify a path to a OpenAPI 3.0 spec file")
 	}
 
 	cfg := configFromFlags()
@@ -123,7 +120,7 @@ func main() {
 		case "skip-prune":
 			opts.SkipPrune = true
 		default:
-			fmt.Printf("unknown generate option %s\n", g)
+			fmt.Fprintf(flag.CommandLine.Output(), "unknown generate option %s\n", g)
 			flag.PrintDefaults()
 			os.Exit(1)
 		}
@@ -134,35 +131,34 @@ func main() {
 	opts.ExcludeSchemas = cfg.ExcludeSchemas
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
-		errExit("can not specify both server and chi-server targets simultaneously")
+		errExitf("can not specify both server and chi-server targets simultaneously")
 	}
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExitf("error loading swagger spec\n: %s", err)
 	}
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
+		errExitf("error loading template overrides: %s\n", err)
 	}
-	opts.UserTemplates = templates
 
+	opts.UserTemplates = templates
 	opts.ImportMapping = cfg.ImportMapping
 
 	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
 	if err != nil {
-		errExit("error generating code: %s\n", err)
+		errExitf("error generating code: %s\n", err)
 	}
 
 	if cfg.OutputFile != "" {
-		err = ioutil.WriteFile(cfg.OutputFile, []byte(code), 0644)
-		if err != nil {
-			errExit("error writing generated code to file: %s", err)
+		if err = ioutil.WriteFile(cfg.OutputFile, []byte(code), 0644); err != nil {
+			errExitf("error writing generated code to file: %s", err)
 		}
-	} else {
-		fmt.Println(code)
+		return
 	}
+	fmt.Fprintln(os.Stdout, code)
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
@@ -198,12 +194,12 @@ func configFromFlags() *configuration {
 	if flagConfigFile != "" {
 		f, err := os.Open(flagConfigFile)
 		if err != nil {
-			errExit("failed to open config file with error: %v\n", err)
+			errExitf("failed to open config file with error: %v\n", err)
 		}
 		defer f.Close()
 		err = yaml.NewDecoder(f).Decode(&cfg)
 		if err != nil {
-			errExit("error parsing config file: %v\n", err)
+			errExitf("error parsing config file: %v\n", err)
 		}
 	}
 
@@ -226,7 +222,7 @@ func configFromFlags() *configuration {
 		var err error
 		cfg.ImportMapping, err = util.ParseCommandlineMap(flagImportMapping)
 		if err != nil {
-			errExit("error parsing import-mapping: %s\n", err)
+			errExitf("error parsing import-mapping: %s\n", err)
 		}
 	}
 	if cfg.ExcludeSchemas == nil {

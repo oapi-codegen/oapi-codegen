@@ -7,12 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 type testServer struct {
@@ -131,7 +130,7 @@ func (t *testServer) GetStartingWithNumber(ctx echo.Context, n1param string) err
 	return nil
 }
 
-// (GET /queryDeepObject)
+// (GET /queryDeepObject).
 func (t *testServer) GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error {
 	t.complexObject = &params.DeepObj
 	return nil
@@ -253,13 +252,12 @@ func TestParameterBinding(t *testing.T) {
 		IsAdmin: true,
 	}
 
-	expectedArray := []int32{3, 4, 5}
-
-	var expectedPrimitive int32 = 5
-
-	var expectedPrimitiveString string = "123;456"
-
-	var expectedN1Param string = "foo"
+	var (
+		expectedArray           = []int32{3, 4, 5}
+		expectedPrimitive       = int32(5)
+		expectedPrimitiveString = "123;456"
+		expectedN1Param         = "foo"
+	)
 
 	// Check the passthrough case
 	//  (GET /passThrough/{param})
@@ -514,6 +512,7 @@ func TestParameterBinding(t *testing.T) {
 }
 
 func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder {
+	t.Helper()
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
 	assert.Equal(t, code, rec.Code)
@@ -666,14 +665,14 @@ func TestClientQueryParams(t *testing.T) {
 		IsAdmin: true,
 	}
 
-	expectedArray1 := []int32{3, 4, 5}
-	expectedArray2 := []int32{6, 7, 8}
-
-	var expectedPrimitive1 int32 = 5
-	var expectedPrimitive2 int32 = 100
-	var expectedPrimitiveString string = "123;456"
-
-	var expectedStartingWithNumber string = "111"
+	var (
+		expectedArray1             = []int32{3, 4, 5}
+		expectedArray2             = []int32{6, 7, 8}
+		expectedPrimitive1         = int32(5)
+		expectedPrimitive2         = int32(100)
+		expectedPrimitiveString    = "123;456"
+		expectedStartingWithNumber = "111"
+	)
 
 	// Check query params
 	qParams := GetQueryFormParams{

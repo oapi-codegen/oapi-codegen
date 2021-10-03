@@ -26,9 +26,10 @@ func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "http://host/pets:validate", req.URL.String())
 	})
 
-	client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
+	_, err := client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
 		Names: []string{"fido"},
 	})
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
@@ -43,7 +44,8 @@ func TestClient_WhenPathHasId_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "/pets/id", req.URL.Path)
 	})
 	petID := "id"
-	client.GetPetWithResponse(context.Background(), petID)
+	_, err := client.GetPetWithResponse(context.Background(), petID)
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
@@ -58,12 +60,12 @@ func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t
 		assert.Equal(t, "http://host/pets/id1%2Fid2", req.URL.String())
 	})
 	petID := "id1/id2"
-	client.GetPetWithResponse(context.Background(), petID)
+	_, err := client.GetPetWithResponse(context.Background(), petID)
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
 func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
-
 	e := echo.New()
 	m := &MockClient{}
 	RegisterHandlers(e, m)

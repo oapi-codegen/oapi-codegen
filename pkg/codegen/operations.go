@@ -42,13 +42,12 @@ func (pd ParameterDefinition) TypeDef() string {
 
 // Generate the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
-// 'json:"foo"'
+// 'json:"foo"'.
 func (pd *ParameterDefinition) JsonTag() string {
 	if pd.Required {
 		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
-	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
 	}
+	return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
@@ -147,7 +146,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 
 		goType, err := paramToGoType(param, append(path, param.Name))
 		if err != nil {
-			return nil, fmt.Errorf("error generating type for param (%s): %s",
+			return nil, fmt.Errorf("error generating type for param (%s): %w",
 				param.Name, err)
 		}
 
@@ -165,7 +164,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
-				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
+				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %w",
 					paramOrRef.Ref, param.Name, err)
 			}
 			pd.Schema.GoType = goType
@@ -193,7 +192,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
-// This structure describes an Operation
+// This structure describes an Operation.
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
@@ -214,14 +213,14 @@ type OperationDefinition struct {
 // Returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
-	result := append(o.QueryParams, o.HeaderParams...)
+	result := append(o.QueryParams, o.HeaderParams...) // nolint: gocritic
 	result = append(result, o.CookieParams...)
 	return result
 }
 
-// Returns all parameters
+// Returns all parameters.
 func (o *OperationDefinition) AllParams() []ParameterDefinition {
-	result := append(o.QueryParams, o.HeaderParams...)
+	result := append(o.QueryParams, o.HeaderParams...) // nolint: gocritic
 	result = append(result, o.CookieParams...)
 	result = append(result, o.PathParams...)
 	return result
@@ -241,7 +240,7 @@ func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// This returns the Operations summary as a multi line comment
+// This returns the Operations summary as a multi line comment.
 func (o *OperationDefinition) SummaryAsComment() string {
 	if o.Summary == "" {
 		return ""
@@ -267,55 +266,59 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 		responseRef := responses[responseName]
 
 		// We can only generate a type if we have a value:
-		if responseRef.Value != nil {
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
-			for _, contentTypeName := range sortedContentKeys {
-				contentType := responseRef.Value.Content[contentTypeName]
-				// We can only generate a type if we have a schema:
-				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
-					if err != nil {
-						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
-					}
+		if responseRef.Value == nil {
+			continue
+		}
 
-					var typeName string
-					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
-						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
-						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
-					default:
-						continue
-					}
-
-					td := ResponseTypeDefinition{
-						TypeDefinition: TypeDefinition{
-							TypeName: typeName,
-							Schema:   responseSchema,
-						},
-						ResponseName:    responseName,
-						ContentTypeName: contentTypeName,
-					}
-					if IsGoTypeReference(contentType.Schema.Ref) {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
-						if err != nil {
-							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
-						}
-						td.Schema.RefType = refType
-					}
-					tds = append(tds, td)
-				}
+		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		for _, contentTypeName := range sortedContentKeys {
+			contentType := responseRef.Value.Content[contentTypeName]
+			// We can only generate a type if we have a schema:
+			if contentType.Schema == nil {
+				continue
 			}
+
+			responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+			if err != nil {
+				return nil, fmt.Errorf("unable to determine go type for %s.%s: %w", o.OperationId, contentTypeName, err)
+			}
+
+			var typeName string
+			switch {
+			case StringInArray(contentTypeName, contentTypesJSON):
+				typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+			// YAML:
+			case StringInArray(contentTypeName, contentTypesYAML):
+				typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+			// XML:
+			case StringInArray(contentTypeName, contentTypesXML):
+				typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+			default:
+				continue
+			}
+
+			td := ResponseTypeDefinition{
+				TypeDefinition: TypeDefinition{
+					TypeName: typeName,
+					Schema:   responseSchema,
+				},
+				ResponseName:    responseName,
+				ContentTypeName: contentTypeName,
+			}
+			if IsGoTypeReference(contentType.Schema.Ref) {
+				refType, err := RefPathToGoType(contentType.Schema.Ref)
+				if err != nil {
+					return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
+				}
+				td.Schema.RefType = refType
+			}
+			tds = append(tds, td)
 		}
 	}
 	return tds, nil
 }
 
-// This describes a request body
+// This describes a request body.
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
 	Required bool
@@ -335,7 +338,7 @@ type RequestBodyDefinition struct {
 	Default bool
 }
 
-// Returns the Go type definition for a request body
+// Returns the Go type definition for a request body.
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
 		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
@@ -383,7 +386,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
 		if err != nil {
-			return nil, fmt.Errorf("error describing global parameters for %s: %s",
+			return nil, fmt.Errorf("error describing global parameters for %s: %w",
 				requestPath, err)
 		}
 
@@ -398,10 +401,9 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
-					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
+					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %w",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
 			} else {
 				op.OperationID = ToCamelCase(op.OperationID)
 			}
@@ -410,12 +412,12 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// we're iterating over.
 			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
 			if err != nil {
-				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
+				return nil, fmt.Errorf("error describing global parameters for %s/%s: %w",
 					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
-			allParams := append(globalParams, localParams...)
+			allParams := append(globalParams, localParams...) // nolint: gocritic
 
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
@@ -457,7 +459,6 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
-
 			}
 
 			if op.RequestBody != nil {
@@ -474,8 +475,6 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
-
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
 	}
@@ -484,6 +483,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 		return "", fmt.Errorf("request path cannot be an empty string")
 	}
 
+	operationId := strings.ToLower(opName)
 	for _, part := range strings.Split(requestPath, "/") {
 		if part != "" {
 			operationId = operationId + "-" + part
@@ -617,18 +617,17 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	return append(typeDefs, td)
 }
 
-// Generates code for all types produced
+// Generates code for all types produced.
 func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
 	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-    return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
+		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
-    return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-
+		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 	}
 
 	// Generate boiler plate for all additional types.
@@ -641,12 +640,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
-	
-  if _, err := w.WriteString("\n"); err != nil {
+
+	if _, err := w.WriteString("\n"); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	  if _, err := w.WriteString(addProps); err != nil {
+	if _, err := w.WriteString(addProps); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
@@ -681,7 +680,7 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }
 
-// GenerateTemplates used to generate templates
+// GenerateTemplates used to generate templates.
 func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
 	var generatedTemplates []string
 	for _, tmpl := range templates {
@@ -689,10 +688,10 @@ func GenerateTemplates(templates []string, t *template.Template, ops interface{}
 		w := bufio.NewWriter(&buf)
 
 		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
-			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
+			return "", fmt.Errorf("error generating %s: %w", tmpl, err)
 		}
 		if err := w.Flush(); err != nil {
-			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
+			return "", fmt.Errorf("error flushing output buffer for %s: %w", tmpl, err)
 		}
 		generatedTemplates = append(generatedTemplates, buf.String())
 	}

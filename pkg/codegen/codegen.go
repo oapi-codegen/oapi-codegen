@@ -18,15 +18,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"sort"
 	"strings"
 	"text/template"
 
+	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 )
 
 // Options defines the optional code to generate.
@@ -46,13 +46,13 @@ type Options struct {
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 }
 
-// goImport represents a go package to be imported in the generated code
+// goImport represents a go package to be imported in the generated code.
 type goImport struct {
 	Name string // package name
 	Path string // package path
 }
 
-// String returns a go import statement
+// String returns a go import statement.
 func (gi goImport) String() string {
 	if gi.Name != "" {
 		return fmt.Sprintf("%s %q", gi.Name, gi.Path)
@@ -60,10 +60,10 @@ func (gi goImport) String() string {
 	return fmt.Sprintf("%q", gi.Path)
 }
 
-// importMap maps external OpenAPI specifications files/urls to external go packages
+// importMap maps external OpenAPI specifications files/urls to external go packages.
 type importMap map[string]goImport
 
-// GoImports returns a slice of go import statements
+// GoImports returns a slice of go import statements.
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
@@ -101,13 +101,15 @@ func constructImportMapping(input map[string]string) importMap {
 
 // Uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
-// opts defines
-func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
+// opts defines.
+func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) { // nolint: gocyclo, cyclop
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
 	if !opts.SkipPrune {
-		pruneUnusedComponents(swagger)
+		if err := pruneUnusedComponents(swagger); err != nil {
+			return "", fmt.Errorf("error pruning components: %w", err)
+		}
 	}
 
 	// This creates the golang templates text package
@@ -146,7 +148,6 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		if err != nil {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
-
 	}
 
 	var echoServerOut string
@@ -211,7 +212,6 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	_, err = w.WriteString(typeDefinitions)
 	if err != nil {
 		return "", fmt.Errorf("error writing type definitions: %w", err)
-
 	}
 
 	if opts.GenerateClient {
@@ -262,7 +262,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 
 	outBytes, err := imports.Process(packageName+".go", []byte(goCode), nil)
 	if err != nil {
-		fmt.Println(goCode)
+		fmt.Fprintln(os.Stderr, goCode)
 		return "", fmt.Errorf("error formatting Go code: %w", err)
 	}
 	return string(outBytes), nil
@@ -278,7 +278,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	if err != nil {
 		return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
 	}
-	allTypes := append(schemaTypes, paramTypes...)
+	allTypes := append(schemaTypes, paramTypes...) // nolint: gocritic
 
 	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
 	if err != nil {
@@ -316,7 +316,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	return typeDefinitions, nil
 }
 
-// Generates operation ids, context keys, paths, etc. to be exported as constants
+// Generates operation ids, context keys, paths, etc. to be exported as constants.
 func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
 	constants := Constants{
 		SecuritySchemeProviderNames: []string{},
@@ -330,7 +330,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		}
 	}
 
-	var providerNames []string
+	providerNames := make([]string, 0, len(providerNameMap))
 	for providerName := range providerNameMap {
 		providerNames = append(providerNames, providerName)
 	}
@@ -535,7 +535,6 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
-
 }
 
 // Generate our import statements and package definition.
@@ -569,7 +568,7 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 }
 
 // Generate all the glue code which provides the API for interacting with
-// additional properties and JSON-ification
+// additional properties and JSON-ification.
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 
@@ -594,7 +593,6 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 	}
 
 	return GenerateTemplates([]string{"additional-properties.tmpl"}, t, context)
-
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the
@@ -602,5 +600,5 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
-	return strings.Replace(goCode, "\uFEFF", "", -1)
+	return strings.ReplaceAll(goCode, "\uFEFF", "")
 }

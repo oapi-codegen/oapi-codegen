@@ -93,6 +93,7 @@ components:
 `
 
 func doGet(t *testing.T, mux *chi.Mux, rawURL string) *httptest.ResponseRecorder {
+	t.Helper()
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -103,6 +104,7 @@ func doGet(t *testing.T, mux *chi.Mux, rawURL string) *httptest.ResponseRecorder
 }
 
 func doPost(t *testing.T, mux *chi.Mux, rawURL string, jsonBody interface{}) *httptest.ResponseRecorder {
+	t.Helper()
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -136,7 +138,6 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	options := Options{
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
-
 				for _, s := range input.Scopes {
 					if s == "someScope" {
 						return nil
@@ -191,11 +192,10 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
-
 }
 
 func testRequestValidatorBasicFunctions(t *testing.T, r *chi.Mux) {
-
+	t.Helper()
 	called := false
 
 	// Install a request handler for /resource. We want to make sure it doesn't
@@ -267,5 +267,4 @@ func testRequestValidatorBasicFunctions(t *testing.T, r *chi.Mux) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
-
 }

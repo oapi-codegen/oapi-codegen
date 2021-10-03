@@ -15,7 +15,6 @@ import (
 )
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "api"
 	opts := Options{
@@ -60,7 +59,6 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
 	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
 
 	// Input vars for code generation:
@@ -86,12 +84,11 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 
 func TestExamplePetStoreParseFunction(t *testing.T) {
-
 	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
 
 	cannedResponse := &http.Response{
@@ -111,7 +108,6 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 }
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Options{

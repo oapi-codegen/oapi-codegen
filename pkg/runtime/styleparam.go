@@ -26,7 +26,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
-// Parameter escaping works differently based on where a header is found
+// Parameter escaping works differently based on where a header is found.
 type ParamLocation int
 
 const (
@@ -47,7 +47,7 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 
 // Given an input value, such as a primitive type, array or object, turn it
 // into a parameter based on style/explode definition, performing whatever
-// escaping is necessary based on parameter location
+// escaping is necessary based on parameter location.
 func StyleParamWithLocation(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
@@ -80,7 +80,7 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 }
 
 func styleSlice(style string, explode bool, paramName string, paramLocation ParamLocation, values []interface{}) (string, error) {
-	if style == "deepObject" {
+	if style == styleDeepObject {
 		if !explode {
 			return "", errors.New("deepObjects must be exploded")
 		}
@@ -91,37 +91,37 @@ func styleSlice(style string, explode bool, paramName string, paramLocation Para
 	var separator string
 
 	switch style {
-	case "simple":
+	case styleSimple:
 		separator = ","
-	case "label":
+	case styleLabel:
 		prefix = "."
 		if explode {
 			separator = "."
 		} else {
 			separator = ","
 		}
-	case "matrix":
+	case styleMatrix:
 		prefix = fmt.Sprintf(";%s=", paramName)
 		if explode {
 			separator = prefix
 		} else {
 			separator = ","
 		}
-	case "form":
+	case styleForm:
 		prefix = fmt.Sprintf("%s=", paramName)
 		if explode {
 			separator = "&" + prefix
 		} else {
 			separator = ","
 		}
-	case "spaceDelimited":
+	case styleSpaceDelimited:
 		prefix = fmt.Sprintf("%s=", paramName)
 		if explode {
 			separator = "&" + prefix
 		} else {
 			separator = " "
 		}
-	case "pipeDelimited":
+	case stylePipeDelimited:
 		prefix = fmt.Sprintf("%s=", paramName)
 		if explode {
 			separator = "&" + prefix
@@ -129,7 +129,7 @@ func styleSlice(style string, explode bool, paramName string, paramLocation Para
 			separator = "|"
 		}
 	default:
-		return "", fmt.Errorf("unsupported style '%s'", style)
+		return "", fmt.Errorf("unsupported style %q", style)
 	}
 
 	// We're going to assume here that the array is one of simple types.
@@ -141,7 +141,7 @@ func styleSlice(style string, explode bool, paramName string, paramLocation Para
 		part = escapeParameterString(part, paramLocation)
 		parts[i] = part
 		if err != nil {
-			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
+			return "", fmt.Errorf("error formatting %q: %w", paramName, err)
 		}
 	}
 	return prefix + strings.Join(parts, separator), nil
@@ -166,13 +166,13 @@ func marshalDateTimeValue(value interface{}) (string, bool) {
 
 	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
 		tt := v.Convert(reflect.TypeOf(time.Time{}))
-		timeVal := tt.Interface().(time.Time)
+		timeVal := tt.Interface().(time.Time) // nolint: forcetypeassert
 		return timeVal.Format(time.RFC3339Nano), true
 	}
 
 	if t.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 		d := v.Convert(reflect.TypeOf(types.Date{}))
-		dateVal := d.Interface().(types.Date)
+		dateVal := d.Interface().(types.Date) // nolint: forcetypeassert
 		return dateVal.Format(types.DateFormat), true
 	}
 
@@ -180,7 +180,6 @@ func marshalDateTimeValue(value interface{}) (string, bool) {
 }
 
 func styleStruct(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-
 	if timeVal, ok := marshalDateTimeValue(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
@@ -189,7 +188,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 		return styledVal, nil
 	}
 
-	if style == "deepObject" {
+	if style == styleDeepObject {
 		if !explode {
 			return "", errors.New("deepObjects must be exploded")
 		}
@@ -223,7 +222,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 		}
 		str, err := primitiveToString(f.Interface())
 		if err != nil {
-			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
+			return "", fmt.Errorf("error formatting %q: %w", paramName, err)
 		}
 		fieldDict[fieldName] = str
 	}
@@ -232,7 +231,7 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 }
 
 func styleMap(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-	if style == "deepObject" {
+	if style == styleDeepObject {
 		if !explode {
 			return "", errors.New("deepObjects must be exploded")
 		}
@@ -248,7 +247,7 @@ func styleMap(style string, explode bool, paramName string, paramLocation ParamL
 	for fieldName, value := range dict {
 		str, err := primitiveToString(value)
 		if err != nil {
-			return "", fmt.Errorf("error formatting '%s': %s", paramName, err)
+			return "", fmt.Errorf("error formatting %q: %w", paramName, err)
 		}
 		fieldDict[fieldName] = str
 	}
@@ -260,7 +259,7 @@ func processFieldDict(style string, explode bool, paramName string, paramLocatio
 
 	// This works for everything except deepObject. We'll handle that one
 	// separately.
-	if style != "deepObject" {
+	if style != styleDeepObject {
 		if explode {
 			for _, k := range sortedKeys(fieldDict) {
 				v := escapeParameterString(fieldDict[k], paramLocation)
@@ -279,16 +278,16 @@ func processFieldDict(style string, explode bool, paramName string, paramLocatio
 	var separator string
 
 	switch style {
-	case "simple":
+	case styleSimple:
 		separator = ","
-	case "label":
+	case styleLabel:
 		prefix = "."
 		if explode {
 			separator = prefix
 		} else {
 			separator = ","
 		}
-	case "matrix":
+	case styleMatrix:
 		if explode {
 			separator = ";"
 			prefix = ";"
@@ -296,14 +295,14 @@ func processFieldDict(style string, explode bool, paramName string, paramLocatio
 			separator = ","
 			prefix = fmt.Sprintf(";%s=", paramName)
 		}
-	case "form":
+	case styleForm:
 		if explode {
 			separator = "&"
 		} else {
 			prefix = fmt.Sprintf("%s=", paramName)
 			separator = ","
 		}
-	case "deepObject":
+	case styleDeepObject:
 		{
 			if !explode {
 				return "", fmt.Errorf("deepObject parameters must be exploded")
@@ -316,7 +315,7 @@ func processFieldDict(style string, explode bool, paramName string, paramLocatio
 			separator = "&"
 		}
 	default:
-		return "", fmt.Errorf("unsupported style '%s'", style)
+		return "", fmt.Errorf("unsupported style %q", style)
 	}
 
 	return prefix + strings.Join(parts, separator), nil
@@ -330,15 +329,15 @@ func stylePrimitive(style string, explode bool, paramName string, paramLocation 
 
 	var prefix string
 	switch style {
-	case "simple":
-	case "label":
+	case styleSimple:
+	case styleLabel:
 		prefix = "."
-	case "matrix":
+	case styleMatrix:
 		prefix = fmt.Sprintf(";%s=", paramName)
-	case "form":
+	case styleForm:
 		prefix = fmt.Sprintf("%s=", paramName)
 	default:
-		return "", fmt.Errorf("unsupported style '%s'", style)
+		return "", fmt.Errorf("unsupported style %q", style)
 	}
 	return prefix + escapeParameterString(strVal, paramLocation), nil
 }
@@ -369,7 +368,7 @@ func primitiveToString(value interface{}) (string, error) {
 	case reflect.String:
 		output = v.String()
 	default:
-		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
+		return "", fmt.Errorf("unsupported type %q", reflect.TypeOf(value).String())
 	}
 	return output, nil
 }

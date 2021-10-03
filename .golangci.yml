@@ -1,0 +1,70 @@
+run:
+  concurrency: 4
+  deadline: 5m
+
+linters-settings:
+  govet:
+    check-shadowing: false
+  gocyclo:
+    min-complexity: 20
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 4
+  cyclop:
+    max-complexity: 20
+  nestif:
+    min-complexity: 9
+
+linters:
+  enable-all: true
+  disable:
+    - dupl
+    - gas
+    - errcheck
+    - gofmt
+    - gosimple
+    - interfacer
+    - megacheck
+    - maligned
+    - structcheck
+    - staticcheck
+    - unconvert
+    - unparam
+    - varcheck
+    - lll
+    - prealloc
+    - gochecknoglobals
+    - gochecknoinits
+    - scopelint
+    - funlen
+    - godox
+    - exhaustivestruct
+    - goerr113
+    - wsl
+    - nlreturn
+    - tagliatelle
+    - gomnd
+    - paralleltest
+    - wrapcheck
+    - testpackage
+    - golint
+    - gofumpt
+    - exhaustive
+    - gocognit
+    - gci
+    - revive # TODO(steve): Remove to enabled, but there are lots of missing comments.
+
+issues:
+  exclude:
+    - .*Id.* should be .*ID.*
+    - .*use.* underscore? in package name.*
+    - "ST1000: package comment should be of the form.*"
+    - "ST1003: .* should be .*"
+    - "ST1003: should not use underscores in package names.*"
+    - "ST10.*: comment on exported .* should be of the form .*"
+  exclude-use-default: false
+  max-same-issues: 0

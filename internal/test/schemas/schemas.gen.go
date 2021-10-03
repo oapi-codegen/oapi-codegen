@@ -935,7 +935,7 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 // ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
 func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -969,7 +969,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 // ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
 func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1022,7 +1022,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 // ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
 func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1038,7 +1038,7 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 // ParseIssue209Response parses an HTTP response from a Issue209WithResponse call
 func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1054,7 +1054,7 @@ func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
 func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1070,7 +1070,7 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 // ParseGetIssues375Response parses an HTTP response from a GetIssues375WithResponse call
 func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1096,7 +1096,7 @@ func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error
 // ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
 func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -1112,7 +1112,7 @@ func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 // ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
 func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() // nolint: errcheck
 	if err != nil {
 		return nil, err
 	}

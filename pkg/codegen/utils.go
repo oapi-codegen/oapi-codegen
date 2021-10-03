@@ -28,7 +28,7 @@ import (
 var pathParamRE *regexp.Regexp
 
 func init() {
-	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
 }
 
 // Uppercase the first character in a string. This assumes UTF-8, so we have
@@ -42,7 +42,7 @@ func UppercaseFirstCharacter(str string) string {
 	return string(runes)
 }
 
-// Same as above, except lower case
+// Same as above, except lower case.
 func LowercaseFirstCharacter(str string) string {
 	if str == "" {
 		return ""
@@ -55,7 +55,7 @@ func LowercaseFirstCharacter(str string) string {
 // This function will convert query-arg style strings to CamelCase. We will
 // use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
-// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord.
 func ToCamelCase(str string) string {
 	separators := "-#@!$&=.+:;_~ (){}[]"
 	s := strings.Trim(str, " ")
@@ -77,17 +77,13 @@ func ToCamelCase(str string) string {
 			}
 		}
 
-		if strings.ContainsRune(separators, v) {
-			capNext = true
-		} else {
-			capNext = false
-		}
+		capNext = strings.ContainsRune(separators, v)
 	}
 	return n
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
-// order, since Golang scrambles dictionary keys
+// order, since Golang scrambles dictionary keys.
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -112,7 +108,7 @@ func SortedPathsKeys(dict openapi3.Paths) []string {
 	return keys
 }
 
-// This function returns Operation dictionary keys in sorted order
+// This function returns Operation dictionary keys in sorted order.
 func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -124,7 +120,7 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 	return keys
 }
 
-// This function returns Responses dictionary keys in sorted order
+// This function returns Responses dictionary keys in sorted order.
 func SortedResponsesKeys(dict openapi3.Responses) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -136,7 +132,7 @@ func SortedResponsesKeys(dict openapi3.Responses) []string {
 	return keys
 }
 
-// This returns Content dictionary keys in sorted order
+// This returns Content dictionary keys in sorted order.
 func SortedContentKeys(dict openapi3.Content) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -148,7 +144,7 @@ func SortedContentKeys(dict openapi3.Content) []string {
 	return keys
 }
 
-// This returns string map keys in sorted order
+// This returns string map keys in sorted order.
 func SortedStringKeys(dict map[string]string) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -160,7 +156,7 @@ func SortedStringKeys(dict map[string]string) []string {
 	return keys
 }
 
-// This returns sorted keys for a ParameterRef dict
+// This returns sorted keys for a ParameterRef dict.
 func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -195,7 +191,7 @@ func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
 }
 
 // This function checks whether the specified string is present in an array
-// of strings
+// of strings.
 func StringInArray(str string, array []string) bool {
 	for _, elt := range array {
 		if elt == str {
@@ -216,7 +212,7 @@ func RefPathToGoType(refPath string) (string, error) {
 	return refPathToGoType(refPath, true)
 }
 
-// refPathToGoType returns the Go typename for refPath given its
+// refPathToGoType returns the Go typename for refPath given its.
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
@@ -236,7 +232,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
 	if goImport, ok := importMapping[remoteComponent]; !ok {
-		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
+		return "", fmt.Errorf("unrecognized external reference %q; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
 		goType, err := refPathToGoType("#"+flatComponent, false)
 		if err != nil {
@@ -298,7 +294,7 @@ func SwaggerUriToChiUri(uri string) string {
 }
 
 // Returns the argument names, in order, in a given URI string, so for
-// /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
+// /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3.
 func OrderedParamsFromUri(uri string) []string {
 	matches := pathParamRE.FindAllStringSubmatch(uri, -1)
 	result := make([]string, len(matches))
@@ -308,7 +304,7 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// Replaces path parameters of the form {param} with %s
+// Replaces path parameters of the form {param} with %s.
 func ReplacePathParamsWithStr(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "%s")
 }
@@ -316,16 +312,15 @@ func ReplacePathParamsWithStr(uri string) string {
 // Reorders the given parameter definitions to match those in the path URI.
 func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
 	pathParams := OrderedParamsFromUri(path)
-	n := len(in)
-	if len(pathParams) != n {
-		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+	if n := len(in); len(pathParams) != n {
+		return nil, fmt.Errorf("path %q has %d positional parameters, but spec has %d declared",
 			path, len(pathParams), n)
 	}
 	out := make([]ParameterDefinition, len(in))
 	for i, name := range pathParams {
 		p := ParameterDefinitions(in).FindByName(name)
 		if p == nil {
-			return nil, fmt.Errorf("path '%s' refers to parameter '%s', which doesn't exist in specification",
+			return nil, fmt.Errorf("path %q refers to parameter %q, which doesn't exist in specification",
 				path, name)
 		}
 		out[i] = *p
@@ -333,7 +328,7 @@ func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinit
 	return out, nil
 }
 
-// Returns whether the given string is a go keyword
+// Returns whether the given string is a go keyword.
 func IsGoKeyword(str string) bool {
 	keywords := []string{
 		"break",
@@ -490,7 +485,7 @@ func SanitizeGoIdentity(str string) string {
 }
 
 // SanitizeEnumNames fixes illegal chars in the enum names
-// and removes duplicates
+// and removes duplicates.
 func SanitizeEnumNames(enumNames []string) map[string]string {
 	dupCheck := make(map[string]int, len(enumNames))
 	deDup := make([]string, 0, len(enumNames))
@@ -520,7 +515,7 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 }
 
 // Converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
-// valid in Go
+// valid in Go.
 func SchemaNameToTypeName(name string) string {
 	if name == "$" {
 		name = "DollarSign"
@@ -568,8 +563,8 @@ func StringToGoComment(in string) string {
 	}
 
 	// Normalize newlines from Windows/Mac to Linux
-	in = strings.Replace(in, "\r\n", "\n", -1)
-	in = strings.Replace(in, "\r", "\n", -1)
+	r := strings.NewReplacer("\r\n", "\n", "\r", "\n")
+	in = r.Replace(in)
 
 	// Add comment to each line
 	var lines []string
