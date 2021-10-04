@@ -337,9 +337,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 
 	sort.Strings(providerNames)
 
-	for _, providerName := range providerNames {
-		constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerName)
-	}
+	constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerNames...)
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
 }
@@ -487,10 +485,23 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 // Helper function to pass a bunch of types to the template engine, and buffer
 // its output into a string.
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
+	m := map[string]bool{}
+	ts := []TypeDefinition{}
+
+	for _, t := range types {
+		if found := m[t.TypeName]; found {
+			continue
+		}
+
+		m[t.TypeName] = true
+
+		ts = append(ts, t)
+	}
+
 	context := struct {
 		Types []TypeDefinition
 	}{
-		Types: types,
+		Types: ts,
 	}
 
 	return GenerateTemplates([]string{"typedef.tmpl"}, t, context)
@@ -500,7 +511,16 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	c := Constants{
 		EnumDefinitions: []EnumDefinition{},
 	}
+
+	m := map[string]bool{}
+
 	for _, tp := range types {
+		if found := m[tp.TypeName]; found {
+			continue
+		}
+
+		m[tp.TypeName] = true
+
 		if len(tp.Schema.EnumValues) > 0 {
 			wrapper := ""
 			if tp.Schema.GoType == "string" {
@@ -514,7 +534,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-  return GenerateTemplates([]string{"constants.tmpl"}, t, c)
+	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
 
 }
 
@@ -545,14 +565,23 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		Version:         moduleVersion,
 	}
 
-  return GenerateTemplates([]string{"imports.tmpl"}, t, context)
+	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
 }
 
 // Generate all the glue code which provides the API for interacting with
 // additional properties and JSON-ification
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+
+	m := map[string]bool{}
+
 	for _, t := range typeDefs {
+		if found := m[t.TypeName]; found {
+			continue
+		}
+
+		m[t.TypeName] = true
+
 		if t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}
