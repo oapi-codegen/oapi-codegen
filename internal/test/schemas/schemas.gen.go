@@ -1070,7 +1070,7 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 // ParseGetIssues375Response parses an HTTP response from a GetIssues375WithResponse call
 func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
