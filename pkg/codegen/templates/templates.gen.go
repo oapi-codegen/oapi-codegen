@@ -105,15 +105,19 @@ r := options.BaseRouter
 if r == nil {
 r = chi.NewRouter()
 }
+if options.BaseURL == "" {
+options.BaseURL = "/"
+}
+
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
-{{range .}}r.Group(func(r chi.Router) {
-r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
-})
-{{end}}
+r.Route(options.BaseURL, func(r chi.Router) {
+{{range . -}}
+r.{{.Method | lower | title }}("{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
+{{end}}})
 return r
 }
 `,

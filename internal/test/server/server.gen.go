@@ -481,41 +481,26 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	if r == nil {
 		r = chi.NewRouter()
 	}
+	if options.BaseURL == "" {
+		options.BaseURL = "/"
+	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/every-type-optional", wrapper.GetEveryTypeOptional)
+	r.Route(options.BaseURL, func(r chi.Router) {
+		r.Get("/every-type-optional", wrapper.GetEveryTypeOptional)
+		r.Get("/get-simple", wrapper.GetSimple)
+		r.Get("/get-with-args", wrapper.GetWithArgs)
+		r.Get("/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
+		r.Get("/get-with-type/{content_type}", wrapper.GetWithContentType)
+		r.Get("/reserved-keyword", wrapper.GetReservedKeyword)
+		r.Post("/resource/{argument}", wrapper.CreateResource)
+		r.Post("/resource2/{inline_argument}", wrapper.CreateResource2)
+		r.Put("/resource3/{fallthrough}", wrapper.UpdateResource3)
+		r.Get("/response-with-reference", wrapper.GetResponseWithReference)
 	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-simple", wrapper.GetSimple)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-with-args", wrapper.GetWithArgs)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/resource/{argument}", wrapper.CreateResource)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/resource2/{inline_argument}", wrapper.CreateResource2)
-	})
-	r.Group(func(r chi.Router) {
-		r.Put(options.BaseURL+"/resource3/{fallthrough}", wrapper.UpdateResource3)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/response-with-reference", wrapper.GetResponseWithReference)
-	})
-
 	return r
 }

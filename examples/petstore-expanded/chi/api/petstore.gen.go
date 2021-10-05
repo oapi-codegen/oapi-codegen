@@ -225,24 +225,21 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	if r == nil {
 		r = chi.NewRouter()
 	}
+	if options.BaseURL == "" {
+		options.BaseURL = "/"
+	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets", wrapper.FindPets)
+	r.Route(options.BaseURL, func(r chi.Router) {
+		r.Get("/pets", wrapper.FindPets)
+		r.Post("/pets", wrapper.AddPet)
+		r.Delete("/pets/{id}", wrapper.DeletePet)
+		r.Get("/pets/{id}", wrapper.FindPetByID)
 	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/pets", wrapper.AddPet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
-	})
-
 	return r
 }
 

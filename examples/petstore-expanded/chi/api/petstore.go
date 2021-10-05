@@ -10,9 +10,9 @@ import (
 )
 
 type PetStore struct {
+	Lock   sync.Mutex
 	Pets   map[int64]Pet
 	NextId int64
-	Lock   sync.Mutex
 }
 
 // Make sure we conform to ServerInterface
