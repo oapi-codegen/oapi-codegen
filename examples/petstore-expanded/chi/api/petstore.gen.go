@@ -250,11 +250,17 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	if r == nil {
 		r = chi.NewRouter()
 	}
+
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+
+	if options.BaseURL == "" {
+		options.BaseURL = "/"
+	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,

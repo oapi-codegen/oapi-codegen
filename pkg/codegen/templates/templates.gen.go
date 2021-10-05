@@ -2,7 +2,8 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+var templates = map[string]string{
+	"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
 
 // Getter for additional properties for {{.TypeName}}. Returns the specified
 // element and whether it was found
@@ -106,11 +107,17 @@ r := options.BaseRouter
 if r == nil {
 r = chi.NewRouter()
 }
+
 if options.ErrorHandlerFunc == nil {
     options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
         http.Error(w, err.Error(), http.StatusBadRequest)
     }
 }
+
+if options.BaseURL == "" {
+options.BaseURL = "/"
+}
+
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
@@ -1098,4 +1105,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-
