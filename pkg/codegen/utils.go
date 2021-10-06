@@ -61,9 +61,15 @@ func ToCamelCase(str string) string {
 
 	n := ""
 	capNext := true
-	for _, v := range s {
+	for i, v := range s {
 		if unicode.IsUpper(v) {
+			if i > 0 && capNext {
+				n += "_"
+			}
 			n += string(v)
+			if i == 0 && capNext {
+				n += "_"
+			}
 		}
 		if unicode.IsDigit(v) {
 			n += string(v)
@@ -504,6 +510,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 	}
 	return false
 }
+
 // This converts a path, like Object/field1/nestedField into a go
 // type name.
 func PathToTypeName(path []string) string {
