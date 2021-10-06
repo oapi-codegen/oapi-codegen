@@ -447,6 +447,14 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	err = bindParamsToExplodedObject("date", values, &nTDstDate)
 	assert.EqualValues(t, expectedDate, nTDstDate)
 
+	type ObjectWithOptional struct {
+		Time *time.Time `json:"time,omitempty"`
+	}
+
+	var optDstTime ObjectWithOptional
+	err = bindParamsToExplodedObject("explodedObject", values, &optDstTime)
+	assert.NoError(t, err)
+	assert.EqualValues(t, &now, optDstTime.Time)
 }
 
 func TestBindStyledParameterWithLocation(t *testing.T) {

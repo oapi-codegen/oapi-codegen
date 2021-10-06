@@ -41,6 +41,16 @@ func BindStringToObject(src string, dst interface{}) error {
 		t = v.Type()
 	}
 
+	// For some optioinal args
+	if t.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			v.Set(reflect.New(t.Elem()))
+		}
+
+		v = reflect.Indirect(v)
+		t = v.Type()
+	}
+
 	// The resulting type must be settable. reflect will catch issues like
 	// passing the destination by value.
 	if !v.CanSet() {
