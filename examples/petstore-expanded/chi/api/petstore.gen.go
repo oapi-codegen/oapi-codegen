@@ -80,6 +80,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
@@ -100,7 +101,8 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
+		err = fmt.Errorf("Invalid format for parameter tags: %w", err)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -111,7 +113,8 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+		err = fmt.Errorf("Invalid format for parameter limit: %w", err)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -152,7 +155,8 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 
 	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		err = fmt.Errorf("Invalid format for parameter id: %w", err)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -178,7 +182,8 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 
 	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		err = fmt.Errorf("Invalid format for parameter id: %w", err)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -193,15 +198,35 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 	handler(w, r.WithContext(ctx))
 }
 
+type UnescapedCookieParamError struct {
+	error
+}
+type UnmarshalingParamError struct {
+	error
+}
+type RequiredParamError struct {
+	error
+}
+type RequiredHeaderError struct {
+	error
+}
+type InvalidParamFormatError struct {
+	error
+}
+type TooManyValuesForParamError struct {
+	error
+}
+
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
 type ChiServerOptions struct {
-	BaseURL     string
-	BaseRouter  chi.Router
-	Middlewares []MiddlewareFunc
+	BaseURL          string
+	BaseRouter       chi.Router
+	Middlewares      []MiddlewareFunc
+	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -225,9 +250,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	if r == nil {
 		r = chi.NewRouter()
 	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
 	r.Group(func(r chi.Router) {
