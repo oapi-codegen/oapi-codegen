@@ -82,6 +82,7 @@ type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
     Middlewares []MiddlewareFunc
+    ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -108,6 +109,7 @@ r = chi.NewRouter()
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
+ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
 {{range .}}r.Group(func(r chi.Router) {
@@ -129,6 +131,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
     HandlerMiddlewares []MiddlewareFunc
+    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
@@ -151,14 +154,24 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{if .IsJson}}
   err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
   if err != nil {
-    http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+    err = fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err)
+    if siw.ErrorHandlerFunc != nil {
+      siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{err})
+      return
+    }
+    http.Error(w, err.Error(), http.StatusBadRequest)
     return
   }
   {{end}}
   {{if .IsStyled}}
   err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
   if err != nil {
-    http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+    err = fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err)
+    if siw.ErrorHandlerFunc != nil {
+      siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+      return
+    }
+    http.Error(w, err.Error(), http.StatusBadRequest)
     return
   }
   {{end}}
@@ -184,20 +197,35 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var value {{.TypeDef}}
         err = json.Unmarshal([]byte(paramValue), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          err = fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err)
+          if siw.ErrorHandlerFunc != nil {
+            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{err})
+            return
+          }
+          http.Error(w, err.Error(), http.StatusBadRequest)
           return
         }
 
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
-          http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+          err := fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
+          if siw.ErrorHandlerFunc != nil {
+            siw.ErrorHandlerFunc(w, r, &RequiredParamError{err})
+            return
+          }
+          http.Error(w, err.Error(), http.StatusBadRequest)
           return
       }{{end}}
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
       if err != nil {
-        http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+        err = fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err)
+        if siw.ErrorHandlerFunc != nil {
+          siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+          return
+        }
+        http.Error(w, err.Error(), http.StatusBadRequest)
         return
       }
       {{end}}
@@ -211,7 +239,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           var {{.GoName}} {{.TypeDef}}
           n := len(valueList)
           if n != 1 {
-            http.Error(w, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n), http.StatusBadRequest)
+            err := fmt.Errorf("Expected one value for {{.ParamName}}, got %d", n)
+            if siw.ErrorHandlerFunc != nil {
+              siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{err})
+              return
+            }
+            http.Error(w, err.Error(), http.StatusBadRequest)
             return
           }
 
@@ -222,7 +255,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{if .IsJson}}
           err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
-            http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+            err = fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err)
+            if siw.ErrorHandlerFunc != nil {
+              siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{err})
+              return
+            }
+            http.Error(w, err.Error(), http.StatusBadRequest)
             return
           }
         {{end}}
@@ -230,7 +268,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{if .IsStyled}}
           err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
           if err != nil {
-            http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+            err = fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err)
+            if siw.ErrorHandlerFunc != nil {
+              siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+              return
+            }
+            http.Error(w, err.Error(), http.StatusBadRequest)
             return
           }
         {{end}}
@@ -238,7 +281,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+            err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
+            if siw.ErrorHandlerFunc != nil {
+              siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{err})
+              return
+            }
+            http.Error(w, err.Error(), http.StatusBadRequest)
             return
         }{{end}}
 
@@ -259,13 +307,23 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var decoded string
         decoded, err := url.QueryUnescape(cookie.Value)
         if err != nil {
-          http.Error(w, "Error unescaping cookie parameter '{{.ParamName}}'", http.StatusBadRequest)
+          err = fmt.Errorf("Error unescaping cookie parameter '{{.ParamName}}'")
+          if siw.ErrorHandlerFunc != nil {
+            siw.ErrorHandlerFunc(w, r, &UnescapedCookieParamError{err})
+            return
+          }
+          http.Error(w, err.Error(), http.StatusBadRequest)
           return
         }
 
         err = json.Unmarshal([]byte(decoded), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          err = fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err)
+          if siw.ErrorHandlerFunc != nil {
+            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{err})
+            return
+          }
+          http.Error(w, err.Error(), http.StatusBadRequest)
           return
         }
 
@@ -276,7 +334,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var value {{.TypeDef}}
         err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
         if err != nil {
-          http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
+          err = fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err)
+          if siw.ErrorHandlerFunc != nil {
+            siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+            return
+          }
+          http.Error(w, err.Error(), http.StatusBadRequest)
           return
         }
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -285,7 +348,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       }
 
       {{- if .Required}} else {
-        http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+        err := fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
+        if siw.ErrorHandlerFunc != nil {
+          siw.ErrorHandlerFunc(w, r, &RequiredParamError{err})
+          return
+        }
+        http.Error(w, err.Error(), http.StatusBadRequest)
         return
       }
       {{- end}}
@@ -304,6 +372,24 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 }
 {{end}}
 
+type UnescapedCookieParamError struct {
+	error
+}
+type UnmarshalingParamError struct {
+	error
+}
+type RequiredParamError struct {
+	error
+}
+type RequiredHeaderError struct {
+  error
+}
+type InvalidParamFormatError struct {
+	error
+}
+type TooManyValuesForParamError struct {
+	error
+}
 
 
 `,
