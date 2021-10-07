@@ -102,11 +102,7 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
 	if err != nil {
 		err = fmt.Errorf("Invalid format for parameter tags: %w", err)
-		if siw.ErrorHandlerFunc != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
-			return
-		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -118,11 +114,7 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
 		err = fmt.Errorf("Invalid format for parameter limit: %w", err)
-		if siw.ErrorHandlerFunc != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
-			return
-		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -164,11 +156,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 	if err != nil {
 		err = fmt.Errorf("Invalid format for parameter id: %w", err)
-		if siw.ErrorHandlerFunc != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
-			return
-		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -195,11 +183,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
 	if err != nil {
 		err = fmt.Errorf("Invalid format for parameter id: %w", err)
-		if siw.ErrorHandlerFunc != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
-			return
-		}
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
 		return
 	}
 
@@ -265,6 +249,11 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	if r == nil {
 		r = chi.NewRouter()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
 	}
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,

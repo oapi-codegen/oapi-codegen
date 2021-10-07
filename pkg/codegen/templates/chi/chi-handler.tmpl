@@ -31,6 +31,11 @@ r := options.BaseRouter
 if r == nil {
 r = chi.NewRouter()
 }
+if options.ErrorHandlerFunc == nil {
+    options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+    }
+}
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
