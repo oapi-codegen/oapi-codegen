@@ -85,6 +85,11 @@ func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	return r
 }
 
+func (r *RequestBuilder) WithJWSAuth(jws string) *RequestBuilder {
+	r.Headers["Authorization"] = "Bearer " + jws
+	return r
+}
+
 func (r *RequestBuilder) WithHost(value string) *RequestBuilder {
 	return r.WithHeader("Host", value)
 }
