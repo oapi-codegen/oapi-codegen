@@ -2,8 +2,6 @@ package server
 
 import (
 	"errors"
-	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -48,8 +46,6 @@ func TestErrorHandlerFunc(t *testing.T) {
 	defer s.Close()
 
 	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
-	b, _ := ioutil.ReadAll(req.Body)
-	log.Println(string(b))
 	assert.Nil(t, err)
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 }
