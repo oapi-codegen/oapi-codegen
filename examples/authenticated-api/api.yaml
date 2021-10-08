@@ -1,0 +1,83 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Authenticated API Example
+  description: An example API which uses bearer token scopes and JWT auth
+paths:
+  /things:
+    get:
+      operationId: listThings
+      description: |
+        Returns a list of things. Because this endpoint doesn't override the
+        global security, it requires a JWT for authentication.
+      responses:
+        200:
+          description: a list of things
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThingWithID'
+    post:
+      operationId: addThing
+      description: |
+        Adds a thing to the list of things. This endpoints overrides the global
+        security scheme and requires a `things:w` scope in order to perform a
+        write.
+      security:
+        - BearerAuth:
+          - "things:w"
+      requestBody:
+        description: A thing to insert. Returns the inserted thing with an ID
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Thing'
+      responses:
+        201:
+          description: The inserted Thing with a unique ID
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ThingWithID'
+components:
+  schemas:
+    Thing:
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    ThingWithID:
+      allOf:
+        - $ref: '#/components/schemas/Thing'
+        - properties:
+            id:
+              type: integer
+              format: int64
+          required:
+            - id
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - BearerAuth: [ ]
+
