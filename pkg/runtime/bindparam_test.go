@@ -455,6 +455,35 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	err = bindParamsToExplodedObject("explodedObject", values, &optDstTime)
 	assert.NoError(t, err)
 	assert.EqualValues(t, &now, optDstTime.Time)
+
+}
+
+// covers slice case
+func TestBindParamsToExplodedObjectComplex(t *testing.T) {
+
+	type Form struct {
+		Ids     *[]string `json:"ids,omitempty"`
+		Limit   *int      `json:"limit,omitempty"`
+		Offset  *int      `json:"offset,omitempty"`
+		OrderBy *[]string `json:"orderBy,omitempty"`
+	}
+
+	var dest Form
+	values := url.Values{
+		"orderBy": []string{"any", "pseudo"},
+		"limit":   []string{"100"},
+		"ids":     []string{"1"},
+	}
+	expLimit := 100
+	expected := Form{
+		Limit:   &expLimit,
+		OrderBy: &[]string{"any", "pseudo"},
+		Ids:     &[]string{"1"},
+	}
+	err := bindParamsToExplodedObject("explodedObject", values, &dest)
+	assert.NoError(t, err)
+	assert.EqualValues(t, expected, dest)
+
 }
 
 func TestBindStyledParameterWithLocation(t *testing.T) {
