@@ -452,27 +452,29 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   ```
 
 - `x-oapi-codegen-middlewares`: specifies a list of tagged middlewares. These can be specific
-  middlewares that are operation-specific. This is very useful when you want to give a specific
-  routes middleware, but not to all operations. The middleware are always called in the order of
-  definition. If the tagged middleware is not defined, it will be silently skipped.
+  middlewares that are operation-specific, as well as path-specific. This is very useful when you
+  want to give a specific routes middleware, but not to all operations. The middleware are always
+  called in the order of definition. If the tagged middleware is not defined, it will be silently
+  skipped.
 
     ```yaml
-    /myOperation:
+    /pets:
+      x-oapi-codegen-middlewares: [validateJSON]
       get:
-        x-oapi-codegen-middlewares: [validate, getLimit]
+        x-oapi-codegen-middlewares: [limit]
     ```
   In the example above, the following middleware calls will be added to your handler:
 
   ```
-	// Operation specific middleware
-	if siw.TaggedMiddlewares != nil {
-		if middleware, ok := siw.TaggedMiddlewares["validate"]; ok {
-			handler = middleware(handler)
-		}
-		if middleware, ok := siw.TaggedMiddlewares["getLimit"]; ok {
-			handler = middleware(handler)
-		}
-	}
+  // Operation specific middleware
+  if siw.TaggedMiddlewares != nil {
+    if middleware, ok := siw.TaggedMiddlewares["validateJSON"]; ok {
+      handler = middleware(handler)
+    }
+    if middleware, ok := siw.TaggedMiddlewares["limit"]; ok {
+      handler = middleware(handler)
+    }
+  }
   ```
 
 
