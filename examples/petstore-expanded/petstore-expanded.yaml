@@ -59,7 +59,6 @@ paths:
       summary: Creates a new pet
       description: Creates a new pet in the store. Duplicates are allowed
       operationId: addPet
-      x-oapi-codegen-middlewares: [role, somethingelse]
       requestBody:
         description: Pet to add to the store
         required: true

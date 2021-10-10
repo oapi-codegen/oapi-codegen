@@ -144,6 +144,9 @@ type ServerInterface interface {
 
 	// (GET /get-with-tagged-middleware)
 	GetWithTaggedMiddleware(w http.ResponseWriter, r *http.Request)
+
+	// (POST /get-with-tagged-middleware)
+	PostWithTaggedMiddleware(w http.ResponseWriter, r *http.Request)
 	// Get an object by ID
 	// (GET /get-with-type/{content_type})
 	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)
@@ -327,7 +330,32 @@ func (siw *ServerInterfaceWrapper) GetWithTaggedMiddleware(w http.ResponseWriter
 
 	// Operation specific middleware
 	if siw.TaggedMiddlewares != nil {
-		if middleware, ok := siw.TaggedMiddlewares["taggedMiddleware"]; ok {
+		if middleware, ok := siw.TaggedMiddlewares["pathMiddleware"]; ok {
+			handler = middleware(handler)
+		}
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// PostWithTaggedMiddleware operation middleware
+func (siw *ServerInterfaceWrapper) PostWithTaggedMiddleware(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostWithTaggedMiddleware(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	// Operation specific middleware
+	if siw.TaggedMiddlewares != nil {
+		if middleware, ok := siw.TaggedMiddlewares["pathMiddleware"]; ok {
+			handler = middleware(handler)
+		}
+		if middleware, ok := siw.TaggedMiddlewares["operationMiddleware"]; ok {
 			handler = middleware(handler)
 		}
 	}
@@ -565,6 +593,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get("/get-with-args", wrapper.GetWithArgs)
 		r.Get("/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
 		r.Get("/get-with-tagged-middleware", wrapper.GetWithTaggedMiddleware)
+		r.Post("/get-with-tagged-middleware", wrapper.PostWithTaggedMiddleware)
 		r.Get("/get-with-type/{content_type}", wrapper.GetWithContentType)
 		r.Get("/reserved-keyword", wrapper.GetReservedKeyword)
 		r.Post("/resource/{argument}", wrapper.CreateResource)

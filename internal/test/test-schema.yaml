@@ -91,9 +91,15 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /get-with-tagged-middleware:
     summary: GetWithTaggedMiddleware
+    x-oapi-codegen-middlewares: [pathMiddleware]
     get:
-      x-oapi-codegen-middlewares: [taggedMiddleware]
       operationId: getWithTaggedMiddleware
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+    post:
+      x-oapi-codegen-middlewares: [operationMiddleware]
+      operationId: postWithTaggedMiddleware
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"

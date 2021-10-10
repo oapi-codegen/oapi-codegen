@@ -388,6 +388,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				requestPath, err)
 		}
 
+		var pathMiddlewares []string
+		if extension, ok := pathItem.Extensions[extMiddlewares]; ok {
+			var err error
+			pathMiddlewares, err = extParseMiddlewares(extension)
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for %q: %w", extMiddlewares, err)
+			}
+		}
+
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
@@ -426,13 +435,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
-			var middlewares []string
+			middlewares := pathMiddlewares
 			if extension, ok := op.Extensions[extMiddlewares]; ok {
-				var err error
-				middlewares, err = extParseMiddlewares(extension)
+				opMiddlewares, err := extParseMiddlewares(extension)
 				if err != nil {
 					return nil, fmt.Errorf("invalid value for %q: %w", extMiddlewares, err)
 				}
+				middlewares = append(middlewares, opMiddlewares...)
 			}
 
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
