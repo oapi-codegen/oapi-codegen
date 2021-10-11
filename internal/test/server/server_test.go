@@ -1,14 +1,28 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func testGet(t *testing.T, url string) (*http.Response, error) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	require.NoError(t, err)
+
+	return http.DefaultClient.Do(req)
+}
 
 func TestParameters(t *testing.T) {
 	m := ServerInterfaceMock{}
@@ -41,8 +55,10 @@ func TestErrorHandlerFunc(t *testing.T) {
 	s := httptest.NewServer(h)
 	defer s.Close()
 
-	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
+	req, err := testGet(t, s.URL+"/get-with-args")
 	assert.Nil(t, err)
+	defer req.Body.Close()
+
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 }
 
@@ -54,7 +70,10 @@ func TestErrorHandlerFuncBackwardsCompatible(t *testing.T) {
 	s := httptest.NewServer(h)
 	defer s.Close()
 
-	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
+	req, err := testGet(t, s.URL+"/get-with-args")
+	assert.Nil(t, err)
+	defer req.Body.Close()
+
 	b, _ := ioutil.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, "text/plain; charset=utf-8", req.Header.Get("Content-Type"))
