@@ -7,6 +7,7 @@ type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
     Middlewares []MiddlewareFunc
+	TaggedMiddlewares map[string]MiddlewareFunc
     ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
@@ -45,6 +46,7 @@ options.BaseURL = "/"
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
+TaggedMiddlewares: options.TaggedMiddlewares,
 ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}

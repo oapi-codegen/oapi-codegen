@@ -431,8 +431,8 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   flag incorrect usage of this property.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
-  are added are in addition to the regular json tags that are generated. If you specify your 
-  own `json` tag, you will override the default one. 
+  are added are in addition to the regular json tags that are generated. If you specify your
+  own `json` tag, you will override the default one.
 
     ```yaml
     components:
@@ -445,12 +445,35 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
                 tag1: value1
                 tag2: value2
     ```
-  In the example above, field `name` will be declared as: 
-  
+  In the example above, field `name` will be declared as:
+
   ```
   Name string `json:"name" tag1:"value1" tag2:"value2"`
   ```
-  
+
+- `x-oapi-codegen-middlewares`: specifies a list of tagged middlewares. These can be specific
+  middlewares that are operation-specific. This is very useful when you want to give a specific
+  routes middleware, but not to all operations. The middleware are always called in the order of
+  definition. If the tagged middleware is not defined, it will be silently skipped.
+
+    ```yaml
+    /myOperation:
+      get:
+        x-oapi-codegen-middlewares: [validate, getLimit]
+    ```
+  In the example above, the following middleware calls will be added to your handler:
+
+  ```
+	// Operation specific middleware
+	if siw.TaggedMiddlewares != nil {
+		if middleware, ok := siw.TaggedMiddlewares["validate"]; ok {
+			handler = middleware(handler)
+		}
+		if middleware, ok := siw.TaggedMiddlewares["getLimit"]; ok {
+			handler = middleware(handler)
+		}
+	}
+  ```
 
 
 ## Using `oapi-codegen`
@@ -500,7 +523,7 @@ them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
 [`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
-    
+
 ```yaml
 output:
   externalref.gen.go
@@ -513,7 +536,7 @@ import-mapping:
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
 to see all the fields on the configuration structure.
 
 ### Import Mappings

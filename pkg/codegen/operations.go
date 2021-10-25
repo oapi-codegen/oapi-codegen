@@ -208,6 +208,7 @@ type OperationDefinition struct {
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Middlewares         []string                // Sent as part of x-oapi-codegen-middlewares.
 	Spec                *openapi3.Operation
 }
 
@@ -394,16 +395,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			if pathItem.Servers != nil {
 				op.Servers = &pathItem.Servers
 			}
+
 			// We rely on OperationID to generate function names, it's required
+			op.OperationID = ToCamelCase(op.OperationID)
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
-			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
 			}
 
 			// These are parameters defined for the specific path method that
@@ -426,6 +426,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
+			var middlewares []string
+			if extension, ok := op.Extensions[extMiddlewares]; ok {
+				var err error
+				middlewares, err = extParseMiddlewares(extension)
+				if err != nil {
+					return nil, fmt.Errorf("invalid value for %q: %w", extMiddlewares, err)
+				}
+			}
+
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
@@ -444,6 +453,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				TypeDefinitions: typeDefinitions,
+				Middlewares:     middlewares,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -457,7 +467,6 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
-
 			}
 
 			if op.RequestBody != nil {
@@ -624,11 +633,10 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-    return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
+		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
-    return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-
+		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 	}
 
 	// Generate boiler plate for all additional types.
@@ -641,12 +649,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
-	
-  if _, err := w.WriteString("\n"); err != nil {
+
+	if _, err := w.WriteString("\n"); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	  if _, err := w.WriteString(addProps); err != nil {
+	if _, err := w.WriteString(addProps); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 

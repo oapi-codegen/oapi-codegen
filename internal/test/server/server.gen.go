@@ -141,6 +141,9 @@ type ServerInterface interface {
 	// Getter with referenced parameter and referenced response
 	// (GET /get-with-references/{global_argument}/{argument})
 	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
+
+	// (GET /get-with-tagged-middleware)
+	GetWithTaggedMiddleware(w http.ResponseWriter, r *http.Request)
 	// Get an object by ID
 	// (GET /get-with-type/{content_type})
 	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)
@@ -166,6 +169,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
+	TaggedMiddlewares  map[string]MiddlewareFunc
 	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
@@ -304,6 +308,28 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// GetWithTaggedMiddleware operation middleware
+func (siw *ServerInterfaceWrapper) GetWithTaggedMiddleware(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWithTaggedMiddleware(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	// Operation specific middleware
+	if siw.TaggedMiddlewares != nil {
+		if middleware, ok := siw.TaggedMiddlewares["taggedMiddleware"]; ok {
+			handler = middleware(handler)
+		}
 	}
 
 	handler(w, r.WithContext(ctx))
@@ -487,10 +513,11 @@ func Handler(si ServerInterface) http.Handler {
 }
 
 type ChiServerOptions struct {
-	BaseURL          string
-	BaseRouter       chi.Router
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+	BaseURL           string
+	BaseRouter        chi.Router
+	Middlewares       []MiddlewareFunc
+	TaggedMiddlewares map[string]MiddlewareFunc
+	ErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -528,6 +555,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
+		TaggedMiddlewares:  options.TaggedMiddlewares,
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
@@ -536,6 +564,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get("/get-simple", wrapper.GetSimple)
 		r.Get("/get-with-args", wrapper.GetWithArgs)
 		r.Get("/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
+		r.Get("/get-with-tagged-middleware", wrapper.GetWithTaggedMiddleware)
 		r.Get("/get-with-type/{content_type}", wrapper.GetWithContentType)
 		r.Get("/reserved-keyword", wrapper.GetReservedKeyword)
 		r.Post("/resource/{argument}", wrapper.CreateResource)

@@ -211,7 +211,6 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	_, err = w.WriteString(typeDefinitions)
 	if err != nil {
 		return "", fmt.Errorf("error writing type definitions: %w", err)
-
 	}
 
 	if opts.GenerateClient {
@@ -262,7 +261,6 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 
 	outBytes, err := imports.Process(packageName+".go", []byte(goCode), nil)
 	if err != nil {
-		fmt.Println(goCode)
 		return "", fmt.Errorf("error formatting Go code: %w", err)
 	}
 	return string(outBytes), nil
@@ -345,7 +343,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
 func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) ([]TypeDefinition, error) {
-	var excludeSchemasMap = make(map[string]bool)
+	excludeSchemasMap := make(map[string]bool)
 	for _, schema := range excludeSchemas {
 		excludeSchemasMap[schema] = true
 	}
@@ -535,7 +533,6 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
-
 }
 
 // Generate our import statements and package definition.
@@ -594,7 +591,6 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 	}
 
 	return GenerateTemplates([]string{"additional-properties.tmpl"}, t, context)
-
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the

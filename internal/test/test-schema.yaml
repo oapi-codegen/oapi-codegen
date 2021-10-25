@@ -89,6 +89,14 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
+  /get-with-tagged-middleware:
+    summary: GetWithTaggedMiddleware
+    get:
+      x-oapi-codegen-middlewares: [taggedMiddleware]
+      operationId: getWithTaggedMiddleware
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
   /get-with-args:
     summary: GetWithArgs
     get:

@@ -18,6 +18,7 @@ var (
 	lockServerInterfaceMockGetWithArgs              sync.RWMutex
 	lockServerInterfaceMockGetWithContentType       sync.RWMutex
 	lockServerInterfaceMockGetWithReferences        sync.RWMutex
+	lockServerInterfaceMockGetWithTaggedMiddleware  sync.RWMutex
 	lockServerInterfaceMockUpdateResource3          sync.RWMutex
 )
 
@@ -58,6 +59,9 @@ var _ ServerInterface = &ServerInterfaceMock{}
 //             GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)  {
 // 	               panic("mock out the GetWithReferences method")
 //             },
+//             GetWithTaggedMiddlewareFunc: func(w http.ResponseWriter, r *http.Request)  {
+// 	               panic("mock out the GetWithTaggedMiddleware method")
+//             },
 //             UpdateResource3Func: func(w http.ResponseWriter, r *http.Request, pFallthrough int)  {
 // 	               panic("mock out the UpdateResource3 method")
 //             },
@@ -94,6 +98,9 @@ type ServerInterfaceMock struct {
 
 	// GetWithReferencesFunc mocks the GetWithReferences method.
 	GetWithReferencesFunc func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
+
+	// GetWithTaggedMiddlewareFunc mocks the GetWithTaggedMiddleware method.
+	GetWithTaggedMiddlewareFunc func(w http.ResponseWriter, r *http.Request)
 
 	// UpdateResource3Func mocks the UpdateResource3 method.
 	UpdateResource3Func func(w http.ResponseWriter, r *http.Request, pFallthrough int)
@@ -176,6 +183,13 @@ type ServerInterfaceMock struct {
 			GlobalArgument int64
 			// Argument is the argument argument value.
 			Argument Argument
+		}
+		// GetWithTaggedMiddleware holds details about calls to the GetWithTaggedMiddleware method.
+		GetWithTaggedMiddleware []struct {
+			// W is the w argument value.
+			W http.ResponseWriter
+			// R is the r argument value.
+			R *http.Request
 		}
 		// UpdateResource3 holds details about calls to the UpdateResource3 method.
 		UpdateResource3 []struct {
@@ -529,6 +543,41 @@ func (mock *ServerInterfaceMock) GetWithReferencesCalls() []struct {
 	lockServerInterfaceMockGetWithReferences.RLock()
 	calls = mock.calls.GetWithReferences
 	lockServerInterfaceMockGetWithReferences.RUnlock()
+	return calls
+}
+
+// GetWithTaggedMiddleware calls GetWithTaggedMiddlewareFunc.
+func (mock *ServerInterfaceMock) GetWithTaggedMiddleware(w http.ResponseWriter, r *http.Request) {
+	if mock.GetWithTaggedMiddlewareFunc == nil {
+		panic("ServerInterfaceMock.GetWithTaggedMiddlewareFunc: method is nil but ServerInterface.GetWithTaggedMiddleware was just called")
+	}
+	callInfo := struct {
+		W http.ResponseWriter
+		R *http.Request
+	}{
+		W: w,
+		R: r,
+	}
+	lockServerInterfaceMockGetWithTaggedMiddleware.Lock()
+	mock.calls.GetWithTaggedMiddleware = append(mock.calls.GetWithTaggedMiddleware, callInfo)
+	lockServerInterfaceMockGetWithTaggedMiddleware.Unlock()
+	mock.GetWithTaggedMiddlewareFunc(w, r)
+}
+
+// GetWithTaggedMiddlewareCalls gets all the calls that were made to GetWithTaggedMiddleware.
+// Check the length with:
+//     len(mockedServerInterface.GetWithTaggedMiddlewareCalls())
+func (mock *ServerInterfaceMock) GetWithTaggedMiddlewareCalls() []struct {
+	W http.ResponseWriter
+	R *http.Request
+} {
+	var calls []struct {
+		W http.ResponseWriter
+		R *http.Request
+	}
+	lockServerInterfaceMockGetWithTaggedMiddleware.RLock()
+	calls = mock.calls.GetWithTaggedMiddleware
+	lockServerInterfaceMockGetWithTaggedMiddleware.RUnlock()
 	return calls
 }
 

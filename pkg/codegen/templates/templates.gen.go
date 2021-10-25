@@ -2,8 +2,7 @@ package templates
 
 import "text/template"
 
-var templates = map[string]string{
-	"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+var templates = map[string]string{"additional-properties.tmpl": `{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
 
 // Getter for additional properties for {{.TypeName}}. Returns the specified
 // element and whether it was found
@@ -83,6 +82,7 @@ type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
     Middlewares []MiddlewareFunc
+	TaggedMiddlewares map[string]MiddlewareFunc
     ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
@@ -121,6 +121,7 @@ options.BaseURL = "/"
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
+TaggedMiddlewares: options.TaggedMiddlewares,
 ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
@@ -143,6 +144,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
     HandlerMiddlewares []MiddlewareFunc
+	TaggedMiddlewares map[string]MiddlewareFunc
     ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
@@ -322,11 +324,22 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
   var handler = func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-}
+  }
 
   for _, middleware := range siw.HandlerMiddlewares {
     handler = middleware(handler)
   }
+
+  {{ with .Middlewares -}}
+  // Operation specific middleware
+  if siw.TaggedMiddlewares != nil {
+	  {{- range . }}
+		  if middleware, ok := siw.TaggedMiddlewares[{{printf "%q" .}}]; ok {
+		  handler = middleware(handler)
+		}
+	  {{- end }}
+  }
+  {{- end }}
 
   handler(w, r.WithContext(ctx))
 }
@@ -1105,3 +1118,4 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
+
