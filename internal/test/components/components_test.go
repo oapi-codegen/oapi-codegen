@@ -70,3 +70,99 @@ func TestAdditionalProperties(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, bossSchema, obj5.AdditionalProperties["boss"])
 }
+
+func TestOneOf(t *testing.T) {
+	const variant1 = `{"name": "123"}`
+	const variant2 = `[1, 2, 3]`
+	const variant3 = `true`
+	var dst OneOfObject1
+
+	err := json.Unmarshal([]byte(variant1), &dst)
+	assert.NoError(t, err)
+	v1, err := dst.AsOneOfVariant1()
+	assert.NoError(t, err)
+	assert.Equal(t, "123", v1.Name)
+
+	err = json.Unmarshal([]byte(variant2), &dst)
+	assert.NoError(t, err)
+	v2, err := dst.AsOneOfVariant2()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant2([]int{1, 2, 3}), v2)
+
+	err = json.Unmarshal([]byte(variant3), &dst)
+	assert.NoError(t, err)
+	v3, err := dst.AsOneOfVariant3()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant3(true), v3)
+
+	err = dst.FromOneOfVariant1(OneOfVariant1{Name: "123"})
+	assert.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant1), marshaled)
+
+	err = dst.FromOneOfVariant2([]int{1, 2, 3})
+	assert.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant2), marshaled)
+
+	err = dst.FromOneOfVariant3(true)
+	assert.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant3), marshaled)
+}
+
+func TestOneOfWithDiscriminator(t *testing.T) {
+	const variant4 = `{"discriminator": "v4", "name": "123"}`
+	const variant5 = `{"discriminator": "v5", "id": 123}`
+	var dst OneOfObject6
+
+	err := json.Unmarshal([]byte(variant4), &dst)
+	assert.NoError(t, err)
+	discriminator, err := dst.Discriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, "v4", discriminator)
+	v4, err := dst.ValueByDiscriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant4{Discriminator: "v4", Name: "123"}, v4)
+
+	err = json.Unmarshal([]byte(variant5), &dst)
+	assert.NoError(t, err)
+	discriminator, err = dst.Discriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, "v5", discriminator)
+	v5, err := dst.ValueByDiscriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant5{Discriminator: "v5", Id: 123}, v5)
+
+	// discriminator value will be filled by the generated code
+	err = dst.FromOneOfVariant4(OneOfVariant4{Name: "123"})
+	assert.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant4), marshaled)
+
+	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 123})
+	assert.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant5), marshaled)
+}
+
+func TestAnyOf(t *testing.T) {
+	const anyOfStr = `{"discriminator": "all", "name": "123", "id": 456}`
+
+	var dst AnyOfObject1
+	err := json.Unmarshal([]byte(anyOfStr), &dst)
+	assert.NoError(t, err)
+
+	v4, err := dst.AsOneOfVariant4()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant4{Discriminator: "all", Name: "123"}, v4)
+
+	v5, err := dst.AsOneOfVariant5()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant5{Discriminator: "all", Id: 456}, v5)
+}

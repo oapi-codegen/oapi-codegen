@@ -26,6 +26,9 @@ type Schema struct {
 
 	Description string // The description of the element
 
+	UnionElements []string       // Possible elements of oneOf/anyOf union
+	Discriminator *Discriminator // Describes which value is stored in a union
+
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
 }
@@ -134,6 +137,22 @@ func (t *TypeDefinition) CanAlias() bool {
 		(t.Schema.ArrayType != nil && t.Schema.ArrayType.IsRef()) /* array to ref */
 }
 
+type Discriminator struct {
+	// maps discriminator value to go type
+	Mapping map[string]string
+
+	// JSON property name that holds the discriminator
+	Property string
+}
+
+func (d *Discriminator) JSONTag() string {
+	return fmt.Sprintf("`json:\"%s\"`", d.Property)
+}
+
+func (d *Discriminator) PropertyName() string {
+	return SchemaNameToTypeName(d.Property)
+}
+
 func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
@@ -168,15 +187,21 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		OAPISchema:  schema,
 	}
 
-	// We can't support this in any meaningful way
 	if schema.AnyOf != nil {
-		outSchema.GoType = "interface{}"
-		return outSchema, nil
+		if schema.Type != "" || len(schema.OneOf) != 0 || len(schema.AllOf) != 0 || schema.Not != nil {
+			// We can't mix anyOf with type or other union tools
+			outSchema.GoType = "interface{}"
+			return outSchema, nil
+		}
+		return generateUnion(schema, schema.AnyOf, schema.Discriminator, path)
 	}
-	// We can't support this in any meaningful way
 	if schema.OneOf != nil {
-		outSchema.GoType = "interface{}"
-		return outSchema, nil
+		if schema.Type != "" || len(schema.AnyOf) != 0 || len(schema.AllOf) != 0 || schema.Not != nil {
+			// We can't mix oneOf with type or other union tools
+			outSchema.GoType = "interface{}"
+			return outSchema, nil
+		}
+		return generateUnion(schema, schema.OneOf, schema.Discriminator, path)
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -233,8 +258,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 				required := StringInArray(pName, schema.Required)
 
-				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
-					// If we have fields present which have additional properties,
+				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
+					// If we have fields present which have additional properties or union values,
 					// but are not a pre-defined type, we need to define a type
 					// for them, which will be based on the field names we followed
 					// to get to the type.
@@ -625,4 +650,47 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// For json, we go through the standard schema mechanism
 	return GenerateGoSchema(mt.Schema, path)
+}
+
+func generateUnion(schema *openapi3.Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) (Schema, error) {
+	outSchema := Schema{
+		Description: StringToGoComment(schema.Description),
+		OAPISchema:  schema,
+		GoType:      "json.RawMessage",
+	}
+
+	if discriminator != nil {
+		outSchema.Discriminator = &Discriminator{
+			Property: discriminator.PropertyName,
+			Mapping:  make(map[string]string),
+		}
+	}
+
+	refToGoTypeMap := make(map[string]string)
+	for i, element := range elements {
+		elementSchema, err := GenerateGoSchema(element, path)
+		if err != nil {
+			return Schema{}, err
+		}
+
+		if element.Ref == "" {
+			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+			elementSchema.GoType = td.TypeName
+		} else {
+			refToGoTypeMap[element.Ref] = elementSchema.GoType
+		}
+
+		if discriminator != nil {
+			for k, v := range discriminator.Mapping {
+				if v == element.Ref {
+					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
+					break
+				}
+			}
+		}
+		outSchema.UnionElements = append(outSchema.UnionElements, elementSchema.GoType)
+	}
+
+	return outSchema, nil
 }

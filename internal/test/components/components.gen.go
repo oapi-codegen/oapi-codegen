@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -60,11 +61,71 @@ type AdditionalPropertiesObject5 struct {
 	AdditionalProperties map[string]SchemaObject `json:"-"`
 }
 
+// simple anyOf case
+type AnyOfObject1 json.RawMessage
+
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
 	Name   string          `json:"name"`
 	Value1 json.RawMessage `json:"value1"`
 	Value2 json.RawMessage `json:"value2,omitempty"`
+}
+
+// oneOf with references and no disciminator
+type OneOfObject1 json.RawMessage
+
+// oneOf with inline elements
+type OneOfObject2 json.RawMessage
+
+// OneOfObject20 defines model for .
+type OneOfObject20 struct {
+	Name *string `json:"name,omitempty"`
+}
+
+// OneOfObject21 defines model for .
+type OneOfObject21 []float32
+
+// OneOfObject22 defines model for .
+type OneOfObject22 bool
+
+// inline OneOf
+type OneOfObject3 struct {
+	Union *OneOfObject3_Union `json:"union,omitempty"`
+}
+
+// OneOfObject3_Union defines model for OneOfObject3.Union.
+type OneOfObject3_Union json.RawMessage
+
+// oneOf plus fixed type - can't do anything here
+type OneOfObject4 interface{}
+
+// oneOf with disciminator but no mapping
+type OneOfObject5 json.RawMessage
+
+// oneOf with discriminator and mapping
+type OneOfObject6 json.RawMessage
+
+// OneOfVariant1 defines model for OneOfVariant1.
+type OneOfVariant1 struct {
+	Name string `json:"name"`
+}
+
+// OneOfVariant2 defines model for OneOfVariant2.
+type OneOfVariant2 []int
+
+// OneOfVariant3 defines model for OneOfVariant3.
+type OneOfVariant3 bool
+
+// OneOfVariant4 defines model for OneOfVariant4.
+type OneOfVariant4 struct {
+	Discriminator string `json:"discriminator"`
+	Name          string `json:"name"`
+}
+
+// OneOfVariant5 defines model for OneOfVariant5.
+type OneOfVariant5 struct {
+	Discriminator string `json:"discriminator"`
+	Id            int    `json:"id"`
 }
 
 // SchemaObject defines model for SchemaObject.
@@ -719,6 +780,267 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+func (t AnyOfObject1) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *AnyOfObject1) FromOneOfVariant4(v OneOfVariant4) error {
+	b, err := json.Marshal(v)
+	*t = AnyOfObject1(b)
+	return err
+}
+
+func (t AnyOfObject1) AsOneOfVariant5() (OneOfVariant5, error) {
+	var body OneOfVariant5
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *AnyOfObject1) FromOneOfVariant5(v OneOfVariant5) error {
+	b, err := json.Marshal(v)
+	*t = AnyOfObject1(b)
+	return err
+}
+
+func (t AnyOfObject1) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *AnyOfObject1) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
+func (t OneOfObject1) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject1) FromOneOfVariant1(v OneOfVariant1) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject1(b)
+	return err
+}
+
+func (t OneOfObject1) AsOneOfVariant2() (OneOfVariant2, error) {
+	var body OneOfVariant2
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject1) FromOneOfVariant2(v OneOfVariant2) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject1(b)
+	return err
+}
+
+func (t OneOfObject1) AsOneOfVariant3() (OneOfVariant3, error) {
+	var body OneOfVariant3
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject1) FromOneOfVariant3(v OneOfVariant3) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject1(b)
+	return err
+}
+
+func (t OneOfObject1) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *OneOfObject1) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
+func (t OneOfObject2) AsOneOfObject20() (OneOfObject20, error) {
+	var body OneOfObject20
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject2) FromOneOfObject20(v OneOfObject20) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject2(b)
+	return err
+}
+
+func (t OneOfObject2) AsOneOfObject21() (OneOfObject21, error) {
+	var body OneOfObject21
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject2) FromOneOfObject21(v OneOfObject21) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject2(b)
+	return err
+}
+
+func (t OneOfObject2) AsOneOfObject22() (OneOfObject22, error) {
+	var body OneOfObject22
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject2) FromOneOfObject22(v OneOfObject22) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject2(b)
+	return err
+}
+
+func (t OneOfObject2) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *OneOfObject2) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
+func (t OneOfObject3_Union) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject3_Union) FromOneOfVariant1(v OneOfVariant1) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject3_Union(b)
+	return err
+}
+
+func (t OneOfObject3_Union) AsOneOfVariant2() (OneOfVariant2, error) {
+	var body OneOfVariant2
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject3_Union) FromOneOfVariant2(v OneOfVariant2) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject3_Union(b)
+	return err
+}
+
+func (t OneOfObject3_Union) AsOneOfVariant3() (OneOfVariant3, error) {
+	var body OneOfVariant3
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject3_Union) FromOneOfVariant3(v OneOfVariant3) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject3_Union(b)
+	return err
+}
+
+func (t OneOfObject3_Union) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *OneOfObject3_Union) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
+func (t OneOfObject5) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject5) FromOneOfVariant4(v OneOfVariant4) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject5(b)
+	return err
+}
+
+func (t OneOfObject5) AsOneOfVariant5() (OneOfVariant5, error) {
+	var body OneOfVariant5
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject5) FromOneOfVariant5(v OneOfVariant5) error {
+	b, err := json.Marshal(v)
+	*t = OneOfObject5(b)
+	return err
+}
+
+func (t OneOfObject5) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"discriminator"`
+	}
+	err := json.Unmarshal(t, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject5) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *OneOfObject5) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
+func (t OneOfObject6) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject6) FromOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "v4"
+	b, err := json.Marshal(v)
+	*t = OneOfObject6(b)
+	return err
+}
+
+func (t OneOfObject6) AsOneOfVariant5() (OneOfVariant5, error) {
+	var body OneOfVariant5
+	err := json.Unmarshal(t, &body)
+	return body, err
+}
+
+func (t *OneOfObject6) FromOneOfVariant5(v OneOfVariant5) error {
+	v.Discriminator = "v5"
+	b, err := json.Marshal(v)
+	*t = OneOfObject6(b)
+	return err
+}
+
+func (t OneOfObject6) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"discriminator"`
+	}
+	err := json.Unmarshal(t, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject6) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "v4":
+		return t.AsOneOfVariant4()
+	case "v5":
+		return t.AsOneOfVariant5()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OneOfObject6) MarshalJSON() ([]byte, error) {
+	return (json.RawMessage)(t).MarshalJSON()
+}
+
+func (t *OneOfObject6) UnmarshalJSON(b []byte) error {
+	return (*json.RawMessage)(t).UnmarshalJSON(b)
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -1062,6 +1384,9 @@ type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
+		// simple anyOf case
+		AnyOf1 *AnyOfObject1 `json:"anyOf1,omitempty"`
+
 		// Has additional properties with schema for dictionaries
 		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
@@ -1071,6 +1396,24 @@ type EnsureEverythingIsReferencedResponse struct {
 
 		// Has additional properties of type int
 		One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+		// oneOf with references and no disciminator
+		OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
+
+		// oneOf with inline elements
+		OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
+
+		// inline OneOf
+		OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
+
+		// oneOf plus fixed type - can't do anything here
+		OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
+
+		// oneOf with disciminator but no mapping
+		OneOf5 *OneOfObject5 `json:"oneOf5,omitempty"`
+
+		// oneOf with discriminator and mapping
+		OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
 
 		// Allows any additional property
 		Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
@@ -1200,6 +1543,9 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
+			// simple anyOf case
+			AnyOf1 *AnyOfObject1 `json:"anyOf1,omitempty"`
+
 			// Has additional properties with schema for dictionaries
 			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
 
@@ -1209,6 +1555,24 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 			// Has additional properties of type int
 			One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+			// oneOf with references and no disciminator
+			OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
+
+			// oneOf with inline elements
+			OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
+
+			// inline OneOf
+			OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
+
+			// oneOf plus fixed type - can't do anything here
+			OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
+
+			// oneOf with disciminator but no mapping
+			OneOf5 *OneOfObject5 `json:"oneOf5,omitempty"`
+
+			// oneOf with discriminator and mapping
+			OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
 
 			// Allows any additional property
 			Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
@@ -1368,23 +1732,29 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RXTW/jNhD9KwTboxLHzvaim4tu0RRoG+wG6GFjBLQ4ipjKQy05sldY6L8XQ8nflNdx",
-	"9rK5RJY5X49v3oy/yswuKouA5GX6VTr4XIOnX602EF582Lxo+GNmkQCJH1VVlSZTZCyOXrxFfuezAhaK",
-	"nypnK3DUe/ndQKn54WcHuUzlT6Nt2FFn5Ecfw/9/5i+QkWzbJCRjHGiZfuo9zPg1wRcaVaUyByGpqUCm",
-	"0pMz+Cxb/mMfvrLo18V0H/oYP1o9idTgM2cqzlGmciq8WVQliHWRwm6D9Vmwo6nWhk1Ueb+poktrHAqP",
-	"fL0T3yDBMzh5FP4P5cXWVmwREjYXbCwMkkwOoDM67hvVAiJVJ9JWXYAYJPuYBhcJR5gl66NrRJITKEyG",
-	"UchV6eGw8N8seIGWhCpLu4pj8Na6v1Npt8OlkauPKptyQV4obCJVNUc1vSL316X97nVpByaixWZhay9y",
-	"bi2xKkxWiGKIo8f3gwjuW2G/a/nnmXd5JZeg+Mup7j5fuc7v+5WhQnRORG6d0CYLh1wH+FHqXYR/DRV/",
-	"eosbUT0L5UQuVVlDULDcuoUimcqg28nA0ckZR+Nt10eKob8H1VHuuXGe/h4qwNnyDAKEU8mOq1kYBQZz",
-	"y8alyQA9bJGSf909sHcyxO7lA3gSH8EtA42W4Hx3jePrm+ubTmABVWVkKm+vb67H3BmKipD/CNDXDq5g",
-	"Ca6hwuDzlfFXDnJwgBmE23qGUPg+Rx4K4wWgrqxBEvDFePLCW0GFIrFlnMgUijmIzIEi0MKgoML4R/QV",
-	"ZEKhDjI7B1G5GkE/8o0xvmFK32mZyvchwfeb/O78h212yc4+0wyRfm/lGe3uO4frw+Tm5g07Q26W8K3G",
-	"O9XLbSJzW7vLXbxjFy+7jXbKT6w3mSz4hiLGgZeFgzf4uA0+VvZyD5PQYged3K9XuapLGmZKT4bRwSLZ",
-	"WY8q5dTCP7EKPimtn/j+/WCLTAW3WaeZwRIInA+kV2JuddOPsF4L4pIb6Yj7kAVf3FTr+5ACd/Q6gEw/",
-	"RZt1c2J4ZoZgvKXKzzW4Zj2UUlmN5a5mdbNy2wenJuqRoHpqgmx1q61sk3OyxZ3xHwbmZmfpQUQA7QVZ",
-	"MYdHpNphEBuyQvUnu4WVh1YsW7ZcWfffMAKTkwi8atWITIpDssZWhFnbzvYEC+uybBNZWR9hXxjiote+",
-	"XbqxuimD/K02DjKKApIwTx/xJPBM7JhthLMstweMdRf+8Dx/fTv3GnaW9Qt3uPX2vr6n9pAr7fHFtW37",
-	"fwAAAP//Xv36ip0PAAA=",
+	"H4sIAAAAAAAC/9RZW2/bNhT+KwQ3YC9KHN/6oLcM67AOWBO0wfbQGAEtHUXsJFIlKSdCoP8+HEqWdbUl",
+	"Jw9ZX2pJPOR37h9PXqgn40QKEEZT94Uq+JGCNr9Kn4N98aV6keGjJ4UBYfAnS5KIe8xwKWbftRT4Tnsh",
+	"xAx/JUomoEy5y+8cIh9//KwgoC79aXY4dlYI6dlX+//N9jt4hua5Y8FwBT51v5U7bPC1gWczSyLGW0ea",
+	"LAHqUm0UF480x3+4h06k0HtliofyjP+bPg71QXuKJ4iRuvSaaB4nEZC9kkQeDitR4EbXvs9RhEW3lRYF",
+	"rLlVvOdz7XwuDDyCop3j/2CaHGTJwUJEBgSFCReGOi3Tcb9/b8Fi6NHaoTIpDugzSdOmdgsHT9g4+6V7",
+	"izhHrLAYtkLAIg1txX+ToImQhrAokk/9Nnit3m+k2nJYNaPSjmbXqJAmTGQ9WmUdnSZgnwZ7NQ22jUQh",
+	"RRbLVJMAU4s8hdwLSTgUo13/CAHq1LFvqv448QKXc44V18eye3zlGp/3T9yEpNiEBFIRn3t2kSoM3oUu",
+	"spugXonwmbrfjqO7EXAT/M0UZ8KsaO6MX72m+aatTVlC7dHEYxoQWIHpH27CP7UUVbUf5X6H7liUglUo",
+	"kCpmhrrUNhRnYOlixNL+elCe1BcWVu+abZtaS/xa+EtBAAqEB5hDPhGS+Fx7POaCGYmRZ9dO8sp8klcW",
+	"k1Yvab5pqrc4qh4XERdAIILYkpy6PmPTuW3cF8oNxPUmKdJ4W9Tz8gVTimV2afliK2UETHTQL7voS8h2",
+	"UadOpYIX3OQduiU/HoerIUclkS3bz+AXvOGCeEz8YogvMS9NyMUjCUHBuwzGtoOsHrf7ljkqnupGWh+N",
+	"5npqkm1qMF1jliS4s0Pxq6oy91Cwss82tFvf83OsOb3gNtX7cFK9CqAtR0eU239yX+huNQ67Q3frkbid",
+	"d2W8Kpbdl7clIc3Yd7uVrUZVW6WNNjPB7Za65pJVF3zHp50GOU695j7OOHXX5+Dpp/En4AzQ9gbN6mAJ",
+	"uNLm8xDHUDIaYRe7yqlttbHXSC4CicIR90BoOIQR/evTnfU0N7g9vQNtyFdQO0tBd6B0kbLzy6vLq+Jy",
+	"BoIlnLp0eXl1OcduxUxo8c9A6FTBBexAFTX8guuLim1YOz6C6daDu5BrAsJPJBeGwDPXRhMtiQmZIYec",
+	"wR5BtkA8BcyAT7ggJuT6XugEvJLKGFyQqFSAf4+kCu1rb/iffOrSjxbgxwrfJ/3lgM6pzUKyIcLcGJfM",
+	"6rOS9uhhcXX1inmDZafzU7S9QadzdPsOTsocuT3gFjJV52+B9c7y2VHzkj7SXZTZ8xHMq0J90noNwryX",
+	"WkyQWlRSywlSy0pqNUFqVUmtJ0itK6kPE6Q+2IoQKniFH6yW5kmev8OijzmVQ7GApZEZztEyDWet8V8h",
+	"PUuYYrF+QP7xwHz/ATNPDxana4IFrmArVhIMqOLmxMhW+lk5eCircP9FuacW3VoUGPzXvmWPdkJRHWBp",
+	"Rk+ZrFYMTzrsYRwlfqSgsn13dGkyp/VuUUw4DhXo2Byk08q0yWzDKG7TluacRitqQxs75qgmTaURBYCv",
+	"iZFkC/fCpErYMm8kYeXK4roQIFfsQYuST1L9O2yBxVELTBoQ9fTodrD2DXY2Od4gaq1CpFGE5FPqnuiz",
+	"oxdSdp16uGFfYVzgV58r8EyvQRyM03tx1PAY2H2yPTGLja4VserMPxeMH7qNdUOXt06dvO1nrns/5e1Y",
+	"ybuOy/P8vwAAAP//HYpCO1MZAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

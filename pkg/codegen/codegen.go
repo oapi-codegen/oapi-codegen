@@ -312,7 +312,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate}, "")
+	unionBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating union boilerplate: %w", err)
+	}
+
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate, unionBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -595,6 +600,27 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 	return GenerateTemplates([]string{"additional-properties.tmpl"}, t, context)
 
+}
+
+func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var filteredTypes []TypeDefinition
+	for _, t := range typeDefs {
+		if len(t.Schema.UnionElements) != 0 {
+			filteredTypes = append(filteredTypes, t)
+		}
+	}
+
+	if len(filteredTypes) == 0 {
+		return "", nil
+	}
+
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	return GenerateTemplates([]string{"union.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the

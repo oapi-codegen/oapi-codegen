@@ -1078,6 +1078,66 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `,
+	"union.tmpl": `{{range .Types}}
+    {{$typeName := .TypeName -}}
+    {{$discriminator := .Schema.Discriminator}}
+    {{range .Schema.UnionElements}}
+        {{$element := . -}}
+        func (t {{$typeName}}) As{{.}}() ({{.}}, error) {
+            var body {{.}}
+            err := json.Unmarshal(t, &body)
+            return body, err
+        }
+
+        func (t *{{$typeName}}) From{{.}} (v {{.}}) error {
+            {{if $discriminator -}}
+                {{range $value, $type := $discriminator.Mapping -}}
+                    {{if eq $type $element -}}
+                        v.{{$discriminator.PropertyName}} = "{{$value}}"
+                    {{end -}}
+                {{end -}}
+            {{end -}}
+            b, err := json.Marshal(v)
+            *t = {{$typeName}}(b)
+            return err
+        }
+    {{end}}
+
+    {{if $discriminator}}
+        func (t {{.TypeName}}) Discriminator() (string, error) {
+            var discriminator struct {
+                Discriminator string {{$discriminator.JSONTag}}
+            }
+            err := json.Unmarshal(t, &discriminator)
+            return discriminator.Discriminator, err
+        }
+
+        {{if ne 0 (len $discriminator.Mapping)}}
+            func (t {{.TypeName}}) ValueByDiscriminator() (interface{}, error) {
+                discriminator, err := t.Discriminator()
+                if err != nil {
+                    return nil, err
+                }
+                switch discriminator{
+                    {{range $value, $type := $discriminator.Mapping -}}
+                        case "{{$value}}":
+                            return t.As{{$type}}()
+                    {{end -}}
+                    default:
+                        return nil, errors.New("unknown discriminator value: "+discriminator)
+                }
+            }
+        {{end}}
+    {{end}}
+
+    func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
+        return (json.RawMessage)(t).MarshalJSON()
+    }
+
+    func (t *{{.TypeName}}) UnmarshalJSON(b []byte) error {
+        return (*json.RawMessage)(t).UnmarshalJSON(b)
+    }
+{{end}}`,
 }
 
 // Parse parses declared templates.
@@ -1098,4 +1158,3 @@ func Parse(t *template.Template) (*template.Template, error) {
 	}
 	return t, nil
 }
-
