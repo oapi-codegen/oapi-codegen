@@ -942,7 +942,8 @@ type ServerInterface interface {
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}
-}`,
+}
+`,
 	"gin-register.tmpl": `// GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
     BaseURL string
@@ -965,7 +966,8 @@ HandlerMiddlewares: options.Middlewares,
 router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
 {{end}}
 return router
-}`,
+}
+`,
 	"gin-wrappers.tmpl": `// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
