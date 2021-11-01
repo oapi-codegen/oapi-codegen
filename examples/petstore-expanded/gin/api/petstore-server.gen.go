@@ -15,79 +15,35 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi/v5"
+	"github.com/gin-gonic/gin"
 )
-
-// Error defines model for Error.
-type Error struct {
-	// Error code
-	Code int32 `json:"code"`
-
-	// Error message
-	Message string `json:"message"`
-}
-
-// NewPet defines model for NewPet.
-type NewPet struct {
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// Pet defines model for Pet.
-type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-	// Unique id of the pet
-	Id int64 `json:"id"`
-}
-
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
-
-	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
-}
-
-// AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody NewPet
-
-// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody AddPetJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
+	FindPets(c *gin.Context, params FindPetsParams)
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(w http.ResponseWriter, r *http.Request)
+	AddPet(c *gin.Context)
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
+	DeletePet(c *gin.Context, id int64)
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
+	FindPetByID(c *gin.Context, id int64)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(c *gin.Context)
 
 // FindPets operation middleware
-func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	var err error
 
@@ -95,189 +51,133 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	var params FindPetsParams
 
 	// ------------- Optional query parameter "tags" -------------
-	if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
+	if paramValue := c.Query("tags"); paramValue != "" {
 
 	}
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
+	err = runtime.BindQueryParameter("form", true, false, "tags", c.Request.URL.Query(), &params.Tags)
 	if err != nil {
-		err = fmt.Errorf("Invalid format for parameter tags: %w", err)
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter tags: %s", err)})
 		return
 	}
 
 	// ------------- Optional query parameter "limit" -------------
-	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	if paramValue := c.Query("limit"); paramValue != "" {
 
 	}
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
 	if err != nil {
-		err = fmt.Errorf("Invalid format for parameter limit: %w", err)
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter limit: %s", err)})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPets(w, r, params)
-	}
-
 	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+		middleware(c)
 	}
 
-	handler(w, r.WithContext(ctx))
+	siw.Handler.FindPets(c, params)
 }
 
 // AddPet operation middleware
-func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AddPet(w, r)
-	}
+func (siw *ServerInterfaceWrapper) AddPet(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+		middleware(c)
 	}
 
-	handler(w, r.WithContext(ctx))
+	siw.Handler.AddPet(c)
 }
 
 // DeletePet operation middleware
-func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Query("id"), &id)
 	if err != nil {
-		err = fmt.Errorf("Invalid format for parameter id: %w", err)
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeletePet(w, r, id)
-	}
-
 	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+		middleware(c)
 	}
 
-	handler(w, r.WithContext(ctx))
+	siw.Handler.DeletePet(c, id)
 }
 
 // FindPetByID operation middleware
-func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Query("id"), &id)
 	if err != nil {
-		err = fmt.Errorf("Invalid format for parameter id: %w", err)
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{err})
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
 		return
 	}
 
-	var handler = func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPetByID(w, r, id)
-	}
-
 	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+		middleware(c)
 	}
 
-	handler(w, r.WithContext(ctx))
-}
-
-type UnescapedCookieParamError struct {
-	error
-}
-type UnmarshalingParamError struct {
-	error
-}
-type RequiredParamError struct {
-	error
-}
-type RequiredHeaderError struct {
-	error
-}
-type InvalidParamFormatError struct {
-	error
-}
-type TooManyValuesForParamError struct {
-	error
+	siw.Handler.FindPetByID(c, id)
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{})
+func Handler(si ServerInterface) *gin.Engine {
+	return HandlerWithOptions(si, GinServerOptions{})
 }
 
-type ChiServerOptions struct {
-	BaseURL          string
-	BaseRouter       chi.Router
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+type GinServerOptions struct {
+	BaseURL     string
+	BaseRouter  *gin.Engine
+	Middlewares []MiddlewareFunc
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{
+func HandlerFromMux(si ServerInterface, r *gin.Engine) *gin.Engine {
+	return HandlerWithOptions(si, GinServerOptions{
 		BaseRouter: r,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string) *gin.Engine {
+	return HandlerWithOptions(si, GinServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
+func HandlerWithOptions(si ServerInterface, options GinServerOptions) *gin.Engine {
 	r := options.BaseRouter
 
 	if r == nil {
-		r = chi.NewRouter()
-	}
-	if options.ErrorHandlerFunc == nil {
-		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
+		r = gin.New()
 	}
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets", wrapper.FindPets)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/pets", wrapper.AddPet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Delete(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
-	})
+	r.GET(options.BaseURL+"/pets", wrapper.FindPets)
+
+	r.POST(options.BaseURL+"/pets", wrapper.AddPet)
+
+	r.DELETE(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+
+	r.GET(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
 
 	return r
-}
-
-// Base64 encoded, gzipped, json marshaled Swagger object
+} // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
 	"H4sIAAAAAAAC/+RXW48budH9KwV+32OnNbEXedBTvB4vICBrT+LdvKznoYZdkmrBSw9Z1FgY6L8HRbZu",

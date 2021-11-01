@@ -1,12 +1,25 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types,chi-server,spec -o petstore.gen.go ../../petstore-expanded.yaml
+// Copyright 2019 DeepMap, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package api
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"sync"
+
+	"github.com/gin-gonic/gin"
 )
 
 type PetStore struct {
@@ -14,10 +27,6 @@ type PetStore struct {
 	NextId int64
 	Lock   sync.Mutex
 }
-
-// Make sure we conform to ServerInterface
-
-var _ ServerInterface = (*PetStore)(nil)
 
 func NewPetStore() *PetStore {
 	return &PetStore{
@@ -28,17 +37,16 @@ func NewPetStore() *PetStore {
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetstoreError(w http.ResponseWriter, code int, message string) {
+func sendPetstoreError(c *gin.Context, code int, message string) {
 	petErr := Error{
 		Code:    int32(code),
 		Message: message,
 	}
-	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(petErr)
+	c.JSON(code, petErr)
 }
 
 // Here, we implement all of the handlers in the ServerInterface
-func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
+func (p *PetStore) FindPets(c *gin.Context, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -65,19 +73,17 @@ func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindP
 			}
 		}
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	c.JSON(http.StatusOK, result)
 }
 
-func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
+func (p *PetStore) AddPet(c *gin.Context) {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
-	if err := json.NewDecoder(r.Body).Decode(&newPet); err != nil {
-		sendPetstoreError(w, http.StatusBadRequest, "Invalid format for NewPet")
+	err := c.Bind(&newPet)
+	if err != nil {
+		sendPetstoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
 		return
 	}
-
 	// We now have a pet, let's add it to our "database".
 
 	// We're always asynchronous, so lock unsafe operations below
@@ -95,34 +101,30 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	p.Pets[pet.Id] = pet
 
 	// Now, we have to return the NewPet
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(pet)
+	c.JSON(http.StatusCreated, pet)
+	return
 }
 
-func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
+func (p *PetStore) FindPetByID(c *gin.Context, petId int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
-	pet, found := p.Pets[id]
+	pet, found := p.Pets[petId]
 	if !found {
-		sendPetstoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
+		sendPetstoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", petId))
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(pet)
+	c.JSON(http.StatusOK, pet)
 }
 
-func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
+func (p *PetStore) DeletePet(c *gin.Context, id int64) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
 	_, found := p.Pets[id]
 	if !found {
-		sendPetstoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
-		return
+		sendPetstoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
 	}
 	delete(p.Pets, id)
-
-	w.WriteHeader(http.StatusNoContent)
+	c.Status(http.StatusNoContent)
 }

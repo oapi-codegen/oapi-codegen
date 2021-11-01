@@ -30,7 +30,7 @@ func main() {
 	swagger.Servers = nil
 
 	// Create an instance of our handler which satisfies the generated interface
-	// petStore := api.NewPetStore()
+	petStore := api.NewPetStore()
 
 	// This is how you set up a basic chi router
 	r := gin.Default()
@@ -40,6 +40,7 @@ func main() {
 	// r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
+	r = api.Handler(petStore)
 
 	s := &http.Server{
 		Handler: r,
