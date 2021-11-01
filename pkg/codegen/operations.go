@@ -624,10 +624,10 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-    return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
+		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
-    return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
+		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 
 	}
 
@@ -641,12 +641,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	if err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
-	
-  if _, err := w.WriteString("\n"); err != nil {
+
+	if _, err := w.WriteString("\n"); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	  if _, err := w.WriteString(addProps); err != nil {
+	if _, err := w.WriteString(addProps); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
@@ -667,6 +667,12 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"echo-interface.tmpl", "echo-wrappers.tmpl", "echo-register.tmpl"}, t, operations)
+}
+
+// GenerateGinServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gin-interface.tmpl", "gin-wrappers.tmpl", "gin-register.tmpl"}, t, operations)
 }
 
 // Uses the template engine to generate the function which registers our wrappers

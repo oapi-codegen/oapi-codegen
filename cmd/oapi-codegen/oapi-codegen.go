@@ -114,6 +114,8 @@ func main() {
 			opts.GenerateChiServer = true
 		case "server":
 			opts.GenerateEchoServer = true
+		case "gin-server":
+			opts.GenerateGinServer = true
 		case "types":
 			opts.GenerateTypes = true
 		case "spec":
