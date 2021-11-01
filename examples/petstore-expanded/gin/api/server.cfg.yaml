@@ -1,0 +1,8 @@
+output:
+  petstore-server.gen.go
+generate:
+  - server
+  - spec
+package: api
+
+# go run cmd/oapi-codegen/oapi-codegen.go -generate gin --config=examples/petstore-expanded/gin/api/server.cfg.yaml examples/petstore-expanded/petstore-client.gen.go

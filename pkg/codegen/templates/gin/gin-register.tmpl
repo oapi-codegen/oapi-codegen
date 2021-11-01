@@ -1,33 +1,42 @@
-
-
-// This is a simple interface which specifies echo.Route addition functions which
-// are present on both echo.Echo and echo.Group, since we want to allow using
-// either of them for path registration
-type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) *gin.Engine {
+  return HandlerWithOptions(si, GinServerOptions{})
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-    RegisterHandlersWithBaseURL(router, si, "")
+type GinServerOptions struct {
+    BaseURL string
+    BaseRouter *gin.Engine
+    Middlewares []MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-{{if .}}
-    wrapper := ServerInterfaceWrapper{
-        Handler: si,
-    }
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, r *gin.Engine) *gin.Engine {
+    return HandlerWithOptions(si, GinServerOptions {
+        BaseRouter: r,
+    })
+}
+
+func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string) *gin.Engine {
+    return HandlerWithOptions(si, GinServerOptions {
+        BaseURL: baseURL,
+        BaseRouter: r,
+    })
+}
+
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options GinServerOptions) *gin.Engine {
+r := options.BaseRouter
+
+if r == nil {
+r = gin.New()
+}
+{{if .}}wrapper := ServerInterfaceWrapper{
+Handler: si,
+HandlerMiddlewares: options.Middlewares,
+}
 {{end}}
-{{range .}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .}}
+r.{{.Method }}(options.BaseURL+"{{.Path }}", wrapper.{{.OperationId}})
 {{end}}
+return r
 }
