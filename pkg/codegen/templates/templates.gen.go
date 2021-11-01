@@ -936,6 +936,177 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 }
 {{end}}
 `,
+	"gin-interface.tmpl": `// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{end}}
+}
+`,
+	"gin-register.tmpl": `
+
+// This is a simple interface which specifies echo.Route addition functions which
+// are present on both echo.Echo and echo.Group, since we want to allow using
+// either of them for path registration
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+    RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// Registers handlers, and prepends BaseURL to the paths, so that the paths
+// can be served under a prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+{{if .}}
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{end}}
+{{range .}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{end}}
+}
+`,
+	"gin-wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
+type ServerInterfaceWrapper struct {
+    Handler ServerInterface
+}
+
+{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
+    var err error
+{{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+{{if .IsPassThrough}}
+    {{$varName}} = ctx.Param("{{.ParamName}}")
+{{end}}
+{{if .IsJson}}
+    err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+    }
+{{end}}
+{{if .IsStyled}}
+    err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.Param("{{.ParamName}}"), &{{$varName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+    }
+{{end}}
+{{end}}
+
+{{range .SecurityDefinitions}}
+    ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{end}}
+
+{{if .RequiresParamObject}}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+{{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{if .IsStyled}}
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+    }
+    {{else}}
+    if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    err = json.Unmarshal([]byte(paramValue), &value)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+    }{{end}}
+    {{end}}
+{{end}}
+
+{{if .HeaderParams}}
+    headers := ctx.Request().Header
+{{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+    if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+        var {{.GoName}} {{.TypeDef}}
+        n := len(valueList)
+        if n != 1 {
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n))
+        }
+{{if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+{{end}}
+{{if .IsJson}}
+        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        if err != nil {
+            return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        }
+{{end}}
+{{if .IsStyled}}
+        err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
+        if err != nil {
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        }
+{{end}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        } {{if .Required}}else {
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found"))
+        }{{end}}
+{{end}}
+{{end}}
+
+{{range .CookieParams}}
+    if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    var decoded string
+    decoded, err := url.QueryUnescape(cookie.Value)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unescaping cookie parameter '{{.ParamName}}'")
+    }
+    err = json.Unmarshal([]byte(decoded), &value)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    {{if .IsStyled}}
+    var value {{.TypeDef}}
+    err = runtime.BindStyledParameterWithLocation("simple",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, cookie.Value, &value)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+    }{{end}}
+
+{{end}}{{/* .CookieParams */}}
+
+{{end}}{{/* .RequiresParamObject */}}
+    // Invoke the callback with all the unmarshalled arguments
+    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+    return err
+}
+{{end}}
+`,
 	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
 //
 // Code generated by {{.ModuleName}} version {{.Version}} DO NOT EDIT.
