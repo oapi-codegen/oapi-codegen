@@ -1,0 +1,4 @@
+output: examples/petstore-expanded/gin/api/petstore-types.gen.go
+generate:
+  - types
+package: api
