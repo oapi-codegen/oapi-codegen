@@ -1,0 +1,23 @@
+// GinServerOptions provides options for the Gin server.
+type GinServerOptions struct {
+    BaseURL string
+    Middlewares []MiddlewareFunc
+}
+
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
+  return RegisterHandlersWithOptions(router, si, GinServerOptions{})
+}
+
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
+{{if .}}wrapper := ServerInterfaceWrapper{
+Handler: si,
+HandlerMiddlewares: options.Middlewares,
+}
+{{end}}
+{{range .}}
+router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
+{{end}}
+return router
+}

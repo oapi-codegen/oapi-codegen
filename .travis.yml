@@ -1,15 +1,14 @@
 language: go
 go:
-- 1.13.x
+  - 1.16.x
 env:
   global:
-  - GO111MODULE: 'on'
-  - CGO_ENABLED: '0'
+    - GO111MODULE: "on"
+    - CGO_ENABLED: "0"
 script:
-  - go test -v ./...
-  - go generate ./pkg/codegen/templates
-  - go generate ./...
-  - go mod tidy
+  - make tidy
+  - make generate
+  - make test
   - git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
 notifications:
   email:
