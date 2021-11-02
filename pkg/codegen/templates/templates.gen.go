@@ -943,47 +943,28 @@ type ServerInterface interface {
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}
 }`,
-	"gin-register.tmpl": `// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) *gin.Engine {
-  return HandlerWithOptions(si, GinServerOptions{})
-}
-
+	"gin-register.tmpl": `// GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
     BaseURL string
-    BaseRouter *gin.Engine
     Middlewares []MiddlewareFunc
 }
 
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *gin.Engine) *gin.Engine {
-    return HandlerWithOptions(si, GinServerOptions {
-        BaseRouter: r,
-    })
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
+  return RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *gin.Engine, baseURL string) *gin.Engine {
-    return HandlerWithOptions(si, GinServerOptions {
-        BaseURL: baseURL,
-        BaseRouter: r,
-    })
-}
-
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GinServerOptions) *gin.Engine {
-r := options.BaseRouter
-
-if r == nil {
-r = gin.New()
-}
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
 {{range .}}
-r.{{.Method }}(options.BaseURL+"{{.Path }}", wrapper.{{.OperationId}})
+router.{{.Method }}(options.BaseURL+"{{.Path }}", wrapper.{{.OperationId}})
 {{end}}
-return r
+return router
 }`,
 	"gin-wrappers.tmpl": `// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
