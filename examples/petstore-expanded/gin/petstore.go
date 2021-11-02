@@ -11,8 +11,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
 	"github.com/gin-gonic/gin"
+
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
+	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
 )
 
 func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
@@ -31,7 +33,7 @@ func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
-	// r.Use(middleware.OapiRequestValidator(swagger))
+	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
 	r = api.RegisterHandlers(r, petStore)

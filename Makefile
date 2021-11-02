@@ -20,4 +20,4 @@ gin_example:
 
 tidy:
 	@echo "tidy..."
-	go mode tidy
+	go mod tidy
