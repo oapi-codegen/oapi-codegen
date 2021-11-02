@@ -97,7 +97,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", c.Query("id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
 		return
@@ -118,7 +118,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", c.Query("id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
 		return
@@ -153,9 +153,9 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 
 	router.POST(options.BaseURL+"/pets", wrapper.AddPet)
 
-	router.DELETE(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	router.DELETE(options.BaseURL+"/pets/:id", wrapper.DeletePet)
 
-	router.GET(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+	router.GET(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
 
 	return router
 } // Base64 encoded, gzipped, json marshaled Swagger object

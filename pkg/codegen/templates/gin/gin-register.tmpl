@@ -17,7 +17,7 @@ HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
 {{range .}}
-router.{{.Method }}(options.BaseURL+"{{.Path }}", wrapper.{{.OperationId}})
+router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
 {{end}}
 return router
 }

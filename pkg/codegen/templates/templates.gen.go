@@ -962,7 +962,7 @@ HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
 {{range .}}
-router.{{.Method }}(options.BaseURL+"{{.Path }}", wrapper.{{.OperationId}})
+router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
 {{end}}
 return router
 }`,
@@ -997,7 +997,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", c.Query("{{.ParamName}}"), &{{$varName}})
+  err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}})
   if err != nil {
     c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
     return

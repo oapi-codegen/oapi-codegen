@@ -66,10 +66,7 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("List all pets", func(t *testing.T) {
-		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
-		}
+		store.Pets = map[int64]api.Pet{1: {}, 2: {}}
 
 		// Now, list all pets, we should have two
 		rr := doGet(t, r, "/pets")
