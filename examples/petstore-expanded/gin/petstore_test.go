@@ -146,5 +146,4 @@ func TestPetStore(t *testing.T) {
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 0, len(petList))
 	})
-
 }
