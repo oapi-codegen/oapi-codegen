@@ -1,10 +1,10 @@
 language: go
 go:
-- 1.16.x
+  - 1.16.x
 env:
   global:
-  - GO111MODULE: 'on'
-  - CGO_ENABLED: '0'
+    - GO111MODULE: "on"
+    - CGO_ENABLED: "0"
 script:
   - make tidy
   - make generate
