@@ -7,40 +7,22 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
-func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, mux)
+func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRecorder {
+	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, handler)
 	return response.Recorder
 }
 
 func TestPetStore(t *testing.T) {
 	var err error
-
-	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
-	require.NoError(t, err)
-
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
-
-	// This is how you set up a basic chi router
-	r := chi.NewRouter()
-
-	// Use our validation middleware to check all requests against the
-	// OpenAPI schema.
-	r.Use(middleware.OapiRequestValidator(swagger))
-
 	store := api.NewPetStore()
-	api.HandlerFromMux(store, r)
+	ginPetServer := NewGinPetServer(store, 8080)
+	r := ginPetServer.Handler
 
 	t.Run("Add pet", func(t *testing.T) {
 		tag := "TagOfSpot"
@@ -167,4 +149,5 @@ func TestPetStore(t *testing.T) {
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 0, len(petList))
 	})
+
 }

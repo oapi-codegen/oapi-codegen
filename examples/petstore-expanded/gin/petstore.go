@@ -15,10 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
-	flag.Parse()
-
+func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
@@ -28,9 +25,6 @@ func main() {
 	// Clear out the servers array in the swagger spec, that skips validating
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
-
-	// Create an instance of our handler which satisfies the generated interface
-	petStore := api.NewPetStore()
 
 	// This is how you set up a basic chi router
 	r := gin.Default()
@@ -44,9 +38,17 @@ func main() {
 
 	s := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf("0.0.0.0:%d", *port),
+		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
 	}
+	return s
+}
 
+func main() {
+	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	flag.Parse()
+	// Create an instance of our handler which satisfies the generated interface
+	petStore := api.NewPetStore()
+	s := NewGinPetServer(petStore, *port)
 	// And we serve HTTP until the world ends.
 	log.Fatal(s.ListenAndServe())
 }
