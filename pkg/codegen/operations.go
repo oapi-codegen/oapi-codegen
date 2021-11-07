@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"text/template"
 	"unicode"
@@ -205,6 +206,7 @@ type OperationDefinition struct {
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Responses           []ResponseDefinition    // The list of responses that can be accepted by handlers.
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
@@ -361,6 +363,44 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
+type ResponseDefinition struct {
+	StatusCode  string
+	Description string
+	Contents    []ResponseContentDefinition
+	Headers     []ResponseHeaderDefinition
+}
+
+func (r ResponseDefinition) HasFixedStatusCode() bool {
+	_, err := strconv.Atoi(r.StatusCode)
+	return err == nil
+}
+
+type ResponseContentDefinition struct {
+	// This is the schema describing this content
+	Schema Schema
+
+	// This is the content type corresponding to the body, eg, application/json
+	ContentType string
+
+	// When we generate type names, we need a Tag for it, such as JSON, in
+	// which case we will produce "Response200JSONContent".
+	NameTag string
+}
+
+// TypeDef returns the Go type definition for a request body
+func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTag),
+		Schema:   r.Schema,
+	}
+}
+
+type ResponseHeaderDefinition struct {
+	Name   string
+	GoName string
+	Schema Schema
+}
+
 // This function returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {
@@ -431,6 +471,11 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
+			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			if err != nil {
+				return nil, fmt.Errorf("error generating response definitions: %w", err)
+			}
+
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
@@ -443,6 +488,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Path:            requestPath,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
+				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
 			}
 
@@ -512,6 +558,12 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		case "application/json":
 			tag = "JSON"
 			defaultBody = true
+		case "multipart/form-data":
+			tag = "Formdata"
+		case "text/plain":
+			tag = "Text"
+		case "application/octet-stream":
+			tag = "Binary"
 		default:
 			continue
 		}
@@ -555,6 +607,78 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
 	return bodyDefinitions, typeDefinitions, nil
+}
+
+func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
+	var responseDefinitions []ResponseDefinition
+
+	for statusCode, responseOrRef := range responses {
+		if responseOrRef == nil {
+			continue
+		}
+		response := responseOrRef.Value
+
+		var responseContentDefinitions []ResponseContentDefinition
+
+		for contentType, content := range response.Content {
+			var tag string
+			switch contentType {
+			case "application/json":
+				tag = "JSON"
+			case "text/plain":
+				tag = "Text"
+			case "application/octet-stream":
+				tag = "Binary"
+			default:
+				continue
+			}
+
+			responseTypeName := operationID + statusCode + tag + "Response"
+			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
+			if err != nil {
+				return nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			// If the response is a pre-defined type
+			if IsGoTypeReference(responseOrRef.Ref) {
+				// Convert the reference path to Go type
+				refType, err := RefPathToGoType(responseOrRef.Ref)
+				if err != nil {
+					return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+				}
+				contentSchema.RefType = refType
+			}
+
+			rcd := ResponseContentDefinition{
+				ContentType: contentType,
+				NameTag:     tag,
+				Schema:      contentSchema,
+			}
+			responseContentDefinitions = append(responseContentDefinitions, rcd)
+		}
+
+		var responseHeaderDefinitions []ResponseHeaderDefinition
+		for headerName, header := range response.Headers {
+			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
+			if err != nil {
+				return nil, fmt.Errorf("error generating response header definition: %w", err)
+			}
+			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: ToCamelCase(headerName), Schema: contentSchema}
+			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
+		}
+
+		rd := ResponseDefinition{
+			StatusCode: statusCode,
+			Contents:   responseContentDefinitions,
+			Headers:    responseHeaderDefinitions,
+		}
+		if response.Description != nil {
+			rd.Description = *response.Description
+		}
+		responseDefinitions = append(responseDefinitions, rd)
+	}
+
+	return responseDefinitions, nil
 }
 
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
@@ -673,6 +797,20 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"gin-interface.tmpl", "gin-wrappers.tmpl", "gin-register.tmpl"}, t, operations)
+}
+
+func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Options) (string, error) {
+	templates := []string{"strict-interface.tmpl"}
+	if opts.GenerateChiServer {
+		templates = append(templates, "strict-chi.tmpl")
+	}
+	if opts.GenerateEchoServer {
+		templates = append(templates, "strict-echo.tmpl")
+	}
+	if opts.GenerateGinServer {
+		templates = append(templates, "strict-gin.tmpl")
+	}
+	return GenerateTemplates(templates, t, operations)
 }
 
 // Uses the template engine to generate the function which registers our wrappers

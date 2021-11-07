@@ -117,6 +117,9 @@ type BodyWithAddPropsJSONBody_Inner struct {
 	AdditionalProperties map[string]int `json:"-"`
 }
 
+// EnsureEverythingIsReferencedTextRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
+type EnsureEverythingIsReferencedTextRequestBody RequestBody
+
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
 type EnsureEverythingIsReferencedJSONRequestBody RequestBody
 
@@ -795,6 +798,8 @@ type ClientInterface interface {
 	// EnsureEverythingIsReferenced request with any body
 	EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	EnsureEverythingIsReferencedWithTextBody(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ParamsWithAddProps request
@@ -808,6 +813,18 @@ type ClientInterface interface {
 
 func (c *Client) EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewEnsureEverythingIsReferencedRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EnsureEverythingIsReferencedWithTextBody(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnsureEverythingIsReferencedRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -864,6 +881,17 @@ func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSON
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewEnsureEverythingIsReferencedRequestWithTextBody calls the generic EnsureEverythingIsReferenced builder with text/plain body
+func NewEnsureEverythingIsReferencedRequestWithTextBody(server string, body EnsureEverythingIsReferencedTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewEnsureEverythingIsReferencedRequestWithBody(server, "text/plain", bodyReader)
 }
 
 // NewEnsureEverythingIsReferencedRequest calls the generic EnsureEverythingIsReferenced builder with application/json body
@@ -1047,6 +1075,8 @@ type ClientWithResponsesInterface interface {
 	// EnsureEverythingIsReferenced request with any body
 	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
+	EnsureEverythingIsReferencedWithTextBodyWithResponse(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
+
 	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
 	// ParamsWithAddProps request
@@ -1144,6 +1174,14 @@ func (r BodyWithAddPropsResponse) StatusCode() int {
 // EnsureEverythingIsReferencedWithBodyWithResponse request with arbitrary body returning *EnsureEverythingIsReferencedResponse
 func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferencedWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnsureEverythingIsReferencedResponse(rsp)
+}
+
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithTextBodyWithResponse(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferencedWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

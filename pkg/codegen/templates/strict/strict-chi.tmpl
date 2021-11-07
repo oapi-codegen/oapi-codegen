@@ -1,0 +1,124 @@
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            {{$varName := .GoVariableName -}}
+            request.{{$varName | ucFirst}} = {{$varName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
+                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if eq .NameTag "JSON" -}}
+                    if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+                        http.Error(w, "can't decode JSON body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := r.ParseMultipartForm(32 << 20); err != nil {
+                        http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+
+                    {{$nameTag := .NameTag}}
+                    {{range .Schema.Properties -}}
+                        {{if eq .GoTypeDef "*multipart.FileHeader"}}
+                            if fhs := r.MultipartForm.File["{{.JsonFieldName}}"]; len(fhs) > 0 {
+                                body.{{.GoFieldName}} = fhs[0]
+                            }
+                        {{else}}
+                            body.{{.GoFieldName}} = r.FormValue("{{.JsonFieldName}}")
+                        {{end}}
+                    {{end}}{{/* range .Schema.Properties */}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Text" -}}
+                    data, err := ioutil.ReadAll(r.Body)
+                    if err != nil {
+                        http.Error(w, "can't read body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end -}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{}{
+            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response := handler(r.Context(), w, r, request)
+
+        switch v := response.(type) {
+            {{range .Responses -}}
+                {{$statusCode := .StatusCode -}}
+                {{$fixedStatusCode := .HasFixedStatusCode -}}
+                {{$headers := .Headers -}}
+                {{range .Contents -}}
+                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    {{range $headers -}}
+                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    w.Header().Set("Content-Type", "{{.ContentType}}")
+                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                    {{if eq .NameTag "JSON" -}}
+                        writeJSON(w, v)
+                    {{else if eq .NameTag "Binary" -}}
+                        writeRaw(w, v)
+                    {{else if eq .NameTag "Text" -}}
+                        writeRaw(w, ([]byte)(v))
+                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* range .Contents */ -}}
+                {{if eq 0 (len .Contents) -}}
+                    case {{$opid}}{{$statusCode}}Response:
+                    {{range $headers -}}
+                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                {{end}}{{/* if eq 0 (len .Contents) */ -}}
+            {{end}}{{/* range .Responses */ -}}
+            case error:
+                http.Error(w, v.Error(), http.StatusInternalServerError)
+            case nil:
+            default:
+                http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+        }
+    }
+{{end}}
+
+func writeJSON(w http.ResponseWriter, v interface{}) {
+    if err := json.NewEncoder(w).Encode(v); err != nil {
+        fmt.Fprintln(w, err)
+    }
+}
+
+func writeRaw(w http.ResponseWriter, b []byte) {
+    if _, err := w.Write(b); err != nil {
+        fmt.Fprintln(w, err)
+    }
+}

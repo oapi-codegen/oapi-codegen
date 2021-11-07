@@ -1,0 +1,76 @@
+{{range .}}
+    {{$opid := .OperationId -}}
+    type {{$opid | ucFirst}}RequestObject struct {
+        {{range .PathParams -}}
+            {{.GoName | ucFirst}} {{.TypeDef}} {{.JsonTag}}
+        {{end -}}
+        {{if .RequiresParamObject -}}
+            Params {{$opid}}Params
+        {{end -}}
+        {{$multipleBodies := gt 1 (len .Bodies)}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body *{{$opid}}{{.NameTag}}RequestBody
+        {{end -}}
+    }
+
+    {{range .Responses}}
+        {{$statusCode := .StatusCode}}
+        {{$hasHeaders := ne 0 (len .Headers)}}
+        {{$fixedStatusCode := .HasFixedStatusCode}}
+
+        {{if $hasHeaders}}
+            type {{$opid}}{{$statusCode}}ResponseHeaders struct {
+                {{range .Headers}}
+                    {{.GoName}} {{.Schema.TypeDecl}}
+                {{end}}
+            }
+        {{end}}
+
+        {{range .Contents}}
+            {{if and (not $hasHeaders) ($fixedStatusCode) -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}
+
+                {{if not (and (opts.AliasTypes) (.Schema.IsRef))}}
+                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                        return json.Marshal(({{.Schema.GoType}})(t))
+                    }
+                {{end}}
+            {{else -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response struct {
+                    Body {{.Schema.TypeDecl}}
+                    {{if $hasHeaders -}}
+                        Headers {{$opid}}{{$statusCode}}ResponseHeaders
+                    {{end -}}
+
+                    {{if not $fixedStatusCode -}}
+                        StatusCode int
+                    {{end -}}
+                }
+
+                func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                    return json.Marshal(t.Body)
+                }
+            {{end}}
+        {{end}}
+
+        {{if eq 0 (len .Contents) -}}
+            type {{$opid}}{{$statusCode}}Response struct {
+                {{if $hasHeaders -}}
+                    Headers {{$opid}}{{$statusCode}}ResponseHeaders
+                {{end}}
+                {{if not $fixedStatusCode -}}
+                    StatusCode int
+                {{end -}}
+            }
+        {{end}}
+    {{end}}
+{{end}}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{$opid := .OperationId -}}
+{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) interface{}
+{{end}}{{/* range . */ -}}
+}

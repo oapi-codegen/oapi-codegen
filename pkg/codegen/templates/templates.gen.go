@@ -605,7 +605,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
 
 {{range .Bodies}}
 func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}{{.Suffix}}Request(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
+    req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
     }
@@ -1316,6 +1316,406 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 {{end}}
 {{end}}
 {{end}}
+`,
+	"strict-chi.tmpl": `type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            {{$varName := .GoVariableName -}}
+            request.{{$varName | ucFirst}} = {{$varName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
+                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if eq .NameTag "JSON" -}}
+                    if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+                        http.Error(w, "can't decode JSON body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := r.ParseMultipartForm(32 << 20); err != nil {
+                        http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+
+                    {{$nameTag := .NameTag}}
+                    {{range .Schema.Properties -}}
+                        {{if eq .GoTypeDef "*multipart.FileHeader"}}
+                            if fhs := r.MultipartForm.File["{{.JsonFieldName}}"]; len(fhs) > 0 {
+                                body.{{.GoFieldName}} = fhs[0]
+                            }
+                        {{else}}
+                            body.{{.GoFieldName}} = r.FormValue("{{.JsonFieldName}}")
+                        {{end}}
+                    {{end}}{{/* range .Schema.Properties */}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Text" -}}
+                    data, err := ioutil.ReadAll(r.Body)
+                    if err != nil {
+                        http.Error(w, "can't read body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end -}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{}{
+            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response := handler(r.Context(), w, r, request)
+
+        switch v := response.(type) {
+            {{range .Responses -}}
+                {{$statusCode := .StatusCode -}}
+                {{$fixedStatusCode := .HasFixedStatusCode -}}
+                {{$headers := .Headers -}}
+                {{range .Contents -}}
+                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    {{range $headers -}}
+                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    w.Header().Set("Content-Type", "{{.ContentType}}")
+                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                    {{if eq .NameTag "JSON" -}}
+                        writeJSON(w, v)
+                    {{else if eq .NameTag "Binary" -}}
+                        writeRaw(w, v)
+                    {{else if eq .NameTag "Text" -}}
+                        writeRaw(w, ([]byte)(v))
+                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* range .Contents */ -}}
+                {{if eq 0 (len .Contents) -}}
+                    case {{$opid}}{{$statusCode}}Response:
+                    {{range $headers -}}
+                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                {{end}}{{/* if eq 0 (len .Contents) */ -}}
+            {{end}}{{/* range .Responses */ -}}
+            case error:
+                http.Error(w, v.Error(), http.StatusInternalServerError)
+            case nil:
+            default:
+                http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+        }
+    }
+{{end}}
+
+func writeJSON(w http.ResponseWriter, v interface{}) {
+    if err := json.NewEncoder(w).Encode(v); err != nil {
+        fmt.Fprintln(w, err)
+    }
+}
+
+func writeRaw(w http.ResponseWriter, b []byte) {
+    if _, err := w.Write(b); err != nil {
+        fmt.Fprintln(w, err)
+    }
+}
+`,
+	"strict-echo.tmpl": `type StrictHandlerFunc func(ctx echo.Context, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            {{$varName := .GoVariableName -}}
+            request.{{$varName | ucFirst}} = {{$varName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
+                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if eq .NameTag "JSON" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        return err
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        return err
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Text" -}}
+                    data, err := ioutil.ReadAll(ctx.Request().Body)
+                    if err != nil {
+                        return err
+                    }
+                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end -}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx echo.Context, request interface{}) interface{}{
+            return sh.ssi.{{.OperationId}}(ctx.Request().Context(), request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response := handler(ctx, request)
+
+        switch v := response.(type) {
+            {{range .Responses -}}
+                {{$statusCode := .StatusCode -}}
+                {{$fixedStatusCode := .HasFixedStatusCode -}}
+                {{$headers := .Headers -}}
+                {{range .Contents -}}
+                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    {{range $headers -}}
+                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    {{if eq .NameTag "JSON" -}}
+                        ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
+                    {{else if eq .NameTag "Binary" -}}
+                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
+                    {{else if eq .NameTag "Text" -}}
+                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* range .Contents */ -}}
+                {{if eq 0 (len .Contents) -}}
+                    case {{$opid}}{{$statusCode}}Response:
+                    {{range $headers -}}
+                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                {{end}}{{/* if eq 0 (len .Contents) */ -}}
+            {{end}}{{/* range .Responses */ -}}
+            case error:
+                return v
+            case nil:
+            default:
+                return fmt.Errorf("Unexpected response type: %T", v)
+        }
+        return nil
+    }
+{{end}}
+`,
+	"strict-gin.tmpl": `type StrictHandlerFunc func(ctx *gin.Context, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(ctx *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            {{$varName := .GoVariableName -}}
+            request.{{$varName | ucFirst}} = {{$varName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end -}}
+                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if eq .NameTag "JSON" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        ctx.Error(err)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        ctx.Error(err)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Text" -}}
+                    data, err := ioutil.ReadAll(ctx.Request.Body)
+                    if err != nil {
+                        ctx.Error(err)
+                        return
+                    }
+                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end -}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx *gin.Context, request interface{}) interface{}{
+            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response := handler(ctx, request)
+
+        switch v := response.(type) {
+            {{range .Responses -}}
+                {{$statusCode := .StatusCode -}}
+                {{$fixedStatusCode := .HasFixedStatusCode -}}
+                {{$headers := .Headers -}}
+                {{range .Contents -}}
+                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    {{range $headers -}}
+                        ctx.Header("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    {{if eq .NameTag "JSON" -}}
+                        ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
+                    {{else if eq .NameTag "Binary" -}}
+                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
+                    {{else if eq .NameTag "Text" -}}
+                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* range .Contents */ -}}
+                {{if eq 0 (len .Contents) -}}
+                    case {{$opid}}{{$statusCode}}Response:
+                    {{range $headers -}}
+                        ctx.Header("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                {{end}}{{/* if eq 0 (len .Contents) */ -}}
+            {{end}}{{/* range .Responses */ -}}
+            case error:
+                ctx.Error(v)
+            case nil:
+            default:
+                ctx.Error(fmt.Errorf("Unexpected response type: %T", v))
+        }
+    }
+{{end}}
+`,
+	"strict-interface.tmpl": `{{range .}}
+    {{$opid := .OperationId -}}
+    type {{$opid | ucFirst}}RequestObject struct {
+        {{range .PathParams -}}
+            {{.GoName | ucFirst}} {{.TypeDef}} {{.JsonTag}}
+        {{end -}}
+        {{if .RequiresParamObject -}}
+            Params {{$opid}}Params
+        {{end -}}
+        {{$multipleBodies := gt 1 (len .Bodies)}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body *{{$opid}}{{.NameTag}}RequestBody
+        {{end -}}
+    }
+
+    {{range .Responses}}
+        {{$statusCode := .StatusCode}}
+        {{$hasHeaders := ne 0 (len .Headers)}}
+        {{$fixedStatusCode := .HasFixedStatusCode}}
+
+        {{if $hasHeaders}}
+            type {{$opid}}{{$statusCode}}ResponseHeaders struct {
+                {{range .Headers}}
+                    {{.GoName}} {{.Schema.TypeDecl}}
+                {{end}}
+            }
+        {{end}}
+
+        {{range .Contents}}
+            {{if and (not $hasHeaders) ($fixedStatusCode) -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}
+
+                {{if not (and (opts.AliasTypes) (.Schema.IsRef))}}
+                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                        return json.Marshal(({{.Schema.GoType}})(t))
+                    }
+                {{end}}
+            {{else -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response struct {
+                    Body {{.Schema.TypeDecl}}
+                    {{if $hasHeaders -}}
+                        Headers {{$opid}}{{$statusCode}}ResponseHeaders
+                    {{end -}}
+
+                    {{if not $fixedStatusCode -}}
+                        StatusCode int
+                    {{end -}}
+                }
+
+                func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                    return json.Marshal(t.Body)
+                }
+            {{end}}
+        {{end}}
+
+        {{if eq 0 (len .Contents) -}}
+            type {{$opid}}{{$statusCode}}Response struct {
+                {{if $hasHeaders -}}
+                    Headers {{$opid}}{{$statusCode}}ResponseHeaders
+                {{end}}
+                {{if not $fixedStatusCode -}}
+                    StatusCode int
+                {{end -}}
+            }
+        {{end}}
+    {{end}}
+{{end}}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{$opid := .OperationId -}}
+{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) interface{}
+{{end}}{{/* range . */ -}}
+}
 `,
 	"typedef.tmpl": `{{range .Types}}
 {{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}

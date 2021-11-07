@@ -1,0 +1,97 @@
+type StrictHandlerFunc func(ctx echo.Context, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            {{$varName := .GoVariableName -}}
+            request.{{$varName | ucFirst}} = {{$varName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
+                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if eq .NameTag "JSON" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        return err
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := ctx.Bind(&body); err != nil {
+                        return err
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Text" -}}
+                    data, err := ioutil.ReadAll(ctx.Request().Body)
+                    if err != nil {
+                        return err
+                    }
+                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end -}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx echo.Context, request interface{}) interface{}{
+            return sh.ssi.{{.OperationId}}(ctx.Request().Context(), request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response := handler(ctx, request)
+
+        switch v := response.(type) {
+            {{range .Responses -}}
+                {{$statusCode := .StatusCode -}}
+                {{$fixedStatusCode := .HasFixedStatusCode -}}
+                {{$headers := .Headers -}}
+                {{range .Contents -}}
+                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    {{range $headers -}}
+                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    {{if eq .NameTag "JSON" -}}
+                        ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
+                    {{else if eq .NameTag "Binary" -}}
+                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
+                    {{else if eq .NameTag "Text" -}}
+                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* range .Contents */ -}}
+                {{if eq 0 (len .Contents) -}}
+                    case {{$opid}}{{$statusCode}}Response:
+                    {{range $headers -}}
+                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
+                    {{end -}}
+                    ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                {{end}}{{/* if eq 0 (len .Contents) */ -}}
+            {{end}}{{/* range .Responses */ -}}
+            case error:
+                return v
+            case nil:
+            default:
+                return fmt.Errorf("Unexpected response type: %T", v)
+        }
+        return nil
+    }
+{{end}}

@@ -104,7 +104,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
 
 {{range .Bodies}}
 func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}{{.Suffix}}Request(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
+    req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
     }
