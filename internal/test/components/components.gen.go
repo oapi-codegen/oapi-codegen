@@ -149,7 +149,6 @@ func (a *ParamsWithAddPropsParams_P1) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		a.AdditionalProperties = make(map[string]interface{})
 		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
@@ -203,7 +202,6 @@ func (a *ParamsWithAddPropsParams_P2_Inner) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range *object {
 			var fieldVal string
@@ -257,7 +255,6 @@ func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		if raw, found := (*object)["inner"]; found {
 			err = json.Unmarshal(raw, &a.Inner)
 			if err != nil {
@@ -337,7 +334,6 @@ func (a *BodyWithAddPropsJSONBody_Inner) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range *object {
 			var fieldVal int
@@ -391,7 +387,6 @@ func (a *AdditionalPropertiesObject1) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		if raw, found := (*object)["id"]; found {
 			err = json.Unmarshal(raw, &a.Id)
 			if err != nil {
@@ -486,7 +481,6 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		if raw, found := (*object)["name"]; found {
 			err = json.Unmarshal(raw, &a.Name)
 			if err != nil {
@@ -553,7 +547,6 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		if raw, found := (*object)["inner"]; found {
 			err = json.Unmarshal(raw, &a.Inner)
 			if err != nil {
@@ -633,7 +626,6 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		if raw, found := (*object)["name"]; found {
 			err = json.Unmarshal(raw, &a.Name)
 			if err != nil {
@@ -700,7 +692,6 @@ func (a *AdditionalPropertiesObject5) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		a.AdditionalProperties = make(map[string]SchemaObject)
 		for fieldName, fieldBuf := range *object {
 			var fieldVal SchemaObject

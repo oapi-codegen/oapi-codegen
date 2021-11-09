@@ -29,15 +29,14 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if object != nil {
-{{range .Schema.Properties}}
-    if raw, found := (*object)["{{.JsonFieldName}}"]; found {
-        err = json.Unmarshal(raw, &a.{{.GoFieldName}})
-        if err != nil {
-            return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
+	if object != nil { {{range .Schema.Properties}}
+        if raw, found := (*object)["{{.JsonFieldName}}"]; found {
+            err = json.Unmarshal(raw, &a.{{.GoFieldName}})
+            if err != nil {
+                return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
+            }
+            delete(*object, "{{.JsonFieldName}}")
         }
-        delete(*object, "{{.JsonFieldName}}")
-    }
 {{end}}
         a.AdditionalProperties = make(map[string]{{$addType}})
         for fieldName, fieldBuf := range *object {

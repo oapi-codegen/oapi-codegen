@@ -65,7 +65,6 @@ func (a *Document_Fields) UnmarshalJSON(b []byte) error {
 	}
 
 	if object != nil {
-
 		a.AdditionalProperties = make(map[string]Value)
 		for fieldName, fieldBuf := range *object {
 			var fieldVal Value
