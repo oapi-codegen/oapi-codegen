@@ -58,15 +58,16 @@ func (a *Document_Fields) Set(fieldName string, value Value) {
 
 // Override default JSON handling for Document_Fields to handle AdditionalProperties
 func (a *Document_Fields) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if len(object) != 0 {
+	if object != nil {
+
 		a.AdditionalProperties = make(map[string]Value)
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal Value
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {

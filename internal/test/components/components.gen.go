@@ -142,15 +142,16 @@ func (a *ParamsWithAddPropsParams_P1) Set(fieldName string, value interface{}) {
 
 // Override default JSON handling for ParamsWithAddPropsParams_P1 to handle AdditionalProperties
 func (a *ParamsWithAddPropsParams_P1) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if len(object) != 0 {
+	if object != nil {
+
 		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -195,15 +196,16 @@ func (a *ParamsWithAddPropsParams_P2_Inner) Set(fieldName string, value string) 
 
 // Override default JSON handling for ParamsWithAddPropsParams_P2_Inner to handle AdditionalProperties
 func (a *ParamsWithAddPropsParams_P2_Inner) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if len(object) != 0 {
+	if object != nil {
+
 		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal string
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -248,31 +250,32 @@ func (a *BodyWithAddPropsJSONBody) Set(fieldName string, value interface{}) {
 
 // Override default JSON handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
 func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["inner"]; found {
-		err = json.Unmarshal(raw, &a.Inner)
-		if err != nil {
-			return fmt.Errorf("error reading 'inner': %w", err)
-		}
-		delete(object, "inner")
-	}
+	if object != nil {
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
+		if raw, found := (*object)["inner"]; found {
+			err = json.Unmarshal(raw, &a.Inner)
+			if err != nil {
+				return fmt.Errorf("error reading 'inner': %w", err)
+			}
+			delete(*object, "inner")
 		}
-		delete(object, "name")
-	}
 
-	if len(object) != 0 {
+		if raw, found := (*object)["name"]; found {
+			err = json.Unmarshal(raw, &a.Name)
+			if err != nil {
+				return fmt.Errorf("error reading 'name': %w", err)
+			}
+			delete(*object, "name")
+		}
+
 		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -327,15 +330,16 @@ func (a *BodyWithAddPropsJSONBody_Inner) Set(fieldName string, value int) {
 
 // Override default JSON handling for BodyWithAddPropsJSONBody_Inner to handle AdditionalProperties
 func (a *BodyWithAddPropsJSONBody_Inner) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if len(object) != 0 {
+	if object != nil {
+
 		a.AdditionalProperties = make(map[string]int)
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal int
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -380,39 +384,40 @@ func (a *AdditionalPropertiesObject1) Set(fieldName string, value int) {
 
 // Override default JSON handling for AdditionalPropertiesObject1 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject1) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
-		if err != nil {
-			return fmt.Errorf("error reading 'id': %w", err)
-		}
-		delete(object, "id")
-	}
+	if object != nil {
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
+		if raw, found := (*object)["id"]; found {
+			err = json.Unmarshal(raw, &a.Id)
+			if err != nil {
+				return fmt.Errorf("error reading 'id': %w", err)
+			}
+			delete(*object, "id")
 		}
-		delete(object, "name")
-	}
 
-	if raw, found := object["optional"]; found {
-		err = json.Unmarshal(raw, &a.Optional)
-		if err != nil {
-			return fmt.Errorf("error reading 'optional': %w", err)
+		if raw, found := (*object)["name"]; found {
+			err = json.Unmarshal(raw, &a.Name)
+			if err != nil {
+				return fmt.Errorf("error reading 'name': %w", err)
+			}
+			delete(*object, "name")
 		}
-		delete(object, "optional")
-	}
 
-	if len(object) != 0 {
+		if raw, found := (*object)["optional"]; found {
+			err = json.Unmarshal(raw, &a.Optional)
+			if err != nil {
+				return fmt.Errorf("error reading 'optional': %w", err)
+			}
+			delete(*object, "optional")
+		}
+
 		a.AdditionalProperties = make(map[string]int)
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal int
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -474,23 +479,24 @@ func (a *AdditionalPropertiesObject3) Set(fieldName string, value interface{}) {
 
 // Override default JSON handling for AdditionalPropertiesObject3 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
-		}
-		delete(object, "name")
-	}
+	if object != nil {
 
-	if len(object) != 0 {
+		if raw, found := (*object)["name"]; found {
+			err = json.Unmarshal(raw, &a.Name)
+			if err != nil {
+				return fmt.Errorf("error reading 'name': %w", err)
+			}
+			delete(*object, "name")
+		}
+
 		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -540,31 +546,32 @@ func (a *AdditionalPropertiesObject4) Set(fieldName string, value interface{}) {
 
 // Override default JSON handling for AdditionalPropertiesObject4 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["inner"]; found {
-		err = json.Unmarshal(raw, &a.Inner)
-		if err != nil {
-			return fmt.Errorf("error reading 'inner': %w", err)
-		}
-		delete(object, "inner")
-	}
+	if object != nil {
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
+		if raw, found := (*object)["inner"]; found {
+			err = json.Unmarshal(raw, &a.Inner)
+			if err != nil {
+				return fmt.Errorf("error reading 'inner': %w", err)
+			}
+			delete(*object, "inner")
 		}
-		delete(object, "name")
-	}
 
-	if len(object) != 0 {
+		if raw, found := (*object)["name"]; found {
+			err = json.Unmarshal(raw, &a.Name)
+			if err != nil {
+				return fmt.Errorf("error reading 'name': %w", err)
+			}
+			delete(*object, "name")
+		}
+
 		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -619,23 +626,24 @@ func (a *AdditionalPropertiesObject4_Inner) Set(fieldName string, value interfac
 
 // Override default JSON handling for AdditionalPropertiesObject4_Inner to handle AdditionalProperties
 func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
-		}
-		delete(object, "name")
-	}
+	if object != nil {
 
-	if len(object) != 0 {
+		if raw, found := (*object)["name"]; found {
+			err = json.Unmarshal(raw, &a.Name)
+			if err != nil {
+				return fmt.Errorf("error reading 'name': %w", err)
+			}
+			delete(*object, "name")
+		}
+
 		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
@@ -685,15 +693,16 @@ func (a *AdditionalPropertiesObject5) Set(fieldName string, value SchemaObject) 
 
 // Override default JSON handling for AdditionalPropertiesObject5 to handle AdditionalProperties
 func (a *AdditionalPropertiesObject5) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
+	var object *map[string]json.RawMessage
 	err := json.Unmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
-	if len(object) != 0 {
+	if object != nil {
+
 		a.AdditionalProperties = make(map[string]SchemaObject)
-		for fieldName, fieldBuf := range object {
+		for fieldName, fieldBuf := range *object {
 			var fieldVal SchemaObject
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
