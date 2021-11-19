@@ -16,3 +16,8 @@ test:
 tidy:
 	@echo "tidy..."
 	go mod tidy
+
+build : 
+	go build ./...
+
+all: tidy build generate test	
