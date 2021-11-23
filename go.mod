@@ -9,7 +9,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/labstack/echo/v4 v4.2.1
+	github.com/labstack/echo/v4 v4.6.1
 	github.com/lestrrat-go/jwx v1.2.7
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
 	github.com/mattn/go-colorable v0.1.8 // indirect
