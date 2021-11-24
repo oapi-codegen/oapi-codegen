@@ -24,34 +24,34 @@ import (
 
 // Has additional properties of type int
 type AdditionalPropertiesObject1 struct {
-	Id                   int            `json:"id"`
-	Name                 string         `json:"name"`
-	Optional             *string        `json:"optional,omitempty"`
+	Id                   int            `json:"id" xml:"id"`
+	Name                 string         `json:"name" xml:"name"`
+	Optional             *string        `json:"optional,omitempty" xml:"optional"`
 	AdditionalProperties map[string]int `json:"-"`
 }
 
 // Does not allow additional properties
 type AdditionalPropertiesObject2 struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id   int    `json:"id" xml:"id"`
+	Name string `json:"name" xml:"name"`
 }
 
 // Allows any additional property
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // Has anonymous field which has additional properties
 type AdditionalPropertiesObject4 struct {
-	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
-	Name                 string                            `json:"name"`
+	Inner                AdditionalPropertiesObject4_Inner `json:"inner" xml:"inner"`
+	Name                 string                            `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{}            `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
@@ -62,25 +62,25 @@ type AdditionalPropertiesObject5 struct {
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
-	Name   string          `json:"name"`
-	Value1 json.RawMessage `json:"value1"`
-	Value2 json.RawMessage `json:"value2,omitempty"`
+	Name   string          `json:"name" xml:"name"`
+	Value1 json.RawMessage `json:"value1" xml:"value1"`
+	Value2 json.RawMessage `json:"value2,omitempty" xml:"value2"`
 }
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" xml:"firstName"`
+	Role      string `json:"role" xml:"role"`
 }
 
 // ResponseObject defines model for ResponseObject.
 type ResponseObject struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field" xml:"Field"`
 }
 
 // RequestBody defines model for RequestBody.
 type RequestBody struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field" xml:"Field"`
 }
 
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
@@ -91,13 +91,13 @@ type ParamsWithAddPropsParams_P1 struct {
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
 	// This parameter has additional properties
-	P1 ParamsWithAddPropsParams_P1 `json:"p1"`
+	P1 ParamsWithAddPropsParams_P1 `json:"p1" xml:"p1"`
 
 	// This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
-		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner"`
-	} `json:"p2"`
+		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner" xml:"inner"`
+	} `json:"p2" xml:"p2"`
 }
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.
@@ -107,8 +107,8 @@ type ParamsWithAddPropsParams_P2_Inner struct {
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
-	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner"`
-	Name                 string                         `json:"name"`
+	Inner                BodyWithAddPropsJSONBody_Inner `json:"inner" xml:"inner"`
+	Name                 string                         `json:"name" xml:"name"`
 	AdditionalProperties map[string]interface{}         `json:"-"`
 }
 
@@ -1063,23 +1063,23 @@ type EnsureEverythingIsReferencedResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *struct {
 		// Has additional properties with schema for dictionaries
-		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+		Five *AdditionalPropertiesObject5 `json:"five,omitempty" xml:"five"`
 
 		// Has anonymous field which has additional properties
-		Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-		JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+		Four      *AdditionalPropertiesObject4 `json:"four,omitempty" xml:"four"`
+		JsonField *ObjectWithJsonField         `json:"jsonField,omitempty" xml:"jsonField"`
 
 		// Has additional properties of type int
-		One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+		One *AdditionalPropertiesObject1 `json:"one,omitempty" xml:"one"`
 
 		// Allows any additional property
-		Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+		Three *AdditionalPropertiesObject3 `json:"three,omitempty" xml:"three"`
 
 		// Does not allow additional properties
-		Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+		Two *AdditionalPropertiesObject2 `json:"two,omitempty" xml:"two"`
 	}
 	JSONDefault *struct {
-		Field SchemaObject `json:"Field"`
+		Field SchemaObject `json:"Field" xml:"Field"`
 	}
 }
 
@@ -1201,20 +1201,20 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
 			// Has additional properties with schema for dictionaries
-			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+			Five *AdditionalPropertiesObject5 `json:"five,omitempty" xml:"five"`
 
 			// Has anonymous field which has additional properties
-			Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-			JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+			Four      *AdditionalPropertiesObject4 `json:"four,omitempty" xml:"four"`
+			JsonField *ObjectWithJsonField         `json:"jsonField,omitempty" xml:"jsonField"`
 
 			// Has additional properties of type int
-			One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+			One *AdditionalPropertiesObject1 `json:"one,omitempty" xml:"one"`
 
 			// Allows any additional property
-			Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+			Three *AdditionalPropertiesObject3 `json:"three,omitempty" xml:"three"`
 
 			// Does not allow additional properties
-			Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+			Two *AdditionalPropertiesObject2 `json:"two,omitempty" xml:"two"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -1223,7 +1223,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest struct {
-			Field SchemaObject `json:"Field"`
+			Field SchemaObject `json:"Field" xml:"Field"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

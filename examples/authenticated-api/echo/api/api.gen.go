@@ -28,15 +28,15 @@ const (
 // Error defines model for Error.
 type Error struct {
 	// Error code
-	Code int32 `json:"code"`
+	Code int32 `json:"code" xml:"code"`
 
 	// Error message
-	Message string `json:"message"`
+	Message string `json:"message" xml:"message"`
 }
 
 // Thing defines model for Thing.
 type Thing struct {
-	Name string `json:"name"`
+	Name string `json:"name" xml:"name"`
 }
 
 // ThingWithID defines model for ThingWithID.
@@ -44,7 +44,7 @@ type ThingWithID struct {
 	// Embedded struct due to allOf(#/components/schemas/Thing)
 	Thing `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
-	Id int64 `json:"id"`
+	Id int64 `json:"id" xml:"id"`
 }
 
 // AddThingJSONBody defines parameters for AddThing.

@@ -52,7 +52,7 @@ type CustomStringType string
 
 // EnumInObjInArray defines model for EnumInObjInArray.
 type EnumInObjInArray []struct {
-	Val *EnumInObjInArrayVal `json:"val,omitempty"`
+	Val *EnumInObjInArrayVal `json:"val,omitempty" xml:"val"`
 }
 
 // EnumInObjInArrayVal defines model for EnumInObjInArray.Val.
@@ -63,10 +63,10 @@ type GenericObject map[string]interface{}
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
-	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable"`
-	Required            string  `json:"required"`
-	RequiredAndNullable *string `json:"requiredAndNullable"`
+	Optional            *string `json:"optional,omitempty" xml:"optional"`
+	OptionalAndNullable *string `json:"optionalAndNullable" xml:"optionalAndNullable"`
+	Required            string  `json:"required" xml:"required"`
+	RequiredAndNullable *string `json:"requiredAndNullable" xml:"requiredAndNullable"`
 }
 
 // StringInPath defines model for StringInPath.
@@ -80,7 +80,7 @@ type Issue9JSONBody interface{}
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
-	Foo string `json:"foo"`
+	Foo string `json:"foo" xml:"foo"`
 }
 
 // Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
@@ -666,13 +666,13 @@ type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+		AnyType1 *AnyType1 `json:"anyType1,omitempty" xml:"anyType1"`
 
 		// AnyType2 represents any type.
 		//
 		// This should be an interface{}
-		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+		AnyType2         *AnyType2         `json:"anyType2,omitempty" xml:"anyType2"`
+		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty" xml:"customStringType"`
 	}
 }
 
@@ -948,13 +948,13 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+			AnyType1 *AnyType1 `json:"anyType1,omitempty" xml:"anyType1"`
 
 			// AnyType2 represents any type.
 			//
 			// This should be an interface{}
-			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+			AnyType2         *AnyType2         `json:"anyType2,omitempty" xml:"anyType2"`
+			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty" xml:"customStringType"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

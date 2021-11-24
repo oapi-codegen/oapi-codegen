@@ -23,105 +23,105 @@ import (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id      int    `json:"Id"`
-	IsAdmin bool   `json:"IsAdmin"`
-	Object  Object `json:"Object"`
+	Id      int    `json:"Id" xml:"Id"`
+	IsAdmin bool   `json:"IsAdmin" xml:"IsAdmin"`
+	Object  Object `json:"Object" xml:"Object"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" xml:"firstName"`
+	Role      string `json:"role" xml:"role"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// primitive
-	P *int32 `json:"p,omitempty"`
+	P *int32 `json:"p,omitempty" xml:"p"`
 
 	// primitive
-	Ep *int32 `json:"ep,omitempty"`
+	Ep *int32 `json:"ep,omitempty" xml:"ep"`
 
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea *[]int32 `json:"ea,omitempty" xml:"ea"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A *[]int32 `json:"a,omitempty" xml:"a"`
 
 	// exploded object
-	Eo *Object `json:"eo,omitempty"`
+	Eo *Object `json:"eo,omitempty" xml:"eo"`
 
 	// object
-	O *Object `json:"o,omitempty"`
+	O *Object `json:"o,omitempty" xml:"o"`
 
 	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Co *ComplexObject `json:"co,omitempty" xml:"co"`
 
 	// name starting with number
-	N1s *string `json:"1s,omitempty"`
+	N1s *string `json:"1s,omitempty" xml:"1s"`
 }
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
 	// primitive
-	XPrimitive *int32 `json:"X-Primitive,omitempty"`
+	XPrimitive *int32 `json:"X-Primitive,omitempty" xml:"X-Primitive"`
 
 	// primitive
-	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
+	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty" xml:"X-Primitive-Exploded"`
 
 	// exploded array
-	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty" xml:"X-Array-Exploded"`
 
 	// array
-	XArray *[]int32 `json:"X-Array,omitempty"`
+	XArray *[]int32 `json:"X-Array,omitempty" xml:"X-Array"`
 
 	// exploded object
-	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
+	XObjectExploded *Object `json:"X-Object-Exploded,omitempty" xml:"X-Object-Exploded"`
 
 	// object
-	XObject *Object `json:"X-Object,omitempty"`
+	XObject *Object `json:"X-Object,omitempty" xml:"X-Object"`
 
 	// complex object
-	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty" xml:"X-Complex-Object"`
 
 	// name starting with number
-	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
+	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty" xml:"1-Starting-With-Number"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
 	// deep object
-	DeepObj ComplexObject `json:"deepObj"`
+	DeepObj ComplexObject `json:"deepObj" xml:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea *[]int32 `json:"ea,omitempty" xml:"ea"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A *[]int32 `json:"a,omitempty" xml:"a"`
 
 	// exploded object
-	Eo *Object `json:"eo,omitempty"`
+	Eo *Object `json:"eo,omitempty" xml:"eo"`
 
 	// object
-	O *Object `json:"o,omitempty"`
+	O *Object `json:"o,omitempty" xml:"o"`
 
 	// exploded primitive
-	Ep *int32 `json:"ep,omitempty"`
+	Ep *int32 `json:"ep,omitempty" xml:"ep"`
 
 	// primitive
-	P *int32 `json:"p,omitempty"`
+	P *int32 `json:"p,omitempty" xml:"p"`
 
 	// primitive string
-	Ps *string `json:"ps,omitempty"`
+	Ps *string `json:"ps,omitempty" xml:"ps"`
 
 	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Co *ComplexObject `json:"co,omitempty" xml:"co"`
 
 	// name starting with number
-	N1s *string `json:"1s,omitempty"`
+	N1s *string `json:"1s,omitempty" xml:"1s"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

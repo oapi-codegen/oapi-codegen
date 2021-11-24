@@ -18,8 +18,8 @@ import (
 
 // ObjectA defines model for ObjectA.
 type ObjectA struct {
-	Name    *string               `json:"name,omitempty"`
-	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
+	Name    *string               `json:"name,omitempty" xml:"name"`
+	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty" xml:"object_b"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

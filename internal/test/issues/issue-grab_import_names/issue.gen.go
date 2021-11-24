@@ -24,10 +24,10 @@ import (
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
 	// base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.
-	Foo *string `json:"Foo,omitempty"`
+	Foo *string `json:"Foo,omitempty" xml:"Foo"`
 
 	// openapi_types. path. runtime. strings. time.Duration time.Time url. xml. yaml.
-	Bar *string `json:"Bar,omitempty"`
+	Bar *string `json:"Bar,omitempty" xml:"Bar"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
