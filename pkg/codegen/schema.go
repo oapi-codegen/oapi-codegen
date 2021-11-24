@@ -26,6 +26,8 @@ type Schema struct {
 
 	Description string // The description of the element
 
+	XmlProps *XmlProps // Properties to use when marshalling/unmarshalling XML
+
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
 }
@@ -67,7 +69,13 @@ type Property struct {
 	Schema         Schema
 	Required       bool
 	Nullable       bool
+	XmlProps       *XmlProps
 	ExtensionProps *openapi3.ExtensionProps
+}
+
+type XmlProps struct {
+	Name      string
+	Attribute bool
 }
 
 func (p Property) GoFieldName() string {
@@ -147,7 +155,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	schema := sref.Value
-
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	if IsGoTypeReference(sref.Ref) {
@@ -166,6 +173,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	outSchema := Schema{
 		Description: StringToGoComment(schema.Description),
 		OAPISchema:  schema,
+		XmlProps:    readXmlProps(schema.XML),
 	}
 
 	// We can't support this in any meaningful way
@@ -259,6 +267,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Required:       required,
 					Description:    description,
 					Nullable:       p.Value.Nullable,
+					XmlProps:       readXmlProps(p.Value.XML),
 					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
@@ -418,7 +427,7 @@ type FieldDescriptor struct {
 }
 
 // Given a list of schema descriptors, produce corresponding field names with
-// JSON annotations
+// JSON+XML annotations
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for i, p := range props {
@@ -443,6 +452,19 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		fieldTags := make(map[string]string)
+
+		if p.XmlProps != nil {
+			if p.XmlProps.Name != "" {
+				fieldTags["xml"] = p.XmlProps.Name
+			} else {
+				fieldTags["xml"] = p.JsonFieldName
+			}
+			if p.XmlProps.Attribute {
+				fieldTags["xml"] += ",attr"
+			}
+		} else {
+			fieldTags["xml"] = p.JsonFieldName
+		}
 
 		if p.Required || p.Nullable || !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
@@ -473,6 +495,7 @@ func GenStructFromSchema(schema Schema) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	// Append all the field definitions
+	objectParts = appendXMLNameField(objectParts, schema)
 	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
@@ -572,6 +595,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 				return "", err
 			}
 			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
+			objectParts = appendXMLNameField(objectParts, goSchema)
 			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
 			if goSchema.HasAdditionalProperties {
@@ -625,4 +649,36 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// For json, we go through the standard schema mechanism
 	return GenerateGoSchema(mt.Schema, path)
+}
+
+// Util function to read the XML properties from an openapiv3 schema. Currently
+// kin-openapi stores this an 'interface{}'. This can be removed if that
+// ever changes
+func readXmlProps(v interface{}) *XmlProps {
+	if v == nil {
+		return nil
+	}
+
+	m := v.(map[string]interface{})
+	p := &XmlProps{}
+
+	if name, ok := m["name"].(string); ok {
+		p.Name = name
+	}
+	if attribute, ok := m["attribute"].(bool); ok {
+		p.Attribute = attribute
+	}
+
+	return p
+}
+
+// Used when constructing a 'struct' type - adds a 'XMLName` field to control
+// the document name if required by the schema. If not required, appends
+// nothing.
+func appendXMLNameField(objectParts []string, schema Schema) []string {
+	if schema.XmlProps == nil || schema.XmlProps.Name == "" {
+		return objectParts
+	}
+	xmlNameField := fmt.Sprintf("XMLName xml.Name `xml:\"%s\"`", schema.XmlProps.Name)
+	return append(objectParts, xmlNameField)
 }
