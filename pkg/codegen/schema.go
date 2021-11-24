@@ -679,6 +679,6 @@ func appendXMLNameField(objectParts []string, schema Schema) []string {
 	if schema.XmlProps == nil || schema.XmlProps.Name == "" {
 		return objectParts
 	}
-	xmlNameField := fmt.Sprintf("XMLName xml.Name `xml:\"%s\"`", schema.XmlProps.Name)
+	xmlNameField := fmt.Sprintf("XMLName xml.Name `json:\"-\" xml:\"%s\"`", schema.XmlProps.Name)
 	return append(objectParts, xmlNameField)
 }
