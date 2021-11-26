@@ -273,7 +273,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName}, true)
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -517,7 +517,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bodyTypeName := operationID + tag + "Body"
-		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
+		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName}, true)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
 		}

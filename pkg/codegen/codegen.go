@@ -373,7 +373,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		}
 		schemaRef := schemas[schemaName]
 
-		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
+		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName}, true)
 		if err != nil {
 			return nil, fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
 		}
@@ -435,7 +435,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		response := responseOrRef.Value
 		jsonResponse, found := response.Content["application/json"]
 		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName}, false)
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -473,7 +473,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		response := bodyOrRef.Value
 		jsonBody, found := response.Content["application/json"]
 		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{bodyName})
+			goType, err := GenerateGoSchema(jsonBody.Schema, []string{bodyName}, true)
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", bodyName, err)
 			}
