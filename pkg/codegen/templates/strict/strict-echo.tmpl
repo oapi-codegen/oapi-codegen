@@ -26,10 +26,14 @@ type strictHandler struct {
             request.Params = params
         {{end -}}
 
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = ctx.Request().Header.Get("Content-Type")
+        {{end -}}
+
         {{$multipleBodies := gt 1 (len .Bodies) -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
-                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
                 {{if eq .NameTag "JSON" -}}
                     if err := ctx.Bind(&body); err != nil {
                         return err
@@ -47,6 +51,8 @@ type strictHandler struct {
                     }
                     body = {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request().Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             {{if $multipleBodies}}}{{end -}}
         {{end}}{{/* range .Bodies */}}
@@ -71,11 +77,17 @@ type strictHandler struct {
                         ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
                     {{if eq .NameTag "JSON" -}}
-                        ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
-                    {{else if eq .NameTag "Binary" -}}
-                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
+                        return ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
                     {{else if eq .NameTag "Text" -}}
-                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                        return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(v))
+                    {{else -}}
+                        if v.ContentLength != 0 {
+                            ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+                        }
+                        if closer, ok := v.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        return ctx.Stream({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}}, v.Body)
                     {{end}}{{/* if eq .NameTag "JSON" */ -}}
                 {{end}}{{/* range .Contents */ -}}
                 {{if eq 0 (len .Contents) -}}
@@ -83,7 +95,7 @@ type strictHandler struct {
                     {{range $headers -}}
                         ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
-                    ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                    return ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
                 {{end}}{{/* if eq 0 (len .Contents) */ -}}
             {{end}}{{/* range .Responses */ -}}
             case error:

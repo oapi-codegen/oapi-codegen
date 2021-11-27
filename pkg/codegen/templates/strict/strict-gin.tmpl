@@ -26,10 +26,14 @@ type strictHandler struct {
             request.Params = params
         {{end -}}
 
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = ctx.ContentType()
+        {{end -}}
+
         {{$multipleBodies := gt 1 (len .Bodies) -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end -}}
-                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
                 {{if eq .NameTag "JSON" -}}
                     if err := ctx.Bind(&body); err != nil {
                         ctx.Error(err)
@@ -50,6 +54,8 @@ type strictHandler struct {
                     }
                     body = {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             {{if $multipleBodies}}}{{end -}}
         {{end}}{{/* range .Bodies */}}
@@ -75,10 +81,13 @@ type strictHandler struct {
                     {{end -}}
                     {{if eq .NameTag "JSON" -}}
                         ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
-                    {{else if eq .NameTag "Binary" -}}
-                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
                     {{else if eq .NameTag "Text" -}}
                         ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                    {{else -}}
+                        if closer, ok := v.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        ctx.DataFromReader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v.ContentLength, {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}}, v.Body, nil)
                     {{end}}{{/* if eq .NameTag "JSON" */ -}}
                 {{end}}{{/* range .Contents */ -}}
                 {{if eq 0 (len .Contents) -}}

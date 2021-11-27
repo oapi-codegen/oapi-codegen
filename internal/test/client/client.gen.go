@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path"
@@ -35,26 +34,14 @@ type SchemaObject struct {
 // PostBothJSONBody defines parameters for PostBoth.
 type PostBothJSONBody SchemaObject
 
-// PostBothBinaryBody defines parameters for PostBoth.
-type PostBothBinaryBody *multipart.FileHeader
-
 // PostJsonJSONBody defines parameters for PostJson.
 type PostJsonJSONBody SchemaObject
-
-// PostOtherBinaryBody defines parameters for PostOther.
-type PostOtherBinaryBody *multipart.FileHeader
 
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
 type PostBothJSONRequestBody PostBothJSONBody
 
-// PostBothBinaryRequestBody defines body for PostBoth for application/json ContentType.
-type PostBothBinaryRequestBody PostBothBinaryBody
-
 // PostJsonJSONRequestBody defines body for PostJson for application/json ContentType.
 type PostJsonJSONRequestBody PostJsonJSONBody
-
-// PostOtherBinaryRequestBody defines body for PostOther for application/json ContentType.
-type PostOtherBinaryRequestBody PostOtherBinaryBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -134,8 +121,6 @@ type ClientInterface interface {
 
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	PostBothWithBinaryBody(ctx context.Context, body PostBothBinaryRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetBoth request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -149,8 +134,6 @@ type ClientInterface interface {
 
 	// PostOther request with any body
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	PostOtherWithBinaryBody(ctx context.Context, body PostOtherBinaryRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOther request
 	GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -173,18 +156,6 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 
 func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBothRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) PostBothWithBinaryBody(ctx context.Context, body PostBothBinaryRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostBothRequestWithBinaryBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -255,18 +226,6 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 	return c.Client.Do(req)
 }
 
-func (c *Client) PostOtherWithBinaryBody(ctx context.Context, body PostOtherBinaryRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewPostOtherRequestWithBinaryBody(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOtherRequest(c.Server)
 	if err != nil {
@@ -300,17 +259,6 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 	}
 	bodyReader = bytes.NewReader(buf)
 	return NewPostBothRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewPostBothRequestWithBinaryBody calls the generic PostBoth builder with application/octet-stream body
-func NewPostBothRequestWithBinaryBody(server string, body PostBothBinaryRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostBothRequestWithBody(server, "application/octet-stream", bodyReader)
 }
 
 // NewPostBothRequestWithBody generates requests for PostBoth with any type of body
@@ -434,17 +382,6 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	}
 
 	return req, nil
-}
-
-// NewPostOtherRequestWithBinaryBody calls the generic PostOther builder with application/octet-stream body
-func NewPostOtherRequestWithBinaryBody(server string, body PostOtherBinaryRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewPostOtherRequestWithBody(server, "application/octet-stream", bodyReader)
 }
 
 // NewPostOtherRequestWithBody generates requests for PostOther with any type of body
@@ -578,8 +515,6 @@ type ClientWithResponsesInterface interface {
 
 	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
-	PostBothWithBinaryBodyWithResponse(ctx context.Context, body PostBothBinaryRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
-
 	// GetBoth request
 	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
@@ -593,8 +528,6 @@ type ClientWithResponsesInterface interface {
 
 	// PostOther request with any body
 	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
-
-	PostOtherWithBinaryBodyWithResponse(ctx context.Context, body PostOtherBinaryRequestBody, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
 	// GetOther request
 	GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error)
@@ -767,14 +700,6 @@ func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body Pos
 	return ParsePostBothResponse(rsp)
 }
 
-func (c *ClientWithResponses) PostBothWithBinaryBodyWithResponse(ctx context.Context, body PostBothBinaryRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
-	rsp, err := c.PostBothWithBinaryBody(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostBothResponse(rsp)
-}
-
 // GetBothWithResponse request returning *GetBothResponse
 func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error) {
 	rsp, err := c.GetBoth(ctx, reqEditors...)
@@ -813,14 +738,6 @@ func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context, reqEditor
 // PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
 func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error) {
 	rsp, err := c.PostOtherWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParsePostOtherResponse(rsp)
-}
-
-func (c *ClientWithResponses) PostOtherWithBinaryBodyWithResponse(ctx context.Context, body PostOtherBinaryRequestBody, reqEditors ...RequestEditorFn) (*PostOtherResponse, error) {
-	rsp, err := c.PostOtherWithBinaryBody(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

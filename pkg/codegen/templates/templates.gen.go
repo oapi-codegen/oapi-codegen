@@ -419,7 +419,9 @@ type ClientWithResponsesInterface interface {
     // {{$opid}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
-    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
+    {{if .IsSupported -}}
+        {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
+    {{end -}}
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
@@ -468,6 +470,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
+{{if .IsSupported -}}
 func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error) {
     rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body, reqEditors...)
     if err != nil {
@@ -475,6 +478,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
     }
     return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
+{{end}}
 {{end}}
 
 {{end}}{{/* operations */}}
@@ -579,7 +583,9 @@ type ClientInterface interface {
     // {{$opid}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
+    {{if .IsSupported -}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+    {{end -}}
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
@@ -604,6 +610,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
 }
 
 {{range .Bodies}}
+{{if .IsSupported -}}
 func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
@@ -615,6 +622,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
     }
     return c.Client.Do(req)
 }
+{{end -}}{{/* if .IsSupported */}}
 {{end}}{{/* range .Bodies */}}
 {{end}}
 
@@ -626,6 +634,7 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
 {{$opid := .OperationId -}}
 
 {{range .Bodies}}
+{{if .IsSupported -}}
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
 func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
@@ -636,6 +645,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
     bodyReader = bytes.NewReader(buf)
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
+{{end -}}
 {{end}}
 
 // New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
@@ -1310,13 +1320,14 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 `,
 	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .Bodies}}
+{{if .IsSupported -}}
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 {{end}}
-`,
+{{end}}`,
 	"strict-chi.tmpl": `type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
@@ -1345,10 +1356,14 @@ type strictHandler struct {
             request.Params = params
         {{end -}}
 
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = r.Header.Get("Content-Type")
+        {{end -}}
+
         {{$multipleBodies := gt 1 (len .Bodies) -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
-                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
                 {{if eq .NameTag "JSON" -}}
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
                         http.Error(w, "can't decode JSON body: " + err.Error(), http.StatusBadRequest)
@@ -1380,6 +1395,8 @@ type strictHandler struct {
                     }
                     body = {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             {{if $multipleBodies}}}{{end -}}
         {{end}}{{/* range .Bodies */}}
@@ -1403,14 +1420,22 @@ type strictHandler struct {
                     {{range $headers -}}
                         w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
-                    w.Header().Set("Content-Type", "{{.ContentType}}")
+                    w.Header().Set("Content-Type", {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}})
+                    {{if not .IsSupported -}}
+                        if v.ContentLength != 0 {
+                            w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+                        }
+                    {{end -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
                     {{if eq .NameTag "JSON" -}}
                         writeJSON(w, v)
-                    {{else if eq .NameTag "Binary" -}}
-                        writeRaw(w, v)
                     {{else if eq .NameTag "Text" -}}
                         writeRaw(w, ([]byte)(v))
+                    {{else -}}
+                        if closer, ok := v.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        _, _ = io.Copy(w, v.Body)
                     {{end}}{{/* if eq .NameTag "JSON" */ -}}
                 {{end}}{{/* range .Contents */ -}}
                 {{if eq 0 (len .Contents) -}}
@@ -1470,10 +1495,14 @@ type strictHandler struct {
             request.Params = params
         {{end -}}
 
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = ctx.Request().Header.Get("Content-Type")
+        {{end -}}
+
         {{$multipleBodies := gt 1 (len .Bodies) -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
-                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
                 {{if eq .NameTag "JSON" -}}
                     if err := ctx.Bind(&body); err != nil {
                         return err
@@ -1491,6 +1520,8 @@ type strictHandler struct {
                     }
                     body = {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request().Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             {{if $multipleBodies}}}{{end -}}
         {{end}}{{/* range .Bodies */}}
@@ -1515,11 +1546,17 @@ type strictHandler struct {
                         ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
                     {{if eq .NameTag "JSON" -}}
-                        ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
-                    {{else if eq .NameTag "Binary" -}}
-                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
+                        return ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
                     {{else if eq .NameTag "Text" -}}
-                        ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                        return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(v))
+                    {{else -}}
+                        if v.ContentLength != 0 {
+                            ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+                        }
+                        if closer, ok := v.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        return ctx.Stream({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}}, v.Body)
                     {{end}}{{/* if eq .NameTag "JSON" */ -}}
                 {{end}}{{/* range .Contents */ -}}
                 {{if eq 0 (len .Contents) -}}
@@ -1527,7 +1564,7 @@ type strictHandler struct {
                     {{range $headers -}}
                         ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
-                    ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
+                    return ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
                 {{end}}{{/* if eq 0 (len .Contents) */ -}}
             {{end}}{{/* range .Responses */ -}}
             case error:
@@ -1568,10 +1605,14 @@ type strictHandler struct {
             request.Params = params
         {{end -}}
 
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = ctx.ContentType()
+        {{end -}}
+
         {{$multipleBodies := gt 1 (len .Bodies) -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end -}}
-                var body {{$opid}}{{.NameTag}}RequestBody
+                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
                 {{if eq .NameTag "JSON" -}}
                     if err := ctx.Bind(&body); err != nil {
                         ctx.Error(err)
@@ -1592,6 +1633,8 @@ type strictHandler struct {
                     }
                     body = {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             {{if $multipleBodies}}}{{end -}}
         {{end}}{{/* range .Bodies */}}
@@ -1617,10 +1660,13 @@ type strictHandler struct {
                     {{end -}}
                     {{if eq .NameTag "JSON" -}}
                         ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
-                    {{else if eq .NameTag "Binary" -}}
-                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, v)
                     {{else if eq .NameTag "Text" -}}
                         ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                    {{else -}}
+                        if closer, ok := v.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        ctx.DataFromReader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v.ContentLength, {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}}, v.Body, nil)
                     {{end}}{{/* if eq .NameTag "JSON" */ -}}
                 {{end}}{{/* range .Contents */ -}}
                 {{if eq 0 (len .Contents) -}}
@@ -1649,9 +1695,12 @@ type strictHandler struct {
         {{if .RequiresParamObject -}}
             Params {{$opid}}Params
         {{end -}}
+        {{ if .HasMaskedRequestContentTypes -}}
+            ContentType string
+        {{end -}}
         {{$multipleBodies := gt 1 (len .Bodies)}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body *{{$opid}}{{.NameTag}}RequestBody
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if .IsSupported}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
         {{end -}}
     }
 
@@ -1669,8 +1718,8 @@ type strictHandler struct {
         {{end}}
 
         {{range .Contents}}
-            {{if and (not $hasHeaders) ($fixedStatusCode) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}
+            {{if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if .IsSupported}}{{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
                 {{if not (and (opts.AliasTypes) (.Schema.IsRef))}}
                     func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
@@ -1679,7 +1728,7 @@ type strictHandler struct {
                 {{end}}
             {{else -}}
                 type {{$opid}}{{$statusCode}}{{.NameTag}}Response struct {
-                    Body {{.Schema.TypeDecl}}
+                    Body {{if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
                         Headers {{$opid}}{{$statusCode}}ResponseHeaders
                     {{end -}}
@@ -1687,11 +1736,20 @@ type strictHandler struct {
                     {{if not $fixedStatusCode -}}
                         StatusCode int
                     {{end -}}
-                }
 
-                func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
-                    return json.Marshal(t.Body)
+                    {{if not .HasFixedContentType -}}
+                        ContentType string
+                    {{end -}}
+
+                    {{if not .IsSupported -}}
+                        ContentLength int64
+                    {{end -}}
                 }
+                {{if .IsSupported}}
+                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                        return json.Marshal(t.Body)
+                    }
+                {{end}}
             {{end}}
         {{end}}
 

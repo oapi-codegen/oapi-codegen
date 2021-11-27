@@ -317,6 +317,15 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	return tds, nil
 }
 
+func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
+	for _, body := range o.Bodies {
+		if !body.IsFixedContentType() {
+			return true
+		}
+	}
+	return false
+}
+
 // This describes a request body
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
@@ -363,6 +372,16 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
+// Returns true if we support this type of content type. Otherwise io.Reader will be generated
+func (r RequestBodyDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// Returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r RequestBodyDefinition) IsFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
+}
+
 type ResponseDefinition struct {
 	StatusCode  string
 	Description string
@@ -393,6 +412,15 @@ func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDef
 		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTag),
 		Schema:   r.Schema,
 	}
+}
+
+func (r ResponseContentDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// Returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r ResponseContentDefinition) HasFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
 }
 
 type ResponseHeaderDefinition struct {
@@ -562,9 +590,12 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			tag = "Formdata"
 		case "text/plain":
 			tag = "Text"
-		case "application/octet-stream":
-			tag = "Binary"
 		default:
+			bd := RequestBodyDefinition{
+				Required:    body.Required,
+				ContentType: contentType,
+			}
+			bodyDefinitions = append(bodyDefinitions, bd)
 			continue
 		}
 
@@ -627,9 +658,11 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 				tag = "JSON"
 			case "text/plain":
 				tag = "Text"
-			case "application/octet-stream":
-				tag = "Binary"
 			default:
+				rcd := ResponseContentDefinition{
+					ContentType: contentType,
+				}
+				responseContentDefinitions = append(responseContentDefinitions, rcd)
 				continue
 			}
 

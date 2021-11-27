@@ -7,9 +7,12 @@
         {{if .RequiresParamObject -}}
             Params {{$opid}}Params
         {{end -}}
+        {{ if .HasMaskedRequestContentTypes -}}
+            ContentType string
+        {{end -}}
         {{$multipleBodies := gt 1 (len .Bodies)}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body *{{$opid}}{{.NameTag}}RequestBody
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if .IsSupported}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
         {{end -}}
     }
 
@@ -27,8 +30,8 @@
         {{end}}
 
         {{range .Contents}}
-            {{if and (not $hasHeaders) ($fixedStatusCode) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}
+            {{if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if .IsSupported}}{{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
                 {{if not (and (opts.AliasTypes) (.Schema.IsRef))}}
                     func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
@@ -37,7 +40,7 @@
                 {{end}}
             {{else -}}
                 type {{$opid}}{{$statusCode}}{{.NameTag}}Response struct {
-                    Body {{.Schema.TypeDecl}}
+                    Body {{if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
                         Headers {{$opid}}{{$statusCode}}ResponseHeaders
                     {{end -}}
@@ -45,11 +48,20 @@
                     {{if not $fixedStatusCode -}}
                         StatusCode int
                     {{end -}}
-                }
 
-                func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
-                    return json.Marshal(t.Body)
+                    {{if not .HasFixedContentType -}}
+                        ContentType string
+                    {{end -}}
+
+                    {{if not .IsSupported -}}
+                        ContentLength int64
+                    {{end -}}
                 }
+                {{if .IsSupported}}
+                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                        return json.Marshal(t.Body)
+                    }
+                {{end}}
             {{end}}
         {{end}}
 
