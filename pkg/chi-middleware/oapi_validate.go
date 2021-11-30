@@ -12,7 +12,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
 // Options to customize request validation, openapi3filter specified options will be passed through.
@@ -22,14 +22,14 @@ type Options struct {
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidator(swagger *openapi3.Swagger) func(next http.Handler) http.Handler {
+func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) func(next http.Handler) http.Handler {
-	router, err := legacy.NewRouter(swagger)
+func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
+	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
 	}

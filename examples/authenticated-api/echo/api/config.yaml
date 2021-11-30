@@ -1,0 +1,9 @@
+output:
+  api.gen.go
+package: api
+generate:
+  - types
+  - client
+  - server
+  - spec
+  - skip-prune

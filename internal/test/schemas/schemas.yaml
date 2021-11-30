@@ -110,8 +110,17 @@ paths:
     get:
       operationId: Issue209
       description: Checks if parameters are declared properly
-
-
+  /issues/375:
+    get:
+      description: |
+        Enum declaration was generated twice if the enum was in an object
+        which was inside of an array.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnumInObjInArray"
 components:
   schemas:
     GenericObject:
@@ -119,12 +128,14 @@ components:
     AnyType1: {}
     AnyType2:
       description: |
-        AnyType2 represents any type.    
-        
+        AnyType2 represents any type.
+
         This should be an interface{}
     CustomStringType:
       type: string
       format: custom
+      x-oapi-codegen-extra-tags:
+        foo: bar
     NullableProperties:
       type: object
       properties:
@@ -144,6 +155,16 @@ components:
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
+    EnumInObjInArray:
+      type: array
+      items:
+        type: object
+        properties:
+          val:
+            type: string
+            enum:
+            - first
+            - second
   parameters:
     StringInPath:
       name: str
@@ -154,7 +175,7 @@ components:
         type: string
   securitySchemes:
     # This security scheme has a - in it, we need to make sure the name gets
-    # remapped to a valid Go id. See bug 
+    # remapped to a valid Go id. See bug
     access-token:
       type: http
       scheme: bearer

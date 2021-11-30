@@ -85,6 +85,15 @@ func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	return r
 }
 
+func (r *RequestBuilder) WithJWSAuth(jws string) *RequestBuilder {
+	r.Headers["Authorization"] = "Bearer " + jws
+	return r
+}
+
+func (r *RequestBuilder) WithHost(value string) *RequestBuilder {
+	return r.WithHeader("Host", value)
+}
+
 func (r *RequestBuilder) WithContentType(value string) *RequestBuilder {
 	return r.WithHeader("Content-Type", value)
 }
@@ -145,6 +154,9 @@ func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *
 	req := httptest.NewRequest(r.Method, r.Path, bodyReader)
 	for h, v := range r.Headers {
 		req.Header.Add(h, v)
+	}
+	if host, ok := r.Headers["Host"]; ok {
+		req.Host = host
 	}
 	for _, c := range r.Cookies {
 		req.AddCookie(c)

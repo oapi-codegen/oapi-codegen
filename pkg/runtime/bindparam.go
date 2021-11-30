@@ -14,14 +14,14 @@
 package runtime
 
 import (
+	"encoding"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"reflect"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
@@ -63,6 +63,15 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 		}
 	default:
 		// Headers and cookies aren't escaped.
+	}
+
+	// If the destination implements encoding.TextUnmarshaler we use it for binding
+	if tu, ok := dest.(encoding.TextUnmarshaler); ok {
+		if err := tu.UnmarshalText([]byte(value)); err != nil {
+			return fmt.Errorf("error unmarshaling '%s' text as %T: %s", value, dest, err)
+		}
+
+		return nil
 	}
 
 	// Everything comes in by pointer, dereference it

@@ -50,7 +50,7 @@ components:
 `
 
 func TestIssue(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(spec))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
 	require.NoError(t, err)
 
 	opts := codegen.Options{

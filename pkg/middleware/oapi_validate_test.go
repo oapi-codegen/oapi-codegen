@@ -19,6 +19,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
@@ -106,18 +107,28 @@ components:
       bearerFormat: JWT
 `
 
-func doGet(t *testing.T, e *echo.Echo, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().Go(t, e)
+func doGet(t *testing.T, e *echo.Echo, rawURL string) *httptest.ResponseRecorder {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	response := testutil.NewRequest().Get(u.RequestURI()).WithHost(u.Host).WithAcceptJson().GoWithHTTPHandler(t, e)
 	return response.Recorder
 }
 
-func doPost(t *testing.T, e *echo.Echo, url string, jsonBody interface{}) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Post(url).WithJsonBody(jsonBody).Go(t, e)
+func doPost(t *testing.T, e *echo.Echo, rawURL string, jsonBody interface{}) *httptest.ResponseRecorder {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	response := testutil.NewRequest().Post(u.RequestURI()).WithHost(u.Host).WithJsonBody(jsonBody).GoWithHTTPHandler(t, e)
 	return response.Recorder
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
 	require.NoError(t, err, "Error initializing swagger")
 
 	// Create a new echo router

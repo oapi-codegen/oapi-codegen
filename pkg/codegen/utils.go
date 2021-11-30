@@ -210,15 +210,25 @@ func StringInArray(str string, array []string) bool {
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
 // Remote components (document.json#/Foo) are supported if they present in --import-mapping
-// URL components (http://deepmap.com/schemas/document.json#Foo) are supported if they present in --import-mapping
-//
+// URL components (http://deepmap.com/schemas/document.json#/Foo) are supported if they present in --import-mapping
+// Remote and URL also support standard local paths even though the spec doesn't mention them.
 func RefPathToGoType(refPath string) (string, error) {
+	return refPathToGoType(refPath, true)
+}
+
+// refPathToGoType returns the Go typename for refPath given its
+func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
-		if depth := len(pathParts); depth != 4 {
-			return "", fmt.Errorf("Parameter nesting is deeper than supported: %s has %d", refPath, depth)
+		depth := len(pathParts)
+		if local {
+			if depth != 4 {
+				return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+			}
+		} else if depth != 4 && depth != 2 {
+			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
 		}
-		return SchemaNameToTypeName(pathParts[3]), nil
+		return SchemaNameToTypeName(pathParts[len(pathParts)-1]), nil
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
@@ -228,7 +238,7 @@ func RefPathToGoType(refPath string) (string, error) {
 	if goImport, ok := importMapping[remoteComponent]; !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
-		goType, err := RefPathToGoType("#" + flatComponent)
+		goType, err := refPathToGoType("#"+flatComponent, false)
 		if err != nil {
 			return "", err
 		}
@@ -285,6 +295,21 @@ func SwaggerUriToEchoUri(uri string) string {
 //   {?param*}
 func SwaggerUriToChiUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
+}
+
+// This function converts a swagger style path URI with parameters to a
+// Gin compatible path URI. We need to replace all of Swagger parameters with
+// ":param". Valid input parameters are:
+//   {param}
+//   {param*}
+//   {.param}
+//   {.param*}
+//   {;param}
+//   {;param*}
+//   {?param}
+//   {?param*}
+func SwaggerUriToGinUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
 // Returns the argument names, in order, in a given URI string, so for
@@ -496,7 +521,7 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
 	for _, n := range deDup {
-		sanitized := SchemaNameToTypeName(SanitizeGoIdentity(n))
+		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = n

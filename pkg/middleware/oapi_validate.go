@@ -24,7 +24,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
-	"github.com/getkin/kin-openapi/routers/legacy"
+	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
@@ -34,7 +34,7 @@ const UserDataKey = "oapi-codegen/user-data"
 
 // This is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
-// OAPI validation failes on the request, we return an HTTP/400.
+// OAPI validation fails on the request, we return an HTTP/400.
 
 // Create validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
@@ -43,7 +43,7 @@ func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 		return nil, fmt.Errorf("error reading %s: %s", path, err)
 	}
 
-	swagger, err := openapi3.NewSwaggerLoader().LoadSwaggerFromData(data)
+	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
 			path, err)
@@ -52,7 +52,7 @@ func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 }
 
 // Create a validator from a swagger object.
-func OapiRequestValidator(swagger *openapi3.Swagger) echo.MiddlewareFunc {
+func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
@@ -66,8 +66,8 @@ type Options struct {
 }
 
 // Create a validator from a swagger object, with validation options
-func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options) echo.MiddlewareFunc {
-	router, err := legacy.NewRouter(swagger)
+func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
+	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +88,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.Swagger, options *Options
 	}
 }
 
-// This function is called from the middleware above and actually does the work
+// ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
 func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) error {
 	req := ctx.Request()

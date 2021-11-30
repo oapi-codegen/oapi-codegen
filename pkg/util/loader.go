@@ -6,15 +6,15 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func LoadSwagger(filePath string) (swagger *openapi3.Swagger, err error) {
+func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 
-	loader := openapi3.NewSwaggerLoader()
+	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 
 	u, err := url.Parse(filePath)
 	if err == nil && u.Scheme != "" && u.Host != "" {
-		return loader.LoadSwaggerFromURI(u)
+		return loader.LoadFromURI(u)
 	} else {
-		return loader.LoadSwaggerFromFile(filePath)
+		return loader.LoadFromFile(filePath)
 	}
 }

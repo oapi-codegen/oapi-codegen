@@ -75,7 +75,7 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request {{if .HasBody}} with any body{{end}}
+    // {{$opid}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
@@ -143,11 +143,11 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string
     {{if .IsPassThrough}}
-    pathParam{{$paramIdx}} = {{.ParamName}}
+    pathParam{{$paramIdx}} = {{.GoVariableName}}
     {{end}}
     {{if .IsJson}}
     var pathParamBuf{{$paramIdx}} []byte
-    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.ParamName}})
+    pathParamBuf{{$paramIdx}}, err = json.Marshal({{.GoVariableName}})
     if err != nil {
         return nil, err
     }
@@ -167,13 +167,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
     operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
     if operationPath[0] == '/' {
-        operationPath = operationPath[1:]
-    }
-    operationURL := url.URL{
-    	Path: operationPath,
+        operationPath = "." + operationPath
     }
 
-    queryURL := serverURL.ResolveReference(&operationURL)
+    queryURL, err := serverURL.Parse(operationPath)
+    if err != nil {
+        return nil, err
+    }
 
 {{if .QueryParams}}
     queryValues := queryURL.Query()
