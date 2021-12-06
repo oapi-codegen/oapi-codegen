@@ -45,6 +45,7 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	ResponseTypeSuffix string            // The suffix used for responses types
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -109,6 +110,11 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	filterOperationsByTag(swagger, opts)
 	if !opts.SkipPrune {
 		pruneUnusedComponents(swagger)
+	}
+
+	// if we are provided an override for the response type suffix update it
+	if opts.ResponseTypeSuffix != "" {
+		responseTypeSuffix = opts.ResponseTypeSuffix
 	}
 
 	// This creates the golang templates text package
