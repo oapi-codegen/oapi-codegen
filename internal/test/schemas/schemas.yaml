@@ -119,8 +119,17 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/abcSound"
-
-
+  /issues/375:
+    get:
+      description: |
+        Enum declaration was generated twice if the enum was in an object
+        which was inside of an array.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnumInObjInArray"
 components:
   schemas:
     GenericObject:
@@ -163,6 +172,16 @@ components:
           properties:
             uk:
               type: string
+    EnumInObjInArray:
+      type: array
+      items:
+        type: object
+        properties:
+          val:
+            type: string
+            enum:
+            - first
+            - second
   parameters:
     StringInPath:
       name: str

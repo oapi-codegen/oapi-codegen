@@ -376,7 +376,7 @@ func (c *ClientWithResponses) ValidatePetsWithResponse(ctx context.Context, body
 // ParseGetPetResponse parses an HTTP response from a GetPetWithResponse call
 func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +402,7 @@ func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 // ParseValidatePetsResponse parses an HTTP response from a ValidatePetsWithResponse call
 func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}

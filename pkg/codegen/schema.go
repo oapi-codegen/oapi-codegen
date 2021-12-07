@@ -1,11 +1,11 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
 )
 
 // This describes a Schema, a type definition.
@@ -186,7 +186,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	if schema.AllOf != nil {
 		mergedSchema, err := MergeSchemas(schema.AllOf, path)
 		if err != nil {
-			return Schema{}, errors.Wrap(err, "error merging schemas")
+			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
@@ -196,7 +196,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
-			return outSchema, errors.Wrapf(err, "invalid value for %q", extPropGoType)
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
 		}
 		outSchema.GoType = typeName
 		return outSchema, nil
@@ -228,7 +228,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				propertyPath := append(path, pName)
 				pSchema, err := GenerateGoSchema(p, propertyPath)
 				if err != nil {
-					return Schema{}, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
+					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
 
 				required := StringInArray(pName, schema.Required)
@@ -271,7 +271,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			if schema.AdditionalProperties != nil {
 				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
 				if err != nil {
-					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
+					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
 				outSchema.AdditionalPropertiesType = &additionalSchema
 			}
@@ -282,7 +282,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	} else if len(schema.Enum) > 0 {
 		err := resolveType(schema, path, &outSchema)
 		if err != nil {
-			return Schema{}, errors.Wrap(err, "error resolving primitive type")
+			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 		enumValues := make([]string, len(schema.Enum))
 		for i, enumValue := range schema.Enum {
@@ -304,7 +304,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	} else {
 		err := resolveType(schema, path, &outSchema)
 		if err != nil {
-			return Schema{}, errors.Wrap(err, "error resolving primitive type")
+			return Schema{}, fmt.Errorf("error resolving primitive type")
 		}
 	}
 	return outSchema, nil
@@ -321,15 +321,11 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		// [] in front of it.
 		arrayType, err := GenerateGoSchema(schema.Items, path)
 		if err != nil {
-			return errors.Wrap(err, "error generating type for array")
+			return fmt.Errorf("error generating type for array: %w", err)
 		}
 		outSchema.ArrayType = &arrayType
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
-		additionalTypes := arrayType.GetAdditionalTypeDefs()
-		// Check also types defined in array item
-		if len(additionalTypes) > 0 {
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalTypes...)
-		}
+		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 	case "integer":
 		// We default to int if format doesn't ask for something else.
@@ -493,20 +489,20 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		if IsGoTypeReference(ref) {
 			refType, err = RefPathToGoType(ref)
 			if err != nil {
-				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
+				return Schema{}, fmt.Errorf("error converting reference path to a go type: %w", err)
 			}
 		}
 
 		schema, err := GenerateGoSchema(schemaOrRef, path)
 		if err != nil {
-			return Schema{}, errors.Wrap(err, "error generating Go schema in allOf")
+			return Schema{}, fmt.Errorf("error generating Go schema in allOf: %w", err)
 		}
 		schema.RefType = refType
 
 		for _, p := range schema.Properties {
 			err = outSchema.MergeProperty(p)
 			if err != nil {
-				return Schema{}, errors.Wrap(err, "error merging properties")
+				return Schema{}, fmt.Errorf("error merging properties: %w", err)
 			}
 		}
 
@@ -530,7 +526,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var err error
 	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
 	if err != nil {
-		return Schema{}, errors.Wrap(err, "unable to generate aggregate type for AllOf")
+		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
 	}
 	return outSchema, nil
 }

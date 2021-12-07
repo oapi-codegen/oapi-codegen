@@ -63,7 +63,7 @@ func main() {
 
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
 	flag.StringVar(&flagGenerate, "generate", "types,nested-types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "nested-types", "client", "chi-server", "server", "spec", "skip-fmt", "skip-prune"`)
+		`Comma-separated list of code to generate; valid options: "types", "nested-types", "client", "chi-server", "server", "gin", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
@@ -114,6 +114,8 @@ func main() {
 			opts.GenerateChiServer = true
 		case "server":
 			opts.GenerateEchoServer = true
+		case "gin":
+			opts.GenerateGinServer = true
 		case "types":
 			opts.GenerateTypes = true
 		case "nested-types":
@@ -141,7 +143,7 @@ func main() {
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec\n: %s", err)
+		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)

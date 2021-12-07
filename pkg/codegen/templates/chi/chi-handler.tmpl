@@ -7,6 +7,7 @@ type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
     Middlewares []MiddlewareFunc
+    ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -30,9 +31,15 @@ r := options.BaseRouter
 if r == nil {
 r = chi.NewRouter()
 }
+if options.ErrorHandlerFunc == nil {
+    options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+    }
+}
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
+ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
 {{range .}}r.Group(func(r chi.Router) {

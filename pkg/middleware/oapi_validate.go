@@ -34,7 +34,7 @@ const UserDataKey = "oapi-codegen/user-data"
 
 // This is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
-// OAPI validation failes on the request, we return an HTTP/400.
+// OAPI validation fails on the request, we return an HTTP/400.
 
 // Create validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
@@ -88,7 +88,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 	}
 }
 
-// This function is called from the middleware above and actually does the work
+// ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
 func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) error {
 	req := ctx.Request()

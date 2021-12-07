@@ -41,6 +41,14 @@ type AnyType2 interface{}
 // CustomStringType defines model for CustomStringType.
 type CustomStringType string
 
+// EnumInObjInArray defines model for EnumInObjInArray.
+type EnumInObjInArray []EnumInObjInArrayItem
+
+// EnumInObjInArrayItem defines model for EnumInObjInArrayItem.
+type EnumInObjInArrayItem struct {
+	Val *string `json:"val,omitempty"`
+}
+
 // GenericObject defines model for GenericObject.
 type GenericObject map[string]interface{}
 
@@ -93,6 +101,9 @@ type Issue127defaultJSON GenericObject
 
 // Issue127defaultMARKDOWN defines model for Issue127defaultMARKDOWN.
 type Issue127defaultMARKDOWN GenericObject
+
+// GetIssues375200JSON defines model for GetIssues375200JSON.
+type GetIssues375200JSON EnumInObjInArray
 
 // LowerComponentsNameStart200JSON defines model for LowerComponentsNameStart200JSON.
 type LowerComponentsNameStart200JSON AbcSound
@@ -204,6 +215,9 @@ type ClientInterface interface {
 	// Issue30 request
 	Issue30(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetIssues375 request
+	GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -278,6 +292,18 @@ func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...R
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue30Request(c.Server, pFallthrough)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetIssues375Request(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -498,6 +524,33 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	return req, nil
 }
 
+// NewGetIssues375Request generates requests for GetIssues375
+func NewGetIssues375Request(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/issues/375")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewIssue41Request generates requests for Issue41
 func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request, error) {
 	var err error
@@ -675,6 +728,9 @@ type ClientWithResponsesInterface interface {
 	// Issue30 request
 	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error)
 
+	// GetIssues375 request
+	GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error)
+
 	// Issue41 request
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
@@ -805,6 +861,28 @@ func (r Issue30Response) StatusCode() int {
 	return 0
 }
 
+type GetIssues375Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *EnumInObjInArray
+}
+
+// Status returns HTTPResponse.Status
+func (r GetIssues375Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetIssues375Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -922,6 +1000,15 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 	return ParseIssue30Response(rsp)
 }
 
+// GetIssues375WithResponse request returning *GetIssues375Response
+func (c *ClientWithResponses) GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error) {
+	rsp, err := c.GetIssues375(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetIssues375Response(rsp)
+}
+
 // Issue41WithResponse request returning *Issue41Response
 func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
 	rsp, err := c.Issue41(ctx, n1param, reqEditors...)
@@ -960,7 +1047,7 @@ func (c *ClientWithResponses) LowerComponentsNameStartWithResponse(ctx context.C
 // ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
 func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +1081,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 // ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
 func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1047,7 +1134,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 // ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
 func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1063,7 +1150,7 @@ func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 // ParseIssue209Response parses an HTTP response from a Issue209WithResponse call
 func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1079,7 +1166,7 @@ func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
 func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1092,10 +1179,36 @@ func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	return response, nil
 }
 
+// ParseGetIssues375Response parses an HTTP response from a GetIssues375WithResponse call
+func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetIssues375Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest EnumInObjInArray
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
 func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1111,7 +1224,7 @@ func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 // ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
 func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1127,7 +1240,7 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 // ParseLowerComponentsNameStartResponse parses an HTTP response from a LowerComponentsNameStartWithResponse call
 func ParseLowerComponentsNameStartResponse(rsp *http.Response) (*LowerComponentsNameStartResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
+	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
@@ -1167,6 +1280,9 @@ type ServerInterface interface {
 
 	// (GET /issues/30/{fallthrough})
 	Issue30(ctx echo.Context, pFallthrough string) error
+
+	// (GET /issues/375)
+	GetIssues375(ctx echo.Context) error
 
 	// (GET /issues/41/{1param})
 	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
@@ -1252,6 +1368,17 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	return err
 }
 
+// GetIssues375 converts echo context to params.
+func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(Access_tokenScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetIssues375(ctx)
+	return err
+}
+
 // Issue41 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	var err error
@@ -1334,6 +1461,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/issues/185", wrapper.Issue185)
 	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
 	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
+	router.GET(baseURL+"/issues/375", wrapper.GetIssues375)
 	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
 	router.GET(baseURL+"/issues/9", wrapper.Issue9)
 	router.GET(baseURL+"/lowerComponentsNameStart/", wrapper.LowerComponentsNameStart)
@@ -1343,26 +1471,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7RWQW/bOBP9KwN+Bb6LbTlui2186xbdRRa7bdAE6KHOgSbHFmuJZMlRYsHwf1+QlC15",
-	"LWWbTZtLTJEznPdm+GZ2TJjSGo2aPJvvmOWOl0jo4uqGnNLrK33NKQ9riV44ZUkZzebsLfi4D5ZTDkdL",
-	"NmIqbIevbMQ0L5HNmaew4fBbpRxKNidX4Yh5kWPJg2uqbXNM6TXb7/eHzRjI6xvijvxnRfmHqlyiO4/m",
-	"NlcekgmEO8FHE3hQlAMHncxGh4vM8isKYvsRe6vr29riBZvv2tWsB26zAw6tQx8YA65rCA4nC73QKYLc",
-	"VIWEJQLXoDShW3GBu/1Ch7veVZ5MmWi9jYHs2Mq4khObMxE32xAbLkZsOzbcqrEwEteox7glx8fE1z6Z",
-	"GzZnS+5Y4Ox31OiU+JjQtby2cD9URcGXBV47Y9GRwpT3k5WJmHnRk5jRcfOtlgdf4Zw+/k6pPbNrc78b",
-	"3nya0xOvX9rf/f7uepLPl+LGVFqec+D7P1ebvmo989z7xaOonKL6JlRpcseFQO/HZDaow3qJ3KH77VAS",
-	"f3y+Haf6gHQS4snJQrPmfYQrklFbODmRTU9I6ZXpeSroCQT36GFlHNxzp0zlQXlfxU+VlmDu0QGpEidw",
-	"XSD3CFxK4EAH22C60OEBLKs1rNQWZQqLFIWEpVtu0N3H0O7R+XT7xWQ6maZCQs2tYnP2cjKdXLBRlIxI",
-	"S4baVw7HeI+uplzp9Vj5scMVOtQi1dAaaUAFUEtrlCbArfLkwRugnBO0UgeC6/BGhUNOKEFpoFz5hfYW",
-	"BXAtQRsKB6yrNMqIK1QBD9dcSTZn72OA74/xXflPbXSh/rw12qckz6bT8E8YTahj0NzaQonoLfvqTUx9",
-	"q4WnFcdbfWIvHK7YnP0va6FkjUxmRx0LZd1Rse+wmQUb0aNNj9meaVlf0ce/EctSbWUXs18GU/cX3yAE",
-	"UqHSvrLWuJCZSNqWosp6kEb/n8A6xNIStKfi7qQnTVfh3nDrM1PyGBGnmhvgdn1ty+I5rgL4rORuI82D",
-	"frajmj8nmuBG4opXBf1E8n4Q4n9W3pvXw6JRW4R1sI8I4CFHDYc2lx1aCbTPErhDOPSm4bJ787rpROjp",
-	"VyPrH0ZaTw9PaDs1HsLrEjCbXmYvdp7cfpCHdzmKjQe1aoe5BFWiKHhLQVH3A55NL9l5DKOTofJLP7L2",
-	"SHYydO7vOhBeTrPdihcF5c5U63x/juAT+tBwJGywfjBOducx6zB2qSD2oeUFAuOk2AhHQ0kPrpfT74HV",
-	"M/R2gn3S8NsF/eoi213Eq4YTd32IpDP5hsE8zr7HybcH2avUdf8NR7r/UQiPlev59L7f3z1arJfDNVoo",
-	"1JQK1EfdB6WFcQ4FFXX4XVQSZRxsmqeXaFgaWYfOvtAt3sGnezlAy7cKXd3JrzFPy+t/loNGe7tMfGwE",
-	"KiJjA4+/MA/o3h1T8oGXGJORdQg+xf/ngMXP7KDHKXx/1O3DrBy5P52Sv9wFIuNDb3JTuaIZe+dZ1oyV",
-	"YVCdSERbcjvhKijJ3wEAAP//kriuEu0OAAA=",
+	"H4sIAAAAAAAC/7RXUW/bNhD+KweuwF5sy0lbtPFbVnRFhq0NmgB9iPNAk2eLjXRUSSqOYPi/D0fKll3L",
+	"Wbs0eYlF8o533338eFwJZcvKElLwYrISlXSyxIAufl0FZ2hxQZcy5Pyt0StnqmAsiYk4Bx/noZIhh62l",
+	"GAjD0zwqBoJkiWIifOAJh99q41CLSXA1DoRXOZaSXYemapcZWoj1er2ZjIG8vgrSBf/FhPxjXc7QHUZz",
+	"nRsPyQR4T/DRBJYm5CCBktlgs5GdfUUVxHogzqm5bio8EZNV93Xak247Aw4rh54RA0kNsMPRlKaUIsht",
+	"XWiYIUgCQwHdXCpcrafEe72rfbBlgvU6BrISc+tKGcREqDjZhdhiMRAPQysrM1RW4wJpiA/ByWGQC5/M",
+	"rZiImXSCMXtPdXlBn2ZfL+jcOdnwChOwTMV1tkIXDMave1nwP6S6FJMbMTfOBzEQHpUlLW4HByXpwa4d",
+	"kHGr9UB8QEJn1Ke0oCtrZ/GxLgo5K/ByL5b9yGyEPIX3XRCD7eQ56Y0vXkfb34lZB3Yd9VbHJ3/O6Z7X",
+	"m+53v7/bHvzkTF3ZmvQhBr5/uL7rOywHnntHPKramdBc8SFJ7qRS6P0w2Dsk/p6hdOj+3DDyry/Xw0RP",
+	"SCshrhxNSbTHk7dIRh1v8xCqdIINzW3PSUUfQEmPHubWwb10xtYejPd1HKpJg71HB8GUOILLAqVHkFqD",
+	"hLCxZdMp8fmb1QuYmwfUKaxgAhcs7XKF7j6Gdo/Op91PRuPROBEJSVZGTMTL0Xh0IgZRsSIsGZKvHQ7x",
+	"Hl0TckOLofFDh3N0SCpxaIHhiAgh6coaCoAPxgcP3kLIZYBOaUFJYolQDmVADYYg5MZPyVeoQJIGsoEX",
+	"VK4m1DEvZoHkbS60mIj3McD32/gu/OcuOuafryz5VOTT8Zj/KUsBKQYtq6owKnrLvnobS99J8T7jZCeP",
+	"4oXDuZiI37IulaxV6Wwro0zrHRH9AZtTtlE90viY7YGU9pE+/g1ElriVnZy+OVq6f+QdAoMKNfm6qqzj",
+	"ykTQHkIUeQ/a0u8BKodYVgG6VXF21FOmC96Xd31iSR4DYl9zOd1dXw9l8RRXnHxWSnen7ZKe7KiRT4mG",
+	"3Wicy7oIzwjeL8r4e+a9fX1cNJoKYcH2MQNY5kiwueayzVUC3bEE6RA2d9Nx2r193d5E6MMfVje/DLSe",
+	"Ozxlu8NxDm8XgNPxWfZi5YNbH8XhXY7qzoOZd71kSlWjKmQHQdH0J3w6PhOHMQz2etqb/sy6Jdlez7u+",
+	"3Unh5ThbzWVRhNzZepGvDzP4jJ4vHA132Cyt07vtYOUw3lIs9nzlMYCxUW2Fo4WkJ6+X4x9Jq6fn3gn2",
+	"p3rvvaTfHCcuN5ttcVrmSr8hMqvi0ijkcoYcgdvMOG+IO+Ok0FNa5kbl7bg3GsHOeTo2lH3M/oAhYuI5",
+	"rmcU1YM++uBEvzrJViexBscZfbkp0c6LhB9M8U2yfZH0lPxVakf+q8Bp/0dr+1iSh6+q9fr20VN8dvzw",
+	"FgYppJPr44UIhpR1DlUoGv5d1Bp17PhaTUowzKxuuOWZUpfvUU07OwLLtxpds0N8a3+O8P9bJ9tLaReJ",
+	"T61yx8zEEVUs7BLdu21JPsoSYzGyHYD38//7iMVznoLt82S9pf/mERGx338+3NwykFEB29rUrmjfA5Ms",
+	"a/tt7uBHGrEqZTWShiX23wAAAP//YF2RvoUQAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

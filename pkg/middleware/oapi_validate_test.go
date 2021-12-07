@@ -36,7 +36,7 @@ info:
   version: 1.0.0
   title: TestServer
 servers:
-  - url: http://deepmap.ai/
+  - url: http://deepmap.ai
 paths:
   /resource:
     get:

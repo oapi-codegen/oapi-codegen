@@ -32,7 +32,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
     if raw, found := object["{{.JsonFieldName}}"]; found {
         err = json.Unmarshal(raw, &a.{{.GoFieldName}})
         if err != nil {
-            return errors.Wrap(err, "error reading '{{.JsonFieldName}}'")
+            return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
         }
         delete(object, "{{.JsonFieldName}}")
     }
@@ -43,7 +43,7 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
             var fieldVal {{$addType}}
             err := json.Unmarshal(fieldBuf, &fieldVal)
             if err != nil {
-                return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+                return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
             }
             a.AdditionalProperties[fieldName] = fieldVal
         }
@@ -59,14 +59,14 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 {{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
     object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
     if err != nil {
-        return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '{{.JsonFieldName}}'"))
+        return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
 {{if not .Required}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
 	return json.Marshal(object)
@@ -82,6 +82,7 @@ type ChiServerOptions struct {
     BaseURL string
     BaseRouter chi.Router
     Middlewares []MiddlewareFunc
+    ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -105,9 +106,15 @@ r := options.BaseRouter
 if r == nil {
 r = chi.NewRouter()
 }
+if options.ErrorHandlerFunc == nil {
+    options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+    }
+}
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
+ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
 {{range .}}r.Group(func(r chi.Router) {
@@ -129,6 +136,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
     HandlerMiddlewares []MiddlewareFunc
+    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
@@ -151,14 +159,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{if .IsJson}}
   err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
   if err != nil {
-    http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+    siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
   {{if .IsStyled}}
   err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
   if err != nil {
-    http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
@@ -184,20 +192,20 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var value {{.TypeDef}}
         err = json.Unmarshal([]byte(paramValue), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
           return
         }
 
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
       {{end}}
       }{{if .Required}} else {
-          http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+          siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
           return
       }{{end}}
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
       if err != nil {
-        http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
         return
       }
       {{end}}
@@ -211,7 +219,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           var {{.GoName}} {{.TypeDef}}
           n := len(valueList)
           if n != 1 {
-            http.Error(w, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n), http.StatusBadRequest)
+            siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "{{.ParamName}}", Count: n})
             return
           }
 
@@ -222,7 +230,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{if .IsJson}}
           err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
-            http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
           }
         {{end}}
@@ -230,7 +238,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{if .IsStyled}}
           err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
           if err != nil {
-            http.Error(w, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+            siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
             return
           }
         {{end}}
@@ -238,7 +246,8 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            http.Error(w, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+            err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
+            siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "{{.ParamName}}", Err: err})
             return
         }{{end}}
 
@@ -259,13 +268,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var decoded string
         decoded, err := url.QueryUnescape(cookie.Value)
         if err != nil {
-          http.Error(w, "Error unescaping cookie parameter '{{.ParamName}}'", http.StatusBadRequest)
+          err = fmt.Errorf("Error unescaping cookie parameter '{{.ParamName}}'")
+          siw.ErrorHandlerFunc(w, r, &UnescapedCookieParamError{ParamName: "{{.ParamName}}", Err: err})
           return
         }
 
         err = json.Unmarshal([]byte(decoded), &value)
         if err != nil {
-          http.Error(w, "Error unmarshaling parameter '{{.ParamName}}' as JSON", http.StatusBadRequest)
+          siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
           return
         }
 
@@ -276,7 +286,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         var value {{.TypeDef}}
         err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
         if err != nil {
-          http.Error(w, "Invalid format for parameter {{.ParamName}}: %s", http.StatusBadRequest)
+          siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
           return
         }
         params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -285,7 +295,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
       }
 
       {{- if .Required}} else {
-        http.Error(w, "Query argument {{.ParamName}} is required, but not found", http.StatusBadRequest)
+        siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
         return
       }
       {{- end}}
@@ -304,8 +314,74 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 }
 {{end}}
 
+type UnescapedCookieParamError struct {
+    ParamName string
+  	Err error
+}
 
+func (e *UnescapedCookieParamError) Error() string {
+    return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
+}
 
+func (e *UnescapedCookieParamError) Unwrap() error {
+    return e.Err
+}
+
+type UnmarshalingParamError struct {
+    ParamName string
+    Err error
+}
+
+func (e *UnmarshalingParamError) Error() string {
+    return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *UnmarshalingParamError) Unwrap() error {
+    return e.Err
+}
+
+type RequiredParamError struct {
+    ParamName string
+}
+
+func (e *RequiredParamError) Error() string {
+    return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+}
+
+type RequiredHeaderError struct {
+    ParamName string
+    Err error
+}
+
+func (e *RequiredHeaderError) Error() string {
+    return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
+}
+
+func (e *RequiredHeaderError) Unwrap() error {
+    return e.Err
+}
+
+type InvalidParamFormatError struct {
+    ParamName string
+	  Err error
+}
+
+func (e *InvalidParamFormatError) Error() string {
+    return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *InvalidParamFormatError) Unwrap() error {
+    return e.Err
+}
+
+type TooManyValuesForParamError struct {
+    ParamName string
+    Count int
+}
+
+func (e *TooManyValuesForParamError) Error() string {
+    return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
+}
 `,
 	"client-with-responses.tmpl": `// ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
@@ -409,7 +485,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 // Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
 func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer rsp.Body.Close()
+    defer func() { _ = rsp.Body.Close() }()
     if err != nil {
         return nil, err
     }
@@ -726,135 +802,15 @@ const (
 {{end}}
 {{end}}
 `,
-	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
-//
-// Code generated by {{.ModuleName}} version {{.Version}} DO NOT EDIT.
-package {{.PackageName}}
-
-import (
-	"bytes"
-	"compress/gzip"
-	"context"
-	"encoding/base64"
-	"encoding/json"
-	"encoding/xml"
-	"fmt"
-	"gopkg.in/yaml.v2"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
-	"time"
-
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-chi/chi/v5"
-	"github.com/labstack/echo/v4"
-	"github.com/pkg/errors"
-	{{- range .ExternalImports}}
-	{{ . }}
-	{{- end}}
-)
-`,
-	"inline.tmpl": `// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-{{range .SpecParts}}
-    "{{.}}",{{end}}
-}
-
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
-func decodeSpec() ([]byte, error) {
-    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-    if err != nil {
-        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-    }
-    zr, err := gzip.NewReader(bytes.NewReader(zipped))
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
-    var buf bytes.Buffer
-    _, err = buf.ReadFrom(zr)
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
-
-    return buf.Bytes(), nil
-}
-
-var rawSpec = decodeSpecCached()
-
-// a naive cached of a decoded swagger spec
-func decodeSpecCached() func() ([]byte, error) {
-	data, err := decodeSpec()
-	return func() ([]byte, error) {
-		return data, err
-	}
-}
-
-// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
-func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-    var res = make(map[string]func() ([]byte, error))
-    if len(pathToFile) > 0 {
-        res[pathToFile] = rawSpec
-    }
-    {{ if .ImportMapping }}
-    pathPrefix := path.Dir(pathToFile)
-    {{ end }}
-    {{ range $key, $value := .ImportMapping }}
-    for rawPath, rawFunc := range {{ $value.Name }}.PathToRawSpec(path.Join(pathPrefix, "{{ $key }}")) {
-        if _, ok := res[rawPath]; ok {
-            // it is not possible to compare functions in golang, so always overwrite the old value
-        }
-        res[rawPath] = rawFunc
-    }
-    {{- end }}
-    return res
-}
-
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
-    var resolvePath = PathToRawSpec("")
-
-    loader := openapi3.NewLoader()
-    loader.IsExternalRefsAllowed = true
-    loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-        var pathToFile = url.String()
-        pathToFile = path.Clean(pathToFile)
-        getSpec, ok := resolvePath[pathToFile]
-        if !ok {
-            err1 := fmt.Errorf("path not found: %s", pathToFile)
-            return nil, err1
-        }
-        return getSpec()
-    }
-    var specData []byte
-    specData, err = rawSpec()
-    if err != nil {
-        return
-    }
-    swagger, err = loader.LoadFromData(specData)
-    if err != nil {
-        return
-    }
-    return
-}
-`,
-	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
-{{range .TypeDefinitions}}
-// {{.TypeName}} defines parameters for {{$opid}}.
-type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+	"echo-interface.tmpl": `// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
-{{end}}
+}
 `,
-	"register.tmpl": `
+	"echo-register.tmpl": `
 
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
@@ -888,29 +844,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 {{end}}
 }
 `,
-	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
-{{range .Bodies}}
-{{with .TypeDef $opid}}
-// {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
-type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
-{{end}}
-{{end}}
-{{end}}
-`,
-	"server-interface.tmpl": `// ServerInterface represents all server handlers.
-type ServerInterface interface {
-{{range .}}{{.SummaryAsComment }}
-// ({{.Method}} {{.Path}})
-{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
-{{end}}
-}
-`,
-	"typedef.tmpl": `{{range .Types}}
-{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
-type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
-{{end}}
-`,
-	"wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
+	"echo-wrappers.tmpl": `// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
@@ -1037,6 +971,355 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
     return err
 }
+{{end}}
+`,
+	"gin-interface.tmpl": `// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{end}}
+}
+`,
+	"gin-register.tmpl": `// GinServerOptions provides options for the Gin server.
+type GinServerOptions struct {
+    BaseURL string
+    Middlewares []MiddlewareFunc
+}
+
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
+  return RegisterHandlersWithOptions(router, si, GinServerOptions{})
+}
+
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
+{{if .}}wrapper := ServerInterfaceWrapper{
+Handler: si,
+HandlerMiddlewares: options.Middlewares,
+}
+{{end}}
+{{range .}}
+router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
+{{end}}
+return router
+}
+`,
+	"gin-wrappers.tmpl": `// ServerInterfaceWrapper converts contexts to parameters.
+type ServerInterfaceWrapper struct {
+    Handler ServerInterface
+    HandlerMiddlewares []MiddlewareFunc
+}
+
+type MiddlewareFunc func(c *gin.Context)
+
+{{range .}}{{$opid := .OperationId}}
+
+// {{$opid}} operation middleware
+func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
+
+  {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+  var err error
+  {{end}}
+
+  {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+  var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+
+  {{if .IsPassThrough}}
+  {{$varName}} = c.Query("{{.ParamName}}")
+  {{end}}
+  {{if .IsJson}}
+  err = json.Unmarshal([]byte(c.Query("{{.ParamName}}")), &{{$varName}})
+  if err != nil {
+    c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
+    return
+  }
+  {{end}}
+  {{if .IsStyled}}
+  err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}})
+  if err != nil {
+    c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+    return
+  }
+  {{end}}
+
+  {{end}}
+
+{{range .SecurityDefinitions}}
+  c.Set({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{end}}
+
+  {{if .RequiresParamObject}}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+
+    {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+      if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+
+      {{if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+      {{end}}
+
+      {{if .IsJson}}
+        var value {{.TypeDef}}
+        err = json.Unmarshal([]byte(paramValue), &value)
+        if err != nil {
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
+          return
+        }
+
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+      {{end}}
+      }{{if .Required}} else {
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
+          return
+      }{{end}}
+      {{if .IsStyled}}
+      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
+      if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+        return
+      }
+      {{end}}
+  {{end}}
+
+    {{if .HeaderParams}}
+      headers := r.Header
+
+      {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+          var {{.GoName}} {{.TypeDef}}
+          n := len(valueList)
+          if n != 1 {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n)})
+            return
+          }
+
+        {{if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+        {{end}}
+
+        {{if .IsJson}}
+          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+          if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
+            return
+          }
+        {{end}}
+
+        {{if .IsStyled}}
+          err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
+          if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+            return
+          }
+        {{end}}
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+
+        } {{if .Required}}else {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found: %s", err)})
+            return
+        }{{end}}
+
+      {{end}}
+    {{end}}
+
+    {{range .CookieParams}}
+      var cookie *http.Cookie
+
+      if cookie, err = c.Cookie("{{.ParamName}}"); err == nil {
+
+      {{- if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+      {{end}}
+
+      {{- if .IsJson}}
+        var value {{.TypeDef}}
+        var decoded string
+        decoded, err := url.QueryUnescape(cookie.Value)
+        if err != nil {
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unescaping cookie parameter '{{.ParamName}}'"})
+          return
+        }
+
+        err = json.Unmarshal([]byte(decoded), &value)
+        if err != nil {
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
+          return
+        }
+
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+      {{end}}
+
+      {{- if .IsStyled}}
+        var value {{.TypeDef}}
+        err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+        if err != nil {
+          c.JSON(http.StatusBadRequest, gin.H{"msg": "Invalid format for parameter {{.ParamName}}: %s"})
+          return
+        }
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+      {{end}}
+
+      }
+
+      {{- if .Required}} else {
+        c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
+        return
+      }
+      {{- end}}
+    {{end}}
+  {{end}}
+
+  for _, middleware := range siw.HandlerMiddlewares {
+    middleware(c)
+  }
+
+  siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+}
+{{end}}
+`,
+	"imports.tmpl": `// Package {{.PackageName}} provides primitives to interact with the openapi HTTP API.
+//
+// Code generated by {{.ModuleName}} version {{.Version}} DO NOT EDIT.
+package {{.PackageName}}
+
+import (
+	"bytes"
+	"compress/gzip"
+	"context"
+	"encoding/base64"
+	"encoding/json"
+	"encoding/xml"
+	"errors"
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	"path"
+	"strings"
+	"time"
+
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-chi/chi/v5"
+	"github.com/labstack/echo/v4"
+	{{- range .ExternalImports}}
+	{{ . }}
+	{{- end}}
+)
+`,
+	"inline.tmpl": `// Base64 encoded, gzipped, json marshaled Swagger object
+var swaggerSpec = []string{
+{{range .SpecParts}}
+    "{{.}}",{{end}}
+}
+
+// GetSwagger returns the content of the embedded swagger specification file
+// or error if failed to decode
+func decodeSpec() ([]byte, error) {
+    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+    if err != nil {
+        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+    }
+    zr, err := gzip.NewReader(bytes.NewReader(zipped))
+    if err != nil {
+        return nil, fmt.Errorf("error decompressing spec: %s", err)
+    }
+    var buf bytes.Buffer
+    _, err = buf.ReadFrom(zr)
+    if err != nil {
+        return nil, fmt.Errorf("error decompressing spec: %s", err)
+    }
+
+    return buf.Bytes(), nil
+}
+
+var rawSpec = decodeSpecCached()
+
+// a naive cached of a decoded swagger spec
+func decodeSpecCached() func() ([]byte, error) {
+	data, err := decodeSpec()
+	return func() ([]byte, error) {
+		return data, err
+	}
+}
+
+// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
+func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
+    var res = make(map[string]func() ([]byte, error))
+    if len(pathToFile) > 0 {
+        res[pathToFile] = rawSpec
+    }
+    {{ if .ImportMapping }}
+    pathPrefix := path.Dir(pathToFile)
+    {{ end }}
+    {{ range $key, $value := .ImportMapping }}
+    for rawPath, rawFunc := range {{ $value.Name }}.PathToRawSpec(path.Join(pathPrefix, "{{ $key }}")) {
+        if _, ok := res[rawPath]; ok {
+            // it is not possible to compare functions in golang, so always overwrite the old value
+        }
+        res[rawPath] = rawFunc
+    }
+    {{- end }}
+    return res
+}
+
+// GetSwagger returns the Swagger specification corresponding to the generated code
+// in this file. The external references of Swagger specification are resolved.
+// The logic of resolving external references is tightly connected to "import-mapping" feature.
+// Externally referenced files must be embedded in the corresponding golang packages.
+// Urls can be supported but this task was out of the scope.
+func GetSwagger() (swagger *openapi3.T, err error) {
+    var resolvePath = PathToRawSpec("")
+
+    loader := openapi3.NewLoader()
+    loader.IsExternalRefsAllowed = true
+    loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
+        var pathToFile = url.String()
+        pathToFile = path.Clean(pathToFile)
+        getSpec, ok := resolvePath[pathToFile]
+        if !ok {
+            err1 := fmt.Errorf("path not found: %s", pathToFile)
+            return nil, err1
+        }
+        return getSpec()
+    }
+    var specData []byte
+    specData, err = rawSpec()
+    if err != nil {
+        return
+    }
+    swagger, err = loader.LoadFromData(specData)
+    if err != nil {
+        return
+    }
+    return
+}
+`,
+	"param-types.tmpl": `{{range .}}{{$opid := .OperationId}}
+{{range .TypeDefinitions}}
+// {{.TypeName}} defines parameters for {{$opid}}.
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
+{{end}}
+`,
+	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
+{{range .Bodies}}
+{{with .TypeDef $opid}}
+// {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
+{{end}}
+{{end}}
+`,
+	"typedef.tmpl": `{{range .Types}}
+{{ with .Schema.Description }}{{ . }}{{ else }}// {{.TypeName}} defines model for {{.JsonName}}.{{ end }}
+type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 `,
 }
