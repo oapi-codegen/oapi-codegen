@@ -1175,6 +1175,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   for _, middleware := range siw.HandlerMiddlewares {
     middleware(c)
   }
+  if c.IsAborted() {
+    return
+  }
 
   siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
