@@ -372,7 +372,12 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
-// Returns true if we support this type of content type. Otherwise io.Reader will be generated
+// Returns true if we support this content type for client. Otherwise only generic method will ge generated
+func (r RequestBodyDefinition) IsSupportedByClient() bool {
+	return r.NameTag == "JSON"
+}
+
+// Returns true if we support this content type for server. Otherwise io.Reader will be generated
 func (r RequestBodyDefinition) IsSupported() bool {
 	return r.NameTag != ""
 }
@@ -586,7 +591,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		case "application/json":
 			tag = "JSON"
 			defaultBody = true
-		case "multipart/form-data":
+		case "multipart/form-data", "application/x-www-form-urlencoded":
 			tag = "Formdata"
 		case "text/plain":
 			tag = "Text"
