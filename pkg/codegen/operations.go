@@ -591,7 +591,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		case "application/json":
 			tag = "JSON"
 			defaultBody = true
-		case "multipart/form-data", "application/x-www-form-urlencoded":
+		case "multipart/form-data":
+			tag = "Multipart"
+		case "application/x-www-form-urlencoded":
 			tag = "Formdata"
 		case "text/plain":
 			tag = "Text"

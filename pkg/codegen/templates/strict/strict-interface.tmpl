@@ -7,12 +7,12 @@
         {{if .RequiresParamObject -}}
             Params {{$opid}}Params
         {{end -}}
-        {{ if .HasMaskedRequestContentTypes -}}
+        {{if .HasMaskedRequestContentTypes -}}
             ContentType string
         {{end -}}
-        {{$multipleBodies := gt 1 (len .Bodies)}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if .IsSupported}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "JSON"}}*{{$opid}}{{.NameTag}}RequestBody{{else if eq .NameTag "Multipart"}}*multipart.Form{{else if eq .NameTag "Formdata"}}*url.Values{{else}}io.Reader{{end}}
         {{end -}}
     }
 

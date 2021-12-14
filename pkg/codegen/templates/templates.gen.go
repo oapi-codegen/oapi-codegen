@@ -1360,33 +1360,28 @@ type strictHandler struct {
             request.ContentType = r.Header.Get("Content-Type")
         {{end -}}
 
-        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
-                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if eq .NameTag "JSON" -}}
+                    var body {{$opid}}{{.NameTag}}RequestBody
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
                         http.Error(w, "can't decode JSON body: " + err.Error(), http.StatusBadRequest)
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
+                    if err := r.ParseForm(); err != nil {
+                        http.Error(w, "can't decode formdata: " + err.Error(), http.StatusBadRequest)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &r.Form
+                {{else if eq .NameTag "Multipart" -}}
                     if err := r.ParseMultipartForm(32 << 20); err != nil {
                         http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
                         return
                     }
-
-                    {{$nameTag := .NameTag}}
-                    {{range .Schema.Properties -}}
-                        {{if eq .GoTypeDef "*multipart.FileHeader"}}
-                            if fhs := r.MultipartForm.File["{{.JsonFieldName}}"]; len(fhs) > 0 {
-                                body.{{.GoFieldName}} = fhs[0]
-                            }
-                        {{else}}
-                            body.{{.GoFieldName}} = r.FormValue("{{.JsonFieldName}}")
-                        {{end}}
-                    {{end}}{{/* range .Schema.Properties */}}
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.MultipartForm
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(r.Body)
                     if err != nil {
@@ -1398,7 +1393,7 @@ type strictHandler struct {
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
-            {{if $multipleBodies}}}{{end -}}
+            {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{}{
@@ -1499,31 +1494,38 @@ type strictHandler struct {
             request.ContentType = ctx.Request().Header.Get("Content-Type")
         {{end -}}
 
-        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end -}}
-                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if eq .NameTag "JSON" -}}
+                    var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.Bind(&body); err != nil {
                         return err
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
-                    if err := ctx.Bind(&body); err != nil {
+                    if body, err := ctx.FormParams(); err == nil {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    } else {
                         return err
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Multipart" -}}
+                    if body, err := ctx.MultipartForm(); err == nil {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = body
+                    } else {
+                        return err
+                    }
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(ctx.Request().Body)
                     if err != nil {
                         return err
                     }
-                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    body := {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request().Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
-            {{if $multipleBodies}}}{{end -}}
+            {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx echo.Context, request interface{}) interface{}{
@@ -1609,22 +1611,29 @@ type strictHandler struct {
             request.ContentType = ctx.ContentType()
         {{end -}}
 
-        {{$multipleBodies := gt 1 (len .Bodies) -}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end -}}
-                {{if .IsSupported}}var body {{$opid}}{{.NameTag}}RequestBody{{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if eq .NameTag "JSON" -}}
+                    var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.Bind(&body); err != nil {
                         ctx.Error(err)
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
-                    if err := ctx.Bind(&body); err != nil {
+                    if err := ctx.Request.ParseForm(); err != nil {
                         ctx.Error(err)
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &ctx.Request.Form
+                {{else if eq .NameTag "Multipart" -}}
+                    if body, err := ctx.MultipartForm(); err == nil {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = body
+                    } else {
+                        ctx.Error(err)
+                        return
+                    }
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(ctx.Request.Body)
                     if err != nil {
@@ -1636,7 +1645,7 @@ type strictHandler struct {
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
-            {{if $multipleBodies}}}{{end -}}
+            {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx *gin.Context, request interface{}) interface{}{
@@ -1695,12 +1704,12 @@ type strictHandler struct {
         {{if .RequiresParamObject -}}
             Params {{$opid}}Params
         {{end -}}
-        {{ if .HasMaskedRequestContentTypes -}}
+        {{if .HasMaskedRequestContentTypes -}}
             ContentType string
         {{end -}}
-        {{$multipleBodies := gt 1 (len .Bodies)}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if .IsSupported}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "JSON"}}*{{$opid}}{{.NameTag}}RequestBody{{else if eq .NameTag "Multipart"}}*multipart.Form{{else if eq .NameTag "Formdata"}}*url.Values{{else}}io.Reader{{end}}
         {{end -}}
     }
 
