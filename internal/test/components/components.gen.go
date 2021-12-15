@@ -120,7 +120,7 @@ type BodyWithAddPropsJSONBody_Inner struct {
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
 type EnsureEverythingIsReferencedJSONRequestBody RequestBody
 
-// EnsureEverythingIsReferencedTextRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
+// EnsureEverythingIsReferencedTextRequestBody defines body for EnsureEverythingIsReferenced for text/plain ContentType.
 type EnsureEverythingIsReferencedTextRequestBody RequestBody
 
 // BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.

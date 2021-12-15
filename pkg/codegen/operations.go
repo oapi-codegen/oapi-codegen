@@ -17,6 +17,7 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"text/template"
@@ -644,6 +645,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
+	sort.Slice(bodyDefinitions, func(i, j int) bool {
+		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	})
 	return bodyDefinitions, typeDefinitions, nil
 }
 

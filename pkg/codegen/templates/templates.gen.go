@@ -1321,8 +1321,9 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 	"request-bodies.tmpl": `{{range .}}{{$opid := .OperationId}}
 {{range .Bodies}}
 {{if .IsSupported -}}
+{{$contentType := .ContentType -}}
 {{with .TypeDef $opid}}
-// {{.TypeName}} defines body for {{$opid}} for application/json ContentType.
+// {{.TypeName}} defines body for {{$opid}} for {{$contentType}} ContentType.
 type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
