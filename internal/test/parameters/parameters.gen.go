@@ -91,37 +91,37 @@ type GetHeaderParams struct {
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
 	// deep object
-	DeepObj ComplexObject `json:"deepObj"`
+	DeepObj ComplexObject `form:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 	// exploded array
-	Ea *[]int32 `json:"ea,omitempty"`
+	Ea *[]int32 `form:"ea,omitempty"`
 
 	// array
-	A *[]int32 `json:"a,omitempty"`
+	A *[]int32 `form:"a,omitempty"`
 
 	// exploded object
-	Eo *Object `json:"eo,omitempty"`
+	Eo *Object `form:"eo,omitempty"`
 
 	// object
-	O *Object `json:"o,omitempty"`
+	O *Object `form:"o,omitempty"`
 
 	// exploded primitive
-	Ep *int32 `json:"ep,omitempty"`
+	Ep *int32 `form:"ep,omitempty"`
 
 	// primitive
-	P *int32 `json:"p,omitempty"`
+	P *int32 `form:"p,omitempty"`
 
 	// primitive string
-	Ps *string `json:"ps,omitempty"`
+	Ps *string `form:"ps,omitempty"`
 
 	// complex object
-	Co *ComplexObject `json:"co,omitempty"`
+	Co *ComplexObject `form:"co,omitempty"`
 
 	// name starting with number
-	N1s *string `json:"1s,omitempty"`
+	N1s *string `form:"1s,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
