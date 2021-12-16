@@ -45,9 +45,9 @@ func (pd ParameterDefinition) TypeDef() string {
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
 	if pd.Required {
-		return fmt.Sprintf("`form:\"%s\"`", pd.ParamName)
+		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
 	} else {
-		return fmt.Sprintf("`form:\"%s,omitempty\"`", pd.ParamName)
+		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
 	}
 }
 
