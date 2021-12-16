@@ -62,12 +62,13 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description    string
-	JsonFieldName  string
-	Schema         Schema
-	Required       bool
-	Nullable       bool
-	ExtensionProps *openapi3.ExtensionProps
+	Description          string
+	JsonFieldName        string
+	Schema               Schema
+	Required             bool
+	Nullable             bool
+	OverrideFieldHintTag string
+	ExtensionProps       *openapi3.ExtensionProps
 }
 
 func (p Property) GoFieldName() string {
@@ -444,10 +445,15 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
+		fieldHintTag := "json"
+		if p.OverrideFieldHintTag != "" {
+			fieldHintTag = p.OverrideFieldHintTag
+		}
+
 		if p.Required || p.Nullable || !omitEmpty {
-			fieldTags["json"] = p.JsonFieldName
+			fieldTags[fieldHintTag] = p.JsonFieldName
 		} else {
-			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			fieldTags[fieldHintTag] = p.JsonFieldName + ",omitempty"
 		}
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
