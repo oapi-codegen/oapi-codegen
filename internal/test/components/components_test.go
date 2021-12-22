@@ -151,6 +151,42 @@ func TestOneOfWithDiscriminator(t *testing.T) {
 	assertJsonEqual(t, []byte(variant5), marshaled)
 }
 
+func TestOneOfWithFixedProperties(t *testing.T) {
+	const variant1 = "{\"type\": \"v1\", \"name\": \"123\"}"
+	const variant6 = "{\"type\": \"v6\", \"values\": [1, 2, 3]}"
+	var dst OneOfObject9
+
+	err := json.Unmarshal([]byte(variant1), &dst)
+	assert.NoError(t, err)
+	discriminator, err := dst.Discriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, "v1", discriminator)
+	v1, err := dst.ValueByDiscriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant1{Name: "123"}, v1)
+
+	err = json.Unmarshal([]byte(variant6), &dst)
+	assert.NoError(t, err)
+	discriminator, err = dst.Discriminator()
+	assert.NoError(t, err)
+	assert.Equal(t, "v6", discriminator)
+	v2, err := dst.AsOneOfVariant6()
+	assert.NoError(t, err)
+	assert.Equal(t, OneOfVariant6{[]int{1, 2, 3}}, v2)
+
+	err = dst.FromOneOfVariant1(OneOfVariant1{Name: "123"})
+	assert.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant1), marshaled)
+
+	err = dst.FromOneOfVariant6(OneOfVariant6{[]int{1, 2, 3}})
+	assert.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	assert.NoError(t, err)
+	assertJsonEqual(t, []byte(variant6), marshaled)
+}
+
 func TestAnyOf(t *testing.T) {
 	const anyOfStr = `{"discriminator": "all", "name": "123", "id": 456}`
 

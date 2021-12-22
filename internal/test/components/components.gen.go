@@ -61,8 +61,18 @@ type AdditionalPropertiesObject5 struct {
 	AdditionalProperties map[string]SchemaObject `json:"-"`
 }
 
+// Array of object with additional properties
+type AdditionalPropertiesObject6 []AdditionalPropertiesObject6_Item
+
+// AdditionalPropertiesObject6_Item defines model for AdditionalPropertiesObject6.Item.
+type AdditionalPropertiesObject6_Item struct {
+	AdditionalProperties map[string]SchemaObject `json:"-"`
+}
+
 // simple anyOf case
-type AnyOfObject1 json.RawMessage
+type AnyOfObject1 struct {
+	union json.RawMessage
+}
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
@@ -72,10 +82,28 @@ type ObjectWithJsonField struct {
 }
 
 // oneOf with references and no disciminator
-type OneOfObject1 json.RawMessage
+type OneOfObject1 struct {
+	union json.RawMessage
+}
+
+// fixed properties, variable required - will compile, but not much sense
+type OneOfObject10 struct {
+	One   *string `json:"one,omitempty"`
+	Three *bool   `json:"three,omitempty"`
+	Two   *int    `json:"two,omitempty"`
+	union json.RawMessage
+}
+
+// OneOfObject100 defines model for .
+type OneOfObject100 interface{}
+
+// OneOfObject101 defines model for .
+type OneOfObject101 interface{}
 
 // oneOf with inline elements
-type OneOfObject2 json.RawMessage
+type OneOfObject2 struct {
+	union json.RawMessage
+}
 
 // OneOfObject20 defines model for .
 type OneOfObject20 struct {
@@ -94,16 +122,45 @@ type OneOfObject3 struct {
 }
 
 // OneOfObject3_Union defines model for OneOfObject3.Union.
-type OneOfObject3_Union json.RawMessage
+type OneOfObject3_Union struct {
+	union json.RawMessage
+}
 
-// oneOf plus fixed type - can't do anything here
-type OneOfObject4 interface{}
+// oneOf plus fixed type - custom marshaling/unmarshaling
+type OneOfObject4 struct {
+	FixedProperty *string `json:"fixedProperty,omitempty"`
+	union         json.RawMessage
+}
 
 // oneOf with disciminator but no mapping
-type OneOfObject5 json.RawMessage
+type OneOfObject5 struct {
+	union json.RawMessage
+}
 
 // oneOf with discriminator and mapping
-type OneOfObject6 json.RawMessage
+type OneOfObject6 struct {
+	union json.RawMessage
+}
+
+// array of oneOf
+type OneOfObject7 []OneOfObject7_Item
+
+// OneOfObject7_Item defines model for OneOfObject7.Item.
+type OneOfObject7_Item struct {
+	union json.RawMessage
+}
+
+// oneOf with fixed properties
+type OneOfObject8 struct {
+	Fixed *string `json:"fixed,omitempty"`
+	union json.RawMessage
+}
+
+// oneOf with fixed descriminator
+type OneOfObject9 struct {
+	Type  string `json:"type"`
+	union json.RawMessage
+}
 
 // OneOfVariant1 defines model for OneOfVariant1.
 type OneOfVariant1 struct {
@@ -126,6 +183,11 @@ type OneOfVariant4 struct {
 type OneOfVariant5 struct {
 	Discriminator string `json:"discriminator"`
 	Id            int    `json:"id"`
+}
+
+// OneOfVariant6 defines model for OneOfVariant6.
+type OneOfVariant6 struct {
+	Values OneOfVariant2 `json:"values"`
 }
 
 // SchemaObject defines model for SchemaObject.
@@ -780,191 +842,416 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for AdditionalPropertiesObject6_Item. Returns the specified
+// element and whether it was found
+func (a AdditionalPropertiesObject6_Item) Get(fieldName string) (value SchemaObject, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for AdditionalPropertiesObject6_Item
+func (a *AdditionalPropertiesObject6_Item) Set(fieldName string, value SchemaObject) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]SchemaObject)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for AdditionalPropertiesObject6_Item to handle AdditionalProperties
+func (a *AdditionalPropertiesObject6_Item) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]SchemaObject)
+		for fieldName, fieldBuf := range object {
+			var fieldVal SchemaObject
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for AdditionalPropertiesObject6_Item to handle AdditionalProperties
+func (a AdditionalPropertiesObject6_Item) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 func (t AnyOfObject1) AsOneOfVariant4() (OneOfVariant4, error) {
 	var body OneOfVariant4
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *AnyOfObject1) FromOneOfVariant4(v OneOfVariant4) error {
 	b, err := json.Marshal(v)
-	*t = AnyOfObject1(b)
+	t.union = b
 	return err
 }
 
 func (t AnyOfObject1) AsOneOfVariant5() (OneOfVariant5, error) {
 	var body OneOfVariant5
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *AnyOfObject1) FromOneOfVariant5(v OneOfVariant5) error {
 	b, err := json.Marshal(v)
-	*t = AnyOfObject1(b)
+	t.union = b
 	return err
 }
 
 func (t AnyOfObject1) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *AnyOfObject1) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 func (t OneOfObject1) AsOneOfVariant1() (OneOfVariant1, error) {
 	var body OneOfVariant1
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject1) FromOneOfVariant1(v OneOfVariant1) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject1(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject1) AsOneOfVariant2() (OneOfVariant2, error) {
 	var body OneOfVariant2
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject1) FromOneOfVariant2(v OneOfVariant2) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject1(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject1) AsOneOfVariant3() (OneOfVariant3, error) {
 	var body OneOfVariant3
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject1) FromOneOfVariant3(v OneOfVariant3) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject1(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject1) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *OneOfObject1) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+func (t OneOfObject10) AsOneOfObject100() (OneOfObject100, error) {
+	var body OneOfObject100
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject10) FromOneOfObject100(v OneOfObject100) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject10) AsOneOfObject101() (OneOfObject101, error) {
+	var body OneOfObject101
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject10) FromOneOfObject101(v OneOfObject101) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject10) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return nil, err
+	}
+
+	object["one"], err = json.Marshal(t.One)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'one': %w", err)
+	}
+
+	object["three"], err = json.Marshal(t.Three)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'three': %w", err)
+	}
+
+	object["two"], err = json.Marshal(t.Two)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'two': %w", err)
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OneOfObject10) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["one"]; found {
+		err = json.Unmarshal(raw, &t.One)
+		if err != nil {
+			return fmt.Errorf("error reading 'one': %w", err)
+		}
+	}
+
+	if raw, found := object["three"]; found {
+		err = json.Unmarshal(raw, &t.Three)
+		if err != nil {
+			return fmt.Errorf("error reading 'three': %w", err)
+		}
+	}
+
+	if raw, found := object["two"]; found {
+		err = json.Unmarshal(raw, &t.Two)
+		if err != nil {
+			return fmt.Errorf("error reading 'two': %w", err)
+		}
+	}
+
+	return err
 }
 
 func (t OneOfObject2) AsOneOfObject20() (OneOfObject20, error) {
 	var body OneOfObject20
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject2) FromOneOfObject20(v OneOfObject20) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject2(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject2) AsOneOfObject21() (OneOfObject21, error) {
 	var body OneOfObject21
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject2) FromOneOfObject21(v OneOfObject21) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject2(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject2) AsOneOfObject22() (OneOfObject22, error) {
 	var body OneOfObject22
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject2) FromOneOfObject22(v OneOfObject22) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject2(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject2) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *OneOfObject2) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 func (t OneOfObject3_Union) AsOneOfVariant1() (OneOfVariant1, error) {
 	var body OneOfVariant1
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject3_Union) FromOneOfVariant1(v OneOfVariant1) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject3_Union(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject3_Union) AsOneOfVariant2() (OneOfVariant2, error) {
 	var body OneOfVariant2
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject3_Union) FromOneOfVariant2(v OneOfVariant2) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject3_Union(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject3_Union) AsOneOfVariant3() (OneOfVariant3, error) {
 	var body OneOfVariant3
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject3_Union) FromOneOfVariant3(v OneOfVariant3) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject3_Union(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject3_Union) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *OneOfObject3_Union) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+func (t OneOfObject4) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject4) FromOneOfVariant1(v OneOfVariant1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject4) AsOneOfVariant2() (OneOfVariant2, error) {
+	var body OneOfVariant2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject4) FromOneOfVariant2(v OneOfVariant2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject4) AsOneOfVariant3() (OneOfVariant3, error) {
+	var body OneOfVariant3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject4) FromOneOfVariant3(v OneOfVariant3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject4) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return nil, err
+	}
+
+	object["fixedProperty"], err = json.Marshal(t.FixedProperty)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'fixedProperty': %w", err)
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OneOfObject4) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["fixedProperty"]; found {
+		err = json.Unmarshal(raw, &t.FixedProperty)
+		if err != nil {
+			return fmt.Errorf("error reading 'fixedProperty': %w", err)
+		}
+	}
+
+	return err
 }
 
 func (t OneOfObject5) AsOneOfVariant4() (OneOfVariant4, error) {
 	var body OneOfVariant4
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject5) FromOneOfVariant4(v OneOfVariant4) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject5(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject5) AsOneOfVariant5() (OneOfVariant5, error) {
 	var body OneOfVariant5
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject5) FromOneOfVariant5(v OneOfVariant5) error {
 	b, err := json.Marshal(v)
-	*t = OneOfObject5(b)
+	t.union = b
 	return err
 }
 
@@ -972,41 +1259,43 @@ func (t OneOfObject5) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"discriminator"`
 	}
-	err := json.Unmarshal(t, &discriminator)
+	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
 func (t OneOfObject5) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *OneOfObject5) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 func (t OneOfObject6) AsOneOfVariant4() (OneOfVariant4, error) {
 	var body OneOfVariant4
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject6) FromOneOfVariant4(v OneOfVariant4) error {
 	v.Discriminator = "v4"
 	b, err := json.Marshal(v)
-	*t = OneOfObject6(b)
+	t.union = b
 	return err
 }
 
 func (t OneOfObject6) AsOneOfVariant5() (OneOfVariant5, error) {
 	var body OneOfVariant5
-	err := json.Unmarshal(t, &body)
+	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
 func (t *OneOfObject6) FromOneOfVariant5(v OneOfVariant5) error {
 	v.Discriminator = "v5"
 	b, err := json.Marshal(v)
-	*t = OneOfObject6(b)
+	t.union = b
 	return err
 }
 
@@ -1014,7 +1303,7 @@ func (t OneOfObject6) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"discriminator"`
 	}
-	err := json.Unmarshal(t, &discriminator)
+	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -1034,11 +1323,202 @@ func (t OneOfObject6) ValueByDiscriminator() (interface{}, error) {
 }
 
 func (t OneOfObject6) MarshalJSON() ([]byte, error) {
-	return (json.RawMessage)(t).MarshalJSON()
+	b, err := t.union.MarshalJSON()
+	return b, err
 }
 
 func (t *OneOfObject6) UnmarshalJSON(b []byte) error {
-	return (*json.RawMessage)(t).UnmarshalJSON(b)
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+func (t OneOfObject7_Item) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject7_Item) FromOneOfVariant1(v OneOfVariant1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject7_Item) AsOneOfVariant2() (OneOfVariant2, error) {
+	var body OneOfVariant2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject7_Item) FromOneOfVariant2(v OneOfVariant2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject7_Item) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfObject7_Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+func (t OneOfObject8) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject8) FromOneOfVariant1(v OneOfVariant1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject8) AsOneOfVariant2() (OneOfVariant2, error) {
+	var body OneOfVariant2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject8) FromOneOfVariant2(v OneOfVariant2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject8) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return nil, err
+	}
+
+	object["fixed"], err = json.Marshal(t.Fixed)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'fixed': %w", err)
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OneOfObject8) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["fixed"]; found {
+		err = json.Unmarshal(raw, &t.Fixed)
+		if err != nil {
+			return fmt.Errorf("error reading 'fixed': %w", err)
+		}
+	}
+
+	return err
+}
+
+func (t OneOfObject9) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject9) FromOneOfVariant1(v OneOfVariant1) error {
+	t.Type = "v1"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject9) AsOneOfVariant6() (OneOfVariant6, error) {
+	var body OneOfVariant6
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject9) FromOneOfVariant6(v OneOfVariant6) error {
+	t.Type = "v6"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject9) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject9) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "v1":
+		return t.AsOneOfVariant1()
+	case "v6":
+		return t.AsOneOfVariant6()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OneOfObject9) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return nil, err
+	}
+
+	object["type"], err = json.Marshal(t.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OneOfObject9) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &t.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+	}
+
+	return err
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -1400,13 +1880,16 @@ type EnsureEverythingIsReferencedResponse struct {
 		// oneOf with references and no disciminator
 		OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
 
+		// fixed properties, variable required - will compile, but not much sense
+		OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
+
 		// oneOf with inline elements
 		OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
 
 		// inline OneOf
 		OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
 
-		// oneOf plus fixed type - can't do anything here
+		// oneOf plus fixed type - custom marshaling/unmarshaling
 		OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
 
 		// oneOf with disciminator but no mapping
@@ -1414,6 +1897,18 @@ type EnsureEverythingIsReferencedResponse struct {
 
 		// oneOf with discriminator and mapping
 		OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
+
+		// array of oneOf
+		OneOf7 *OneOfObject7 `json:"oneOf7,omitempty"`
+
+		// oneOf with fixed properties
+		OneOf8 *OneOfObject8 `json:"oneOf8,omitempty"`
+
+		// oneOf with fixed descriminator
+		OneOf9 *OneOfObject9 `json:"oneOf9,omitempty"`
+
+		// Array of object with additional properties
+		Six *AdditionalPropertiesObject6 `json:"six,omitempty"`
 
 		// Allows any additional property
 		Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
@@ -1559,13 +2054,16 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 			// oneOf with references and no disciminator
 			OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
 
+			// fixed properties, variable required - will compile, but not much sense
+			OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
+
 			// oneOf with inline elements
 			OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
 
 			// inline OneOf
 			OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
 
-			// oneOf plus fixed type - can't do anything here
+			// oneOf plus fixed type - custom marshaling/unmarshaling
 			OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
 
 			// oneOf with disciminator but no mapping
@@ -1573,6 +2071,18 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 			// oneOf with discriminator and mapping
 			OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
+
+			// array of oneOf
+			OneOf7 *OneOfObject7 `json:"oneOf7,omitempty"`
+
+			// oneOf with fixed properties
+			OneOf8 *OneOfObject8 `json:"oneOf8,omitempty"`
+
+			// oneOf with fixed descriminator
+			OneOf9 *OneOfObject9 `json:"oneOf9,omitempty"`
+
+			// Array of object with additional properties
+			Six *AdditionalPropertiesObject6 `json:"six,omitempty"`
 
 			// Allows any additional property
 			Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
@@ -1732,29 +2242,33 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RZW2/bNhT+KwQ3YC9KHN/6oLcM67AOWBO0wfbQGAEtHUXsJFIlKSdCoP8+HEqWdbUl",
-	"Jw9ZX2pJPOR37h9PXqgn40QKEEZT94Uq+JGCNr9Kn4N98aV6keGjJ4UBYfAnS5KIe8xwKWbftRT4Tnsh",
-	"xAx/JUomoEy5y+8cIh9//KwgoC79aXY4dlYI6dlX+//N9jt4hua5Y8FwBT51v5U7bPC1gWczSyLGW0ea",
-	"LAHqUm0UF480x3+4h06k0HtliofyjP+bPg71QXuKJ4iRuvSaaB4nEZC9kkQeDitR4EbXvs9RhEW3lRYF",
-	"rLlVvOdz7XwuDDyCop3j/2CaHGTJwUJEBgSFCReGOi3Tcb9/b8Fi6NHaoTIpDugzSdOmdgsHT9g4+6V7",
-	"izhHrLAYtkLAIg1txX+ToImQhrAokk/9Nnit3m+k2nJYNaPSjmbXqJAmTGQ9WmUdnSZgnwZ7NQ22jUQh",
-	"RRbLVJMAU4s8hdwLSTgUo13/CAHq1LFvqv448QKXc44V18eye3zlGp/3T9yEpNiEBFIRn3t2kSoM3oUu",
-	"spugXonwmbrfjqO7EXAT/M0UZ8KsaO6MX72m+aatTVlC7dHEYxoQWIHpH27CP7UUVbUf5X6H7liUglUo",
-	"kCpmhrrUNhRnYOlixNL+elCe1BcWVu+abZtaS/xa+EtBAAqEB5hDPhGS+Fx7POaCGYmRZ9dO8sp8klcW",
-	"k1Yvab5pqrc4qh4XERdAIILYkpy6PmPTuW3cF8oNxPUmKdJ4W9Tz8gVTimV2afliK2UETHTQL7voS8h2",
-	"UadOpYIX3OQduiU/HoerIUclkS3bz+AXvOGCeEz8YogvMS9NyMUjCUHBuwzGtoOsHrf7ljkqnupGWh+N",
-	"5npqkm1qMF1jliS4s0Pxq6oy91Cwss82tFvf83OsOb3gNtX7cFK9CqAtR0eU239yX+huNQ67Q3frkbid",
-	"d2W8Kpbdl7clIc3Yd7uVrUZVW6WNNjPB7Za65pJVF3zHp50GOU695j7OOHXX5+Dpp/En4AzQ9gbN6mAJ",
-	"uNLm8xDHUDIaYRe7yqlttbHXSC4CicIR90BoOIQR/evTnfU0N7g9vQNtyFdQO0tBd6B0kbLzy6vLq+Jy",
-	"BoIlnLp0eXl1OcduxUxo8c9A6FTBBexAFTX8guuLim1YOz6C6daDu5BrAsJPJBeGwDPXRhMtiQmZIYec",
-	"wR5BtkA8BcyAT7ggJuT6XugEvJLKGFyQqFSAf4+kCu1rb/iffOrSjxbgxwrfJ/3lgM6pzUKyIcLcGJfM",
-	"6rOS9uhhcXX1inmDZafzU7S9QadzdPsOTsocuT3gFjJV52+B9c7y2VHzkj7SXZTZ8xHMq0J90noNwryX",
-	"WkyQWlRSywlSy0pqNUFqVUmtJ0itK6kPE6Q+2IoQKniFH6yW5kmev8OijzmVQ7GApZEZztEyDWet8V8h",
-	"PUuYYrF+QP7xwHz/ATNPDxana4IFrmArVhIMqOLmxMhW+lk5eCircP9FuacW3VoUGPzXvmWPdkJRHWBp",
-	"Rk+ZrFYMTzrsYRwlfqSgsn13dGkyp/VuUUw4DhXo2Byk08q0yWzDKG7TluacRitqQxs75qgmTaURBYCv",
-	"iZFkC/fCpErYMm8kYeXK4roQIFfsQYuST1L9O2yBxVELTBoQ9fTodrD2DXY2Od4gaq1CpFGE5FPqnuiz",
-	"oxdSdp16uGFfYVzgV58r8EyvQRyM03tx1PAY2H2yPTGLja4VserMPxeMH7qNdUOXt06dvO1nrns/5e1Y",
-	"ybuOy/P8vwAAAP//HYpCO1MZAAA=",
+	"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",
+	"AAD//255GrzSHwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

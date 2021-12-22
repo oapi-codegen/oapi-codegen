@@ -1325,11 +1325,12 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
 	"union.tmpl": `{{range .Types}}
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
+    {{$properties := .Schema.Properties -}}
     {{range .Schema.UnionElements}}
         {{$element := . -}}
         func (t {{$typeName}}) As{{.}}() ({{.}}, error) {
             var body {{.}}
-            err := json.Unmarshal(t, &body)
+            err := json.Unmarshal(t.union, &body)
             return body, err
         }
 
@@ -1337,12 +1338,19 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
-                        v.{{$discriminator.PropertyName}} = "{{$value}}"
+                        {{$hasProperty := false -}}
+                        {{range $properties -}}
+                            {{if eq .GoFieldName $discriminator.PropertyName -}}
+                                t.{{$discriminator.PropertyName}} = "{{$value}}"
+                                {{$hasProperty = true -}}
+                            {{end -}}
+                        {{end -}}
+                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
                     {{end -}}
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
-            *t = {{$typeName}}(b)
+            t.union = b
             return err
         }
     {{end}}
@@ -1352,7 +1360,7 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
             var discriminator struct {
                 Discriminator string {{$discriminator.JSONTag}}
             }
-            err := json.Unmarshal(t, &discriminator)
+            err := json.Unmarshal(t.union, &discriminator)
             return discriminator.Discriminator, err
         }
 
@@ -1375,11 +1383,48 @@ type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.Ty
     {{end}}
 
     func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
-        return (json.RawMessage)(t).MarshalJSON()
+        b, err := t.union.MarshalJSON()
+        {{if ne 0 (len .Schema.Properties) -}}
+            if err != nil {
+                return nil, err
+            }
+            object := make(map[string]json.RawMessage)
+            err = json.Unmarshal(b, &object)
+            if err != nil {
+                return nil, err
+            }
+            {{range .Schema.Properties}}
+                object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
+                if err != nil {
+                    return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
+                }
+            {{end -}}
+            b, err = json.Marshal(object)
+        {{end -}}
+        return b, err
     }
 
     func (t *{{.TypeName}}) UnmarshalJSON(b []byte) error {
-        return (*json.RawMessage)(t).UnmarshalJSON(b)
+        err := t.union.UnmarshalJSON(b)
+        {{if ne 0 (len .Schema.Properties) -}}
+            if err != nil {
+                return err
+            }
+            object := make(map[string]json.RawMessage)
+            err = json.Unmarshal(b, &object)
+            if err != nil {
+                return err
+            }
+            {{range .Schema.Properties}}
+                if raw, found := object["{{.JsonFieldName}}"]; found {
+                    err = json.Unmarshal(raw, &t.{{.GoFieldName}})
+                    if err != nil {
+                        return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
+                    }
+                }
+            {{end}}
+        {{end -}}
+        return err
     }
 {{end}}`,
 }

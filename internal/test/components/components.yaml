@@ -33,6 +33,8 @@ paths:
                     $ref: "#/components/schemas/AdditionalPropertiesObject4"
                   five:
                     $ref: "#/components/schemas/AdditionalPropertiesObject5"
+                  six:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject6"
                   oneOf1:
                     $ref: "#/components/schemas/OneOfObject1"
                   oneOf2:
@@ -45,6 +47,14 @@ paths:
                     $ref: "#/components/schemas/OneOfObject5"
                   oneOf6:
                     $ref: "#/components/schemas/OneOfObject6"
+                  oneOf7:
+                    $ref: "#/components/schemas/OneOfObject7"
+                  oneOf8:
+                    $ref: "#/components/schemas/OneOfObject8"
+                  oneOf9:
+                    $ref: "#/components/schemas/OneOfObject9"
+                  oneOf10:
+                    $ref: "#/components/schemas/OneOfObject10"
                   anyOf1:
                     $ref: "#/components/schemas/AnyOfObject1"
                   jsonField:
@@ -160,6 +170,13 @@ components:
       type: object
       additionalProperties:
         $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject6:
+      description: Array of object with additional properties
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/SchemaObject'
     OneOfObject1:
       description: oneOf with references and no disciminator
       oneOf:
@@ -187,7 +204,7 @@ components:
             - $ref: '#/components/schemas/OneOfVariant2'
             - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject4:
-      description: oneOf plus fixed type - can't do anything here
+      description: oneOf plus fixed type - custom marshaling/unmarshaling
       type: object
       properties:
         fixedProperty:
@@ -213,6 +230,54 @@ components:
         mapping:
           v4: '#/components/schemas/OneOfVariant4'
           v5: '#/components/schemas/OneOfVariant5'
+    OneOfObject7:
+      description: array of oneOf
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/OneOfVariant1'
+          - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject8:
+      description: oneOf with fixed properties
+      type: object
+      properties:
+        fixed:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject9:
+      description: oneOf with fixed descriminator
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+    OneOfObject10:
+      description: fixed properties, variable required - will compile, but not much sense
+      type: object
+      properties:
+        one:
+          type: string
+        two:
+          type: integer
+        three:
+          type: boolean
+      oneOf:
+        - required:
+            - one
+        - required:
+            - two
+            - three
     AnyOfObject1:
       description: simple anyOf case
       anyOf:
@@ -251,6 +316,13 @@ components:
       required:
         - discriminator
         - id
+    OneOfVariant6:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/OneOfVariant2'
+      required:
+        - values
     ObjectWithJsonField:
       type: object
       properties:
