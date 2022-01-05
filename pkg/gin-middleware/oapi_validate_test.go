@@ -252,7 +252,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	// Call a protected function to which we don't have access
 	{
 		rec := doGet(t, g, "http://deepmap.ai/protected_resource2")
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
@@ -264,7 +264,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	// Call a protected function without credentials
 	{
 		rec := doGet(t, g, "http://deepmap.ai/protected_resource_401")
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}

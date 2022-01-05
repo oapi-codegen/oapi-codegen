@@ -69,10 +69,10 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 		panic(err)
 	}
 	return func(c *gin.Context) {
-		err := ValidateRequestFromContext(c, router, options)
+		statusCode, err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
 			// note: i am not sure if this is the best way to handle this
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.AbortWithStatusJSON(statusCode, gin.H{"error": err.Error()})
 		}
 		c.Next()
 	}
@@ -80,7 +80,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
-func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *Options) error {
+func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *Options) (int, error) {
 	req := c.Request
 	route, pathParams, err := router.FindRoute(req)
 
@@ -90,11 +90,11 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return errors.New(e.Reason)
+			return http.StatusBadRequest, errors.New(e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating route: %s", err.Error())
+			return http.StatusBadRequest, fmt.Errorf("error validating route: %s", err.Error())
 		}
 	}
 
@@ -122,16 +122,16 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
 			errorLines := strings.Split(e.Error(), "\n")
-			return fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
+			return http.StatusBadRequest, fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
 		case *openapi3filter.SecurityRequirementsError:
-			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
+			return http.StatusUnauthorized, fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return http.StatusBadRequest, fmt.Errorf("error validating request: %s", err)
 		}
 	}
-	return nil
+	return http.StatusOK, nil
 }
 
 // Helper function to get the echo context from within requests. It returns
