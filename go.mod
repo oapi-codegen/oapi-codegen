@@ -2,7 +2,6 @@ module github.com/deepmap/oapi-codegen
 
 require (
 	github.com/cyberdelia/templates v0.0.0-20141128023046-ca7fffd4298c
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/getkin/kin-openapi v0.80.0
 	github.com/gin-gonic/gin v1.7.4
 	github.com/go-chi/chi/v5 v5.0.0
@@ -13,12 +12,10 @@ require (
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/lestrrat-go/jwx v1.2.7
 	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
-	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/stretchr/testify v1.7.0
 	github.com/ugorji/go v1.2.6 // indirect
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
 	golang.org/x/tools v0.0.0-20210114065538-d78b04bdf963
 	google.golang.org/protobuf v1.27.1 // indirect
