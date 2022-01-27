@@ -17,7 +17,9 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"embed"
 	"fmt"
+	"io/fs"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -25,9 +27,11 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen/templates"
 )
+
+// Embed the templates directory
+//go:embed templates
+var templates embed.FS
 
 // Options defines the optional code to generate.
 type Options struct {
@@ -117,7 +121,8 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
-	t, err := templates.Parse(t)
+	err := LoadTemplates(templates, t)
+
 	if err != nil {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
@@ -635,4 +640,30 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
+}
+
+// LoadTemplates loads all of our template files into a text/template. The
+// path of template is relative to the templates directory.
+func LoadTemplates(src embed.FS, t *template.Template) error {
+	return fs.WalkDir(src, "templates", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return fmt.Errorf("error walking directory %s: %w", path, err)
+		}
+		if d.IsDir() {
+			return nil
+		}
+
+		buf, err := src.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("error reading file '%s': %w", path, err)
+		}
+
+		templateName := strings.TrimPrefix(path, "templates/")
+		tmpl := t.New(templateName)
+		_, err = tmpl.Parse(string(buf))
+		if err != nil {
+			return fmt.Errorf("parsing template '%s': %w", path, err)
+		}
+		return nil
+	})
 }
