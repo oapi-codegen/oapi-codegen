@@ -345,6 +345,9 @@ type RequestBodyDefinition struct {
 	// Whether this is the default body type. For an operation named OpFoo, we
 	// will not add suffixes like OpFooJSONBody for this one.
 	Default bool
+
+	// Contains encoding options for formdata
+	Encoding map[string]RequestBodyEncoding
 }
 
 // Returns the Go type definition for a request body
@@ -386,6 +389,12 @@ func (r RequestBodyDefinition) IsSupported() bool {
 // Returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r RequestBodyDefinition) IsFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
+}
+
+type RequestBodyEncoding struct {
+	ContentType string
+	Style       string
+	Explode     *bool
 }
 
 type ResponseDefinition struct {
@@ -643,6 +652,15 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			ContentType: contentType,
 			Default:     defaultBody,
 		}
+
+		if len(content.Encoding) != 0 {
+			bd.Encoding = make(map[string]RequestBodyEncoding)
+			for k, v := range content.Encoding {
+				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
+				bd.Encoding[k] = encoding
+			}
+		}
+
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
 	sort.Slice(bodyDefinitions, func(i, j int) bool {

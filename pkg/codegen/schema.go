@@ -393,8 +393,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 			outSchema.GoType = "json.RawMessage"
 			outSchema.SkipOptionalPointer = true
 		case "binary":
-			outSchema.GoType = "*multipart.FileHeader"
-			outSchema.SkipOptionalPointer = true
+			outSchema.GoType = "openapi_types.File"
 		default:
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
