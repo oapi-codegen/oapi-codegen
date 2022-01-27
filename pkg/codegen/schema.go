@@ -333,7 +333,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	} else {
 		err := resolveType(schema, path, &outSchema)
 		if err != nil {
-			return Schema{}, fmt.Errorf("error resolving primitive type")
+			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 	}
 	return outSchema, nil
