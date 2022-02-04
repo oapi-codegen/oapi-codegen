@@ -7,21 +7,29 @@ import (
 
 const (
 	extPropGoType    = "x-go-type"
+	extGoFieldName   = "x-go-name"
 	extPropOmitEmpty = "x-omitempty"
 	extPropExtraTags = "x-oapi-codegen-extra-tags"
 )
 
-func extTypeName(extPropValue interface{}) (string, error) {
+func extString(extPropValue interface{}) (string, error) {
 	raw, ok := extPropValue.(json.RawMessage)
 	if !ok {
 		return "", fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var name string
-	if err := json.Unmarshal(raw, &name); err != nil {
+	var str string
+	if err := json.Unmarshal(raw, &str); err != nil {
 		return "", fmt.Errorf("failed to unmarshal json: %w", err)
 	}
 
-	return name, nil
+	return str, nil
+}
+func extTypeName(extPropValue interface{}) (string, error) {
+	return extString(extPropValue)
+}
+
+func extParseGoFieldName(extPropValue interface{}) (string, error) {
+	return extString(extPropValue)
 }
 
 func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
