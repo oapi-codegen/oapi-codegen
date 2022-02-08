@@ -93,15 +93,42 @@ func genResponsePayload(operationID string) string {
 	return buffer.String()
 }
 
-func genOperationContext(op *OperationDefinition) string {
+func genContextType(op *OperationDefinition, override bool) string {
 	var buffer = bytes.NewBufferString("")
 
-	buffer.WriteString(fmt.Sprintf(`type %sContext struct {
+	if op.Spec.Extensions["x-response-helper"] != nil || override {
+		buffer.WriteString(op.OperationId)
+		buffer.WriteString("Context")
+	} else {
+		buffer.WriteString("echo.Context")
+	}
+
+	return buffer.String()
+}
+
+func genContextTypeVar(op *OperationDefinition, override bool) string {
+	var buffer = bytes.NewBufferString("")
+
+	if op.Spec.Extensions["x-response-helper"] != nil || override {
+		buffer.WriteString(op.OperationId)
+		buffer.WriteString("Context{ctx}")
+	} else {
+		buffer.WriteString("ctx")
+	}
+
+	return buffer.String()
+}
+
+func genOperationContext(op *OperationDefinition, override bool) string {
+	var buffer = bytes.NewBufferString("")
+	if op.Spec.Extensions["x-response-helper"] != nil || override {
+		buffer.WriteString(fmt.Sprintf(`type %sContext struct {
 	echo.Context
 }`, op.OperationId))
 
-	buffer.WriteString(genResponseHelpers(op))
-	buffer.WriteString(genRequestHelpers(op))
+		buffer.WriteString(genResponseHelpers(op))
+		buffer.WriteString(genRequestHelpers(op))
+	}
 
 	return buffer.String()
 }
@@ -443,6 +470,8 @@ var TemplateFunctions = template.FuncMap{
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
 	"genOperationContext":        genOperationContext,
+	"genContextType":             genContextType,
+	"genContextTypeVar":          genContextTypeVar,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,

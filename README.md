@@ -521,6 +521,18 @@ you can specify any combination of those.
  the code.
 - `import-mapping`: specifies a map of references external OpenAPI specs to go
  Go include paths. Please see below.
+- `x-response-helper` add `x-response-helper: tre` to each path to generate a helper
+ function that binds the request body as a struct. It will also create a helper for return of the response.
+ alternatively, you can add `response-helper` to the`types` and it will be added
+ to all paths.  (only for echo)
+```
+paths:
+ /things:
+    get:
+      operationId: listThings
+      description:  Returns a list of things
+      x-response-helper: true
+```
 
 So, for example, if you would like to produce only the server code, you could
 run `oapi-codegen -generate types,server`. You could generate `types` and

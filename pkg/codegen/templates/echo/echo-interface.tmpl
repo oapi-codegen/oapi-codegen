@@ -2,10 +2,10 @@
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(ctx {{.OperationId}}Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{.OperationId}}(ctx {{genContextType . opts.GenerateResponseHelper}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
 
 {{ range .}}
-{{ genOperationContext . }}
+{{ genOperationContext . opts.GenerateResponseHelper}}
 {{ end }}

@@ -124,6 +124,8 @@ func main() {
 			opts.SkipFmt = true
 		case "skip-prune":
 			opts.SkipPrune = true
+		case "response-helper":
+			opts.GenerateResponseHelper = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
