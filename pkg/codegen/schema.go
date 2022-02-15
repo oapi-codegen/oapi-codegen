@@ -310,7 +310,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
 			outSchema.RefType = typeName
 		}
-		//outSchema.RefType = typeName
+		// outSchema.RefType = typeName
 	} else {
 		err := resolveType(schema, path, &outSchema)
 		if err != nil {
@@ -435,7 +435,7 @@ func GenFieldsFromProperties(props []Property) []string {
 		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
 
 		// Support x-omitempty
-		omitEmpty := true
+		omitEmpty := false
 		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
 			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
 				omitEmpty = extOmitEmpty
@@ -444,11 +444,12 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
-		if p.Required || p.Nullable || !omitEmpty {
+		if (p.Required || p.Nullable) && !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 		}
+
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
