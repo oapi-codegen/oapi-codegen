@@ -543,8 +543,6 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Minus"
 		case '+':
 			prefix += "Plus"
-		case '@':
-			prefix += "At"
 		case '&':
 			prefix += "And"
 		case '~':

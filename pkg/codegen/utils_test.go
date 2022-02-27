@@ -342,11 +342,12 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	t.Parallel()
 
 	for in, want := range map[string]string{
+		"$":            "DollarSign",
 		"no_prefix~+-": "NoPrefix",
 		"123":          "N123",
 		"-1":           "Minus1",
 		"+1":           "Plus1",
-		"@home":        "AtHome",
+		"@timestamp,":  "Timestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
 		"_foo":         "Foo",
