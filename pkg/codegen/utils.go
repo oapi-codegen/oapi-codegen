@@ -549,8 +549,6 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "And"
 		case '~':
 			prefix += "Tilde"
-		case '_':
-			prefix += "Underscore"
 		case '=':
 			prefix += "Equal"
 		case '#':
