@@ -30,8 +30,6 @@ const (
 
 	BarFoo2 Bar = " Foo "
 
-	BarFoo3 Bar = "_Foo_"
-
 	BarFooBar Bar = "Foo Bar"
 
 	BarFooBar1 Bar = "Foo-Bar"
@@ -39,6 +37,8 @@ const (
 	BarN1 Bar = "1"
 
 	BarN1Foo Bar = "1Foo"
+
+	BarUnderscoreFoo Bar = "_Foo_"
 )
 
 // Bar defines model for Bar.
