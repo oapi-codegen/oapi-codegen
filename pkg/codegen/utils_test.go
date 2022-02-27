@@ -343,6 +343,7 @@ func TestSchemaNameToTypeName(t *testing.T) {
 
 	for in, want := range map[string]string{
 		"$":            "DollarSign",
+		"$ref":         "Ref",
 		"no_prefix~+-": "NoPrefix",
 		"123":          "N123",
 		"-1":           "Minus1",

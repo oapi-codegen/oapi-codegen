@@ -538,7 +538,9 @@ func typeNamePrefix(name string) (prefix string) {
 	for _, r := range name {
 		switch r {
 		case '$':
-			prefix += "DollarSign"
+			if len(name) == 1 {
+				return "DollarSign"
+			}
 		case '-':
 			prefix += "Minus"
 		case '+':
