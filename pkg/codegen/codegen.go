@@ -363,6 +363,11 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
 }
 
+// Not the best, but let's do it this way for now.
+// Define a package variable that holds the Schemas to allow us to
+// dereference schemas from another part of the tree.
+var Schemas = make(map[string]*openapi3.SchemaRef)
+
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
 func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) ([]TypeDefinition, error) {
@@ -370,6 +375,8 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 	for _, schema := range excludeSchemas {
 		excludeSchemasMap[schema] = true
 	}
+	// Set the package variable to reference the local variable
+	Schemas = schemas
 	types := make([]TypeDefinition, 0)
 	// We're going to define Go types for every object under components/schemas
 	for _, schemaName := range SortedSchemaKeys(schemas) {

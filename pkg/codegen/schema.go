@@ -45,7 +45,7 @@ func (s *Schema) MergeProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
 		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
-			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
+			return fmt.Errorf("property '%s' already exists with a different type", e.JsonFieldName)
 		}
 	}
 	s.Properties = append(s.Properties, p)
@@ -541,6 +541,24 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	return outSchema, nil
 }
 
+const localSchemaSpec = "#/components/schemas/"
+
+// GetReferencedSchema requires the package scope variable Schemas to have been populated
+func GetReferencedSchema(ref string) (*openapi3.SchemaRef, error) {
+	if !strings.HasPrefix(ref, localSchemaSpec) {
+		return nil, fmt.Errorf("schema ref %s doesn't start with local schema string %s",
+			ref, localSchemaSpec)
+	}
+	name := strings.TrimPrefix(ref, localSchemaSpec)
+	if s, ok := Schemas[name]; ok {
+		if s.Value != nil {
+			return s, nil
+		}
+		return nil, fmt.Errorf("schema %s had no value", name)
+	}
+	return nil, fmt.Errorf("could not find referenced schema %s", name)
+}
+
 // This function generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
@@ -550,20 +568,35 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
 		if IsGoTypeReference(ref) {
-			// We have a referenced type, we will generate an inlined struct
-			// member.
-			// struct {
-			//   InlinedMember
-			//   ...
-			// }
 			goType, err := RefPathToGoType(ref)
 			if err != nil {
 				return "", err
 			}
-			objectParts = append(objectParts,
-				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
-			objectParts = append(objectParts,
-				fmt.Sprintf("   %s `yaml:\",inline\"`", goType))
+			if true {
+				// We have a referenced type, we will flatten
+				rSchema, err := GetReferencedSchema(ref)
+				if err != nil {
+					return "", err
+				}
+				goSchema, err := GenerateGoSchema(rSchema, path)
+				if err != nil {
+					return "", err
+				}
+				objectParts = append(objectParts,
+					fmt.Sprintf("   // Flattened from allOf(%s)\n", ref))
+				objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
+			} else {
+				// We have a referenced type, we will generate an inlined struct
+				// member.
+				// struct {
+				//   InlinedMember
+				//   ...
+				// }
+				objectParts = append(objectParts,
+					fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
+				objectParts = append(objectParts,
+					fmt.Sprintf("   %s `yaml:\",inline\"`", goType))
+			}
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
