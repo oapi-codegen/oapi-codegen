@@ -1,11 +1,11 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pkg/errors"
 )
 
 // This describes a Schema, a type definition.
@@ -15,7 +15,8 @@ type Schema struct {
 
 	ArrayType *Schema // The schema of array element
 
-	EnumValues map[string]string // Enum values
+	EnumValues    map[string]string // Enum values
+	EmbeddedTypes []string          // Types emebedded by allOf
 
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
@@ -488,6 +489,21 @@ func GenStructFromSchema(schema Schema) string {
 	return strings.Join(objectParts, "\n")
 }
 
+func EmbeddedTypeNames(allOf []*openapi3.SchemaRef) ([]string, error) {
+	var typeNames []string
+	for _, schemaOrRef := range allOf {
+		ref := schemaOrRef.Ref
+		if ref != "" {
+			refType, err := RefPathToGoType(ref)
+			if err != nil {
+				return nil, err
+			}
+			typeNames = append(typeNames, refType)
+		}
+	}
+	return typeNames, nil
+}
+
 // Merge all the fields in the schemas supplied into one giant schema.
 func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var outSchema Schema
@@ -537,6 +553,10 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
 	if err != nil {
 		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
+	}
+	outSchema.EmbeddedTypes, err = EmbeddedTypeNames(allOf)
+	if err != nil {
+		return Schema{}, errors.Wrap(err, "unable to extract embedded types for AllOf")
 	}
 	return outSchema, nil
 }
@@ -625,4 +645,20 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// For json, we go through the standard schema mechanism
 	return GenerateGoSchema(mt.Schema, path)
+}
+
+func hasValidatingUnmarshal(schema Schema) bool {
+	for _, p := range schema.Properties {
+		if p.Required && !p.Nullable {
+			return true
+		}
+	}
+	return false
+}
+
+func optHasValidatingUnmarshal(validatingUnmarshal bool) func(Schema) bool {
+	if validatingUnmarshal {
+		return hasValidatingUnmarshal
+	}
+	return func(Schema) bool { return false }
 }

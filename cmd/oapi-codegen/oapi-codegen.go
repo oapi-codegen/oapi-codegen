@@ -49,21 +49,22 @@ var (
 )
 
 type configuration struct {
-	PackageName     string            `yaml:"package"`
-	GenerateTargets []string          `yaml:"generate"`
-	OutputFile      string            `yaml:"output"`
-	IncludeTags     []string          `yaml:"include-tags"`
-	ExcludeTags     []string          `yaml:"exclude-tags"`
-	TemplatesDir    string            `yaml:"templates"`
-	ImportMapping   map[string]string `yaml:"import-mapping"`
-	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	PackageName     string   `yaml:"package"`
+	GenerateTargets []string `yaml:"generate"`
+
+	OutputFile     string            `yaml:"output"`
+	IncludeTags    []string          `yaml:"include-tags"`
+	ExcludeTags    []string          `yaml:"exclude-tags"`
+	TemplatesDir   string            `yaml:"templates"`
+	ImportMapping  map[string]string `yaml:"import-mapping"`
+	ExcludeSchemas []string          `yaml:"exclude-schemas"`
 }
 
 func main() {
 
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "spec", "skip-fmt", "skip-prune"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "spec", "skip-fmt", "skip-prune", "validating-unmarshal"`)
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
@@ -124,6 +125,8 @@ func main() {
 			opts.SkipFmt = true
 		case "skip-prune":
 			opts.SkipPrune = true
+		case "validating-unmarshal":
+			opts.ValidatingUnmarshal = true
 		default:
 			fmt.Printf("unknown generate option %s\n", g)
 			flag.PrintDefaults()
