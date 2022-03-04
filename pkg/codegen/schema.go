@@ -541,15 +541,8 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	return outSchema, nil
 }
 
-const localSchemaSpec = "#/components/schemas/"
-
 // GetReferencedSchema requires the package scope variable Schemas to have been populated
-func GetReferencedSchema(ref string) (*openapi3.SchemaRef, error) {
-	if !strings.HasPrefix(ref, localSchemaSpec) {
-		return nil, fmt.Errorf("schema ref %s doesn't start with local schema string %s",
-			ref, localSchemaSpec)
-	}
-	name := strings.TrimPrefix(ref, localSchemaSpec)
+func GetReferencedSchema(name string) (*openapi3.SchemaRef, error) {
 	if s, ok := Schemas[name]; ok {
 		if s.Value != nil {
 			return s, nil
@@ -563,8 +556,35 @@ func GetReferencedSchema(ref string) (*openapi3.SchemaRef, error) {
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
 func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
+	// Check how many refs and props we have
+	refCount := 0
+	savedRef := ""
+	propCount := 0
+	for _, schemaOrRef := range allOf {
+		ref := schemaOrRef.Ref
+		if IsGoTypeReference(ref) {
+			refCount++
+			savedRef = ref
+		} else {
+			goSchema, err := GenerateGoSchema(schemaOrRef, path)
+			if err != nil {
+				return "", err
+			}
+			propCount += len(GenFieldsFromProperties(goSchema.Properties))
+		}
+	}
+	if refCount == 1 && propCount == 0 {
+		// We have just one reference - flatten it and just use the referenced struct
+		goType, err := RefPathToGoType(savedRef)
+		if err != nil {
+			return "", err
+		}
+		return goType, nil
+	}
+
 	// Start out with struct {
 	objectParts := []string{"struct {"}
+
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
 		if IsGoTypeReference(ref) {
@@ -574,7 +594,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 			}
 			if true {
 				// We have a referenced type, we will flatten
-				rSchema, err := GetReferencedSchema(ref)
+				rSchema, err := GetReferencedSchema(goType)
 				if err != nil {
 					return "", err
 				}
