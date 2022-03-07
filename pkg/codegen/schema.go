@@ -574,7 +574,8 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 		}
 	}
 	if refCount == 1 && propCount == 0 {
-		// We have just one reference - flatten it and just use the referenced struct
+		// We have just one reference and no properties
+		// so flatten it and just use the referenced struct.
 		goType, err := RefPathToGoType(savedRef)
 		if err != nil {
 			return "", err
@@ -593,7 +594,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 				return "", err
 			}
 			if true {
-				// We have a referenced type, we will flatten
+				// We have a referenced type, we will add a new struct to be included later
 				rSchema, err := GetReferencedSchema(goType)
 				if err != nil {
 					return "", err
