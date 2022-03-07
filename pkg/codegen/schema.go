@@ -594,7 +594,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 				return "", err
 			}
 			if true {
-				// We have a referenced type, we will add a new struct to be included later
+				// We have a referenced type; use it
 				rSchema, err := GetReferencedSchema(goType)
 				if err != nil {
 					return "", err
