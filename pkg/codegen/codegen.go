@@ -368,10 +368,6 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 // dereference schemas from another part of the tree.
 var Schemas = make(map[string]*openapi3.SchemaRef)
 
-// Even worse for now, we need to have a list of additional schemas to go
-// create to avoid anonymous structs
-var AdditionalSchemas = make(map[string]*openapi3.SchemaRef)
-
 // Generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
 func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) ([]TypeDefinition, error) {
@@ -404,13 +400,6 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		if _, ok := excludeSchemasMap[schemaName]; ok {
 			continue
 		}
-		err := schemaLoop(schemaName)
-		if err != nil {
-			return nil, err
-		}
-	}
-	// Now go back and add any added schemas
-	for _, schemaName := range SortedSchemaKeys(AdditionalSchemas) {
 		err := schemaLoop(schemaName)
 		if err != nil {
 			return nil, err
