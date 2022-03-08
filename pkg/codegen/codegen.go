@@ -379,12 +379,15 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 	Schemas = schemas
 	types := make([]TypeDefinition, 0)
 	// We're going to define Go types for every object under components/schemas
-	schemaLoop := func(schemaName string) error {
+	for _, schemaName := range SortedSchemaKeys(schemas) {
+		if _, ok := excludeSchemasMap[schemaName]; ok {
+			continue
+		}
 		schemaRef := schemas[schemaName]
 
 		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
 		if err != nil {
-			return fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
+			return nil, fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
 		}
 
 		types = append(types, TypeDefinition{
@@ -394,16 +397,6 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		})
 
 		types = append(types, goSchema.GetAdditionalTypeDefs()...)
-		return nil
-	}
-	for _, schemaName := range SortedSchemaKeys(schemas) {
-		if _, ok := excludeSchemasMap[schemaName]; ok {
-			continue
-		}
-		err := schemaLoop(schemaName)
-		if err != nil {
-			return nil, err
-		}
 	}
 	return types, nil
 }
