@@ -149,9 +149,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
@@ -166,8 +164,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
@@ -181,8 +178,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+

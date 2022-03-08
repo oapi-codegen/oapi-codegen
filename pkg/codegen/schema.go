@@ -576,16 +576,11 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 	if refCount == 1 && propCount == 0 {
 		// We have just one reference and no properties
 		// so flatten it and just use the referenced struct.
-		goType, err := RefPathToGoType(savedRef)
-		if err != nil {
-			return "", err
-		}
-		return goType, nil
+		return RefPathToGoType(savedRef)
 	}
 
 	// Start out with struct {
 	objectParts := []string{"struct {"}
-
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
 		if IsGoTypeReference(ref) {
