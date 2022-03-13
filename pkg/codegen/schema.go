@@ -17,6 +17,9 @@ type Schema struct {
 
 	EnumValues map[string]string // Enum values
 
+	HasDefault   bool   // true if the item has a default value
+	DefaultValue string // set to the supplied default if any
+
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
@@ -138,7 +141,7 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
-func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+func GenerateGoSchema(sref *openapi3.SchemaRef, path []string, required bool) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore we have at least valid Go-Code.
@@ -184,7 +187,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		mergedSchema, err := MergeSchemas(schema.AllOf, path, required)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
@@ -224,14 +227,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		} else {
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
+				required := StringInArray(pName, schema.Required)
 				p := schema.Properties[pName]
 				propertyPath := append(path, pName)
-				pSchema, err := GenerateGoSchema(p, propertyPath)
+				pSchema, err := GenerateGoSchema(p, propertyPath, required)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
-
-				required := StringInArray(pName, schema.Required)
 
 				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
 					// If we have fields present which have additional properties,
@@ -269,7 +271,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				GoType: "interface{}",
 			}
 			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path, true)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -280,7 +282,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
-		err := resolveType(schema, path, &outSchema)
+		err := resolveType(schema, path, &outSchema, required)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -312,94 +314,126 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		//outSchema.RefType = typeName
 	} else {
-		err := resolveType(schema, path, &outSchema)
+		err := resolveType(schema, path, &outSchema, required)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 	}
+
+	outSchema.HasDefault = schema.Default != nil
+	if outSchema.HasDefault {
+		outSchema.DefaultValue = fmt.Sprintf("%v", schema.Default)
+	}
+
 	return outSchema, nil
 }
 
 // resolveType resolves primitive  type or array for schema
-func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema, required bool) error {
 	f := schema.Format
 	t := schema.Type
 
-	switch t {
-	case "array":
+	if t == "array" {
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
-		arrayType, err := GenerateGoSchema(schema.Items, path)
+		arrayType, err := GenerateGoSchema(schema.Items, path, true)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
-		outSchema.AdditionalTypes = arrayType.AdditionalTypes
+		itemPrefix := ""
+
+		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+			itemPrefix = "*"
+		}
+		outSchema.GoType = "[]" + itemPrefix + arrayType.TypeDecl()
+		additionalTypes := arrayType.GetAdditionalTypeDefs()
+		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalTypes...)
 		outSchema.Properties = arrayType.Properties
-	case "integer":
-		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else if f == "" {
-			outSchema.GoType = "int"
-		} else {
-			return fmt.Errorf("invalid integer format: %s", f)
+
+	} else {
+		gtype, skipOptional, err := typeFrom(t, f, schema.Nullable, required)
+		if err != nil {
+			return err
 		}
-	case "number":
-		// We default to float for "number"
-		if f == "double" {
-			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
-			outSchema.GoType = "float32"
-		} else {
-			return fmt.Errorf("invalid number format: %s", f)
-		}
-	case "boolean":
-		if f != "" {
-			return fmt.Errorf("invalid format (%s) for boolean", f)
-		}
-		outSchema.GoType = "bool"
-	case "string":
-		// Special case string formats here.
-		switch f {
-		case "byte":
-			outSchema.GoType = "[]byte"
-		case "email":
-			outSchema.GoType = "openapi_types.Email"
-		case "date":
-			outSchema.GoType = "openapi_types.Date"
-		case "date-time":
-			outSchema.GoType = "time.Time"
-		case "json":
-			outSchema.GoType = "json.RawMessage"
-			outSchema.SkipOptionalPointer = true
-		default:
-			// All unrecognized formats are simply a regular string.
-			outSchema.GoType = "string"
-		}
-	default:
-		return fmt.Errorf("unhandled Schema type: %s", t)
+		outSchema.GoType = gtype
+		outSchema.SkipOptionalPointer = skipOptional
 	}
 	return nil
+}
+
+func typeFrom(typeName, format string, nullable bool, required bool) (goType string, skipOptionalPointer bool, err error) {
+	switch typeName {
+	case "integer":
+		// We default to int if format doesn't ask for something else.
+		switch format {
+		case "int64":
+			goType = "int64"
+		case "int32":
+			goType = "int32"
+		case "int16":
+			goType = "int16"
+		case "int8":
+			goType = "int8"
+		case "int":
+			goType = "int"
+		case "uint64":
+			goType = "uint64"
+		case "uint32":
+			goType = "uint32"
+		case "uint16":
+			goType = "uint16"
+		case "uint8":
+			goType = "uint8"
+		case "uint":
+			goType = "uint"
+		case "":
+			goType = "int"
+		default:
+			return "", skipOptionalPointer, fmt.Errorf("invalid integer format: %s", format)
+		}
+	case "number":
+		switch format {
+		case "float64":
+			goType = "float64"
+		case "float":
+			goType = "float32"
+		case "double":
+			goType = "float64"
+		case "":
+			goType = "float32"
+		case "float32":
+			goType = "float32"
+		default:
+			return "", skipOptionalPointer, fmt.Errorf("invalid float format: %s", format)
+		}
+	case "boolean":
+		if format != "" {
+			return "", skipOptionalPointer, fmt.Errorf("invalid format (%s) for boolean", format)
+		}
+		goType = "bool"
+	case "string":
+		// Special case string formats here.
+		switch format {
+		case "byte":
+			goType = "[]byte"
+		case "email":
+			goType = "openapi_types.Email"
+		case "date":
+			goType = "openapi_types.Date"
+		case "date-time":
+			goType = "time.Time"
+		case "json":
+			goType = "json.RawMessage"
+			skipOptionalPointer = true
+		default:
+			// All unrecognized formats are simply a regular string.
+			goType = "string"
+		}
+	default:
+		return "", skipOptionalPointer, fmt.Errorf("unhandled Schema type: %s", typeName)
+	}
+	return goType, skipOptionalPointer, nil
 }
 
 // This describes a Schema, a type definition.
@@ -489,7 +523,7 @@ func GenStructFromSchema(schema Schema) string {
 }
 
 // Merge all the fields in the schemas supplied into one giant schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, required bool) (Schema, error) {
 	var outSchema Schema
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
@@ -503,7 +537,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 		}
 
-		schema, err := GenerateGoSchema(schemaOrRef, path)
+		schema, err := GenerateGoSchema(schemaOrRef, path, required)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error generating Go schema in allOf: %w", err)
 		}
@@ -534,7 +568,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 
 	// Now, we generate the struct which merges together all the fields.
 	var err error
-	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	outSchema.GoType, err = GenStructFromAllOf(allOf, path, required)
 	if err != nil {
 		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
 	}
@@ -544,7 +578,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 // This function generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
+func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string, required bool) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
@@ -567,7 +601,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
-			goSchema, err := GenerateGoSchema(schemaOrRef, path)
+			goSchema, err := GenerateGoSchema(schemaOrRef, path, required)
 			if err != nil {
 				return "", err
 			}
@@ -600,7 +634,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// We can process the schema through the generic schema processor
 	if param.Schema != nil {
-		return GenerateGoSchema(param.Schema, path)
+		return GenerateGoSchema(param.Schema, path, param.Required)
 	}
 
 	// At this point, we have a content type. We know how to deal with
@@ -624,5 +658,5 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	}
 
 	// For json, we go through the standard schema mechanism
-	return GenerateGoSchema(mt.Schema, path)
+	return GenerateGoSchema(mt.Schema, path, param.Required)
 }
