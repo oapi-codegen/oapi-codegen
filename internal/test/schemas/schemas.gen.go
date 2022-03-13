@@ -1264,9 +1264,12 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
+
+	var queryParamsWithDefaults = ctx.QueryParams()
+
 	// ------------- Required query parameter "foo" -------------
 
-	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	err = runtime.BindQueryParameter("form", true, true, "foo", queryParamsWithDefaults, &params.Foo)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}
