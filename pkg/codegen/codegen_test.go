@@ -131,8 +131,10 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.NotEmpty(t, code)
 
 	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
+	fmtd, err := format.Source([]byte(code))
 	assert.NoError(t, err)
+
+	code = string(fmtd)
 
 	// Check that we have a package:
 	assert.Contains(t, code, "package testswagger")
@@ -163,7 +165,6 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
-	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
@@ -202,6 +203,7 @@ paths:
         required: false
         schema:
           type: integer
+          default: 100
       responses:
         200:
           description: Success
