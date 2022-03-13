@@ -32,9 +32,18 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
+{{if ne (len .QueryParams) 0}}
+    var queryParamsWithDefaults = ctx.QueryParams()
+{{end}}    
 {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{if .Schema.HasDefault}}
+    // set default if not present: {{.Schema.DefaultValue}}
+    if !queryParamsWithDefaults.Has("{{.ParamName}}"){
+        queryParamsWithDefaults.Set("{{.ParamName}}","{{.Schema.DefaultValue}}")
+    }
+    {{end}}
     {{if .IsStyled}}
-    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", queryParamsWithDefaults, &params.{{.GoName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }

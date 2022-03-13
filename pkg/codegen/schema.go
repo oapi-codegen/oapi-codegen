@@ -17,6 +17,9 @@ type Schema struct {
 
 	EnumValues map[string]string // Enum values
 
+	HasDefault   bool   // true if the item has a default value
+	DefaultValue string // set to the supplied default if any
+
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
@@ -316,6 +319,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string, required bool) (S
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 	}
+
+	outSchema.HasDefault = schema.Default != nil
+	if outSchema.HasDefault {
+		outSchema.DefaultValue = fmt.Sprintf("%v", schema.Default)
+	}
+
 	return outSchema, nil
 }
 

@@ -131,8 +131,10 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.NotEmpty(t, code)
 
 	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
+	fmtd, err := format.Source([]byte(code))
 	assert.NoError(t, err)
+
+	code = string(fmtd)
 
 	// Check that we have a package:
 	assert.Contains(t, code, "package testswagger")
@@ -169,6 +171,7 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "FavouriteBirds *[]*string    `json:\"favourite_birds,omitempty\"`")
 	assert.Contains(t, code, "DetestedBirds  *[]string     `json:\"detested_birds,omitempty\"`")
 	assert.Contains(t, code, "IntValues      *[]*int64     `json:\"intValues,omitempty\"`")
+	assert.Contains(t, code, "// set default if not present: 100")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)
@@ -207,6 +210,7 @@ paths:
         required: false
         schema:
           type: integer
+          default: 100
       responses:
         200:
           description: Success
