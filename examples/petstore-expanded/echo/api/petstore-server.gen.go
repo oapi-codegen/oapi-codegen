@@ -45,16 +45,19 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
+
+	var queryParamsWithDefaults = ctx.QueryParams()
+
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
+	err = runtime.BindQueryParameter("form", true, false, "tags", queryParamsWithDefaults, &params.Tags)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	err = runtime.BindQueryParameter("form", true, false, "limit", queryParamsWithDefaults, &params.Limit)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
 	}

@@ -3011,9 +3011,12 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetDeepObjectParams
+
+	var queryParamsWithDefaults = ctx.QueryParams()
+
 	// ------------- Required query parameter "deepObj" -------------
 
-	err = runtime.BindQueryParameter("deepObject", true, true, "deepObj", ctx.QueryParams(), &params.DeepObj)
+	err = runtime.BindQueryParameter("deepObject", true, true, "deepObj", queryParamsWithDefaults, &params.DeepObj)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj: %s", err))
 	}
@@ -3029,51 +3032,54 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQueryFormParams
+
+	var queryParamsWithDefaults = ctx.QueryParams()
+
 	// ------------- Optional query parameter "ea" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "ea", ctx.QueryParams(), &params.Ea)
+	err = runtime.BindQueryParameter("form", true, false, "ea", queryParamsWithDefaults, &params.Ea)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ea: %s", err))
 	}
 
 	// ------------- Optional query parameter "a" -------------
 
-	err = runtime.BindQueryParameter("form", false, false, "a", ctx.QueryParams(), &params.A)
+	err = runtime.BindQueryParameter("form", false, false, "a", queryParamsWithDefaults, &params.A)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter a: %s", err))
 	}
 
 	// ------------- Optional query parameter "eo" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "eo", ctx.QueryParams(), &params.Eo)
+	err = runtime.BindQueryParameter("form", true, false, "eo", queryParamsWithDefaults, &params.Eo)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: %s", err))
 	}
 
 	// ------------- Optional query parameter "o" -------------
 
-	err = runtime.BindQueryParameter("form", false, false, "o", ctx.QueryParams(), &params.O)
+	err = runtime.BindQueryParameter("form", false, false, "o", queryParamsWithDefaults, &params.O)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter o: %s", err))
 	}
 
 	// ------------- Optional query parameter "ep" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "ep", ctx.QueryParams(), &params.Ep)
+	err = runtime.BindQueryParameter("form", true, false, "ep", queryParamsWithDefaults, &params.Ep)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ep: %s", err))
 	}
 
 	// ------------- Optional query parameter "p" -------------
 
-	err = runtime.BindQueryParameter("form", false, false, "p", ctx.QueryParams(), &params.P)
+	err = runtime.BindQueryParameter("form", false, false, "p", queryParamsWithDefaults, &params.P)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p: %s", err))
 	}
 
 	// ------------- Optional query parameter "ps" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "ps", ctx.QueryParams(), &params.Ps)
+	err = runtime.BindQueryParameter("form", true, false, "ps", queryParamsWithDefaults, &params.Ps)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ps: %s", err))
 	}
@@ -3093,7 +3099,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	// ------------- Optional query parameter "1s" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "1s", ctx.QueryParams(), &params.N1s)
+	err = runtime.BindQueryParameter("form", true, false, "1s", queryParamsWithDefaults, &params.N1s)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
 	}
