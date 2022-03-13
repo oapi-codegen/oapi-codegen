@@ -58,7 +58,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	// ------------- Optional query parameter "limit" -------------
 
 	// set default if not present: 100
-	if !queryParamsWithDefaults.Has("limit") {
+	if _, ok := queryParamsWithDefaults["limit"]; !ok {
 		queryParamsWithDefaults.Set("limit", "100")
 	}
 

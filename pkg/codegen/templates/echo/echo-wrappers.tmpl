@@ -38,7 +38,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
     {{if .Schema.HasDefault}}
     // set default if not present: {{.Schema.DefaultValue}}
-    if !queryParamsWithDefaults.Has("{{.ParamName}}"){
+    if _,ok := queryParamsWithDefaults["{{.ParamName}}"];!ok{
         queryParamsWithDefaults.Set("{{.ParamName}}","{{.Schema.DefaultValue}}")
     }
     {{end}}
