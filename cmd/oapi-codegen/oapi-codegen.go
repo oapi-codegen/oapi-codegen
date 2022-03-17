@@ -174,20 +174,43 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 		return templates, nil
 	}
 
-	files, err := ioutil.ReadDir(templatesDir)
+	err := loadTemplateOverridesWithSubfolder(&templates, templatesDir, "")
+
 	if err != nil {
 		return nil, err
 	}
 
-	for _, f := range files {
-		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
-		if err != nil {
-			return nil, err
-		}
-		templates[f.Name()] = string(data)
+	return templates, nil
+}
+
+func loadTemplateOverridesWithSubfolder(templates *map[string]string, templatesDir string, prefix string) error {
+	files, err := ioutil.ReadDir(templatesDir)
+
+	if err != nil {
+		return err
 	}
 
-	return templates, nil
+	for _, f := range files {
+		fileName := f.Name()
+
+		if len(prefix) > 0 {
+			fileName = fmt.Sprintf("%v/%v", prefix, fileName)
+		}
+
+		if f.IsDir() {
+			loadTemplateOverridesWithSubfolder(templates, path.Join(templatesDir, f.Name()), fileName)
+		} else {
+			data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+
+			if err != nil {
+				return err
+			}
+
+			(*templates)[fileName] = string(data)
+		}
+	}
+
+	return nil
 }
 
 // configFromFlags parses the flags and the config file. Anything which is
