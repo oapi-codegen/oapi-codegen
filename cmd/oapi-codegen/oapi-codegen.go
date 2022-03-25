@@ -35,17 +35,18 @@ func errExit(format string, args ...interface{}) {
 }
 
 var (
-	flagPackageName    string
-	flagGenerate       string
-	flagOutputFile     string
-	flagIncludeTags    string
-	flagExcludeTags    string
-	flagTemplatesDir   string
-	flagImportMapping  string
-	flagExcludeSchemas string
-	flagConfigFile     string
-	flagAliasTypes     bool
-	flagPrintVersion   bool
+	flagPackageName       string
+	flagGenerate          string
+	flagOutputFile        string
+	flagIncludeTags       string
+	flagExcludeTags       string
+	flagTemplatesDir      string
+	flagImportMapping     string
+	flagExcludeSchemas    string
+	flagConfigFile        string
+	flagAliasTypes        bool
+	flagPrintVersion      bool
+	flagIncludeValidation bool
 )
 
 type configuration struct {
@@ -73,6 +74,7 @@ func main() {
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
+	flag.BoolVar(&flagIncludeValidation, "include-validation", false, "when specified, include validation code")
 	flag.Parse()
 
 	if flagPrintVersion {
@@ -134,6 +136,7 @@ func main() {
 	opts.IncludeTags = cfg.IncludeTags
 	opts.ExcludeTags = cfg.ExcludeTags
 	opts.ExcludeSchemas = cfg.ExcludeSchemas
+	opts.IncludeValidation = flagIncludeValidation
 
 	if opts.GenerateEchoServer && opts.GenerateChiServer {
 		errExit("can not specify both server and chi-server targets simultaneously")

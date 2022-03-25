@@ -140,12 +140,12 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
-func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+func DescribeParameters(params openapi3.Parameters, path []string, includeValidation bool) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		goType, err := paramToGoType(param, append(path, param.Name), includeValidation)
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
@@ -258,7 +258,7 @@ func (o *OperationDefinition) SummaryAsComment() string {
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+func (o *OperationDefinition) GetResponseTypeDefinitions(includeValidation bool) ([]ResponseTypeDefinition, error) {
 	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
@@ -273,7 +273,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName}, includeValidation)
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -374,14 +374,14 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, includeValidation bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		globalParams, err := DescribeParameters(pathItem.Parameters, nil, includeValidation)
 		if err != nil {
 			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
@@ -401,14 +401,14 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
+
 			} else {
 				op.OperationID = ToCamelCase(op.OperationID)
 			}
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"}, includeValidation)
 			if err != nil {
 				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
@@ -426,7 +426,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody, includeValidation)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
@@ -465,7 +465,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 
 			// Generate all the type definitions needed for this operation
-			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef, includeValidation)...)
 
 			operations = append(operations, opDef)
 		}
@@ -495,7 +495,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 
 // This function turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef, includeValidation bool) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
@@ -517,7 +517,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bodyTypeName := operationID + tag + "Body"
-		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
+		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName}, includeValidation)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
 		}
@@ -557,11 +557,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
+func GenerateTypeDefsForOperation(op OperationDefinition, includeValidation bool) []TypeDefinition {
 	var typeDefs []TypeDefinition
 	// Start with the params object itself
 	if len(op.Params()) != 0 {
-		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
+		typeDefs = append(typeDefs, GenerateParamsTypes(op, includeValidation)...)
 	}
 
 	// Now, go through all the additional types we need to declare.
@@ -577,7 +577,7 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 
 // This defines the schema for a parameters definition object which encapsulates
 // all the query, header and cookie parameters for an operation.
-func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
+func GenerateParamsTypes(op OperationDefinition, includeValidation bool) []TypeDefinition {
 	var typeDefs []TypeDefinition
 
 	objectParams := op.QueryParams
@@ -608,7 +608,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	}
 
 	s.Description = op.Spec.Description
-	s.GoType = GenStructFromSchema(s)
+	s.GoType = GenStructFromSchema(s, includeValidation)
 
 	td := TypeDefinition{
 		TypeName: typeName,
