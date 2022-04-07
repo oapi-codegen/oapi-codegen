@@ -392,6 +392,8 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		case "json":
 			outSchema.GoType = "json.RawMessage"
 			outSchema.SkipOptionalPointer = true
+		case "uuid":
+			outSchema.GoType = "openapi_types.UUID"
 		default:
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
