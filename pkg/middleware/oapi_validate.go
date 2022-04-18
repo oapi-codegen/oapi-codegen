@@ -63,6 +63,7 @@ type Options struct {
 	ParamDecoder openapi3filter.ContentParameterDecoder
 	UserData     interface{}
 	Skipper      echomiddleware.Skipper
+	SkipRouteError bool
 }
 
 // Create a validator from a swagger object, with validation options
@@ -78,8 +79,12 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 			if skipper(c) {
 				return next(c)
 			}
-
 			err := ValidateRequestFromContext(c, router, options)
+			if echoErr, ok := err.(*echo.HTTPError); ok {
+				if _, ok := echoErr.Internal.(*routers.RouteError); ok && options.SkipRouteError {
+					return next(c)
+				}
+			}
 			if err != nil {
 				return err
 			}
@@ -100,7 +105,11 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+			return &echo.HTTPError{
+				Code:     http.StatusBadRequest,
+				Message:  e.Reason,
+				Internal: err,
+			}
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
