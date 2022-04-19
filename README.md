@@ -643,3 +643,38 @@ on-the-fly at run time. Example:
         -templates my-templates/ \
         -generate types,client \
         petstore-expanded.yaml
+
+## Validator-Integration
+The [go-playground/validator](https://github.com/go-playground/validator) has been integrated so we can generate fitting annotations based on the OpenAPI-Definition.
+The following constraints from the OpenAPI are supported:
+
+| Type | Constraint | Validator-Annotation | Comment|
+|---|---|---|---|
+|integer|minimum|gt/gte| gt or gte depending on if ExclusiveMinimum is set|
+|integer|maximum|lt/lte| lt or lte depending on if ExclusiveMaximum is set|
+|number|minimum|gt/gte| gt or gte depending on if ExclusiveMinimum is set|
+|number|maximum|lt/lte| lt or lte depending on if ExclusiveMaximum is set|
+|string|email|email| |
+|string|uuid|uuid| |
+|string|uri|uri| |
+|string|hostname|hostname| |
+|string|ipv4|ipv4| |
+|string|ipv6|ipv6| |
+|string|minLength|min| |
+|string|maxLength|max| |
+|string|pattern|pattern| Some special characters need to be encoded: Quote (") = 0x22, Comma (,) = 0x2c, Backtick(`) = 0x60 |
+
+In order to support the pattern-constraint a custom validator needs to be registered like so:
+```
+import (
+    "github.com/go-playground/validator/v10"
+    pv "github.com/deepmap/oapi-codegen/pkg/validator"
+)
+
+// get a preconfigured validator
+v1 := pv.NewWithPatternValidator()
+
+// add the pattern validator to your own instance manually
+v := validator.New()
+_ = v.RegisterValidation("pattern", pv.PatternValidator)
+```
