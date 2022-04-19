@@ -432,7 +432,15 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
 		}
-		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
+
+		goFieldName := p.GoFieldName()
+		if _, ok := p.ExtensionProps.Extensions[extGoFieldName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+				goFieldName = extGoFieldName
+			}
+		}
+
+		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
 		// Support x-omitempty
 		omitEmpty := true

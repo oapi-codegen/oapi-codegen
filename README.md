@@ -474,6 +474,10 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-name`: specifies Go field name. It allows you to specify the field name for a schema, and
+  will override any default value. This extended property isn't supported in all parts of
+  OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
+  flag incorrect usage of this property.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
   are added are in addition to the regular json tags that are generated. If you specify your 
