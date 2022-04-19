@@ -67,6 +67,8 @@ type Property struct {
 	Schema         Schema
 	Required       bool
 	Nullable       bool
+	ReadOnly       bool
+	WriteOnly      bool
 	ExtensionProps *openapi3.ExtensionProps
 }
 
@@ -76,7 +78,9 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && (!p.Required || p.Nullable) {
+	if !p.Schema.SkipOptionalPointer &&
+		(!p.Required || p.Nullable || p.ReadOnly || p.WriteOnly) {
+
 		typeDef = "*" + typeDef
 	}
 	return typeDef
@@ -259,6 +263,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Required:       required,
 					Description:    description,
 					Nullable:       p.Value.Nullable,
+					ReadOnly:       p.Value.ReadOnly,
+					WriteOnly:      p.Value.WriteOnly,
 					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
@@ -454,7 +460,7 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
-		if p.Required || p.Nullable || !omitEmpty {
+		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
