@@ -17,7 +17,7 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/jwx v1.2.23
 	github.com/mailru/easyjson v0.7.7 // indirect
-	github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd
+	github.com/matryer/moq v0.2.7
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/stretchr/testify v1.7.1
