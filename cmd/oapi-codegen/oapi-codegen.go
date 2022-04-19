@@ -163,7 +163,7 @@ func main() {
 			errExit("error writing generated code to file: %s", err)
 		}
 	} else {
-		fmt.Println(code)
+		fmt.Print(code)
 	}
 }
 
