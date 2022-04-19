@@ -8,6 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.9.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
+	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/labstack/echo/v4 v4.6.3
 	github.com/lestrrat-go/jwx v1.2.7
