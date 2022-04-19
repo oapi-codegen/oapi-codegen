@@ -348,6 +348,12 @@ func stylePrimitive(style string, explode bool, paramName string, paramLocation 
 func primitiveToString(value interface{}) (string, error) {
 	var output string
 
+	// sometimes time and date used like primitive types
+	// it can happen if paramether is object and has time or date as field
+	if res, ok := marshalDateTimeValue(value); ok {
+		return res, nil
+	}
+
 	// Values may come in by pointer for optionals, so make sure to dereferene.
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
