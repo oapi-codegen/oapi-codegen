@@ -1,10 +1,7 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
-    HandlerMiddlewares []MiddlewareFunc
 }
-
-type MiddlewareFunc func(c *gin.Context)
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -77,7 +74,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{end}}
 
     {{if .HeaderParams}}
-      headers := r.Header
+      headers := c.Request.Header
 
       {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
         if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
@@ -164,10 +161,6 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       {{- end}}
     {{end}}
   {{end}}
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    middleware(c)
-  }
 
   siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }

@@ -163,7 +163,7 @@ func main() {
 			errExit("error writing generated code to file: %s", err)
 		}
 	} else {
-		fmt.Println(code)
+		fmt.Print(code)
 	}
 }
 
@@ -180,6 +180,19 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 	}
 
 	for _, f := range files {
+		// Recursively load subdirectory files, using the path relative to the templates
+		// directory as the key. This allows for overriding the files in the service-specific
+		// directories (e.g. echo, chi, etc.).
+		if f.IsDir() {
+			subFiles, err := loadTemplateOverrides(path.Join(templatesDir, f.Name()))
+			if err != nil {
+				return nil, err
+			}
+			for subDir, subFile := range subFiles {
+				templates[path.Join(f.Name(), subDir)] = subFile
+			}
+			continue
+		}
 		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
 		if err != nil {
 			return nil, err
