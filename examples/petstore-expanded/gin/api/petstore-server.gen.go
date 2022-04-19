@@ -36,11 +36,8 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
+	Handler ServerInterface
 }
-
-type MiddlewareFunc func(c *gin.Context)
 
 // FindPets operation middleware
 func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
@@ -72,19 +69,11 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 		return
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-	}
-
 	siw.Handler.FindPets(c, params)
 }
 
 // AddPet operation middleware
 func (siw *ServerInterfaceWrapper) AddPet(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-	}
 
 	siw.Handler.AddPet(c)
 }
@@ -101,10 +90,6 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
 		return
-	}
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
 	}
 
 	siw.Handler.DeletePet(c, id)
@@ -124,30 +109,30 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 		return
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-	}
-
 	siw.Handler.FindPetByID(c, id)
 }
 
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL     string
-	Middlewares []MiddlewareFunc
+	Middlewares []gin.HandlerFunc
 }
 
+// keeping for backward compatibility
+type MiddlewareFunc = gin.HandlerFunc
+
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
+func RegisterHandlers(router gin.IRouter, si ServerInterface) *gin.RouterGroup {
 	return RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
+func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) *gin.RouterGroup {
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
+		Handler: si,
 	}
+
+	router = router.Group("/", options.Middlewares...)
 
 	router.GET(options.BaseURL+"/pets", wrapper.FindPets)
 
@@ -157,8 +142,10 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 
 	router.GET(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
 
-	return router
-} // Base64 encoded, gzipped, json marshaled Swagger object
+	return router.(*gin.RouterGroup)
+}
+
+// Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
 	"H4sIAAAAAAAC/+RXW48budH9KwV+32OnNbEXedBTvB4vICBrT+LdvKznoYZdkmrBSw9Z1FgY6L8HRbZu",
