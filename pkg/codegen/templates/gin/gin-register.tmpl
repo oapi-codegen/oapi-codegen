@@ -8,12 +8,12 @@ type GinServerOptions struct {
 type MiddlewareFunc = gin.HandlerFunc
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router gin.IRouter, si ServerInterface) gin.IRouter {
+func RegisterHandlers(router gin.IRouter, si ServerInterface) *gin.RouterGroup {
   return RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) gin.IRouter {
+func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) *gin.RouterGroup {
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 }
@@ -24,5 +24,5 @@ router = router.Group("/", options.Middlewares...)
 {{range .}}
 router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
 {{end}}
-return router
+return router.(*gin.RouterGroup)
 }
