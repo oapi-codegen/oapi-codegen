@@ -72,8 +72,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
 			// note: i am not sure if this is the best way to handle this
-			// todo: the error message should be customizable by the user
-			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 		c.Next()
@@ -126,9 +124,6 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 			errorLines := strings.Split(e.Error(), "\n")
 			return fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
 		case *openapi3filter.SecurityRequirementsError:
-			for _, e := range e.Errors {
-				c.Error(e)
-			}
 			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
 		default:
 			// This should never happen today, but if our upstream code changes,
