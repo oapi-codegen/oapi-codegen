@@ -30,44 +30,26 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// JSONExampleJSONBody defines parameters for JSONExample.
-type JSONExampleJSONBody Example
-
-// MultipartExampleMultipartBody defines parameters for MultipartExample.
-type MultipartExampleMultipartBody Example
-
-// MultipleRequestAndResponseTypesJSONBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesJSONBody Example
-
-// MultipleRequestAndResponseTypesFormdataBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesFormdataBody Example
-
-// MultipleRequestAndResponseTypesMultipartBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesMultipartBody Example
-
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody string
 
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody string
 
-// URLEncodedExampleFormdataBody defines parameters for URLEncodedExample.
-type URLEncodedExampleFormdataBody Example
-
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
-type JSONExampleJSONRequestBody JSONExampleJSONBody
+type JSONExampleJSONRequestBody Example
 
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
-type MultipartExampleMultipartRequestBody MultipartExampleMultipartBody
+type MultipartExampleMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
-type MultipleRequestAndResponseTypesJSONRequestBody MultipleRequestAndResponseTypesJSONBody
+type MultipleRequestAndResponseTypesJSONRequestBody Example
 
 // MultipleRequestAndResponseTypesFormdataRequestBody defines body for MultipleRequestAndResponseTypes for application/x-www-form-urlencoded ContentType.
-type MultipleRequestAndResponseTypesFormdataRequestBody MultipleRequestAndResponseTypesFormdataBody
+type MultipleRequestAndResponseTypesFormdataRequestBody Example
 
 // MultipleRequestAndResponseTypesMultipartRequestBody defines body for MultipleRequestAndResponseTypes for multipart/form-data ContentType.
-type MultipleRequestAndResponseTypesMultipartRequestBody MultipleRequestAndResponseTypesMultipartBody
+type MultipleRequestAndResponseTypesMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTypesTextBody
@@ -76,7 +58,7 @@ type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTy
 type TextExampleTextRequestBody TextExampleTextBody
 
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
-type URLEncodedExampleFormdataRequestBody URLEncodedExampleFormdataBody
+type URLEncodedExampleFormdataRequestBody Example
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -248,6 +230,17 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 	TextBody      *MultipleRequestAndResponseTypesTextRequestBody
 }
 
+type MultipleRequestAndResponseTypes200FormdataResponse Example
+
+func (t MultipleRequestAndResponseTypes200FormdataResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((Example)(t))
+}
+
+type MultipleRequestAndResponseTypes200ImagepngResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
 type MultipleRequestAndResponseTypes200MultipartformDataResponse struct {
 	Body          io.Reader
 	ContentLength int64
@@ -263,17 +256,6 @@ type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((Example)(t))
-}
-
-type MultipleRequestAndResponseTypes200FormdataResponse Example
-
-func (t MultipleRequestAndResponseTypes200FormdataResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
-}
-
-type MultipleRequestAndResponseTypes200ImagepngResponse struct {
-	Body          io.Reader
-	ContentLength int64
 }
 
 type TextExampleRequestObject struct {
@@ -300,6 +282,11 @@ type UnknownExampleRequestObject struct {
 	Body io.Reader
 }
 
+type UnknownExample200Videomp4Response struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
 type UnknownExample400TextResponse Badrequest
 
 func (t UnknownExample400TextResponse) MarshalJSON() ([]byte, error) {
@@ -308,11 +295,6 @@ func (t UnknownExample400TextResponse) MarshalJSON() ([]byte, error) {
 
 type UnknownExampledefaultResponse struct {
 	StatusCode int
-}
-
-type UnknownExample200Videomp4Response struct {
-	Body          io.Reader
-	ContentLength int64
 }
 
 type URLEncodedExampleRequestObject struct {
@@ -498,15 +480,6 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
-	case MultipleRequestAndResponseTypes200MultipartformDataResponse:
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
-		}
-		ctx.DataFromReader(200, v.ContentLength, "multipart/form-data", v.Body, nil)
-	case MultipleRequestAndResponseTypes200TextResponse:
-		ctx.Data(200, "text/plain", []byte(v))
-	case MultipleRequestAndResponseTypes200JSONResponse:
-		ctx.JSON(200, v)
 	case MultipleRequestAndResponseTypes200FormdataResponse:
 		if form, err := runtime.MarshalForm(v, nil); err != nil {
 			ctx.Error(err)
@@ -518,6 +491,15 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 			defer closer.Close()
 		}
 		ctx.DataFromReader(200, v.ContentLength, "image/png", v.Body, nil)
+	case MultipleRequestAndResponseTypes200MultipartformDataResponse:
+		if closer, ok := v.Body.(io.ReadCloser); ok {
+			defer closer.Close()
+		}
+		ctx.DataFromReader(200, v.ContentLength, "multipart/form-data", v.Body, nil)
+	case MultipleRequestAndResponseTypes200TextResponse:
+		ctx.Data(200, "text/plain", []byte(v))
+	case MultipleRequestAndResponseTypes200JSONResponse:
+		ctx.JSON(200, v)
 	case error:
 		ctx.Error(v)
 	case nil:
@@ -578,15 +560,15 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
-	case UnknownExample400TextResponse:
-		ctx.Data(400, "text/plain", []byte(v))
-	case UnknownExampledefaultResponse:
-		ctx.Status(v.StatusCode)
 	case UnknownExample200Videomp4Response:
 		if closer, ok := v.Body.(io.ReadCloser); ok {
 			defer closer.Close()
 		}
 		ctx.DataFromReader(200, v.ContentLength, "video/mp4", v.Body, nil)
+	case UnknownExample400TextResponse:
+		ctx.Data(400, "text/plain", []byte(v))
+	case UnknownExampledefaultResponse:
+		ctx.Status(v.StatusCode)
 	case error:
 		ctx.Error(v)
 	case nil:

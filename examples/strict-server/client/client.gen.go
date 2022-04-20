@@ -25,44 +25,26 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// JSONExampleJSONBody defines parameters for JSONExample.
-type JSONExampleJSONBody Example
-
-// MultipartExampleMultipartBody defines parameters for MultipartExample.
-type MultipartExampleMultipartBody Example
-
-// MultipleRequestAndResponseTypesMultipartBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesMultipartBody Example
-
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody string
-
-// MultipleRequestAndResponseTypesJSONBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesJSONBody Example
-
-// MultipleRequestAndResponseTypesFormdataBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesFormdataBody Example
 
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody string
 
-// URLEncodedExampleFormdataBody defines parameters for URLEncodedExample.
-type URLEncodedExampleFormdataBody Example
-
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
-type JSONExampleJSONRequestBody JSONExampleJSONBody
+type JSONExampleJSONRequestBody Example
 
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
-type MultipartExampleMultipartRequestBody MultipartExampleMultipartBody
+type MultipartExampleMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
-type MultipleRequestAndResponseTypesJSONRequestBody MultipleRequestAndResponseTypesJSONBody
+type MultipleRequestAndResponseTypesJSONRequestBody Example
 
 // MultipleRequestAndResponseTypesFormdataRequestBody defines body for MultipleRequestAndResponseTypes for application/x-www-form-urlencoded ContentType.
-type MultipleRequestAndResponseTypesFormdataRequestBody MultipleRequestAndResponseTypesFormdataBody
+type MultipleRequestAndResponseTypesFormdataRequestBody Example
 
 // MultipleRequestAndResponseTypesMultipartRequestBody defines body for MultipleRequestAndResponseTypes for multipart/form-data ContentType.
-type MultipleRequestAndResponseTypesMultipartRequestBody MultipleRequestAndResponseTypesMultipartBody
+type MultipleRequestAndResponseTypesMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTypesTextBody
@@ -71,7 +53,7 @@ type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTy
 type TextExampleTextRequestBody TextExampleTextBody
 
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
-type URLEncodedExampleFormdataRequestBody URLEncodedExampleFormdataBody
+type URLEncodedExampleFormdataRequestBody Example
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

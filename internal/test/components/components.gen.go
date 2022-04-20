@@ -88,6 +88,14 @@ type RequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
+// EnsureEverythingIsReferencedJSONBody defines parameters for EnsureEverythingIsReferenced.
+type EnsureEverythingIsReferencedJSONBody struct {
+	Field SchemaObject `json:"Field"`
+}
+
+// EnsureEverythingIsReferencedTextBody defines parameters for EnsureEverythingIsReferenced.
+type EnsureEverythingIsReferencedTextBody string
+
 // ParamsWithAddPropsParams_P1 defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams_P1 struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
@@ -123,10 +131,10 @@ type BodyWithAddPropsJSONBody_Inner struct {
 }
 
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
-type EnsureEverythingIsReferencedJSONRequestBody RequestBody
+type EnsureEverythingIsReferencedJSONRequestBody EnsureEverythingIsReferencedJSONBody
 
 // EnsureEverythingIsReferencedTextRequestBody defines body for EnsureEverythingIsReferenced for text/plain ContentType.
-type EnsureEverythingIsReferencedTextRequestBody RequestBody
+type EnsureEverythingIsReferencedTextRequestBody EnsureEverythingIsReferencedTextBody
 
 // BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.
 type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody

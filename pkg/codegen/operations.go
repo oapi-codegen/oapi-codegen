@@ -630,11 +630,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if IsGoTypeReference(bodyOrRef.Ref) {
+		if IsGoTypeReference(content.Schema.Ref) {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(bodyOrRef.Ref)
+			refType, err := RefPathToGoType(content.Schema.Ref)
 			if err != nil {
-				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", bodyOrRef.Ref, err)
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.Ref, err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -679,7 +679,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
 	var responseDefinitions []ResponseDefinition
 
-	for statusCode, responseOrRef := range responses {
+	for _, statusCode := range SortedResponsesKeys(responses) {
+		responseOrRef := responses[statusCode]
 		if responseOrRef == nil {
 			continue
 		}

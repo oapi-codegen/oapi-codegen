@@ -31,44 +31,26 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// JSONExampleJSONBody defines parameters for JSONExample.
-type JSONExampleJSONBody Example
-
-// MultipartExampleMultipartBody defines parameters for MultipartExample.
-type MultipartExampleMultipartBody Example
-
-// MultipleRequestAndResponseTypesJSONBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesJSONBody Example
-
-// MultipleRequestAndResponseTypesFormdataBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesFormdataBody Example
-
-// MultipleRequestAndResponseTypesMultipartBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesMultipartBody Example
-
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody string
 
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody string
 
-// URLEncodedExampleFormdataBody defines parameters for URLEncodedExample.
-type URLEncodedExampleFormdataBody Example
-
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
-type JSONExampleJSONRequestBody JSONExampleJSONBody
+type JSONExampleJSONRequestBody Example
 
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
-type MultipartExampleMultipartRequestBody MultipartExampleMultipartBody
+type MultipartExampleMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
-type MultipleRequestAndResponseTypesJSONRequestBody MultipleRequestAndResponseTypesJSONBody
+type MultipleRequestAndResponseTypesJSONRequestBody Example
 
 // MultipleRequestAndResponseTypesFormdataRequestBody defines body for MultipleRequestAndResponseTypes for application/x-www-form-urlencoded ContentType.
-type MultipleRequestAndResponseTypesFormdataRequestBody MultipleRequestAndResponseTypesFormdataBody
+type MultipleRequestAndResponseTypesFormdataRequestBody Example
 
 // MultipleRequestAndResponseTypesMultipartRequestBody defines body for MultipleRequestAndResponseTypes for multipart/form-data ContentType.
-type MultipleRequestAndResponseTypesMultipartRequestBody MultipleRequestAndResponseTypesMultipartBody
+type MultipleRequestAndResponseTypesMultipartRequestBody Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTypesTextBody
@@ -77,7 +59,7 @@ type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTy
 type TextExampleTextRequestBody TextExampleTextBody
 
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
-type URLEncodedExampleFormdataRequestBody URLEncodedExampleFormdataBody
+type URLEncodedExampleFormdataRequestBody Example
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -382,12 +364,6 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 	TextBody      *MultipleRequestAndResponseTypesTextRequestBody
 }
 
-type MultipleRequestAndResponseTypes200TextResponse string
-
-func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((string)(t))
-}
-
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
@@ -408,6 +384,12 @@ type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 type MultipleRequestAndResponseTypes200MultipartformDataResponse struct {
 	Body          io.Reader
 	ContentLength int64
+}
+
+type MultipleRequestAndResponseTypes200TextResponse string
+
+func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((string)(t))
 }
 
 type TextExampleRequestObject struct {
@@ -453,10 +435,6 @@ type URLEncodedExampleRequestObject struct {
 	Body *URLEncodedExampleFormdataRequestBody
 }
 
-type URLEncodedExampledefaultResponse struct {
-	StatusCode int
-}
-
 type URLEncodedExample200FormdataResponse Example
 
 func (t URLEncodedExample200FormdataResponse) MarshalJSON() ([]byte, error) {
@@ -467,6 +445,10 @@ type URLEncodedExample400TextResponse Badrequest
 
 func (t URLEncodedExample400TextResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((Badrequest)(t))
+}
+
+type URLEncodedExampledefaultResponse struct {
+	StatusCode int
 }
 
 // StrictServerInterface represents all server handlers.
@@ -643,10 +625,6 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	response := handler(r.Context(), w, r, request)
 
 	switch v := response.(type) {
-	case MultipleRequestAndResponseTypes200TextResponse:
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(200)
-		writeRaw(w, ([]byte)(v))
 	case MultipleRequestAndResponseTypes200JSONResponse:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
@@ -679,6 +657,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 			defer closer.Close()
 		}
 		_, _ = io.Copy(w, v.Body)
+	case MultipleRequestAndResponseTypes200TextResponse:
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(200)
+		writeRaw(w, ([]byte)(v))
 	case error:
 		http.Error(w, v.Error(), http.StatusInternalServerError)
 	case nil:
@@ -792,8 +774,6 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 	response := handler(r.Context(), w, r, request)
 
 	switch v := response.(type) {
-	case URLEncodedExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
 	case URLEncodedExample200FormdataResponse:
 		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
 		w.WriteHeader(200)
@@ -806,6 +786,8 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(400)
 		writeRaw(w, ([]byte)(v))
+	case URLEncodedExampledefaultResponse:
+		w.WriteHeader(v.StatusCode)
 	case error:
 		http.Error(w, v.Error(), http.StatusInternalServerError)
 	case nil:
