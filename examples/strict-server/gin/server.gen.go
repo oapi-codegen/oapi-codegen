@@ -230,6 +230,12 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 	TextBody      *MultipleRequestAndResponseTypesTextRequestBody
 }
 
+type MultipleRequestAndResponseTypes200JSONResponse Example
+
+func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((Example)(t))
+}
+
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (t MultipleRequestAndResponseTypes200FormdataResponse) MarshalJSON() ([]byte, error) {
@@ -250,12 +256,6 @@ type MultipleRequestAndResponseTypes200TextResponse string
 
 func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((string)(t))
-}
-
-type MultipleRequestAndResponseTypes200JSONResponse Example
-
-func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
 }
 
 type TextExampleRequestObject struct {
@@ -480,6 +480,8 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
+	case MultipleRequestAndResponseTypes200JSONResponse:
+		ctx.JSON(200, v)
 	case MultipleRequestAndResponseTypes200FormdataResponse:
 		if form, err := runtime.MarshalForm(v, nil); err != nil {
 			ctx.Error(err)
@@ -498,8 +500,6 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		ctx.DataFromReader(200, v.ContentLength, "multipart/form-data", v.Body, nil)
 	case MultipleRequestAndResponseTypes200TextResponse:
 		ctx.Data(200, "text/plain", []byte(v))
-	case MultipleRequestAndResponseTypes200JSONResponse:
-		ctx.JSON(200, v)
 	case error:
 		ctx.Error(v)
 	case nil:

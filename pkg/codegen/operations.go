@@ -688,7 +688,8 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 
 		var responseContentDefinitions []ResponseContentDefinition
 
-		for contentType, content := range response.Content {
+		for _, contentType := range SortedContentKeys(response.Content) {
+			content := response.Content[contentType]
 			var tag string
 			switch contentType {
 			case "application/json":

@@ -225,17 +225,6 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 	TextBody      *MultipleRequestAndResponseTypesTextRequestBody
 }
 
-type MultipleRequestAndResponseTypes200MultipartformDataResponse struct {
-	Body          io.Reader
-	ContentLength int64
-}
-
-type MultipleRequestAndResponseTypes200TextResponse string
-
-func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((string)(t))
-}
-
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
@@ -251,6 +240,17 @@ func (t MultipleRequestAndResponseTypes200FormdataResponse) MarshalJSON() ([]byt
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 	Body          io.Reader
 	ContentLength int64
+}
+
+type MultipleRequestAndResponseTypes200MultipartformDataResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+type MultipleRequestAndResponseTypes200TextResponse string
+
+func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((string)(t))
 }
 
 type TextExampleRequestObject struct {
@@ -474,16 +474,6 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
-	case MultipleRequestAndResponseTypes200MultipartformDataResponse:
-		if v.ContentLength != 0 {
-			ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
-		}
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
-		}
-		return ctx.Stream(200, "multipart/form-data", v.Body)
-	case MultipleRequestAndResponseTypes200TextResponse:
-		return ctx.Blob(200, "text/plain", []byte(v))
 	case MultipleRequestAndResponseTypes200JSONResponse:
 		return ctx.JSON(200, v)
 	case MultipleRequestAndResponseTypes200FormdataResponse:
@@ -500,6 +490,16 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 			defer closer.Close()
 		}
 		return ctx.Stream(200, "image/png", v.Body)
+	case MultipleRequestAndResponseTypes200MultipartformDataResponse:
+		if v.ContentLength != 0 {
+			ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+		}
+		if closer, ok := v.Body.(io.ReadCloser); ok {
+			defer closer.Close()
+		}
+		return ctx.Stream(200, "multipart/form-data", v.Body)
+	case MultipleRequestAndResponseTypes200TextResponse:
+		return ctx.Blob(200, "text/plain", []byte(v))
 	case error:
 		return v
 	case nil:
