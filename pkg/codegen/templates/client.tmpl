@@ -133,11 +133,21 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
 func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
-    buf, err := json.Marshal(body)
-    if err != nil {
-        return nil, err
-    }
-    bodyReader = bytes.NewReader(buf)
+    {{if eq .NameTag "JSON" -}}
+        buf, err := json.Marshal(body)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = bytes.NewReader(buf)
+    {{else if eq .NameTag "Formdata" -}}
+        bodyStr, err := runtime.MarshalForm(body, nil)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = strings.NewReader(bodyStr.Encode())
+    {{else if eq .NameTag "Text" -}}
+        bodyReader = strings.NewReader(string(body))
+    {{end -}}
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
 {{end -}}

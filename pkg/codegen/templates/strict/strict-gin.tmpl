@@ -45,10 +45,15 @@ type strictHandler struct {
                         ctx.Error(err)
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &ctx.Request.Form
+                    var body {{$opid}}{{.NameTag}}RequestBody
+                    if err := runtime.BindForm(&body, ctx.Request.Form, nil, nil); err != nil {
+                        ctx.Error(err)
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Multipart" -}}
-                    if body, err := ctx.MultipartForm(); err == nil {
-                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = body
+                    if reader, err := ctx.Request.MultipartReader(); err == nil {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     } else {
                         ctx.Error(err)
                         return
@@ -59,7 +64,7 @@ type strictHandler struct {
                         ctx.Error(err)
                         return
                     }
-                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    body := {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request.Body
@@ -82,14 +87,20 @@ type strictHandler struct {
                 {{$fixedStatusCode := .HasFixedStatusCode -}}
                 {{$headers := .Headers -}}
                 {{range .Contents -}}
-                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    case {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response:
                     {{range $headers -}}
                         ctx.Header("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
                     {{if eq .NameTag "JSON" -}}
                         ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
                     {{else if eq .NameTag "Text" -}}
-                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{.ContentType}}, []byte(v))
+                        ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(v))
+                    {{else if eq .NameTag "Formdata" -}}
+                        if form, err := runtime.MarshalForm(v, nil); err != nil {
+                            ctx.Error(err)
+                        } else {
+                            ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(form.Encode()))
+                        }
                     {{else -}}
                         if closer, ok := v.Body.(io.ReadCloser); ok {
                             defer closer.Close()

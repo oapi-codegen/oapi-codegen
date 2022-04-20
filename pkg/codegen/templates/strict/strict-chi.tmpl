@@ -45,20 +45,26 @@ type strictHandler struct {
                         http.Error(w, "can't decode formdata: " + err.Error(), http.StatusBadRequest)
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &r.Form
-                {{else if eq .NameTag "Multipart" -}}
-                    if err := r.ParseMultipartForm(32 << 20); err != nil {
-                        http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
+                    var body {{$opid}}{{.NameTag}}RequestBody
+                    if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+                        http.Error(w, "can't bind formdata: " + err.Error(), http.StatusBadRequest)
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.MultipartForm
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Multipart" -}}
+                    if reader, err := r.MultipartReader(); err != nil {
+                        http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
+                        return
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
+                    }
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(r.Body)
                     if err != nil {
                         http.Error(w, "can't read body: " + err.Error(), http.StatusBadRequest)
                         return
                     }
-                    body = {{$opid}}{{.NameTag}}RequestBody(data)
+                    body := {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
@@ -81,7 +87,7 @@ type strictHandler struct {
                 {{$fixedStatusCode := .HasFixedStatusCode -}}
                 {{$headers := .Headers -}}
                 {{range .Contents -}}
-                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    case {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response:
                     {{range $headers -}}
                         w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
@@ -96,6 +102,12 @@ type strictHandler struct {
                         writeJSON(w, v)
                     {{else if eq .NameTag "Text" -}}
                         writeRaw(w, ([]byte)(v))
+                    {{else if eq .NameTag "Formdata" -}}
+                        if form, err := runtime.MarshalForm(v, nil); err != nil {
+                            fmt.Fprintln(w, err)
+                        } else {
+                            writeRaw(w, []byte(form.Encode()))
+                        }
                     {{else -}}
                         if closer, ok := v.Body.(io.ReadCloser); ok {
                             defer closer.Close()

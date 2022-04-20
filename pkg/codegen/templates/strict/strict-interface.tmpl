@@ -12,7 +12,7 @@
         {{end -}}
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "JSON"}}*{{$opid}}{{.NameTag}}RequestBody{{else if eq .NameTag "Multipart"}}*multipart.Form{{else if eq .NameTag "Formdata"}}*url.Values{{else}}io.Reader{{end}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "Multipart"}}*multipart.Reader{{else if ne .NameTag ""}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
         {{end -}}
     }
 
@@ -39,7 +39,7 @@
                     }
                 {{end}}
             {{else -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response struct {
+                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response struct {
                     Body {{if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
                         Headers {{$opid}}{{$statusCode}}ResponseHeaders

@@ -378,7 +378,7 @@ func (r RequestBodyDefinition) Suffix() string {
 
 // Returns true if we support this content type for client. Otherwise only generic method will ge generated
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
-	return r.NameTag == "JSON"
+	return r.NameTag == "JSON" || r.NameTag == "Formdata" || r.NameTag == "Text"
 }
 
 // Returns true if we support this content type for server. Otherwise io.Reader will be generated
@@ -436,6 +436,13 @@ func (r ResponseContentDefinition) IsSupported() bool {
 // Returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r ResponseContentDefinition) HasFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
+}
+
+func (r ResponseContentDefinition) NameTagOrContentType() string {
+	if r.NameTag != "" {
+		return r.NameTag
+	}
+	return SchemaNameToTypeName(r.ContentType)
 }
 
 type ResponseHeaderDefinition struct {
@@ -597,15 +604,15 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var tag string
 		var defaultBody bool
 
-		switch contentType {
-		case "application/json":
+		switch {
+		case contentType == "application/json":
 			tag = "JSON"
 			defaultBody = true
-		case "multipart/form-data":
+		case strings.HasPrefix(contentType, "multipart/"):
 			tag = "Multipart"
-		case "application/x-www-form-urlencoded":
+		case contentType == "application/x-www-form-urlencoded":
 			tag = "Formdata"
-		case "text/plain":
+		case contentType == "text/plain":
 			tag = "Text"
 		default:
 			bd := RequestBodyDefinition{
@@ -685,6 +692,8 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			switch contentType {
 			case "application/json":
 				tag = "JSON"
+			case "application/x-www-form-urlencoded":
+				tag = "Formdata"
 			case "text/plain":
 				tag = "Text"
 			default:
@@ -862,15 +871,15 @@ func GenerateGinServer(t *template.Template, operations []OperationDefinition) (
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Options) (string, error) {
-	templates := []string{"strict-interface.tmpl"}
+	templates := []string{"strict/strict-interface.tmpl"}
 	if opts.GenerateChiServer {
-		templates = append(templates, "strict-chi.tmpl")
+		templates = append(templates, "strict/strict-chi.tmpl")
 	}
 	if opts.GenerateEchoServer {
-		templates = append(templates, "strict-echo.tmpl")
+		templates = append(templates, "strict/strict-echo.tmpl")
 	}
 	if opts.GenerateGinServer {
-		templates = append(templates, "strict-gin.tmpl")
+		templates = append(templates, "strict/strict-gin.tmpl")
 	}
 	return GenerateTemplates(templates, t, operations)
 }

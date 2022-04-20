@@ -40,16 +40,20 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
-                    if body, err := ctx.FormParams(); err == nil {
+                    if form, err := ctx.FormParams(); err == nil {
+                        var body {{$opid}}{{.NameTag}}RequestBody
+                        if err := runtime.BindForm(&body, form, nil, nil); err != nil {
+                            return err
+                        }
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                     } else {
                         return err
                     }
                 {{else if eq .NameTag "Multipart" -}}
-                    if body, err := ctx.MultipartForm(); err == nil {
-                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = body
-                    } else {
+                    if reader, err := ctx.Request().MultipartReader(); err != nil {
                         return err
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(ctx.Request().Body)
@@ -79,7 +83,7 @@ type strictHandler struct {
                 {{$fixedStatusCode := .HasFixedStatusCode -}}
                 {{$headers := .Headers -}}
                 {{range .Contents -}}
-                    case {{$opid}}{{$statusCode}}{{.NameTag}}Response:
+                    case {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response:
                     {{range $headers -}}
                         ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
@@ -87,6 +91,12 @@ type strictHandler struct {
                         return ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
                     {{else if eq .NameTag "Text" -}}
                         return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(v))
+                    {{else if eq .NameTag "Formdata" -}}
+                        if form, err := runtime.MarshalForm(v, nil); err != nil {
+                            return err
+                        } else {
+                            return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(form.Encode()))
+                        }
                     {{else -}}
                         if v.ContentLength != 0 {
                             ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))

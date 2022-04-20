@@ -800,6 +800,8 @@ type ClientInterface interface {
 
 	EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	EnsureEverythingIsReferencedWithTextBody(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ParamsWithAddProps request
 	ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -823,6 +825,18 @@ func (c *Client) EnsureEverythingIsReferencedWithBody(ctx context.Context, conte
 
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewEnsureEverythingIsReferencedRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EnsureEverythingIsReferencedWithTextBody(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnsureEverythingIsReferencedRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -878,6 +892,13 @@ func NewEnsureEverythingIsReferencedRequest(server string, body EnsureEverything
 	}
 	bodyReader = bytes.NewReader(buf)
 	return NewEnsureEverythingIsReferencedRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewEnsureEverythingIsReferencedRequestWithTextBody calls the generic EnsureEverythingIsReferenced builder with text/plain body
+func NewEnsureEverythingIsReferencedRequestWithTextBody(server string, body EnsureEverythingIsReferencedTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyReader = strings.NewReader(string(body))
+	return NewEnsureEverythingIsReferencedRequestWithBody(server, "text/plain", bodyReader)
 }
 
 // NewEnsureEverythingIsReferencedRequestWithBody generates requests for EnsureEverythingIsReferenced with any type of body
@@ -1052,6 +1073,8 @@ type ClientWithResponsesInterface interface {
 
 	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
+	EnsureEverythingIsReferencedWithTextBodyWithResponse(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
+
 	// ParamsWithAddProps request
 	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error)
 
@@ -1155,6 +1178,14 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(c
 
 func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnsureEverythingIsReferencedResponse(rsp)
+}
+
+func (c *ClientWithResponses) EnsureEverythingIsReferencedWithTextBodyWithResponse(ctx context.Context, body EnsureEverythingIsReferencedTextRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
+	rsp, err := c.EnsureEverythingIsReferencedWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}

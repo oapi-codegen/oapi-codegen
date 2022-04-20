@@ -38,7 +38,7 @@ type Options struct {
 	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
 	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
 	GenerateGinServer  bool              // GenerateGinServer specifies whether to generate echo server boilerplate
-	GenerateStrict     bool              //GenerateStrict specifies whether to generate strict server wrapper
+	GenerateStrict     bool              // GenerateStrict specifies whether to generate strict server wrapper
 	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
 	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
 	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
