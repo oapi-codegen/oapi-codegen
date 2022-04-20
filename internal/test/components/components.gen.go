@@ -193,7 +193,12 @@ type OneOfVariant6 struct {
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
 	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+
+	// This property is required and readOnly, so the go model should have it as a pointer,
+	// as it will not be included when it is sent from client to server.
+	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
+	Role                  string  `json:"role"`
+	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
 
 // ResponseObject defines model for ResponseObject.

@@ -70,6 +70,8 @@ type Property struct {
 	Schema         Schema
 	Required       bool
 	Nullable       bool
+	ReadOnly       bool
+	WriteOnly      bool
 	ExtensionProps *openapi3.ExtensionProps
 }
 
@@ -79,7 +81,9 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && (!p.Required || p.Nullable) {
+	if !p.Schema.SkipOptionalPointer &&
+		(!p.Required || p.Nullable || p.ReadOnly || p.WriteOnly) {
+
 		typeDef = "*" + typeDef
 	}
 	return typeDef
@@ -267,6 +271,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Required:       required,
 					Description:    description,
 					Nullable:       p.Value.Nullable,
+					ReadOnly:       p.Value.ReadOnly,
+					WriteOnly:      p.Value.WriteOnly,
 					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
@@ -427,6 +433,8 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		case "json":
 			outSchema.GoType = "json.RawMessage"
 			outSchema.SkipOptionalPointer = true
+		case "uuid":
+			outSchema.GoType = "openapi_types.UUID"
 		default:
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
@@ -467,7 +475,15 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
 		}
-		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
+
+		goFieldName := p.GoFieldName()
+		if _, ok := p.ExtensionProps.Extensions[extGoFieldName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+				goFieldName = extGoFieldName
+			}
+		}
+
+		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
 		// Support x-omitempty
 		omitEmpty := true
@@ -479,7 +495,7 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
-		if p.Required || p.Nullable || !omitEmpty {
+		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"

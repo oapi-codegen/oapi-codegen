@@ -337,3 +337,25 @@ func TestEscapePathElements(t *testing.T) {
 	p = "/foo/bar:baz"
 	assert.Equal(t, "/foo/bar%3Abaz", EscapePathElements(p))
 }
+
+func TestSchemaNameToTypeName(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"$":            "DollarSign",
+		"$ref":         "Ref",
+		"no_prefix~+-": "NoPrefix",
+		"123":          "N123",
+		"-1":           "Minus1",
+		"+1":           "Plus1",
+		"@timestamp,":  "Timestamp",
+		"&now":         "AndNow",
+		"~":            "Tilde",
+		"_foo":         "Foo",
+		"=3":           "Equal3",
+		"#Tag":         "HashTag",
+		".com":         "DotCom",
+	} {
+		assert.Equal(t, want, SchemaNameToTypeName(in))
+	}
+}
