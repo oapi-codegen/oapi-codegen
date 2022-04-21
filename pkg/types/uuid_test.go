@@ -4,22 +4,24 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUUID_MarshalJSON_Fail(t *testing.T) {
-	testUUID := "this-is-not-a-uuid"
+func TestUUID_MarshalJSON_Zero(t *testing.T) {
+	var testUUID UUID
 	b := struct {
 		UUIDField UUID `json:"uuid"`
 	}{
-		UUIDField: UUID(testUUID),
+		UUIDField: testUUID,
 	}
-	_, err := json.Marshal(b)
-	assert.Error(t, err)
+	marshaled, err := json.Marshal(b)
+	assert.NoError(t, err)
+	assert.JSONEq(t, `{"uuid":"00000000-0000-0000-0000-000000000000"}`, string(marshaled))
 }
 
 func TestUUID_MarshalJSON_Pass(t *testing.T) {
-	testUUID := "9cb14230-b640-11ec-b909-0242ac120002"
+	testUUID := uuid.MustParse("9cb14230-b640-11ec-b909-0242ac120002")
 	b := struct {
 		UUIDField UUID `json:"uuid"`
 	}{
@@ -40,7 +42,7 @@ func TestUUID_UnmarshalJSON_Fail(t *testing.T) {
 }
 
 func TestUUID_UnmarshalJSON_Pass(t *testing.T) {
-	testUUID := UUID("9cb14230-b640-11ec-b909-0242ac120002")
+	testUUID := UUID(uuid.MustParse("9cb14230-b640-11ec-b909-0242ac120002"))
 	jsonStr := `{"uuid":"9cb14230-b640-11ec-b909-0242ac120002"}`
 	b := struct {
 		UUIDField UUID `json:"uuid"`
