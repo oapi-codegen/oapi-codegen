@@ -273,6 +273,28 @@ func TestOapiRequestValidator(t *testing.T) {
 	}
 }
 
+func TestOapiRequestValidatorSkipRouteError(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	require.NoError(t, err, "Error initializing swagger")
+
+	e := echo.New()
+	options := Options{
+		SkipRouteError: true,
+	}
+	e.Use(OapiRequestValidatorWithOptions(swagger, &options))
+
+	called := false
+	e.GET("/not_defined", func(c echo.Context) error {
+		called = true
+		c.String(http.StatusOK, "ok")
+		return nil
+	})
+	// not defined path causes route error but it should be skipped
+	rec := doGet(t, e, "http://deepmap.ai/not_defined")
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.True(t, called, "Handler should have been called")
+}
+
 func TestGetSkipperFromOptions(t *testing.T) {
 
 	options := new(Options)
