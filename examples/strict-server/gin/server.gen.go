@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -35,6 +36,12 @@ type MultipleRequestAndResponseTypesTextBody string
 
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody string
+
+// HeadersExampleParams defines parameters for HeadersExample.
+type HeadersExampleParams struct {
+	Header1 string `json:"header1"`
+	Header2 *int   `json:"header2,omitempty"`
+}
 
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
 type JSONExampleJSONRequestBody Example
@@ -60,6 +67,9 @@ type TextExampleTextRequestBody TextExampleTextBody
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
 type URLEncodedExampleFormdataRequestBody Example
 
+// HeadersExampleJSONRequestBody defines body for HeadersExample for application/json ContentType.
+type HeadersExampleJSONRequestBody Example
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -80,6 +90,9 @@ type ServerInterface interface {
 
 	// (POST /urlencoded)
 	URLEncodedExample(c *gin.Context)
+
+	// (POST /with-headers)
+	HeadersExample(c *gin.Context, params HeadersExampleParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -150,6 +163,64 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(c *gin.Context) {
 	siw.Handler.URLEncodedExample(c)
 }
 
+// HeadersExample operation middleware
+func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
+
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params HeadersExampleParams
+
+	headers := c.Request.Header
+
+	// ------------- Required header parameter "header1" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("header1")]; found {
+		var Header1 string
+		n := len(valueList)
+		if n != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for header1, got %d", n)})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "header1", runtime.ParamLocationHeader, valueList[0], &Header1)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter header1: %s", err)})
+			return
+		}
+
+		params.Header1 = Header1
+
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Header parameter header1 is required, but not found: %s", err)})
+		return
+	}
+
+	// ------------- Optional header parameter "header2" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("header2")]; found {
+		var Header2 int
+		n := len(valueList)
+		if n != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for header2, got %d", n)})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithLocation("simple", false, "header2", runtime.ParamLocationHeader, valueList[0], &Header2)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter header2: %s", err)})
+			return
+		}
+
+		params.Header2 = &Header2
+
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+	}
+
+	siw.Handler.HeadersExample(c, params)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL     string
@@ -180,6 +251,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 
 	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 
+	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
+
 	return router
 }
 
@@ -195,10 +268,6 @@ func (t JSONExample200JSONResponse) MarshalJSON() ([]byte, error) {
 
 type JSONExample400TextResponse Badrequest
 
-func (t JSONExample400TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Badrequest)(t))
-}
-
 type JSONExampledefaultResponse struct {
 	StatusCode int
 }
@@ -207,16 +276,9 @@ type MultipartExampleRequestObject struct {
 	Body *multipart.Reader
 }
 
-type MultipartExample200MultipartformDataResponse struct {
-	Body          io.Reader
-	ContentLength int64
-}
+type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
 type MultipartExample400TextResponse Badrequest
-
-func (t MultipartExample400TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Badrequest)(t))
-}
 
 type MultipartExampledefaultResponse struct {
 	StatusCode int
@@ -238,25 +300,14 @@ func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, e
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
-func (t MultipleRequestAndResponseTypes200FormdataResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
-}
-
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 	Body          io.Reader
 	ContentLength int64
 }
 
-type MultipleRequestAndResponseTypes200MultipartformDataResponse struct {
-	Body          io.Reader
-	ContentLength int64
-}
+type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.Writer) error
 
 type MultipleRequestAndResponseTypes200TextResponse string
-
-func (t MultipleRequestAndResponseTypes200TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((string)(t))
-}
 
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
@@ -264,15 +315,7 @@ type TextExampleRequestObject struct {
 
 type TextExample200TextResponse string
 
-func (t TextExample200TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((string)(t))
-}
-
 type TextExample400TextResponse Badrequest
-
-func (t TextExample400TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Badrequest)(t))
-}
 
 type TextExampledefaultResponse struct {
 	StatusCode int
@@ -289,10 +332,6 @@ type UnknownExample200Videomp4Response struct {
 
 type UnknownExample400TextResponse Badrequest
 
-func (t UnknownExample400TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Badrequest)(t))
-}
-
 type UnknownExampledefaultResponse struct {
 	StatusCode int
 }
@@ -303,17 +342,34 @@ type URLEncodedExampleRequestObject struct {
 
 type URLEncodedExample200FormdataResponse Example
 
-func (t URLEncodedExample200FormdataResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
-}
-
 type URLEncodedExample400TextResponse Badrequest
 
-func (t URLEncodedExample400TextResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Badrequest)(t))
+type URLEncodedExampledefaultResponse struct {
+	StatusCode int
 }
 
-type URLEncodedExampledefaultResponse struct {
+type HeadersExampleRequestObject struct {
+	Params HeadersExampleParams
+	Body   *HeadersExampleJSONRequestBody
+}
+
+type HeadersExample200ResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type HeadersExample200JSONResponse struct {
+	Body    Example
+	Headers HeadersExample200ResponseHeaders
+}
+
+func (t HeadersExample200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
+}
+
+type HeadersExample400TextResponse Badrequest
+
+type HeadersExampledefaultResponse struct {
 	StatusCode int
 }
 
@@ -337,6 +393,9 @@ type StrictServerInterface interface {
 
 	// (POST /urlencoded)
 	URLEncodedExample(ctx context.Context, request URLEncodedExampleRequestObject) interface{}
+
+	// (POST /with-headers)
+	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) interface{}
 }
 
 type StrictHandlerFunc func(ctx *gin.Context, args interface{}) interface{}
@@ -408,11 +467,13 @@ func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
-	case MultipartExample200MultipartformDataResponse:
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
+	case MultipartExample200MultipartResponse:
+		writer := multipart.NewWriter(ctx.Writer)
+		ctx.Writer.Header().Set("Content-Type", writer.FormDataContentType())
+		defer writer.Close()
+		if err := v(writer); err != nil {
+			ctx.Error(err)
 		}
-		ctx.DataFromReader(200, v.ContentLength, "multipart/form-data", v.Body, nil)
 	case MultipartExample400TextResponse:
 		ctx.Data(400, "text/plain", []byte(v))
 	case MultipartExampledefaultResponse:
@@ -493,11 +554,13 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 			defer closer.Close()
 		}
 		ctx.DataFromReader(200, v.ContentLength, "image/png", v.Body, nil)
-	case MultipleRequestAndResponseTypes200MultipartformDataResponse:
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
+	case MultipleRequestAndResponseTypes200MultipartResponse:
+		writer := multipart.NewWriter(ctx.Writer)
+		ctx.Writer.Header().Set("Content-Type", writer.FormDataContentType())
+		defer writer.Close()
+		if err := v(writer); err != nil {
+			ctx.Error(err)
 		}
-		ctx.DataFromReader(200, v.ContentLength, "multipart/form-data", v.Body, nil)
 	case MultipleRequestAndResponseTypes200TextResponse:
 		ctx.Data(200, "text/plain", []byte(v))
 	case error:
@@ -620,20 +683,61 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 	}
 }
 
+// HeadersExample operation middleware
+func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleParams) {
+	var request HeadersExampleRequestObject
+
+	request.Params = params
+
+	var body HeadersExampleJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) interface{} {
+		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "HeadersExample")
+	}
+
+	response := handler(ctx, request)
+
+	switch v := response.(type) {
+	case HeadersExample200JSONResponse:
+		ctx.Header("header1", fmt.Sprint(v.Headers.Header1))
+		ctx.Header("header2", fmt.Sprint(v.Headers.Header2))
+		ctx.JSON(200, v)
+	case HeadersExample400TextResponse:
+		ctx.Data(400, "text/plain", []byte(v))
+	case HeadersExampledefaultResponse:
+		ctx.Status(v.StatusCode)
+	case error:
+		ctx.Error(v)
+	case nil:
+	default:
+		ctx.Error(fmt.Errorf("Unexpected response type: %T", v))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xWy27bOhD9FWLuXSqW22alXVNk0WeAJF0VXdDi2GJKcVhyZNkI9O8FJdmNXBlwUife",
-	"dCc+5szhmYfmHnIqHVm0HCC7B4/BkQ3YLmZSefxZYeC4ysky2vaTccWpM1LbuAp5gaWMX/97nEMG/6W/",
-	"QdPuNKQPwJqmSUBhyL12rMlCBhdSXW9Pkx5yhASvHUIGgb22C2gSwJUsncF45jw59Kw78ktpKhwxaZLN",
-	"Ds3uMO/ZaDuneHnI6h1ZltoGofR8jh4ti14FETGCCJVz5BmVmK1F9JCzCOiX6CEB1hyJwc3DfdETDpDA",
-	"En3oHL2aTCfT+BxyaKXTkMGbdisBJ7loH5TeBWr1dtRpMeT64ebqi9BByIqplKxzacxalNKHQhqDSmjL",
-	"FDlWOYcJtK68jMbvVW9+2WuZQK/4Ban1Tuilc0bnrd2W0GEJsIlU0wo+SLTX0+lzuNlNsquPUeLzztkY",
-	"xpbUIFsjzFxWZkT0r/aHpdoK9J58/7K0rAxrJz0/DNZQ7c+bK4dIvsVL5+TLMyVZPpPqx/J0UuH7ZjBa",
-	"JDcF1UEUVAsmoVAaUWsuxMZwp7q1FVIEbRcGxYZUMhpJg333emvVdf+W24jx7LWUDFBWZ3Vdn7XBq7xB",
-	"m5NC9TRYXcoFps4uhuYRWzJkMFtzTNs/u+uRkijZ+5fZdflC7eSf0uOF3dVehNjf725xdVCrO2LI/+pN",
-	"L9Csqm5zv2a91SGyPTGDDlBxqRVSWrrzRyKfStRBKe7R9frTZXfnsfPO0Wr+kR3reH5PEZY4zrejb4Ds",
-	"2z1U3kAGBbPL0rQbmSehlosF+ommNA6/zffmVwAAAP//pen/+5gMAAA=",
+	"H4sIAAAAAAAC/+xXTW/bOBD9K8TsHmnLyebk22YRYL8DJOmpyGEsjm2mEsmSI8tGoP9eUJIdy5EDJ7UT",
+	"oOhNpDhvHt98kHyE1ObOGjIcYPwInoKzJlA9mKDy9LWgwHGUWsNk6k+mJScuQ23iKKRzyjF+/eppCmP4",
+	"JXkCTZq/IdkCq6pKgqKQeu1YWwNjuER1s/krW8geErxyBGMI7LWZQSWBlpi7jOI/560jz7ohv8CsoB6T",
+	"Sq5n7OSB0paNNlMbF3dZ/WENozZBKD2dkifDolVBRIwgQuGc9UxKTFYiekhZBPIL8iCBNUdicLs9L1rC",
+	"ASQsyIfG0dlwNBzF7VhHBp2GMfxWT0lwyPN6Q8lDsLXezjZadLn+fXv9v9BBYME2R9YpZtlK5OjDHLOM",
+	"lNCGbeRYpByGULvyGI3/Uq35VaulhFbxS6tWO6FH5zKd1nYbQoclwDpSVS14J9HOR6NTuNlNsut/osQX",
+	"jbM+jA2pTrZGmCkWWY/on8wXY0sjyHvr250leZGxduh5O1hdtf9bLzlE8g1eMrU+HyhkPJHqx/L0ocK3",
+	"zaC3SG7ntgxibkvBVijCTJSa52JtuFPd2ggUQZtZRmJNSvZGMqO2e/1u1E27l7uIcfJakh2U5aAsy0Ed",
+	"vMJnZFKrSL0NVuc4o8SZWdc8YiPDGCYrjmn7vLseKYnk3lNm1+U7tZOfSvcXdlN7EWJ/v7uj5UGt7ogh",
+	"/649vUOzKprJ/Zq1VofI9sYMOkDFhVZkk9xdvBL5o0TtlOIeXW/+vWrWvPa+c7Saf2XHOp7fDwpLPGQH",
+	"c0JFPuw/nP9sFogUjZjEEzclvSAl0CjhiQtvSImFxvUl9tlZ3AI8hdWhx5y49vr5EWIrgIYGSDCY02Z8",
+	"1iaB9lFZ9gXJF3qGfBHrHHpstWGaUVTk/ge+XkvYivJa2Rfbr9yI1rfsSbXq5Hkan531E61JlsJnMaLM",
+	"bpwkzdNuGEqczcgPtU3iI626r74FAAD//1evVKNADwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

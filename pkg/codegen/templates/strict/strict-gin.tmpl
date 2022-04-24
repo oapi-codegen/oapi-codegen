@@ -101,6 +101,13 @@ type strictHandler struct {
                         } else {
                             ctx.Data({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(form.Encode()))
                         }
+                    {{else if eq .NameTag "Multipart" -}}
+                        writer := multipart.NewWriter(ctx.Writer)
+                        ctx.Writer.Header().Set("Content-Type", writer.FormDataContentType())
+                        defer writer.Close()
+                        if err := v(writer); err != nil {
+                            ctx.Error(err)
+                        }
                     {{else -}}
                         if closer, ok := v.Body.(io.ReadCloser); ok {
                             defer closer.Close()

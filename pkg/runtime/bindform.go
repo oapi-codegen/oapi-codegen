@@ -30,9 +30,9 @@ func BindForm(ptr interface{}, form map[string][]string, files map[string][]*mul
 	tValue := ptrVal.Type()
 
 	for i := 0; i < tValue.NumField(); i++ {
-		field := tValue.Field(i)
-		tag := field.Tag.Get(tagName)
-		if !field.IsExported() || tag == "-" {
+		field := ptrVal.Field(i)
+		tag := tValue.Field(i).Tag.Get(tagName)
+		if !field.CanInterface() || tag == "-" {
 			continue
 		}
 		tag = strings.Split(tag, ",")[0] // extract the name of the tag
@@ -55,13 +55,13 @@ func BindForm(ptr interface{}, form map[string][]string, files map[string][]*mul
 				if encoding.Explode != nil {
 					explode = *encoding.Explode
 				}
-				if err := BindStyledParameterWithLocation(encoding.Style, explode, tag, ParamLocationUndefined, value, ptrVal.Field(i).Addr().Interface()); err != nil {
+				if err := BindStyledParameterWithLocation(encoding.Style, explode, tag, ParamLocationUndefined, value, field.Addr().Interface()); err != nil {
 					return err
 				}
 			}
 		} else {
 			// regular form data
-			if _, err := bindFormImpl(ptrVal.Field(i), form, files, tag); err != nil {
+			if _, err := bindFormImpl(field, form, files, tag); err != nil {
 				return err
 			}
 		}
@@ -78,19 +78,19 @@ func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url
 	tValue := ptrVal.Type()
 	result := make(url.Values)
 	for i := 0; i < tValue.NumField(); i++ {
-		field := tValue.Field(i)
-		tag := field.Tag.Get(tagName)
-		if !field.IsExported() || tag == "-" {
+		field := ptrVal.Field(i)
+		tag := tValue.Field(i).Tag.Get(tagName)
+		if !field.CanInterface() || tag == "-" {
 			continue
 		}
 		omitEmpty := strings.HasSuffix(tag, ",omitempty")
-		if omitEmpty && ptrVal.Field(i).IsZero() {
+		if omitEmpty && field.IsZero() {
 			continue
 		}
 		tag = strings.Split(tag, ",")[0] // extract the name of the tag
 		if encoding, ok := encodings[tag]; ok && encoding.ContentType != "" {
 			if strings.HasPrefix(encoding.ContentType, jsonContentType) {
-				if data, err := json.Marshal(ptrVal.Field(i)); err != nil {
+				if data, err := json.Marshal(field); err != nil {
 					return nil, err
 				} else {
 					result[tag] = append(result[tag], string(data))
@@ -98,7 +98,7 @@ func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url
 			}
 			return nil, errors.New("unsupported encoding, only application/json is supported")
 		} else {
-			marshalFormImpl(ptrVal.Field(i), result, tag)
+			marshalFormImpl(field, result, tag)
 		}
 	}
 	return result, nil
@@ -165,7 +165,7 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 				}
 				hasData = hasData || additionalPropertiesHasData
 			}
-			if !field.IsExported() || tag == "-" {
+			if !v.Field(i).CanInterface() || tag == "-" {
 				continue
 			}
 			tag = strings.Split(tag, ",")[0] // extract the name of the tag
@@ -238,7 +238,7 @@ func marshalFormImpl(v reflect.Value, result url.Values, name string) {
 				}
 				continue
 			}
-			if !field.IsExported() || tag == "-" {
+			if !v.Field(i).CanInterface() || tag == "-" {
 				continue
 			}
 			tag = strings.Split(tag, ",")[0] // extract the name of the tag

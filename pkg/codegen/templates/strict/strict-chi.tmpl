@@ -91,7 +91,10 @@ type strictHandler struct {
                     {{range $headers -}}
                         w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
                     {{end -}}
-                    w.Header().Set("Content-Type", {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}})
+                    {{if eq .NameTag "Multipart" -}}
+                        writer := multipart.NewWriter(w)
+                    {{end -}}
+                    w.Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}writer.FormDataContentType(){{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}})
                     {{if not .IsSupported -}}
                         if v.ContentLength != 0 {
                             w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
@@ -107,6 +110,11 @@ type strictHandler struct {
                             fmt.Fprintln(w, err)
                         } else {
                             writeRaw(w, []byte(form.Encode()))
+                        }
+                    {{else if eq .NameTag "Multipart" -}}
+                        defer writer.Close()
+                        if err := v(writer); err != nil {
+                            http.Error(w, err.Error(), http.StatusInternalServerError)
                         }
                     {{else -}}
                         if closer, ok := v.Body.(io.ReadCloser); ok {

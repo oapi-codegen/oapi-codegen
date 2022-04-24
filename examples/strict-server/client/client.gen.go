@@ -31,6 +31,12 @@ type MultipleRequestAndResponseTypesTextBody string
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody string
 
+// HeadersExampleParams defines parameters for HeadersExample.
+type HeadersExampleParams struct {
+	Header1 string `json:"header1"`
+	Header2 *int   `json:"header2,omitempty"`
+}
+
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
 type JSONExampleJSONRequestBody Example
 
@@ -54,6 +60,9 @@ type TextExampleTextRequestBody TextExampleTextBody
 
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
 type URLEncodedExampleFormdataRequestBody Example
+
+// HeadersExampleJSONRequestBody defines body for HeadersExample for application/json ContentType.
+type HeadersExampleJSONRequestBody Example
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -157,6 +166,11 @@ type ClientInterface interface {
 	URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// HeadersExample request with any body
+	HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -293,6 +307,30 @@ func (c *Client) URLEncodedExampleWithBody(ctx context.Context, contentType stri
 
 func (c *Client) URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewURLEncodedExampleRequestWithFormdataBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHeadersExampleRequestWithBody(c.Server, params, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewHeadersExampleRequest(c.Server, params, body)
 	if err != nil {
 		return nil, err
 	}
@@ -535,6 +573,66 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewHeadersExampleRequest calls the generic HeadersExample builder with application/json body
+func NewHeadersExampleRequest(server string, params *HeadersExampleParams, body HeadersExampleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewHeadersExampleRequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewHeadersExampleRequestWithBody generates requests for HeadersExample with any type of body
+func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParams, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/with-headers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	var headerParam0 string
+
+	headerParam0, err = runtime.StyleParamWithLocation("simple", false, "header1", runtime.ParamLocationHeader, params.Header1)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("header1", headerParam0)
+
+	if params.Header2 != nil {
+		var headerParam1 string
+
+		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "header2", runtime.ParamLocationHeader, *params.Header2)
+		if err != nil {
+			return nil, err
+		}
+
+		req.Header.Set("header2", headerParam1)
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -607,6 +705,11 @@ type ClientWithResponsesInterface interface {
 	URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
 	URLEncodedExampleWithFormdataBodyWithResponse(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
+
+	// HeadersExample request with any body
+	HeadersExampleWithBodyWithResponse(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
+
+	HeadersExampleWithResponse(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
 }
 
 type JSONExampleResponse struct {
@@ -737,6 +840,28 @@ func (r URLEncodedExampleResponse) StatusCode() int {
 	return 0
 }
 
+type HeadersExampleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Example
+}
+
+// Status returns HTTPResponse.Status
+func (r HeadersExampleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r HeadersExampleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse
 func (c *ClientWithResponses) JSONExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error) {
 	rsp, err := c.JSONExampleWithBody(ctx, contentType, body, reqEditors...)
@@ -837,6 +962,23 @@ func (c *ClientWithResponses) URLEncodedExampleWithFormdataBodyWithResponse(ctx 
 		return nil, err
 	}
 	return ParseURLEncodedExampleResponse(rsp)
+}
+
+// HeadersExampleWithBodyWithResponse request with arbitrary body returning *HeadersExampleResponse
+func (c *ClientWithResponses) HeadersExampleWithBodyWithResponse(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error) {
+	rsp, err := c.HeadersExampleWithBody(ctx, params, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHeadersExampleResponse(rsp)
+}
+
+func (c *ClientWithResponses) HeadersExampleWithResponse(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error) {
+	rsp, err := c.HeadersExample(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseHeadersExampleResponse(rsp)
 }
 
 // ParseJSONExampleResponse parses an HTTP response from a JSONExampleWithResponse call
@@ -953,6 +1095,32 @@ func ParseURLEncodedExampleResponse(rsp *http.Response) (*URLEncodedExampleRespo
 	response := &URLEncodedExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseHeadersExampleResponse parses an HTTP response from a HeadersExampleWithResponse call
+func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &HeadersExampleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	}
 
 	return response, nil

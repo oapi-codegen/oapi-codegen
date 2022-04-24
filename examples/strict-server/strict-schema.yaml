@@ -146,6 +146,44 @@ paths:
               schema:
                 type: string
                 format: byte
+  /with-headers:
+    post:
+      operationId: Headers Example
+      description: Headers can be received and returned via structs
+      parameters:
+        - name: header1
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: header2
+          in: header
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          headers:
+            header1:
+              schema:
+                type: string
+            header2:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
 components:
   responses:
     badrequest:

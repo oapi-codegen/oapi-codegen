@@ -97,6 +97,13 @@ type strictHandler struct {
                         } else {
                             return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(form.Encode()))
                         }
+                    {{else if eq .NameTag "Multipart" -}}
+                        writer := multipart.NewWriter(ctx.Response())
+                        ctx.Response().Header().Set("Content-Type", writer.FormDataContentType())
+                        defer writer.Close()
+                        if err := v(writer); err != nil {
+                            return err
+                        }
                     {{else -}}
                         if v.ContentLength != 0 {
                             ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))

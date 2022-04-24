@@ -23,24 +23,24 @@
 
         {{if $hasHeaders}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
-                {{range .Headers}}
+                {{range .Headers -}}
                     {{.GoName}} {{.Schema.TypeDecl}}
-                {{end}}
+                {{end -}}
             }
         {{end}}
 
         {{range .Contents}}
             {{if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if .IsSupported}}{{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
-                {{if not (and (opts.AliasTypes) (.Schema.IsRef))}}
+                {{if and (not (and (opts.AliasTypes) (.Schema.IsRef))) (eq .NameTag "JSON")}}
                     func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
                         return json.Marshal(({{.Schema.GoType}})(t))
                     }
                 {{end}}
             {{else -}}
                 type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response struct {
-                    Body {{if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                    Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
                         Headers {{$opid}}{{$statusCode}}ResponseHeaders
                     {{end -}}
@@ -57,7 +57,7 @@
                         ContentLength int64
                     {{end -}}
                 }
-                {{if .IsSupported}}
+                {{if eq .NameTag "JSON"}}
                     func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
                         return json.Marshal(t.Body)
                     }

@@ -691,12 +691,14 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 		for _, contentType := range SortedContentKeys(response.Content) {
 			content := response.Content[contentType]
 			var tag string
-			switch contentType {
-			case "application/json":
+			switch {
+			case contentType == "application/json":
 				tag = "JSON"
-			case "application/x-www-form-urlencoded":
+			case contentType == "application/x-www-form-urlencoded":
 				tag = "Formdata"
-			case "text/plain":
+			case strings.HasPrefix(contentType, "multipart/"):
+				tag = "Multipart"
+			case contentType == "text/plain":
 				tag = "Text"
 			default:
 				rcd := ResponseContentDefinition{
