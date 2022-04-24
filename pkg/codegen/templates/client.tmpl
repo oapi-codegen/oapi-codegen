@@ -75,10 +75,11 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
+{{$typesPkg := .TypesPackage -}}
     // {{$opid}} request{{if .HasBody}} with any body{{end}}
-    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
+    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
-    {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+    {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}, body {{$typesPkg}}{{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
 }
@@ -89,8 +90,9 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
+{{$typesPkg := .TypesPackage -}}
 
-func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
@@ -103,7 +105,7 @@ func (c *Client) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{ge
 }
 
 {{range .Bodies}}
-func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
+func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}, body {{$typesPkg}}{{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}{{.Suffix}}Request(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
@@ -123,10 +125,11 @@ func (c *Client) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathPar
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{$opid := .OperationId -}}
+{{$typesPkg := .TypesPackage -}}
 
 {{range .Bodies}}
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
-func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
+func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}, body {{$typesPkg}}{{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
     buf, err := json.Marshal(body)
     if err != nil {
@@ -138,7 +141,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
 {{end}}
 
 // New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
-func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
+func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$typesPkg}}{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string

@@ -13,6 +13,8 @@ type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
 
+	PackageName string // If the type is external type, this is set
+
 	ArrayType *Schema // The schema of array element
 
 	EnumValues map[string]string // Enum values
@@ -35,10 +37,16 @@ func (s Schema) IsRef() bool {
 }
 
 func (s Schema) TypeDecl() string {
+	var res string
 	if s.IsRef() {
-		return s.RefType
+		res = s.RefType
+	} else {
+		res = s.GoType
 	}
-	return s.GoType
+	if s.PackageName != "" {
+		res = s.PackageName + res
+	}
+	return res
 }
 
 func (s *Schema) MergeProperty(p Property) error {
@@ -142,7 +150,7 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
-func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+func GenerateGoSchema(sref *openapi3.SchemaRef, path []string, typesPackage string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore we have at least valid Go-Code.
@@ -163,6 +171,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:      refType,
+			PackageName: typesPackage,
 			Description: StringToGoComment(schema.Description),
 		}, nil
 	}
@@ -188,7 +197,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		mergedSchema, err := MergeSchemas(schema.AllOf, path, typesPackage)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
@@ -230,7 +239,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
 				propertyPath := append(path, pName)
-				pSchema, err := GenerateGoSchema(p, propertyPath)
+				pSchema, err := GenerateGoSchema(p, propertyPath, typesPackage)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
@@ -275,7 +284,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				GoType: "interface{}",
 			}
 			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path, typesPackage)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -286,7 +295,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
-		err := resolveType(schema, path, &outSchema)
+		err := resolveType(schema, path, &outSchema, typesPackage)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -318,7 +327,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		//outSchema.RefType = typeName
 	} else {
-		err := resolveType(schema, path, &outSchema)
+		err := resolveType(schema, path, &outSchema, typesPackage)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -327,7 +336,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 }
 
 // resolveType resolves primitive  type or array for schema
-func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema, typesPackage string) error {
 	f := schema.Format
 	t := schema.Type
 
@@ -335,7 +344,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 	case "array":
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
-		arrayType, err := GenerateGoSchema(schema.Items, path)
+		arrayType, err := GenerateGoSchema(schema.Items, path, typesPackage)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
@@ -505,7 +514,7 @@ func GenStructFromSchema(schema Schema) string {
 }
 
 // Merge all the fields in the schemas supplied into one giant schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, typesPackage string) (Schema, error) {
 	var outSchema Schema
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
@@ -519,7 +528,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 		}
 
-		schema, err := GenerateGoSchema(schemaOrRef, path)
+		schema, err := GenerateGoSchema(schemaOrRef, path, typesPackage)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error generating Go schema in allOf: %w", err)
 		}
@@ -550,7 +559,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 
 	// Now, we generate the struct which merges together all the fields.
 	var err error
-	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	outSchema.GoType, err = GenStructFromAllOf(allOf, path, typesPackage)
 	if err != nil {
 		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
 	}
@@ -560,7 +569,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 // This function generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
+func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string, typesPackage string) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
@@ -583,7 +592,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
-			goSchema, err := GenerateGoSchema(schemaOrRef, path)
+			goSchema, err := GenerateGoSchema(schemaOrRef, path, typesPackage)
 			if err != nil {
 				return "", err
 			}
@@ -609,14 +618,14 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 
 // This constructs a Go type for a parameter, looking at either the schema or
 // the content, whichever is available
-func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
+func paramToGoType(param *openapi3.Parameter, path []string, typesPackage string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
 		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
 	}
 
 	// We can process the schema through the generic schema processor
 	if param.Schema != nil {
-		return GenerateGoSchema(param.Schema, path)
+		return GenerateGoSchema(param.Schema, path, typesPackage)
 	}
 
 	// At this point, we have a content type. We know how to deal with
@@ -640,5 +649,5 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	}
 
 	// For json, we go through the standard schema mechanism
-	return GenerateGoSchema(mt.Schema, path)
+	return GenerateGoSchema(mt.Schema, path, typesPackage)
 }
