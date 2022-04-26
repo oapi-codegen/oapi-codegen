@@ -45,7 +45,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
-    var params {{.OperationId}}Params
+    var params {{.TypePackagePrefix}}{{.OperationId}}Params
 
     {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
       if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
