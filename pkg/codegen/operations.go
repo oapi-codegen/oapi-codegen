@@ -733,7 +733,8 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 		}
 
 		var responseHeaderDefinitions []ResponseHeaderDefinition
-		for headerName, header := range response.Headers {
+		for _, headerName := range SortedHeadersKeys(response.Headers) {
+			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)

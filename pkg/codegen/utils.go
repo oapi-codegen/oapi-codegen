@@ -136,6 +136,17 @@ func SortedResponsesKeys(dict openapi3.Responses) []string {
 	return keys
 }
 
+func SortedHeadersKeys(dict openapi3.Headers) []string {
+	keys := make([]string, len(dict))
+	i := 0
+	for key := range dict {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // This returns Content dictionary keys in sorted order
 func SortedContentKeys(dict openapi3.Content) []string {
 	keys := make([]string, len(dict))
