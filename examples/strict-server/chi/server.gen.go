@@ -88,6 +88,9 @@ type ServerInterface interface {
 	// (POST /unknown)
 	UnknownExample(w http.ResponseWriter, r *http.Request)
 
+	// (POST /unspecified-content-type)
+	UnspecifiedContentType(w http.ResponseWriter, r *http.Request)
+
 	// (POST /urlencoded)
 	URLEncodedExample(w http.ResponseWriter, r *http.Request)
 
@@ -170,6 +173,21 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 
 	var handler = func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnknownExample(w, r)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
+}
+
+// UnspecifiedContentType operation middleware
+func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnspecifiedContentType(w, r)
 	}
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -387,6 +405,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 	})
 	r.Group(func(r chi.Router) {
@@ -449,6 +470,8 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 
 type MultipleRequestAndResponseTypes200TextResponse string
 
+type MultipleRequestAndResponseTypes400TextResponse Badrequest
+
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
 }
@@ -473,6 +496,23 @@ type UnknownExample200Videomp4Response struct {
 type UnknownExample400TextResponse Badrequest
 
 type UnknownExampledefaultResponse struct {
+	StatusCode int
+}
+
+type UnspecifiedContentTypeRequestObject struct {
+	ContentType string
+	Body        io.Reader
+}
+
+type UnspecifiedContentType200VideoResponse struct {
+	Body          io.Reader
+	ContentType   string
+	ContentLength int64
+}
+
+type UnspecifiedContentType400TextResponse Badrequest
+
+type UnspecifiedContentTypedefaultResponse struct {
 	StatusCode int
 }
 
@@ -530,6 +570,9 @@ type StrictServerInterface interface {
 
 	// (POST /unknown)
 	UnknownExample(ctx context.Context, request UnknownExampleRequestObject) interface{}
+
+	// (POST /unspecified-content-type)
+	UnspecifiedContentType(ctx context.Context, request UnspecifiedContentTypeRequestObject) interface{}
 
 	// (POST /urlencoded)
 	URLEncodedExample(ctx context.Context, request URLEncodedExampleRequestObject) interface{}
@@ -722,6 +765,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(200)
 		writeRaw(w, ([]byte)(v))
+	case MultipleRequestAndResponseTypes400TextResponse:
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(400)
+		writeRaw(w, ([]byte)(v))
 	case error:
 		http.Error(w, v.Error(), http.StatusInternalServerError)
 	case nil:
@@ -801,6 +848,48 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(400)
 		writeRaw(w, ([]byte)(v))
 	case UnknownExampledefaultResponse:
+		w.WriteHeader(v.StatusCode)
+	case error:
+		http.Error(w, v.Error(), http.StatusInternalServerError)
+	case nil:
+	default:
+		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+	}
+}
+
+// UnspecifiedContentType operation middleware
+func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	var request UnspecifiedContentTypeRequestObject
+
+	request.ContentType = r.Header.Get("Content-Type")
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+		return sh.ssi.UnspecifiedContentType(ctx, request.(UnspecifiedContentTypeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnspecifiedContentType")
+	}
+
+	response := handler(r.Context(), w, r, request)
+
+	switch v := response.(type) {
+	case UnspecifiedContentType200VideoResponse:
+		w.Header().Set("Content-Type", v.ContentType)
+		if v.ContentLength != 0 {
+			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+		}
+		w.WriteHeader(200)
+		if closer, ok := v.Body.(io.ReadCloser); ok {
+			defer closer.Close()
+		}
+		_, _ = io.Copy(w, v.Body)
+	case UnspecifiedContentType400TextResponse:
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(400)
+		writeRaw(w, ([]byte)(v))
+	case UnspecifiedContentTypedefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
 		http.Error(w, v.Error(), http.StatusInternalServerError)
@@ -915,19 +1004,20 @@ func writeRaw(w http.ResponseWriter, b []byte) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

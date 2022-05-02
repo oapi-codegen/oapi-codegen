@@ -106,7 +106,7 @@ paths:
           description: Unknown error
   /multiple:
     post:
-      operationId: Multiple request and response types
+      operationId: MultipleRequestAndResponseTypes
       description: Shows how to deal with multiple content types in a single request
       requestBody:
         content:
@@ -146,9 +146,11 @@ paths:
               schema:
                 type: string
                 format: byte
+        400:
+          $ref: "#/components/responses/badrequest"
   /with-headers:
     post:
-      operationId: Headers Example
+      operationId: HeadersExample
       description: Headers can be received and returned via structs
       parameters:
         - name: header1
@@ -180,6 +182,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /unspecified-content-type:
+    post:
+      operationId: UnspecifiedContentType
+      description: Concrete content type is not specified by the schema, so we must pass it to client code
+      requestBody:
+        content:
+          image/*:
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: OK
+          content:
+            video/*:
+              schema:
+                type: string
+                format: byte
         400:
           $ref: "#/components/responses/badrequest"
         default:

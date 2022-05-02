@@ -162,6 +162,9 @@ type ClientInterface interface {
 	// UnknownExample request with any body
 	UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// UnspecifiedContentType request with any body
+	UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// URLEncodedExample request with any body
 	URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -283,6 +286,18 @@ func (c *Client) TextExampleWithTextBody(ctx context.Context, body TextExampleTe
 
 func (c *Client) UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnknownExampleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnspecifiedContentTypeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -533,6 +548,35 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 	return req, nil
 }
 
+// NewUnspecifiedContentTypeRequestWithBody generates requests for UnspecifiedContentType with any type of body
+func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/unspecified-content-type")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewURLEncodedExampleRequestWithFormdataBody calls the generic URLEncodedExample builder with application/x-www-form-urlencoded body
 func NewURLEncodedExampleRequestWithFormdataBody(server string, body URLEncodedExampleFormdataRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -701,6 +745,9 @@ type ClientWithResponsesInterface interface {
 	// UnknownExample request with any body
 	UnknownExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnknownExampleResponse, error)
 
+	// UnspecifiedContentType request with any body
+	UnspecifiedContentTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnspecifiedContentTypeResponse, error)
+
 	// URLEncodedExample request with any body
 	URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
@@ -813,6 +860,27 @@ func (r UnknownExampleResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r UnknownExampleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type UnspecifiedContentTypeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r UnspecifiedContentTypeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnspecifiedContentTypeResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -947,6 +1015,15 @@ func (c *ClientWithResponses) UnknownExampleWithBodyWithResponse(ctx context.Con
 	return ParseUnknownExampleResponse(rsp)
 }
 
+// UnspecifiedContentTypeWithBodyWithResponse request with arbitrary body returning *UnspecifiedContentTypeResponse
+func (c *ClientWithResponses) UnspecifiedContentTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnspecifiedContentTypeResponse, error) {
+	rsp, err := c.UnspecifiedContentTypeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnspecifiedContentTypeResponse(rsp)
+}
+
 // URLEncodedExampleWithBodyWithResponse request with arbitrary body returning *URLEncodedExampleResponse
 func (c *ClientWithResponses) URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error) {
 	rsp, err := c.URLEncodedExampleWithBody(ctx, contentType, body, reqEditors...)
@@ -1077,6 +1154,22 @@ func ParseUnknownExampleResponse(rsp *http.Response) (*UnknownExampleResponse, e
 	}
 
 	response := &UnknownExampleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseUnspecifiedContentTypeResponse parses an HTTP response from a UnspecifiedContentTypeWithResponse call
+func ParseUnspecifiedContentTypeResponse(rsp *http.Response) (*UnspecifiedContentTypeResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnspecifiedContentTypeResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
