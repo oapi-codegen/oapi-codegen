@@ -33,6 +33,8 @@ paths:
                     $ref: "#/components/schemas/AdditionalPropertiesObject4"
                   five:
                     $ref: "#/components/schemas/AdditionalPropertiesObject5"
+                  six:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject6"
                   jsonField:
                     $ref: "#/components/schemas/ObjectWithJsonField"
         default:
@@ -94,7 +96,7 @@ components:
           type: string
         readOnlyRequiredProp:
           description: |
-            This property is required and readOnly, so the go model should have it as a pointer, 
+            This property is required and readOnly, so the go model should have it as a pointer,
             as it will not be included when it is sent from client to server.
           type: string
           readOnly: true
@@ -157,6 +159,12 @@ components:
       type: object
       additionalProperties:
         $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject6:
+      description: Has nested additional properties
+      type: object
+      additionalProperties:
+        additionalProperties: true
+        type: "object"
     ObjectWithJsonField:
       type: object
       properties:

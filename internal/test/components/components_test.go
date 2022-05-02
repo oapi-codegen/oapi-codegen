@@ -69,4 +69,14 @@ func TestAdditionalProperties(t *testing.T) {
 	err = json.Unmarshal([]byte(buf2), &obj5)
 	assert.NoError(t, err)
 	assert.Equal(t, bossSchema, obj5.AdditionalProperties["boss"])
+
+	buf3 := `{"outer":{"inner":"value"}}`
+	var obj6 AdditionalPropertiesObject6
+	err = json.Unmarshal([]byte(buf3), &obj6)
+	assert.NoError(t, err)
+	assert.Equal(t, "value", obj6.AdditionalProperties["outer"].AdditionalProperties["inner"])
+
+	buf4, err := json.Marshal(&obj6)
+	assert.NoError(t, err)
+	assert.Equal(t, buf3, string(buf4))
 }
