@@ -55,6 +55,10 @@ paths:
                     $ref: "#/components/schemas/OneOfObject9"
                   oneOf10:
                     $ref: "#/components/schemas/OneOfObject10"
+                  oneOf11:
+                    $ref: "#/components/schemas/OneOfObject11"
+                  oneOf12:
+                    $ref: "#/components/schemas/OneOfObject12"
                   anyOf1:
                     $ref: "#/components/schemas/AnyOfObject1"
                   jsonField:
@@ -289,6 +293,23 @@ components:
         - required:
             - two
             - three
+    OneOfObject11:
+      description: additional properties of oneOf
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: boolean
+          - type: number
+          - type: string
+    OneOfObject12:
+      description: allOf of oneOfs
+      allOf:
+        - oneOf:
+            - type: string
+            - type: number
+        - oneOf:
+            - $ref: '#/components/schemas/OneOfVariant3'
+            - $ref: '#/components/schemas/OneOfVariant4'
     AnyOfObject1:
       description: simple anyOf case
       anyOf:

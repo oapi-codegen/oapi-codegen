@@ -100,6 +100,38 @@ type OneOfObject100 interface{}
 // OneOfObject101 defines model for .
 type OneOfObject101 interface{}
 
+// additional properties of oneOf
+type OneOfObject11 struct {
+	AdditionalProperties map[string]OneOfObject11_AdditionalProperties `json:"-"`
+}
+
+// OneOfObject110 defines model for .
+type OneOfObject110 bool
+
+// OneOfObject111 defines model for .
+type OneOfObject111 float32
+
+// OneOfObject112 defines model for .
+type OneOfObject112 string
+
+// OneOfObject11_AdditionalProperties defines model for OneOfObject11.AdditionalProperties.
+type OneOfObject11_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// OneOfObject12 defines model for OneOfObject12.
+type OneOfObject12 struct {
+	// Embedded fields due to inline allOf schema
+	// Embedded fields due to inline allOf schema
+	union json.RawMessage
+}
+
+// OneOfObject120 defines model for .
+type OneOfObject120 string
+
+// OneOfObject121 defines model for .
+type OneOfObject121 float32
+
 // oneOf with inline elements
 type OneOfObject2 struct {
 	union json.RawMessage
@@ -900,6 +932,59 @@ func (a AdditionalPropertiesObject6_Item) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for OneOfObject11. Returns the specified
+// element and whether it was found
+func (a OneOfObject11) Get(fieldName string) (value OneOfObject11_AdditionalProperties, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OneOfObject11
+func (a *OneOfObject11) Set(fieldName string, value OneOfObject11_AdditionalProperties) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]OneOfObject11_AdditionalProperties)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OneOfObject11 to handle AdditionalProperties
+func (a *OneOfObject11) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]OneOfObject11_AdditionalProperties)
+		for fieldName, fieldBuf := range object {
+			var fieldVal OneOfObject11_AdditionalProperties
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OneOfObject11 to handle AdditionalProperties
+func (a OneOfObject11) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 func (t AnyOfObject1) AsOneOfVariant4() (OneOfVariant4, error) {
 	var body OneOfVariant4
 	err := json.Unmarshal(t.union, &body)
@@ -1065,6 +1150,110 @@ func (t *OneOfObject10) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	return err
+}
+
+func (t OneOfObject11_AdditionalProperties) AsOneOfObject110() (OneOfObject110, error) {
+	var body OneOfObject110
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject11_AdditionalProperties) FromOneOfObject110(v OneOfObject110) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject11_AdditionalProperties) AsOneOfObject111() (OneOfObject111, error) {
+	var body OneOfObject111
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject11_AdditionalProperties) FromOneOfObject111(v OneOfObject111) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject11_AdditionalProperties) AsOneOfObject112() (OneOfObject112, error) {
+	var body OneOfObject112
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject11_AdditionalProperties) FromOneOfObject112(v OneOfObject112) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject11_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfObject11_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+func (t OneOfObject12) AsOneOfObject120() (OneOfObject120, error) {
+	var body OneOfObject120
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject12) FromOneOfObject120(v OneOfObject120) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject12) AsOneOfObject121() (OneOfObject121, error) {
+	var body OneOfObject121
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject12) FromOneOfObject121(v OneOfObject121) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject12) AsOneOfVariant3() (OneOfVariant3, error) {
+	var body OneOfVariant3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject12) FromOneOfVariant3(v OneOfVariant3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject12) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+func (t *OneOfObject12) FromOneOfVariant4(v OneOfVariant4) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+func (t OneOfObject12) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfObject12) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
 	return err
 }
 
@@ -1888,6 +2077,12 @@ type EnsureEverythingIsReferencedResponse struct {
 		// fixed properties, variable required - will compile, but not much sense
 		OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
 
+		// additional properties of oneOf
+		OneOf11 *OneOfObject11 `json:"oneOf11,omitempty"`
+
+		// allOf of oneOfs
+		OneOf12 *OneOfObject12 `json:"oneOf12,omitempty"`
+
 		// oneOf with inline elements
 		OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
 
@@ -2061,6 +2256,12 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 
 			// fixed properties, variable required - will compile, but not much sense
 			OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
+
+			// additional properties of oneOf
+			OneOf11 *OneOfObject11 `json:"oneOf11,omitempty"`
+
+			// allOf of oneOfs
+			OneOf12 *OneOfObject12 `json:"oneOf12,omitempty"`
 
 			// oneOf with inline elements
 			OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
@@ -2247,35 +2448,36 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RZb2/bOA//KoKe56Xb/GmbbXnXB88OtwNuLbbh7sUaDIrN1NrZkifJSYPC3/1AyXEc",
-	"W07srDfs+qaxJIr8kRRJUc80lGkmBQij6fyZKviWgzb/kxEHO/ChGtjiZyiFAWHwJ8uyhIfMcClGX7UU",
-	"OKbDGFKGvzIlM1Cm3OUXDkmEP/6rYEXn9D+jPduRI9Kjj/b/3fIrhIYWRWCF4QoiOv9c7rDAYQNPZpQl",
-	"jDdYmm0GdE61UVw80gL/cA+dSaF3YNxHyePfhiegEehQ8QxlpHN6SzRPswTIDiSRe2alFLjRbRRxJGHJ",
-	"fYXCiTWxwD3TNf5cGHgERVvsf2Wa7GnJXkNErggSEy4MDRqq45F/b8FS8KAOqMwcA59KDnVqtwiQwyLY",
-	"Ld1pJDiihWm3FlYs0dAE/n8JmghpCEsSufHr4HtxvxC0q25oRuUtZLcISBMmth5U2xamAbIPE/t6mNjW",
-	"E4UU21TmmqzwaJFNzMOYxF0+2raPEKBOsX1R+P3InVzBOVq8OXa6+0eu/ud+w01M3CZkJRWJeGgXKafw",
-	"AaLPUMSGbyrFthhaHL1j1mVbbiDVLwW/JXc5wFAii0Ns71b1iIrfdP75OJs7AXerP5jiTJhrWgT9V9/Q",
-	"YtG0SpkKLGsSMg0omJPpT27i37QUVdbq5cYBXbMkBwtoJVXKDJ1TmxiDjqXTHkv9ca3k5HNvi7um20PU",
-	"EmedKyhYgQIRAsaCiAhJIq5DnnLBjMQTZNcOsspkkFWmg1Zf0WLRgDdu41vxJ4hqrh2QNZIvbdJ3aiQX",
-	"ZMOThCA/nkBAlrmx2SnNw5hoEBoOwNfVLwXQBUpdHzQbiXaLFeDkohn1kMbnLY5gP7OUMgEm7NRG+pJf",
-	"cdzc06Pm5iLhAggkkNritQ6xb5hucn/ex41ySuTp0uXpxplvw2xY86otfSmyXdTKP7ngrub8Cd30hKGu",
-	"uwyVJTYdowvbevCChLk2MiUpUzpmCRePo1zsP37KQ9o0lMVzvyuJevlVXVk3R726HrLKg0xSlmVOOTir",
-	"qoi2D+Tb99bFG/PFOdocnogO4c1OwqsEtGH6CLjd1PyZrq/7yR7Q9U1PuYOfUHmv2spjVdVTRo0qQv2A",
-	"k7Lw1Do1cV8ftXUzdf2Yw+0/rsOP6Zse2Nz0vsA46sGTfnADup71WTnzeLDFU/zzap551Ox0eeoyY2c7",
-	"q7xKmPnzy960Dn1k3k7ztfu419+rdOAtbw5DQEv4llu0Sqd+8A73CfrBvTlHHn+v4oQ4Hb2JQ8dpCWMr",
-	"/5M3ssYhb0hS7uHjfnCVazFfcaXN+67rjwIW3Ylk+6FkhTm/HRU+xVxXHRLC9b4ux/S22yMgWhITA3mU",
-	"JJURJETHMk8iErM1EG4I3qlJJlHZKiAPgmkctYU91vJLIFyESR5BRDYxCJzkGqt7Q1ZKpiRMOP42kmhQ",
-	"a1CXD3j52rHf9S/aGGXiB79R3IAPfcMraisdk6ZxLIegpuoOxXaxXNjGJxcre4VIeGgvNFVMoL+/+2SP",
-	"LTeIhH4CbchHqwKMpaC0M9Pkcnw5du1EECzjdE6vLseXGHAzZmLrDiMQOldwAWtQWxNz8XjB9UV1r7SH",
-	"4hFMhw+AiKz9CDxxbbQzODNk784kZAItGSpgBiLCBTEx1w9CZxCWl1Zr6kzlAiJrQfQr25N+F9E5fWsF",
-	"fFvJ905/2EsX1Lr3264TddDgH9W7+81m+XQ8/o4Oue1DTE6d64PGSYFesoaTNEf6XbiFzNX5W2AFZzsX",
-	"vTr8vvaKy7/nSzCpMvikV1RsUY2HkI0ruukAsmlFdTWA6qqiuh5AdV1R3QyguqmoZgOoZhXVqwFUryqq",
-	"1wOoXldUbwZQvUEqzZ/O96/ZQa/mvD2uak2d83aY+grw8olrxfLEdMevMkSNGo95jnqUMcVS/QWr9C8s",
-	"ir5gVNKdgfuWYPB3Nb2lBAPK9Q8ZWcpoWz4jlAnN3272xOl7KwUGhtvIpjH73lAxsLW5r4zYreh+t7DM",
-	"OFJ8y0Ftd2XgnGYTWk+8Lt/vo/OxV41W1aTN1iZT11O2d4PT0oraE4x9tNhXRU6JAiDSWKEs4UGYXAmb",
-	"Ao3EwseudE2ilVTEJy1SbqT6q1sD06MaGPTc4+tvNpzV90yzKPBmVEujIk8SvKhJ7fE++5BCyoxcdzfM",
-	"uYwLnI24gtB4FRKgnz6Io4o/fCO5P+azWAQ0PFad+fjf/wmtrxnaF7Sh72i7F9SdnYqmrxRtwxVF8XcA",
-	"AAD//ze6W+0hIQAA",
+	"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",
+	"4fI8/38AAAD//5M8LeoQIwAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -287,7 +287,23 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
+				if additionalSchema.HasAdditionalProperties || len(additionalSchema.UnionElements) != 0 {
+					// If we have fields present which have additional properties or union values,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeName := PathToTypeName(append(path, "AdditionalProperties"))
+
+					typeDef := TypeDefinition{
+						TypeName: typeName,
+						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
+						Schema:   additionalSchema,
+					}
+					additionalSchema.RefType = typeName
+					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
+				}
 				outSchema.AdditionalPropertiesType = &additionalSchema
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
 			}
 
 			if schema.AnyOf != nil {
@@ -335,7 +351,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
 			outSchema.RefType = typeName
 		}
-		//outSchema.RefType = typeName
+		// outSchema.RefType = typeName
 	} else {
 		err := resolveType(schema, path, &outSchema)
 		if err != nil {
@@ -584,6 +600,9 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
 			}
 		}
+
+		outSchema.UnionElements = append(outSchema.UnionElements, schema.UnionElements...)
+		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, schema.AdditionalTypes...)
 	}
 
 	// Now, we generate the struct which merges together all the fields.
@@ -601,6 +620,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
+	var hasAdditionalProperties bool
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
 		if IsGoTypeReference(ref) {
@@ -639,7 +659,13 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 					objectParts = append(objectParts, additionalPropertiesPart)
 				}
 			}
+			if len(goSchema.UnionElements) != 0 {
+				hasAdditionalProperties = true
+			}
 		}
+	}
+	if hasAdditionalProperties {
+		objectParts = append(objectParts, "union json.RawMessage")
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n"), nil
