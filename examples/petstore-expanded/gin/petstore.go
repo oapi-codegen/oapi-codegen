@@ -36,7 +36,9 @@ func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 	r.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
-	r = api.RegisterHandlers(r, petStore)
+	apiRoutes := api.RegisterHandlers(r, petStore).(*gin.RouterGroup)
+
+	r.Use(apiRoutes.Handlers...)
 
 	s := &http.Server{
 		Handler: r,
