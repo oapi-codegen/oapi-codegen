@@ -1,0 +1,47 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+paths:
+  /complex-type-expression:
+    post:
+      summary: Generate complex type, refere to Expressions
+      operationId: complexType
+      requestBody:
+        description: A set of expressions on attributes
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Expressions'
+            example:
+              - attributeName: firstName
+                operator: "="
+                value: John
+              - attributeName: dateOfBirth
+                operator: "<"
+                value: "1990-12-31"
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    Expression:
+      type: object
+      required:
+        - operator
+      properties:
+        operator:
+          type: string
+          enum:
+            - '<'
+            - '>'
+            - '='
+            - '>='
+            - '<='
+            - '!='
+    Expressions:
+        type: array
+        items:
+          $ref: '#/components/schemas/Expression'

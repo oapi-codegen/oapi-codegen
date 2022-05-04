@@ -535,6 +535,17 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 }
 
 func typeNamePrefix(name string) (prefix string) {
+	switch name {
+	case "!=":
+		prefix += "NotEqual"
+	case "<=":
+		prefix += "LowerThanOrEqualTo"
+	case ">=":
+		prefix += "LargerThanOrEqualTo"
+	}
+	if prefix != "" {
+		return
+	}
 	for _, r := range name {
 		switch r {
 		case '$':
@@ -555,6 +566,10 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Hash"
 		case '.':
 			prefix += "Dot"
+		case '<':
+			prefix += "LowerThan"
+		case '>':
+			prefix += "LargerThan"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {
