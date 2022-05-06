@@ -22,14 +22,26 @@ func TestDate_MarshalJSON(t *testing.T) {
 }
 
 func TestDate_UnmarshalJSON(t *testing.T) {
-	testDate := time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC)
-	jsonStr := `{"date":"2019-04-01"}`
-	b := struct {
-		DateField Date `json:"date"`
-	}{}
-	err := json.Unmarshal([]byte(jsonStr), &b)
-	assert.NoError(t, err)
-	assert.Equal(t, testDate, b.DateField.Time)
+	t.Run("value date", func(t *testing.T) {
+		testDate := time.Date(2019, 4, 1, 0, 0, 0, 0, time.UTC)
+		jsonStr := `{"date":"2019-04-01"}`
+		b := struct {
+			DateField Date `json:"date"`
+		}{}
+		err := json.Unmarshal([]byte(jsonStr), &b)
+		assert.NoError(t, err)
+		assert.Equal(t, testDate, b.DateField.Time)
+	})
+
+	t.Run("empty date", func(t *testing.T) {
+		jsonStr := `{"date":""}`
+		b := struct {
+			DateField Date `json:"date,omitempty"`
+		}{}
+		err := json.Unmarshal([]byte(jsonStr), &b)
+		assert.NoError(t, err)
+		assert.Equal(t, time.Time{}, b.DateField.Time)
+	})
 }
 
 func TestDate_Stringer(t *testing.T) {

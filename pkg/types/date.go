@@ -21,6 +21,9 @@ func (d *Date) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+	if dateStr == "" {
+		return nil
+	}
 	parsed, err := time.Parse(DateFormat, dateStr)
 	if err != nil {
 		return err
