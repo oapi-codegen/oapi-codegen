@@ -1,0 +1,7 @@
+output:
+  v2/openapi.gen.go
+package: v2
+generate:
+  - types
+  - skip-prune
+  - spec

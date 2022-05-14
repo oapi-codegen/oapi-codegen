@@ -49,7 +49,12 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
 }
+
+// We store options globally to simplify accessing them from all the codegen
+// functions.
+var options Options
 
 // goImport represents a go package to be imported in the generated code
 type goImport struct {
@@ -79,7 +84,7 @@ func (im importMap) GoImports() []string {
 
 var importMapping importMap
 
-func constructImportMapping(input map[string]string) importMap {
+func constructImportMapping(importMapping map[string]string) importMap {
 	var (
 		pathToName = map[string]string{}
 		result     = importMap{}
@@ -87,7 +92,7 @@ func constructImportMapping(input map[string]string) importMap {
 
 	{
 		var packagePaths []string
-		for _, packageName := range input {
+		for _, packageName := range importMapping {
 			packagePaths = append(packagePaths, packageName)
 		}
 		sort.Strings(packagePaths)
@@ -98,16 +103,19 @@ func constructImportMapping(input map[string]string) importMap {
 			}
 		}
 	}
-	for specPath, packagePath := range input {
+	for specPath, packagePath := range importMapping {
 		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
 	}
 	return result
 }
 
-// Uses the Go templating engine to generate all of our server wrappers from
+// Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
+	// This is global state
+	options = opts
+
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
@@ -116,7 +124,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Options { return opts }
+	TemplateFunctions["opts"] = func() Options { return options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above

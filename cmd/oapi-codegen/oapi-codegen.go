@@ -46,6 +46,7 @@ var (
 	flagConfigFile     string
 	flagAliasTypes     bool
 	flagPrintVersion   bool
+	flagOlfAllOfOutput bool
 )
 
 type configuration struct {
@@ -57,6 +58,7 @@ type configuration struct {
 	TemplatesDir    string            `yaml:"templates"`
 	ImportMapping   map[string]string `yaml:"import-mapping"`
 	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	OldAllOfOutput  bool              `yaml:"old-all-of-output"`
 }
 
 func main() {
@@ -73,6 +75,7 @@ func main() {
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
+	flag.BoolVar(&flagOlfAllOfOutput, "old-all-of-output", false, "when true, old and incorrect AllOf implementation is used")
 	flag.Parse()
 
 	if flagPrintVersion {
@@ -151,6 +154,7 @@ func main() {
 	opts.UserTemplates = templates
 
 	opts.ImportMapping = cfg.ImportMapping
+	opts.OldMergeSchemas = cfg.OldAllOfOutput
 
 	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
 	if err != nil {
@@ -250,5 +254,10 @@ func configFromFlags() *configuration {
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
+
+	if cfg.OldAllOfOutput == false {
+		cfg.OldAllOfOutput = flagOlfAllOfOutput
+	}
+
 	return &cfg
 }

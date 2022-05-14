@@ -103,12 +103,10 @@ func TestPetStore(t *testing.T) {
 		tag := "TagOfFido"
 
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{
-				NewPet: api.NewPet{
-					Tag: &tag,
-				},
+			1: {
+				Tag: &tag,
 			},
-			2: api.Pet{},
+			2: {},
 		}
 
 		// Filter pets by tag, we should have 1

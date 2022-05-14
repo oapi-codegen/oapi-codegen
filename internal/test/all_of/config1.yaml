@@ -1,0 +1,8 @@
+output:
+  v1/openapi.gen.go
+package: v1
+generate:
+  - types
+  - skip-prune
+  - spec
+old-all-of-output: true
