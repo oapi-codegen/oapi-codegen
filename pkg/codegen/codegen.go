@@ -50,6 +50,7 @@ type Options struct {
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
+	ResponseTypeSuffix string            // The suffix used for responses types
 }
 
 // We store options globally to simplify accessing them from all the codegen
@@ -121,6 +122,11 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	filterOperationsByTag(swagger, opts)
 	if !opts.SkipPrune {
 		pruneUnusedComponents(swagger)
+	}
+
+	// if we are provided an override for the response type suffix update it
+	if opts.ResponseTypeSuffix != "" {
+		responseTypeSuffix = opts.ResponseTypeSuffix
 	}
 
 	// This creates the golang templates text package
