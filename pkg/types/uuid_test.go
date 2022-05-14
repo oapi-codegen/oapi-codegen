@@ -25,7 +25,7 @@ func TestUUID_MarshalJSON_Pass(t *testing.T) {
 	b := struct {
 		UUIDField UUID `json:"uuid"`
 	}{
-		UUIDField: UUID(testUUID),
+		UUIDField: testUUID,
 	}
 	jsonBytes, err := json.Marshal(b)
 	assert.NoError(t, err)
@@ -42,7 +42,7 @@ func TestUUID_UnmarshalJSON_Fail(t *testing.T) {
 }
 
 func TestUUID_UnmarshalJSON_Pass(t *testing.T) {
-	testUUID := UUID(uuid.MustParse("9cb14230-b640-11ec-b909-0242ac120002"))
+	testUUID := uuid.MustParse("9cb14230-b640-11ec-b909-0242ac120002")
 	jsonStr := `{"uuid":"9cb14230-b640-11ec-b909-0242ac120002"}`
 	b := struct {
 		UUIDField UUID `json:"uuid"`
