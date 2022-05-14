@@ -29,8 +29,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-const GinContextKey = "oapi-codegen/gin-context"
-const UserDataKey = "oapi-codegen/user-data"
+const (
+	GinContextKey = "oapi-codegen/gin-context"
+	UserDataKey   = "oapi-codegen/user-data"
+)
 
 // Create validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
@@ -54,9 +56,13 @@ func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
+// ErrorHandler is called when there is an error in validation
+type ErrorHandler func(c *gin.Context, message string, statusCode int)
+
 // Options to customize request validation. These are passed through to
 // openapi3filter.
 type Options struct {
+	ErrorHandler ErrorHandler
 	Options      openapi3filter.Options
 	ParamDecoder openapi3filter.ContentParameterDecoder
 	UserData     interface{}
@@ -71,8 +77,14 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 	return func(c *gin.Context) {
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
-			// note: i am not sure if this is the best way to handle this
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if options != nil && options.ErrorHandler != nil {
+				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+				// in case the handler didn't internally call Abort, stop the chain
+				c.Abort()
+			} else {
+				// note: i am not sure if this is the best way to handle this
+				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
 		}
 		c.Next()
 	}

@@ -134,6 +134,9 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	// Set up an authenticator to check authenticated function. It will allow
 	// access to "someScope", but disallow others.
 	options := Options{
+		ErrorHandler: func(w http.ResponseWriter, message string, statusCode int) {
+			http.Error(w, "test: "+message, statusCode)
+		},
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
 
@@ -188,6 +191,7 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/protected_resource_401")
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
+		assert.Equal(t, "test: Security requirements failed\n", rec.Body.String())
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
