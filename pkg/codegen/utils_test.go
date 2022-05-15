@@ -20,12 +20,36 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringOps(t *testing.T) {
-	// Test that each substitution works
-	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
+func TestCamelCase(t *testing.T) {
+	type test struct {
+		input    string
+		expected string
+	}
 
-	// Make sure numbers don't interact in a funny way.
-	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
+	tests := []test{
+		{
+			input:    "word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
+			expected: "WordWordWORDWordWordWordWordWordWordWordWordWordWord",
+		},
+		{input: "number-1234", expected: "Number1234"},
+		{input: "Foo Bar", expected: "FooBar"},
+		{input: "db_user", expected: "DBUser"},
+		{input: "Db_uSer", expected: "DBUSer"},
+		{input: "user_db", expected: "UserDB"},
+		{input: "USer_dB", expected: "USerDB"},
+		{input: "user_db_pasta", expected: "UserDBPasta"},
+		{input: "uSeR_Db_PASta", expected: "USeRDBPASta"},
+		{input: "user_id_pasta", expected: "UserIDPasta"},
+		{input: "User_iD_paSTA", expected: "UserIDPaSTA"},
+		{input: "user_ident_pasta", expected: "UserIdentPasta"},
+		{input: "usEr_iDENT_pAsta", expected: "UsErIDENTPAsta"},
+		{input: "identifier", expected: "Identifier"},
+		{input: "identifier_pasta", expected: "IdentifierPasta"},
+	}
+
+	for _, tc := range tests {
+		assert.Equal(t, tc.expected, ToCamelCase(tc.input), "Incorrect CamelCase conversion")
+	}
 }
 
 func TestSortedSchemaKeys(t *testing.T) {

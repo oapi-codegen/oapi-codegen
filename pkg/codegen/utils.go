@@ -57,33 +57,40 @@ func LowercaseFirstCharacter(str string) string {
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
 // would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := "-#@!$&=.+:;_~ (){}[]"
+	specialCharRegexStr := "[-#@!$&=.+:;_~ (){}\\[\\]]"
+
+	// Support initialisms
+	// https://github.com/golang/go/wiki/CodeReviewComments#initialisms
+	// https://staticcheck.io/docs/configuration/options/#initialisms
+	acronyms := []string{"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF",
+		"GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON", "QPS", "RAM",
+		"RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI",
+		"GID", "UID", "UUID", "URI", "URL", "UTF8", "VM", "XML", "XMPP",
+		"XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS"}
+
+	acronymsSepRegexStr := fmt.Sprintf("($|%s.)|", specialCharRegexStr)
+	acronymsInitialRegexStr := strings.Join(acronyms, acronymsSepRegexStr) +
+		acronymsSepRegexStr
+	acronymsTrailingRegexStr := strings.Join(acronyms, acronymsSepRegexStr) +
+		acronymsSepRegexStr
+
+	camelCaseRegexStr := fmt.Sprintf("(?i)^(%s[A-Za-z0-9])|%s(%s[A-Za-z0-9])",
+		acronymsInitialRegexStr,
+		specialCharRegexStr,
+		acronymsTrailingRegexStr)
+
+	camelCaseRegex := regexp.MustCompile(camelCaseRegexStr)
+	specialCharRegex := regexp.MustCompile(specialCharRegexStr)
+
+	// If you wanted true camelCase without user overriding you could
+	// set the string to lowercase beforehand
+	// However, users may expect some degree of override already, and we don't
+	// want to break backwards compatibility
 	s := strings.Trim(str, " ")
-
-	n := ""
-	capNext := true
-	for _, v := range s {
-		if unicode.IsUpper(v) {
-			n += string(v)
-		}
-		if unicode.IsDigit(v) {
-			n += string(v)
-		}
-		if unicode.IsLower(v) {
-			if capNext {
-				n += strings.ToUpper(string(v))
-			} else {
-				n += string(v)
-			}
-		}
-
-		if strings.ContainsRune(separators, v) {
-			capNext = true
-		} else {
-			capNext = false
-		}
-	}
-	return n
+	s = camelCaseRegex.ReplaceAllStringFunc(s, func(s string) string {
+		return strings.ToUpper(s)
+	})
+	return specialCharRegex.ReplaceAllString(s, "")
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
