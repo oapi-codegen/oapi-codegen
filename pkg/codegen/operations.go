@@ -119,7 +119,7 @@ func (pd ParameterDefinition) GoVariableName() string {
 }
 
 func (pd ParameterDefinition) GoName() string {
-	return SchemaNameToTypeName(pd.ParamName)
+	return SchemaNameToTypeName(pd.Schema.GoType)
 }
 
 func (pd ParameterDefinition) IndirectOptional() bool {
