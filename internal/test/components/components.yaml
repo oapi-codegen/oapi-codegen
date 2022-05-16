@@ -18,6 +18,7 @@ paths:
         $ref: "#/components/requestBodies/RequestBody"
       responses:
         200:
+          description: placeholder
           content:
             application/json:
               schema:
@@ -65,6 +66,13 @@ paths:
                 additionalProperties:
                   type: string
             required: [inner]
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
     post:
       operationId: BodyWithAddProps
       description: |
@@ -84,6 +92,13 @@ paths:
                     type: integer
               required: [name, inner]
               additionalProperties: true
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     SchemaObject:
