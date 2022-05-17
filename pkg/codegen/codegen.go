@@ -50,6 +50,7 @@ type Options struct {
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
+	OldEnumConflicts   bool              // When set to true, we include the object path in enum names, otherwise, rely on global de-dup
 	ResponseTypeSuffix string            // The suffix used for responses types
 }
 
@@ -576,8 +577,8 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		for j := i + 1; j < len(enums); j++ {
 			e2 := enums[j]
 
-			for e1key := range e1.Schema.EnumValues {
-				_, found := e2.Schema.EnumValues[e1key]
+			for e1key := range e1.GetValues() {
+				_, found := e2.GetValues()[e1key]
 				if found {
 					e1.Conflicts = true
 					e2.Conflicts = true
@@ -590,11 +591,23 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 		// now see if this enum conflicts with any global type names.
 		for _, tp := range types {
+			// Skip over enums, since we've handled those above.
+			if len(tp.Schema.EnumValues) > 0 {
+				continue
+			}
 			_, found := e1.Schema.EnumValues[tp.TypeName]
 			if found {
 				e1.Conflicts = true
 				enums[i] = e1
 			}
+		}
+
+		// Another edge case is that an enum value can conflict with its own
+		// type name.
+		_, found := e1.GetValues()[e1.TypeName];
+		if found {
+			e1.Conflicts = true
+			enums[i] = e1
 		}
 	}
 

@@ -6,20 +6,86 @@ package components
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+)
+
+// Defines values for Enum1.
+const (
+	Enum1One Enum1 = "One"
+
+	Enum1Three Enum1 = "Three"
+
+	Enum1Two Enum1 = "Two"
+)
+
+// Defines values for Enum2.
+const (
+	Enum2One Enum2 = "One"
+
+	Enum2Three Enum2 = "Three"
+
+	Enum2Two Enum2 = "Two"
+)
+
+// Defines values for Enum3.
+const (
+	Enum3Bar Enum3 = "Bar"
+
+	Enum3Enum1One Enum3 = "Enum1One"
+
+	Enum3Foo Enum3 = "Foo"
+)
+
+// Defines values for Enum4.
+const (
+	Cat Enum4 = "Cat"
+
+	Dog Enum4 = "Dog"
+
+	Mouse Enum4 = "Mouse"
+)
+
+// Defines values for Enum5.
+const (
+	N5 Enum5 = 5
+
+	N6 Enum5 = 6
+
+	N7 Enum5 = 7
+)
+
+// Defines values for EnumParam1.
+const (
+	EnumParam1Both EnumParam1 = "both"
+
+	EnumParam1False EnumParam1 = "false"
+
+	EnumParam1True EnumParam1 = "true"
+)
+
+// Defines values for EnumParam2.
+const (
+	EnumParam2Both EnumParam2 = "both"
+
+	EnumParam2False EnumParam2 = "false"
+
+	EnumParam2True EnumParam2 = "true"
+)
+
+// Defines values for EnumParam3.
+const (
+	Alice EnumParam3 = "alice"
+
+	Bob EnumParam3 = "bob"
+
+	Eve EnumParam3 = "eve"
 )
 
 // Has additional properties of type int
@@ -60,6 +126,24 @@ type AdditionalPropertiesObject5 struct {
 	AdditionalProperties map[string]SchemaObject `json:"-"`
 }
 
+// Conflicts with Enum2, enum values need to be prefixed with type
+// name.
+type Enum1 string
+
+// Conflicts with Enum1, enum values need to be prefixed with type
+// name.
+type Enum2 string
+
+// Enum values conflict with Enums above, need to be prefixed
+// with type name.
+type Enum3 string
+
+// No conflicts here, should have unmodified enums
+type Enum4 string
+
+// Numerical enum
+type Enum5 int
+
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
 	Name   string          `json:"name"`
@@ -77,6 +161,18 @@ type SchemaObject struct {
 	Role                  string  `json:"role"`
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
+
+// EnumParam1 defines model for EnumParam1.
+type EnumParam1 string
+
+// EnumParam2 defines model for EnumParam2.
+type EnumParam2 string
+
+// EnumParam3 defines model for EnumParam3.
+type EnumParam3 string
+
+// a parameter
+type ParameterObject string
 
 // ResponseObject defines model for ResponseObject.
 type ResponseObject struct {
@@ -724,674 +820,32 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
-type RequestEditorFn func(ctx context.Context, req *http.Request) error
-
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// Client which conforms to the OpenAPI3 specification for this service.
-type Client struct {
-	// The endpoint of the server conforming to this interface, with scheme,
-	// https://api.deepmap.com for example. This can contain a path relative
-	// to the server, such as https://api.deepmap.com/dev-test, and all the
-	// paths in the swagger spec will be appended to the server.
-	Server string
-
-	// Doer for performing requests, typically a *http.Client with any
-	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
-
-	// A list of callbacks for modifying requests which are generated before sending over
-	// the network.
-	RequestEditors []RequestEditorFn
-}
-
-// ClientOption allows setting custom parameters during construction
-type ClientOption func(*Client) error
-
-// Creates a new Client, with reasonable defaults
-func NewClient(server string, opts ...ClientOption) (*Client, error) {
-	// create a client with sane default values
-	client := Client{
-		Server: server,
-	}
-	// mutate client and add all optional params
-	for _, o := range opts {
-		if err := o(&client); err != nil {
-			return nil, err
-		}
-	}
-	// ensure the server URL always has a trailing slash
-	if !strings.HasSuffix(client.Server, "/") {
-		client.Server += "/"
-	}
-	// create httpClient, if not already present
-	if client.Client == nil {
-		client.Client = &http.Client{}
-	}
-	return &client, nil
-}
-
-// WithHTTPClient allows overriding the default Doer, which is
-// automatically created using http.Client. This is useful for tests.
-func WithHTTPClient(doer HttpRequestDoer) ClientOption {
-	return func(c *Client) error {
-		c.Client = doer
-		return nil
-	}
-}
-
-// WithRequestEditorFn allows setting up a callback function, which will be
-// called right before sending the request. This can be used to mutate the request.
-func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return func(c *Client) error {
-		c.RequestEditors = append(c.RequestEditors, fn)
-		return nil
-	}
-}
-
-// The interface specification for the client above.
-type ClientInterface interface {
-	// EnsureEverythingIsReferenced request with any body
-	EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// ParamsWithAddProps request
-	ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// BodyWithAddProps request with any body
-	BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
-
-func (c *Client) EnsureEverythingIsReferencedWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewEnsureEverythingIsReferencedRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewEnsureEverythingIsReferencedRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) ParamsWithAddProps(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewParamsWithAddPropsRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) BodyWithAddPropsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewBodyWithAddPropsRequestWithBody(c.Server, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) BodyWithAddProps(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewBodyWithAddPropsRequest(c.Server, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-// NewEnsureEverythingIsReferencedRequest calls the generic EnsureEverythingIsReferenced builder with application/json body
-func NewEnsureEverythingIsReferencedRequest(server string, body EnsureEverythingIsReferencedJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewEnsureEverythingIsReferencedRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewEnsureEverythingIsReferencedRequestWithBody generates requests for EnsureEverythingIsReferenced with any type of body
-func NewEnsureEverythingIsReferencedRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewParamsWithAddPropsRequest generates requests for ParamsWithAddProps
-func NewParamsWithAddPropsRequest(server string, params *ParamsWithAddPropsParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/params_with_add_props")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	queryValues := queryURL.Query()
-
-	if queryFrag, err := runtime.StyleParamWithLocation("simple", true, "p1", runtime.ParamLocationQuery, params.P1); err != nil {
-		return nil, err
-	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-		return nil, err
-	} else {
-		for k, v := range parsed {
-			for _, v2 := range v {
-				queryValues.Add(k, v2)
-			}
-		}
-	}
-
-	if queryFrag, err := runtime.StyleParamWithLocation("form", true, "p2", runtime.ParamLocationQuery, params.P2); err != nil {
-		return nil, err
-	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-		return nil, err
-	} else {
-		for k, v := range parsed {
-			for _, v2 := range v {
-				queryValues.Add(k, v2)
-			}
-		}
-	}
-
-	queryURL.RawQuery = queryValues.Encode()
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewBodyWithAddPropsRequest calls the generic BodyWithAddProps builder with application/json body
-func NewBodyWithAddPropsRequest(server string, body BodyWithAddPropsJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewBodyWithAddPropsRequestWithBody(server, "application/json", bodyReader)
-}
-
-// NewBodyWithAddPropsRequestWithBody generates requests for BodyWithAddProps with any type of body
-func NewBodyWithAddPropsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/params_with_add_props")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", queryURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	for _, r := range c.RequestEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	for _, r := range additionalEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-	ClientInterface
-}
-
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-	client, err := NewClient(server, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &ClientWithResponses{client}, nil
-}
-
-// WithBaseURL overrides the baseURL.
-func WithBaseURL(baseURL string) ClientOption {
-	return func(c *Client) error {
-		newBaseURL, err := url.Parse(baseURL)
-		if err != nil {
-			return err
-		}
-		c.Server = newBaseURL.String()
-		return nil
-	}
-}
-
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferenced request with any body
-	EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
-
-	EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
-
-	// ParamsWithAddProps request
-	ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error)
-
-	// BodyWithAddProps request with any body
-	BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
-
-	BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error)
-}
-
-type EnsureEverythingIsReferencedResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
-		// Has additional properties with schema for dictionaries
-		Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
-
-		// Has anonymous field which has additional properties
-		Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-		JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
-
-		// Has additional properties of type int
-		One *AdditionalPropertiesObject1 `json:"one,omitempty"`
-
-		// Allows any additional property
-		Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
-
-		// Does not allow additional properties
-		Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
-	}
-	JSONDefault *struct {
-		Field SchemaObject `json:"Field"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r EnsureEverythingIsReferencedResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ParamsWithAddPropsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r ParamsWithAddPropsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ParamsWithAddPropsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type BodyWithAddPropsResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r BodyWithAddPropsResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r BodyWithAddPropsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// EnsureEverythingIsReferencedWithBodyWithResponse request with arbitrary body returning *EnsureEverythingIsReferencedResponse
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
-	rsp, err := c.EnsureEverythingIsReferencedWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseEnsureEverythingIsReferencedResponse(rsp)
-}
-
-func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, body EnsureEverythingIsReferencedJSONRequestBody, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
-	rsp, err := c.EnsureEverythingIsReferenced(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseEnsureEverythingIsReferencedResponse(rsp)
-}
-
-// ParamsWithAddPropsWithResponse request returning *ParamsWithAddPropsResponse
-func (c *ClientWithResponses) ParamsWithAddPropsWithResponse(ctx context.Context, params *ParamsWithAddPropsParams, reqEditors ...RequestEditorFn) (*ParamsWithAddPropsResponse, error) {
-	rsp, err := c.ParamsWithAddProps(ctx, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseParamsWithAddPropsResponse(rsp)
-}
-
-// BodyWithAddPropsWithBodyWithResponse request with arbitrary body returning *BodyWithAddPropsResponse
-func (c *ClientWithResponses) BodyWithAddPropsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error) {
-	rsp, err := c.BodyWithAddPropsWithBody(ctx, contentType, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseBodyWithAddPropsResponse(rsp)
-}
-
-func (c *ClientWithResponses) BodyWithAddPropsWithResponse(ctx context.Context, body BodyWithAddPropsJSONRequestBody, reqEditors ...RequestEditorFn) (*BodyWithAddPropsResponse, error) {
-	rsp, err := c.BodyWithAddProps(ctx, body, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseBodyWithAddPropsResponse(rsp)
-}
-
-// ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
-func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &EnsureEverythingIsReferencedResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Has additional properties with schema for dictionaries
-			Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
-
-			// Has anonymous field which has additional properties
-			Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
-			JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
-
-			// Has additional properties of type int
-			One *AdditionalPropertiesObject1 `json:"one,omitempty"`
-
-			// Allows any additional property
-			Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
-
-			// Does not allow additional properties
-			Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest struct {
-			Field SchemaObject `json:"Field"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
-	case true:
-		// Content-type (text/plain) unsupported
-
-	}
-
-	return response, nil
-}
-
-// ParseParamsWithAddPropsResponse parses an HTTP response from a ParamsWithAddPropsWithResponse call
-func ParseParamsWithAddPropsResponse(rsp *http.Response) (*ParamsWithAddPropsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ParamsWithAddPropsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ParseBodyWithAddPropsResponse parses an HTTP response from a BodyWithAddPropsWithResponse call
-func ParseBodyWithAddPropsResponse(rsp *http.Response) (*BodyWithAddPropsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &BodyWithAddPropsResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	return response, nil
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ensure-everything-is-referenced)
-	EnsureEverythingIsReferenced(ctx echo.Context) error
-
-	// (GET /params_with_add_props)
-	ParamsWithAddProps(ctx echo.Context, params ParamsWithAddPropsParams) error
-
-	// (POST /params_with_add_props)
-	BodyWithAddProps(ctx echo.Context) error
-}
-
-// ServerInterfaceWrapper converts echo contexts to parameters.
-type ServerInterfaceWrapper struct {
-	Handler ServerInterface
-}
-
-// EnsureEverythingIsReferenced converts echo context to params.
-func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.EnsureEverythingIsReferenced(ctx)
-	return err
-}
-
-// ParamsWithAddProps converts echo context to params.
-func (w *ServerInterfaceWrapper) ParamsWithAddProps(ctx echo.Context) error {
-	var err error
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params ParamsWithAddPropsParams
-	// ------------- Required query parameter "p1" -------------
-
-	err = runtime.BindQueryParameter("simple", true, true, "p1", ctx.QueryParams(), &params.P1)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p1: %s", err))
-	}
-
-	// ------------- Required query parameter "p2" -------------
-
-	err = runtime.BindQueryParameter("form", true, true, "p2", ctx.QueryParams(), &params.P2)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p2: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.ParamsWithAddProps(ctx, params)
-	return err
-}
-
-// BodyWithAddProps converts echo context to params.
-func (w *ServerInterfaceWrapper) BodyWithAddProps(ctx echo.Context) error {
-	var err error
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.BodyWithAddProps(ctx)
-	return err
-}
-
-// This is a simple interface which specifies echo.Route addition functions which
-// are present on both echo.Echo and echo.Group, since we want to allow using
-// either of them for path registration
-type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-}
-
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
-}
-
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-
-	wrapper := ServerInterfaceWrapper{
-		Handler: si,
-	}
-
-	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET(baseURL+"/params_with_add_props", wrapper.ParamsWithAddProps)
-	router.POST(baseURL+"/params_with_add_props", wrapper.BodyWithAddProps)
-
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

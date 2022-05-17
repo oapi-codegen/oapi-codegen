@@ -325,14 +325,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		sanitizedValues := SanitizeEnumNames(enumValues)
 		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
-		var constNamePath []string
+
 		for k, v := range sanitizedValues {
+			var enumName string
 			if v == "" {
-				constNamePath = append(path, "Empty")
+				enumName = "Empty"
 			} else {
-				constNamePath = append(path, k)
+				enumName = k
 			}
-			outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(constNamePath))] = v
+			if options.OldEnumConflicts {
+				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
+			} else {
+				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
 			typeName := SchemaNameToTypeName(PathToTypeName(path))
