@@ -429,7 +429,7 @@ If you generate client-code, you can use some default-provided security provider
 which help you to use the various OpenAPI 3 Authentication mechanism.
 
 
-```
+```go
     import (
         "github.com/deepmap/oapi-codegen/pkg/securityprovider"
     )
