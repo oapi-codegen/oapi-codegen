@@ -18,6 +18,7 @@ paths:
         $ref: "#/components/requestBodies/RequestBody"
       responses:
         200:
+          description: placeholder
           content:
             application/json:
               schema:
@@ -93,6 +94,13 @@ paths:
                 additionalProperties:
                   type: string
             required: [inner]
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
     post:
       operationId: BodyWithAddProps
       description: |
@@ -112,6 +120,13 @@ paths:
                     type: integer
               required: [name, inner]
               additionalProperties: true
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     SchemaObject:
@@ -367,6 +382,34 @@ components:
           type: string
           format: json
       required: [name, value1]
+    Enum1:
+      description: |
+        Conflicts with Enum2, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [One, Two, Three]
+    Enum2:
+      description: |
+        Conflicts with Enum1, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [ One, Two, Three ]
+    Enum3:
+      description: |
+        Enum values conflict with Enums above, need to be prefixed
+        with type name.
+      type: string
+      enum: [ Enum1One, Foo, Bar ]
+    Enum4:
+      description: |
+        No conflicts here, should have unmodified enums
+      type: string
+      enum: [ Cat, Dog, Mouse ]
+    Enum5:
+      description: |
+        Numerical enum
+      type: integer
+      enum: [ 5, 6, 7 ]
   responses:
     ResponseObject:
       description: A simple response object
@@ -395,6 +438,27 @@ components:
         text/plain:
           schema:
             type: string
+    EnumParam1:
+      name: ParamEnum1
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [on, off, both]
+    EnumParam2:
+      name: ParamEnum2
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ on, off, both ]
+    EnumParam3:
+      name: ParamEnum3
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ alice, eve, bob ]
   requestBodies:
     RequestBody:
       content:

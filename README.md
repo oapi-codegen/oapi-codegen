@@ -42,24 +42,34 @@ The `/components/schemas` section in OpenAPI defines reusable objects, so Go
 types are generated for these. The Pet Store example defines `Error`, `Pet`,
 `Pets` and `NewPet`, so we do the same in Go:
 ```go
-// Type definition for component schema "Error"
+// Error defines model for Error.
 type Error struct {
-    Code    int32  `json:"code"`
+    // Error code
+    Code int32 `json:"code"`
+
+    // Error message
     Message string `json:"message"`
 }
 
-// Type definition for component schema "NewPet"
+// NewPet defines model for NewPet.
 type NewPet struct {
-    Name string  `json:"name"`
-    Tag  *string `json:"tag,omitempty"`
+    // Name of the pet
+    Name string `json:"name"`
+
+    // Type of the pet
+    Tag *string `json:"tag,omitempty"`
 }
 
-// Type definition for component schema "Pet"
+// Pet defines model for Pet.
 type Pet struct {
-    // Embedded struct due to allOf(#/components/schemas/NewPet)
-    NewPet
-    // Embedded fields due to inline allOf schema
+    // Unique id of the pet
     Id int64 `json:"id"`
+
+    // Name of the pet
+    Name string `json:"name"`
+
+    // Type of the pet
+    Tag *string `json:"tag,omitempty"`
 }
 
 // Type definition for component schema "Pets"

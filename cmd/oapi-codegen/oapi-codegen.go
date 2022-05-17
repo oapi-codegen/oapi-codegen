@@ -35,28 +35,34 @@ func errExit(format string, args ...interface{}) {
 }
 
 var (
-	flagPackageName    string
-	flagGenerate       string
-	flagOutputFile     string
-	flagIncludeTags    string
-	flagExcludeTags    string
-	flagTemplatesDir   string
-	flagImportMapping  string
-	flagExcludeSchemas string
-	flagConfigFile     string
-	flagAliasTypes     bool
-	flagPrintVersion   bool
+	flagPackageName        string
+	flagGenerate           string
+	flagOutputFile         string
+	flagIncludeTags        string
+	flagExcludeTags        string
+	flagTemplatesDir       string
+	flagImportMapping      string
+	flagExcludeSchemas     string
+	flagConfigFile         string
+	flagResponseTypeSuffix string
+	flagAliasTypes         bool
+	flagPrintVersion       bool
+	flagOldAllOfOutput     bool
+	flagOldEnumConflicts   bool
 )
 
 type configuration struct {
-	PackageName     string            `yaml:"package"`
-	GenerateTargets []string          `yaml:"generate"`
-	OutputFile      string            `yaml:"output"`
-	IncludeTags     []string          `yaml:"include-tags"`
-	ExcludeTags     []string          `yaml:"exclude-tags"`
-	TemplatesDir    string            `yaml:"templates"`
-	ImportMapping   map[string]string `yaml:"import-mapping"`
-	ExcludeSchemas  []string          `yaml:"exclude-schemas"`
+	PackageName        string            `yaml:"package"`
+	GenerateTargets    []string          `yaml:"generate"`
+	OutputFile         string            `yaml:"output"`
+	IncludeTags        []string          `yaml:"include-tags"`
+	ExcludeTags        []string          `yaml:"exclude-tags"`
+	TemplatesDir       string            `yaml:"templates"`
+	ImportMapping      map[string]string `yaml:"import-mapping"`
+	ExcludeSchemas     []string          `yaml:"exclude-schemas"`
+	OldAllOfOutput     bool              `yaml:"old-all-of-output"`
+	OldEnumConflicts   bool              `yaml:"old-enum-conflicts"`
+	ResponseTypeSuffix string            `yaml:"response-type-suffix"`
 }
 
 func main() {
@@ -71,8 +77,11 @@ func main() {
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
+	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "the suffix used for responses types")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
+	flag.BoolVar(&flagOldAllOfOutput, "old-all-of-output", false, "when true, old and incorrect AllOf implementation is used")
+	flag.BoolVar(&flagOldEnumConflicts, "old-enum-conflicts", false, "when true, use old style enum naming")
 	flag.Parse()
 
 	if flagPrintVersion {
@@ -104,7 +113,8 @@ func main() {
 	}
 
 	opts := codegen.Options{
-		AliasTypes: flagAliasTypes,
+		AliasTypes:         flagAliasTypes,
+		ResponseTypeSuffix: flagResponseTypeSuffix,
 	}
 	for _, g := range cfg.GenerateTargets {
 		switch g {
@@ -151,6 +161,10 @@ func main() {
 	opts.UserTemplates = templates
 
 	opts.ImportMapping = cfg.ImportMapping
+
+	opts.OldMergeSchemas = cfg.OldAllOfOutput
+
+	opts.OldEnumConflicts = cfg.OldEnumConflicts
 
 	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
 	if err != nil {
@@ -250,5 +264,14 @@ func configFromFlags() *configuration {
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
+
+	if cfg.OldAllOfOutput == false {
+		cfg.OldAllOfOutput = flagOldAllOfOutput
+	}
+
+	if cfg.OldEnumConflicts == false {
+		cfg.OldEnumConflicts = flagOldEnumConflicts
+	}
+
 	return &cfg
 }

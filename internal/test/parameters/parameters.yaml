@@ -23,7 +23,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeArray/{param}:
     get:
-      summary:
       operationId: getSimpleNoExplodeArray
       parameters:
       - name: param
@@ -41,7 +40,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeArray/{param*}:
     get:
-      summary:
       operationId: getSimpleExplodeArray
       parameters:
         - name: param
@@ -59,7 +57,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeObject/{param}:
     get:
-      summary:
       operationId: getSimpleNoExplodeObject
       parameters:
         - name: param
@@ -74,7 +71,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeObject/{param*}:
     get:
-      summary:
       operationId: getSimpleExplodeObject
       parameters:
         - name: param
@@ -89,7 +85,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeArray/{.param}:
     get:
-      summary:
       operationId: getLabelNoExplodeArray
       parameters:
         - name: param
@@ -107,7 +102,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeArray/{.param*}:
     get:
-      summary:
       operationId: getLabelExplodeArray
       parameters:
         - name: param
@@ -125,7 +119,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeObject/{.param}:
     get:
-      summary:
       operationId: getLabelNoExplodeObject
       parameters:
         - name: param
@@ -140,7 +133,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeObject/{.param*}:
     get:
-      summary:
       operationId: getLabelExplodeObject
       parameters:
         - name: param
@@ -155,7 +147,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeArray/{.id}:
     get:
-      summary:
       operationId: getMatrixNoExplodeArray
       parameters:
         - name: id
@@ -173,7 +164,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeArray/{.id*}:
     get:
-      summary:
       operationId: getMatrixExplodeArray
       parameters:
         - name: id
@@ -191,7 +181,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeObject/{.id}:
     get:
-      summary:
       operationId: getMatrixNoExplodeObject
       parameters:
         - name: id
@@ -206,7 +195,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeObject/{.id*}:
     get:
-      summary:
       operationId: getMatrixExplodeObject
       parameters:
         - name: id
@@ -352,6 +340,9 @@ paths:
           explode: true
           schema:
             $ref: "#/components/schemas/ComplexObject"
+      responses:
+        default:
+         $ref: "#/components/responses/SimpleResponse"
   /header:
     get:
       operationId: getHeader
@@ -420,6 +411,10 @@ paths:
           required: false
           schema:
             type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+
   /cookie:
     get:
       operationId: getCookie
@@ -488,6 +483,10 @@ paths:
           required: false
           schema:
             type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+
 components:
   schemas:
     Object:

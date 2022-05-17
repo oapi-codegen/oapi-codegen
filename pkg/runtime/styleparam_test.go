@@ -490,6 +490,31 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "7", result)
 
+	type UintType uint
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, UintType(9))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "9", result)
+
+	type Uint8Type uint8
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, Uint8Type(9))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "9", result)
+
+	type Uint16Type uint16
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, Uint16Type(9))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "9", result)
+
+	type Uint32Type uint32
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, Uint32Type(9))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "9", result)
+
+	type Uint64Type uint64
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, Uint64Type(9))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "9", result)
+
 	type FloatType64 float64
 	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, FloatType64(7.5))
 	assert.NoError(t, err)

@@ -49,7 +49,14 @@ type Options struct {
 	UserTemplates      map[string]string // Override built-in templates from user-provided files
 	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
+	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
+	OldEnumConflicts   bool              // When set to true, we include the object path in enum names, otherwise, rely on global de-dup
+	ResponseTypeSuffix string            // The suffix used for responses types
 }
+
+// We store options globally to simplify accessing them from all the codegen
+// functions.
+var options Options
 
 // goImport represents a go package to be imported in the generated code
 type goImport struct {
@@ -79,7 +86,7 @@ func (im importMap) GoImports() []string {
 
 var importMapping importMap
 
-func constructImportMapping(input map[string]string) importMap {
+func constructImportMapping(importMapping map[string]string) importMap {
 	var (
 		pathToName = map[string]string{}
 		result     = importMap{}
@@ -87,7 +94,7 @@ func constructImportMapping(input map[string]string) importMap {
 
 	{
 		var packagePaths []string
-		for _, packageName := range input {
+		for _, packageName := range importMapping {
 			packagePaths = append(packagePaths, packageName)
 		}
 		sort.Strings(packagePaths)
@@ -98,16 +105,19 @@ func constructImportMapping(input map[string]string) importMap {
 			}
 		}
 	}
-	for specPath, packagePath := range input {
+	for specPath, packagePath := range importMapping {
 		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
 	}
 	return result
 }
 
-// Uses the Go templating engine to generate all of our server wrappers from
+// Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
+	// This is global state
+	options = opts
+
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
@@ -115,8 +125,13 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		pruneUnusedComponents(swagger)
 	}
 
+	// if we are provided an override for the response type suffix update it
+	if opts.ResponseTypeSuffix != "" {
+		responseTypeSuffix = opts.ResponseTypeSuffix
+	}
+
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Options { return opts }
+	TemplateFunctions["opts"] = func() Options { return options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -532,12 +547,12 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
-	c := Constants{
-		EnumDefinitions: []EnumDefinition{},
-	}
+	enums := []EnumDefinition{}
 
+	// Keep track of which enums we've generated
 	m := map[string]bool{}
 
+	// These are all types defined globally
 	for _, tp := range types {
 		if found := m[tp.TypeName]; found {
 			continue
@@ -550,7 +565,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			if tp.Schema.GoType == "string" {
 				wrapper = `"`
 			}
-			c.EnumDefinitions = append(c.EnumDefinitions, EnumDefinition{
+			enums = append(enums, EnumDefinition{
 				Schema:       tp.Schema,
 				TypeName:     tp.TypeName,
 				ValueWrapper: wrapper,
@@ -558,7 +573,52 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
+	// Now, go through all the enums, and figure out if we have conflicts with
+	// any others.
+	for i := range enums {
+		// Look through all other enums not compared so far. Make sure we don't
+		// compare against self.
+		e1 := enums[i]
+		for j := i + 1; j < len(enums); j++ {
+			e2 := enums[j]
+
+			for e1key := range e1.GetValues() {
+				_, found := e2.GetValues()[e1key]
+				if found {
+					e1.Conflicts = true
+					e2.Conflicts = true
+					enums[i] = e1
+					enums[j] = e2
+					break
+				}
+			}
+		}
+
+		// now see if this enum conflicts with any global type names.
+		for _, tp := range types {
+			// Skip over enums, since we've handled those above.
+			if len(tp.Schema.EnumValues) > 0 {
+				continue
+			}
+			_, found := e1.Schema.EnumValues[tp.TypeName]
+			if found {
+				e1.Conflicts = true
+				enums[i] = e1
+			}
+		}
+
+		// Another edge case is that an enum value can conflict with its own
+		// type name.
+		_, found := e1.GetValues()[e1.TypeName];
+		if found {
+			e1.Conflicts = true
+			enums[i] = e1
+		}
+	}
+
+	// Now see if enums conflict with any non-enum typenames
+
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
 }
 
 // Generate our import statements and package definition.

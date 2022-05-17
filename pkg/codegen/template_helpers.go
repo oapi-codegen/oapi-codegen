@@ -26,13 +26,14 @@ import (
 const (
 	// These allow the case statements to be sorted later:
 	prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
-	responseTypeSuffix                                          = "Response"
 )
 
 var (
 	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
 	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
 	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
+
+	responseTypeSuffix = "Response"
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -149,9 +150,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
@@ -166,8 +165,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// YAML:
 			case StringInArray(contentTypeName, contentTypesYAML):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
@@ -181,8 +179,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// XML:
 			case StringInArray(contentTypeName, contentTypesXML):
 				if typeDefinition.ContentTypeName == contentTypeName {
-					var caseAction string
-					caseAction = fmt.Sprintf("var dest %s\n"+
+					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+

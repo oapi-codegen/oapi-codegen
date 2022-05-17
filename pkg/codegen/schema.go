@@ -44,7 +44,12 @@ func (s Schema) TypeDecl() string {
 	return s.GoType
 }
 
-func (s *Schema) MergeProperty(p Property) error {
+// AddProperty adds a new property to the current Schema, and returns an error
+// if it collides. Two identical fields will not collide, but two properties by
+// the same name, but different definition, will collide. It's safe to merge the
+// fields of two schemas with overalapping properties if those properties are
+// identical.
+func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
 		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
@@ -91,9 +96,32 @@ func (p Property) GoTypeDef() string {
 
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
-	Schema       Schema
-	TypeName     string
+	// Schema is the scheme of a type which has a list of enum values, eg, the
+	// "container" of the enum.
+	Schema Schema
+	// TypeName is the name of the enum's type, usually aliased from something.
+	TypeName string
+	// ValueWrapper wraps the value. It's used to conditionally apply quotes
+	// around strings.
 	ValueWrapper string
+	// Conflicts is set to true when this enum conflicts with another in
+	// terms of TypeNames
+	Conflicts bool
+}
+
+// GetValues generates enum names in a way to minimize global conflicts
+func (e *EnumDefinition) GetValues() map[string]string {
+	// in case there are no conflicts, it's safe to use the values as-is
+	if !e.Conflicts {
+		return e.Schema.EnumValues
+	}
+	// If we do have conflicts, we will prefix the enum's typename to the values.
+	newValues := make(map[string]string, len(e.Schema.EnumValues))
+	for k, v := range e.Schema.EnumValues {
+		newName := e.TypeName + UppercaseFirstCharacter(k)
+		newValues[newName] = v
+	}
+	return newValues
 }
 
 type Constants struct {
@@ -332,14 +360,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		sanitizedValues := SanitizeEnumNames(enumValues)
 		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
-		var constNamePath []string
+
 		for k, v := range sanitizedValues {
+			var enumName string
 			if v == "" {
-				constNamePath = append(path, "Empty")
+				enumName = "Empty"
 			} else {
-				constNamePath = append(path, k)
+				enumName = k
 			}
-			outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(constNamePath))] = v
+			if options.OldEnumConflicts {
+				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
+			} else {
+				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
 			typeName := SchemaNameToTypeName(PathToTypeName(path))
@@ -556,119 +589,6 @@ func GenStructFromSchema(schema Schema) string {
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
-}
-
-// Merge all the fields in the schemas supplied into one giant schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-	var outSchema Schema
-	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
-
-		var refType string
-		var err error
-		if IsGoTypeReference(ref) {
-			refType, err = RefPathToGoType(ref)
-			if err != nil {
-				return Schema{}, fmt.Errorf("error converting reference path to a go type: %w", err)
-			}
-		}
-
-		schema, err := GenerateGoSchema(schemaOrRef, path)
-		if err != nil {
-			return Schema{}, fmt.Errorf("error generating Go schema in allOf: %w", err)
-		}
-		schema.RefType = refType
-
-		for _, p := range schema.Properties {
-			err = outSchema.MergeProperty(p)
-			if err != nil {
-				return Schema{}, fmt.Errorf("error merging properties: %w", err)
-			}
-		}
-
-		if schema.HasAdditionalProperties {
-			if outSchema.HasAdditionalProperties {
-				// Both this schema, and the aggregate schema have additional
-				// properties, they must match.
-				if schema.AdditionalPropertiesType.TypeDecl() != outSchema.AdditionalPropertiesType.TypeDecl() {
-					return Schema{}, errors.New("additional properties in allOf have incompatible types")
-				}
-			} else {
-				// We're switching from having no additional properties to having
-				// them
-				outSchema.HasAdditionalProperties = true
-				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
-			}
-		}
-
-		outSchema.UnionElements = append(outSchema.UnionElements, schema.UnionElements...)
-		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, schema.AdditionalTypes...)
-	}
-
-	// Now, we generate the struct which merges together all the fields.
-	var err error
-	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
-	if err != nil {
-		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
-	}
-	return outSchema, nil
-}
-
-// This function generates an object that is the union of the objects in the
-// input array. In the case of Ref objects, we use an embedded struct, otherwise,
-// we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
-	// Start out with struct {
-	objectParts := []string{"struct {"}
-	var hasAdditionalProperties bool
-	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
-		if IsGoTypeReference(ref) {
-			// We have a referenced type, we will generate an inlined struct
-			// member.
-			// struct {
-			//   InlinedMember
-			//   ...
-			// }
-			goType, err := RefPathToGoType(ref)
-			if err != nil {
-				return "", err
-			}
-			objectParts = append(objectParts,
-				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
-			objectParts = append(objectParts,
-				fmt.Sprintf("   %s `yaml:\",inline\"`", goType))
-		} else {
-			// Inline all the fields from the schema into the output struct,
-			// just like in the simple case of generating an object.
-			goSchema, err := GenerateGoSchema(schemaOrRef, path)
-			if err != nil {
-				return "", err
-			}
-			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
-			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
-
-			if goSchema.HasAdditionalProperties {
-				addPropsType := goSchema.AdditionalPropertiesType.GoType
-				if goSchema.AdditionalPropertiesType.RefType != "" {
-					addPropsType = goSchema.AdditionalPropertiesType.RefType
-				}
-
-				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
-				if !StringInArray(additionalPropertiesPart, objectParts) {
-					objectParts = append(objectParts, additionalPropertiesPart)
-				}
-			}
-			if len(goSchema.UnionElements) != 0 {
-				hasAdditionalProperties = true
-			}
-		}
-	}
-	if hasAdditionalProperties {
-		objectParts = append(objectParts, "union json.RawMessage")
-	}
-	objectParts = append(objectParts, "}")
-	return strings.Join(objectParts, "\n"), nil
 }
 
 // This constructs a Go type for a parameter, looking at either the schema or

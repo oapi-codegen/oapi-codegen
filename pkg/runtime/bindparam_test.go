@@ -335,6 +335,30 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
+
+	t.Run("optional", func(t *testing.T) {
+		queryParams := url.Values{
+			"time":   {"2020-12-09T16:09:53+00:00"},
+			"number": {"100"},
+		}
+		// An optional time will be a pointer to a time in a parameter object
+		var optionalTime *time.Time
+		err := BindQueryParameter("form", true, false, "notfound", queryParams, &optionalTime)
+		require.NoError(t, err)
+		assert.Nil(t, optionalTime)
+
+		var optionalNumber *int
+		err = BindQueryParameter("form", true, false, "notfound", queryParams, &optionalNumber)
+		require.NoError(t, err)
+		assert.Nil(t, optionalNumber)
+
+		// If we require values, we require errors when they're not present.
+		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalTime)
+		assert.Error(t, err)
+		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
+		assert.Error(t, err)
+
+	})
 }
 
 func TestBindParameterViaAlias(t *testing.T) {
@@ -423,28 +447,36 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	}
 
 	var dstTime time.Time
-	err := bindParamsToExplodedObject("time", values, &dstTime)
+	fieldsPresent, err := bindParamsToExplodedObject("time", values, &dstTime)
 	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, now, dstTime)
 
 	type AliasedTime time.Time
 	var aDstTime AliasedTime
-	err = bindParamsToExplodedObject("time", values, &aDstTime)
+	fieldsPresent, err = bindParamsToExplodedObject("time", values, &aDstTime)
 	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, now, aDstTime)
 
 	expectedDate := MockBinder{Time: time.Date(2020, 11, 6, 0, 0, 0, 0, time.UTC)}
 
 	var dstDate MockBinder
-	err = bindParamsToExplodedObject("date", values, &dstDate)
+	fieldsPresent, err = bindParamsToExplodedObject("date", values, &dstDate)
+	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, expectedDate, dstDate)
 
 	var eDstDate EmbeddedMockBinder
-	err = bindParamsToExplodedObject("date", values, &eDstDate)
+	fieldsPresent, err = bindParamsToExplodedObject("date", values, &eDstDate)
+	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, expectedDate, dstDate)
 
 	var nTDstDate AnotherMockBinder
-	err = bindParamsToExplodedObject("date", values, &nTDstDate)
+	fieldsPresent, err = bindParamsToExplodedObject("date", values, &nTDstDate)
+	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, expectedDate, nTDstDate)
 
 	type ObjectWithOptional struct {
@@ -452,8 +484,9 @@ func TestBindParamsToExplodedObject(t *testing.T) {
 	}
 
 	var optDstTime ObjectWithOptional
-	err = bindParamsToExplodedObject("explodedObject", values, &optDstTime)
+	fieldsPresent, err = bindParamsToExplodedObject("explodedObject", values, &optDstTime)
 	assert.NoError(t, err)
+	assert.True(t, fieldsPresent)
 	assert.EqualValues(t, &now, optDstTime.Time)
 }
 

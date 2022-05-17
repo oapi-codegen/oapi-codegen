@@ -31,9 +31,9 @@ const (
 
 // Defines values for EnumInObjInArrayVal.
 const (
-	EnumInObjInArrayValFirst EnumInObjInArrayVal = "first"
+	First EnumInObjInArrayVal = "first"
 
-	EnumInObjInArrayValSecond EnumInObjInArrayVal = "second"
+	Second EnumInObjInArrayVal = "second"
 )
 
 // This schema name starts with a number

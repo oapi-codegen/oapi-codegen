@@ -1,0 +1,7 @@
+output:
+  components.gen.go
+package: components
+generate:
+  - types
+  - skip-prune
+  - spec

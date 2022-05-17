@@ -360,8 +360,10 @@ func primitiveToString(value interface{}) (string, error) {
 	kind := t.Kind()
 
 	switch kind {
-	case reflect.Int8, reflect.Int32, reflect.Int64, reflect.Int:
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		output = strconv.FormatInt(v.Int(), 10)
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
+		output = strconv.FormatUint(v.Uint(), 10)
 	case reflect.Float64:
 		output = strconv.FormatFloat(v.Float(), 'f', -1, 64)
 	case reflect.Float32:

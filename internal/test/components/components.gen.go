@@ -6,21 +6,87 @@ package components
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+)
+
+// Defines values for Enum1.
+const (
+	Enum1One Enum1 = "One"
+
+	Enum1Three Enum1 = "Three"
+
+	Enum1Two Enum1 = "Two"
+)
+
+// Defines values for Enum2.
+const (
+	Enum2One Enum2 = "One"
+
+	Enum2Three Enum2 = "Three"
+
+	Enum2Two Enum2 = "Two"
+)
+
+// Defines values for Enum3.
+const (
+	Enum3Bar Enum3 = "Bar"
+
+	Enum3Enum1One Enum3 = "Enum1One"
+
+	Enum3Foo Enum3 = "Foo"
+)
+
+// Defines values for Enum4.
+const (
+	Cat Enum4 = "Cat"
+
+	Dog Enum4 = "Dog"
+
+	Mouse Enum4 = "Mouse"
+)
+
+// Defines values for Enum5.
+const (
+	N5 Enum5 = 5
+
+	N6 Enum5 = 6
+
+	N7 Enum5 = 7
+)
+
+// Defines values for EnumParam1.
+const (
+	EnumParam1Both EnumParam1 = "both"
+
+	EnumParam1False EnumParam1 = "false"
+
+	EnumParam1True EnumParam1 = "true"
+)
+
+// Defines values for EnumParam2.
+const (
+	EnumParam2Both EnumParam2 = "both"
+
+	EnumParam2False EnumParam2 = "false"
+
+	EnumParam2True EnumParam2 = "true"
+)
+
+// Defines values for EnumParam3.
+const (
+	Alice EnumParam3 = "alice"
+
+	Bob EnumParam3 = "bob"
+
+	Eve EnumParam3 = "eve"
 )
 
 // Has additional properties of type int
@@ -73,6 +139,24 @@ type AdditionalPropertiesObject6_Item struct {
 type AnyOfObject1 struct {
 	union json.RawMessage
 }
+
+// Conflicts with Enum2, enum values need to be prefixed with type
+// name.
+type Enum1 string
+
+// Conflicts with Enum1, enum values need to be prefixed with type
+// name.
+type Enum2 string
+
+// Enum values conflict with Enums above, need to be prefixed
+// with type name.
+type Enum3 string
+
+// No conflicts here, should have unmodified enums
+type Enum4 string
+
+// Numerical enum
+type Enum5 int
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
@@ -232,6 +316,18 @@ type SchemaObject struct {
 	Role                  string  `json:"role"`
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
+
+// EnumParam1 defines model for EnumParam1.
+type EnumParam1 string
+
+// EnumParam2 defines model for EnumParam2.
+type EnumParam2 string
+
+// EnumParam3 defines model for EnumParam3.
+type EnumParam3 string
+
+// a parameter
+type ParameterObject string
 
 // ResponseObject defines model for ResponseObject.
 type ResponseObject struct {
