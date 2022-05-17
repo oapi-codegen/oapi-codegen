@@ -541,12 +541,12 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
-	c := Constants{
-		EnumDefinitions: []EnumDefinition{},
-	}
+	enums := []EnumDefinition{}
 
+	// Keep track of which enums we've generated
 	m := map[string]bool{}
 
+	// These are all types defined globally
 	for _, tp := range types {
 		if found := m[tp.TypeName]; found {
 			continue
@@ -559,7 +559,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			if tp.Schema.GoType == "string" {
 				wrapper = `"`
 			}
-			c.EnumDefinitions = append(c.EnumDefinitions, EnumDefinition{
+			enums = append(enums, EnumDefinition{
 				Schema:       tp.Schema,
 				TypeName:     tp.TypeName,
 				ValueWrapper: wrapper,
@@ -567,7 +567,40 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, c)
+	// Now, go through all the enums, and figure out if we have conflicts with
+	// any others.
+	for i := range enums {
+		// Look through all other enums not compared so far. Make sure we don't
+		// compare against self.
+		e1 := enums[i]
+		for j := i + 1; j < len(enums); j++ {
+			e2 := enums[j]
+
+			for e1key := range e1.Schema.EnumValues {
+				_, found := e2.Schema.EnumValues[e1key]
+				if found {
+					e1.Conflicts = true
+					e2.Conflicts = true
+					enums[i] = e1
+					enums[j] = e2
+					break
+				}
+			}
+		}
+
+		// now see if this enum conflicts with any global type names.
+		for _, tp := range types {
+			_, found := e1.Schema.EnumValues[tp.TypeName]
+			if found {
+				e1.Conflicts = true
+				enums[i] = e1
+			}
+		}
+	}
+
+	// Now see if enums conflict with any non-enum typenames
+
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
 }
 
 // Generate our import statements and package definition.

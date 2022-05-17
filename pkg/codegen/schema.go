@@ -93,9 +93,32 @@ func (p Property) GoTypeDef() string {
 
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
-	Schema       Schema
-	TypeName     string
+	// Schema is the scheme of a type which has a list of enum values, eg, the
+	// "container" of the enum.
+	Schema Schema
+	// TypeName is the name of the enum's type, usually aliased from something.
+	TypeName string
+	// ValueWrapper wraps the value. It's used to conditionally apply quotes
+	// around strings.
 	ValueWrapper string
+	// Conflicts is set to true when this enum conflicts with another in
+	// terms of TypeNames
+	Conflicts bool
+}
+
+// GetValues generates enum names in a way to minimize global conflicts
+func (e *EnumDefinition) GetValues() map[string]string {
+	// in case there are no conflicts, it's safe to use the values as-is
+	if !e.Conflicts {
+		return e.Schema.EnumValues
+	}
+	// If we do have conflicts, we will prefix the enum's typename to the values.
+	newValues := make(map[string]string, len(e.Schema.EnumValues))
+	for k, v := range e.Schema.EnumValues {
+		newName := e.TypeName + UppercaseFirstCharacter(k)
+		newValues[newName] = v
+	}
+	return newValues
 }
 
 type Constants struct {
