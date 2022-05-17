@@ -506,8 +506,6 @@ func SanitizeGoIdentity(str string) string {
 
 // SanitizeEnumNames fixes illegal chars in the enum names
 // and removes duplicates
-// TODO(marcin): Since this is now done globally, this function can be
-//  simplified.
 func SanitizeEnumNames(enumNames []string) map[string]string {
 	dupCheck := make(map[string]int, len(enumNames))
 	deDup := make([]string, 0, len(enumNames))
