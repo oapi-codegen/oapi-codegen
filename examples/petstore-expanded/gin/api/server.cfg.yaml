@@ -1,4 +1,4 @@
-output: examples/petstore-expanded/gin/api/petstore-server.gen.go
+output: petstore-server.gen.go
 generate:
   - gin
   - spec

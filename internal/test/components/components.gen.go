@@ -182,7 +182,7 @@ type ParamsWithAddPropsParams struct {
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
 		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner"`
-	} `json:"p2"`
+	} `form:"p2" json:"p2"`
 }
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.

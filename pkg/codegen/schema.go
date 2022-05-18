@@ -74,6 +74,7 @@ type Property struct {
 	Nullable       bool
 	ReadOnly       bool
 	WriteOnly      bool
+	NeedsFormTag   bool
 	ExtensionProps *openapi3.ExtensionProps
 }
 
@@ -484,20 +485,27 @@ func GenFieldsFromProperties(props []Property) []string {
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
 		// Support x-omitempty
-		omitEmpty := true
+		overrideOmitEmpty := true
 		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
 			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
-				omitEmpty = extOmitEmpty
+				overrideOmitEmpty = extOmitEmpty
 			}
 		}
 
 		fieldTags := make(map[string]string)
 
-		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !omitEmpty {
+		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty {
 			fieldTags["json"] = p.JsonFieldName
+			if p.NeedsFormTag {
+				fieldTags["form"] = p.JsonFieldName
+			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			if p.NeedsFormTag {
+				fieldTags["form"] = p.JsonFieldName + ",omitempty"
+			}
 		}
+
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)

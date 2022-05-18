@@ -83,9 +83,7 @@ func TestPetStore(t *testing.T) {
 
 		store.Pets = map[int64]api.Pet{
 			1: {
-				NewPet: api.NewPet{
-					Tag: &tag,
-				},
+				Tag: &tag,
 			},
 			2: {},
 		}

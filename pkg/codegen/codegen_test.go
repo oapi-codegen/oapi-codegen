@@ -2,16 +2,18 @@ package codegen
 
 import (
 	"bytes"
+	_ "embed"
 	"go/format"
 	"io/ioutil"
 	"net/http"
 	"testing"
 
-	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
+
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 )
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
@@ -160,7 +162,7 @@ type GetTestByNameResponse struct {
 
 	// Check the client method signatures:
 	assert.Contains(t, code, "type GetTestByNameParams struct {")
-	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
+	assert.Contains(t, code, "Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
@@ -172,143 +174,5 @@ type GetTestByNameResponse struct {
 	assert.Len(t, problems, 0)
 }
 
-const testOpenAPIDefinition = `
-openapi: 3.0.1
-
-info:
-  title: OpenAPI-CodeGen Test
-  description: 'This is a test OpenAPI Spec'
-  version: 1.0.0
-
-servers:
-- url: https://test.oapi-codegen.com/v2
-- url: http://test.oapi-codegen.com/v2
-
-paths:
-  /test/{name}:
-    get:
-      tags:
-      - test
-      summary: Get test
-      operationId: getTestByName
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: $top
-        in: query
-        required: false
-        schema:
-          type: integer
-      responses:
-        200:
-          description: Success
-          content:
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Test'
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Test'
-        422:
-          description: InvalidArray
-          content:
-            application/xml:
-              schema:
-                type: array
-            application/json:
-              schema:
-                type: array
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /cat:
-    get:
-      tags:
-      - cat
-      summary: Get cat status
-      operationId: getCatStatus
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                oneOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-            application/xml:
-              schema:
-                anyOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-            application/yaml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-components:
-  schemas:
-
-    Test:
-      properties:
-        name:
-          type: string
-        cases:
-          type: array
-          items:
-            $ref: '#/components/schemas/TestCase'
-
-    TestCase:
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-
-    Error:
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
-
-    CatAlive:
-      properties:
-        name:
-          type: string
-        alive_since:
-          type: string
-          format: date-time
-
-    CatDead:
-      properties:
-        name:
-          type: string
-        dead_since:
-          type: string
-          format: date-time
-          x-oapi-codegen-extra-tags:
-            tag1: value1
-            tag2: value2
-        cause:
-          type: string
-          enum: [car, dog, oldage]
-`
+//go:embed test_spec.yaml
+var testOpenAPIDefinition string
