@@ -22,23 +22,15 @@ import (
 
 // Defines values for Bar.
 const (
-	BarBar Bar = "Bar"
-
-	BarFoo Bar = "Foo"
-
-	BarFoo1 Bar = " Foo"
-
-	BarFoo2 Bar = " Foo "
-
-	BarFoo3 Bar = "_Foo_"
-
-	BarFooBar Bar = "Foo Bar"
-
+	BarBar     Bar = "Bar"
+	BarFoo     Bar = "Foo"
+	BarFoo1    Bar = " Foo"
+	BarFoo2    Bar = " Foo "
+	BarFoo3    Bar = "_Foo_"
+	BarFooBar  Bar = "Foo Bar"
 	BarFooBar1 Bar = "Foo-Bar"
-
-	BarN1 Bar = "1"
-
-	BarN1Foo Bar = "1Foo"
+	BarN1      Bar = "1"
+	BarN1Foo   Bar = "1Foo"
 )
 
 // Bar defines model for Bar.

@@ -31,8 +31,7 @@ const (
 
 // Defines values for EnumInObjInArrayVal.
 const (
-	First EnumInObjInArrayVal = "first"
-
+	First  EnumInObjInArrayVal = "first"
 	Second EnumInObjInArrayVal = "second"
 )
 

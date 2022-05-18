@@ -18,74 +18,58 @@ import (
 
 // Defines values for Enum1.
 const (
-	Enum1One Enum1 = "One"
-
+	Enum1One   Enum1 = "One"
 	Enum1Three Enum1 = "Three"
-
-	Enum1Two Enum1 = "Two"
+	Enum1Two   Enum1 = "Two"
 )
 
 // Defines values for Enum2.
 const (
-	Enum2One Enum2 = "One"
-
+	Enum2One   Enum2 = "One"
 	Enum2Three Enum2 = "Three"
-
-	Enum2Two Enum2 = "Two"
+	Enum2Two   Enum2 = "Two"
 )
 
 // Defines values for Enum3.
 const (
-	Enum3Bar Enum3 = "Bar"
-
+	Enum3Bar      Enum3 = "Bar"
 	Enum3Enum1One Enum3 = "Enum1One"
-
-	Enum3Foo Enum3 = "Foo"
+	Enum3Foo      Enum3 = "Foo"
 )
 
 // Defines values for Enum4.
 const (
-	Cat Enum4 = "Cat"
-
-	Dog Enum4 = "Dog"
-
+	Cat   Enum4 = "Cat"
+	Dog   Enum4 = "Dog"
 	Mouse Enum4 = "Mouse"
 )
 
 // Defines values for Enum5.
 const (
 	N5 Enum5 = 5
-
 	N6 Enum5 = 6
-
 	N7 Enum5 = 7
 )
 
 // Defines values for EnumParam1.
 const (
-	EnumParam1Both EnumParam1 = "both"
-
+	EnumParam1Both  EnumParam1 = "both"
 	EnumParam1False EnumParam1 = "false"
-
-	EnumParam1True EnumParam1 = "true"
+	EnumParam1True  EnumParam1 = "true"
 )
 
 // Defines values for EnumParam2.
 const (
-	EnumParam2Both EnumParam2 = "both"
-
+	EnumParam2Both  EnumParam2 = "both"
 	EnumParam2False EnumParam2 = "false"
-
-	EnumParam2True EnumParam2 = "true"
+	EnumParam2True  EnumParam2 = "true"
 )
 
 // Defines values for EnumParam3.
 const (
 	Alice EnumParam3 = "alice"
-
-	Bob EnumParam3 = "bob"
-
-	Eve EnumParam3 = "eve"
+	Bob   EnumParam3 = "bob"
+	Eve   EnumParam3 = "eve"
 )
 
 // Has additional properties of type int
