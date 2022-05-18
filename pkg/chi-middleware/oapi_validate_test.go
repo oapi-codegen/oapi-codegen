@@ -2,95 +2,24 @@ package middleware
 
 import (
 	"context"
+	_ "embed"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
-var testSchema = `openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: TestServer
-servers:
-  - url: http://deepmap.ai/
-paths:
-  /resource:
-    get:
-      operationId: getResource
-      parameters:
-        - name: id
-          in: query
-          schema:
-            type: integer
-            minimum: 10
-            maximum: 100
-      responses:
-        '200':
-            description: success
-            content:
-              application/json:
-                schema:
-                  properties:
-                    name:
-                      type: string
-                    id:
-                      type: integer
-    post:
-      operationId: createResource
-      responses:
-        '204':
-          description: No content
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              properties:
-                name:
-                  type: string
-  /protected_resource:
-    get:
-      operationId: getProtectedResource
-      security:
-        - BearerAuth:
-          - someScope
-      responses:
-        '204':
-          description: no content
-  /protected_resource2:
-    get:
-      operationId: getProtectedResource
-      security:
-        - BearerAuth:
-          - otherScope
-      responses:
-        '204':
-          description: no content
-  /protected_resource_401:
-    get:
-      operationId: getProtectedResource
-      security:
-        - BearerAuth:
-          - unauthorized
-      responses:
-        '401':
-          description: no content
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-`
+//go:embed test_spec.yaml
+var testSchema []byte
 
 func doGet(t *testing.T, mux *chi.Mux, rawURL string) *httptest.ResponseRecorder {
 	u, err := url.Parse(rawURL)
@@ -113,7 +42,7 @@ func doPost(t *testing.T, mux *chi.Mux, rawURL string, jsonBody interface{}) *ht
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
