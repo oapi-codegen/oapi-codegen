@@ -255,6 +255,9 @@ func SetupHandler() {
     http.Handle("/", Handler(&myApi))
 }
 ```
+
+Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
+
 </summary></details>
 
 #### Additional Properties in type definitions
