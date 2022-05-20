@@ -16,7 +16,74 @@ package codegen
 import (
 	"net/http"
 	"testing"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
+
+func TestIsJson(t *testing.T) {
+	type test struct {
+		name       string
+		mediaTypes []string
+		want       bool
+	}
+
+	suite := []test{
+		{
+			name:       "When no MediaType, returns false",
+			mediaTypes: []string{},
+			want:       false,
+		},
+		{
+			name:       "When not a JSON MediaType, returns false",
+			mediaTypes: []string{"application/pdf"},
+			want:       false,
+		},
+		{
+			name:       "When more than one MediaTypes, returns false",
+			mediaTypes: []string{"application/pdf", "application/json"},
+			want:       false,
+		},
+		{
+			name:       "When MediaType ends with json, but isn't JSON, returns false",
+			mediaTypes: []string{"application/notjson"},
+			want:       false,
+		},
+		{
+			name:       "When MediaType is application/json, returns true",
+			mediaTypes: []string{"application/json"},
+			want:       true,
+		},
+		{
+			name:       "When MediaType is application/json-patch+json, returns true",
+			mediaTypes: []string{"application/json-patch+json"},
+			want:       true,
+		},
+		{
+			name:       "When MediaType is application/vnd.api+json, returns true",
+			mediaTypes: []string{"application/vnd.api+json"},
+			want:       true,
+		},
+	}
+	for _, test := range suite {
+		t.Run(test.name, func(t *testing.T) {
+			pd := ParameterDefinition{
+				Spec: &openapi3.Parameter{
+					Content: make(map[string]*openapi3.MediaType),
+				},
+			}
+			for _, mediaType := range test.mediaTypes {
+				pd.Spec.Content[mediaType] = nil
+			}
+
+			got := pd.IsJson()
+
+			if got != test.want {
+				t.Fatalf("IsJson validation failed. Want [%v] Got [%v]", test.want, got)
+			}
+
+		})
+	}
+}
 
 func TestGenerateDefaultOperationID(t *testing.T) {
 	type test struct {

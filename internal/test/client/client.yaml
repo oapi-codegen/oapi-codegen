@@ -80,6 +80,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SchemaObject'
+  /with_vendor_json:
+    post:
+      operationId: PostVendorJson
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              type: object
 components:
   schemas:
     SchemaObject:
