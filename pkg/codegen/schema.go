@@ -168,7 +168,7 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) IsAlias() bool {
-	return !options.OldAliasing && t.Schema.DefineViaAlias
+	return !options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -348,7 +348,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				enumName = k
 			}
-			if options.OldEnumConflicts {
+			if options.Compatibility.OldEnumConflicts {
 				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
 			} else {
 				outSchema.EnumValues[SchemaNameToTypeName(k)] = v

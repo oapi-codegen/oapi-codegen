@@ -33,31 +33,9 @@ import (
 //go:embed templates
 var templates embed.FS
 
-// Options defines the optional code to generate.
-type Options struct {
-	GenerateChiServer  bool              // GenerateChiServer specifies whether to generate chi server boilerplate
-	GenerateEchoServer bool              // GenerateEchoServer specifies whether to generate echo server boilerplate
-	GenerateGinServer  bool              // GenerateGinServer specifies whether to generate echo server boilerplate
-	GenerateClient     bool              // GenerateClient specifies whether to generate client boilerplate
-	GenerateTypes      bool              // GenerateTypes specifies whether to generate type definitions
-	EmbedSpec          bool              // Whether to embed the swagger spec in the generated code
-	SkipFmt            bool              // Whether to skip go imports on the generated code
-	SkipPrune          bool              // Whether to skip pruning unused components on the generated code
-	AliasTypes         bool              // Whether to alias types if possible
-	IncludeTags        []string          // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags        []string          // Exclude operations that have one of these tags. Ignored when empty.
-	UserTemplates      map[string]string // Override built-in templates from user-provided files
-	ImportMapping      map[string]string // ImportMapping specifies the golang package path for each external reference
-	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
-	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
-	OldEnumConflicts   bool              // When set to true, we include the object path in enum names, otherwise, rely on global de-dup
-	OldAliasing        bool              // When set, we won't alias types for backward compatibility
-	ResponseTypeSuffix string            // The suffix used for responses types
-}
-
 // We store options globally to simplify accessing them from all the codegen
 // functions.
-var options Options
+var options Configuration
 
 // goImport represents a go package to be imported in the generated code
 type goImport struct {
@@ -115,24 +93,24 @@ func constructImportMapping(importMapping map[string]string) importMap {
 // Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(swagger *openapi3.T, packageName string, opts Options) (string, error) {
+func Generate(swagger *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	options = opts
 
 	importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(swagger, opts)
-	if !opts.SkipPrune {
+	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(swagger)
 	}
 
 	// if we are provided an override for the response type suffix update it
-	if opts.ResponseTypeSuffix != "" {
-		responseTypeSuffix = opts.ResponseTypeSuffix
+	if opts.OutputOptions.ResponseTypeSuffix != "" {
+		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Options { return options }
+	TemplateFunctions["opts"] = func() Configuration { return options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -143,9 +121,9 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 
 	// Override built-in templates with user-provided versions
 	for _, tpl := range t.Templates() {
-		if _, ok := opts.UserTemplates[tpl.Name()]; ok {
+		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
 			utpl := t.New(tpl.Name())
-			if _, err := utpl.Parse(opts.UserTemplates[tpl.Name()]); err != nil {
+			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
 				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
 			}
 		}
@@ -157,8 +135,8 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var typeDefinitions, constantDefinitions string
-	if opts.GenerateTypes {
-		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops, opts.ExcludeSchemas)
+	if opts.Generate.Models {
+		typeDefinitions, err = GenerateTypeDefinitions(t, swagger, ops, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
 			return "", fmt.Errorf("error generating type definitions: %w", err)
 		}
@@ -171,7 +149,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var echoServerOut string
-	if opts.GenerateEchoServer {
+	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -179,7 +157,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var chiServerOut string
-	if opts.GenerateChiServer {
+	if opts.Generate.ChiServer {
 		chiServerOut, err = GenerateChiServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -187,7 +165,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var ginServerOut string
-	if opts.GenerateGinServer {
+	if opts.Generate.GinServer {
 		ginServerOut, err = GenerateGinServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -195,7 +173,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var clientOut string
-	if opts.GenerateClient {
+	if opts.Generate.Client {
 		clientOut, err = GenerateClient(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating client: %w", err)
@@ -203,7 +181,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var clientWithResponsesOut string
-	if opts.GenerateClient {
+	if opts.Generate.Client {
 		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating client with responses: %w", err)
@@ -211,7 +189,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	}
 
 	var inlinedSpec string
-	if opts.EmbedSpec {
+	if opts.Generate.EmbeddedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, swagger)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -222,7 +200,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 	w := bufio.NewWriter(&buf)
 
 	externalImports := importMapping.GoImports()
-	importsOut, err := GenerateImports(t, externalImports, packageName)
+	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -242,7 +220,7 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		return "", fmt.Errorf("error writing type definitions: %w", err)
 	}
 
-	if opts.GenerateClient {
+	if opts.Generate.Client {
 		_, err = w.WriteString(clientOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
@@ -253,28 +231,28 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 		}
 	}
 
-	if opts.GenerateEchoServer {
+	if opts.Generate.EchoServer {
 		_, err = w.WriteString(echoServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
 	}
 
-	if opts.GenerateChiServer {
+	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
 	}
 
-	if opts.GenerateGinServer {
+	if opts.Generate.GinServer {
 		_, err = w.WriteString(ginServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
 	}
 
-	if opts.EmbedSpec {
+	if opts.Generate.EmbeddedSpec {
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
 			return "", fmt.Errorf("error writing inlined spec: %w", err)
@@ -291,11 +269,11 @@ func Generate(swagger *openapi3.T, packageName string, opts Options) (string, er
 
 	// The generation code produces unindented horrors. Use the Go Imports
 	// to make it all pretty.
-	if opts.SkipFmt {
+	if opts.OutputOptions.SkipFmt {
 		return goCode, nil
 	}
 
-	outBytes, err := imports.Process(packageName+".go", []byte(goCode), nil)
+	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
 		fmt.Println(goCode)
 		return "", fmt.Errorf("error formatting Go code: %w", err)

@@ -6,23 +6,27 @@ import (
 	"go/token"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 )
 
 func TestIllegalEnumNames(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
-	opts := codegen.Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
+	opts := codegen.Configuration{
+		PackageName: "illegal_enum_names",
+		Generate: codegen.GenerateOptions{
+			EchoServer:   true,
+			Client:       true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
 	}
 
-	code, err := codegen.Generate(swagger, "illegal_enum_names", opts)
+	code, err := codegen.Generate(swagger, opts)
 	require.NoError(t, err)
 
 	f, err := parser.ParseFile(token.NewFileSet(), "", code, parser.AllErrors)

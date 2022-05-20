@@ -20,11 +20,14 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Client:       true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
 	}
 
 	// Get a spec from the example PetStore definition:
@@ -32,7 +35,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(swagger, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -67,9 +70,14 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := Options{
-		GenerateTypes: true,
-		UserTemplates: userTemplates,
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: userTemplates,
+		},
 	}
 
 	// Get a spec from the example PetStore definition:
@@ -77,7 +85,7 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(swagger, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -116,11 +124,14 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "testswagger"
-	opts := Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Client:       true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
 	}
 
 	// Get a spec from the test definition in this file:
@@ -128,7 +139,7 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(swagger, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 

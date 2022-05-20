@@ -1,6 +1,5 @@
-output:
-  petstore-server.gen.go
-generate:
-  - server
-  - spec
 package: api
+generate:
+  echo-server: true
+  embedded-spec: true
+output: petstore-server.gen.go

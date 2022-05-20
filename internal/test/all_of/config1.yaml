@@ -5,4 +5,5 @@ generate:
   - types
   - skip-prune
   - spec
-old-all-of-output: true
+compatibility:
+  old-merge-schemas: true
