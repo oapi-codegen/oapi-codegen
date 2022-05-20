@@ -51,6 +51,7 @@ type Options struct {
 	ExcludeSchemas     []string          // Exclude from generation schemas with given names. Ignored when empty.
 	OldMergeSchemas    bool              // Schema merging for allOf was changed in a big way, when true, the old way is used
 	OldEnumConflicts   bool              // When set to true, we include the object path in enum names, otherwise, rely on global de-dup
+	OldAliasing        bool              // When set, we won't alias types for backward compatibility
 	ResponseTypeSuffix string            // The suffix used for responses types
 }
 
@@ -604,7 +605,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 		// Another edge case is that an enum value can conflict with its own
 		// type name.
-		_, found := e1.GetValues()[e1.TypeName];
+		_, found := e1.GetValues()[e1.TypeName]
 		if found {
 			e1.Conflicts = true
 			enums[i] = e1

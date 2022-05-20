@@ -26,6 +26,11 @@ type Schema struct {
 
 	Description string // The description of the element
 
+	// If this is set, the schema will declare a type via alias, eg,
+	// `type Foo = bool`. If this is not set, we will define this type via
+	// type definition `type Foo bool`
+	DefineViaAlias bool
+
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
 }
@@ -162,9 +167,8 @@ type ResponseTypeDefinition struct {
 	ResponseName string
 }
 
-func (t *TypeDefinition) CanAlias() bool {
-	return t.Schema.IsRef() || /* actual reference */
-		(t.Schema.ArrayType != nil && t.Schema.ArrayType.IsRef()) /* array to ref */
+func (t *TypeDefinition) IsAlias() bool {
+	return !options.OldAliasing && t.Schema.DefineViaAlias
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -191,8 +195,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType:      refType,
-			Description: StringToGoComment(schema.Description),
+			GoType:         refType,
+			Description:    StringToGoComment(schema.Description),
+			DefineViaAlias: true,
 		}, nil
 	}
 
@@ -254,7 +259,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				outType = "interface{}"
 			}
 			outSchema.GoType = outType
+			outSchema.DefineViaAlias = true
 		} else {
+			// When we define an object, we want it to be a type definition,
+			// not a type alias, eg, "type Foo struct {...}"
+			outSchema.DefineViaAlias = false
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
@@ -316,6 +325,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
+		// Enums need to be typed, so that the values aren't interchangeable,
+		// so no matter what schema conversion thinks, we need to define a
+		// new type.
+		outSchema.DefineViaAlias = false
+
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -378,6 +392,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
+		outSchema.DefineViaAlias = true
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
@@ -405,6 +420,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		} else {
 			return fmt.Errorf("invalid integer format: %s", f)
 		}
+		outSchema.DefineViaAlias = true
 	case "number":
 		// We default to float for "number"
 		if f == "double" {
@@ -414,11 +430,13 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		} else {
 			return fmt.Errorf("invalid number format: %s", f)
 		}
+		outSchema.DefineViaAlias = true
 	case "boolean":
 		if f != "" {
 			return fmt.Errorf("invalid format (%s) for boolean", f)
 		}
 		outSchema.GoType = "bool"
+		outSchema.DefineViaAlias = true
 	case "string":
 		// Special case string formats here.
 		switch f {
@@ -439,13 +457,14 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
 		}
+		outSchema.DefineViaAlias = true
 	default:
 		return fmt.Errorf("unhandled Schema type: %s", t)
 	}
 	return nil
 }
 
-// This describes a Schema, a type definition.
+// SchemaDescriptor describes a Schema, a type definition.
 type SchemaDescriptor struct {
 	Fields                   []FieldDescriptor
 	HasAdditionalProperties  bool

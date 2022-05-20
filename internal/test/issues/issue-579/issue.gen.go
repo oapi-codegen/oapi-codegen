@@ -8,7 +8,7 @@ import (
 )
 
 // AliasedDate defines model for AliasedDate.
-type AliasedDate openapi_types.Date
+type AliasedDate = openapi_types.Date
 
 // Pet defines model for Pet.
 type Pet struct {

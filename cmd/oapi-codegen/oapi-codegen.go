@@ -49,6 +49,7 @@ var (
 	flagPrintVersion       bool
 	flagOldAllOfOutput     bool
 	flagOldEnumConflicts   bool
+	flagOldAliasing        bool
 )
 
 type configuration struct {
@@ -62,6 +63,7 @@ type configuration struct {
 	ExcludeSchemas     []string          `yaml:"exclude-schemas"`
 	OldAllOfOutput     bool              `yaml:"old-all-of-output"`
 	OldEnumConflicts   bool              `yaml:"old-enum-conflicts"`
+	OldAliasing        bool              `yaml:"old-aliasing"`
 	ResponseTypeSuffix string            `yaml:"response-type-suffix"`
 }
 
@@ -82,6 +84,7 @@ func main() {
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
 	flag.BoolVar(&flagOldAllOfOutput, "old-all-of-output", false, "when true, old and incorrect AllOf implementation is used")
 	flag.BoolVar(&flagOldEnumConflicts, "old-enum-conflicts", false, "when true, use old style enum naming")
+	flag.BoolVar(&flagOldAliasing, "old-aliasing", false, "when true, generate older style redefined types")
 	flag.Parse()
 
 	if flagPrintVersion {
@@ -165,6 +168,8 @@ func main() {
 	opts.OldMergeSchemas = cfg.OldAllOfOutput
 
 	opts.OldEnumConflicts = cfg.OldEnumConflicts
+
+	opts.OldAliasing = cfg.OldAliasing
 
 	code, err := codegen.Generate(swagger, cfg.PackageName, opts)
 	if err != nil {
@@ -271,6 +276,10 @@ func configFromFlags() *configuration {
 
 	if cfg.OldEnumConflicts == false {
 		cfg.OldEnumConflicts = flagOldEnumConflicts
+	}
+
+	if cfg.OldAliasing == false {
+		cfg.OldAliasing = flagOldAliasing
 	}
 
 	return &cfg

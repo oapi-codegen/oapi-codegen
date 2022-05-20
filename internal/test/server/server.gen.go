@@ -75,10 +75,10 @@ type SomeObject struct {
 }
 
 // Argument defines model for argument.
-type Argument string
+type Argument = string
 
 // ResponseWithReference defines model for ResponseWithReference.
-type ResponseWithReference SomeObject
+type ResponseWithReference = SomeObject
 
 // SimpleResponse defines model for SimpleResponse.
 type SimpleResponse struct {
@@ -101,10 +101,10 @@ type GetWithArgsParams struct {
 type GetWithContentTypeParamsContentType string
 
 // CreateResourceJSONBody defines parameters for CreateResource.
-type CreateResourceJSONBody EveryTypeRequired
+type CreateResourceJSONBody = EveryTypeRequired
 
 // CreateResource2JSONBody defines parameters for CreateResource2.
-type CreateResource2JSONBody Resource
+type CreateResource2JSONBody = Resource
 
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
@@ -119,10 +119,10 @@ type UpdateResource3JSONBody struct {
 }
 
 // CreateResourceJSONRequestBody defines body for CreateResource for application/json ContentType.
-type CreateResourceJSONRequestBody CreateResourceJSONBody
+type CreateResourceJSONRequestBody = CreateResourceJSONBody
 
 // CreateResource2JSONRequestBody defines body for CreateResource2 for application/json ContentType.
-type CreateResource2JSONRequestBody CreateResource2JSONBody
+type CreateResource2JSONRequestBody = CreateResource2JSONBody
 
 // UpdateResource3JSONRequestBody defines body for UpdateResource3 for application/json ContentType.
 type UpdateResource3JSONRequestBody UpdateResource3JSONBody
