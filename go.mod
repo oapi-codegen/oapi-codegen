@@ -11,6 +11,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/mux v1.8.0
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/lestrrat-go/blackmagic v1.0.1 // indirect
