@@ -224,6 +224,14 @@ components:
       allOf:
       - $ref: "#/components/schemas/Enum1"
       - enum: [ Seven ]
+    FunnyValues:
+      description: Edge cases for enum names
+      type: string
+      enum:
+        - '*'
+        - '5'
+        - '&'
+        - ''
   responses:
     ResponseObject:
       description: A simple response object
