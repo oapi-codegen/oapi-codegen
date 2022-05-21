@@ -2,6 +2,7 @@
 type GinServerOptions struct {
     BaseURL string
     Middlewares []MiddlewareFunc
+    ErrorHandler func(*gin.Context, error, int) bool
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -11,13 +12,24 @@ func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
-{{if .}}wrapper := ServerInterfaceWrapper{
-Handler: si,
-HandlerMiddlewares: options.Middlewares,
-}
-{{end}}
-{{range .}}
-router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
-{{end}}
-return router
+    {{if .}}
+    errorHandler := options.ErrorHandler
+
+    if errorHandler == nil {
+        errorHandler = func(c *gin.Context, err error, statusCode int) bool {
+            c.JSON(statusCode, gin.H{"msg": err.Error()})
+            return false
+        }
+    }
+
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+        HandlerMiddlewares: options.Middlewares,
+        ErrorHandler: errorHandler,
+    }
+    {{end}}
+    {{range .}}
+    router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
+    {{end}}
+    return router
 }
