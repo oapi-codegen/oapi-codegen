@@ -120,8 +120,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoFieldName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoName]); err == nil {
 			goName = extGoFieldName
 		}
 	}

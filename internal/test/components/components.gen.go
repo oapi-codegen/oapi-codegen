@@ -4,16 +4,8 @@
 package components
 
 import (
-	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path"
-	"strings"
-
-	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // Defines values for Enum1.
@@ -168,6 +160,18 @@ type ObjectWithJsonField struct {
 	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
+// When a Schema is renamed, $ref should refer to the new name
+type ReferenceToRenameMe struct {
+	// This schema should be renamed via x-go-name when generating
+	NewName NewName `json:"ToNewName"`
+}
+
+// This schema should be renamed via x-go-name when generating
+type NewName struct {
+	Prop1 string `json:"prop1"`
+	Prop2 string `json:"prop2"`
+}
+
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
 	FirstName string `json:"firstName"`
@@ -189,15 +193,15 @@ type EnumParam2 string
 type EnumParam3 string
 
 // a parameter
-type ParameterObject string
+type RenamedParameterObject string
 
-// ResponseObject defines model for ResponseObject.
-type ResponseObject struct {
+// RenamedResponseObject defines model for ResponseObject.
+type RenamedResponseObject struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// RequestBody defines model for RequestBody.
-type RequestBody struct {
+// RenamedRequestBody defines model for RequestBody.
+type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
@@ -236,7 +240,7 @@ type BodyWithAddPropsJSONBody_Inner struct {
 }
 
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
-type EnsureEverythingIsReferencedJSONRequestBody RequestBody
+type EnsureEverythingIsReferencedJSONRequestBody RenamedRequestBody
 
 // BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.
 type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody
@@ -835,106 +839,4 @@ func (a AdditionalPropertiesObject5) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
-}
-
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"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",
-}
-
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
-func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
-	}
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-var rawSpec = decodeSpecCached()
-
-// a naive cached of a decoded swagger spec
-func decodeSpecCached() func() ([]byte, error) {
-	data, err := decodeSpec()
-	return func() ([]byte, error) {
-		return data, err
-	}
-}
-
-// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
-func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
-	if len(pathToFile) > 0 {
-		res[pathToFile] = rawSpec
-	}
-
-	return res
-}
-
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
-
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
-		pathToFile = path.Clean(pathToFile)
-		getSpec, ok := resolvePath[pathToFile]
-		if !ok {
-			err1 := fmt.Errorf("path not found: %s", pathToFile)
-			return nil, err1
-		}
-		return getSpec()
-	}
-	var specData []byte
-	specData, err = rawSpec()
-	if err != nil {
-		return
-	}
-	swagger, err = loader.LoadFromData(specData)
-	if err != nil {
-		return
-	}
-	return
 }

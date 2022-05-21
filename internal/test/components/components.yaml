@@ -232,8 +232,26 @@ components:
         - '5'
         - '&'
         - ''
+    RenameMe:
+      description: This schema should be renamed via x-go-name when generating
+      x-go-name: NewName
+      type: object
+      properties:
+        prop1:
+          type: string
+        prop2:
+          type: string
+      required: [prop1, prop2]
+    ReferenceToRenameMe:
+      description: When a Schema is renamed, $ref should refer to the new name
+      type: object
+      properties:
+        ToNewName:
+          $ref: "#/components/schemas/RenameMe"
+      required: [ToNewName]
   responses:
     ResponseObject:
+      x-go-name: RenamedResponseObject
       description: A simple response object
       content:
         application/json:
@@ -247,6 +265,7 @@ components:
             type: string
   parameters:
     ParameterObject:
+      x-go-name: RenamedParameterObject
       name: ParameterObject
       description: a parameter
       in: query
@@ -283,6 +302,7 @@ components:
         enum: [ alice, eve, bob ]
   requestBodies:
     RequestBody:
+      x-go-name: RenamedRequestBody
       content:
         application/json:
           schema:

@@ -4,4 +4,3 @@ package: components
 generate:
   - types
   - skip-prune
-  - spec

@@ -8,7 +8,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// This describes a Schema, a type definition.
+// Schema describes an OpenAPI schema, with lots of helper fields to use in the
+// templating engine.
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
@@ -168,7 +169,7 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) IsAlias() bool {
-	return !options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
+	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -348,7 +349,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				enumName = k
 			}
-			if options.Compatibility.OldEnumConflicts {
+			if globalState.options.Compatibility.OldEnumConflicts {
 				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
 			} else {
 				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
@@ -496,8 +497,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		goFieldName := p.GoFieldName()
-		if _, ok := p.ExtensionProps.Extensions[extGoFieldName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
 				goFieldName = extGoFieldName
 			}
 		}
