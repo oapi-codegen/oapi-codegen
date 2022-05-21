@@ -19,15 +19,21 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 }
 
 func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-	var schema openapi3.Schema
-	for _, schemaRef := range allOf {
+	n := len(allOf)
+
+	if n == 1 {
+		return GenerateGoSchema(allOf[0], path)
+	}
+
+	schema := *allOf[0].Value
+
+	for i := 1; i < n; i++ {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value)
+		schema, err = mergeOpenapiSchemas(schema, *allOf[i].Value)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 

@@ -195,7 +195,7 @@ components:
         Conflicts with Enum1, enum values need to be prefixed with type
         name.
       type: string
-      enum: [ One, Two, Three ]
+      enum: [ Two, Three, Four ]
     Enum3:
       description: |
         Enum values conflict with Enums above, need to be prefixed
@@ -212,6 +212,18 @@ components:
         Numerical enum
       type: integer
       enum: [ 5, 6, 7 ]
+    EnumUnion:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+        - $ref: "#/components/schemas/Enum1"
+        - $ref: "#/components/schemas/Enum2"
+    EnumUnion2:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+      - $ref: "#/components/schemas/Enum1"
+      - enum: [ Seven ]
   responses:
     ResponseObject:
       description: A simple response object
