@@ -222,6 +222,10 @@ paths:
                 format: byte
         400:
           $ref: "#/components/responses/badrequest"
+        401:
+          $ref: "#/components/responses/badrequest"
+        403:
+          $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
 components:

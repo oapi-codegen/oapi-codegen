@@ -693,6 +693,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
 	var responseDefinitions []ResponseDefinition
+	// do not let multiple status codes ref to same response, it will break the type switch
+	refSet := make(map[string]struct{})
 
 	for _, statusCode := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[statusCode]
@@ -762,7 +764,13 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			if err != nil {
 				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
 			}
-			rd.Ref = refType
+			// Check if this ref is already used by another response definition. If not use the ref
+			// If we let multiple response definitions alias to same response it will break the type switch
+			// so only the first response will use the ref, other will generate new structs
+			if _, ok := refSet[refType]; !ok {
+				rd.Ref = refType
+				refSet[refType] = struct{}{}
+			}
 		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
