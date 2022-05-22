@@ -186,6 +186,22 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /reusable-responses:
+    post:
+      operationId: ReusableResponses
+      description: Responses can be refs to components/responses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          $ref: "#/components/responses/reusableresponse"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
   /unspecified-content-type:
     post:
       operationId: UnspecifiedContentType
@@ -212,16 +228,22 @@ components:
   responses:
     badrequest:
       description: BadRequest
-      content:
-        text/plain:
+    reusableresponse:
+      description: OK
+      headers:
+        header1:
           schema:
-            $ref: "#/components/schemas/badrequest"
-
+            type: string
+        header2:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/example"
   schemas:
     example:
       type: object
       properties:
         value:
           type: string
-    badrequest:
-      type: string

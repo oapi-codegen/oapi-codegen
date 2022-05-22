@@ -17,11 +17,13 @@
     }
 
     {{range .Responses}}
-        {{$statusCode := .StatusCode}}
-        {{$hasHeaders := ne 0 (len .Headers)}}
-        {{$fixedStatusCode := .HasFixedStatusCode}}
+        {{$statusCode := .StatusCode -}}
+        {{$hasHeaders := ne 0 (len .Headers) -}}
+        {{$fixedStatusCode := .HasFixedStatusCode -}}
+        {{$isRef := .IsRef -}}
+        {{$ref := .Ref  | ucFirst -}}
 
-        {{if $hasHeaders}}
+        {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
                     {{.GoName}} {{.Schema.TypeDecl}}
@@ -30,11 +32,13 @@
         {{end}}
 
         {{range .Contents}}
-            {{if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+            {{if and $fixedStatusCode $isRef -}}
+                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response = {{$ref}}{{.NameTagOrContentType}}Response
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
-                {{if and (not (and .Schema.IsRef)) (eq .NameTag "JSON")}}
-                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                {{if and (not .Schema.IsRef) (eq .NameTag "JSON")}}
+                    func (t {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
                         return json.Marshal(({{.Schema.GoType}})(t))
                     }
                 {{end}}
@@ -42,7 +46,7 @@
                 type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
-                        Headers {{$opid}}{{$statusCode}}ResponseHeaders
+                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
                     {{end -}}
 
                     {{if not $fixedStatusCode -}}
@@ -58,7 +62,7 @@
                     {{end -}}
                 }
                 {{if eq .NameTag "JSON"}}
-                    func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
+                    func (t {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
                         return json.Marshal(t.Body)
                     }
                 {{end}}
@@ -66,14 +70,18 @@
         {{end}}
 
         {{if eq 0 (len .Contents) -}}
-            type {{$opid}}{{$statusCode}}Response struct {
-                {{if $hasHeaders -}}
-                    Headers {{$opid}}{{$statusCode}}ResponseHeaders
-                {{end}}
-                {{if not $fixedStatusCode -}}
-                    StatusCode int
-                {{end -}}
-            }
+            {{if and $fixedStatusCode $isRef -}}
+                type {{$opid}}{{$statusCode}}Response = {{$ref}}Response
+            {{else -}}
+                type {{$opid}}{{$statusCode}}Response struct {
+                    {{if $hasHeaders -}}
+                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
+                    {{end}}
+                    {{if not $fixedStatusCode -}}
+                        StatusCode int
+                    {{end -}}
+                }
+            {{end -}}
         {{end}}
     {{end}}
 {{end}}

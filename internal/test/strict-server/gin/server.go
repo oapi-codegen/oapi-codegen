@@ -73,7 +73,7 @@ func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, reque
 			}
 		})
 	default:
-		return MultipleRequestAndResponseTypes400TextResponse("content type is not supported")
+		return MultipleRequestAndResponseTypes400Response{}
 	}
 }
 
@@ -95,4 +95,8 @@ func (s StrictServer) URLEncodedExample(ctx context.Context, request URLEncodedE
 
 func (s StrictServer) HeadersExample(ctx context.Context, request HeadersExampleRequestObject) interface{} {
 	return HeadersExample200JSONResponse{Body: Example(*request.Body), Headers: HeadersExample200ResponseHeaders{Header1: request.Params.Header1, Header2: *request.Params.Header2}}
+}
+
+func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) interface{} {
+	return ReusableResponses200JSONResponse{Body: *request.Body}
 }

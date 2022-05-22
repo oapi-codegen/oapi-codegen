@@ -408,11 +408,20 @@ type ResponseDefinition struct {
 	Description string
 	Contents    []ResponseContentDefinition
 	Headers     []ResponseHeaderDefinition
+	Ref         string
 }
 
 func (r ResponseDefinition) HasFixedStatusCode() bool {
 	_, err := strconv.Atoi(r.StatusCode)
 	return err == nil
+}
+
+func (r ResponseDefinition) GoName() string {
+	return SchemaNameToTypeName(r.StatusCode)
+}
+
+func (r ResponseDefinition) IsRef() bool {
+	return r.Ref != ""
 }
 
 type ResponseContentDefinition struct {
@@ -430,7 +439,7 @@ type ResponseContentDefinition struct {
 // TypeDef returns the Go type definition for a request body
 func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDefinition {
 	return &TypeDefinition{
-		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTag),
+		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTagOrContentType()),
 		Schema:   r.Schema,
 	}
 }
@@ -720,16 +729,6 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 				return nil, fmt.Errorf("error generating request body definition: %w", err)
 			}
 
-			// If the response is a pre-defined type
-			if IsGoTypeReference(responseOrRef.Ref) {
-				// Convert the reference path to Go type
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
-				}
-				contentSchema.RefType = refType
-			}
-
 			rcd := ResponseContentDefinition{
 				ContentType: contentType,
 				NameTag:     tag,
@@ -756,6 +755,14 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 		}
 		if response.Description != nil {
 			rd.Description = *response.Description
+		}
+		if IsGoTypeReference(responseOrRef.Ref) {
+			// Convert the reference path to Go type
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+			}
+			rd.Ref = refType
 		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
@@ -895,6 +902,10 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 		templates = append(templates, "strict/strict-gin.tmpl")
 	}
 	return GenerateTemplates(templates, t, operations)
+}
+
+func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
+	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }
 
 // Uses the template engine to generate the function which registers our wrappers

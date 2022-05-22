@@ -178,10 +178,19 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var strictServerOut string
 	if opts.Generate.Strict {
+		responses, err := GenerateResponseDefinitions("", spec.Components.Responses)
+		if err != nil {
+			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+		}
+		strictServerResponses, err := GenerateStrictResponses(t, responses)
+		if err != nil {
+			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+		}
 		strictServerOut, err = GenerateStrictServer(t, ops, opts)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
+		strictServerOut = strictServerResponses + strictServerOut
 	}
 
 	var clientOut string

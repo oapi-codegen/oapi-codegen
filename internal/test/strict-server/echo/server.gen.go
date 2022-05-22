@@ -35,6 +35,9 @@ type ServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx echo.Context) error
 
+	// (POST /reusable-responses)
+	ReusableResponses(ctx echo.Context) error
+
 	// (POST /text)
 	TextExample(ctx echo.Context) error
 
@@ -80,6 +83,15 @@ func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Contex
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.MultipleRequestAndResponseTypes(ctx)
+	return err
+}
+
+// ReusableResponses converts echo context to params.
+func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.ReusableResponses(ctx)
 	return err
 }
 
@@ -196,12 +208,30 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/json", wrapper.JSONExample)
 	router.POST(baseURL+"/multipart", wrapper.MultipartExample)
 	router.POST(baseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.POST(baseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.POST(baseURL+"/text", wrapper.TextExample)
 	router.POST(baseURL+"/unknown", wrapper.UnknownExample)
 	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(baseURL+"/with-headers", wrapper.HeadersExample)
 
+}
+
+type BadrequestResponse struct {
+}
+
+type ReusableresponseResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type ReusableresponseJSONResponse struct {
+	Body Example
+
+	Headers ReusableresponseResponseHeaders
+}
+
+func (t ReusableresponseJSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
 }
 
 type JSONExampleRequestObject struct {
@@ -214,7 +244,7 @@ func (t JSONExample200JSONResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((Example)(t))
 }
 
-type JSONExample400TextResponse = Badrequest
+type JSONExample400Response = BadrequestResponse
 
 type JSONExampledefaultResponse struct {
 	StatusCode int
@@ -226,7 +256,7 @@ type MultipartExampleRequestObject struct {
 
 type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
-type MultipartExample400TextResponse = Badrequest
+type MultipartExample400Response = BadrequestResponse
 
 type MultipartExampledefaultResponse struct {
 	StatusCode int
@@ -257,7 +287,19 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 
 type MultipleRequestAndResponseTypes200TextResponse string
 
-type MultipleRequestAndResponseTypes400TextResponse = Badrequest
+type MultipleRequestAndResponseTypes400Response = BadrequestResponse
+
+type ReusableResponsesRequestObject struct {
+	Body *ReusableResponsesJSONRequestBody
+}
+
+type ReusableResponses200JSONResponse = ReusableresponseJSONResponse
+
+type ReusableResponses400Response = BadrequestResponse
+
+type ReusableResponsesdefaultResponse struct {
+	StatusCode int
+}
 
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
@@ -265,7 +307,7 @@ type TextExampleRequestObject struct {
 
 type TextExample200TextResponse string
 
-type TextExample400TextResponse = Badrequest
+type TextExample400Response = BadrequestResponse
 
 type TextExampledefaultResponse struct {
 	StatusCode int
@@ -280,7 +322,7 @@ type UnknownExample200Videomp4Response struct {
 	ContentLength int64
 }
 
-type UnknownExample400TextResponse = Badrequest
+type UnknownExample400Response = BadrequestResponse
 
 type UnknownExampledefaultResponse struct {
 	StatusCode int
@@ -297,7 +339,7 @@ type UnspecifiedContentType200VideoResponse struct {
 	ContentLength int64
 }
 
-type UnspecifiedContentType400TextResponse = Badrequest
+type UnspecifiedContentType400Response = BadrequestResponse
 
 type UnspecifiedContentTypedefaultResponse struct {
 	StatusCode int
@@ -309,7 +351,7 @@ type URLEncodedExampleRequestObject struct {
 
 type URLEncodedExample200FormdataResponse Example
 
-type URLEncodedExample400TextResponse = Badrequest
+type URLEncodedExample400Response = BadrequestResponse
 
 type URLEncodedExampledefaultResponse struct {
 	StatusCode int
@@ -334,7 +376,7 @@ func (t HeadersExample200JSONResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Body)
 }
 
-type HeadersExample400TextResponse = Badrequest
+type HeadersExample400Response = BadrequestResponse
 
 type HeadersExampledefaultResponse struct {
 	StatusCode int
@@ -351,6 +393,9 @@ type StrictServerInterface interface {
 
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) interface{}
+
+	// (POST /reusable-responses)
+	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) interface{}
 
 	// (POST /text)
 	TextExample(ctx context.Context, request TextExampleRequestObject) interface{}
@@ -403,8 +448,8 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 	switch v := response.(type) {
 	case JSONExample200JSONResponse:
 		return ctx.JSON(200, v)
-	case JSONExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case JSONExample400Response:
+		return ctx.NoContent(400)
 	case JSONExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -443,8 +488,8 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 		if err := v(writer); err != nil {
 			return err
 		}
-	case MultipartExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case MultipartExample400Response:
+		return ctx.NoContent(400)
 	case MultipartExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -532,8 +577,45 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 		}
 	case MultipleRequestAndResponseTypes200TextResponse:
 		return ctx.Blob(200, "text/plain", []byte(v))
-	case MultipleRequestAndResponseTypes400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case MultipleRequestAndResponseTypes400Response:
+		return ctx.NoContent(400)
+	case error:
+		return v
+	case nil:
+	default:
+		return fmt.Errorf("Unexpected response type: %T", v)
+	}
+	return nil
+}
+
+// ReusableResponses operation middleware
+func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
+	var request ReusableResponsesRequestObject
+
+	var body ReusableResponsesJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) interface{} {
+		return sh.ssi.ReusableResponses(ctx.Request().Context(), request.(ReusableResponsesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReusableResponses")
+	}
+
+	response := handler(ctx, request)
+
+	switch v := response.(type) {
+	case ReusableResponses200JSONResponse:
+		ctx.Response().Header().Set("header1", fmt.Sprint(v.Headers.Header1))
+		ctx.Response().Header().Set("header2", fmt.Sprint(v.Headers.Header2))
+		return ctx.JSON(200, v)
+	case ReusableResponses400Response:
+		return ctx.NoContent(400)
+	case ReusableResponsesdefaultResponse:
+		return ctx.NoContent(v.StatusCode)
 	case error:
 		return v
 	case nil:
@@ -566,8 +648,8 @@ func (sh *strictHandler) TextExample(ctx echo.Context) error {
 	switch v := response.(type) {
 	case TextExample200TextResponse:
 		return ctx.Blob(200, "text/plain", []byte(v))
-	case TextExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case TextExample400Response:
+		return ctx.NoContent(400)
 	case TextExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -603,8 +685,8 @@ func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
 			defer closer.Close()
 		}
 		return ctx.Stream(200, "video/mp4", v.Body)
-	case UnknownExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case UnknownExample400Response:
+		return ctx.NoContent(400)
 	case UnknownExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -642,8 +724,8 @@ func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
 			defer closer.Close()
 		}
 		return ctx.Stream(200, v.ContentType, v.Body)
-	case UnspecifiedContentType400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case UnspecifiedContentType400Response:
+		return ctx.NoContent(400)
 	case UnspecifiedContentTypedefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -685,8 +767,8 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 		} else {
 			return ctx.Blob(200, "application/x-www-form-urlencoded", []byte(form.Encode()))
 		}
-	case URLEncodedExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case URLEncodedExample400Response:
+		return ctx.NoContent(400)
 	case URLEncodedExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -724,8 +806,8 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 		ctx.Response().Header().Set("header1", fmt.Sprint(v.Headers.Header1))
 		ctx.Response().Header().Set("header2", fmt.Sprint(v.Headers.Header2))
 		return ctx.JSON(200, v)
-	case HeadersExample400TextResponse:
-		return ctx.Blob(400, "text/plain", []byte(v))
+	case HeadersExample400Response:
+		return ctx.NoContent(400)
 	case HeadersExampledefaultResponse:
 		return ctx.NoContent(v.StatusCode)
 	case error:
@@ -740,20 +822,21 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

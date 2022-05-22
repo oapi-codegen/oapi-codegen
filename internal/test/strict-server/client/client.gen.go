@@ -17,13 +17,13 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 )
 
-// Badrequest defines model for badrequest.
-type Badrequest = string
-
 // Example defines model for example.
 type Example struct {
 	Value *string `json:"value,omitempty"`
 }
+
+// Reusableresponse defines model for reusableresponse.
+type Reusableresponse = Example
 
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
@@ -54,6 +54,9 @@ type MultipleRequestAndResponseTypesMultipartRequestBody = Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody = MultipleRequestAndResponseTypesTextBody
+
+// ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
+type ReusableResponsesJSONRequestBody = Example
 
 // TextExampleTextRequestBody defines body for TextExample for text/plain ContentType.
 type TextExampleTextRequestBody = TextExampleTextBody
@@ -154,6 +157,11 @@ type ClientInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ReusableResponses request with any body
+	ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TextExample request with any body
 	TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -250,6 +258,30 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableResponsesRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableResponsesRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -464,6 +496,46 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	}
 
 	operationPath := fmt.Sprintf("/multiple")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewReusableResponsesRequest calls the generic ReusableResponses builder with application/json body
+func NewReusableResponsesRequest(server string, body ReusableResponsesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewReusableResponsesRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewReusableResponsesRequestWithBody generates requests for ReusableResponses with any type of body
+func NewReusableResponsesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/reusable-responses")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -737,6 +809,11 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// ReusableResponses request with any body
+	ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
+
+	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
+
 	// TextExample request with any body
 	TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
@@ -818,6 +895,28 @@ func (r MultipleRequestAndResponseTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ReusableResponsesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Example
+}
+
+// Status returns HTTPResponse.Status
+func (r ReusableResponsesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReusableResponsesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -989,6 +1088,23 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// ReusableResponsesWithBodyWithResponse request with arbitrary body returning *ReusableResponsesResponse
+func (c *ClientWithResponses) ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error) {
+	rsp, err := c.ReusableResponsesWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableResponsesResponse(rsp)
+}
+
+func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error) {
+	rsp, err := c.ReusableResponses(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableResponsesResponse(rsp)
+}
+
 // TextExampleWithBodyWithResponse request with arbitrary body returning *TextExampleResponse
 func (c *ClientWithResponses) TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error) {
 	rsp, err := c.TextExampleWithBody(ctx, contentType, body, reqEditors...)
@@ -1123,6 +1239,32 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 
 	case rsp.StatusCode == 200:
 		// Content-type (text/plain) unsupported
+
+	}
+
+	return response, nil
+}
+
+// ParseReusableResponsesResponse parses an HTTP response from a ReusableResponsesWithResponse call
+func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReusableResponsesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
