@@ -128,7 +128,7 @@ type AdditionalPropertiesObject5 struct {
 }
 
 // Array of object with additional properties
-type AdditionalPropertiesObject6 []AdditionalPropertiesObject6_Item
+type AdditionalPropertiesObject6 = []AdditionalPropertiesObject6_Item
 
 // AdditionalPropertiesObject6_Item defines model for AdditionalPropertiesObject6.Item.
 type AdditionalPropertiesObject6_Item struct {
@@ -174,18 +174,6 @@ type ObjectWithJsonField struct {
 	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
-// When a Schema is renamed, $ref should refer to the new name
-type ReferenceToRenameMe struct {
-	// This schema should be renamed via x-go-name when generating
-	NewName NewName `json:"ToNewName"`
-}
-
-// This schema should be renamed via x-go-name when generating
-type NewName struct {
-	Prop1 string `json:"prop1"`
-	Prop2 string `json:"prop2"`
-}
-
 // oneOf with references and no disciminator
 type OneOfObject1 struct {
 	union json.RawMessage
@@ -200,10 +188,10 @@ type OneOfObject10 struct {
 }
 
 // OneOfObject100 defines model for .
-type OneOfObject100 interface{}
+type OneOfObject100 = interface{}
 
 // OneOfObject101 defines model for .
-type OneOfObject101 interface{}
+type OneOfObject101 = interface{}
 
 // additional properties of oneOf
 type OneOfObject11 struct {
@@ -211,13 +199,13 @@ type OneOfObject11 struct {
 }
 
 // OneOfObject110 defines model for .
-type OneOfObject110 bool
+type OneOfObject110 = bool
 
 // OneOfObject111 defines model for .
-type OneOfObject111 float32
+type OneOfObject111 = float32
 
 // OneOfObject112 defines model for .
-type OneOfObject112 string
+type OneOfObject112 = string
 
 // OneOfObject11_AdditionalProperties defines model for OneOfObject11.AdditionalProperties.
 type OneOfObject11_AdditionalProperties struct {
@@ -230,10 +218,10 @@ type OneOfObject12 struct {
 }
 
 // OneOfObject120 defines model for .
-type OneOfObject120 string
+type OneOfObject120 = string
 
 // OneOfObject121 defines model for .
-type OneOfObject121 float32
+type OneOfObject121 = float32
 
 // oneOf with inline elements
 type OneOfObject2 struct {
@@ -246,10 +234,10 @@ type OneOfObject20 struct {
 }
 
 // OneOfObject21 defines model for .
-type OneOfObject21 []float32
+type OneOfObject21 = []float32
 
 // OneOfObject22 defines model for .
-type OneOfObject22 bool
+type OneOfObject22 = bool
 
 // inline OneOf
 type OneOfObject3 struct {
@@ -278,7 +266,7 @@ type OneOfObject6 struct {
 }
 
 // array of oneOf
-type OneOfObject7 []OneOfObject7_Item
+type OneOfObject7 = []OneOfObject7_Item
 
 // OneOfObject7_Item defines model for OneOfObject7.Item.
 type OneOfObject7_Item struct {
@@ -303,10 +291,10 @@ type OneOfVariant1 struct {
 }
 
 // OneOfVariant2 defines model for OneOfVariant2.
-type OneOfVariant2 []int
+type OneOfVariant2 = []int
 
 // OneOfVariant3 defines model for OneOfVariant3.
-type OneOfVariant3 bool
+type OneOfVariant3 = bool
 
 // OneOfVariant4 defines model for OneOfVariant4.
 type OneOfVariant4 struct {
@@ -323,6 +311,18 @@ type OneOfVariant5 struct {
 // OneOfVariant6 defines model for OneOfVariant6.
 type OneOfVariant6 struct {
 	Values OneOfVariant2 `json:"values"`
+}
+
+// When a Schema is renamed, $ref should refer to the new name
+type ReferenceToRenameMe struct {
+	// This schema should be renamed via x-go-name when generating
+	NewName NewName `json:"ToNewName"`
+}
+
+// This schema should be renamed via x-go-name when generating
+type NewName struct {
+	Prop1 string `json:"prop1"`
+	Prop2 string `json:"prop2"`
 }
 
 // SchemaObject defines model for SchemaObject.
@@ -1828,115 +1828,4 @@ func (t *OneOfObject9) UnmarshalJSON(b []byte) error {
 	}
 
 	return err
-}
-
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"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",
-}
-
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
-func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
-	}
-	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
-	}
-
-	return buf.Bytes(), nil
-}
-
-var rawSpec = decodeSpecCached()
-
-// a naive cached of a decoded swagger spec
-func decodeSpecCached() func() ([]byte, error) {
-	data, err := decodeSpec()
-	return func() ([]byte, error) {
-		return data, err
-	}
-}
-
-// Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
-func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
-	if len(pathToFile) > 0 {
-		res[pathToFile] = rawSpec
-	}
-
-	return res
-}
-
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
-
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
-		pathToFile = path.Clean(pathToFile)
-		getSpec, ok := resolvePath[pathToFile]
-		if !ok {
-			err1 := fmt.Errorf("path not found: %s", pathToFile)
-			return nil, err1
-		}
-		return getSpec()
-	}
-	var specData []byte
-	specData, err = rawSpec()
-	if err != nil {
-		return
-	}
-	swagger, err = loader.LoadFromData(specData)
-	if err != nil {
-		return
-	}
-	return
 }
