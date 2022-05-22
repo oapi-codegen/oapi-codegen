@@ -23,53 +23,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Badrequest defines model for badrequest.
-type Badrequest string
-
-// Example defines model for example.
-type Example struct {
-	Value *string `json:"value,omitempty"`
-}
-
-// MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesTextBody string
-
-// TextExampleTextBody defines parameters for TextExample.
-type TextExampleTextBody string
-
-// HeadersExampleParams defines parameters for HeadersExample.
-type HeadersExampleParams struct {
-	Header1 string `json:"header1"`
-	Header2 *int   `json:"header2,omitempty"`
-}
-
-// JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
-type JSONExampleJSONRequestBody Example
-
-// MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
-type MultipartExampleMultipartRequestBody Example
-
-// MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
-type MultipleRequestAndResponseTypesJSONRequestBody Example
-
-// MultipleRequestAndResponseTypesFormdataRequestBody defines body for MultipleRequestAndResponseTypes for application/x-www-form-urlencoded ContentType.
-type MultipleRequestAndResponseTypesFormdataRequestBody Example
-
-// MultipleRequestAndResponseTypesMultipartRequestBody defines body for MultipleRequestAndResponseTypes for multipart/form-data ContentType.
-type MultipleRequestAndResponseTypesMultipartRequestBody Example
-
-// MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
-type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTypesTextBody
-
-// TextExampleTextRequestBody defines body for TextExample for text/plain ContentType.
-type TextExampleTextRequestBody TextExampleTextBody
-
-// URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
-type URLEncodedExampleFormdataRequestBody Example
-
-// HeadersExampleJSONRequestBody defines body for HeadersExample for application/json ContentType.
-type HeadersExampleJSONRequestBody Example
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -261,7 +214,7 @@ func (t JSONExample200JSONResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal((Example)(t))
 }
 
-type JSONExample400TextResponse Badrequest
+type JSONExample400TextResponse = Badrequest
 
 type JSONExampledefaultResponse struct {
 	StatusCode int
@@ -273,7 +226,7 @@ type MultipartExampleRequestObject struct {
 
 type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
-type MultipartExample400TextResponse Badrequest
+type MultipartExample400TextResponse = Badrequest
 
 type MultipartExampledefaultResponse struct {
 	StatusCode int
@@ -304,7 +257,7 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 
 type MultipleRequestAndResponseTypes200TextResponse string
 
-type MultipleRequestAndResponseTypes400TextResponse Badrequest
+type MultipleRequestAndResponseTypes400TextResponse = Badrequest
 
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
@@ -312,7 +265,7 @@ type TextExampleRequestObject struct {
 
 type TextExample200TextResponse string
 
-type TextExample400TextResponse Badrequest
+type TextExample400TextResponse = Badrequest
 
 type TextExampledefaultResponse struct {
 	StatusCode int
@@ -327,7 +280,7 @@ type UnknownExample200Videomp4Response struct {
 	ContentLength int64
 }
 
-type UnknownExample400TextResponse Badrequest
+type UnknownExample400TextResponse = Badrequest
 
 type UnknownExampledefaultResponse struct {
 	StatusCode int
@@ -344,7 +297,7 @@ type UnspecifiedContentType200VideoResponse struct {
 	ContentLength int64
 }
 
-type UnspecifiedContentType400TextResponse Badrequest
+type UnspecifiedContentType400TextResponse = Badrequest
 
 type UnspecifiedContentTypedefaultResponse struct {
 	StatusCode int
@@ -356,7 +309,7 @@ type URLEncodedExampleRequestObject struct {
 
 type URLEncodedExample200FormdataResponse Example
 
-type URLEncodedExample400TextResponse Badrequest
+type URLEncodedExample400TextResponse = Badrequest
 
 type URLEncodedExampledefaultResponse struct {
 	StatusCode int
@@ -381,7 +334,7 @@ func (t HeadersExample200JSONResponse) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.Body)
 }
 
-type HeadersExample400TextResponse Badrequest
+type HeadersExample400TextResponse = Badrequest
 
 type HeadersExampledefaultResponse struct {
 	StatusCode int

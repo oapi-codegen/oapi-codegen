@@ -177,7 +177,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	var strictServerOut string
-	if opts.GenerateStrict {
+	if opts.Generate.Strict {
 		strictServerOut, err = GenerateStrictServer(t, ops, opts)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -264,7 +264,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
-	if opts.GenerateStrict {
+	if opts.Generate.Strict {
 		_, err = w.WriteString(strictServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)

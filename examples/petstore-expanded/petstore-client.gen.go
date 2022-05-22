@@ -57,7 +57,7 @@ type FindPetsParams struct {
 }
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody NewPet
+type AddPetJSONRequestBody = NewPet
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

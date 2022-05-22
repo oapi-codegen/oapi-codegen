@@ -321,6 +321,8 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 			opts.Generate.EchoServer = true
 		case "gin":
 			opts.Generate.GinServer = true
+		case "strict-server":
+			opts.Generate.Strict = true
 		case "types":
 			opts.Generate.Models = true
 		case "spec":

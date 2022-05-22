@@ -1,4 +1,5 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --package=api --generate types,chi-server,strict-server,spec -o petstore.gen.go ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -84,7 +85,7 @@ func (p *PetStore) FindPetByID(ctx context.Context, request FindPetByIDRequestOb
 
 	pet, found := p.Pets[request.Id]
 	if !found {
-		return FindPetByIDdefaultJSONResponse{StatusCode: http.StatusNotFound, Body:Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
+		return FindPetByIDdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
 	}
 
 	return FindPetByID200JSONResponse(pet)
@@ -96,7 +97,7 @@ func (p *PetStore) DeletePet(ctx context.Context, request DeletePetRequestObject
 
 	_, found := p.Pets[request.Id]
 	if !found {
-		return DeletePetdefaultJSONResponse{StatusCode: http.StatusNotFound, Body:Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
+		return DeletePetdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
 	}
 	delete(p.Pets, request.Id)
 

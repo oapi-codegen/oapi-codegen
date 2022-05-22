@@ -883,15 +883,15 @@ func GenerateGinServer(t *template.Template, operations []OperationDefinition) (
 	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
-func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Options) (string, error) {
+func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 	templates := []string{"strict/strict-interface.tmpl"}
-	if opts.GenerateChiServer {
+	if opts.Generate.ChiServer {
 		templates = append(templates, "strict/strict-chi.tmpl")
 	}
-	if opts.GenerateEchoServer {
+	if opts.Generate.EchoServer {
 		templates = append(templates, "strict/strict-echo.tmpl")
 	}
-	if opts.GenerateGinServer {
+	if opts.Generate.GinServer {
 		templates = append(templates, "strict/strict-gin.tmpl")
 	}
 	return GenerateTemplates(templates, t, operations)

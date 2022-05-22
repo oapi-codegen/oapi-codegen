@@ -18,7 +18,7 @@ import (
 )
 
 // Badrequest defines model for badrequest.
-type Badrequest string
+type Badrequest = string
 
 // Example defines model for example.
 type Example struct {
@@ -26,10 +26,10 @@ type Example struct {
 }
 
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
-type MultipleRequestAndResponseTypesTextBody string
+type MultipleRequestAndResponseTypesTextBody = string
 
 // TextExampleTextBody defines parameters for TextExample.
-type TextExampleTextBody string
+type TextExampleTextBody = string
 
 // HeadersExampleParams defines parameters for HeadersExample.
 type HeadersExampleParams struct {
@@ -38,31 +38,31 @@ type HeadersExampleParams struct {
 }
 
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
-type JSONExampleJSONRequestBody Example
+type JSONExampleJSONRequestBody = Example
 
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
-type MultipartExampleMultipartRequestBody Example
+type MultipartExampleMultipartRequestBody = Example
 
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
-type MultipleRequestAndResponseTypesJSONRequestBody Example
+type MultipleRequestAndResponseTypesJSONRequestBody = Example
 
 // MultipleRequestAndResponseTypesFormdataRequestBody defines body for MultipleRequestAndResponseTypes for application/x-www-form-urlencoded ContentType.
-type MultipleRequestAndResponseTypesFormdataRequestBody Example
+type MultipleRequestAndResponseTypesFormdataRequestBody = Example
 
 // MultipleRequestAndResponseTypesMultipartRequestBody defines body for MultipleRequestAndResponseTypes for multipart/form-data ContentType.
-type MultipleRequestAndResponseTypesMultipartRequestBody Example
+type MultipleRequestAndResponseTypesMultipartRequestBody = Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
-type MultipleRequestAndResponseTypesTextRequestBody MultipleRequestAndResponseTypesTextBody
+type MultipleRequestAndResponseTypesTextRequestBody = MultipleRequestAndResponseTypesTextBody
 
 // TextExampleTextRequestBody defines body for TextExample for text/plain ContentType.
-type TextExampleTextRequestBody TextExampleTextBody
+type TextExampleTextRequestBody = TextExampleTextBody
 
 // URLEncodedExampleFormdataRequestBody defines body for URLEncodedExample for application/x-www-form-urlencoded ContentType.
-type URLEncodedExampleFormdataRequestBody Example
+type URLEncodedExampleFormdataRequestBody = Example
 
 // HeadersExampleJSONRequestBody defines body for HeadersExample for application/json ContentType.
-type HeadersExampleJSONRequestBody Example
+type HeadersExampleJSONRequestBody = Example
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

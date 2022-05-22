@@ -20,45 +20,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Error defines model for Error.
-type Error struct {
-	// Error code
-	Code int32 `json:"code"`
-
-	// Error message
-	Message string `json:"message"`
-}
-
-// NewPet defines model for NewPet.
-type NewPet struct {
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// Pet defines model for Pet.
-type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-	// Unique id of the pet
-	Id int64 `json:"id"`
-}
-
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
-
-	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
-}
-
-// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody NewPet
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Returns all pets
@@ -150,7 +111,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -176,7 +137,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return

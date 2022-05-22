@@ -46,7 +46,7 @@ type ThingWithID struct {
 }
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
-type AddThingJSONRequestBody Thing
+type AddThingJSONRequestBody = Thing
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

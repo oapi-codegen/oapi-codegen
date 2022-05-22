@@ -80,7 +80,7 @@ type Issue9Params struct {
 }
 
 // Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
-type Issue185JSONRequestBody NullableProperties
+type Issue185JSONRequestBody = NullableProperties
 
 // Issue9JSONRequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody = Issue9JSONBody

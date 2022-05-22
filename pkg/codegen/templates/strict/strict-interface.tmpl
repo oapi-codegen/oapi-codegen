@@ -31,9 +31,9 @@
 
         {{range .Contents}}
             {{if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and (opts.AliasTypes) (.Schema.IsRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                type {{$opid}}{{$statusCode}}{{.NameTag}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
-                {{if and (not (and (opts.AliasTypes) (.Schema.IsRef))) (eq .NameTag "JSON")}}
+                {{if and (not (and .Schema.IsRef)) (eq .NameTag "JSON")}}
                     func (t {{$opid}}{{$statusCode}}{{.NameTag}}Response) MarshalJSON() ([]byte, error) {
                         return json.Marshal(({{.Schema.GoType}})(t))
                     }

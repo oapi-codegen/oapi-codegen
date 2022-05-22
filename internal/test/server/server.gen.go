@@ -113,10 +113,10 @@ type UpdateResource3JSONBody struct {
 }
 
 // CreateResourceJSONRequestBody defines body for CreateResource for application/json ContentType.
-type CreateResourceJSONRequestBody EveryTypeRequired
+type CreateResourceJSONRequestBody = EveryTypeRequired
 
 // CreateResource2JSONRequestBody defines body for CreateResource2 for application/json ContentType.
-type CreateResource2JSONRequestBody Resource
+type CreateResource2JSONRequestBody = Resource
 
 // UpdateResource3JSONRequestBody defines body for UpdateResource3 for application/json ContentType.
 type UpdateResource3JSONRequestBody UpdateResource3JSONBody
