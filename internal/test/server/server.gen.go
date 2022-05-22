@@ -75,10 +75,10 @@ type SomeObject struct {
 }
 
 // Argument defines model for argument.
-type Argument string
+type Argument = string
 
 // ResponseWithReference defines model for ResponseWithReference.
-type ResponseWithReference SomeObject
+type ResponseWithReference = SomeObject
 
 // SimpleResponse defines model for SimpleResponse.
 type SimpleResponse struct {
@@ -88,10 +88,10 @@ type SimpleResponse struct {
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {
 	// An optional query argument
-	OptionalArgument *int64 `json:"optional_argument,omitempty"`
+	OptionalArgument *int64 `form:"optional_argument,omitempty" json:"optional_argument,omitempty"`
 
 	// An optional query argument
-	RequiredArgument int64 `json:"required_argument"`
+	RequiredArgument int64 `form:"required_argument" json:"required_argument"`
 
 	// An optional query argument
 	HeaderArgument *int32 `json:"header_argument,omitempty"`
@@ -103,7 +103,7 @@ type GetWithContentTypeParamsContentType string
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
 	// Some query argument
-	InlineQueryArgument *int `json:"inline_query_argument,omitempty"`
+	InlineQueryArgument *int `form:"inline_query_argument,omitempty" json:"inline_query_argument,omitempty"`
 }
 
 // UpdateResource3JSONBody defines parameters for UpdateResource3.
@@ -270,7 +270,7 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 	// ------------- Path parameter "global_argument" -------------
 	var globalArgument int64
 
-	err = runtime.BindStyledParameter("simple", false, "global_argument", chi.URLParam(r, "global_argument"), &globalArgument)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "global_argument", runtime.ParamLocationPath, chi.URLParam(r, "global_argument"), &globalArgument)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "global_argument", Err: err})
 		return
@@ -279,7 +279,7 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 	// ------------- Path parameter "argument" -------------
 	var argument Argument
 
-	err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "argument", runtime.ParamLocationPath, chi.URLParam(r, "argument"), &argument)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "argument", Err: err})
 		return
@@ -305,7 +305,7 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 	// ------------- Path parameter "content_type" -------------
 	var contentType GetWithContentTypeParamsContentType
 
-	err = runtime.BindStyledParameter("simple", false, "content_type", chi.URLParam(r, "content_type"), &contentType)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "content_type", runtime.ParamLocationPath, chi.URLParam(r, "content_type"), &contentType)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "content_type", Err: err})
 		return
@@ -346,7 +346,7 @@ func (siw *ServerInterfaceWrapper) CreateResource(w http.ResponseWriter, r *http
 	// ------------- Path parameter "argument" -------------
 	var argument Argument
 
-	err = runtime.BindStyledParameter("simple", false, "argument", chi.URLParam(r, "argument"), &argument)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "argument", runtime.ParamLocationPath, chi.URLParam(r, "argument"), &argument)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "argument", Err: err})
 		return
@@ -372,7 +372,7 @@ func (siw *ServerInterfaceWrapper) CreateResource2(w http.ResponseWriter, r *htt
 	// ------------- Path parameter "inline_argument" -------------
 	var inlineArgument int
 
-	err = runtime.BindStyledParameter("simple", false, "inline_argument", chi.URLParam(r, "inline_argument"), &inlineArgument)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "inline_argument", runtime.ParamLocationPath, chi.URLParam(r, "inline_argument"), &inlineArgument)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "inline_argument", Err: err})
 		return
@@ -412,7 +412,7 @@ func (siw *ServerInterfaceWrapper) UpdateResource3(w http.ResponseWriter, r *htt
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough int
 
-	err = runtime.BindStyledParameter("simple", false, "fallthrough", chi.URLParam(r, "fallthrough"), &pFallthrough)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, chi.URLParam(r, "fallthrough"), &pFallthrough)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fallthrough", Err: err})
 		return

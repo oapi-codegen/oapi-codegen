@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 579 test
+paths:
+  /placeholder:
+    get:
+      responses:
+        200:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    Pet:
+      type: object
+      properties:
+        born:
+          $ref: "#/components/schemas/AliasedDate"
+        born_at:
+          type: string
+          format: date
+    AliasedDate:
+      type: string
+      format: date

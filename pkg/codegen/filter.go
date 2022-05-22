@@ -2,12 +2,12 @@ package codegen
 
 import "github.com/getkin/kin-openapi/openapi3"
 
-func filterOperationsByTag(swagger *openapi3.T, opts Options) {
-	if len(opts.ExcludeTags) > 0 {
-		excludeOperationsWithTags(swagger.Paths, opts.ExcludeTags)
+func filterOperationsByTag(swagger *openapi3.T, opts Configuration) {
+	if len(opts.OutputOptions.ExcludeTags) > 0 {
+		excludeOperationsWithTags(swagger.Paths, opts.OutputOptions.ExcludeTags)
 	}
-	if len(opts.IncludeTags) > 0 {
-		includeOperationsWithTags(swagger.Paths, opts.IncludeTags, false)
+	if len(opts.OutputOptions.IncludeTags) > 0 {
+		includeOperationsWithTags(swagger.Paths, opts.OutputOptions.IncludeTags, false)
 	}
 }
 

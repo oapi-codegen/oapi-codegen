@@ -21,13 +21,13 @@ components:
   schemas:
     Bar:
       type: string
-      enum: 
+      enum:
         - Foo
         - Bar
         - Foo Bar
         - Foo-Bar
         - 1Foo
-        - Bar
+        - Bar  # A swagger validator would catch this duplicate value
         - ' Foo'
         - ' Foo '
         - _Foo_

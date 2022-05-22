@@ -10,13 +10,19 @@ incompatibilities. It's tedious to generate Go models which precisely correspond
 OpenAPI specifications, so let our code generator do that work for you, so that
 you can focus on implementing the business logic for your service.
 
-We have chosen to use [Echo](https://github.com/labstack/echo) as
+We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
-stubs, and [Chi](https://github.com/go-chi/chi) is also supported as an alternative.
+stubs, and [Chi](https://github.com/go-chi/chi), and [Gin](https://github.com/gin-gonic/gin)
+have also been added by contributors as additional routers. We chose Echo because
+the `Context` object is a mockable interface, and it allows for some advanced
+testing.
 
 This package tries to be too simple rather than too generic, so we've made some
 design decisions in favor of simplicity, knowing that we can't generate strongly
-typed Go code for all possible OpenAPI Schemas.
+typed Go code for all possible OpenAPI Schemas. If there is a way to accomplish
+something via utility code or reflection, it's probably a better approach than
+code generation, which is fragile due to the very dynamic nature of OpenAPI and
+the very static nature of Go.
 
 ## Overview
 
@@ -42,24 +48,34 @@ The `/components/schemas` section in OpenAPI defines reusable objects, so Go
 types are generated for these. The Pet Store example defines `Error`, `Pet`,
 `Pets` and `NewPet`, so we do the same in Go:
 ```go
-// Type definition for component schema "Error"
+// Error defines model for Error.
 type Error struct {
-    Code    int32  `json:"code"`
+    // Error code
+    Code int32 `json:"code"`
+
+    // Error message
     Message string `json:"message"`
 }
 
-// Type definition for component schema "NewPet"
+// NewPet defines model for NewPet.
 type NewPet struct {
-    Name string  `json:"name"`
-    Tag  *string `json:"tag,omitempty"`
+    // Name of the pet
+    Name string `json:"name"`
+
+    // Type of the pet
+    Tag *string `json:"tag,omitempty"`
 }
 
-// Type definition for component schema "Pet"
+// Pet defines model for Pet.
 type Pet struct {
-    // Embedded struct due to allOf(#/components/schemas/NewPet)
-    NewPet
-    // Embedded fields due to inline allOf schema
+    // Unique id of the pet
     Id int64 `json:"id"`
+
+    // Name of the pet
+    Name string `json:"name"`
+
+    // Type of the pet
+    Tag *string `json:"tag,omitempty"`
 }
 
 // Type definition for component schema "Pets"
@@ -419,7 +435,7 @@ If you generate client-code, you can use some default-provided security provider
 which help you to use the various OpenAPI 3 Authentication mechanism.
 
 
-```
+```go
     import (
         "github.com/deepmap/oapi-codegen/pkg/securityprovider"
     )

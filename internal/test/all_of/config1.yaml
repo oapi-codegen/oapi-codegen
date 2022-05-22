@@ -1,0 +1,9 @@
+output:
+  v1/openapi.gen.go
+package: v1
+generate:
+  - types
+  - skip-prune
+  - spec
+compatibility:
+  old-merge-schemas: true

@@ -4,7 +4,7 @@
 {{$contentType := .ContentType -}}
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for {{$contentType}} ContentType.
-type {{.TypeName}} {{if and (opts.AliasTypes) (.CanAlias)}}={{end}} {{.Schema.TypeDecl}}
+type {{.TypeName}} {{if .IsAlias}}={{end}} {{.Schema.TypeDecl}}
 {{end}}
 {{end}}
 {{end}}

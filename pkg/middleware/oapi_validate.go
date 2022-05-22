@@ -29,8 +29,10 @@ import (
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
 
-const EchoContextKey = "oapi-codegen/echo-context"
-const UserDataKey = "oapi-codegen/user-data"
+const (
+	EchoContextKey = "oapi-codegen/echo-context"
+	UserDataKey    = "oapi-codegen/user-data"
+)
 
 // This is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
@@ -56,16 +58,20 @@ func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
+// ErrorHandler is called when there is an error in validation
+type ErrorHandler func(c echo.Context, err *echo.HTTPError) error
+
 // Options to customize request validation. These are passed through to
 // openapi3filter.
 type Options struct {
+	ErrorHandler ErrorHandler
 	Options      openapi3filter.Options
 	ParamDecoder openapi3filter.ContentParameterDecoder
 	UserData     interface{}
 	Skipper      echomiddleware.Skipper
 }
 
-// Create a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
@@ -81,6 +87,9 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 
 			err := ValidateRequestFromContext(c, router, options)
 			if err != nil {
+				if options != nil && options.ErrorHandler != nil {
+					return options.ErrorHandler(c, err)
+				}
 				return err
 			}
 			return next(c)
@@ -90,7 +99,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
-func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) error {
+func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) *echo.HTTPError {
 	req := ctx.Request()
 	route, pathParams, err := router.FindRoute(req)
 

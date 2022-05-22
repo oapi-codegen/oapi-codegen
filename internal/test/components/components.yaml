@@ -18,6 +18,7 @@ paths:
         $ref: "#/components/requestBodies/RequestBody"
       responses:
         200:
+          description: placeholder
           content:
             application/json:
               schema:
@@ -65,6 +66,13 @@ paths:
                 additionalProperties:
                   type: string
             required: [inner]
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
     post:
       operationId: BodyWithAddProps
       description: |
@@ -84,6 +92,13 @@ paths:
                     type: integer
               required: [name, inner]
               additionalProperties: true
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     SchemaObject:
@@ -169,8 +184,74 @@ components:
           type: string
           format: json
       required: [name, value1]
+    Enum1:
+      description: |
+        Conflicts with Enum2, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [One, Two, Three]
+    Enum2:
+      description: |
+        Conflicts with Enum1, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [ Two, Three, Four ]
+    Enum3:
+      description: |
+        Enum values conflict with Enums above, need to be prefixed
+        with type name.
+      type: string
+      enum: [ Enum1One, Foo, Bar ]
+    Enum4:
+      description: |
+        No conflicts here, should have unmodified enums
+      type: string
+      enum: [ Cat, Dog, Mouse ]
+    Enum5:
+      description: |
+        Numerical enum
+      type: integer
+      enum: [ 5, 6, 7 ]
+    EnumUnion:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+        - $ref: "#/components/schemas/Enum1"
+        - $ref: "#/components/schemas/Enum2"
+    EnumUnion2:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+      - $ref: "#/components/schemas/Enum1"
+      - enum: [ Seven ]
+    FunnyValues:
+      description: Edge cases for enum names
+      type: string
+      enum:
+        - '*'
+        - '5'
+        - '&'
+        - ''
+    RenameMe:
+      description: This schema should be renamed via x-go-name when generating
+      x-go-name: NewName
+      type: object
+      properties:
+        prop1:
+          type: string
+        prop2:
+          type: string
+      required: [prop1, prop2]
+    ReferenceToRenameMe:
+      description: When a Schema is renamed, $ref should refer to the new name
+      type: object
+      properties:
+        ToNewName:
+          $ref: "#/components/schemas/RenameMe"
+      required: [ToNewName]
   responses:
     ResponseObject:
+      x-go-name: RenamedResponseObject
       description: A simple response object
       content:
         application/json:
@@ -184,6 +265,7 @@ components:
             type: string
   parameters:
     ParameterObject:
+      x-go-name: RenamedParameterObject
       name: ParameterObject
       description: a parameter
       in: query
@@ -197,8 +279,30 @@ components:
         text/plain:
           schema:
             type: string
+    EnumParam1:
+      name: ParamEnum1
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [on, off, both]
+    EnumParam2:
+      name: ParamEnum2
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ on, off, both ]
+    EnumParam3:
+      name: ParamEnum3
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ alice, eve, bob ]
   requestBodies:
     RequestBody:
+      x-go-name: RenamedRequestBody
       content:
         application/json:
           schema:

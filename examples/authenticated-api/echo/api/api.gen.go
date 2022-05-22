@@ -41,10 +41,8 @@ type Thing struct {
 
 // ThingWithID defines model for ThingWithID.
 type ThingWithID struct {
-	// Embedded struct due to allOf(#/components/schemas/Thing)
-	Thing `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-	Id int64 `json:"id"`
+	Id   int64  `json:"id"`
+	Name string `json:"name"`
 }
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.

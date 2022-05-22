@@ -15,9 +15,13 @@ import (
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 )
 
+// ErrorHandler is called when there is an error in validation
+type ErrorHandler func(w http.ResponseWriter, message string, statusCode int)
+
 // Options to customize request validation, openapi3filter specified options will be passed through.
 type Options struct {
-	Options openapi3filter.Options
+	Options      openapi3filter.Options
+	ErrorHandler ErrorHandler
 }
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
@@ -39,7 +43,11 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 			// validate request
 			if statusCode, err := validateRequest(r, router, options); err != nil {
-				http.Error(w, err.Error(), statusCode)
+				if options != nil && options.ErrorHandler != nil {
+					options.ErrorHandler(w, err.Error(), statusCode)
+				} else {
+					http.Error(w, err.Error(), statusCode)
+				}
 				return
 			}
 

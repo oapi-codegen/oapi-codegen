@@ -4,22 +4,88 @@
 package components
 
 import (
-	"bytes"
-	"compress/gzip"
-	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
-	"net/url"
-	"path"
-	"strings"
+)
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+// Defines values for Enum1.
+const (
+	Enum1One   Enum1 = "One"
+	Enum1Three Enum1 = "Three"
+	Enum1Two   Enum1 = "Two"
+)
+
+// Defines values for Enum2.
+const (
+	Enum2Four  Enum2 = "Four"
+	Enum2Three Enum2 = "Three"
+	Enum2Two   Enum2 = "Two"
+)
+
+// Defines values for Enum3.
+const (
+	Enum3Bar      Enum3 = "Bar"
+	Enum3Enum1One Enum3 = "Enum1One"
+	Enum3Foo      Enum3 = "Foo"
+)
+
+// Defines values for Enum4.
+const (
+	Cat   Enum4 = "Cat"
+	Dog   Enum4 = "Dog"
+	Mouse Enum4 = "Mouse"
+)
+
+// Defines values for Enum5.
+const (
+	Enum5N5 Enum5 = 5
+	Enum5N6 Enum5 = 6
+	Enum5N7 Enum5 = 7
+)
+
+// Defines values for EnumUnion.
+const (
+	EnumUnionFour  EnumUnion = "Four"
+	EnumUnionOne   EnumUnion = "One"
+	EnumUnionThree EnumUnion = "Three"
+	EnumUnionTwo   EnumUnion = "Two"
+)
+
+// Defines values for EnumUnion2.
+const (
+	EnumUnion2One   EnumUnion2 = "One"
+	EnumUnion2Seven EnumUnion2 = "Seven"
+	EnumUnion2Three EnumUnion2 = "Three"
+	EnumUnion2Two   EnumUnion2 = "Two"
+)
+
+// Defines values for FunnyValues.
+const (
+	FunnyValuesAnd      FunnyValues = "&"
+	FunnyValuesAsterisk FunnyValues = "*"
+	FunnyValuesEmpty    FunnyValues = ""
+	FunnyValuesN5       FunnyValues = "5"
+)
+
+// Defines values for EnumParam1.
+const (
+	EnumParam1Both  EnumParam1 = "both"
+	EnumParam1False EnumParam1 = "false"
+	EnumParam1True  EnumParam1 = "true"
+)
+
+// Defines values for EnumParam2.
+const (
+	EnumParam2Both  EnumParam2 = "both"
+	EnumParam2False EnumParam2 = "false"
+	EnumParam2True  EnumParam2 = "true"
+)
+
+// Defines values for EnumParam3.
+const (
+	Alice EnumParam3 = "alice"
+	Bob   EnumParam3 = "bob"
+	Eve   EnumParam3 = "eve"
 )
 
 // Has additional properties of type int
@@ -60,11 +126,50 @@ type AdditionalPropertiesObject5 struct {
 	AdditionalProperties map[string]SchemaObject `json:"-"`
 }
 
+// Conflicts with Enum2, enum values need to be prefixed with type
+// name.
+type Enum1 string
+
+// Conflicts with Enum1, enum values need to be prefixed with type
+// name.
+type Enum2 string
+
+// Enum values conflict with Enums above, need to be prefixed
+// with type name.
+type Enum3 string
+
+// No conflicts here, should have unmodified enums
+type Enum4 string
+
+// Numerical enum
+type Enum5 int
+
+// EnumUnion defines model for EnumUnion.
+type EnumUnion string
+
+// EnumUnion2 defines model for EnumUnion2.
+type EnumUnion2 string
+
+// Edge cases for enum names
+type FunnyValues string
+
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
 	Name   string          `json:"name"`
 	Value1 json.RawMessage `json:"value1"`
 	Value2 json.RawMessage `json:"value2,omitempty"`
+}
+
+// When a Schema is renamed, $ref should refer to the new name
+type ReferenceToRenameMe struct {
+	// This schema should be renamed via x-go-name when generating
+	NewName NewName `json:"ToNewName"`
+}
+
+// This schema should be renamed via x-go-name when generating
+type NewName struct {
+	Prop1 string `json:"prop1"`
+	Prop2 string `json:"prop2"`
 }
 
 // SchemaObject defines model for SchemaObject.
@@ -78,13 +183,25 @@ type SchemaObject struct {
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
 
-// ResponseObject defines model for ResponseObject.
-type ResponseObject struct {
+// EnumParam1 defines model for EnumParam1.
+type EnumParam1 string
+
+// EnumParam2 defines model for EnumParam2.
+type EnumParam2 string
+
+// EnumParam3 defines model for EnumParam3.
+type EnumParam3 string
+
+// a parameter
+type RenamedParameterObject string
+
+// RenamedResponseObject defines model for ResponseObject.
+type RenamedResponseObject struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// RequestBody defines model for RequestBody.
-type RequestBody struct {
+// RenamedRequestBody defines model for RequestBody.
+type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
@@ -110,7 +227,7 @@ type ParamsWithAddPropsParams struct {
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
 		Inner ParamsWithAddPropsParams_P2_Inner `json:"inner"`
-	} `json:"p2"`
+	} `form:"p2" json:"p2"`
 }
 
 // ParamsWithAddPropsParams_P2_Inner defines parameters for ParamsWithAddProps.

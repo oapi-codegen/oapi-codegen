@@ -216,7 +216,7 @@ func StringInArray(str string, array []string) bool {
 	return false
 }
 
-// This function takes a $ref value and converts it to a Go typename.
+// RefPathToGoType takes a $ref value and converts it to a Go typename.
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
 // #/components/responses/Baz -> Baz
@@ -239,7 +239,20 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		} else if depth != 4 && depth != 2 {
 			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
 		}
-		return SchemaNameToTypeName(pathParts[len(pathParts)-1]), nil
+
+		// Schemas may have been renamed locally, so look up the actual name in
+		// the spec.
+		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
+		if err != nil {
+			return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
+		}
+		if name != "" {
+			return name, nil
+		}
+		// lastPart now stores the final element of the type path. This is what
+		// we use as the base for a type name.
+		lastPart := pathParts[len(pathParts)-1]
+		return SchemaNameToTypeName(lastPart), nil
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
@@ -257,7 +270,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 	}
 }
 
-// This function takes a $ref value and checks if it has link to go type.
+// IsGoTypeReference takes a $ref value and checks if it has link to go type.
 // #/components/schemas/Foo                     -> true
 // ./local/file.yml#/components/parameters/Bar  -> true
 // ./local/file.yml                             -> false
@@ -267,7 +280,7 @@ func IsGoTypeReference(ref string) bool {
 	return ref != "" && !IsWholeDocumentReference(ref)
 }
 
-// This function takes a $ref value and checks if it is whole document reference.
+// IsWholeDocumentReference takes a $ref value and checks if it is whole document reference.
 // #/components/schemas/Foo                             -> false
 // ./local/file.yml#/components/parameters/Bar          -> false
 // ./local/file.yml                                     -> true
@@ -278,8 +291,8 @@ func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
 }
 
-// This function converts a swagger style path URI with parameters to a
-// Echo compatible path URI. We need to replace all of Swagger parameters with
+// SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to a
+// Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
 //   {param}
 //   {param*}
@@ -293,7 +306,7 @@ func SwaggerUriToEchoUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
-// This function converts a swagger style path URI with parameters to a
+// SwaggerUriToChiUri converts a swagger style path URI with parameters to a
 // Chi compatible path URI. We need to replace all of Swagger parameters with
 // "{param}". Valid input parameters are:
 //   {param}
@@ -546,6 +559,9 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 }
 
 func typeNamePrefix(name string) (prefix string) {
+	if len(name) == 0 {
+		return "Empty"
+	}
 	for _, r := range name {
 		switch r {
 		case '$':
@@ -558,6 +574,8 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Plus"
 		case '&':
 			prefix += "And"
+		case '|':
+			prefix += "Or"
 		case '~':
 			prefix += "Tilde"
 		case '=':
@@ -566,6 +584,10 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Hash"
 		case '.':
 			prefix += "Dot"
+		case '*':
+			prefix += "Asterisk"
+		case '^':
+			prefix += "Caret"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {
@@ -648,4 +670,119 @@ func EscapePathElements(path string) string {
 		elems[i] = url.QueryEscape(e)
 	}
 	return strings.Join(elems, "/")
+}
+
+// renameSchema takes as input the name of a schema as provided in the spec,
+// and the definition of the schema. If the schema overrides the name via
+// x-go-name, the new name is returned, otherwise, the original name is
+// returned.
+func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
+	// References will not change type names.
+	if schemaRef.Ref != "" {
+		return SchemaNameToTypeName(schemaName), nil
+	}
+	schema := schemaRef.Value
+
+	if extension, ok := schema.Extensions[extGoName]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+		}
+		return typeName, nil
+	}
+	return SchemaNameToTypeName(schemaName), nil
+}
+
+// renameParameter generates the name for a parameter, taking x-go-name into
+// account
+func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
+	if parameterRef.Ref != "" {
+		return SchemaNameToTypeName(parameterName), nil
+	}
+	parameter := parameterRef.Value
+
+	if extension, ok := parameter.Extensions[extGoName]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+		}
+		return typeName, nil
+	}
+	return SchemaNameToTypeName(parameterName), nil
+}
+
+// renameResponse generates the name for a parameter, taking x-go-name into
+// account
+func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
+	if responseRef.Ref != "" {
+		return SchemaNameToTypeName(responseName), nil
+	}
+	response := responseRef.Value
+
+	if extension, ok := response.Extensions[extGoName]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+		}
+		return typeName, nil
+	}
+	return SchemaNameToTypeName(responseName), nil
+}
+
+// renameRequestBody generates the name for a parameter, taking x-go-name into
+// account
+func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
+	if requestBodyRef.Ref != "" {
+		return SchemaNameToTypeName(requestBodyName), nil
+	}
+	requestBody := requestBodyRef.Value
+
+	if extension, ok := requestBody.Extensions[extGoName]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+		}
+		return typeName, nil
+	}
+	return SchemaNameToTypeName(requestBodyName), nil
+}
+
+// findSchemaByRefPath turns a $ref path into a schema. This will return ""
+// if the schema wasn't found, and it'll only work successfully for schemas
+// defined within the spec that we parsed.
+func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+	pathElements := strings.Split(refPath, "/")
+	// All local references will have 4 path elements.
+	if len(pathElements) != 4 {
+		return "", nil
+	}
+
+	// We only support local references
+	if pathElements[0] != "#" {
+		return "", nil
+	}
+	// Only components are supported
+	if pathElements[1] != "components" {
+		return "", nil
+	}
+	propertyName := pathElements[3]
+	switch pathElements[2] {
+	case "schemas":
+		if schema, found := spec.Components.Schemas[propertyName]; found {
+			return renameSchema(propertyName, schema)
+		}
+	case "parameters":
+		if parameter, found := spec.Components.Parameters[propertyName]; found {
+			return renameParameter(propertyName, parameter)
+		}
+	case "responses":
+		if response, found := spec.Components.Responses[propertyName]; found {
+			return renameResponse(propertyName, response)
+		}
+	case "requestBodies":
+		if requestBody, found := spec.Components.RequestBodies[propertyName]; found {
+			return renameRequestBody(propertyName, requestBody)
+		}
+	}
+	return "", nil
 }

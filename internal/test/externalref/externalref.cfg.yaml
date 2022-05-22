@@ -1,10 +1,11 @@
-output:
-  externalref.gen.go
 package: externalref
 generate:
-  - types
-  - skip-prune
-  - spec
+  models: true
+  embedded-spec: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+output: externalref.gen.go
+output-options:
+
+  skip-prune: true

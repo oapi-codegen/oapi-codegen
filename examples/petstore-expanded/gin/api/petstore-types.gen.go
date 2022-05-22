@@ -23,24 +23,27 @@ type NewPet struct {
 
 // Pet defines model for Pet.
 type Pet struct {
-	// Embedded struct due to allOf(#/components/schemas/NewPet)
-	NewPet `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
 	// Unique id of the pet
 	Id int64 `json:"id"`
+
+	// Name of the pet
+	Name string `json:"name"`
+
+	// Type of the pet
+	Tag *string `json:"tag,omitempty"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
 	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody NewPet
+type AddPetJSONBody = NewPet
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody AddPetJSONBody
+type AddPetJSONRequestBody = AddPetJSONBody
