@@ -71,7 +71,7 @@ type Options struct {
 	Skipper      echomiddleware.Skipper
 }
 
-// Create a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {

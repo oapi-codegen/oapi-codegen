@@ -393,7 +393,7 @@ components:
         Conflicts with Enum1, enum values need to be prefixed with type
         name.
       type: string
-      enum: [ One, Two, Three ]
+      enum: [ Two, Three, Four ]
     Enum3:
       description: |
         Enum values conflict with Enums above, need to be prefixed
@@ -410,8 +410,46 @@ components:
         Numerical enum
       type: integer
       enum: [ 5, 6, 7 ]
+    EnumUnion:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+        - $ref: "#/components/schemas/Enum1"
+        - $ref: "#/components/schemas/Enum2"
+    EnumUnion2:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+      - $ref: "#/components/schemas/Enum1"
+      - enum: [ Seven ]
+    FunnyValues:
+      description: Edge cases for enum names
+      type: string
+      enum:
+        - '*'
+        - '5'
+        - '&'
+        - ''
+    RenameMe:
+      description: This schema should be renamed via x-go-name when generating
+      x-go-name: NewName
+      type: object
+      properties:
+        prop1:
+          type: string
+        prop2:
+          type: string
+      required: [prop1, prop2]
+    ReferenceToRenameMe:
+      description: When a Schema is renamed, $ref should refer to the new name
+      type: object
+      properties:
+        ToNewName:
+          $ref: "#/components/schemas/RenameMe"
+      required: [ToNewName]
   responses:
     ResponseObject:
+      x-go-name: RenamedResponseObject
       description: A simple response object
       content:
         application/json:
@@ -425,6 +463,7 @@ components:
             type: string
   parameters:
     ParameterObject:
+      x-go-name: RenamedParameterObject
       name: ParameterObject
       description: a parameter
       in: query
@@ -461,6 +500,7 @@ components:
         enum: [ alice, eve, bob ]
   requestBodies:
     RequestBody:
+      x-go-name: RenamedRequestBody
       content:
         application/json:
           schema:

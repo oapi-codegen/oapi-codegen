@@ -120,8 +120,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoFieldName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoName]); err == nil {
 			goName = extGoFieldName
 		}
 	}
@@ -581,8 +581,8 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	return typeDefs
 }
 
-// This defines the schema for a parameters definition object which encapsulates
-// all the query, header and cookie parameters for an operation.
+// GenerateParamsTypes defines the schema for a parameters definition object
+// which encapsulates all the query, header and cookie parameters for an operation.
 func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 
@@ -595,6 +595,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	s := Schema{}
 	for _, param := range objectParams {
 		pSchema := param.Schema
+		param.Style()
 		if pSchema.HasAdditionalProperties {
 			propRefName := strings.Join([]string{typeName, param.GoName()}, "_")
 			pSchema.RefType = propRefName
@@ -608,6 +609,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			JsonFieldName:  param.ParamName,
 			Required:       param.Required,
 			Schema:         pSchema,
+			NeedsFormTag:   param.Style() == "form",
 			ExtensionProps: &param.Spec.ExtensionProps,
 		}
 		s.Properties = append(s.Properties, prop)

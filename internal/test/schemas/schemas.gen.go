@@ -31,27 +31,26 @@ const (
 
 // Defines values for EnumInObjInArrayVal.
 const (
-	First EnumInObjInArrayVal = "first"
-
+	First  EnumInObjInArrayVal = "first"
 	Second EnumInObjInArrayVal = "second"
 )
 
 // This schema name starts with a number
-type N5StartsWithNumber map[string]interface{}
+type N5StartsWithNumber = map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
-type AnyType1 interface{}
+type AnyType1 = interface{}
 
 // AnyType2 represents any type.
 //
 // This should be an interface{}
-type AnyType2 interface{}
+type AnyType2 = interface{}
 
 // CustomStringType defines model for CustomStringType.
-type CustomStringType string
+type CustomStringType = string
 
 // EnumInObjInArray defines model for EnumInObjInArray.
-type EnumInObjInArray []struct {
+type EnumInObjInArray = []struct {
 	Val *EnumInObjInArrayVal `json:"val,omitempty"`
 }
 
@@ -59,7 +58,7 @@ type EnumInObjInArray []struct {
 type EnumInObjInArrayVal string
 
 // GenericObject defines model for GenericObject.
-type GenericObject map[string]interface{}
+type GenericObject = map[string]interface{}
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
@@ -70,24 +69,24 @@ type NullableProperties struct {
 }
 
 // StringInPath defines model for StringInPath.
-type StringInPath string
+type StringInPath = string
 
 // Issue185JSONBody defines parameters for Issue185.
-type Issue185JSONBody NullableProperties
+type Issue185JSONBody = NullableProperties
 
 // Issue9JSONBody defines parameters for Issue9.
-type Issue9JSONBody interface{}
+type Issue9JSONBody = interface{}
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
-	Foo string `json:"foo"`
+	Foo string `form:"foo" json:"foo"`
 }
 
 // Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
-type Issue185JSONRequestBody Issue185JSONBody
+type Issue185JSONRequestBody = Issue185JSONBody
 
 // Issue9JSONRequestBody defines body for Issue9 for application/json ContentType.
-type Issue9JSONRequestBody Issue9JSONBody
+type Issue9JSONRequestBody = Issue9JSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

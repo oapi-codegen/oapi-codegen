@@ -10,12 +10,17 @@ import (
 func TestFilterOperationsByTag(t *testing.T) {
 	packageName := "testswagger"
 	t.Run("include tags", func(t *testing.T) {
-		opts := Options{
-			GenerateClient:     true,
-			GenerateEchoServer: true,
-			GenerateTypes:      true,
-			EmbedSpec:          true,
-			IncludeTags:        []string{"hippo", "giraffe", "cat"},
+		opts := Configuration{
+			PackageName: packageName,
+			Generate: GenerateOptions{
+				EchoServer:   true,
+				Client:       true,
+				Models:       true,
+				EmbeddedSpec: true,
+			},
+			OutputOptions: OutputOptions{
+				IncludeTags: []string{"hippo", "giraffe", "cat"},
+			},
 		}
 
 		// Get a spec from the test definition in this file:
@@ -23,7 +28,7 @@ func TestFilterOperationsByTag(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Run our code generation:
-		code, err := Generate(swagger, packageName, opts)
+		code, err := Generate(swagger, opts)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, code)
 		assert.NotContains(t, code, `"/test/:name"`)
@@ -31,12 +36,17 @@ func TestFilterOperationsByTag(t *testing.T) {
 	})
 
 	t.Run("exclude tags", func(t *testing.T) {
-		opts := Options{
-			GenerateClient:     true,
-			GenerateEchoServer: true,
-			GenerateTypes:      true,
-			EmbedSpec:          true,
-			ExcludeTags:        []string{"hippo", "giraffe", "cat"},
+		opts := Configuration{
+			PackageName: packageName,
+			Generate: GenerateOptions{
+				EchoServer:   true,
+				Client:       true,
+				Models:       true,
+				EmbeddedSpec: true,
+			},
+			OutputOptions: OutputOptions{
+				ExcludeTags: []string{"hippo", "giraffe", "cat"},
+			},
 		}
 
 		// Get a spec from the test definition in this file:
@@ -44,7 +54,7 @@ func TestFilterOperationsByTag(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Run our code generation:
-		code, err := Generate(swagger, packageName, opts)
+		code, err := Generate(swagger, opts)
 		assert.NoError(t, err)
 		assert.NotEmpty(t, code)
 		assert.Contains(t, code, `"/test/:name"`)

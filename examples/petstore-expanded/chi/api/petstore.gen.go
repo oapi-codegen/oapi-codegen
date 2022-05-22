@@ -51,17 +51,17 @@ type Pet struct {
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
 	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody NewPet
+type AddPetJSONBody = NewPet
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody AddPetJSONBody
+type AddPetJSONRequestBody = AddPetJSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -154,7 +154,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -180,7 +180,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return

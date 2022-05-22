@@ -21,7 +21,7 @@ import (
 )
 
 // ArrayValue defines model for ArrayValue.
-type ArrayValue []Value
+type ArrayValue = []Value
 
 // Document defines model for Document.
 type Document struct {

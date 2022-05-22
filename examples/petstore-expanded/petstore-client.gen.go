@@ -50,17 +50,17 @@ type Pet struct {
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
 	// maximum number of results to return
-	Limit *int32 `json:"limit,omitempty"`
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
 // AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody NewPet
+type AddPetJSONBody = NewPet
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody AddPetJSONBody
+type AddPetJSONRequestBody = AddPetJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

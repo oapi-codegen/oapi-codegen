@@ -8,7 +8,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// This describes a Schema, a type definition.
+// Schema describes an OpenAPI schema, with lots of helper fields to use in the
+// templating engine.
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
@@ -28,6 +29,11 @@ type Schema struct {
 
 	UnionElements []string       // Possible elements of oneOf/anyOf union
 	Discriminator *Discriminator // Describes which value is stored in a union
+
+	// If this is set, the schema will declare a type via alias, eg,
+	// `type Foo = bool`. If this is not set, we will define this type via
+	// type definition `type Foo bool`
+	DefineViaAlias bool
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
@@ -77,6 +83,7 @@ type Property struct {
 	Nullable       bool
 	ReadOnly       bool
 	WriteOnly      bool
+	NeedsFormTag   bool
 	ExtensionProps *openapi3.ExtensionProps
 }
 
@@ -164,9 +171,8 @@ type ResponseTypeDefinition struct {
 	ResponseName string
 }
 
-func (t *TypeDefinition) CanAlias() bool {
-	return t.Schema.IsRef() || /* actual reference */
-		(t.Schema.ArrayType != nil && t.Schema.ArrayType.IsRef()) /* array to ref */
+func (t *TypeDefinition) IsAlias() bool {
+	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
 type Discriminator struct {
@@ -209,8 +215,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType:      refType,
-			Description: StringToGoComment(schema.Description),
+			GoType:         refType,
+			Description:    StringToGoComment(schema.Description),
+			DefineViaAlias: true,
 		}, nil
 	}
 
@@ -261,7 +268,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				outType = "interface{}"
 			}
 			outSchema.GoType = outType
+			outSchema.DefineViaAlias = true
 		} else {
+			// When we define an object, we want it to be a type definition,
+			// not a type alias, eg, "type Foo struct {...}"
+			outSchema.DefineViaAlias = false
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
@@ -349,7 +360,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
-		err := resolveType(schema, path, &outSchema)
+		err := oapiSchemaToGoType(schema, path, &outSchema)
+		// Enums need to be typed, so that the values aren't interchangeable,
+		// so no matter what schema conversion thinks, we need to define a
+		// new type.
+		outSchema.DefineViaAlias = false
+
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -368,7 +384,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				enumName = k
 			}
-			if options.OldEnumConflicts {
+			if globalState.options.Compatibility.OldEnumConflicts {
 				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
 			} else {
 				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
@@ -386,7 +402,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		// outSchema.RefType = typeName
 	} else {
-		err := resolveType(schema, path, &outSchema)
+		err := oapiSchemaToGoType(schema, path, &outSchema)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -394,8 +410,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	return outSchema, nil
 }
 
-// resolveType resolves primitive  type or array for schema
-func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+// oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
+// all non-object types.
+func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
 	t := schema.Type
 
@@ -427,6 +444,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
+		outSchema.DefineViaAlias = true
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
@@ -454,6 +472,7 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		} else {
 			return fmt.Errorf("invalid integer format: %s", f)
 		}
+		outSchema.DefineViaAlias = true
 	case "number":
 		// We default to float for "number"
 		if f == "double" {
@@ -463,11 +482,13 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 		} else {
 			return fmt.Errorf("invalid number format: %s", f)
 		}
+		outSchema.DefineViaAlias = true
 	case "boolean":
 		if f != "" {
 			return fmt.Errorf("invalid format (%s) for boolean", f)
 		}
 		outSchema.GoType = "bool"
+		outSchema.DefineViaAlias = true
 	case "string":
 		// Special case string formats here.
 		switch f {
@@ -488,13 +509,14 @@ func resolveType(schema *openapi3.Schema, path []string, outSchema *Schema) erro
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
 		}
+		outSchema.DefineViaAlias = true
 	default:
 		return fmt.Errorf("unhandled Schema type: %s", t)
 	}
 	return nil
 }
 
-// This describes a Schema, a type definition.
+// SchemaDescriptor describes a Schema, a type definition.
 type SchemaDescriptor struct {
 	Fields                   []FieldDescriptor
 	HasAdditionalProperties  bool
@@ -526,8 +548,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		goFieldName := p.GoFieldName()
-		if _, ok := p.ExtensionProps.Extensions[extGoFieldName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoFieldName]); err == nil {
+		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
 				goFieldName = extGoFieldName
 			}
 		}
@@ -535,20 +557,27 @@ func GenFieldsFromProperties(props []Property) []string {
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
 		// Support x-omitempty
-		omitEmpty := true
+		overrideOmitEmpty := true
 		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
 			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
-				omitEmpty = extOmitEmpty
+				overrideOmitEmpty = extOmitEmpty
 			}
 		}
 
 		fieldTags := make(map[string]string)
 
-		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !omitEmpty {
+		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty {
 			fieldTags["json"] = p.JsonFieldName
+			if p.NeedsFormTag {
+				fieldTags["form"] = p.JsonFieldName
+			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			if p.NeedsFormTag {
+				fieldTags["form"] = p.JsonFieldName + ",omitempty"
+			}
 		}
+
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
