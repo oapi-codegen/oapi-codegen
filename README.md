@@ -522,8 +522,8 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 The default options for `oapi-codegen` will generate everything; client, server,
 type definitions and embedded swagger spec, but you can generate subsets of
-those via the `-generate` flag. It defaults to `types,client,server,spec`, but
-you can specify any combination of those.
+those via the `-generate` flag. It defaults to `types,client,server,embedded-spec`,
+but you can specify any combination of those.
 
 - `types`: generate all type definitions for all types in the OpenAPI spec. This
  will be everything under `#components`, as well as request parameter, request
@@ -534,7 +534,7 @@ you can specify any combination of those.
  that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
-- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
+- `embedded-spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
 - `skip-fmt`: skip running `goimports` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating
