@@ -128,6 +128,11 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			return fmt.Errorf("error in openapi3.MultiError: %s", me)
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request

@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -80,6 +81,11 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 	}
 
 	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			return http.StatusBadRequest, me
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
