@@ -12,6 +12,7 @@ type Configuration struct {
 	Compatibility CompatibilityOptions `yaml:"compatibility,omitempty"`
 	OutputOptions OutputOptions        `yaml:"output-options,omitempty"`
 	ImportMapping map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
+	TypeMapping   map[string]string
 }
 
 // GenerateOptions specifies which supported output formats to generate.

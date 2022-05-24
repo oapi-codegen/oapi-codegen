@@ -95,12 +95,12 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(op *OperationDefinition) string {
+func genResponseUnmarshal(op *OperationDefinition, typeMapping map[string]string) string {
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
 
 	// Get the type definitions from the operation:
-	typeDefinitions, err := op.GetResponseTypeDefinitions()
+	typeDefinitions, err := op.GetResponseTypeDefinitions(typeMapping)
 	if err != nil {
 		panic(err)
 	}
@@ -234,8 +234,8 @@ func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
-	td, err := op.GetResponseTypeDefinitions()
+func getResponseTypeDefinitions(op *OperationDefinition, typeMapping map[string]string) []ResponseTypeDefinition {
+	td, err := op.GetResponseTypeDefinitions(typeMapping)
 	if err != nil {
 		panic(err)
 	}
@@ -280,8 +280,6 @@ var TemplateFunctions = template.FuncMap{
 	"camelCase":                  ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
-	"genResponseUnmarshal":       genResponseUnmarshal,
-	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
