@@ -35,8 +35,8 @@ write a lot of boilerplate code to perform all the marshalling and unmarshalling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-    oapi-codegen petstore-expanded.yaml  > petstore.gen.go
+    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    oapi-codegen petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
 generated.
