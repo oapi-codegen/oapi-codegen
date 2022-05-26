@@ -16,12 +16,13 @@ type Configuration struct {
 
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
-	ChiServer    bool `yaml:"chi-server,omitempty"`    // ChiServer specifies whether to generate chi server boilerplate
-	EchoServer   bool `yaml:"echo-server,omitempty"`   // EchoServer specifies whether to generate echo server boilerplate
-	GinServer    bool `yaml:"gin-server,omitempty"`    // GinServer specifies whether to generate echo server boilerplate
-	Client       bool `yaml:"client,omitempty"`        // Client specifies whether to generate client boilerplate
-	Models       bool `yaml:"models,omitempty"`        // Models specifies whether to generate type definitions
-	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"` // Whether to embed the swagger spec in the generated code
+	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
+	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
+	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate echo server boilerplate
+	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
+	Client        bool `yaml:"client,omitempty"`         // Client specifies whether to generate client boilerplate
+	Models        bool `yaml:"models,omitempty"`         // Models specifies whether to generate type definitions
+	EmbeddedSpec  bool `yaml:"embedded-spec,omitempty"`  // Whether to embed the swagger spec in the generated code
 }
 
 // CompatibilityOptions specifies backward compatibility settings for the
