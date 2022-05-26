@@ -5,7 +5,7 @@ type ServerInterfaceWrapper struct {
     ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(http.Handler) http.Handler
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -168,15 +168,15 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
   {{end}}
 
-  var handler = func(w http.ResponseWriter, r *http.Request) {
+  var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-}
+  })
 
   for _, middleware := range siw.HandlerMiddlewares {
     handler = middleware(handler)
   }
 
-  handler(w, r.WithContext(ctx))
+  handler.ServeHTTP(w, r.WithContext(ctx))
 }
 {{end}}
 
