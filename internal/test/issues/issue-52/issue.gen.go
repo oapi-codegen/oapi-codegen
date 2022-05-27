@@ -306,7 +306,6 @@ func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil

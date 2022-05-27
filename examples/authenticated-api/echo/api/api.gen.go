@@ -378,7 +378,6 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -404,7 +403,6 @@ func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
 			return nil, err
 		}
 		response.JSON201 = &dest
-
 	}
 
 	return response, nil

@@ -51,11 +51,12 @@ type CompatibilityOptions struct {
 
 // OutputOptions are used to modify the output code in some way.
 type OutputOptions struct {
-	SkipFmt       bool              `yaml:"skip-fmt,omitempty"`       // Whether to skip go imports on the generated code
-	SkipPrune     bool              `yaml:"skip-prune,omitempty"`     // Whether to skip pruning unused components on the generated code
-	IncludeTags   []string          `yaml:"include-tags,omitempty"`   // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`   // Exclude operations that have one of these tags. Ignored when empty.
-	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
+	ErrOnInvalid  bool              `yaml:"error-on-invalid,omitempty"` // Whether to return an error if the server returned an invalid response
+	SkipFmt       bool              `yaml:"skip-fmt,omitempty"`         // Whether to skip go imports on the generated code
+	SkipPrune     bool              `yaml:"skip-prune,omitempty"`       // Whether to skip pruning unused components on the generated code
+	IncludeTags   []string          `yaml:"include-tags,omitempty"`     // Only include operations that have one of these tags. Ignored when empty.
+	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`     // Exclude operations that have one of these tags. Ignored when empty.
+	UserTemplates map[string]string `yaml:"user-templates,omitempty"`   // Override built-in templates from user-provided files
 
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
