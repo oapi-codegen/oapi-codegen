@@ -17,39 +17,10 @@ import (
 	"path"
 	"strings"
 
+	. "github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api/models"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 )
-
-const (
-	BearerAuthScopes = "BearerAuth.Scopes"
-)
-
-// Error defines model for Error.
-type Error struct {
-	// Error code
-	Code int32 `json:"code"`
-
-	// Error message
-	Message string `json:"message"`
-}
-
-// Thing defines model for Thing.
-type Thing struct {
-	Name string `json:"name"`
-}
-
-// ThingWithID defines model for ThingWithID.
-type ThingWithID struct {
-	Id   int64  `json:"id"`
-	Name string `json:"name"`
-}
-
-// AddThingJSONBody defines parameters for AddThing.
-type AddThingJSONBody = Thing
-
-// AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
-type AddThingJSONRequestBody = AddThingJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

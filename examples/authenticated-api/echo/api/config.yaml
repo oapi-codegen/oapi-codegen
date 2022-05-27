@@ -2,8 +2,10 @@ package: api
 generate:
   echo-server: true
   client: true
-  models: true
+  models: false
   embedded-spec: true
 output: api.gen.go
 output-options:
   skip-prune: true
+additional-imports:
+  ".": github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api/models

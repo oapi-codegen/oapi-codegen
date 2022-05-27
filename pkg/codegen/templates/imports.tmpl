@@ -30,4 +30,7 @@ import (
 	{{- range .ExternalImports}}
 	{{ . }}
 	{{- end}}
+	{{- range $k, $v := .AdditionalImports}}
+	{{ $k }} "{{ $v }}"
+	{{- end}}
 )
