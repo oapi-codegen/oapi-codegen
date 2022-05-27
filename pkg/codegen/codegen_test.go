@@ -120,42 +120,23 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	assert.Equal(t, "cat", *findPetByIDResponse.JSON200.Tag)
 }
 
-func TestExampleOpenAPICodeGeneration(t *testing.T) {
+var codegenTestCases = []struct {
+	label       string
+	typeMapping map[string]string
+	contains    []string
+}{
+	{
+		label: "plain",
+		contains: []string{
+			// Check that we have a package:
+			"package testswagger",
 
-	// Input vars for code generation:
-	packageName := "testswagger"
-	opts := Configuration{
-		PackageName: packageName,
-		Generate: GenerateOptions{
-			EchoServer:   true,
-			Client:       true,
-			Models:       true,
-			EmbeddedSpec: true,
-		},
-	}
+			// Check that response structs are generated correctly:
+			"type GetTestByNameResponse struct {",
 
-	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
-	assert.NoError(t, err)
-
-	// Run our code generation:
-	code, err := Generate(swagger, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
-
-	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
-
-	// Check that we have a package:
-	assert.Contains(t, code, "package testswagger")
-
-	// Check that response structs are generated correctly:
-	assert.Contains(t, code, "type GetTestByNameResponse struct {")
-
-	// Check that response structs contains fallbacks to interface for invalid types:
-	// Here an invalid array with no items.
-	assert.Contains(t, code, `
+			// Check that response structs contains fallbacks to interface for invalid types:
+			// Here an invalid array with no items.
+			`
 type GetTestByNameResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -164,25 +145,73 @@ type GetTestByNameResponse struct {
 	JSON422      *[]interface{}
 	XML422       *[]interface{}
 	JSONDefault  *Error
-}`)
+}`,
 
-	// Check that the helper methods are generated correctly:
-	assert.Contains(t, code, "func (r GetTestByNameResponse) Status() string {")
-	assert.Contains(t, code, "func (r GetTestByNameResponse) StatusCode() int {")
-	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {")
+			// Check that the helper methods are generated correctly:
+			"func (r GetTestByNameResponse) Status() string {",
+			"func (r GetTestByNameResponse) StatusCode() int {",
+			"func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {",
 
-	// Check the client method signatures:
-	assert.Contains(t, code, "type GetTestByNameParams struct {")
-	assert.Contains(t, code, "Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`")
-	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
-	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
-	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
+			// Check the client method signatures:
+			"type GetTestByNameParams struct {",
+			"Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`",
+			"func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {",
+			"func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {",
+			"DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`",
+		},
+	},
+	{
+		label: "map_time_to_string",
+		typeMapping: map[string]string{
+			"string:date-time": "string",
+		},
+		contains: []string{
+			"DeadSince  *string    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`",
+		},
+	},
+}
 
-	// Make sure the generated code is valid:
-	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", []byte(code))
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
+func TestExampleOpenAPICodeGeneration(t *testing.T) {
+	for _, tc := range codegenTestCases {
+		t.Run(tc.label, func(t *testing.T) {
+			// Input vars for code generation:
+			packageName := "testswagger"
+			opts := Configuration{
+				PackageName: packageName,
+				Generate: GenerateOptions{
+					EchoServer:   true,
+					Client:       true,
+					Models:       true,
+					EmbeddedSpec: true,
+				},
+				TypeMapping: tc.typeMapping,
+			}
+
+			// Get a spec from the test definition in this file:
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+			assert.NoError(t, err)
+
+			// Run our code generation:
+			code, err := Generate(swagger, opts)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, code)
+
+			// Check that we have valid (formattable) code:
+			_, err = format.Source([]byte(code))
+			assert.NoError(t, err)
+
+			// Check that the code contains all required snippets
+			for _, snippet := range tc.contains {
+				assert.Contains(t, code, snippet)
+			}
+
+			// Make sure the generated code is valid:
+			linter := new(lint.Linter)
+			problems, err := linter.Lint("test.gen.go", []byte(code))
+			assert.NoError(t, err)
+			assert.Len(t, problems, 0)
+		})
+	}
 }
 
 //go:embed test_spec.yaml

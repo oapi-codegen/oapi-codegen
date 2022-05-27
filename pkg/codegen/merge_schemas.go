@@ -9,20 +9,20 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, typeMapping map[string]string) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
-		return mergeSchemas_V1(allOf, path)
+		return mergeSchemas_V1(allOf, path, typeMapping)
 	}
-	return mergeSchemas(allOf, path)
+	return mergeSchemas(allOf, path, typeMapping)
 }
 
-func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemas(allOf []*openapi3.SchemaRef, path []string, typeMapping map[string]string) (Schema, error) {
 	n := len(allOf)
 
 	if n == 1 {
-		return GenerateGoSchema(allOf[0], path)
+		return GenerateGoSchema(allOf[0], path, typeMapping)
 	}
 
 	schema := *allOf[0].Value
@@ -34,7 +34,7 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path, typeMapping)
 }
 
 func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
