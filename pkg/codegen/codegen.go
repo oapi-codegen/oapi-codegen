@@ -294,8 +294,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		fmt.Println(goCode)
-		return "", fmt.Errorf("error formatting Go code: %w", err)
+		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
 	}
 	return string(outBytes), nil
 }
