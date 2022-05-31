@@ -35,13 +35,13 @@ const (
 	Second EnumInObjInArrayVal = "second"
 )
 
-// This schema name starts with a number
+// N5StartsWithNumber This schema name starts with a number
 type N5StartsWithNumber = map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
 type AnyType1 = interface{}
 
-// AnyType2 represents any type.
+// AnyType2 AnyType2 represents any type.
 //
 // This should be an interface{}
 type AnyType2 = interface{}
@@ -664,7 +664,7 @@ type EnsureEverythingIsReferencedResponse struct {
 	JSON200      *struct {
 		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
-		// AnyType2 represents any type.
+		// AnyType2 AnyType2 represents any type.
 		//
 		// This should be an interface{}
 		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
@@ -946,7 +946,7 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 		var dest struct {
 			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
-			// AnyType2 represents any type.
+			// AnyType2 AnyType2 represents any type.
 			//
 			// This should be an interface{}
 			AnyType2         *AnyType2         `json:"anyType2,omitempty"`

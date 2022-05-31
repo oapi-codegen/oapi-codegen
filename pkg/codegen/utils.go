@@ -652,6 +652,17 @@ func PathToTypeName(path []string) string {
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {
+	return stringToGoCommentWithPrefix(in, "")
+}
+
+// StringWithTypeNameToGoComment renders a possible multi-line string as a
+// valid Go-Comment, including the name of the type being referenced. Each line
+// is prefixed as a comment.
+func StringWithTypeNameToGoComment(in, typeName string) string {
+	return stringToGoCommentWithPrefix(in, typeName)
+}
+
+func stringToGoCommentWithPrefix(in, prefix string) string {
 	if len(in) == 0 || len(strings.TrimSpace(in)) == 0 { // ignore empty comment
 		return ""
 	}
@@ -662,8 +673,12 @@ func StringToGoComment(in string) string {
 
 	// Add comment to each line
 	var lines []string
-	for _, line := range strings.Split(in, "\n") {
-		lines = append(lines, fmt.Sprintf("// %s", line))
+	for i, line := range strings.Split(in, "\n") {
+		s := "//"
+		if i == 0 && len(prefix) > 0 {
+			s += " " + prefix
+		}
+		lines = append(lines, fmt.Sprintf("%s %s", s, line))
 	}
 	in = strings.Join(lines, "\n")
 

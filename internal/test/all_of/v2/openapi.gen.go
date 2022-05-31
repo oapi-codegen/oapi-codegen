@@ -22,7 +22,7 @@ type Person struct {
 	LastName           string `json:"LastName"`
 }
 
-// These are fields that specify a person. They are all optional, and
+// PersonProperties These are fields that specify a person. They are all optional, and
 // would be used by an `Edit` style API endpoint, where each is optional.
 type PersonProperties struct {
 	FirstName          *string `json:"FirstName,omitempty"`

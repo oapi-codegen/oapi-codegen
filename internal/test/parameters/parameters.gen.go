@@ -42,34 +42,34 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	// primitive
+	// P primitive
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// primitive
+	// Ep primitive
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// exploded array
+	// Ea exploded array
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// array
+	// A array
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// exploded object
+	// Eo exploded object
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// object
+	// O object
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// complex object
+	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// name starting with number
+	// N1s name starting with number
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
 type EnumParamsParams struct {
-	// Parameter with enum values
+	// EnumPathParam Parameter with enum values
 	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
 }
 
@@ -78,64 +78,64 @@ type EnumParamsParamsEnumPathParam int32
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	// primitive
+	// XPrimitive primitive
 	XPrimitive *int32 `json:"X-Primitive,omitempty"`
 
-	// primitive
+	// XPrimitiveExploded primitive
 	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
 
-	// exploded array
+	// XArrayExploded exploded array
 	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
 
-	// array
+	// XArray array
 	XArray *[]int32 `json:"X-Array,omitempty"`
 
-	// exploded object
+	// XObjectExploded exploded object
 	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
 
-	// object
+	// XObject object
 	XObject *Object `json:"X-Object,omitempty"`
 
-	// complex object
+	// XComplexObject complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 
-	// name starting with number
+	// N1StartingWithNumber name starting with number
 	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
-	// deep object
+	// DeepObj deep object
 	DeepObj ComplexObject `json:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	// exploded array
+	// Ea exploded array
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// array
+	// A array
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// exploded object
+	// Eo exploded object
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// object
+	// O object
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// exploded primitive
+	// Ep exploded primitive
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// primitive
+	// P primitive
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// primitive string
+	// Ps primitive string
 	Ps *string `form:"ps,omitempty" json:"ps,omitempty"`
 
-	// complex object
+	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// name starting with number
+	// N1s name starting with number
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 

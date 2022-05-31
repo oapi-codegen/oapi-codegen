@@ -89,7 +89,7 @@ const (
 	Eve   EnumParam3 = "eve"
 )
 
-// Has additional properties of type int
+// AdditionalPropertiesObject1 Has additional properties of type int
 type AdditionalPropertiesObject1 struct {
 	Id                   int            `json:"id"`
 	Name                 string         `json:"name"`
@@ -97,19 +97,19 @@ type AdditionalPropertiesObject1 struct {
 	AdditionalProperties map[string]int `json:"-"`
 }
 
-// Does not allow additional properties
+// AdditionalPropertiesObject2 Does not allow additional properties
 type AdditionalPropertiesObject2 struct {
 	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
 
-// Allows any additional property
+// AdditionalPropertiesObject3 Allows any additional property
 type AdditionalPropertiesObject3 struct {
 	Name                 string                 `json:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// Has anonymous field which has additional properties
+// AdditionalPropertiesObject4 Has anonymous field which has additional properties
 type AdditionalPropertiesObject4 struct {
 	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
 	Name                 string                            `json:"name"`
@@ -122,33 +122,33 @@ type AdditionalPropertiesObject4_Inner struct {
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// Has additional properties with schema for dictionaries
+// AdditionalPropertiesObject5 Has additional properties with schema for dictionaries
 type AdditionalPropertiesObject5 map[string]SchemaObject
 
-// Array of object with additional properties
+// AdditionalPropertiesObject6 Array of object with additional properties
 type AdditionalPropertiesObject6 = []map[string]SchemaObject
 
-// simple anyOf case
+// AnyOfObject1 simple anyOf case
 type AnyOfObject1 struct {
 	union json.RawMessage
 }
 
-// Conflicts with Enum2, enum values need to be prefixed with type
+// Enum1 Conflicts with Enum2, enum values need to be prefixed with type
 // name.
 type Enum1 string
 
-// Conflicts with Enum1, enum values need to be prefixed with type
+// Enum2 Conflicts with Enum1, enum values need to be prefixed with type
 // name.
 type Enum2 string
 
-// Enum values conflict with Enums above, need to be prefixed
+// Enum3 Enum values conflict with Enums above, need to be prefixed
 // with type name.
 type Enum3 string
 
-// No conflicts here, should have unmodified enums
+// Enum4 No conflicts here, should have unmodified enums
 type Enum4 string
 
-// Numerical enum
+// Enum5 Numerical enum
 type Enum5 int
 
 // EnumUnion defines model for EnumUnion.
@@ -157,7 +157,7 @@ type EnumUnion string
 // EnumUnion2 defines model for EnumUnion2.
 type EnumUnion2 string
 
-// Edge cases for enum names
+// FunnyValues Edge cases for enum names
 type FunnyValues string
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
@@ -167,12 +167,12 @@ type ObjectWithJsonField struct {
 	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
-// oneOf with references and no disciminator
+// OneOfObject1 oneOf with references and no disciminator
 type OneOfObject1 struct {
 	union json.RawMessage
 }
 
-// fixed properties, variable required - will compile, but not much sense
+// OneOfObject10 fixed properties, variable required - will compile, but not much sense
 type OneOfObject10 struct {
 	One   *string `json:"one,omitempty"`
 	Three *bool   `json:"three,omitempty"`
@@ -186,7 +186,7 @@ type OneOfObject100 = interface{}
 // OneOfObject101 defines model for .
 type OneOfObject101 = interface{}
 
-// additional properties of oneOf
+// OneOfObject11 additional properties of oneOf
 type OneOfObject11 map[string]OneOfObject11_AdditionalProperties
 
 // OneOfObject110 defines model for .
@@ -214,7 +214,7 @@ type OneOfObject120 = string
 // OneOfObject121 defines model for .
 type OneOfObject121 = float32
 
-// oneOf with inline elements
+// OneOfObject2 oneOf with inline elements
 type OneOfObject2 struct {
 	union json.RawMessage
 }
@@ -230,7 +230,7 @@ type OneOfObject21 = []float32
 // OneOfObject22 defines model for .
 type OneOfObject22 = bool
 
-// inline OneOf
+// OneOfObject3 inline OneOf
 type OneOfObject3 struct {
 	Union *OneOfObject3_Union `json:"union,omitempty"`
 }
@@ -240,23 +240,23 @@ type OneOfObject3_Union struct {
 	union json.RawMessage
 }
 
-// oneOf plus fixed type - custom marshaling/unmarshaling
+// OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshaling
 type OneOfObject4 struct {
 	FixedProperty *string `json:"fixedProperty,omitempty"`
 	union         json.RawMessage
 }
 
-// oneOf with disciminator but no mapping
+// OneOfObject5 oneOf with disciminator but no mapping
 type OneOfObject5 struct {
 	union json.RawMessage
 }
 
-// oneOf with discriminator and mapping
+// OneOfObject6 oneOf with discriminator and mapping
 type OneOfObject6 struct {
 	union json.RawMessage
 }
 
-// array of oneOf
+// OneOfObject7 array of oneOf
 type OneOfObject7 = []OneOfObject7_Item
 
 // OneOfObject7_Item defines model for OneOfObject7.Item.
@@ -264,13 +264,13 @@ type OneOfObject7_Item struct {
 	union json.RawMessage
 }
 
-// oneOf with fixed properties
+// OneOfObject8 oneOf with fixed properties
 type OneOfObject8 struct {
 	Fixed *string `json:"fixed,omitempty"`
 	union json.RawMessage
 }
 
-// oneOf with fixed descriminator
+// OneOfObject9 oneOf with fixed descriminator
 type OneOfObject9 struct {
 	Type  string `json:"type"`
 	union json.RawMessage
@@ -304,13 +304,13 @@ type OneOfVariant6 struct {
 	Values OneOfVariant2 `json:"values"`
 }
 
-// When a Schema is renamed, $ref should refer to the new name
+// ReferenceToRenameMe When a Schema is renamed, $ref should refer to the new name
 type ReferenceToRenameMe struct {
-	// This schema should be renamed via x-go-name when generating
+	// ToNewName This schema should be renamed via x-go-name when generating
 	NewName NewName `json:"ToNewName"`
 }
 
-// This schema should be renamed via x-go-name when generating
+// NewName This schema should be renamed via x-go-name when generating
 type NewName struct {
 	Prop1 string `json:"prop1"`
 	Prop2 string `json:"prop2"`
@@ -320,7 +320,7 @@ type NewName struct {
 type SchemaObject struct {
 	FirstName string `json:"firstName"`
 
-	// This property is required and readOnly, so the go model should have it as a pointer,
+	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
 	// as it will not be included when it is sent from client to server.
 	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
 	Role                  string  `json:"role"`
@@ -336,7 +336,7 @@ type EnumParam2 string
 // EnumParam3 defines model for EnumParam3.
 type EnumParam3 string
 
-// a parameter
+// RenamedParameterObject // a parameter
 type RenamedParameterObject string
 
 // RenamedResponseObject defines model for ResponseObject.
@@ -359,10 +359,10 @@ type EnsureEverythingIsReferencedTextBody = string
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
-	// This parameter has additional properties
+	// P1 This parameter has additional properties
 	P1 map[string]interface{} `json:"p1"`
 
-	// This parameter has an anonymous inner property which needs to be
+	// P2 This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
 		Inner map[string]string `json:"inner"`

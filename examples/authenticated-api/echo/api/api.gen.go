@@ -27,10 +27,10 @@ const (
 
 // Error defines model for Error.
 type Error struct {
-	// Error code
+	// Code Error code
 	Code int32 `json:"code"`
 
-	// Error message
+	// Message Error message
 	Message string `json:"message"`
 }
 
