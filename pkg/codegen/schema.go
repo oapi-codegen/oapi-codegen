@@ -27,6 +27,9 @@ type Schema struct {
 
 	Description string // The description of the element
 
+	UnionElements []string       // Possible elements of oneOf/anyOf union
+	Discriminator *Discriminator // Describes which value is stored in a union
+
 	// If this is set, the schema will declare a type via alias, eg,
 	// `type Foo = bool`. If this is not set, we will define this type via
 	// type definition `type Foo bool`
@@ -172,6 +175,22 @@ func (t *TypeDefinition) IsAlias() bool {
 	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
+type Discriminator struct {
+	// maps discriminator value to go type
+	Mapping map[string]string
+
+	// JSON property name that holds the discriminator
+	Property string
+}
+
+func (d *Discriminator) JSONTag() string {
+	return fmt.Sprintf("`json:\"%s\"`", d.Property)
+}
+
+func (d *Discriminator) PropertyName() string {
+	return SchemaNameToTypeName(d.Property)
+}
+
 func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
@@ -207,17 +226,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		OAPISchema:  schema,
 	}
 
-	// We can't support this in any meaningful way
-	if schema.AnyOf != nil {
-		outSchema.GoType = "interface{}"
-		return outSchema, nil
-	}
-	// We can't support this in any meaningful way
-	if schema.OneOf != nil {
-		outSchema.GoType = "interface{}"
-		return outSchema, nil
-	}
-
 	// AllOf is interesting, and useful. It's the union of a number of other
 	// schemas. A common usage is to create a union of an object with an ID,
 	// so that in a RESTful paradigm, the Create operation can return
@@ -247,7 +255,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	if t == "" || t == "object" {
 		var outType string
 
-		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) {
+		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) && schema.AnyOf == nil && schema.OneOf == nil {
 			// If the object has no properties or additional properties, we
 			// have some special cases for its type.
 			if t == "object" {
@@ -276,8 +284,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 				required := StringInArray(pName, schema.Required)
 
-				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
-					// If we have fields present which have additional properties,
+				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
+					// If we have fields present which have additional properties or union values,
 					// but are not a pre-defined type, we need to define a type
 					// for them, which will be based on the field names we followed
 					// to get to the type.
@@ -318,7 +326,34 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
+				if additionalSchema.HasAdditionalProperties || len(additionalSchema.UnionElements) != 0 {
+					// If we have fields present which have additional properties or union values,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeName := PathToTypeName(append(path, "AdditionalProperties"))
+
+					typeDef := TypeDefinition{
+						TypeName: typeName,
+						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
+						Schema:   additionalSchema,
+					}
+					additionalSchema.RefType = typeName
+					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
+				}
 				outSchema.AdditionalPropertiesType = &additionalSchema
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
+			}
+
+			if schema.AnyOf != nil {
+				if err := generateUnion(&outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
+					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
+				}
+			}
+			if schema.OneOf != nil {
+				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
+					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
+				}
 			}
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
@@ -365,7 +400,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
 			outSchema.RefType = typeName
 		}
-		//outSchema.RefType = typeName
+		// outSchema.RefType = typeName
 	} else {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		if err != nil {
@@ -388,6 +423,22 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		arrayType, err := GenerateGoSchema(schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
+		}
+		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
+			// If we have items which have additional properties or union values,
+			// but are not a pre-defined type, we need to define a type
+			// for them, which will be based on the field names we followed
+			// to get to the type.
+			typeName := PathToTypeName(append(path, "Item"))
+
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(append(path, "Item"), "."),
+				Schema:   arrayType,
+			}
+			arrayType.AdditionalTypes = append(arrayType.AdditionalTypes, typeDef)
+
+			arrayType.RefType = typeName
 		}
 		outSchema.ArrayType = &arrayType
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
@@ -564,6 +615,9 @@ func GenStructFromSchema(schema Schema) string {
 		objectParts = append(objectParts,
 			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
 	}
+	if len(schema.UnionElements) != 0 {
+		objectParts = append(objectParts, "union json.RawMessage")
+	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
 }
@@ -602,4 +656,41 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// For json, we go through the standard schema mechanism
 	return GenerateGoSchema(mt.Schema, path)
+}
+
+func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+	if discriminator != nil {
+		outSchema.Discriminator = &Discriminator{
+			Property: discriminator.PropertyName,
+			Mapping:  make(map[string]string),
+		}
+	}
+
+	refToGoTypeMap := make(map[string]string)
+	for i, element := range elements {
+		elementSchema, err := GenerateGoSchema(element, path)
+		if err != nil {
+			return err
+		}
+
+		if element.Ref == "" {
+			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+			elementSchema.GoType = td.TypeName
+		} else {
+			refToGoTypeMap[element.Ref] = elementSchema.GoType
+		}
+
+		if discriminator != nil {
+			for k, v := range discriminator.Mapping {
+				if v == element.Ref {
+					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
+					break
+				}
+			}
+		}
+		outSchema.UnionElements = append(outSchema.UnionElements, elementSchema.GoType)
+	}
+
+	return nil
 }

@@ -86,7 +86,7 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "spec", "skip-fmt", "skip-prune"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates")
@@ -258,7 +258,7 @@ func updateConfigFromFlags(cfg configuration) (configuration, error) {
 
 	if len(unsupportedFlags) > 0 {
 		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
-			"new config style, please use --old-style-config or update your configuration",
+			"new config style, please use -old-config-style or update your configuration",
 			strings.Join(unsupportedFlags, ", "))
 	}
 
@@ -321,6 +321,8 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 			opts.Generate.EchoServer = true
 		case "gin":
 			opts.Generate.GinServer = true
+		case "gorilla":
+			opts.Generate.GorillaServer = true
 		case "strict-server":
 			opts.Generate.Strict = true
 		case "types":

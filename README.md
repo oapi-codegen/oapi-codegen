@@ -35,8 +35,8 @@ write a lot of boilerplate code to perform all the marshalling and unmarshalling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go get github.com/deepmap/oapi-codegen/cmd/oapi-codegen
-    oapi-codegen petstore-expanded.yaml  > petstore.gen.go
+    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    oapi-codegen petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
 generated.
@@ -255,6 +255,9 @@ func SetupHandler() {
     http.Handle("/", Handler(&myApi))
 }
 ```
+
+Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
+
 </summary></details>
 
 #### Additional Properties in type definitions
@@ -314,6 +317,21 @@ There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
 all of them are tested via the `internal/test/components` schemas and tests. Please
 look through those tests for more usage examples.
+
+#### oneOf/anyOf/allOf support
+
+- `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`. 
+The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
+```yaml
+schema:
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+```
+- `allOf` is supported, by taking the union of all the fields in all the
+    component schemas. This is the most useful of these operations, and is
+    commonly used to merge objects with an identifier, as in the
+    `petstore-expanded` example.
 
 ## Generated Client Boilerplate
 
@@ -607,23 +625,6 @@ by comma separating them in the form `key1:value1,key2:value2`.
 
 This code is still young, and not complete, since we're filling it in as we
 need it. We've not yet implemented several things:
-
-- `oneOf`, `anyOf` are not supported with strong Go typing. This schema:
-
-        schema:
-          oneOf:
-            - $ref: '#/components/schemas/Cat'
-            - $ref: '#/components/schemas/Dog'
-
-    will result in a Go type of `interface{}`. It will be up to you
-    to validate whether it conforms to `Cat` and/or `Dog`, depending on the
-    keyword. It's not clear if we can do anything much better here given the
-    limits of Go typing.
-
-    `allOf` is supported, by taking the union of all the fields in all the
-    component schemas. This is the most useful of these operations, and is
-    commonly used to merge objects with an identifier, as in the
-    `petstore-expanded` example.
 
 - `patternProperties` isn't yet supported and will exit with an error. Pattern
  properties were defined in JSONSchema, and the `kin-openapi` Swagger object

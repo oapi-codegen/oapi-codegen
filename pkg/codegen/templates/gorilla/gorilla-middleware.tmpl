@@ -5,7 +5,7 @@ type ServerInterfaceWrapper struct {
     ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.Handler) http.Handler
+type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -20,17 +20,17 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
   {{if .IsPassThrough}}
-  {{$varName}} = chi.URLParam(r, "{{.ParamName}}")
+  {{$varName}} = mux.Vars(r)["{{.ParamName}}"]
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte(chi.URLParam(r, "{{.ParamName}}")), &{{$varName}})
+  err = json.Unmarshal([]byte(mux.Vars(r)["{{.ParamName}}"]), &{{$varName}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, chi.URLParam(r, "{{.ParamName}}"), &{{$varName}})
+  err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", mux.Vars(r)["{{.ParamName}}"], &{{$varName}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
     return
@@ -168,21 +168,21 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
   {{end}}
 
-  var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+  var handler = func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-  })
+}
 
   for _, middleware := range siw.HandlerMiddlewares {
     handler = middleware(handler)
   }
 
-  handler.ServeHTTP(w, r.WithContext(ctx))
+  handler(w, r.WithContext(ctx))
 }
 {{end}}
 
 type UnescapedCookieParamError struct {
     ParamName string
-  	Err error
+    Err error
 }
 
 func (e *UnescapedCookieParamError) Error() string {
@@ -248,3 +248,4 @@ type TooManyValuesForParamError struct {
 func (e *TooManyValuesForParamError) Error() string {
     return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
+
