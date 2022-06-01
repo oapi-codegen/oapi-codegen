@@ -273,6 +273,56 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// When we define an object, we want it to be a type definition,
 			// not a type alias, eg, "type Foo struct {...}"
 			outSchema.DefineViaAlias = false
+
+			// If the schema has additional properties, we need to special case
+			// a lot of behaviors.
+			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
+
+			// Until we have a concrete additional properties type, we default to
+			// any schema.
+			outSchema.AdditionalPropertiesType = &Schema{
+				GoType: "interface{}",
+			}
+
+			// If additional properties are defined, we will override the default
+			// above with the specific definition.
+			if schema.AdditionalProperties != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+				if err != nil {
+					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
+				}
+				if additionalSchema.HasAdditionalProperties || len(additionalSchema.UnionElements) != 0 {
+					// If we have fields present which have additional properties or union values,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeName := PathToTypeName(append(path, "AdditionalProperties"))
+
+					typeDef := TypeDefinition{
+						TypeName: typeName,
+						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
+						Schema:   additionalSchema,
+					}
+					additionalSchema.RefType = typeName
+					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
+				}
+				outSchema.AdditionalPropertiesType = &additionalSchema
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
+			}
+
+			// If the schema has no properties, and only additional properties, we will
+			// early-out here and generate a map[string]<schema> instead of an object
+			// that contains this map.
+			if len(schema.Properties) == 0 && schema.AnyOf == nil && schema.OneOf == nil {
+				// We have a dictionary here. Returns the goType to be just a map from
+				// string to the property type. HasAdditionalProperties=false means
+				// that we won't generate custom json.Marshaler and json.Unmarshaler functions,
+				// since we don't need them for a simple map.
+				outSchema.HasAdditionalProperties = false
+				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				return outSchema, nil
+			}
+
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
@@ -315,34 +365,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					ExtensionProps: &p.Value.ExtensionProps,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
-			}
-
-			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
-			outSchema.AdditionalPropertiesType = &Schema{
-				GoType: "interface{}",
-			}
-			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
-				if err != nil {
-					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
-				}
-				if additionalSchema.HasAdditionalProperties || len(additionalSchema.UnionElements) != 0 {
-					// If we have fields present which have additional properties or union values,
-					// but are not a pre-defined type, we need to define a type
-					// for them, which will be based on the field names we followed
-					// to get to the type.
-					typeName := PathToTypeName(append(path, "AdditionalProperties"))
-
-					typeDef := TypeDefinition{
-						TypeName: typeName,
-						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
-						Schema:   additionalSchema,
-					}
-					additionalSchema.RefType = typeName
-					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
-				}
-				outSchema.AdditionalPropertiesType = &additionalSchema
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
 			}
 
 			if schema.AnyOf != nil {
@@ -598,6 +620,14 @@ func GenFieldsFromProperties(props []Property) []string {
 	return fields
 }
 
+func additionalPropertiesType(schema Schema) string {
+	addPropsType := schema.AdditionalPropertiesType.GoType
+	if schema.AdditionalPropertiesType.RefType != "" {
+		addPropsType = schema.AdditionalPropertiesType.RefType
+	}
+	return addPropsType
+}
+
 func GenStructFromSchema(schema Schema) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
@@ -605,13 +635,9 @@ func GenStructFromSchema(schema Schema) string {
 	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
-		addPropsType := schema.AdditionalPropertiesType.GoType
-		if schema.AdditionalPropertiesType.RefType != "" {
-			addPropsType = schema.AdditionalPropertiesType.RefType
-		}
-
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
+				additionalPropertiesType(schema)))
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")
