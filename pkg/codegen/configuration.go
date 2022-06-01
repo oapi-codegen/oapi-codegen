@@ -5,13 +5,19 @@ import (
 	"reflect"
 )
 
+type AdditionalImport struct {
+	Alias   string `yaml:"alias,omitempty"`
+	Package string `yaml:"package"`
+}
+
 // Configuration defines code generation customizations
 type Configuration struct {
-	PackageName   string               `yaml:"package"` // PackageName to generate
-	Generate      GenerateOptions      `yaml:"generate,omitempty"`
-	Compatibility CompatibilityOptions `yaml:"compatibility,omitempty"`
-	OutputOptions OutputOptions        `yaml:"output-options,omitempty"`
-	ImportMapping map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
+	PackageName       string               `yaml:"package"` // PackageName to generate
+	Generate          GenerateOptions      `yaml:"generate,omitempty"`
+	Compatibility     CompatibilityOptions `yaml:"compatibility,omitempty"`
+	OutputOptions     OutputOptions        `yaml:"output-options,omitempty"`
+	ImportMapping     map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
+	AdditionalImports []AdditionalImport   `yaml:"additional-imports,omitempty"`
 }
 
 // GenerateOptions specifies which supported output formats to generate.

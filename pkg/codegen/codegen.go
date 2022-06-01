@@ -656,22 +656,24 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 	}
 
 	context := struct {
-		ExternalImports []string
-		PackageName     string
-		ModuleName      string
-		Version         string
+		ExternalImports   []string
+		PackageName       string
+		ModuleName        string
+		Version           string
+		AdditionalImports []AdditionalImport
 	}{
-		ExternalImports: externalImports,
-		PackageName:     packageName,
-		ModuleName:      modulePath,
-		Version:         moduleVersion,
+		ExternalImports:   externalImports,
+		PackageName:       packageName,
+		ModuleName:        modulePath,
+		Version:           moduleVersion,
+		AdditionalImports: globalState.options.AdditionalImports,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
 }
 
-// Generate all the glue code which provides the API for interacting with
-// additional properties and JSON-ification
+// GenerateAdditionalPropertyBoilerplate generates all the glue code which provides
+// the API for interacting with additional properties and JSON-ification
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 
