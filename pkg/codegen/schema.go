@@ -312,8 +312,10 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			// If the schema has no properties, and only additional properties, we will
 			// early-out here and generate a map[string]<schema> instead of an object
-			// that contains this map.
-			if len(schema.Properties) == 0 && schema.AnyOf == nil && schema.OneOf == nil {
+			// that contains this map. We skip over anyOf/oneOf here because they can
+			// introduce properties. allOf was handled above.
+			if !globalState.options.Compatibility.DisableFlattenAdditionalProperties &&
+				len(schema.Properties) == 0 && schema.AnyOf == nil && schema.OneOf == nil {
 				// We have a dictionary here. Returns the goType to be just a map from
 				// string to the property type. HasAdditionalProperties=false means
 				// that we won't generate custom json.Marshaler and json.Unmarshaler functions,
