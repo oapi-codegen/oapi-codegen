@@ -176,6 +176,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var gorillaServerOut string
+	if opts.Generate.GorillaServer {
+		gorillaServerOut, err = GenerateGorillaServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var clientOut string
 	if opts.Generate.Client {
 		clientOut, err = GenerateClient(t, ops)
@@ -256,6 +264,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.GorillaServer {
+		_, err = w.WriteString(gorillaServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
 	if opts.Generate.EmbeddedSpec {
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
@@ -279,8 +294,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		fmt.Println(goCode)
-		return "", fmt.Errorf("error formatting Go code: %w", err)
+		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
 	}
 	return string(outBytes), nil
 }
@@ -329,7 +343,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate}, "")
+	unionBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating union boilerplate: %w", err)
+	}
+
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate, unionBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -637,22 +656,24 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 	}
 
 	context := struct {
-		ExternalImports []string
-		PackageName     string
-		ModuleName      string
-		Version         string
+		ExternalImports   []string
+		PackageName       string
+		ModuleName        string
+		Version           string
+		AdditionalImports []AdditionalImport
 	}{
-		ExternalImports: externalImports,
-		PackageName:     packageName,
-		ModuleName:      modulePath,
-		Version:         moduleVersion,
+		ExternalImports:   externalImports,
+		PackageName:       packageName,
+		ModuleName:        modulePath,
+		Version:           moduleVersion,
+		AdditionalImports: globalState.options.AdditionalImports,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
 }
 
-// Generate all the glue code which provides the API for interacting with
-// additional properties and JSON-ification
+// GenerateAdditionalPropertyBoilerplate generates all the glue code which provides
+// the API for interacting with additional properties and JSON-ification
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 
@@ -677,6 +698,27 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 	}
 
 	return GenerateTemplates([]string{"additional-properties.tmpl"}, t, context)
+}
+
+func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var filteredTypes []TypeDefinition
+	for _, t := range typeDefs {
+		if len(t.Schema.UnionElements) != 0 {
+			filteredTypes = append(filteredTypes, t)
+		}
+	}
+
+	if len(filteredTypes) == 0 {
+		return "", nil
+	}
+
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	return GenerateTemplates([]string{"union.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the

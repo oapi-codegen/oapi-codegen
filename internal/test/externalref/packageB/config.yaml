@@ -1,9 +1,7 @@
-package: v1
+package: packageB
 generate:
   models: true
   embedded-spec: true
-compatibility:
-  old-merge-schemas: true
 output-options:
   skip-prune: true
-output: v1/openapi.gen.go
+output: externalref.gen.go

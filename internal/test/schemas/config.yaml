@@ -1,0 +1,7 @@
+package: schemas
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: schemas.gen.go

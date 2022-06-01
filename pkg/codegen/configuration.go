@@ -5,23 +5,30 @@ import (
 	"reflect"
 )
 
+type AdditionalImport struct {
+	Alias   string `yaml:"alias,omitempty"`
+	Package string `yaml:"package"`
+}
+
 // Configuration defines code generation customizations
 type Configuration struct {
-	PackageName   string               `yaml:"package"` // PackageName to generate
-	Generate      GenerateOptions      `yaml:"generate,omitempty"`
-	Compatibility CompatibilityOptions `yaml:"compatibility,omitempty"`
-	OutputOptions OutputOptions        `yaml:"output-options,omitempty"`
-	ImportMapping map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
+	PackageName       string               `yaml:"package"` // PackageName to generate
+	Generate          GenerateOptions      `yaml:"generate,omitempty"`
+	Compatibility     CompatibilityOptions `yaml:"compatibility,omitempty"`
+	OutputOptions     OutputOptions        `yaml:"output-options,omitempty"`
+	ImportMapping     map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
+	AdditionalImports []AdditionalImport   `yaml:"additional-imports,omitempty"`
 }
 
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
-	ChiServer    bool `yaml:"chi-server,omitempty"`    // ChiServer specifies whether to generate chi server boilerplate
-	EchoServer   bool `yaml:"echo-server,omitempty"`   // EchoServer specifies whether to generate echo server boilerplate
-	GinServer    bool `yaml:"gin-server,omitempty"`    // GinServer specifies whether to generate echo server boilerplate
-	Client       bool `yaml:"client,omitempty"`        // Client specifies whether to generate client boilerplate
-	Models       bool `yaml:"models,omitempty"`        // Models specifies whether to generate type definitions
-	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"` // Whether to embed the swagger spec in the generated code
+	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
+	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
+	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate echo server boilerplate
+	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
+	Client        bool `yaml:"client,omitempty"`         // Client specifies whether to generate client boilerplate
+	Models        bool `yaml:"models,omitempty"`         // Models specifies whether to generate type definitions
+	EmbeddedSpec  bool `yaml:"embedded-spec,omitempty"`  // Whether to embed the swagger spec in the generated code
 }
 
 // CompatibilityOptions specifies backward compatibility settings for the
@@ -33,19 +40,19 @@ type CompatibilityOptions struct {
 	// level. So, new behavior merges OpenAPI specs but generates different code
 	// than we have in the past. Set OldMergeSchemas to true for the old behavior.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/531
-	OldMergeSchemas bool `yaml:"old-merge-schemas"`
+	OldMergeSchemas bool `yaml:"old-merge-schemas,omitempty"`
 	// Enum values can generate conflicting typenames, so we've updated the
 	// code for enum generation to avoid these conflicts, but it will result
 	// in some enum types being renamed in existing code. Set OldEnumConflicts to true
 	// to revert to old behavior. Please see:
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
-	OldEnumConflicts bool `yaml:"old-enum-conflicts"`
+	OldEnumConflicts bool `yaml:"old-enum-conflicts,omitempty"`
 	// It was a mistake to generate a go type definition for every $ref in
 	// the OpenAPI schema. New behavior uses type aliases where possible, but
 	// this can generate code which breaks existing builds. Set OldAliasing to true
 	// for old behavior.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
-	OldAliasing bool `yaml:"old-aliasing"`
+	OldAliasing bool `yaml:"old-aliasing,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.

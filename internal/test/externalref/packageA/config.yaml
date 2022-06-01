@@ -1,0 +1,9 @@
+package: packageA
+generate:
+  models: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
+import-mapping:
+  ../packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+output: externalref.gen.go

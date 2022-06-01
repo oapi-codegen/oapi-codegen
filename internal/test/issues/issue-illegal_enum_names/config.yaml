@@ -1,0 +1,7 @@
+package: illegal_enum_names
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: issue.gen.go

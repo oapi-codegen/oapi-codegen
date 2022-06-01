@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api/models"
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
@@ -60,7 +61,7 @@ func TestPetStore(t *testing.T) {
 	// the stack except the well-tested HTTP system in Go, which there is no
 	// point for us to test.
 	tag := "TagOfSpot"
-	newPet := api.NewPet{
+	newPet := models.NewPet{
 		Name: "Spot",
 		Tag:  &tag,
 	}
@@ -70,7 +71,7 @@ func TestPetStore(t *testing.T) {
 
 	// We should have gotten a response from the server with the new pet. Make
 	// sure that its fields match.
-	var resultPet api.Pet
+	var resultPet models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet)
 	assert.NoError(t, err, "error unmarshaling response")
 	assert.Equal(t, newPet.Name, resultPet.Name)
@@ -81,7 +82,7 @@ func TestPetStore(t *testing.T) {
 
 	// Test the getter function.
 	result = testutil.NewRequest().Get(fmt.Sprintf("/pets/%d", petId)).WithAcceptJson().Go(t, e)
-	var resultPet2 api.Pet
+	var resultPet2 models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet2)
 	assert.NoError(t, err, "error getting pet")
 	assert.Equal(t, resultPet, resultPet2)
@@ -89,14 +90,14 @@ func TestPetStore(t *testing.T) {
 	// We should get a 404 on invalid ID
 	result = testutil.NewRequest().Get("/pets/27179095781").WithAcceptJson().Go(t, e)
 	assert.Equal(t, http.StatusNotFound, result.Code())
-	var petError api.Error
+	var petError models.Error
 	err = result.UnmarshalBodyToObject(&petError)
 	assert.NoError(t, err, "error getting response", err)
 	assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 	// Let's insert another pet for subsequent tests.
 	tag = "TagOfFido"
-	newPet = api.NewPet{
+	newPet = models.NewPet{
 		Name: "Fido",
 		Tag:  &tag,
 	}
@@ -112,7 +113,7 @@ func TestPetStore(t *testing.T) {
 	// Now, list all pets, we should have two
 	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
-	var petList []api.Pet
+	var petList []models.Pet
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
 	assert.Equal(t, 2, len(petList))
