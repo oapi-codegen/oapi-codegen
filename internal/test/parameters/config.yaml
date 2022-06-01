@@ -1,0 +1,7 @@
+package: parameters
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: parameters.gen.go

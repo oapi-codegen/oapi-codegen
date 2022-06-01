@@ -40,19 +40,19 @@ type CompatibilityOptions struct {
 	// level. So, new behavior merges OpenAPI specs but generates different code
 	// than we have in the past. Set OldMergeSchemas to true for the old behavior.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/531
-	OldMergeSchemas bool `yaml:"old-merge-schemas"`
+	OldMergeSchemas bool `yaml:"old-merge-schemas,omitempty"`
 	// Enum values can generate conflicting typenames, so we've updated the
 	// code for enum generation to avoid these conflicts, but it will result
 	// in some enum types being renamed in existing code. Set OldEnumConflicts to true
 	// to revert to old behavior. Please see:
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
-	OldEnumConflicts bool `yaml:"old-enum-conflicts"`
+	OldEnumConflicts bool `yaml:"old-enum-conflicts,omitempty"`
 	// It was a mistake to generate a go type definition for every $ref in
 	// the OpenAPI schema. New behavior uses type aliases where possible, but
 	// this can generate code which breaks existing builds. Set OldAliasing to true
 	// for old behavior.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
-	OldAliasing bool `yaml:"old-aliasing"`
+	OldAliasing bool `yaml:"old-aliasing,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.

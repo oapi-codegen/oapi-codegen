@@ -7,5 +7,4 @@ import-mapping:
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
 output: externalref.gen.go
 output-options:
-
   skip-prune: true

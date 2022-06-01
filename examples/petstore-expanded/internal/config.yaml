@@ -1,0 +1,5 @@
+package: petstore
+generate:
+  client: true
+  models: true
+output: ../petstore-client.gen.go
