@@ -323,12 +323,21 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	}
 	allTypes = append(allTypes, bodyTypes...)
 
-	paramTypesOut, err := GenerateTypesForOperations(t, ops)
+	// Go through all operations, and add their types to allTypes, so that we can
+	// scan all of them for enums. Operation definitions are handled differently
+	// from the rest, so let's keep track of enumTypes separately, which will contain
+	// all types needed to be scanned for enums, which includes those within operations.
+	enumTypes := allTypes
+	for _, op := range ops {
+		enumTypes = append(enumTypes, op.TypeDefinitions...)
+	}
+
+	operationsOut, err := GenerateTypesForOperations(t, ops)
 	if err != nil {
 		return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
 	}
 
-	enumsOut, err := GenerateEnums(t, allTypes)
+	enumsOut, err := GenerateEnums(t, enumTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
@@ -348,7 +357,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, paramTypesOut, allOfBoilerplate, unionBoilerplate}, "")
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate}, "")
 	return typeDefinitions, nil
 }
 

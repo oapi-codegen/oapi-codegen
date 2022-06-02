@@ -625,7 +625,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	return append(typeDefs, td)
 }
 
-// Generates code for all types produced
+// GenerateTypesForOperations generates code for all types produced within operations
 func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)

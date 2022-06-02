@@ -21,6 +21,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Defines values for EnumParamsParamsEnumPathParam.
+const (
+	N100 EnumParamsParamsEnumPathParam = 100
+	N200 EnumParamsParamsEnumPathParam = 200
+)
+
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
 	Id      int    `json:"Id"`
@@ -60,6 +66,15 @@ type GetCookieParams struct {
 	// name starting with number
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
+
+// EnumParamsParams defines parameters for EnumParams.
+type EnumParamsParams struct {
+	// Parameter with enum values
+	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
+}
+
+// EnumParamsParamsEnumPathParam defines parameters for EnumParams.
+type EnumParamsParamsEnumPathParam int32
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
@@ -203,6 +218,9 @@ type ClientInterface interface {
 	// GetCookie request
 	GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// EnumParams request
+	EnumParams(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetHeader request
 	GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -272,6 +290,18 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqE
 
 func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCookieRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) EnumParams(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnumParamsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -678,6 +708,53 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 			Value: cookieParam7,
 		}
 		req.AddCookie(cookie7)
+	}
+
+	return req, nil
+}
+
+// NewEnumParamsRequest generates requests for EnumParams
+func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/enums")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	queryValues := queryURL.Query()
+
+	if params.EnumPathParam != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "enumPathParam", runtime.ParamLocationQuery, *params.EnumPathParam); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
 	}
 
 	return req, nil
@@ -1565,6 +1642,9 @@ type ClientWithResponsesInterface interface {
 	// GetCookie request
 	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error)
 
+	// EnumParams request
+	EnumParamsWithResponse(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*EnumParamsResponse, error)
+
 	// GetHeader request
 	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error)
 
@@ -1656,6 +1736,27 @@ func (r GetCookieResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetCookieResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type EnumParamsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r EnumParamsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r EnumParamsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2058,6 +2159,15 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	return ParseGetCookieResponse(rsp)
 }
 
+// EnumParamsWithResponse request returning *EnumParamsResponse
+func (c *ClientWithResponses) EnumParamsWithResponse(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*EnumParamsResponse, error) {
+	rsp, err := c.EnumParams(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseEnumParamsResponse(rsp)
+}
+
 // GetHeaderWithResponse request returning *GetHeaderResponse
 func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error) {
 	rsp, err := c.GetHeader(ctx, params, reqEditors...)
@@ -2245,6 +2355,22 @@ func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
 	}
 
 	response := &GetCookieResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseEnumParamsResponse parses an HTTP response from a EnumParamsWithResponse call
+func ParseEnumParamsResponse(rsp *http.Response) (*EnumParamsResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &EnumParamsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -2549,6 +2675,9 @@ type ServerInterface interface {
 	// (GET /cookie)
 	GetCookie(ctx echo.Context, params GetCookieParams) error
 
+	// (GET /enums)
+	EnumParams(ctx echo.Context, params EnumParamsParams) error
+
 	// (GET /header)
 	GetHeader(ctx echo.Context, params GetHeaderParams) error
 
@@ -2727,6 +2856,24 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetCookie(ctx, params)
+	return err
+}
+
+// EnumParams converts echo context to params.
+func (w *ServerInterfaceWrapper) EnumParams(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params EnumParamsParams
+	// ------------- Optional query parameter "enumPathParam" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "enumPathParam", ctx.QueryParams(), &params.EnumPathParam)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter enumPathParam: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.EnumParams(ctx, params)
 	return err
 }
 
@@ -3226,6 +3373,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 	router.GET(baseURL+"/contentObject/:param", wrapper.GetContentObject)
 	router.GET(baseURL+"/cookie", wrapper.GetCookie)
+	router.GET(baseURL+"/enums", wrapper.EnumParams)
 	router.GET(baseURL+"/header", wrapper.GetHeader)
 	router.GET(baseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
 	router.GET(baseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
@@ -3250,25 +3398,26 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
