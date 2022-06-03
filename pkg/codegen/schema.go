@@ -266,6 +266,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// If we don't even have the object designator, we're a completely
 				// generic type.
 				outType = "interface{}"
+				outSchema.SkipOptionalPointer = true
 			}
 			outSchema.GoType = outType
 			outSchema.DefineViaAlias = true
