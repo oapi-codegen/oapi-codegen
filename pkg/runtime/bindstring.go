@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/google/uuid"
 )
 
 // This function takes a string, and attempts to assign it to the destination
@@ -84,6 +85,14 @@ func BindStringToObject(src string, dst interface{}) error {
 		val, err = strconv.ParseBool(src)
 		if err == nil {
 			v.SetBool(val)
+		}
+	case reflect.Array:
+		if dstUuid, ok := dst.(*uuid.UUID); ok {
+			err = dstUuid.Scan(src)
+		} else if dstUuid, ok := dst.(*types.UUID); ok {
+			err = dstUuid.Scan(src)
+		} else {
+			err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())
 		}
 	case reflect.Struct:
 		// if this is not of type Time or of type Date look to see if this is of type Binder.
