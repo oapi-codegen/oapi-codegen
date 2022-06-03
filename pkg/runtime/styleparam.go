@@ -62,6 +62,15 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 		t = v.Type()
 	}
 
+	// types.UUID is internally a byte array, thus primitiveToString doesn't support this type. So to enable
+	// the usage of UUID formated strings as parameters, we first convert the UUID to string and than handle it as
+	// normal string.
+	if t.ConvertibleTo(reflect.TypeOf(types.UUID{})) {
+		value = (v.Interface()).(types.UUID).String()
+		t = reflect.TypeOf(value)
+		v = reflect.ValueOf(value)
+	}
+
 	switch t.Kind() {
 	case reflect.Slice:
 		n := v.Len()

@@ -46,6 +46,8 @@ func TestStyleParam(t *testing.T) {
 	type AliasedDate types.Date
 	date := AliasedDate{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 
+	uuid := types.UUID{29, 187, 26, 155, 135, 17, 72, 196, 128, 137, 190, 20, 140, 9, 201, 56}
+
 	// ---------------------------- Simple Style -------------------------------
 
 	result, err := StyleParamWithLocation("simple", false, "id", ParamLocationQuery, primitive)
@@ -111,6 +113,22 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
+
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "1dbb1a9b-8711-48c4-8089-be148c09c938", result)
 
 	// ----------------------------- Label Style -------------------------------
 
@@ -178,6 +196,22 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
 	// ----------------------------- Matrix Style ------------------------------
 
 	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, primitive)
@@ -243,6 +277,22 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
+
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
 
 	// ------------------------------ Form Style -------------------------------
 	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, primitive)
@@ -325,6 +375,22 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, &uuid)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=1dbb1a9b-8711-48c4-8089-be148c09c938", result)
+
 	// ------------------------  spaceDelimited Style --------------------------
 
 	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, primitive)
@@ -375,6 +441,18 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &date)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &uuid)
 	assert.Error(t, err)
 
 	// -------------------------  pipeDelimited Style --------------------------
@@ -429,6 +507,18 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &uuid)
+	assert.Error(t, err)
+
 	// ---------------------------  deepObject Style ---------------------------
 	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
@@ -476,6 +566,18 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &date)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &uuid)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &uuid)
 	assert.Error(t, err)
 
 	// Misc tests
