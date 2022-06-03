@@ -214,6 +214,7 @@ type OperationDefinition struct {
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
+	Alias               bool                    // True if the path is an alias to another path
 	Spec                *openapi3.Operation
 }
 
@@ -381,7 +382,11 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 
 // OperationDefinitions returns all operations for a swagger definition.
 func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+
 	var operations []OperationDefinition
+
+	// Use a map of OperationID to OperationDefintion
+	operationsMap := make(map[string][]OperationDefinition)
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
@@ -473,9 +478,21 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
+			// If we have the same OperationId and same object, it is an alias
+			operationIDDefs, ok := operationsMap[opDef.OperationId]
+			if ok {
+				opDef.Alias = true
+				operationIDDefs = append(operationIDDefs, opDef)
+
+			} else {
+				operationIDDefs = []OperationDefinition{opDef}
+			}
+			operationsMap[opDef.OperationId] = operationIDDefs
+
 			operations = append(operations, opDef)
 		}
 	}
+
 	return operations, nil
 }
 

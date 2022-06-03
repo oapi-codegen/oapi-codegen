@@ -2,6 +2,10 @@
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
+{{- if .Alias}}
+// Alias for {{.OperationId}}
+{{else}}
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{end}}
 {{end}}
 }

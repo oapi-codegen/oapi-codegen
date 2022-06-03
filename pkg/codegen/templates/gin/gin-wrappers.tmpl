@@ -6,7 +6,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-{{range .}}{{$opid := .OperationId}}
+{{range .}}{{if not .Alias}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
@@ -171,4 +171,5 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
   siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
+{{end}}
 {{end}}

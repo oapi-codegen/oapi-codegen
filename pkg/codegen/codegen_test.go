@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -172,11 +173,18 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "func ParseGetTestByNameResponse(rsp *http.Response) (*GetTestByNameResponse, error) {")
 
 	// Check the client method signatures:
-	assert.Contains(t, code, "type GetTestByNameParams struct {")
+	assert.Equal(t, 1, strings.Count(code, "type GetTestByNameParams struct {"))
 	assert.Contains(t, code, "Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
+
+	// Check the server interface and implementations:
+	assert.Equal(t, 1, strings.Count(code, "GetTestByName(ctx echo.Context, name string, params GetTestByNameParams) error"), "Alias not properly handled (duplicated interface signature)")
+	assert.Equal(t, 1, strings.Count(code, "func (w *ServerInterfaceWrapper) GetTestByName(ctx echo.Context) error {"), "Alias not properly handled (duplicated interface implementation)")
+
+	// Check for alias post request body duplication
+	assert.Equal(t, 1, strings.Count(code, "type CreateNewCatJSONRequestBody CreateNewCatJSONBody"), "Alias not properly handled (duplicated request body type)")
 
 	// Make sure the generated code is valid:
 	linter := new(lint.Linter)

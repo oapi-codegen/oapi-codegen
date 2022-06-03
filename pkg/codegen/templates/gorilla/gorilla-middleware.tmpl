@@ -7,7 +7,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-{{range .}}{{$opid := .OperationId}}
+{{range .}}{{if not .Alias}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
@@ -179,6 +179,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   handler(w, r.WithContext(ctx))
 }
 {{end}}
+{{end}}
 
 type UnescapedCookieParamError struct {
     ParamName string
@@ -248,4 +249,3 @@ type TooManyValuesForParamError struct {
 func (e *TooManyValuesForParamError) Error() string {
     return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
-

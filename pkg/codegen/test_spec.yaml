@@ -10,6 +10,9 @@ servers:
   - url: http://test.oapi-codegen.com/v2
 
 paths:
+  /test/alias/{name}:
+    $ref: "#/paths//test/{name}"
+
   /test/{name}:
     get:
       tags:
@@ -56,6 +59,9 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /kat:
+    $ref: "#/paths//cat"
+
   /cat:
     get:
       tags:
@@ -87,6 +93,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    post:
+      tags:
+        - cat
+      summary: Create cat
+      operationId: createNewCat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: "The cat"
+              properties:
+                name:
+                  type: string
 
 components:
   schemas:
