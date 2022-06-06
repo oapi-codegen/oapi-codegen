@@ -10,12 +10,12 @@ import (
 // commas and colons. We will allow escaping those using double quotes, so
 // when passing in "key1":"value1", we will not look inside the quoted sections.
 func ParseCommandlineMap(src string) (map[string]string, error) {
-	result := make(map[string]string)
 	tuples := splitString(src, ',')
+	result := make(map[string]string, len(tuples))
 	for _, t := range tuples {
 		kv := splitString(t, ':')
 		if len(kv) != 2 {
-			return nil, fmt.Errorf("expected key:value, got :%s", t)
+			return nil, fmt.Errorf("expected key:value, got: %s", t)
 		}
 		key := strings.TrimLeft(kv[0], `"`)
 		key = strings.TrimRight(key, `"`)
@@ -54,7 +54,7 @@ func splitString(s string, sep rune) []string {
 	const escapeChar rune = '"'
 
 	var parts []string
-	var part string
+	var part strings.Builder
 	inQuotes := false
 
 	for _, c := range s {
@@ -69,11 +69,11 @@ func splitString(s string, sep rune) []string {
 		// If we've gotten the separator rune, consider the previous part
 		// complete, but only if we're outside of quoted sections
 		if c == sep && !inQuotes {
-			parts = append(parts, part)
-			part = ""
+			parts = append(parts, part.String())
+			part.Reset()
 			continue
 		}
-		part = part + string(c)
+		part.WriteString(string(c))
 	}
-	return append(parts, part)
+	return append(parts, part.String())
 }
