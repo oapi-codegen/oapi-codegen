@@ -589,8 +589,9 @@ output:
   externalref.gen.go
 package: externalref
 generate:
-  - types
-  - skip-prune
+  models: true
+output-options:
+  skip-prune: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
