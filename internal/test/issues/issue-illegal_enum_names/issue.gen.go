@@ -23,6 +23,7 @@ import (
 // Defines values for Bar.
 const (
 	BarBar     Bar = "Bar"
+	BarEmpty   Bar = ""
 	BarFoo     Bar = "Foo"
 	BarFoo1    Bar = " Foo"
 	BarFoo2    Bar = " Foo "
@@ -313,10 +314,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 var swaggerSpec = []string{
 
 	"H4sIAAAAAAAC/0xQQU4DMQz8SjVwDNml3HLkUMQbEKqirbcN6tpRYpCqKn9HzkIhl5kkHtszV0yyZGFi",
-	"rQhX1OlES+z0ORYD4s8F4Q07Ebj+6IxvbuxhZY//CzbrxWADh/1OZG81eHfQSyYEVC2Jj2itOSSexWZp",
-	"0rP9ee/h8EWlJmEEjH70I5qDZOKYEwKe/Oi3cMhRT33dYZbe40hqIJlK1CT8ekDAC+m6UaGahSt1yXYc",
-	"DSZhJe6qmPM5TV03fFSb/RuJsaS0dOF9oRkBd8NfeMNPcoMF0G4uYynxspo8UJ1KyrpaMoutn+8AAAD/",
-	"/y6OlsyDAQAA",
+	"rQhX1OlES+z0ORYD4s8F4Q1w2InA9ffONzf2sLLH/wWb9WKwgcN+J7K3Grw76CUTAqqWxEe01hwSz2Lj",
+	"NOnZ/rz3cPiiUpMwAkY/+hHNQTJxzAkBT370WzjkqKe+8TBL73EkNZBMJWoSfj0g4IV03ahQzcKVumQ7",
+	"jgaTsBJ3Vcz5nKauGz6qzf5NxVhSWrrwvtCMgLvhL7/hJ7zBAmg3l7GUeFlNHqhOJWVdLZnF1s93AAAA",
+	"//9U8KAOhgEAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
