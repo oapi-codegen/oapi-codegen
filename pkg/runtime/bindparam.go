@@ -279,10 +279,8 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // the Content parameter form.
 func BindQueryParameter(style string, explode bool, required bool, paramName string,
 	queryParams url.Values, dest interface{}) error {
-
 	// dv = destination value.
 	dv := reflect.Indirect(reflect.ValueOf(dest))
-
 	// intermediate value form which is either dv or dv dereferenced.
 	v := dv
 

@@ -169,4 +169,11 @@ func TestBindStringToObject(t *testing.T) {
 	var dstEmbeddedMockBinder EmbeddedMockBinder
 	assert.NoError(t, BindStringToObject(dateString, &dstEmbeddedMockBinder))
 	assert.EqualValues(t, dateString, dstEmbeddedMockBinder.Time.Format("2006-01-02"))
+
+	// Checks UUID binding
+	uuidString := "bbca1470-5e1f-4c64-ba99-fa7a6d2687b0"
+	var dstUUID types.UUID
+	assert.NoError(t, BindStringToObject(uuidString, &dstUUID))
+	assert.Equal(t, dstUUID.String(), uuidString)
+
 }
