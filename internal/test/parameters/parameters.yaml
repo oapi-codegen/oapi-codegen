@@ -486,7 +486,21 @@ paths:
       responses:
         default:
           $ref: "#/components/responses/SimpleResponse"
-
+  /enums:
+    get:
+      operationId: enumParams
+      parameters:
+       - name: enumPathParam
+         description: Parameter with enum values
+         in: query
+         required: false
+         schema:
+           type: integer
+           format: int32
+           enum: [100, 200]
+      responses:
+        204:
+          description: no content
 components:
   schemas:
     Object:

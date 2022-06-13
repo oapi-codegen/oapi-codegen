@@ -54,6 +54,9 @@ type CompatibilityOptions struct {
 	// for old behavior.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
 	OldAliasing bool `yaml:"old-aliasing,omitempty"`
+	// When an object contains no members, and only an additionalProperties specification,
+	// it is flattened to a map. Set
+	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.

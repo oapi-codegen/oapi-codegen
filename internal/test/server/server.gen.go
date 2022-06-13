@@ -13,6 +13,12 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+// Defines values for GetWithContentTypeParamsContentType.
+const (
+	Json GetWithContentTypeParamsContentType = "json"
+	Text GetWithContentTypeParamsContentType = "text"
+)
+
 // EveryTypeOptional defines model for EveryTypeOptional.
 type EveryTypeOptional struct {
 	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`
