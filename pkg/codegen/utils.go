@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -21,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unsafe"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -89,13 +91,42 @@ func ToCamelCase(str string) string {
 // This function returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
-	keys := make([]string, len(dict))
 	i := 0
-	for key := range dict {
-		keys[i] = key
+	keys := make([]string, len(dict))
+	orders := make(map[string]int64, len(dict))
+
+	for key, v := range dict {
+		keys[i], orders[key] = key, int64(len(dict))
 		i++
+
+		if v == nil || v.Value == nil {
+			continue
+		}
+
+		ext := v.Value.Extensions["x-order"]
+		if ext == nil {
+			continue
+		}
+
+		var xOrder string
+		if b, ok := ext.(json.RawMessage); ok {
+			xOrder = *(*string)(unsafe.Pointer(&b))
+		} else { // not sure if this is possible.
+			xOrder = fmt.Sprint(ext)
+		}
+
+		order, err := strconv.ParseInt(xOrder, 10, 0)
+		if err == nil {
+			orders[key] = order
+		}
 	}
-	sort.Strings(keys)
+
+	sort.Slice(keys, func(i, j int) bool {
+		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
+			return i < j
+		}
+		return keys[i] < keys[j]
+	})
 	return keys
 }
 

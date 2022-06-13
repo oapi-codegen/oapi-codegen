@@ -14,6 +14,8 @@
 package codegen
 
 import (
+	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -39,6 +41,32 @@ func TestSortedSchemaKeys(t *testing.T) {
 	}
 
 	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedSchemaKeysWithXOrder(t *testing.T) {
+	withOrder := func(i int) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				ExtensionProps: openapi3.ExtensionProps{
+					Extensions: map[string]interface{}{"x-order": json.RawMessage(strconv.Itoa(i))},
+				},
+			},
+		}
+	}
+	dict := map[string]*openapi3.SchemaRef{
+		"minusHundredth": withOrder(-100),
+		"minusTenth":     withOrder(-10),
+		"zero":           withOrder(0),
+		"first":          withOrder(1),
+		"middleA":        nil,
+		"middleB":        nil,
+		"middleC":        nil,
+		"last":           withOrder(100),
+	}
+
+	expected := []string{"minusHundredth", "minusTenth", "zero", "first", "middleA", "middleB", "middleC", "last"}
 
 	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
 }
