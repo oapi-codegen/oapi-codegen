@@ -52,3 +52,14 @@ func TestDate_Stringer(t *testing.T) {
 		assert.Equal(t, "2019-04-01", fmt.Sprintf("%v", d))
 	})
 }
+
+func TestDate_UnmarshalText(t *testing.T) {
+	testDate := time.Date(2022, 6, 14, 0, 0, 0, 0, time.UTC)
+	value := []byte("2022-06-14")
+
+	date := Date{}
+	err := date.UnmarshalText(value)
+
+	assert.NoError(t, err)
+	assert.Equal(t, testDate, date.Time)
+}
