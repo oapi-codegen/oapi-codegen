@@ -585,15 +585,16 @@ file via the `--config` option. Please see the test under
 for an example. The structure of the file is as follows:
     
 ```yaml
-output:
-  externalref.gen.go
 package: externalref
 generate:
-  - types
-  - skip-prune
+  models: true
+  embedded-spec: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+output: externalref.gen.go
+output-options:
+  skip-prune: true
 ```
 
 Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
