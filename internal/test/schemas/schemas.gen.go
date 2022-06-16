@@ -1397,6 +1397,59 @@ type ServerInterface interface {
 	Issue975(ctx echo.Context) error
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
+// (GET /ensure-everything-is-referenced)
+func (_ Unimplemented) EnsureEverythingIsReferenced(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/1051)
+func (_ Unimplemented) Issue1051(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/127)
+func (_ Unimplemented) Issue127(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/185)
+func (_ Unimplemented) Issue185(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/209/${str})
+func (_ Unimplemented) Issue209(ctx echo.Context, str StringInPath) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/30/{fallthrough})
+func (_ Unimplemented) Issue30(ctx echo.Context, pFallthrough string) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/375)
+func (_ Unimplemented) GetIssues375(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/41/{1param})
+func (_ Unimplemented) Issue41(ctx echo.Context, n1param N5StartsWithNumber) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/9)
+func (_ Unimplemented) Issue9(ctx echo.Context, params Issue9Params) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /issues/975)
+func (_ Unimplemented) Issue975(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

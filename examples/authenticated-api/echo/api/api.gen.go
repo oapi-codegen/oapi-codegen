@@ -416,6 +416,19 @@ type ServerInterface interface {
 	AddThing(ctx echo.Context) error
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
+// (GET /things)
+func (_ Unimplemented) ListThings(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /things)
+func (_ Unimplemented) AddThing(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

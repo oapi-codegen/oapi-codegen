@@ -5,3 +5,12 @@ type ServerInterface interface {
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
+
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct {}
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+func (_ Unimplemented) {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
+    return ctx.NoContent(http.StatusNotImplemented)
+}
+{{end}}

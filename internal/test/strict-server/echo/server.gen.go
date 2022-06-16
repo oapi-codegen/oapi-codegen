@@ -60,6 +60,64 @@ type ServerInterface interface {
 	UnionExample(ctx echo.Context) error
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
+// (POST /json)
+func (_ Unimplemented) JSONExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /multipart)
+func (_ Unimplemented) MultipartExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /multiple)
+func (_ Unimplemented) MultipleRequestAndResponseTypes(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /reserved-go-keyword-parameters/{type})
+func (_ Unimplemented) ReservedGoKeywordParameters(ctx echo.Context, pType string) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /reusable-responses)
+func (_ Unimplemented) ReusableResponses(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /text)
+func (_ Unimplemented) TextExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /unknown)
+func (_ Unimplemented) UnknownExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /unspecified-content-type)
+func (_ Unimplemented) UnspecifiedContentType(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /urlencoded)
+func (_ Unimplemented) URLEncodedExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /with-headers)
+func (_ Unimplemented) HeadersExample(ctx echo.Context, params HeadersExampleParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (POST /with-union)
+func (_ Unimplemented) UnionExample(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface

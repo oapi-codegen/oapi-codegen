@@ -429,6 +429,21 @@ type ServerInterface interface {
 	ValidatePets(ctx echo.Context) error
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
+// Get pet given identifier.
+// (GET /pets/{petId})
+func (_ Unimplemented) GetPet(ctx echo.Context, petId string) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// Validate pets
+// (POST /pets:validate)
+func (_ Unimplemented) ValidatePets(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
