@@ -152,7 +152,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 		typeDefinitionsImports, err := GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
-			return "", fmt.Errorf("error getting type definition imports")
+			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
 
 		for k, v := range typeDefinitionsImports {
