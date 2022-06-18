@@ -784,7 +784,12 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 		return nil, err
 	}
 
-	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports} {
+	responsesImports, err := GetResponsesImports(swagger.Components.Responses)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports} {
 		for k, v := range imprts {
 			res[k] = v
 		}
@@ -793,6 +798,7 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 }
 
 func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]goImport, error) {
+	var err error
 	res := map[string]goImport{}
 	excludeSchemasMap := make(map[string]bool)
 	for _, schema := range excludeSchemas {
@@ -808,20 +814,17 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 			continue
 		}
 
-		schemaImports, err := GetImportsFromSchema(schema.Properties)
+		res, err = GetImportsFromSchema(schema.Properties)
 		if err != nil {
 			return nil, err
-		}
-
-		for k, v := range schemaImports {
-			res[k] = v
 		}
 	}
 	return res, nil
 }
 
 func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]goImport, error) {
-	res := map[string]goImport{}
+	var res map[string]goImport
+	var err error
 	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
 		response := requestBodyRef.Value
@@ -832,13 +835,31 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 				continue
 			}
 
-			schemaImports, err := GetImportsFromSchema(schema.Value.Properties)
+			res, err = GetImportsFromSchema(schema.Value.Properties)
 			if err != nil {
 				return nil, err
 			}
+		}
+	}
+	return res, nil
+}
 
-			for k, v := range schemaImports {
-				res[k] = v
+func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string]goImport, error) {
+	var res map[string]goImport
+	var err error
+	for _, responseName := range SortedResponsesKeys(responses) {
+		responseOrRef := responses[responseName]
+		response := responseOrRef.Value
+		jsonResponse, found := response.Content["application/json"]
+		if found {
+			schema := jsonResponse.Schema
+			if schema == nil || schema.Value == nil || schema.Value.Properties == nil {
+				continue
+			}
+
+			res, err = GetImportsFromSchema(schema.Value.Properties)
+			if err != nil {
+				return nil, err
 			}
 		}
 	}
