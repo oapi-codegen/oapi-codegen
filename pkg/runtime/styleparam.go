@@ -14,6 +14,7 @@
 package runtime
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"net/url"
@@ -60,6 +61,25 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 		}
 		v = reflect.Indirect(v)
 		t = v.Type()
+	}
+
+	// If the value implements encoding.TextMarshaler we use it for marshaling
+	// https://github.com/deepmap/oapi-codegen/issues/504
+	if tu, ok := value.(encoding.TextMarshaler); ok {
+		t := reflect.Indirect(reflect.ValueOf(value)).Type()
+		convertableToTime := t.ConvertibleTo(reflect.TypeOf(time.Time{}))
+		convertableToDate := t.ConvertibleTo(reflect.TypeOf(types.Date{}))
+
+		// Since both time.Time and types.Date implement encoding.TextMarshaler
+		// we should avoid calling theirs MarshalText()
+		if !convertableToTime && !convertableToDate {
+			b, err := tu.MarshalText()
+			if err != nil {
+				return "", fmt.Errorf("error marshaling '%s' as text: %s", value, err)
+			}
+
+			return stylePrimitive(style, explode, paramName, paramLocation, string(b))
+		}
 	}
 
 	switch t.Kind() {
