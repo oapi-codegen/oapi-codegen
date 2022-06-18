@@ -773,11 +773,23 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 }
 
 func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
+	res := map[string]goImport{}
 	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
 	if err != nil {
 		return nil, err
 	}
-	return schemaImports, nil
+
+	reqBodiesImports, err := GetRequestBodiesImports(swagger.Components.RequestBodies)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports} {
+		for k, v := range imprts {
+			res[k] = v
+		}
+	}
+	return res, nil
 }
 
 func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]goImport, error) {
@@ -792,7 +804,7 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 		}
 		schema := schemas[schemaName].Value
 
-		if schema.Properties == nil {
+		if schema == nil || schema.Properties == nil {
 			continue
 		}
 
@@ -803,6 +815,31 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 
 		for k, v := range schemaImports {
 			res[k] = v
+		}
+	}
+	return res, nil
+}
+
+func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+		requestBodyRef := bodies[requestBodyName]
+		response := requestBodyRef.Value
+		jsonBody, found := response.Content["application/json"]
+		if found {
+			schema := jsonBody.Schema
+			if schema == nil || schema.Value == nil || schema.Value.Properties == nil {
+				continue
+			}
+
+			schemaImports, err := GetImportsFromSchema(schema.Value.Properties)
+			if err != nil {
+				return nil, err
+			}
+
+			for k, v := range schemaImports {
+				res[k] = v
+			}
 		}
 	}
 	return res, nil

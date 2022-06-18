@@ -813,6 +813,5 @@ func GetImportsFromSchema(dict map[string]*openapi3.SchemaRef) (map[string]goImp
 			continue
 		}
 	}
-
 	return res, nil
 }
