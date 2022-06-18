@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -789,4 +790,29 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+func GetImportsFromSchema(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	for _, v := range dict {
+		if v == nil {
+			continue
+		}
+		goTypeImportExt := v.Value.Extensions["x-go-type-import"]
+		if goTypeImportExt == nil {
+			continue
+		}
+
+		if raw, ok := goTypeImportExt.(json.RawMessage); ok {
+			gi := goImport{}
+			if err := json.Unmarshal(raw, &gi); err != nil {
+				return nil, err
+			}
+			res[gi.Name+":"+gi.Path] = gi
+		} else {
+			continue
+		}
+	}
+
+	return res, nil
 }

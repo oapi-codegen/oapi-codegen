@@ -150,6 +150,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
 
+		typeDefinitionsImports, err := GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
+		if err != nil {
+			return "", fmt.Errorf("error getting type definition imports")
+		}
+
+		for k, v := range typeDefinitionsImports {
+			importMapping[k] = v
+		}
 	}
 
 	var echoServerOut string
@@ -762,4 +770,40 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 		}
 		return nil
 	})
+}
+
+func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
+	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
+	if err != nil {
+		return nil, err
+	}
+	return schemaImports, nil
+}
+
+func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	excludeSchemasMap := make(map[string]bool)
+	for _, schema := range excludeSchemas {
+		excludeSchemasMap[schema] = true
+	}
+	for _, schemaName := range SortedSchemaKeys(schemas) {
+		if _, ok := excludeSchemasMap[schemaName]; ok {
+			continue
+		}
+		schema := schemas[schemaName].Value
+
+		if schema.Properties == nil {
+			continue
+		}
+
+		schemaImports, err := GetImportsFromSchema(schema.Properties)
+		if err != nil {
+			return nil, err
+		}
+
+		for k, v := range schemaImports {
+			res[k] = v
+		}
+	}
+	return res, nil
 }
