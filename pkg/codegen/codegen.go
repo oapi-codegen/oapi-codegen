@@ -814,7 +814,7 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 			continue
 		}
 
-		res, err = GetImportsFromSchema(schema.Properties)
+		res, err = GetImports(schema.Properties)
 		if err != nil {
 			return nil, err
 		}
@@ -835,7 +835,7 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 				continue
 			}
 
-			res, err = GetImportsFromSchema(schema.Value.Properties)
+			res, err = GetImports(schema.Value.Properties)
 			if err != nil {
 				return nil, err
 			}
@@ -857,7 +857,7 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 				continue
 			}
 
-			res, err = GetImportsFromSchema(schema.Value.Properties)
+			res, err = GetImports(schema.Value.Properties)
 			if err != nil {
 				return nil, err
 			}

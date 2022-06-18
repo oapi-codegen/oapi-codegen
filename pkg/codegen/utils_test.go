@@ -378,7 +378,7 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
-func TestGetImportsFromSchemaKeys(t *testing.T) {
+func TestGetImports(t *testing.T) {
 	schemas := map[string]*openapi3.SchemaRef{
 		"age": {
 			Value: &openapi3.Schema{
@@ -408,7 +408,7 @@ func TestGetImportsFromSchemaKeys(t *testing.T) {
 		},
 	}
 
-	res, err := GetImportsFromSchema(schemas)
+	res, err := GetImports(schemas)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)

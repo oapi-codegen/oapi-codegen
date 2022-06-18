@@ -792,7 +792,7 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	return "", nil
 }
 
-func GetImportsFromSchema(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
+func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, v := range dict {
 		if v == nil {
