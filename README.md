@@ -536,28 +536,55 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 - `x-go-type-import`: adds extra Go imports to your generated code. It can help you, when you want to
    choose your own import package for `x-go-type`.
 
-    ```yaml
+  ```yaml
     schemas:
       Pet:
         properties:
           age:
             x-go-type: uuid.UUID
             x-go-type-import:
-              name: uuid
+              name: myuuid
               path: github.com/google/uuid
-    ```
+  ```
   After code generation you will get this:
   ```go
     import (
         ...
-        uuid "github.com/google/uuid"
+        myuuid "github.com/google/uuid"
     )
     
   //Pet defines model for Pet.
     type Pet struct {
-        Age *hello.UUID `json:"age,omitempty"`
+        Age *myuuid.UUID `json:"age,omitempty"`
     }
 
+  ```
+  `name` is an optional parameter. Example without name:
+
+  ```yaml
+  components:
+  schemas:
+    Pet:
+      properties:
+        age:
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+      required:
+        - age
+  ```
+
+  After code generation you will get this result:
+
+  ```go
+  import (
+	  "github.com/google/uuid"
+  )
+
+  // Pet defines model for Pet.
+  type Pet struct {
+	  Age uuid.UUID `json:"age"`
+  }
   ```
 
 
