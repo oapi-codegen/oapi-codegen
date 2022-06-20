@@ -217,10 +217,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	w := bufio.NewWriter(&buf)
 
 	externalImports := importMapping.GoImports()
-	if xGoTypeImports != nil {
-		for _, v := range xGoTypeImports {
-			externalImports = append(externalImports, v.String())
-		}
+	for _, v := range xGoTypeImports {
+		externalImports = append(externalImports, v.String())
 	}
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
