@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -383,9 +384,14 @@ func TestGetImports(t *testing.T) {
 		"age": {
 			Value: &openapi3.Schema{
 				ExtensionProps: openapi3.ExtensionProps{
-					Extensions: map[string]interface{}{"x-go-type-import": json.RawMessage(
-						`{"name": "hello", "path": "github.com/google/uuid"}`,
-					)},
+					Extensions: map[string]interface{}{
+						"x-go-type-import": json.RawMessage(
+							`{"name": "hello", "path": "github.com/google/uuid"}`,
+						),
+						"x-go-type": json.RawMessage(
+							"hello.UUID",
+						),
+					},
 				},
 			},
 		},
@@ -402,7 +408,7 @@ func TestGetImports(t *testing.T) {
 	}
 
 	expected := map[string]goImport{
-		"hello:github.com/google/uuid": {
+		fmt.Sprintf("%s %q", "hello", "github.com/google/uuid"): {
 			Name: "hello",
 			Path: "github.com/google/uuid",
 		},
