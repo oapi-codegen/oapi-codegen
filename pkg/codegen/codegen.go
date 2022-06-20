@@ -139,6 +139,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	var typeDefinitions, constantDefinitions string
+	var xGoTypeImports map[string]goImport
 	if opts.Generate.Models {
 		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
@@ -150,13 +151,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
 
-		typeDefinitionsImports, err := GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
+		xGoTypeImports, err = GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
-		}
-
-		for k, v := range typeDefinitionsImports {
-			importMapping[k] = v
 		}
 	}
 
@@ -220,6 +217,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	w := bufio.NewWriter(&buf)
 
 	externalImports := importMapping.GoImports()
+	if xGoTypeImports != nil {
+		for _, v := range xGoTypeImports {
+			externalImports = append(externalImports, v.String())
+		}
+	}
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
