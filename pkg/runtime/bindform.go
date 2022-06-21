@@ -22,6 +22,15 @@ type RequestBodyEncoding struct {
 	Explode     *bool
 }
 
+func BindMultipart(ptr interface{}, reader multipart.Reader) error {
+	const defaultMemory = 32 << 20
+	form, err := reader.ReadForm(defaultMemory)
+	if err != nil {
+		return err
+	}
+	return BindForm(ptr, form.Value, form.File, nil)
+}
+
 func BindForm(ptr interface{}, form map[string][]string, files map[string][]*multipart.FileHeader, encodings map[string]RequestBodyEncoding) error {
 	ptrVal := reflect.Indirect(reflect.ValueOf(ptr))
 	if ptrVal.Kind() != reflect.Struct {
@@ -158,8 +167,8 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 		for i := 0; i < v.NumField(); i++ {
 			field := v.Type().Field(i)
 			tag := field.Tag.Get(tagName)
-			if field.Name == "AdditionalProperties" && tag == "-" {
-				additionalPropertiesHasData, err := bindAdditionalProperties(v.Field(i), form, files, name)
+			if field.Name == "AdditionalProperties" && field.Type.Kind() == reflect.Map && tag == "-" {
+				additionalPropertiesHasData, err := bindAdditionalProperties(v.Field(i), v, form, files, name)
 				if err != nil {
 					return false, err
 				}
@@ -213,9 +222,59 @@ func indexedElementsCount(form map[string][]string, files map[string][]*multipar
 	return maxIndex + 1
 }
 
-func bindAdditionalProperties(additionalProperties reflect.Value, form map[string][]string, files map[string][]*multipart.FileHeader, name string) (bool, error) {
-	// TODO: support additional properties
-	return false, nil
+func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct reflect.Value, form map[string][]string, files map[string][]*multipart.FileHeader, name string) (bool, error) {
+	hasData := false
+	valueType := additionalProperties.Type().Elem()
+
+	// store all fixed properties in a set
+	fieldsSet := make(map[string]struct{})
+	for i := 0; i < parentStruct.NumField(); i++ {
+		tag := parentStruct.Type().Field(i).Tag.Get(tagName)
+		if !parentStruct.Field(i).CanInterface() || tag == "-" {
+			continue
+		}
+		tag = strings.Split(tag, ",")[0]
+		fieldsSet[tag] = struct{}{}
+	}
+
+	result := reflect.MakeMap(additionalProperties.Type())
+	for k := range form {
+		if strings.HasPrefix(k, name+"[") {
+			key := strings.TrimPrefix(k, name+"[")
+			key = key[:strings.Index(key, "]")]
+			if _, ok := fieldsSet[key]; ok {
+				continue
+			}
+			value := reflect.New(valueType)
+			ptrHasData, err := bindFormImpl(value, form, files, fmt.Sprintf("%s[%s]", name, key))
+			if err != nil {
+				return false, err
+			}
+			result.SetMapIndex(reflect.ValueOf(key), value.Elem())
+			hasData = hasData || ptrHasData
+		}
+	}
+	for k := range files {
+		if strings.HasPrefix(k, name+"[") {
+			key := strings.TrimPrefix(k, name+"[")
+			key = key[:strings.Index(key, "]")]
+			if _, ok := fieldsSet[key]; ok {
+				continue
+			}
+			value := reflect.New(valueType)
+			result.SetMapIndex(reflect.ValueOf(key), value)
+			ptrHasData, err := bindFormImpl(value, form, files, fmt.Sprintf("%s[%s]", name, key))
+			if err != nil {
+				return false, err
+			}
+			result.SetMapIndex(reflect.ValueOf(key), value.Elem())
+			hasData = hasData || ptrHasData
+		}
+	}
+	if hasData {
+		additionalProperties.Set(result)
+	}
+	return hasData, nil
 }
 
 func marshalFormImpl(v reflect.Value, result url.Values, name string) {

@@ -13,8 +13,9 @@ import (
 
 func TestBindURLForm(t *testing.T) {
 	type testSubStruct struct {
-		Int    int    `json:"int"`
-		String string `json:"string"`
+		Int                  int               `json:"int"`
+		String               string            `json:"string"`
+		AdditionalProperties map[string]string `json:"-"`
 	}
 	type testStruct struct {
 		Int             int              `json:"int"`
@@ -49,6 +50,9 @@ func TestBindURLForm(t *testing.T) {
 		"opt_struct[int]=456&opt_struct[string]=def": {OptStruct: &testSubStruct{Int: 456, String: "def"}},
 		"opt_struct_slice[0][int]=123&opt_struct_slice[0][string]=abc&opt_struct_slice[1][int]=456&opt_struct_slice[1][string]=def": {
 			OptStructSlice: &([]testSubStruct{{Int: 123, String: "abc"}, {Int: 456, String: "def"}}),
+		},
+		"opt_struct[additional_property]=123": {
+			OptStruct: &testSubStruct{AdditionalProperties: map[string]string{"additional_property": "123"}},
 		},
 	}
 
