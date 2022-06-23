@@ -541,7 +541,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
       Pet:
         properties:
           age:
-            x-go-type: uuid.UUID
+            x-go-type: myuuid.UUID
             x-go-type-import:
               name: myuuid
               path: github.com/google/uuid
@@ -559,7 +559,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
     }
 
   ```
-  `name` is an optional parameter. Example without name:
+  `name` is an optional parameter. Example:
 
   ```yaml
   components:
