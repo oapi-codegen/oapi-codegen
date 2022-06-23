@@ -8,6 +8,10 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/util"
+
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +19,13 @@ import (
 	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
 	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 )
+
+func checkLint(t *testing.T, filename string, code []byte) {
+	linter := new(lint.Linter)
+	problems, err := linter.Lint("test.gen.go", code)
+	assert.NoError(t, err)
+	assert.Len(t, problems, 0)
+}
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
 
@@ -58,10 +69,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 `)
 
 	// Make sure the generated code is valid:
-	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", []byte(code))
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
+	checkLint(t, "test.gen.go", []byte(code))
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
@@ -179,10 +187,42 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
 
 	// Make sure the generated code is valid:
-	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", []byte(code))
+	checkLint(t, "test.gen.go", []byte(code))
+}
+
+func TestXGoTypeImport(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+	}
+	spec := "test_specs/x-go-type-import-pet.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
 	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check import
+	assert.Contains(t, code, `myuuid "github.com/google/uuid"`)
+
+	// Check generated struct
+	assert.Contains(t, code, "type Pet struct {\n\tAge myuuid.UUID `json:\"age\"`\n}")
+
+	// Make sure the generated code is valid:
+	checkLint(t, "test.gen.go", []byte(code))
+
 }
 
 //go:embed test_spec.yaml
