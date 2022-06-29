@@ -14,7 +14,6 @@
 package runtime
 
 import (
-	"github.com/google/uuid"
 	"testing"
 	"time"
 
@@ -679,7 +678,7 @@ func TestStyleParam(t *testing.T) {
 	assert.EqualValues(t, "date_field,1996-03-19,time_field,1996-03-19T00%3A00%3A00Z,uuid_field,baa07328-452e-40bd-aa2e-fa823ec13605", result)
 
 	// Test handling of struct that implement encoding.TextMarshaler
-  timeVal = time.Date(1996, time.March, 19, 0, 0, 0, 0, time.UTC)
+	timeVal = time.Date(1996, time.March, 19, 0, 0, 0, 0, time.UTC)
 
 	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, timeVal)
 	assert.NoError(t, err)
