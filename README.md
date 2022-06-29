@@ -260,6 +260,47 @@ Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible
 
 </summary></details>
 
+#### Strict server generation
+
+oapi-codegen also supports generating RPC inspired strict server, that will parse request bodies and encode responses. 
+The main points of this code is to automate some parsing, abstract user code from server specific code, 
+and also to force user code to comply with the schema.
+It supports binding of `application/json` and `application/x-www-form-urlencoded` to a struct, for `multipart` requests
+it generates a `multipart.Reader`, which can be used to either manually iterating over parts or using `runtime.BindMultipart`
+function to bind the form to a struct. All other content types are represented by a `io.Reader` interface.
+
+To form a response simply return one of the generated structs with corresponding status code and content type. For example,
+to return a status code 200 JSON response for a AddPet use the `AddPet200JSONResponse` struct which will set the correct
+Content-Type header, status code and will marshal the response data. You can also return an `error` interface, that will be
+cause an `Internal Server Error` response. If you return a response that is not supported by this method, you will get an error.
+Unfortunately go does not support union types outside generic code, so we can't type check in compile time.
+
+Short example:
+```go
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) interface{} {
+    var result []Pet
+	// Implement me
+    return GetPets200JSONResponse(result)
+}
+```
+For a complete example see `/examples/petstore-expanded/strict`.
+
+Code is generation with a configuration flag `genrate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
+The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
+```go
+func SetupHandler() {
+    var myApi PetStoreImpl
+	myStrictApiHandler := api.NewStrictHandler(myApi, nil)
+    e := echo.New()
+    petstore.RegisterHandlers(e, &myStrictApiHandler)
+}
+```
+
+Strict server also has its own middlewares. It can access to both request and response structs,
+as well as raw request\response data. It can be used for logging the parsed request\response objects, transforming go errors into response structs,
+authorization, etc. Note that middlewares are server-specific.
+
 #### Additional Properties in type definitions
 
 [OpenAPI Schemas](https://swagger.io/specification/#schemaObject) implicitly

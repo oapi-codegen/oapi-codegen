@@ -6,7 +6,9 @@ package api
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,48 +19,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 )
-
-// Error defines model for Error.
-type Error struct {
-	// Error code
-	Code int32 `json:"code"`
-
-	// Error message
-	Message string `json:"message"`
-}
-
-// NewPet defines model for NewPet.
-type NewPet struct {
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// Pet defines model for Pet.
-type Pet struct {
-	// Unique id of the pet
-	Id int64 `json:"id"`
-
-	// Name of the pet
-	Name string `json:"name"`
-
-	// Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	// tags to filter by
-	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
-
-	// maximum number of results to return
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
-}
-
-// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody = NewPet
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -321,6 +281,251 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 
 	return r
+}
+
+type FindPetsRequestObject struct {
+	Params FindPetsParams
+}
+
+type FindPets200JSONResponse []Pet
+
+func (t FindPets200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(([]Pet)(t))
+}
+
+type FindPetsdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (t FindPetsdefaultJSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
+}
+
+type AddPetRequestObject struct {
+	Body *AddPetJSONRequestBody
+}
+
+type AddPet200JSONResponse Pet
+
+func (t AddPet200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((Pet)(t))
+}
+
+type AddPetdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (t AddPetdefaultJSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
+}
+
+type DeletePetRequestObject struct {
+	Id int64 `json:"id"`
+}
+
+type DeletePet204Response struct {
+}
+
+type DeletePetdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (t DeletePetdefaultJSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
+}
+
+type FindPetByIDRequestObject struct {
+	Id int64 `json:"id"`
+}
+
+type FindPetByID200JSONResponse Pet
+
+func (t FindPetByID200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal((Pet)(t))
+}
+
+type FindPetByIDdefaultJSONResponse struct {
+	Body       Error
+	StatusCode int
+}
+
+func (t FindPetByIDdefaultJSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(t.Body)
+}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+	// Returns all pets
+	// (GET /pets)
+	FindPets(ctx context.Context, request FindPetsRequestObject) interface{}
+	// Creates a new pet
+	// (POST /pets)
+	AddPet(ctx context.Context, request AddPetRequestObject) interface{}
+	// Deletes a pet by ID
+	// (DELETE /pets/{id})
+	DeletePet(ctx context.Context, request DeletePetRequestObject) interface{}
+	// Returns a pet by ID
+	// (GET /pets/{id})
+	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) interface{}
+}
+
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+	ssi         StrictServerInterface
+	middlewares []StrictMiddlewareFunc
+}
+
+// FindPets operation middleware
+func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
+	var request FindPetsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+		return sh.ssi.FindPets(ctx, request.(FindPetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "FindPets")
+	}
+
+	response := handler(r.Context(), w, r, request)
+
+	switch v := response.(type) {
+	case FindPets200JSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		writeJSON(w, v)
+	case FindPetsdefaultJSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(v.StatusCode)
+		writeJSON(w, v)
+	case error:
+		http.Error(w, v.Error(), http.StatusInternalServerError)
+	case nil:
+	default:
+		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+	}
+}
+
+// AddPet operation middleware
+func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
+	var request AddPetRequestObject
+
+	var body AddPetJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+		return sh.ssi.AddPet(ctx, request.(AddPetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AddPet")
+	}
+
+	response := handler(r.Context(), w, r, request)
+
+	switch v := response.(type) {
+	case AddPet200JSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		writeJSON(w, v)
+	case AddPetdefaultJSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(v.StatusCode)
+		writeJSON(w, v)
+	case error:
+		http.Error(w, v.Error(), http.StatusInternalServerError)
+	case nil:
+	default:
+		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+	}
+}
+
+// DeletePet operation middleware
+func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
+	var request DeletePetRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+		return sh.ssi.DeletePet(ctx, request.(DeletePetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeletePet")
+	}
+
+	response := handler(r.Context(), w, r, request)
+
+	switch v := response.(type) {
+	case DeletePet204Response:
+		w.WriteHeader(204)
+	case DeletePetdefaultJSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(v.StatusCode)
+		writeJSON(w, v)
+	case error:
+		http.Error(w, v.Error(), http.StatusInternalServerError)
+	case nil:
+	default:
+		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+	}
+}
+
+// FindPetByID operation middleware
+func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
+	var request FindPetByIDRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+		return sh.ssi.FindPetByID(ctx, request.(FindPetByIDRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "FindPetByID")
+	}
+
+	response := handler(r.Context(), w, r, request)
+
+	switch v := response.(type) {
+	case FindPetByID200JSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(200)
+		writeJSON(w, v)
+	case FindPetByIDdefaultJSONResponse:
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(v.StatusCode)
+		writeJSON(w, v)
+	case error:
+		http.Error(w, v.Error(), http.StatusInternalServerError)
+	case nil:
+	default:
+		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+	}
+}
+
+func writeJSON(w http.ResponseWriter, v interface{}) {
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		fmt.Fprintln(w, err)
+	}
+}
+
+func writeRaw(w http.ResponseWriter, b []byte) {
+	if _, err := w.Write(b); err != nil {
+		fmt.Fprintln(w, err)
+	}
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
