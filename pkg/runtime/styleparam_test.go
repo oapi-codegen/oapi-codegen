@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
@@ -45,6 +46,9 @@ func TestStyleParam(t *testing.T) {
 
 	type AliasedDate types.Date
 	date := AliasedDate{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
+
+	type AliasedUUID types.UUID
+	aUUID := AliasedUUID(uuid.MustParse("baa07328-452e-40bd-aa2e-fa823ec13605"))
 
 	// ---------------------------- Simple Style -------------------------------
 
@@ -112,6 +116,22 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "2020-01-01", result)
 
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("simple", true, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
 	// ----------------------------- Label Style -------------------------------
 
 	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, primitive)
@@ -178,6 +198,22 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, ".2020-01-01", result)
 
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("label", false, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("label", true, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ".baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
 	// ----------------------------- Matrix Style ------------------------------
 
 	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, primitive)
@@ -243,6 +279,22 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &date)
 	assert.NoError(t, err)
 	assert.EqualValues(t, ";id=2020-01-01", result)
+
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("matrix", false, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("matrix", true, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, ";id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
 
 	// ------------------------------ Form Style -------------------------------
 	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, primitive)
@@ -325,6 +377,22 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=2020-01-01", result)
 
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("form", false, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
+	result, err = StyleParamWithLocation("form", true, "id", ParamLocationQuery, &aUUID)
+	assert.NoError(t, err)
+	assert.EqualValues(t, "id=baa07328-452e-40bd-aa2e-fa823ec13605", result)
+
 	// ------------------------  spaceDelimited Style --------------------------
 
 	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, primitive)
@@ -375,6 +443,18 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &date)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
 	// -------------------------  pipeDelimited Style --------------------------
@@ -429,6 +509,18 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &aUUID)
+	assert.Error(t, err)
+
 	// ---------------------------  deepObject Style ---------------------------
 	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
@@ -476,6 +568,18 @@ func TestStyleParam(t *testing.T) {
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &date)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &aUUID)
+	assert.Error(t, err)
+
+	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
 	// Misc tests
@@ -546,22 +650,25 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "firstName,Alex", result)
 
-	// Test handling of time and date inside objects
+	// Test handling of other known types inside objects
 	type testObject3 struct {
 		TimeField time.Time  `json:"time_field"`
 		DateField types.Date `json:"date_field"`
+		UUIDField types.UUID `json:"uuid_field"`
 	}
 	timeVal := time.Date(1996, time.March, 19, 0, 0, 0, 0, time.UTC)
 	dateVal := types.Date{
 		Time: timeVal,
 	}
+	uuidVal := uuid.MustParse("baa07328-452e-40bd-aa2e-fa823ec13605")
 
 	object3 := testObject3{
 		TimeField: timeVal,
 		DateField: dateVal,
+		UUIDField: uuid.UUID(uuidVal),
 	}
 
 	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, object3)
 	assert.NoError(t, err)
-	assert.EqualValues(t, "date_field,1996-03-19,time_field,1996-03-19T00%3A00%3A00Z", result)
+	assert.EqualValues(t, "date_field,1996-03-19,time_field,1996-03-19T00%3A00%3A00Z,uuid_field,baa07328-452e-40bd-aa2e-fa823ec13605", result)
 }

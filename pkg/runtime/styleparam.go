@@ -158,9 +158,9 @@ func sortedKeys(strMap map[string]string) []string {
 	return keys
 }
 
-// This is a special case. The struct may be a date or time, in
-// which case, marshal it in correct format.
-func marshalDateTimeValue(value interface{}) (string, bool) {
+// These are special cases. The value may be a date, time, or uuid,
+// in which case, marshal it into the correct format.
+func marshalKnownTypes(value interface{}) (string, bool) {
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 
@@ -176,12 +176,17 @@ func marshalDateTimeValue(value interface{}) (string, bool) {
 		return dateVal.Format(types.DateFormat), true
 	}
 
+	if t.ConvertibleTo(reflect.TypeOf(types.UUID{})) {
+		u := v.Convert(reflect.TypeOf(types.UUID{}))
+		uuidVal := u.Interface().(types.UUID)
+		return uuidVal.String(), true
+	}
+
 	return "", false
 }
 
 func styleStruct(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-
-	if timeVal, ok := marshalDateTimeValue(value); ok {
+	if timeVal, ok := marshalKnownTypes(value); ok {
 		styledVal, err := stylePrimitive(style, explode, paramName, paramLocation, timeVal)
 		if err != nil {
 			return "", fmt.Errorf("failed to style time: %w", err)
@@ -350,7 +355,7 @@ func primitiveToString(value interface{}) (string, error) {
 
 	// sometimes time and date used like primitive types
 	// it can happen if paramether is object and has time or date as field
-	if res, ok := marshalDateTimeValue(value); ok {
+	if res, ok := marshalKnownTypes(value); ok {
 		return res, nil
 	}
 
