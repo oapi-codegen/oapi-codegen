@@ -57,11 +57,8 @@ type FindPetsParams struct {
 	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
-// AddPetJSONBody defines parameters for AddPet.
-type AddPetJSONBody = NewPet
-
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody = AddPetJSONBody
+type AddPetJSONRequestBody = NewPet
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

@@ -45,11 +45,8 @@ type ThingWithID struct {
 	Name string `json:"name"`
 }
 
-// AddThingJSONBody defines parameters for AddThing.
-type AddThingJSONBody = Thing
-
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
-type AddThingJSONRequestBody = AddThingJSONBody
+type AddThingJSONRequestBody = Thing
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error

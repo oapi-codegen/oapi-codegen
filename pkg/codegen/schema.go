@@ -529,6 +529,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.SkipOptionalPointer = true
 		case "uuid":
 			outSchema.GoType = "openapi_types.UUID"
+		case "binary":
+			outSchema.GoType = "openapi_types.File"
 		default:
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"

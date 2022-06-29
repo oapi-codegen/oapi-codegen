@@ -323,6 +323,8 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 			opts.Generate.GinServer = true
 		case "gorilla":
 			opts.Generate.GorillaServer = true
+		case "strict-server":
+			opts.Generate.Strict = true
 		case "types":
 			opts.Generate.Models = true
 		case "spec":
