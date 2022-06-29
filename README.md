@@ -574,7 +574,59 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   ```
   Name string `json:"name" tag1:"value1" tag2:"value2"`
   ```
-  
+- `x-go-type-import`: adds extra Go imports to your generated code. It can help you, when you want to
+   choose your own import package for `x-go-type`.
+
+  ```yaml
+    schemas:
+      Pet:
+        properties:
+          age:
+            x-go-type: myuuid.UUID
+            x-go-type-import:
+              name: myuuid
+              path: github.com/google/uuid
+  ```
+  After code generation you will get this:
+  ```go
+    import (
+        ...
+        myuuid "github.com/google/uuid"
+    )
+    
+  //Pet defines model for Pet.
+    type Pet struct {
+        Age *myuuid.UUID `json:"age,omitempty"`
+    }
+
+  ```
+  `name` is an optional parameter. Example:
+
+  ```yaml
+  components:
+  schemas:
+    Pet:
+      properties:
+        age:
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+      required:
+        - age
+  ```
+
+  After code generation you will get this result:
+
+  ```go
+  import (
+	  "github.com/google/uuid"
+  )
+
+  // Pet defines model for Pet.
+  type Pet struct {
+	  Age uuid.UUID `json:"age"`
+  }
+  ```
 
 
 ## Using `oapi-codegen`

@@ -139,6 +139,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	var typeDefinitions, constantDefinitions string
+	var xGoTypeImports map[string]goImport
 	if opts.Generate.Models {
 		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
@@ -150,6 +151,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
 
+		xGoTypeImports, err = GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
+		if err != nil {
+			return "", fmt.Errorf("error getting type definition imports: %w", err)
+		}
 	}
 
 	var echoServerOut string
@@ -228,7 +233,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	externalImports := importMapping.GoImports()
+	externalImports := append(importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
@@ -786,4 +791,98 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 		}
 		return nil
 	})
+}
+
+func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
+	if err != nil {
+		return nil, err
+	}
+
+	reqBodiesImports, err := GetRequestBodiesImports(swagger.Components.RequestBodies)
+	if err != nil {
+		return nil, err
+	}
+
+	responsesImports, err := GetResponsesImports(swagger.Components.Responses)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports} {
+		for k, v := range imprts {
+			res[k] = v
+		}
+	}
+	return res, nil
+}
+
+func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]goImport, error) {
+	var err error
+	res := map[string]goImport{}
+	excludeSchemasMap := make(map[string]bool)
+	for _, schema := range excludeSchemas {
+		excludeSchemasMap[schema] = true
+	}
+	for _, schemaName := range SortedSchemaKeys(schemas) {
+		if _, ok := excludeSchemasMap[schemaName]; ok {
+			continue
+		}
+		schema := schemas[schemaName].Value
+
+		if schema == nil || schema.Properties == nil {
+			continue
+		}
+
+		res, err = GetImports(schema.Properties)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]goImport, error) {
+	var res map[string]goImport
+	var err error
+	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+		requestBodyRef := bodies[requestBodyName]
+		response := requestBodyRef.Value
+		jsonBody, found := response.Content["application/json"]
+		if found {
+			schema := jsonBody.Schema
+			if schema == nil || schema.Value == nil || schema.Value.Properties == nil {
+				continue
+			}
+
+			res, err = GetImports(schema.Value.Properties)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return res, nil
+}
+
+func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string]goImport, error) {
+	var res map[string]goImport
+	var err error
+	for _, responseName := range SortedResponsesKeys(responses) {
+		responseOrRef := responses[responseName]
+		response := responseOrRef.Value
+		jsonResponse, found := response.Content["application/json"]
+		if found {
+			schema := jsonResponse.Schema
+			if schema == nil || schema.Value == nil || schema.Value.Properties == nil {
+				continue
+			}
+
+			res, err = GetImports(schema.Value.Properties)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+	return res, nil
 }
