@@ -382,7 +382,12 @@ func primitiveToString(value interface{}) (string, error) {
 	case reflect.String:
 		output = v.String()
 	default:
-		return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
+		v, ok := value.(fmt.Stringer)
+		if !ok {
+			return "", fmt.Errorf("unsupported type %s", reflect.TypeOf(value).String())
+		}
+
+		output = v.String()
 	}
 	return output, nil
 }

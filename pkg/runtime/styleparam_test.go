@@ -629,6 +629,11 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "1.05", result)
 
+	uuidValue := uuid.MustParse("c2d07ba4-5106-4eab-bcad-0bd6068dcb1a")
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, types.UUID(uuidValue))
+	assert.NoError(t, err)
+	assert.EqualValues(t, "c2d07ba4-5106-4eab-bcad-0bd6068dcb1a", result)
+
 	// Test that we handle optional fields
 	type TestObject2 struct {
 		FirstName *string `json:"firstName"`
