@@ -1,0 +1,146 @@
+openapi: 3.0.0
+info:
+  description: example
+  title: example-api
+  version: 0.0.1
+components:
+  schemas:
+    componentSchema:
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - component_schema_online
+            - component_schema_offline
+          example: 'component_schema_online'
+  responses:
+    componentResponse:
+      description: Example
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - component_response_online
+                  - component_response_offline
+                example: 'component_response_online'
+  requestBodies:
+    componentRequestBody:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - component_body_online
+                  - component_body_offline
+                example: 'component_body_online'
+  parameters:
+    componentParameter:
+      name: status
+      in: path
+      required: true
+      schema:
+        type: object
+        properties:
+          status:
+            type: string
+            enum:
+              - component_parameter_online
+              - component_parameter_offline
+            example: 'component_parameter_online'
+paths:
+  '/path':
+    get:
+      responses:
+        '200':
+          description: Example
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - path_response_online
+                      - path_response_offline
+                    example: 'path_response_online'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - path_body_online
+                    - path_body_offline
+                  example: 'path_body_online'
+  '/path/{status}':
+    get:
+      parameters:
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - path_parameter_online
+                  - path_parameter_offline
+                example: 'path_parameter_online'
+      responses:
+        '200':
+          description: Example
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - path_response_online
+                      - path_response_offline
+                    example: 'path_response_online'
+  '/path2':
+    get:
+      responses:
+        '200':
+          $ref: "#/components/responses/componentResponse"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - path_body_online
+                    - path_body_offline
+                  example: 'path_body_online'
+  '/path3/{status}':
+    get:
+      parameters:
+        # Support for this is half-baked, it doesn't emit the enums
+        - $ref: "#/components/parameters/componentParameter"
+      responses:
+        '200':
+          description: Example
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/componentSchema"
+      requestBody:
+        $ref: "#/components/requestBodies/componentRequestBody"

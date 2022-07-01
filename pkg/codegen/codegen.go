@@ -352,6 +352,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	}
 	allTypes = append(allTypes, bodyTypes...)
 
+	pathTypes, err := GenerateTypesForPaths(t, swagger.Paths)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go types for paths: %w", err)
+	}
+	allTypes = append(allTypes, pathTypes...)
+
 	// Go through all operations, and add their types to allTypes, so that we can
 	// scan all of them for enums. Operation definitions are handled differently
 	// from the rest, so let's keep track of enumTypes separately, which will contain
@@ -485,7 +491,63 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		}
 
 		types = append(types, typeDef)
+		types = append(types, typeDef.Schema.GetAdditionalTypeDefs()...)
 	}
+	return types, nil
+}
+
+// GenerateTypesForPaths generates type definitions for any custom types defined in the
+// paths section of the Swagger spec.
+func GenerateTypesForPaths(t *template.Template, paths openapi3.Paths) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	for _, pathName := range SortedPathsKeys(paths) {
+		path := paths[pathName]
+
+		for opName, op := range path.Operations() {
+			operationTypes, err := GenerateTypesForOperation(t, op, opName)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in path: %s: %w", opName, pathName, err)
+			}
+
+			types = append(types, operationTypes...)
+		}
+	}
+
+	return types, nil
+}
+
+func GenerateTypesForOperation(t *template.Template, op *openapi3.Operation, opName string) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	paramsMap := make(openapi3.ParametersMap)
+	for _, param := range op.Parameters {
+		paramsMap[param.Ref] = param
+	}
+	parameterTypes, err := GenerateTypesForParameters(t, paramsMap)
+	if err != nil {
+
+		return nil, fmt.Errorf("error generating Go types for parameters in operation: %s: %w", opName, err)
+	}
+	types = append(types, parameterTypes...)
+
+	responses := op.Responses
+	responsesTypes, err := GenerateTypesForResponses(t, responses)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for responses in operation: %s: %w", opName, err)
+	}
+	types = append(types, responsesTypes...)
+
+	if op.RequestBody != nil {
+		bodies := make(map[string]*openapi3.RequestBodyRef)
+		bodies[fmt.Sprintf(opName)] = op.RequestBody
+		bodyTypes, err := GenerateTypesForRequestBodies(t, bodies)
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go types for requestBody in operation: %s: %w", opName, err)
+		}
+		types = append(types, bodyTypes...)
+	}
+
 	return types, nil
 }
 
@@ -527,7 +589,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
-			types = append(types, typeDef)
+			types = append(types, typeDef.Schema.GetAdditionalTypeDefs()...)
 		}
 	}
 	return types, nil
@@ -570,7 +632,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
-			types = append(types, typeDef)
+			types = append(types, typeDef.Schema.GetAdditionalTypeDefs()...)
 		}
 	}
 	return types, nil
@@ -590,6 +652,17 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 		m[t.TypeName] = true
 
 		ts = append(ts, t)
+
+		for _, additionalType := range t.Schema.GetAdditionalTypeDefs() {
+			if len(additionalType.Schema.EnumValues) > 0 {
+				if found := m[additionalType.TypeName]; found {
+					continue
+				}
+
+				m[additionalType.TypeName] = true
+				ts = append(ts, additionalType)
+			}
+		}
 	}
 
 	context := struct {
