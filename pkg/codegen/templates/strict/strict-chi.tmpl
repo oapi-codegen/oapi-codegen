@@ -18,13 +18,14 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
     }}
 }
 
-func NewStrictHandlerWithOptions(ssi StrictServerInterface, options StrictChiServerOptions) ServerInterface {
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictChiServerOptions) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
     ssi StrictServerInterface
     middlewares []StrictMiddlewareFunc
+    options StrictChiServerOptions
 }
 
 {{range .}}
