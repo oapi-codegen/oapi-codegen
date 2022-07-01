@@ -349,13 +349,13 @@ type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
+// EnsureEverythingIsReferencedTextBody defines parameters for EnsureEverythingIsReferenced.
+type EnsureEverythingIsReferencedTextBody = string
+
 // EnsureEverythingIsReferencedJSONBody defines parameters for EnsureEverythingIsReferenced.
 type EnsureEverythingIsReferencedJSONBody struct {
 	Field SchemaObject `json:"Field"`
 }
-
-// EnsureEverythingIsReferencedTextBody defines parameters for EnsureEverythingIsReferenced.
-type EnsureEverythingIsReferencedTextBody = string
 
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
