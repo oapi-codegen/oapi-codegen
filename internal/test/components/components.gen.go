@@ -879,9 +879,11 @@ func (t OneOfObject10) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["one"], err = json.Marshal(t.One)
@@ -1175,9 +1177,11 @@ func (t OneOfObject4) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["fixedProperty"], err = json.Marshal(t.FixedProperty)
@@ -1374,9 +1378,11 @@ func (t OneOfObject8) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["fixed"], err = json.Marshal(t.Fixed)
@@ -1465,9 +1471,11 @@ func (t OneOfObject9) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["type"], err = json.Marshal(t.Type)
