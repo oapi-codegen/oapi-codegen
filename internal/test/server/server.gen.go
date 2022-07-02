@@ -83,8 +83,28 @@ type SomeObject struct {
 // Argument defines model for argument.
 type Argument = string
 
+// ResponseWithReference defines model for ResponseWithReference.
+type ResponseWithReference = SomeObject
+
+// SimpleResponse defines model for SimpleResponse.
+type SimpleResponse struct {
+	Name string `json:"name"`
+}
+
+// N200 defines model for 200.
+type N200 = EveryTypeOptional
+
 // Empty defines model for .
 type Empty = int32
+
+// POST defines model for POST.
+type POST = EveryTypeRequired
+
+// PUT defines model for PUT.
+type PUT struct {
+	Id   *int    `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {

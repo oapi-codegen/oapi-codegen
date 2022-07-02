@@ -589,6 +589,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
+			types = append(types, typeDef)
 			types = append(types, typeDef.Schema.GetAdditionalTypeDefs()...)
 		}
 	}
@@ -632,6 +633,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
+			types = append(types, typeDef)
 			types = append(types, typeDef.Schema.GetAdditionalTypeDefs()...)
 		}
 	}

@@ -46,6 +46,15 @@ type PetNames struct {
 // Empty defines model for .
 type Empty = string
 
+// N200 defines model for 200.
+type N200 = Pet
+
+// Default defines model for default.
+type Default = Error
+
+// POST defines model for POST.
+type POST = PetNames
+
 // ValidatePetsJSONRequestBody defines body for ValidatePets for application/json ContentType.
 type ValidatePetsJSONRequestBody = PetNames
 
