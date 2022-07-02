@@ -71,6 +71,9 @@ type NullableProperties struct {
 // StringInPath defines model for StringInPath.
 type StringInPath = string
 
+// This schema name starts with a number
+type Empty = N5StartsWithNumber
+
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
 

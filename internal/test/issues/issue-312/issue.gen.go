@@ -43,6 +43,9 @@ type PetNames struct {
 	Names []string `json:"names"`
 }
 
+// Empty defines model for .
+type Empty = string
+
 // ValidatePetsJSONRequestBody defines body for ValidatePets for application/json ContentType.
 type ValidatePetsJSONRequestBody = PetNames
 

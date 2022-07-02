@@ -40,6 +40,9 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// Empty defines model for .
+type Empty = ComplexObject
+
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// primitive

@@ -83,13 +83,8 @@ type SomeObject struct {
 // Argument defines model for argument.
 type Argument = string
 
-// ResponseWithReference defines model for ResponseWithReference.
-type ResponseWithReference = SomeObject
-
-// SimpleResponse defines model for SimpleResponse.
-type SimpleResponse struct {
-	Name string `json:"name"`
-}
+// Empty defines model for .
+type Empty = int32
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {

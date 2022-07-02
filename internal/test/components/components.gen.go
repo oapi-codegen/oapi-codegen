@@ -339,14 +339,9 @@ type EnumParam3 string
 // a parameter
 type RenamedParameterObject string
 
-// RenamedResponseObject defines model for ResponseObject.
-type RenamedResponseObject struct {
-	Field SchemaObject `json:"Field"`
-}
-
-// RenamedRequestBody defines model for RequestBody.
-type RenamedRequestBody struct {
-	Field SchemaObject `json:"Field"`
+// Empty defines model for .
+type Empty struct {
+	Inner map[string]string `json:"inner"`
 }
 
 // EnsureEverythingIsReferencedJSONBody defines parameters for EnsureEverythingIsReferenced.

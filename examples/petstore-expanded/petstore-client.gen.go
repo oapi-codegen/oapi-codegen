@@ -47,6 +47,9 @@ type Pet struct {
 	Tag *string `json:"tag,omitempty"`
 }
 
+// Empty defines model for .
+type Empty = int32
+
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by

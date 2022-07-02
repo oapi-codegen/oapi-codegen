@@ -22,8 +22,8 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// Reusableresponse defines model for reusableresponse.
-type Reusableresponse = Example
+// Empty defines model for .
+type Empty = int
 
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
