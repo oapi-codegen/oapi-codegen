@@ -71,9 +71,6 @@ type NullableProperties struct {
 // StringInPath defines model for StringInPath.
 type StringInPath = string
 
-// Issue185JSONBody defines parameters for Issue185.
-type Issue185JSONBody = NullableProperties
-
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
 
@@ -83,7 +80,7 @@ type Issue9Params struct {
 }
 
 // Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
-type Issue185JSONRequestBody = Issue185JSONBody
+type Issue185JSONRequestBody = NullableProperties
 
 // Issue9JSONRequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody = Issue9JSONBody

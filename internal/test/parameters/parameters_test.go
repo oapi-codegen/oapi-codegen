@@ -236,6 +236,11 @@ func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
 	return nil
 }
 
+// (GET /enums)
+func (t *testServer) EnumParams(ctx echo.Context, params EnumParamsParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 func TestParameterBinding(t *testing.T) {
 	var ts testServer
 	e := echo.New()

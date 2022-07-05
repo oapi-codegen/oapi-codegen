@@ -28,7 +28,7 @@ func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	// This is how you set up a basic chi router
+	// This is how you set up a basic gin router
 	r := gin.Default()
 
 	// Use our validation middleware to check all requests against the

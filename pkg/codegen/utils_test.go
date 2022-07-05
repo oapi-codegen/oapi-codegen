@@ -14,6 +14,8 @@
 package codegen
 
 import (
+	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -375,4 +377,45 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
+}
+
+func TestGetImports(t *testing.T) {
+	schemas := map[string]*openapi3.SchemaRef{
+		"age": {
+			Value: &openapi3.Schema{
+				ExtensionProps: openapi3.ExtensionProps{
+					Extensions: map[string]interface{}{
+						"x-go-type-import": json.RawMessage(
+							`{"name": "hello", "path": "github.com/google/uuid"}`,
+						),
+						"x-go-type": json.RawMessage(
+							"hello.UUID",
+						),
+					},
+				},
+			},
+		},
+		"name": {
+			Value: &openapi3.Schema{
+				ExtensionProps: openapi3.ExtensionProps{
+					Extensions: map[string]interface{}{"other-tag": json.RawMessage(
+						`bla`,
+					)},
+				},
+			},
+		},
+		"value": nil,
+	}
+
+	expected := map[string]goImport{
+		fmt.Sprintf("%s %q", "hello", "github.com/google/uuid"): {
+			Name: "hello",
+			Path: "github.com/google/uuid",
+		},
+	}
+
+	res, err := GetImports(schemas)
+
+	assert.NoError(t, err)
+	assert.Equal(t, expected, res)
 }
