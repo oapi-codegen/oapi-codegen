@@ -12,4 +12,26 @@ const (
   {{$name}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
 {{end}}
 )
+
+{{if $.ValidateEnumValues}}
+// UnmarshalJSON validates the enum values for {{$Enum.TypeName}} and returns an error if the
+// provided value is not defined.
+func (v *{{$Enum.TypeName}}) UnmarshalJSON(b []byte) error {
+    var s {{$Enum.TypeDecl}} 
+
+    if err := json.Unmarshal(b, &s); err != nil {
+        return err
+    }
+    {{$first := true}}
+    switch {{$Enum.TypeName}}(s) {
+    case {{range $name, $value := $Enum.GetValues}}{{if $first}}{{$first = false}}{{else}},
+        {{end}}{{$name}}{{end}}:
+        *v = {{$Enum.TypeName}}(s)
+
+        return nil
+    default:
+        return fmt.Errorf("invalid enum value: %v", s)
+    }
+}
+{{end}}
 {{end}}

@@ -108,6 +108,8 @@ type EnumDefinition struct {
 	Schema Schema
 	// TypeName is the name of the enum's type, usually aliased from something.
 	TypeName string
+	// TypeDecl is the name of the enum's base type.
+	TypeDecl string
 	// ValueWrapper wraps the value. It's used to conditionally apply quotes
 	// around strings.
 	ValueWrapper string
@@ -136,6 +138,9 @@ type Constants struct {
 	SecuritySchemeProviderNames []string
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
+	// ValidateEnumValues generates a custom unmarshaler that validates the enum
+	// values.
+	ValidateEnumValues bool
 }
 
 // TypeDefinition describes a Go type definition in generated code.

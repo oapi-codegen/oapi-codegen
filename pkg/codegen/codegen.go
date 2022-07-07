@@ -623,6 +623,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			enums = append(enums, EnumDefinition{
 				Schema:       tp.Schema,
 				TypeName:     tp.TypeName,
+				TypeDecl:     tp.Schema.TypeDecl(),
 				ValueWrapper: wrapper,
 			})
 		}
@@ -673,7 +674,10 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now see if enums conflict with any non-enum typenames
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
+		EnumDefinitions:    enums,
+		ValidateEnumValues: globalState.options.Compatibility.ValidateEnumValues,
+	})
 }
 
 // Generate our import statements and package definition.
