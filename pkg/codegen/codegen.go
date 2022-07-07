@@ -621,9 +621,10 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				wrapper = `"`
 			}
 			enums = append(enums, EnumDefinition{
-				Schema:       tp.Schema,
-				TypeName:     tp.TypeName,
-				ValueWrapper: wrapper,
+				Schema:         tp.Schema,
+				TypeName:       tp.TypeName,
+				ValueWrapper:   wrapper,
+				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
 			})
 		}
 	}
@@ -640,8 +641,8 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			for e1key := range e1.GetValues() {
 				_, found := e2.GetValues()[e1key]
 				if found {
-					e1.Conflicts = true
-					e2.Conflicts = true
+					e1.PrefixTypeName = true
+					e2.PrefixTypeName = true
 					enums[i] = e1
 					enums[j] = e2
 					break
@@ -657,7 +658,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			}
 			_, found := e1.Schema.EnumValues[tp.TypeName]
 			if found {
-				e1.Conflicts = true
+				e1.PrefixTypeName = true
 				enums[i] = e1
 			}
 		}
@@ -666,7 +667,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		// type name.
 		_, found := e1.GetValues()[e1.TypeName]
 		if found {
-			e1.Conflicts = true
+			e1.PrefixTypeName = true
 			enums[i] = e1
 		}
 	}
