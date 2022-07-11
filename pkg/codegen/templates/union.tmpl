@@ -29,6 +29,31 @@
             t.union = b
             return err
         }
+
+        func (t *{{$typeName}}) Merge{{.}} (v {{.}}) error {
+            {{if $discriminator -}}
+                {{range $value, $type := $discriminator.Mapping -}}
+                    {{if eq $type $element -}}
+                        {{$hasProperty := false -}}
+                        {{range $properties -}}
+                            {{if eq .GoFieldName $discriminator.PropertyName -}}
+                                t.{{$discriminator.PropertyName}} = "{{$value}}"
+                                {{$hasProperty = true -}}
+                            {{end -}}
+                        {{end -}}
+                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                    {{end -}}
+                {{end -}}
+            {{end -}}
+            b, err := json.Marshal(v)
+            if err != nil {
+              return err
+            }
+
+            merged, err := runtime.JsonMerge(b, t.union)
+            t.union = merged
+            return err
+        }
     {{end}}
 
     {{if $discriminator}}
