@@ -211,9 +211,6 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 	var params GetWithArgsParams
 
 	// ------------- Optional query parameter "optional_argument" -------------
-	if paramValue := r.URL.Query().Get("optional_argument"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "optional_argument", r.URL.Query(), &params.OptionalArgument)
 	if err != nil {
@@ -222,6 +219,7 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 	}
 
 	// ------------- Required query parameter "required_argument" -------------
+
 	if paramValue := r.URL.Query().Get("required_argument"); paramValue != "" {
 
 	} else {
@@ -388,9 +386,6 @@ func (siw *ServerInterfaceWrapper) CreateResource2(w http.ResponseWriter, r *htt
 	var params CreateResource2Params
 
 	// ------------- Optional query parameter "inline_query_argument" -------------
-	if paramValue := r.URL.Query().Get("inline_query_argument"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "inline_query_argument", r.URL.Query(), &params.InlineQueryArgument)
 	if err != nil {
