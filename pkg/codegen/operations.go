@@ -177,6 +177,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 					paramOrRef.Ref, param.Name, err)
 			}
 			pd.Schema.GoType = goType
+			pd.Schema.RefType = paramOrRef.Ref
 		}
 		outParams = append(outParams, pd)
 	}
@@ -810,6 +811,10 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	s := Schema{}
 	for _, param := range objectParams {
 		pSchema := param.Schema
+		if IsGoTypeReference(pSchema.RefType) {
+			// skip reference types
+			continue
+		}
 		param.Style()
 		if pSchema.HasAdditionalProperties {
 			propRefName := strings.Join([]string{typeName, param.GoName()}, "_")
@@ -830,14 +835,19 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 		s.Properties = append(s.Properties, prop)
 	}
 
-	s.Description = op.Spec.Description
-	s.GoType = GenStructFromSchema(s)
+	if len(s.Properties) > 0 {
+		s.Description = op.Spec.Description
+		s.GoType = GenStructFromSchema(s)
 
-	td := TypeDefinition{
-		TypeName: typeName,
-		Schema:   s,
+		// do not create a struct without any fields
+		td := TypeDefinition{
+			TypeName: typeName,
+			Schema:   s,
+		}
+		return append(typeDefs, td)
 	}
-	return append(typeDefs, td)
+
+	return typeDefs
 }
 
 // GenerateTypesForOperations generates code for all types produced within operations

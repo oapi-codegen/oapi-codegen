@@ -1,0 +1,131 @@
+openapi: "3.0.2"
+info:
+  description: example openapi spec
+  version: v1
+  title: example openapi spec
+
+servers:
+  - url: "https://example.com/api/v1"
+    description: Production
+
+paths:
+  /project:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/FilterQueryParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SortQueryParam"
+      tags:
+        - project
+      summary: "Get list with all projects"
+      description: "Get list with all projects."
+      operationId: "getProjectList"
+      responses:
+        200:
+          description: "List with projects"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectList"
+
+  /inventory:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/FilterQueryParam"
+        - $ref: "#/components/parameters/SizeParam"
+        - $ref: "#/components/parameters/OffsetParam"
+        - $ref: "#/components/parameters/SortQueryParam"
+      tags:
+        - inventory
+      summary: "Get list with all inventories"
+      description: "Get list with all inventories."
+      operationId: "getInventoryList"
+      responses:
+        200:
+          description: "List with inventories"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryList"
+
+components:
+  schemas:
+    ProjectList:
+      type: array
+      items:
+        $ref: "#/components/schemas/ProjectListItem"
+
+    ProjectListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - id
+        - name
+
+    InventoryList:
+      type: array
+      items:
+        $ref: "#/components/schemas/InventoryListItem"
+
+    InventoryListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - id
+        - project_id
+        - name
+
+  parameters:
+    SizeParam:
+      in: query
+      name: size
+      required: false
+      description: "Maximum number of items in result list"
+      schema:
+        type: integer
+        minimum: -1
+        default: 50
+
+    OffsetParam:
+      in: query
+      name: offset
+      required: false
+      description: "The number of items to skip before starting to collect the result set"
+      schema:
+        type: integer
+        minimum: 0
+
+    FilterQueryParam:
+      in: query
+      name: filterParam
+      required: false
+      schema:
+        type: string
+
+    SortQueryParam:
+      in: query
+      name: sort
+      schema:
+        type: array
+        items:
+          type: string
+
+

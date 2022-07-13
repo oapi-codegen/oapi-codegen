@@ -128,6 +128,9 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 	assert.Equal(t, "cat", *findPetByIDResponse.JSON200.Tag)
 }
 
+//go:embed test_spec.yaml
+var testOpenAPIDefinition string
+
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
@@ -225,5 +228,31 @@ func TestXGoTypeImport(t *testing.T) {
 
 }
 
-//go:embed test_spec.yaml
-var testOpenAPIDefinition string
+func TestParametersRefCollision(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+	}
+	spec := "test_specs/parameters-ref-collision.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we do not have the referenced types generated:
+	assert.NotContains(t, code, "type GetInventoryListParams")
+	assert.NotContains(t, code, "type GetProjectListParams")
+
+	// Make sure the generated code is valid:
+	checkLint(t, "test.gen.go", []byte(code))
+}
