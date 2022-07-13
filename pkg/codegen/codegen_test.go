@@ -233,7 +233,8 @@ func TestParametersRefCollision(t *testing.T) {
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
-			Models: true,
+			Models:     true,
+			EchoServer: true,
 		},
 	}
 	spec := "test_specs/parameters-ref-collision.yaml"
@@ -250,8 +251,8 @@ func TestParametersRefCollision(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Check that we do not have the referenced types generated:
-	assert.NotContains(t, code, "type GetInventoryListParams")
-	assert.NotContains(t, code, "type GetProjectListParams")
+	assert.NotContains(t, code, "GetInventoryListParams")
+	assert.NotContains(t, code, "GetProjectListParams")
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
