@@ -49,6 +49,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/InventoryList"
 
+  /component:
+    get:
+      parameters:
+        - in: query
+          name: filterParam
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/SizeParam"
+        - in: query
+          name: offset
+          required: false
+          description: "The number of items to skip before starting to collect the result set"
+          schema:
+            type: integer
+            minimum: 0
+        - $ref: "#/components/parameters/SortQueryParam"
+      tags:
+        - component
+      summary: "Get list with all components"
+      description: "Get list with all components."
+      operationId: "getComponentList"
+      responses:
+        200:
+          description: "Request was successful"
+
+
 components:
   schemas:
     ProjectList:

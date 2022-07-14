@@ -273,6 +273,33 @@ func TestEchoReferenceParameters(t *testing.T) {
 	// wrapper must pass the correct parameters to interface implementation
 	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
 	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
+
+	/*
+		type GetComponentListParams struct {
+			FilterParam *string `form:"filterParam,omitempty" json:"filterParam,omitempty"`
+
+			// Maximum number of items in result list
+			Size *SizeParam `form:"size,omitempty" json:"size,omitempty"`
+
+			// The number of items to skip before starting to collect the result set
+			Offset *int            `form:"offset,omitempty" json:"offset,omitempty"`
+			Sort   *SortQueryParam `form:"sort,omitempty" json:"sort,omitempty"`
+		}
+	*/
+
+	// this struct definition must exist
+	require.Contains(t, code, "type GetComponentListParams")
+
+	// these struct field definition smust exist
+	require.Regexp(t, `Size\s*\*SizeParam`, code)
+	require.Regexp(t, `Sort\s*\*SortQueryParam`, code)
+
+	// these fields must not exist in any generated struct definition
+	require.NotRegexp(t, `FilterParam\s*\*string`, code)
+	require.NotRegexp(t, `Offset\s*\*int`, code)
+
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
+
+	ioutil.WriteFile("test.gen.go", []byte(code), 0770)
 }
