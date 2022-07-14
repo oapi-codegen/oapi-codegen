@@ -250,8 +250,6 @@ func TestEchoReferenceParameters(t *testing.T) {
 	_, err = format.Source([]byte(code))
 	require.NoError(t, err)
 
-	ioutil.WriteFile("test.gen.go", []byte(code), 0770)
-
 	// Must not contain inline param object definitions
 	require.NotContains(t, code, "GetInventoryListParams")
 	require.NotContains(t, code, "GetProjectListParams")
@@ -302,6 +300,4 @@ func TestEchoReferenceParameters(t *testing.T) {
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
-
-	ioutil.WriteFile("test.gen.go", []byte(code), 0770)
 }
