@@ -865,7 +865,13 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			NeedsFormTag:   param.Style() == "form",
 			ExtensionProps: &param.Spec.ExtensionProps,
 		}
-		s.Properties = append(s.Properties, prop)
+
+		// we do not want to have struct fields that
+		// are actually reference types and have their
+		// own top level type definition
+		if !param.IsRef {
+			s.Properties = append(s.Properties, prop)
+		}
 	}
 
 	if len(s.Properties) > 0 {

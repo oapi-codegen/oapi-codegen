@@ -250,6 +250,8 @@ func TestEchoReferenceParameters(t *testing.T) {
 	_, err = format.Source([]byte(code))
 	require.NoError(t, err)
 
+	ioutil.WriteFile("test.gen.go", []byte(code), 0770)
+
 	// Must not contain inline param object definitions
 	require.NotContains(t, code, "GetInventoryListParams")
 	require.NotContains(t, code, "GetProjectListParams")
@@ -290,13 +292,13 @@ func TestEchoReferenceParameters(t *testing.T) {
 	// this struct definition must exist
 	require.Contains(t, code, "type GetComponentListParams")
 
-	// these struct field definition smust exist
-	require.Regexp(t, `Size\s*\*SizeParam`, code)
-	require.Regexp(t, `Sort\s*\*SortQueryParam`, code)
+	// these fields must exist in any generated struct definition
+	require.Regexp(t, `FilterParam\s*\*string`, code)
+	require.Regexp(t, `Offset\s*\*int`, code)
 
-	// these fields must not exist in any generated struct definition
-	require.NotRegexp(t, `FilterParam\s*\*string`, code)
-	require.NotRegexp(t, `Offset\s*\*int`, code)
+	// these struct field definitions must not exist
+	require.NotRegexp(t, `Size\s*\*SizeParam`, code)
+	require.NotRegexp(t, `Sort\s*\*SortQueryParam`, code)
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
