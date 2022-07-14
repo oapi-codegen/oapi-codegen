@@ -32,6 +32,7 @@ type ParameterDefinition struct {
 	Required  bool   // Is this a required parameter?
 	Spec      *openapi3.Parameter
 	Schema    Schema
+	IsRef     bool
 }
 
 // This function is here as an adapter after a large refactoring so that I don't
@@ -177,7 +178,8 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 					paramOrRef.Ref, param.Name, err)
 			}
 			pd.Schema.GoType = goType
-			pd.Schema.RefType = paramOrRef.Ref
+			pd.IsRef = true
+
 		}
 		outParams = append(outParams, pd)
 	}
@@ -240,8 +242,43 @@ func (o *OperationDefinition) AllParams() []ParameterDefinition {
 // If we have parameters other than path parameters, they're bundled into an
 // object. Returns true if we have any of those. This is used from the template
 // engine.
+// A ParamsObject is only required when we do have at least a single non.reference type
+// parameter.
 func (o *OperationDefinition) RequiresParamObject() bool {
-	return len(o.Params()) > 0
+	return len(o.nonReferenceParams()) > 0
+}
+
+// ReferenceParams returns a list of parameters that are defined in #/components
+// contrary to being defined inline.
+func (o *OperationDefinition) ReferenceParams() []ParameterDefinition {
+	params := o.Params()
+	refTypeParams := make([]ParameterDefinition, 0, len(params))
+
+	for _, param := range params {
+		if param.IsRef {
+			refTypeParams = append(refTypeParams, param)
+		}
+	}
+	return refTypeParams
+}
+
+// RequiresReferenceParams returns true if we have reference parameter objects
+// that need to be generated as individual parameters
+func (o *OperationDefinition) RequiresReferenceParams() bool {
+	return len(o.ReferenceParams()) > 0
+}
+
+// nonReferenceParams returns a list of parameters that are defined inline
+func (o *OperationDefinition) nonReferenceParams() []ParameterDefinition {
+	params := o.Params()
+	nonRefTypeParams := make([]ParameterDefinition, 0, len(params))
+
+	for _, param := range params {
+		if !param.IsRef {
+			nonRefTypeParams = append(nonRefTypeParams, param)
+		}
+	}
+	return nonRefTypeParams
 }
 
 // This is called by the template engine to determine whether to generate body
@@ -782,7 +819,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 	// Start with the params object itself
-	if len(op.Params()) != 0 {
+	if op.RequiresParamObject() {
 		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
@@ -811,10 +848,6 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	s := Schema{}
 	for _, param := range objectParams {
 		pSchema := param.Schema
-		if IsGoTypeReference(pSchema.RefType) {
-			// skip reference types
-			continue
-		}
 		param.Style()
 		if pSchema.HasAdditionalProperties {
 			propRefName := strings.Join([]string{typeName, param.GoName()}, "_")

@@ -122,7 +122,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 
 {{end}}{{/* .RequiresParamObject */}}
     // Invoke the callback with all the unmarshalled arguments
-    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+    err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{ if .RequiresReferenceParams }}{{genParamNames .ReferenceParams}}{{end}})
     return err
 }
 {{end}}

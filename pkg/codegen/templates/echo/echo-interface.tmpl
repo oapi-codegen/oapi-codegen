@@ -2,6 +2,6 @@
 type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{ end }}{{ if .RequiresReferenceParams }}{{genParamArgs .ReferenceParams}}{{end}}) error
 {{end}}
 }
