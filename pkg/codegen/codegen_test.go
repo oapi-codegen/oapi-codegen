@@ -237,23 +237,38 @@ func TestParametersRefCollision(t *testing.T) {
 			EchoServer: true,
 		},
 	}
-	spec := "test_specs/parameters-ref-collision.yaml"
+	spec := "test_specs/parameters-ref-type.yaml"
 	swagger, err := util.LoadSwagger(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
 	code, err := Generate(swagger, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
+	require.NoError(t, err)
+	require.NotEmpty(t, code)
 
 	// Check that we have valid (formattable) code:
 	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Check that we do not have the referenced types generated:
-	assert.NotContains(t, code, "GetInventoryListParams")
-	assert.NotContains(t, code, "GetProjectListParams")
+	require.NotContains(t, code, "GetInventoryListParams")
+	require.NotContains(t, code, "GetProjectListParams")
 
+	require.Contains(t, code, "type FilterQueryParam = string")
+	require.Contains(t, code, "type OffsetParam = int")
+	require.Contains(t, code, "type SizeParam = int")
+	require.Contains(t, code, "type SortQueryParam = []string")
+
+	require.Contains(t, code, "GetInventoryList(ctx echo.Context, filterParam FilterQueryParam, size SizeParam, offset OffsetParam, sort SortQueryParam) error")
+	require.Contains(t, code, "GetProjectList(ctx echo.Context, filterParam FilterQueryParam, size SizeParam, offset OffsetParam, sort SortQueryParam) error")
+
+	require.Contains(t, code, "var filterParam FilterQueryParam")
+	require.Contains(t, code, "var size SizeParam")
+	require.Contains(t, code, "var offset OffsetParam")
+	require.Contains(t, code, "var sort SortQueryParam")
+
+	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
+	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
 }
