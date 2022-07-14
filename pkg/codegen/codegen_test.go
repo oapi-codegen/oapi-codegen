@@ -250,23 +250,27 @@ func TestEchoReferenceParameters(t *testing.T) {
 	_, err = format.Source([]byte(code))
 	require.NoError(t, err)
 
-	// Check that we do not have the referenced types generated:
+	// Must not contain inline param object definitions
 	require.NotContains(t, code, "GetInventoryListParams")
 	require.NotContains(t, code, "GetProjectListParams")
 
+	// must contain shared reference type definitions
 	require.Contains(t, code, "type FilterQueryParam = string")
 	require.Contains(t, code, "type OffsetParam = int")
 	require.Contains(t, code, "type SizeParam = int")
 	require.Contains(t, code, "type SortQueryParam = []string")
 
+	// interface must have the correct signature
 	require.Contains(t, code, "GetInventoryList(ctx echo.Context, filterParam FilterQueryParam, size SizeParam, offset OffsetParam, sort SortQueryParam) error")
 	require.Contains(t, code, "GetProjectList(ctx echo.Context, filterParam FilterQueryParam, size SizeParam, offset OffsetParam, sort SortQueryParam) error")
 
+	// wrapper parameter parsing must define variable names for each query parameter
 	require.Contains(t, code, "var filterParam FilterQueryParam")
 	require.Contains(t, code, "var size SizeParam")
 	require.Contains(t, code, "var offset OffsetParam")
 	require.Contains(t, code, "var sort SortQueryParam")
 
+	// wrapper must pass the correct parameters to interface implementation
 	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
 	require.Contains(t, code, "w.Handler.GetProjectList(ctx, filterParam, size, offset, sort)")
 	// Make sure the generated code is valid:
