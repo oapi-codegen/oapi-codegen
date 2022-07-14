@@ -228,7 +228,7 @@ func TestXGoTypeImport(t *testing.T) {
 
 }
 
-func TestParametersRefCollision(t *testing.T) {
+func TestEchoReferenceParameters(t *testing.T) {
 	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
