@@ -34,7 +34,12 @@ func (file *File) MarshalJSON() ([]byte, error) {
 }
 
 func (file *File) UnmarshalJSON(data []byte) error {
-	return json.Unmarshal(data, &file.data)
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	file.data = []byte(s)
+	return nil
 }
 
 func (file File) Bytes() ([]byte, error) {
