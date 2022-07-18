@@ -25,6 +25,15 @@ const (
 	OpenIdScopes = "OpenId.Scopes"
 )
 
+func OpenIdScopesFromContext(ctx context.Context) []string {
+	value := ctx.Value(OpenIdScopes)
+	if value == nil {
+		return nil
+	}
+
+	return value.([]string)
+}
+
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
 	FirstName string `json:"firstName"`

@@ -25,6 +25,15 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
+func BearerAuthScopesFromContext(ctx context.Context) []string {
+	value := ctx.Value(BearerAuthScopes)
+	if value == nil {
+		return nil
+	}
+
+	return value.([]string)
+}
+
 // Error defines model for Error.
 type Error struct {
 	// Error code

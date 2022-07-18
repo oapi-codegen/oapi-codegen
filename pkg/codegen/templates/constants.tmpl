@@ -4,6 +4,18 @@ const (
     {{- $ProviderName | ucFirst}}Scopes = "{{$ProviderName}}.Scopes"
 {{end}}
 )
+
+{{range $ProviderName := .SecuritySchemeProviderNames}}
+func {{$ProviderName | ucFirst}}ScopesFromContext(ctx context.Context) []string {
+    value := ctx.Value({{- $ProviderName | ucFirst}}Scopes)
+    if value == nil {
+        return nil
+    }
+
+    return value.([]string)
+}
+
+{{end}}
 {{end}}
 {{range $Enum := .EnumDefinitions}}
 // Defines values for {{$Enum.TypeName}}.

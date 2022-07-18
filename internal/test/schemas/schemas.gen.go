@@ -29,6 +29,15 @@ const (
 	Access_tokenScopes = "access_token.Scopes"
 )
 
+func Access_tokenScopesFromContext(ctx context.Context) []string {
+	value := ctx.Value(Access_tokenScopes)
+	if value == nil {
+		return nil
+	}
+
+	return value.([]string)
+}
+
 // Defines values for EnumInObjInArrayVal.
 const (
 	First  EnumInObjInArrayVal = "first"
