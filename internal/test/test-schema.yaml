@@ -195,6 +195,17 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
+  /resource4/{argument}:
+    post:
+      summary: Create a resource
+      operationId: createResource4
+      parameters:
+        - $ref: "#/components/parameters/argument"
+      requestBody:
+        $ref: './externalref/packageA/spec.yaml#/components/requestBodies/PostRequestBody'
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
 components:
   parameters:
     argument:

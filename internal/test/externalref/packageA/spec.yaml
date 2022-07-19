@@ -6,3 +6,11 @@ components:
           type: string
         object_b:
           $ref: ../packageB/spec.yaml#/components/schemas/ObjectB
+  requestBodies:
+    PostRequestBody:
+      description: A request body with a type reference to an external object
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ObjectA"
+      required: true

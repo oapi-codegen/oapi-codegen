@@ -22,12 +22,17 @@ type ObjectA struct {
 	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
 }
 
+// PostRequestBody defines model for PostRequestBody.
+type PostRequestBody = ObjectA
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/0SNQarDMAwF7/L+X5p4711zgR6hKEZJ3MaysN1FCLl7sVOoNhoYHnPAp6hJWGqBO1D8",
-	"ypE63qcn+3prqDkp5xq4C6HI7dddGQ6l5iALToPUF4+pyf/MMxyGwSr5Fy082qLsh53i9md/Ufst2is3",
-	"4mxnEGROcPLeNoOkLKQBDjBQqmu5zPkJAAD//0utOZO+AAAA",
+	"H4sIAAAAAAAC/3yPzU7EMAyEXyUyHKvNPbfdFwDxAsibutssrW0SV1BVfXeUtvycONmakWbmWyDKqMLE",
+	"ViAskOl9omIXaRNtwrMUe/kR5ypFYSO2+qLqkCJaEvb3Ily1EnsasX6PmToI8OB/O/zuFv90vVO0M6zr",
+	"2kBLJeakNQYCnN2xwl2lnd1Hst6hs1nJZeooE0dyJg7Z0adRZhycbHHQbAApUwvB8kQ1/Gisg75LwwKa",
+	"RSnbQck4Ur21BAIUy4lvsDaw575e/+CcTl4xvuGNLr4oxdOM4/AP46Uy1iGJO4HA0zA0IEqMmiAANKBo",
+	"fdmd9SsAAP//Z6LzfpEBAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
