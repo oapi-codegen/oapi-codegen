@@ -112,7 +112,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
+            err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
             siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "{{.ParamName}}", Err: err})
             return
         }{{end}}
