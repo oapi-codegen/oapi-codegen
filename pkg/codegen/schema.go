@@ -113,15 +113,17 @@ type EnumDefinition struct {
 	// ValueWrapper wraps the value. It's used to conditionally apply quotes
 	// around strings.
 	ValueWrapper string
-	// Conflicts is set to true when this enum conflicts with another in
-	// terms of TypeNames
-	Conflicts bool
+	// PrefixTypeName determines if the enum value is prefixed with its TypeName.
+	// This is set to true when this enum conflicts with another in terms of
+	// TypeNames or when explicitly requested via the
+	// `compatibility.always-prefix-enum-values` option.
+	PrefixTypeName bool
 }
 
 // GetValues generates enum names in a way to minimize global conflicts
 func (e *EnumDefinition) GetValues() map[string]string {
 	// in case there are no conflicts, it's safe to use the values as-is
-	if !e.Conflicts {
+	if !e.PrefixTypeName {
 		return e.Schema.EnumValues
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.

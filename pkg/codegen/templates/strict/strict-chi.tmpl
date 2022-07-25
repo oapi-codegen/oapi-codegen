@@ -2,13 +2,30 @@ type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
+type StrictChiServerOptions struct {
+    RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
+    ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-    return &strictHandler{ssi: ssi, middlewares: middlewares}
+    return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictChiServerOptions {
+        RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+        },
+        ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+        },
+    }}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictChiServerOptions) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
     ssi StrictServerInterface
     middlewares []StrictMiddlewareFunc
+    options StrictChiServerOptions
 }
 
 {{range .}}
@@ -36,24 +53,24 @@ type strictHandler struct {
                 {{if eq .NameTag "JSON" -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-                        http.Error(w, "can't decode JSON body: " + err.Error(), http.StatusBadRequest)
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
                     if err := r.ParseForm(); err != nil {
-                        http.Error(w, "can't decode formdata: " + err.Error(), http.StatusBadRequest)
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
                         return
                     }
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
-                        http.Error(w, "can't bind formdata: " + err.Error(), http.StatusBadRequest)
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Multipart" -}}
                     if reader, err := r.MultipartReader(); err != nil {
-                        http.Error(w, "can't decode multipart body: " + err.Error(), http.StatusBadRequest)
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
                         return
                     } else {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
@@ -61,7 +78,7 @@ type strictHandler struct {
                 {{else if eq .NameTag "Text" -}}
                     data, err := ioutil.ReadAll(r.Body)
                     if err != nil {
-                        http.Error(w, "can't read body: " + err.Error(), http.StatusBadRequest)
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
                         return
                     }
                     body := {{$opid}}{{.NameTag}}RequestBody(data)
@@ -114,7 +131,7 @@ type strictHandler struct {
                     {{else if eq .NameTag "Multipart" -}}
                         defer writer.Close()
                         if err := v(writer); err != nil {
-                            http.Error(w, err.Error(), http.StatusInternalServerError)
+                            sh.options.ResponseErrorHandlerFunc(w, r, err)
                         }
                     {{else -}}
                         if closer, ok := v.Body.(io.ReadCloser); ok {
@@ -132,10 +149,10 @@ type strictHandler struct {
                 {{end}}{{/* if eq 0 (len .Contents) */ -}}
             {{end}}{{/* range .Responses */ -}}
             case error:
-                http.Error(w, v.Error(), http.StatusInternalServerError)
+                sh.options.ResponseErrorHandlerFunc(w, r, v)
             case nil:
             default:
-                http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+                sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
         }
     }
 {{end}}

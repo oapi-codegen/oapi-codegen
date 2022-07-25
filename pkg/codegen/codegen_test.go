@@ -220,6 +220,15 @@ func TestXGoTypeImport(t *testing.T) {
 	// Check generated struct
 	assert.Contains(t, code, "type Pet struct {\n\tAge myuuid.UUID `json:\"age\"`\n}")
 
+	// Check import
+	assert.Contains(t, code, `github.com/CavernaTechnologies/pgext`)
+
+	// Check generated struct
+	assert.Contains(t, code, "type Person struct {\n\tAge pgext.Puint `json:\"age\"`\n}")
+
+	// Check generated struct
+	assert.Contains(t, code, "type Car struct {\n\tAge int `json:\"age\"`\n}")
+
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
 

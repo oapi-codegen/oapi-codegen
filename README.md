@@ -361,8 +361,8 @@ look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
 
-- `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`. 
-The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
+- `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`.
+The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`, `MergeCat`, `MergeDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
 ```yaml
 schema:
   oneOf:
@@ -678,15 +678,18 @@ file via the `--config` option. Please see the test under
 for an example. The structure of the file is as follows:
     
 ```yaml
-output:
-  externalref.gen.go
 package: externalref
 generate:
-  - types
-  - skip-prune
+  models: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+output: externalref.gen.go
+output-options:
+  skip-prune: true
 ```
 
 Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 

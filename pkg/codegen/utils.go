@@ -604,6 +604,8 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Asterisk"
 		case '^':
 			prefix += "Caret"
+		case '%':
+			prefix += "Percent"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {

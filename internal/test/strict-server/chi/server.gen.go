@@ -597,13 +597,30 @@ type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
+type StrictChiServerOptions struct {
+	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
+	ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictChiServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictChiServerOptions) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictChiServerOptions
 }
 
 // JSONExample operation middleware
@@ -612,7 +629,7 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 
 	var body JSONExampleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
 	request.Body = &body
@@ -636,10 +653,10 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 	case JSONExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -648,7 +665,7 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 	var request MultipartExampleRequestObject
 
 	if reader, err := r.MultipartReader(); err != nil {
-		http.Error(w, "can't decode multipart body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
 		return
 	} else {
 		request.Body = reader
@@ -670,17 +687,17 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(200)
 		defer writer.Close()
 		if err := v(writer); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	case MultipartExample400Response:
 		w.WriteHeader(400)
 	case MultipartExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -691,19 +708,19 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
 		}
 		request.JSONBody = &body
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "can't decode formdata: "+err.Error(), http.StatusBadRequest)
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
 			return
 		}
 		var body MultipleRequestAndResponseTypesFormdataRequestBody
 		if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
-			http.Error(w, "can't bind formdata: "+err.Error(), http.StatusBadRequest)
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
 			return
 		}
 		request.FormdataBody = &body
@@ -713,7 +730,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
 		if reader, err := r.MultipartReader(); err != nil {
-			http.Error(w, "can't decode multipart body: "+err.Error(), http.StatusBadRequest)
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
 			return
 		} else {
 			request.MultipartBody = reader
@@ -722,7 +739,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain") {
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "can't read body: "+err.Error(), http.StatusBadRequest)
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 			return
 		}
 		body := MultipleRequestAndResponseTypesTextRequestBody(data)
@@ -767,7 +784,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		w.WriteHeader(200)
 		defer writer.Close()
 		if err := v(writer); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	case MultipleRequestAndResponseTypes200TextResponse:
 		w.Header().Set("Content-Type", "text/plain")
@@ -776,10 +793,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	case MultipleRequestAndResponseTypes400Response:
 		w.WriteHeader(400)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -789,7 +806,7 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 
 	var body ReusableResponsesJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
 	request.Body = &body
@@ -815,10 +832,10 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 	case ReusableResponsesdefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -828,7 +845,7 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 
 	data, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "can't read body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 		return
 	}
 	body := TextExampleTextRequestBody(data)
@@ -853,10 +870,10 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 	case TextExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -891,10 +908,10 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 	case UnknownExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -935,10 +952,10 @@ func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.R
 	case UnspecifiedContentTypedefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -947,12 +964,12 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 	var request URLEncodedExampleRequestObject
 
 	if err := r.ParseForm(); err != nil {
-		http.Error(w, "can't decode formdata: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
 		return
 	}
 	var body URLEncodedExampleFormdataRequestBody
 	if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
-		http.Error(w, "can't bind formdata: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
 		return
 	}
 	request.Body = &body
@@ -980,10 +997,10 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 	case URLEncodedExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -995,7 +1012,7 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 
 	var body HeadersExampleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
 	request.Body = &body
@@ -1021,10 +1038,10 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 	case HeadersExampledefaultResponse:
 		w.WriteHeader(v.StatusCode)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 

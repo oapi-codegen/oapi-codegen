@@ -51,9 +51,6 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 	var params FindPetsParams
 
 	// ------------- Optional query parameter "tags" -------------
-	if paramValue := c.Query("tags"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", c.Request.URL.Query(), &params.Tags)
 	if err != nil {
@@ -62,9 +59,6 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 	}
 
 	// ------------- Optional query parameter "limit" -------------
-	if paramValue := c.Query("limit"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
 	if err != nil {
