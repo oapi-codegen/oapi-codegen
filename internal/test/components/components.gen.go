@@ -66,6 +66,7 @@ const (
 	FunnyValuesAsterisk FunnyValues = "*"
 	FunnyValuesEmpty    FunnyValues = ""
 	FunnyValuesN5       FunnyValues = "5"
+	FunnyValuesPercent  FunnyValues = "%"
 )
 
 // Defines values for EnumParam1.
