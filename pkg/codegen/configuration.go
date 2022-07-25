@@ -57,6 +57,10 @@ type CompatibilityOptions struct {
 	// When an object contains no members, and only an additionalProperties specification,
 	// it is flattened to a map. Set
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
+	// When an object property is both required and readOnly the go model is generated
+	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/604
+	DisableRequiredReadOnlyAsPointer bool `yaml:"disable-required-readonly-as-pointer,omitempty"`
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
