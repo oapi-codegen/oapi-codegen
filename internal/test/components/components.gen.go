@@ -66,6 +66,7 @@ const (
 	FunnyValuesAsterisk FunnyValues = "*"
 	FunnyValuesEmpty    FunnyValues = ""
 	FunnyValuesN5       FunnyValues = "5"
+	FunnyValuesPercent  FunnyValues = "%"
 )
 
 // Defines values for EnumParam1.
@@ -349,6 +350,14 @@ type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
+// EnsureEverythingIsReferencedTextBody defines parameters for EnsureEverythingIsReferenced.
+type EnsureEverythingIsReferencedTextBody = string
+
+// EnsureEverythingIsReferencedJSONBody defines parameters for EnsureEverythingIsReferenced.
+type EnsureEverythingIsReferencedJSONBody struct {
+	Field SchemaObject `json:"Field"`
+}
+
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
 	// This parameter has additional properties
@@ -369,7 +378,10 @@ type BodyWithAddPropsJSONBody struct {
 }
 
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
-type EnsureEverythingIsReferencedJSONRequestBody RenamedRequestBody
+type EnsureEverythingIsReferencedJSONRequestBody EnsureEverythingIsReferencedJSONBody
+
+// EnsureEverythingIsReferencedTextRequestBody defines body for EnsureEverythingIsReferenced for text/plain ContentType.
+type EnsureEverythingIsReferencedTextRequestBody = EnsureEverythingIsReferencedTextBody
 
 // BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.
 type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody
@@ -868,9 +880,11 @@ func (t OneOfObject10) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["one"], err = json.Marshal(t.One)
@@ -1164,9 +1178,11 @@ func (t OneOfObject4) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["fixedProperty"], err = json.Marshal(t.FixedProperty)
@@ -1363,9 +1379,11 @@ func (t OneOfObject8) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["fixed"], err = json.Marshal(t.Fixed)
@@ -1454,9 +1472,11 @@ func (t OneOfObject9) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return nil, err
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	object["type"], err = json.Marshal(t.Type)

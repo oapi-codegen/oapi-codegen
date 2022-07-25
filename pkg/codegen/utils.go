@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -126,6 +127,17 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 
 // This function returns Responses dictionary keys in sorted order
 func SortedResponsesKeys(dict openapi3.Responses) []string {
+	keys := make([]string, len(dict))
+	i := 0
+	for key := range dict {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func SortedHeadersKeys(dict openapi3.Headers) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -592,6 +604,8 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Asterisk"
 		case '^':
 			prefix += "Caret"
+		case '%':
+			prefix += "Percent"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {
@@ -789,4 +803,29 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 		}
 	}
 	return "", nil
+}
+
+func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	for _, v := range dict {
+		if v == nil || v.Value == nil {
+			continue
+		}
+
+		if v.Value.Extensions["x-go-type-import"] == nil || v.Value.Extensions["x-go-type"] == nil {
+			continue
+		}
+		goTypeImportExt := v.Value.Extensions["x-go-type-import"]
+
+		if raw, ok := goTypeImportExt.(json.RawMessage); ok {
+			gi := goImport{}
+			if err := json.Unmarshal(raw, &gi); err != nil {
+				return nil, err
+			}
+			res[gi.String()] = gi
+		} else {
+			continue
+		}
+	}
+	return res, nil
 }

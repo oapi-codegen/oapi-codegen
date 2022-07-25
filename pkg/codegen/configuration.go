@@ -24,8 +24,9 @@ type Configuration struct {
 type GenerateOptions struct {
 	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
 	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
-	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate echo server boilerplate
+	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate gin server boilerplate
 	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
+	Strict        bool `yaml:"strict-server,omitempty"`  // Strict specifies whether to generate strict server wrapper
 	Client        bool `yaml:"client,omitempty"`         // Client specifies whether to generate client boilerplate
 	Models        bool `yaml:"models,omitempty"`         // Models specifies whether to generate type definitions
 	EmbeddedSpec  bool `yaml:"embedded-spec,omitempty"`  // Whether to embed the swagger spec in the generated code
@@ -56,6 +57,9 @@ type CompatibilityOptions struct {
 	// When an object contains no members, and only an additionalProperties specification,
 	// it is flattened to a map. Set
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
+	// When set to true, always prefix enum values with their type name instead of only
+	// when typenames would be conflicting.
+	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.

@@ -202,3 +202,13 @@ func TestAnyOf(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, OneOfVariant5{Discriminator: "all", Id: 456}, v5)
 }
+
+func TestMarshalWhenNoUnionValueSet(t *testing.T) {
+	const expected = `{"one":null,"three":null,"two":null}`
+
+	var dst OneOfObject10
+
+	bytes, err := dst.MarshalJSON()
+	assert.Nil(t, err)
+	assert.Equal(t, expected, string(bytes))
+}
