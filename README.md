@@ -361,8 +361,8 @@ look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
 
-- `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`. 
-The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
+- `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`.
+The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`, `MergeCat`, `MergeDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
 ```yaml
 schema:
   oneOf:
