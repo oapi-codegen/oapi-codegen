@@ -615,7 +615,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
 
-	for contentType, content := range body.Content {
+	for _, contentType := range SortedContentKeys(body.Content) {
+		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
 
