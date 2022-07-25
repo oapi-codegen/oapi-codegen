@@ -292,6 +292,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 	var params GetFooParams
 
 	headers := ctx.Request().Header
+
 	// ------------- Optional header parameter "Foo" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("Foo")]; found {
 		var Foo string
@@ -306,7 +307,9 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 		}
 
 		params.Foo = &Foo
+
 	}
+
 	// ------------- Optional header parameter "Bar" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("Bar")]; found {
 		var Bar string
@@ -321,6 +324,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 		}
 
 		params.Bar = &Bar
+
 	}
 
 	// Invoke the callback with all the unmarshalled arguments

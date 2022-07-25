@@ -2741,6 +2741,7 @@ type ServerInterfaceWrapper struct {
 // GetContentObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param ComplexObject
 
@@ -2768,6 +2769,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p: %s", err))
 		}
+
 		params.P = &value
 
 	}
@@ -2779,6 +2781,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ep: %s", err))
 		}
+
 		params.Ep = &value
 
 	}
@@ -2790,6 +2793,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ea: %s", err))
 		}
+
 		params.Ea = &value
 
 	}
@@ -2801,6 +2805,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter a: %s", err))
 		}
+
 		params.A = &value
 
 	}
@@ -2812,6 +2817,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: %s", err))
 		}
+
 		params.Eo = &value
 
 	}
@@ -2823,6 +2829,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter o: %s", err))
 		}
+
 		params.O = &value
 
 	}
@@ -2839,6 +2846,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
 		}
+
 		params.Co = &value
 
 	}
@@ -2850,6 +2858,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
 		}
+
 		params.N1s = &value
 
 	}
@@ -2865,6 +2874,7 @@ func (w *ServerInterfaceWrapper) EnumParams(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params EnumParamsParams
+
 	// ------------- Optional query parameter "enumPathParam" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "enumPathParam", ctx.QueryParams(), &params.EnumPathParam)
@@ -2885,6 +2895,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 	var params GetHeaderParams
 
 	headers := ctx.Request().Header
+
 	// ------------- Optional header parameter "X-Primitive" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive")]; found {
 		var XPrimitive int32
@@ -2899,7 +2910,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XPrimitive = &XPrimitive
+
 	}
+
 	// ------------- Optional header parameter "X-Primitive-Exploded" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Primitive-Exploded")]; found {
 		var XPrimitiveExploded int32
@@ -2914,7 +2927,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XPrimitiveExploded = &XPrimitiveExploded
+
 	}
+
 	// ------------- Optional header parameter "X-Array-Exploded" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Array-Exploded")]; found {
 		var XArrayExploded []int32
@@ -2929,7 +2944,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XArrayExploded = &XArrayExploded
+
 	}
+
 	// ------------- Optional header parameter "X-Array" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Array")]; found {
 		var XArray []int32
@@ -2944,7 +2961,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XArray = &XArray
+
 	}
+
 	// ------------- Optional header parameter "X-Object-Exploded" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Object-Exploded")]; found {
 		var XObjectExploded Object
@@ -2959,7 +2978,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XObjectExploded = &XObjectExploded
+
 	}
+
 	// ------------- Optional header parameter "X-Object" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Object")]; found {
 		var XObject Object
@@ -2974,7 +2995,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XObject = &XObject
+
 	}
+
 	// ------------- Optional header parameter "X-Complex-Object" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("X-Complex-Object")]; found {
 		var XComplexObject ComplexObject
@@ -2989,7 +3012,9 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.XComplexObject = &XComplexObject
+
 	}
+
 	// ------------- Optional header parameter "1-Starting-With-Number" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("1-Starting-With-Number")]; found {
 		var N1StartingWithNumber string
@@ -3004,6 +3029,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		}
 
 		params.N1StartingWithNumber = &N1StartingWithNumber
+
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -3014,6 +3040,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 // GetLabelExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
@@ -3030,6 +3057,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 // GetLabelExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param Object
 
@@ -3046,6 +3074,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx echo.Context) error {
 // GetLabelNoExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
@@ -3062,6 +3091,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx echo.Context) error 
 // GetLabelNoExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param Object
 
@@ -3078,6 +3108,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx echo.Context) error
 // GetMatrixExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
@@ -3094,6 +3125,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx echo.Context) error {
 // GetMatrixExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id Object
 
@@ -3110,6 +3142,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx echo.Context) error 
 // GetMatrixNoExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
@@ -3126,6 +3159,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx echo.Context) error
 // GetMatrixNoExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id Object
 
@@ -3142,6 +3176,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx echo.Context) erro
 // GetPassThrough converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPassThrough(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param string
 
@@ -3158,6 +3193,7 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetDeepObjectParams
+
 	// ------------- Required query parameter "deepObj" -------------
 
 	err = runtime.BindQueryParameter("deepObject", true, true, "deepObj", ctx.QueryParams(), &params.DeepObj)
@@ -3176,6 +3212,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetQueryFormParams
+
 	// ------------- Optional query parameter "ea" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "ea", ctx.QueryParams(), &params.Ea)
@@ -3229,12 +3266,12 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	if paramValue := ctx.QueryParam("co"); paramValue != "" {
 
-		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		var Co ComplexObject
+		err = json.Unmarshal([]byte(paramValue), &Co)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
 		}
-		params.Co = &value
+		params.Co = &Co
 
 	}
 
@@ -3253,6 +3290,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 // GetSimpleExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
@@ -3269,6 +3307,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 // GetSimpleExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param Object
 
@@ -3285,6 +3324,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx echo.Context) error 
 // GetSimpleNoExplodeArray converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
@@ -3301,6 +3341,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx echo.Context) error
 // GetSimpleNoExplodeObject converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param Object
 
@@ -3317,6 +3358,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx echo.Context) erro
 // GetSimplePrimitive converts echo context to params.
 func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "param" -------------
 	var param int32
 
@@ -3333,6 +3375,7 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 // GetStartingWithNumber converts echo context to params.
 func (w *ServerInterfaceWrapper) GetStartingWithNumber(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "1param" -------------
 	var n1param string
 

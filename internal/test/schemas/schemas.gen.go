@@ -1190,6 +1190,7 @@ func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 // Issue209 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
@@ -1208,6 +1209,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 // Issue30 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
@@ -1237,6 +1239,7 @@ func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 // Issue41 converts echo context to params.
 func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
@@ -1260,6 +1263,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
+
 	// ------------- Required query parameter "foo" -------------
 
 	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)

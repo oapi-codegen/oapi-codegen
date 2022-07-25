@@ -46,6 +46,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
+
 	// ------------- Optional query parameter "tags" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
@@ -77,6 +78,7 @@ func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 // DeletePet converts echo context to params.
 func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id int64
 
@@ -93,6 +95,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 // FindPetByID converts echo context to params.
 func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "id" -------------
 	var id int64
 

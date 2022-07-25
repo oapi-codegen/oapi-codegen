@@ -139,6 +139,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 	var params HeadersExampleParams
 
 	headers := ctx.Request().Header
+
 	// ------------- Required header parameter "header1" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header1")]; found {
 		var Header1 string
@@ -153,9 +154,11 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 		}
 
 		params.Header1 = Header1
+
 	} else {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter header1 is required, but not found"))
 	}
+
 	// ------------- Optional header parameter "header2" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header2")]; found {
 		var Header2 int
@@ -170,6 +173,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 		}
 
 		params.Header2 = &Header2
+
 	}
 
 	// Invoke the callback with all the unmarshalled arguments

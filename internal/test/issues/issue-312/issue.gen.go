@@ -438,6 +438,7 @@ type ServerInterfaceWrapper struct {
 // GetPet converts echo context to params.
 func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 	var err error
+
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
