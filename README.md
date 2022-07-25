@@ -683,6 +683,7 @@ output:
 package: externalref
 generate:
   models: true
+output-options:
   skip-prune: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
