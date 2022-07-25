@@ -47,6 +47,7 @@ func TestIllegalEnumNames(t *testing.T) {
 		}
 	}
 
+	require.Equal(t, `""`, constDefs["BarEmpty"])
 	require.Equal(t, `"Bar"`, constDefs["BarBar"])
 	require.Equal(t, `"Foo"`, constDefs["BarFoo"])
 	require.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])
