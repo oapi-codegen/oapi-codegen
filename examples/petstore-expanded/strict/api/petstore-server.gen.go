@@ -55,9 +55,6 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	var params FindPetsParams
 
 	// ------------- Optional query parameter "tags" -------------
-	if paramValue := r.URL.Query().Get("tags"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
 	if err != nil {
@@ -66,9 +63,6 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 	}
 
 	// ------------- Optional query parameter "limit" -------------
-	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
-
-	}
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
 	if err != nil {
@@ -376,13 +370,30 @@ type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
+type StrictChiServerOptions struct {
+	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
+	ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictChiServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictChiServerOptions) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictChiServerOptions
 }
 
 // FindPets operation middleware
@@ -410,10 +421,10 @@ func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params
 		w.WriteHeader(v.StatusCode)
 		writeJSON(w, v)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -423,7 +434,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	var body AddPetJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "can't decode JSON body: "+err.Error(), http.StatusBadRequest)
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
 	request.Body = &body
@@ -447,10 +458,10 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(v.StatusCode)
 		writeJSON(w, v)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -477,10 +488,10 @@ func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id in
 		w.WriteHeader(v.StatusCode)
 		writeJSON(w, v)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 
@@ -509,10 +520,10 @@ func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id 
 		w.WriteHeader(v.StatusCode)
 		writeJSON(w, v)
 	case error:
-		http.Error(w, v.Error(), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, v)
 	case nil:
 	default:
-		http.Error(w, fmt.Sprintf("Unexpected response type: %T", v), http.StatusInternalServerError)
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
 	}
 }
 

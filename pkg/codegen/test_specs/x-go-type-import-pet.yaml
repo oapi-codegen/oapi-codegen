@@ -28,12 +28,53 @@ paths:
             type: integer
             format: int64
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
+                $ref: "#/components/schemas/Pet"
+  /person/{id}:
+    get:
+      summary: Returns a person by ID
+      description: Returns a person based on a single ID
+      operationId: findPersonByID
+      parameters:
+        - name: id
+          in: path
+          description: ID of person to fetch
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: person response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+  /car/{id}:
+    get:
+      summary: Returns a car by ID
+      description: Returns a car based on a single ID
+      operationId: findCarByID
+      parameters:
+        - name: id
+          in: path
+          description: ID of car to fetch
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: car response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Car"
+
 components:
   schemas:
     Pet:
@@ -43,5 +84,19 @@ components:
           x-go-type-import:
             path: github.com/google/uuid
             name: myuuid
+      required:
+        - age
+    Person:
+      properties:
+        age:
+          x-go-type: pgext.Puint
+          x-go-type-import:
+            path: github.com/CavernaTechnologies/pgext
+      required:
+        - age
+    Car:
+      properties:
+        age:
+          type: integer
       required:
         - age

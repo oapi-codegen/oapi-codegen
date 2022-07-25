@@ -429,6 +429,7 @@ components:
         - '*'
         - '5'
         - '&'
+        - '%'
         - ''
     RenameMe:
       description: This schema should be renamed via x-go-name when generating

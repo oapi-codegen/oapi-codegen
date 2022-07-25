@@ -37,7 +37,9 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{ end }}
 
     {{ range $paramIdx, $param := .QueryParams }}
+    {{- if (or (or .Required .IsPassThrough) (or .IsJson .IsStyled)) -}}
     // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{ end }}
         {{ if .IsRef }}
     var {{ .GoVariableName }} {{ .TypeDef }}
             {{ if .IsStyled }}

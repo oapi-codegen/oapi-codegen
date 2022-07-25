@@ -46,27 +46,32 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params
 
-    {{range $paramIdx, $param := .QueryParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
-      if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+    {{range $paramIdx, $param := .QueryParams}}
+      {{- if (or (or .Required .IsPassThrough) (or .IsJson .IsStyled)) -}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+      {{ end }}
+      {{ if (or (or .Required .IsPassThrough) .IsJson) }}
+        if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
-      {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        {{if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        {{end}}
+
+        {{if .IsJson}}
+          var value {{.TypeDef}}
+          err = json.Unmarshal([]byte(paramValue), &value)
+          if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
+            return
+          }
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        {{end}}
+        }{{if .Required}} else {
+            c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
+            return
+        }{{end}}
       {{end}}
-
-      {{if .IsJson}}
-        var value {{.TypeDef}}
-        err = json.Unmarshal([]byte(paramValue), &value)
-        if err != nil {
-          c.JSON(http.StatusBadRequest, gin.H{"msg": "Error unmarshaling parameter '{{.ParamName}}' as JSON"})
-          return
-        }
-
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
-      {{end}}
-      }{{if .Required}} else {
-          c.JSON(http.StatusBadRequest, gin.H{"msg": "Query argument {{.ParamName}} is required, but not found"})
-          return
-      }{{end}}
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
       if err != nil {
