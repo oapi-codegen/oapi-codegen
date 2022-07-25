@@ -36,6 +36,9 @@ const (
 // Bar defines model for Bar.
 type Bar string
 
+// N200 defines model for 200.
+type N200 = []Bar
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

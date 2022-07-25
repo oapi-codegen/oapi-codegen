@@ -21,6 +21,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Empty defines model for .
+type Empty = string
+
+// N200 defines model for 200.
+type N200 = string
+
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
 	// base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.

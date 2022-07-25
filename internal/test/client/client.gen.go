@@ -31,6 +31,9 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
+// POST defines model for POST.
+type POST = SchemaObject
+
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
 type PostBothJSONRequestBody = SchemaObject
 

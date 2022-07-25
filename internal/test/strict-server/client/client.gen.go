@@ -25,6 +25,15 @@ type Example struct {
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
+// N200 defines model for 200.
+type N200 = Example
+
+// POST defines model for POST.
+type POST = Example
+
+// Empty defines model for .
+type Empty = int
+
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
 

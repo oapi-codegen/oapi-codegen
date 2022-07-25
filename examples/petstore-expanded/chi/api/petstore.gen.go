@@ -48,6 +48,18 @@ type Pet struct {
 	Tag *string `json:"tag,omitempty"`
 }
 
+// Empty defines model for .
+type Empty = int32
+
+// N200 defines model for 200.
+type N200 = []Pet
+
+// Default defines model for default.
+type Default = Error
+
+// POST defines model for POST.
+type POST = NewPet
+
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags to filter by

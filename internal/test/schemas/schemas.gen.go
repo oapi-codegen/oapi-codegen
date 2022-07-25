@@ -71,6 +71,26 @@ type NullableProperties struct {
 // StringInPath defines model for StringInPath.
 type StringInPath = string
 
+// N200 defines model for 200.
+type N200 struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// AnyType2 represents any type.
+	//
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+}
+
+// Default defines model for default.
+type Default = GenericObject
+
+// GET defines model for GET.
+type GET = NullableProperties
+
+// This schema name starts with a number
+type Empty = N5StartsWithNumber
+
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
 
