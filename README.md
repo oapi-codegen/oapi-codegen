@@ -632,6 +632,35 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   }
   ```
 
+- `x-enum-varnames`: supplies other enum names for the corresponding values.
+
+    ```yaml
+    components:
+      schemas:
+        Object:
+          properties:
+            category:
+              type: integer
+              enum: [0, 1, 2]
+              x-enum-varnames:
+                - notice
+                - warning
+                - urgent
+    ```
+
+    After code generation you will get this result:
+
+    ```go
+    // Defines values for ObjectCategory.
+    const (
+    	Notice  ObjectCategory = 0
+    	Urgent  ObjectCategory = 2
+    	Warning ObjectCategory = 1
+    )
+
+    // ObjectCategory defines model for Object.Category.
+    type ObjectCategory int
+    ```
 
 ## Using `oapi-codegen`
 
