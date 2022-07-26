@@ -546,13 +546,17 @@ func SanitizeGoIdentity(str string) string {
 
 // SanitizeEnumNames fixes illegal chars in the enum names
 // and removes duplicates
-func SanitizeEnumNames(enumNames []string) map[string]string {
-	dupCheck := make(map[string]int, len(enumNames))
-	deDup := make([]string, 0, len(enumNames))
+func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
+	dupCheck := make(map[string]int, len(enumValues))
+	deDup := make([][]string, 0, len(enumValues))
 
-	for _, n := range enumNames {
+	for i, v := range enumValues {
+		n := v
+		if i < len(enumNames) {
+			n = enumNames[i]
+		}
 		if _, dup := dupCheck[n]; !dup {
-			deDup = append(deDup, n)
+			deDup = append(deDup, []string{n, v})
 		}
 		dupCheck[n] = 0
 	}
@@ -560,13 +564,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	dupCheck = make(map[string]int, len(deDup))
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
-	for _, n := range deDup {
+	for _, p := range deDup {
+		n, v := p[0], p[1]
 		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
-			sanitizedDeDup[sanitized] = n
+			sanitizedDeDup[sanitized] = v
 		} else {
-			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
+			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = v
 		}
 		dupCheck[sanitized]++
 	}
