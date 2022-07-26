@@ -188,6 +188,8 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
+	assert.Contains(t, code, "Geriatric CatDeadAgeCategory = 5")
+	assert.Contains(t, code, "N2 CatDeadArea = 2")
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
