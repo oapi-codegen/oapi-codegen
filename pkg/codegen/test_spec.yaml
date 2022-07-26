@@ -136,3 +136,16 @@ components:
         cause:
           type: string
           enum: [car, dog, oldage]
+        area:
+          type: integer
+          enum: [0, 1, 2]
+        age_category:
+          type: integer
+          enum: [0, 1, 2, 3, 4, 5, 6]
+          x-enum-varnames:
+            - kitten
+            - junior
+            - prime
+            - mature
+            - senior
+            - geriatric
