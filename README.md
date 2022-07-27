@@ -632,7 +632,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   }
   ```
 
-- `x-enum-varnames`: supplies other enum names for the corresponding values.
+- `x-enum-varnames`: supplies other enum names for the corresponding values. (alias: `x-enumNames`)
 
     ```yaml
     components:
