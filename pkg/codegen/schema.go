@@ -406,9 +406,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		enumNames := enumValues
-		if _, ok := schema.ExtensionProps.Extensions[extEnumVarNames]; ok {
-			if extEnumNames, err := extParseEnumVarNames(schema.ExtensionProps.Extensions[extEnumVarNames]); err == nil {
-				enumNames = extEnumNames
+		for _, key := range []string{extEnumVarNames, extEnumNames} {
+			if _, ok := schema.ExtensionProps.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(schema.ExtensionProps.Extensions[key]); err == nil {
+					enumNames = extEnumNames
+					break
+				}
 			}
 		}
 

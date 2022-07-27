@@ -11,6 +11,7 @@ const (
 	extPropOmitEmpty = "x-omitempty"
 	extPropExtraTags = "x-oapi-codegen-extra-tags"
 	extEnumVarNames  = "x-enum-varnames"
+	extEnumNames     = "x-enumNames"
 )
 
 func extString(extPropValue interface{}) (string, error) {
