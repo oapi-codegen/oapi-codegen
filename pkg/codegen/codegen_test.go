@@ -61,7 +61,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 
 	// Check that the property comments were generated
-	assert.Contains(t, code, "// Unique id of the pet")
+	assert.Contains(t, code, "// Id Unique id of the pet")
 
 	// Check that the summary comment contains newlines
 	assert.Contains(t, code, `// Deletes a pet by ID

@@ -220,13 +220,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:         refType,
-			Description:    StringToGoComment(schema.Description),
+			Description:    schema.Description,
 			DefineViaAlias: true,
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: StringToGoComment(schema.Description),
+		Description: schema.Description,
 		OAPISchema:  schema,
 	}
 
@@ -567,6 +567,14 @@ func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for i, p := range props {
 		field := ""
+
+		goFieldName := p.GoFieldName()
+		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
+				goFieldName = extGoFieldName
+			}
+		}
+
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.
@@ -574,14 +582,7 @@ func GenFieldsFromProperties(props []Property) []string {
 			if i != 0 {
 				field += "\n"
 			}
-			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
-		}
-
-		goFieldName := p.GoFieldName()
-		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
-				goFieldName = extGoFieldName
-			}
+			field += fmt.Sprintf("%s\n", StringWithTypeNameToGoComment(p.Description, p.GoFieldName()))
 		}
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())

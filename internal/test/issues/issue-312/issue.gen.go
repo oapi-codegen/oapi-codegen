@@ -24,22 +24,22 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-	// Error code
+	// Code Error code
 	Code int32 `json:"code"`
 
-	// Error message
+	// Message Error message
 	Message string `json:"message"`
 }
 
 // Pet defines model for Pet.
 type Pet struct {
-	// The name of the pet.
+	// Name The name of the pet.
 	Name string `json:"name"`
 }
 
 // PetNames defines model for PetNames.
 type PetNames struct {
-	// The names of the pets.
+	// Names The names of the pets.
 	Names []string `json:"names"`
 }
 

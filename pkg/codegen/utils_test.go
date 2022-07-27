@@ -346,6 +346,62 @@ Line
 	}
 }
 
+func TestStringWithTypeNameToGoComment(t *testing.T) {
+	testCases := []struct {
+		input     string
+		inputName string
+		expected  string
+		message   string
+	}{
+		{
+			input:     "",
+			inputName: "",
+			expected:  "",
+			message:   "blank string should be ignored due to human unreadable",
+		},
+		{
+			input:    " ",
+			expected: "",
+			message:  "whitespace should be ignored due to human unreadable",
+		},
+		{
+			input:     "Single Line",
+			inputName: "SingleLine",
+			expected:  "// SingleLine Single Line",
+			message:   "single line comment",
+		},
+		{
+			input:     "    Single Line",
+			inputName: "SingleLine",
+			expected:  "// SingleLine     Single Line",
+			message:   "single line comment preserving whitespace",
+		},
+		{
+			input: `Multi
+Line
+  With
+    Spaces
+	And
+		Tabs
+`,
+			inputName: "MultiLine",
+			expected: `// MultiLine Multi
+// Line
+//   With
+//     Spaces
+// 	And
+// 		Tabs`,
+			message: "multi line preserving whitespaces using tabs or spaces",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringWithTypeNameToGoComment(testCase.input, testCase.inputName)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
+}
+
 func TestEscapePathElements(t *testing.T) {
 	p := "/foo/bar/baz"
 	assert.Equal(t, p, EscapePathElements(p))
