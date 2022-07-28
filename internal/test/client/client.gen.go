@@ -31,11 +31,17 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
+// PostVendorJsonJSONBody defines parameters for PostVendorJson.
+type PostVendorJsonJSONBody = map[string]interface{}
+
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
 type PostBothJSONRequestBody = SchemaObject
 
 // PostJsonJSONRequestBody defines body for PostJson for application/json ContentType.
 type PostJsonJSONRequestBody = SchemaObject
+
+// PostVendorJsonJSONRequestBody defines body for PostVendorJson for application/vnd.api+json ContentType.
+type PostVendorJsonJSONRequestBody = PostVendorJsonJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -134,6 +140,11 @@ type ClientInterface interface {
 
 	// GetJsonWithTrailingSlash request
 	GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostVendorJson request with any body
+	PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostVendorJson(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -234,6 +245,30 @@ func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*
 
 func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetJsonWithTrailingSlashRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostVendorJsonRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostVendorJson(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostVendorJsonRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -461,6 +496,46 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewPostVendorJsonRequest calls the generic PostVendorJson builder with application/vnd.api+json body
+func NewPostVendorJsonRequest(server string, body PostVendorJsonJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostVendorJsonRequestWithBody(server, "application/vnd.api+json", bodyReader)
+}
+
+// NewPostVendorJsonRequestWithBody generates requests for PostVendorJson with any type of body
+func NewPostVendorJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/with_vendor_json")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -528,6 +603,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetJsonWithTrailingSlash request
 	GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error)
+
+	// PostVendorJson request with any body
+	PostVendorJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)
+
+	PostVendorJsonWithResponse(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)
 }
 
 type PostBothResponse struct {
@@ -677,6 +757,27 @@ func (r GetJsonWithTrailingSlashResponse) StatusCode() int {
 	return 0
 }
 
+type PostVendorJsonResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostVendorJsonResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostVendorJsonResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
 func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
 	rsp, err := c.PostBothWithBody(ctx, contentType, body, reqEditors...)
@@ -754,6 +855,23 @@ func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.C
 		return nil, err
 	}
 	return ParseGetJsonWithTrailingSlashResponse(rsp)
+}
+
+// PostVendorJsonWithBodyWithResponse request with arbitrary body returning *PostVendorJsonResponse
+func (c *ClientWithResponses) PostVendorJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error) {
+	rsp, err := c.PostVendorJsonWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostVendorJsonResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostVendorJsonWithResponse(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error) {
+	rsp, err := c.PostVendorJson(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostVendorJsonResponse(rsp)
 }
 
 // ParsePostBothResponse parses an HTTP response from a PostBothWithResponse call
@@ -868,6 +986,22 @@ func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*GetJsonWithTrai
 	return response, nil
 }
 
+// ParsePostVendorJsonResponse parses an HTTP response from a PostVendorJsonWithResponse call
+func ParsePostVendorJsonResponse(rsp *http.Response) (*PostVendorJsonResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostVendorJsonResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -891,6 +1025,9 @@ type ServerInterface interface {
 
 	// (GET /with_trailing_slash/)
 	GetJsonWithTrailingSlash(ctx echo.Context) error
+
+	// (POST /with_vendor_json)
+	PostVendorJson(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -965,6 +1102,15 @@ func (w *ServerInterfaceWrapper) GetJsonWithTrailingSlash(ctx echo.Context) erro
 	return err
 }
 
+// PostVendorJson converts echo context to params.
+func (w *ServerInterfaceWrapper) PostVendorJson(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.PostVendorJson(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1000,21 +1146,22 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/with_other_body", wrapper.PostOther)
 	router.GET(baseURL+"/with_other_response", wrapper.GetOther)
 	router.GET(baseURL+"/with_trailing_slash/", wrapper.GetJsonWithTrailingSlash)
+	router.POST(baseURL+"/with_vendor_json", wrapper.PostVendorJson)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8yUz24TMRDGX2U1cFyyKdz2CAdUJAgikTiEqHK8k9jVrm1mJq1W0b47GicliahCkGjV",
-	"SzTO/NE338/rLdjYpRgwCEO9BbYOO5PDaQ4ny1u0oudEMSGJx5xdeWL5YjrUg/QJoQYW8mENQwkU28cS",
-	"msGfG0/YQD3fVZVHoxaDlviwitrcIFvySXwMUMPMeS4EWbi4dygOqRCHxYfWY5DChGYffvfiviGnGBi5",
-	"MITFGgOSEWwKG4nQStv/CFBC6y0GzjpDXgQ+X89UvXhR+TBDlmKKdIcEJdwh8U7K1Wg8GmthTBhM8lDD",
-	"u9F4dAUlJCMu+1Pde3E3y5h/mr1pKXK2Uo00utd1AzV8jSzvozjYuYN6anqtszEIhtxiUmq9zU3VLauM",
-	"B1gavSZcQQ2vqgPNao+yOuGo/h6PilZQ3rAQmu505CpSZwRqWPpgqIfyD5gnNIU2mP/YOw912LSt1hw5",
-	"cZTdwhof8eIjHqw4qn07Hr9UE4bDjipJaffnWX9S5c/C+p8IZfUP2XOAfut/QkAqi9FuyEsP9XwLk4RZ",
-	"wBx07ojQNFDuYtN0PsBiWBx2ifo+XIBionUXs3i2j2Un/xIWhwXOw/hfV1zI+NaH9Q23hl31t2uij/Fs",
-	"3zLVjhd6b4bhVwAAAP//2pHiCAkHAAA=",
+	"H4sIAAAAAAAC/8yUUY/TMAzHv0pleKO0O3jrIzygQ4JD3AQPY5qyxFtzapPgeDtVU787ctaxTXeMTYLT",
+	"vUzObEd//39ON6B9G7xDxxGqDURdY6tSeJvCm/kdapZzIB+Q2GLKLixF/qxalAN3AaGCyGTdEvocyDeP",
+	"JSSDP1eW0EA12VblB1dNeymxbuGl2WDUZANb76CCcW1jxhg5Zvc1co2UcY3Z+8ai40w5M4TfLddfMQbv",
+	"IsZMEWZLdEiK0WTaE6HmpvvhIIfGanQx6XRpEPh0PRb1bFnkwxgjZ7dIayTIYY0Ut1KuilExkkIf0Klg",
+	"oYK3xai4ghyC4jr5U95brmdzn37MYFrwMVkpRiqZ69pABV985Heea9i6g3IyndRp7xhdalEhNFanpvIu",
+	"iowdLIleEi6gghflnmY5oCyPOIq/h1d5zcivIxOq9vjKhadWMVQwt05RB/kDmEc0mVaY/hich8qtmkZq",
+	"Dpw4yG5giY948QH3VhzUvhmNnqsJ/X5GkSS0u9OsP4ryJ2F9EaGkfpc9Bei3/v8ISGRF1Cuy3EE12cBN",
+	"wCRgAnJvQagM5NtYmdY6mPbT/Sxevg9noLiRurNZPNlj2co/h8V+gNMw/tWKMynbWLecxUbFuvzbmsjH",
+	"eDy03ErHM9+bNTrjabaT8OfF+ZYKL3rJa2cKFeyrh/MNhvuLnm3f/woAAP//ihdq57wHAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
