@@ -34,12 +34,13 @@ func errExit(format string, args ...interface{}) {
 }
 
 var (
-	flagOutputFile     string
-	flagConfigFile     string
-	flagOldConfigStyle bool
-	flagOutputConfig   bool
-	flagPrintVersion   bool
-	flagPackageName    string
+	isOldConfigStyle bool
+
+	flagOutputFile   string
+	flagConfigFile   string
+	flagOutputConfig bool
+	flagPrintVersion bool
+	flagPackageName  string
 
 	// The options below are deprecated, and they will be removed in a future
 	// release. Please use the new config file format.
@@ -77,7 +78,6 @@ type oldConfiguration struct {
 
 func main() {
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
-	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "whether to use the older style config file format")
 	flag.BoolVar(&flagOutputConfig, "output-config", false, "when true, outputs a configuration file for oapi-codegen using current settings")
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
@@ -113,8 +113,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	// fallback to the old config style if we don't receive the new `--config` flag
+	if flagConfigFile == "" {
+		isOldConfigStyle = true
+	}
+
 	var opts configuration
-	if !flagOldConfigStyle {
+	if !isOldConfigStyle {
 		// We simply read the configuration from disk.
 		if flagConfigFile != "" {
 			buf, err := ioutil.ReadFile(flagConfigFile)
@@ -258,7 +263,7 @@ func updateConfigFromFlags(cfg configuration) (configuration, error) {
 
 	if len(unsupportedFlags) > 0 {
 		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
-			"new config style, please use  -old-config-style or update your configuration ",
+			"new config style, please remove the --config flag or update your configuration ",
 			strings.Join(unsupportedFlags, ", "))
 	}
 

@@ -695,6 +695,12 @@ output-options:
 Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
 to see all the fields on the configuration structure.
 
+**Note:** the old configuration options, present in pre-1.11.0 releases will work again:
+
+```sh
+oapi-codegen --package=petshop --generate="types,client,server,spec" -alias-types petshop-expanded.yaml
+```
+
 ### Import Mappings
 
 OpenAPI specifications may contain references to other OpenAPI specifications,
