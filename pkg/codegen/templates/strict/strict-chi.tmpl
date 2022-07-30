@@ -104,6 +104,8 @@ type strictHandler struct {
             if err := validResponse.Visit{{$opid}}Response(w); err != nil {
                 sh.options.ResponseErrorHandlerFunc(w, r, err)
             }
+        } else if response != nil {
+            sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
         }
     }
 {{end}}

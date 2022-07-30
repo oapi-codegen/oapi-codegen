@@ -87,6 +87,8 @@ type strictHandler struct {
             if err := validResponse.Visit{{$opid}}Response(ctx.Writer); err != nil {
                 ctx.Error(err)
             }
+        } else if response != nil {
+            ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
         }
     }
 {{end}}

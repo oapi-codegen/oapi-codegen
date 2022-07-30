@@ -459,6 +459,8 @@ func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params
 		if err := validResponse.VisitFindPetsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -488,6 +490,8 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 		if err := validResponse.VisitAddPetResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -512,6 +516,8 @@ func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id in
 		if err := validResponse.VisitDeletePetResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -536,6 +542,8 @@ func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id 
 		if err := validResponse.VisitFindPetByIDResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 

@@ -80,9 +80,9 @@ type strictHandler struct {
         if err != nil {
             return err
         } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
-            if err := validResponse.Visit{{$opid}}Response(ctx.Response()); err != nil {
-                return err
-            }
+            return validResponse.Visit{{$opid}}Response(ctx.Response())
+        } else if response != nil {
+            return fmt.Errorf("Unexpected response type: %T", response)
         }
         return nil
     }

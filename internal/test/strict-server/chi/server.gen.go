@@ -896,6 +896,8 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 		if err := validResponse.VisitJSONExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -925,6 +927,8 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 		if err := validResponse.VisitMultipartExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -988,6 +992,8 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1017,6 +1023,8 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 		if err := validResponse.VisitReusableResponsesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1047,6 +1055,8 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 		if err := validResponse.VisitTextExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1071,6 +1081,8 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 		if err := validResponse.VisitUnknownExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1097,6 +1109,8 @@ func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.R
 		if err := validResponse.VisitUnspecifiedContentTypeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1130,6 +1144,8 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 		if err := validResponse.VisitURLEncodedExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1161,6 +1177,8 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 		if err := validResponse.VisitHeadersExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 

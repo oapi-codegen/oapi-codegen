@@ -701,9 +701,9 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
-		if err := validResponse.VisitJSONExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitJSONExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -730,9 +730,9 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
-		if err := validResponse.VisitMultipartExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitMultipartExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -790,9 +790,9 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
-		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -819,9 +819,9 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
-		if err := validResponse.VisitReusableResponsesResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitReusableResponsesResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -849,9 +849,9 @@ func (sh *strictHandler) TextExample(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
-		if err := validResponse.VisitTextExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitTextExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -874,9 +874,9 @@ func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
-		if err := validResponse.VisitUnknownExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitUnknownExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -901,9 +901,9 @@ func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
-		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitUnspecifiedContentTypeResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -934,9 +934,9 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
-		if err := validResponse.VisitURLEncodedExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitURLEncodedExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -965,9 +965,9 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
-		if err := validResponse.VisitHeadersExampleResponse(ctx.Response()); err != nil {
-			return err
-		}
+		return validResponse.VisitHeadersExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
 	}
 	return nil
 }
