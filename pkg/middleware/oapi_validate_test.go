@@ -308,6 +308,114 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	}
 }
 
+func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	require.NoError(t, err, "Error initializing swagger")
+
+	// Create a new echo router
+	e := echo.New()
+
+	// Set up an authenticator to check authenticated function. It will allow
+	// access to "someScope", but disallow others.
+	options := Options{
+		Options: openapi3filter.Options{
+			ExcludeRequestBody:    false,
+			ExcludeResponseBody:   false,
+			IncludeResponseStatus: true,
+			MultiError:            true,
+		},
+		MultiErrorHandler: func(me openapi3.MultiError) *echo.HTTPError {
+			return &echo.HTTPError{
+				Code:     http.StatusTeapot,
+				Message:  me.Error(),
+				Internal: me,
+			}
+		},
+	}
+
+	// register middleware
+	e.Use(OapiRequestValidatorWithOptions(swagger, &options))
+
+	called := false
+
+	// Install a request handler for /resource. We want to make sure it doesn't
+	// get called.
+	e.GET("/multiparamresource", func(c echo.Context) error {
+		called = true
+		return nil
+	})
+
+	// Let's send a good request, it should pass
+	{
+		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50&id2=50")
+		assert.Equal(t, http.StatusOK, rec.Code)
+		assert.True(t, called, "Handler should have been called")
+		called = false
+	}
+
+	// Let's send a request with a missing parameter, it should return
+	// a bad status
+	{
+		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50")
+		assert.Equal(t, http.StatusTeapot, rec.Code)
+		body, err := ioutil.ReadAll(rec.Body)
+		if assert.NoError(t, err) {
+			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
+			assert.Contains(t, string(body), "value is required but missing")
+		}
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+
+	// Let's send a request with a 2 missing parameters, it should return
+	// a bad status
+	{
+		rec := doGet(t, e, "http://deepmap.ai/multiparamresource")
+		assert.Equal(t, http.StatusTeapot, rec.Code)
+		body, err := ioutil.ReadAll(rec.Body)
+		if assert.NoError(t, err) {
+			assert.Contains(t, string(body), "parameter \\\"id\\\"")
+			assert.Contains(t, string(body), "value is required but missing")
+			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
+			assert.Contains(t, string(body), "value is required but missing")
+		}
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+
+	// Let's send a request with a 1 missing parameter, and another outside
+	// or the parameters. It should return a bad status
+	{
+		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=500")
+		assert.Equal(t, http.StatusTeapot, rec.Code)
+		body, err := ioutil.ReadAll(rec.Body)
+		if assert.NoError(t, err) {
+			assert.Contains(t, string(body), "parameter \\\"id\\\"")
+			assert.Contains(t, string(body), "number must be at most 100")
+			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
+			assert.Contains(t, string(body), "value is required but missing")
+		}
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+
+	// Let's send a request with a parameters that do not meet spec. It should
+	// return a bad status
+	{
+		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
+		assert.Equal(t, http.StatusTeapot, rec.Code)
+		body, err := ioutil.ReadAll(rec.Body)
+		if assert.NoError(t, err) {
+			assert.Contains(t, string(body), "parameter \\\"id\\\"")
+			assert.Contains(t, string(body), "parsing \\\"abc\\\": invalid syntax")
+			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
+			assert.Contains(t, string(body), "number must be at least 10")
+		}
+		assert.False(t, called, "Handler should not have been called")
+		called = false
+	}
+}
+
 func TestGetSkipperFromOptions(t *testing.T) {
 
 	options := new(Options)
