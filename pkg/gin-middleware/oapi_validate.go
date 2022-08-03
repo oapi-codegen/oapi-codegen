@@ -59,13 +59,17 @@ func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
 // ErrorHandler is called when there is an error in validation
 type ErrorHandler func(c *gin.Context, message string, statusCode int)
 
+// MultiErrorHandler is called when oapi returns a MultiError type
+type MultiErrorHandler func(openapi3.MultiError) error
+
 // Options to customize request validation. These are passed through to
 // openapi3filter.
 type Options struct {
-	ErrorHandler ErrorHandler
-	Options      openapi3filter.Options
-	ParamDecoder openapi3filter.ContentParameterDecoder
-	UserData     interface{}
+	ErrorHandler      ErrorHandler
+	Options           openapi3filter.Options
+	ParamDecoder      openapi3filter.ContentParameterDecoder
+	UserData          interface{}
+	MultiErrorHandler MultiErrorHandler
 }
 
 // Create a validator from a swagger object, with validation options
@@ -128,6 +132,12 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			errFunc := getMultiErrorHandlerFromOptions(options)
+			return errFunc(me)
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
@@ -162,4 +172,25 @@ func GetGinContext(c context.Context) *gin.Context {
 
 func GetUserData(c context.Context) interface{} {
 	return c.Value(UserDataKey)
+}
+
+// attempt to get the MultiErrorHandler from the options. If it is not set,
+// return a default handler
+func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
+	if options == nil {
+		return defaultMultiErrorHandler
+	}
+
+	if options.MultiErrorHandler == nil {
+		return defaultMultiErrorHandler
+	}
+
+	return options.MultiErrorHandler
+}
+
+// defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
+// of all of the errors. This method is called if there are no other
+// methods defined on the options.
+func defaultMultiErrorHandler(me openapi3.MultiError) error {
+	return fmt.Errorf("multiple errors encountered: %s", me)
 }

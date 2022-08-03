@@ -16,6 +16,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -61,14 +62,18 @@ func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 // ErrorHandler is called when there is an error in validation
 type ErrorHandler func(c echo.Context, err *echo.HTTPError) error
 
+// MultiErrorHandler is called when oapi returns a MultiError type
+type MultiErrorHandler func(openapi3.MultiError) *echo.HTTPError
+
 // Options to customize request validation. These are passed through to
 // openapi3filter.
 type Options struct {
-	ErrorHandler ErrorHandler
-	Options      openapi3filter.Options
-	ParamDecoder openapi3filter.ContentParameterDecoder
-	UserData     interface{}
-	Skipper      echomiddleware.Skipper
+	ErrorHandler      ErrorHandler
+	Options           openapi3filter.Options
+	ParamDecoder      openapi3filter.ContentParameterDecoder
+	UserData          interface{}
+	Skipper           echomiddleware.Skipper
+	MultiErrorHandler MultiErrorHandler
 }
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
@@ -136,6 +141,12 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			errFunc := getMultiErrorHandlerFromOptions(options)
+			return errFunc(me)
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
@@ -201,4 +212,29 @@ func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 	}
 
 	return options.Skipper
+}
+
+// attempt to get the MultiErrorHandler from the options. If it is not set,
+// return a default handler
+func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
+	if options == nil {
+		return defaultMultiErrorHandler
+	}
+
+	if options.MultiErrorHandler == nil {
+		return defaultMultiErrorHandler
+	}
+
+	return options.MultiErrorHandler
+}
+
+// defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
+// of all of the errors. This method is called if there are no other
+// methods defined on the options.
+func defaultMultiErrorHandler(me openapi3.MultiError) *echo.HTTPError {
+	return &echo.HTTPError{
+		Code:     http.StatusBadRequest,
+		Message:  me.Error(),
+		Internal: me,
+	}
 }
