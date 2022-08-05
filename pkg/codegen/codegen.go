@@ -20,6 +20,8 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"io/ioutil"
+	"path"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -123,11 +125,28 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
+	// This  the specified user-templates-dir
+	if opts.OutputOptions.UserTemplatesDir != "" {
+		overrides, err := loadTemplateOverrides(opts.OutputOptions.UserTemplatesDir)
+		if err != nil {
+			return "", fmt.Errorf("error parsing user templates directory: %w", err)
+		}
+		if opts.OutputOptions.UserTemplates == nil {
+			opts.OutputOptions.UserTemplates = make(map[string]string)
+		}
+
+		for k, v := range overrides {
+			if _, ok := opts.OutputOptions.UserTemplates[k]; !ok {
+				opts.OutputOptions.UserTemplates[k] = v
+			}
+		}
+	}
+
 	// Override built-in templates with user-provided versions
 	for _, tpl := range t.Templates() {
-		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
+		if override, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
 			utpl := t.New(tpl.Name())
-			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
+			if _, err := utpl.Parse(override); err != nil {
 				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
 			}
 		}
@@ -895,4 +914,40 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 		}
 	}
 	return res, nil
+}
+
+func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
+	templates := make(map[string]string)
+
+	if templatesDir == "" {
+		return templates, nil
+	}
+
+	files, err := ioutil.ReadDir(templatesDir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, f := range files {
+		// Recursively load subdirectory files, using the path relative to the templates
+		// directory as the key. This allows for overriding the files in the service-specific
+		// directories (e.g. echo, chi, etc.).
+		if f.IsDir() {
+			subFiles, err := loadTemplateOverrides(path.Join(templatesDir, f.Name()))
+			if err != nil {
+				return nil, err
+			}
+			for subDir, subFile := range subFiles {
+				templates[path.Join(f.Name(), subDir)] = subFile
+			}
+			continue
+		}
+		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+		if err != nil {
+			return nil, err
+		}
+		templates[f.Name()] = string(data)
+	}
+
+	return templates, nil
 }

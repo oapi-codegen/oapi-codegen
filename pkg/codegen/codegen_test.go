@@ -28,7 +28,6 @@ func checkLint(t *testing.T, filename string, code []byte) {
 }
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "api"
 	opts := Configuration{
@@ -73,7 +72,6 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
 	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
 
 	// Input vars for code generation:
@@ -108,8 +106,70 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	assert.Contains(t, code, "//blah")
 }
 
-func TestExamplePetStoreParseFunction(t *testing.T) {
+func TestExamplePetStoreCodeGenerationWithUserTemplatesDir(t *testing.T) {
+	// Input vars for code generation:
 
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			ChiServer: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplatesDir: "test_templates",
+		},
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "//__placeholder__")
+
+	// Tests that `user-templates` takes precedence over
+	// `user-templates-dir`
+
+	// Input vars for code generation:
+	opts = Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates:    map[string]string{"typedef.tmpl": "//blah"},
+			UserTemplatesDir: "test_templates",
+		},
+	}
+
+	// Run our code generation:
+	code, err = Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "//blah")
+}
+
+func TestExamplePetStoreParseFunction(t *testing.T) {
 	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
 
 	cannedResponse := &http.Response{
@@ -129,7 +189,6 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 }
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Configuration{
@@ -231,7 +290,6 @@ func TestXGoTypeImport(t *testing.T) {
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
-
 }
 
 //go:embed test_spec.yaml
