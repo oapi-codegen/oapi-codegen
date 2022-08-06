@@ -124,27 +124,23 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
+	templateOverrides := make(map[string]string, len(opts.OutputOptions.UserTemplates))
 
-	// This  the specified user-templates-dir
 	if opts.OutputOptions.UserTemplatesDir != "" {
 		overrides, err := loadTemplateOverrides(opts.OutputOptions.UserTemplatesDir)
 		if err != nil {
 			return "", fmt.Errorf("error parsing user templates directory: %w", err)
 		}
-		if opts.OutputOptions.UserTemplates == nil {
-			opts.OutputOptions.UserTemplates = make(map[string]string)
-		}
-
 		for k, v := range overrides {
-			if _, ok := opts.OutputOptions.UserTemplates[k]; !ok {
-				opts.OutputOptions.UserTemplates[k] = v
-			}
+			templateOverrides[k] = v
 		}
 	}
-
+	for k, v := range opts.OutputOptions.UserTemplates {
+		templateOverrides[k] = v
+	}
 	// Override built-in templates with user-provided versions
 	for _, tpl := range t.Templates() {
-		if override, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
+		if override, ok := templateOverrides[tpl.Name()]; ok {
 			utpl := t.New(tpl.Name())
 			if _, err := utpl.Parse(override); err != nil {
 				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
