@@ -73,7 +73,7 @@ type OutputOptions struct {
 	IncludeTags        []string          `yaml:"include-tags,omitempty"`         // Only include operations that have one of these tags. Ignored when empty.
 	ExcludeTags        []string          `yaml:"exclude-tags,omitempty"`         // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates      map[string]string `yaml:"user-templates,omitempty"`       // Override built-in templates from user-provided files
-	UserTemplatesDir   string            `yaml:"user-templates-dir,omitempty"`   // Override built-in templates from user-provided files
+	UserTemplatesDir   string            `yaml:"user-templates-dir,omitempty"`   // Override built-in templates from user-provided files by specifying a directory path
 	ExcludeSchemas     []string          `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string            `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 }

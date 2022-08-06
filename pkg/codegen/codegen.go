@@ -126,6 +126,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 	templateOverrides := make(map[string]string, len(opts.OutputOptions.UserTemplates))
 
+	// This loads user-provided templates by walking the supplied directory
 	if opts.OutputOptions.UserTemplatesDir != "" {
 		overrides, err := loadTemplateOverrides(opts.OutputOptions.UserTemplatesDir)
 		if err != nil {
@@ -135,9 +136,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			templateOverrides[k] = v
 		}
 	}
+
+	// This loads the user-templates, overriding any templates that were loaded
+	// from the user-templates-dir
 	for k, v := range opts.OutputOptions.UserTemplates {
 		templateOverrides[k] = v
 	}
+
 	// Override built-in templates with user-provided versions
 	for _, tpl := range t.Templates() {
 		if override, ok := templateOverrides[tpl.Name()]; ok {
