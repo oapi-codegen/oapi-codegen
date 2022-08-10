@@ -920,6 +920,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.GinServer {
 		templates = append(templates, "strict/strict-gin.tmpl")
 	}
+	if opts.Generate.GorillaServer {
+		templates = append(templates, "strict/strict-gorilla.tmpl")
+	}
 	return GenerateTemplates(templates, t, operations)
 }
 
