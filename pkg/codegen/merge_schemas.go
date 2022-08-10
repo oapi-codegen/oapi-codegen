@@ -9,31 +9,30 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(sc *openapi3.Schema, path []string) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
-		return mergeSchemas_V1(allOf, path)
+		return mergeSchemas_V1(sc.AllOf, path)
 	}
-	return mergeSchemas(allOf, path)
+	return mergeSchemas(sc, path)
 }
 
-func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemas(sc *openapi3.Schema, path []string) (Schema, error) {
+	allOf := sc.AllOf
 	n := len(allOf)
 
-	if n == 1 {
-		return GenerateGoSchema(allOf[0], path)
-	}
+	schema := *sc
+	schema.AllOf = nil
 
-	schema := *allOf[0].Value
-
-	for i := 1; i < n; i++ {
+	for i := 0; i < n; i++ {
 		var err error
 		schema, err = mergeOpenapiSchemas(schema, *allOf[i].Value)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
+
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
