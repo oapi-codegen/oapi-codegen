@@ -475,3 +475,34 @@ func TestGetImports(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, res)
 }
+
+func TestLowercaseFirstCharacters(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "id",
+			expected: "id",
+		},
+		{
+			name:     "CamelCase",
+			expected: "camelCase",
+		},
+		{
+			name:     "ID",
+			expected: "id",
+		},
+		{
+			name:     "DBTree",
+			expected: "dbTree",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, LowercaseFirstCharacters(tt.name))
+		})
+	}
+}

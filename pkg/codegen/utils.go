@@ -58,6 +58,27 @@ func LowercaseFirstCharacter(str string) string {
 	return string(runes)
 }
 
+// Lowercase the first upper characters in a string for case of abbreviation.
+// This assumes UTF-8, so we have to be careful with unicode, don't treat it as a byte array.
+func LowercaseFirstCharacters(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	runes := []rune(str)
+
+	for i := 0; i < len(runes); i++ {
+		next := i + 1
+		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
+			break
+		}
+
+		runes[i] = unicode.ToLower(runes[i])
+	}
+
+	return string(runes)
+}
+
 // This function will convert query-arg style strings to CamelCase. We will
 // use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
