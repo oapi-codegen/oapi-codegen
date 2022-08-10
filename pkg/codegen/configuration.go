@@ -74,8 +74,9 @@ type OutputOptions struct {
 	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`   // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
 
-	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
-	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	ExcludeSchemas     []string       `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
+	ResponseTypeSuffix string         `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	NameNormalizer     NameNormalizer `yaml:"-"`                              // Function used to normalize golang names and types
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

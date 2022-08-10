@@ -113,6 +113,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
+	// if we provided an override for name normalizer update it
+	// default normalizer is ToCamelCase
+	nameNormalizer = ToCamelCase
+	if opts.OutputOptions.NameNormalizer != nil {
+		nameNormalizer = opts.OutputOptions.NameNormalizer
+	}
+
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
