@@ -1,6 +1,10 @@
 OpenAPI Client and Server Code Generator
 ----------------------------------------
 
+⚠️ This README may be for the latest development version, which may contain
+unreleased changes. Please ensure you're looking at the README for the latest
+release version.
+
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
