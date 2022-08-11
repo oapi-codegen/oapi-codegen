@@ -1,17 +1,14 @@
-type StrictRequestType string
-const HttpRequest StrictRequestType = "request"
-
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
-type StrictGorillaServerOptions struct {
+type StrictHTTPServerOptions struct {
     RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
     ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-    return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGorillaServerOptions {
+    return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictHTTPServerOptions {
         RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
             http.Error(w, err.Error(), http.StatusBadRequest)
         },
@@ -21,14 +18,14 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
     }}
 }
 
-func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGorillaServerOptions) ServerInterface {
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictHTTPServerOptions) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
     ssi StrictServerInterface
     middlewares []StrictMiddlewareFunc
-    options StrictGorillaServerOptions
+    options StrictHTTPServerOptions
 }
 
 {{range .}}
@@ -93,7 +90,7 @@ type strictHandler struct {
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{}{
-            return sh.ssi.{{.OperationId}}(context.WithValue(ctx, HttpRequest, r), request.({{$opid | ucFirst}}RequestObject))
+            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {
             handler = middleware(handler, "{{.OperationId}}")
