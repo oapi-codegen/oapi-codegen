@@ -911,8 +911,8 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 	templates := []string{"strict/strict-interface.tmpl"}
-	if opts.Generate.ChiServer {
-		templates = append(templates, "strict/strict-chi.tmpl")
+	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
+		templates = append(templates, "strict/strict-http.tmpl")
 	}
 	if opts.Generate.EchoServer {
 		templates = append(templates, "strict/strict-echo.tmpl")
