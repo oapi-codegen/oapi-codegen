@@ -597,13 +597,13 @@ type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
-type StrictChiServerOptions struct {
+type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
 	ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictChiServerOptions{
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictHTTPServerOptions{
 		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		},
@@ -613,14 +613,14 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 	}}
 }
 
-func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictChiServerOptions) ServerInterface {
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictHTTPServerOptions) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
-	options     StrictChiServerOptions
+	options     StrictHTTPServerOptions
 }
 
 // JSONExample operation middleware
