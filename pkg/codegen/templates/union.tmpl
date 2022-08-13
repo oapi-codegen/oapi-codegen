@@ -5,14 +5,14 @@
     {{range .Schema.UnionElements}}
         {{$element := . -}}
         // As{{.}} returns the union data inside the {{$typeName}} as a {{.}}
-        func (t {{$typeName}}) As{{.}}() ({{.}}, error) {
+        func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
             err := json.Unmarshal(t.union, &body)
             return body, err
         }
 
         // From{{.}} overwrites any union data inside the {{$typeName}} as the provided {{.}}
-        func (t *{{$typeName}}) From{{.}} (v {{.}}) error {
+        func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
@@ -33,7 +33,7 @@
         }
 
         // Merge{{.}} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
-        func (t *{{$typeName}}) Merge{{.}} (v {{.}}) error {
+        func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
