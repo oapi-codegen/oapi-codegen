@@ -26,7 +26,7 @@ import (
 
 const (
 	// These allow the case statements to be sorted later:
-	prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
+	prefixLessSpecific, prefixLeastSpecific = "6", "9"
 
 	defaultClientTypeName = "Client"
 )
