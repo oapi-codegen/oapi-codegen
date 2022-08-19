@@ -305,6 +305,19 @@ Strict server also has its own middlewares. It can access to both request and re
 as well as raw request\response data. It can be used for logging the parsed request\response objects, transforming go errors into response structs,
 authorization, etc. Note that middlewares are server-specific.
 
+#### Custom server generation
+
+oapi-codegen also supports custom templates as an input to generate server code. This option does not use any of the existing templates, all the templates must be provided by the user.
+The goal of this option is to allow users to experiment with code generation for other frameworks or even avoid frameworks if they want.
+
+The user provided folder with templates can have as many files as desired, they will be parsed and concatenated into a single file.
+
+Example usage:
+
+```bash
+oapi-codegen -generate custom-server -o server.gen.go -old-config-style -package server -templates ./your-template-folder-path examples/petstore-expanded/petstore-expanded.yaml
+```
+
 #### Additional Properties in type definitions
 
 [OpenAPI Schemas](https://swagger.io/specification/#schemaObject) implicitly
@@ -647,6 +660,8 @@ you can specify any combination of those.
  same package to compile.
 - `chi-server`: generate the Chi server boilerplate. This code is dependent on
  that produced by the `types` target.
+- `custom-server`: generate a server file based on user provided templates. This code 
+ is not dependent on the code produced by the `types` target, but could be used it also.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.

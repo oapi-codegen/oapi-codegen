@@ -927,6 +927,10 @@ func GenerateStrictResponses(t *template.Template, responses []ResponseDefinitio
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }
 
+func GenerateCustomServer(t *template.Template, operations []OperationDefinition, userTemplates []string) (string, error) {
+	return GenerateTemplates(userTemplates, t, operations)
+}
+
 // Uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
