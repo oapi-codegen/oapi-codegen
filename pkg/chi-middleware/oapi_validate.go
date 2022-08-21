@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,10 +19,14 @@ import (
 // ErrorHandler is called when there is an error in validation
 type ErrorHandler func(w http.ResponseWriter, message string, statusCode int)
 
+// MultiErrorHandler is called when oapi returns a MultiError type
+type MultiErrorHandler func(openapi3.MultiError) (int, error)
+
 // Options to customize request validation, openapi3filter specified options will be passed through.
 type Options struct {
-	Options      openapi3filter.Options
-	ErrorHandler ErrorHandler
+	Options           openapi3filter.Options
+	ErrorHandler      ErrorHandler
+	MultiErrorHandler MultiErrorHandler
 }
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
@@ -80,6 +85,12 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 	}
 
 	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			errFunc := getMultiErrorHandlerFromOptions(options)
+			return errFunc(me)
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
@@ -97,4 +108,25 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 	}
 
 	return http.StatusOK, nil
+}
+
+// attempt to get the MultiErrorHandler from the options. If it is not set,
+// return a default handler
+func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
+	if options == nil {
+		return defaultMultiErrorHandler
+	}
+
+	if options.MultiErrorHandler == nil {
+		return defaultMultiErrorHandler
+	}
+
+	return options.MultiErrorHandler
+}
+
+// defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
+// of all of the errors. This method is called if there are no other
+// methods defined on the options.
+func defaultMultiErrorHandler(me openapi3.MultiError) (int, error) {
+	return http.StatusBadRequest, me
 }

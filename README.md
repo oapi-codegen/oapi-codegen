@@ -1,6 +1,10 @@
 OpenAPI Client and Server Code Generator
 ----------------------------------------
 
+⚠️ This README may be for the latest development version, which may contain
+unreleased changes. Please ensure you're looking at the README for the latest
+release version.
+
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
@@ -644,7 +648,9 @@ you can specify any combination of those.
  that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
-- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
+- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
+  This is then usable with the `OapiRequestValidator`, or to be used by other
+  methods that need access to the parsed OpenAPI specification
 - `skip-fmt`: skip running `goimports` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating

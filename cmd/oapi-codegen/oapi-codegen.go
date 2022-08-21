@@ -258,7 +258,7 @@ func updateConfigFromFlags(cfg configuration) (configuration, error) {
 
 	if len(unsupportedFlags) > 0 {
 		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
-			"new config style, please use  -old-config-style or update your configuration ",
+			"new config style, please use --old-config-style or update your configuration ",
 			strings.Join(unsupportedFlags, ", "))
 	}
 

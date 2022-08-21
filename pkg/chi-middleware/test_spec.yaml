@@ -66,6 +66,35 @@ paths:
       responses:
         '401':
           description: no content
+  /multiparamresource:
+    get:
+      operationId: getResource
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+        - name: id2
+          required: true
+          in: query
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 100
+      responses:
+        '200':
+            description: success
+            content:
+              application/json:
+                schema:
+                  properties:
+                    name:
+                      type: string
+                    id:
+                      type: integer
 components:
   securitySchemes:
     BearerAuth:
