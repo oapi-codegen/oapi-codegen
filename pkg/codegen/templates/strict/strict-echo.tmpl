@@ -56,7 +56,7 @@ type strictHandler struct {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
                 {{else if eq .NameTag "Text" -}}
-                    data, err := ioutil.ReadAll(ctx.Request().Body)
+                    data, err := io.ReadAll(ctx.Request().Body)
                     if err != nil {
                         return err
                     }

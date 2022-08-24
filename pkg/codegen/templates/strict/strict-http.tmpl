@@ -76,7 +76,7 @@ type strictHandler struct {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
                 {{else if eq .NameTag "Text" -}}
-                    data, err := ioutil.ReadAll(r.Body)
+                    data, err := io.ReadAll(r.Body)
                     if err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
                         return

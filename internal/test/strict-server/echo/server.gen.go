@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -540,7 +539,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 		}
 	}
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "text/plain") {
-		data, err := ioutil.ReadAll(ctx.Request().Body)
+		data, err := io.ReadAll(ctx.Request().Body)
 		if err != nil {
 			return err
 		}
@@ -635,7 +634,7 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 func (sh *strictHandler) TextExample(ctx echo.Context) error {
 	var request TextExampleRequestObject
 
-	data, err := ioutil.ReadAll(ctx.Request().Body)
+	data, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
 		return err
 	}

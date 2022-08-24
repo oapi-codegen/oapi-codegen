@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -1176,7 +1175,7 @@ func (c *ClientWithResponses) HeadersExampleWithResponse(ctx context.Context, pa
 
 // ParseJSONExampleResponse parses an HTTP response from a JSONExampleWithResponse call
 func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1202,7 +1201,7 @@ func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) 
 
 // ParseMultipartExampleResponse parses an HTTP response from a MultipartExampleWithResponse call
 func ParseMultipartExampleResponse(rsp *http.Response) (*MultipartExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1218,7 +1217,7 @@ func ParseMultipartExampleResponse(rsp *http.Response) (*MultipartExampleRespons
 
 // ParseMultipleRequestAndResponseTypesResponse parses an HTTP response from a MultipleRequestAndResponseTypesWithResponse call
 func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*MultipleRequestAndResponseTypesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1247,7 +1246,7 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 
 // ParseReusableResponsesResponse parses an HTTP response from a ReusableResponsesWithResponse call
 func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1273,7 +1272,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 
 // ParseTextExampleResponse parses an HTTP response from a TextExampleWithResponse call
 func ParseTextExampleResponse(rsp *http.Response) (*TextExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1289,7 +1288,7 @@ func ParseTextExampleResponse(rsp *http.Response) (*TextExampleResponse, error) 
 
 // ParseUnknownExampleResponse parses an HTTP response from a UnknownExampleWithResponse call
 func ParseUnknownExampleResponse(rsp *http.Response) (*UnknownExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1305,7 +1304,7 @@ func ParseUnknownExampleResponse(rsp *http.Response) (*UnknownExampleResponse, e
 
 // ParseUnspecifiedContentTypeResponse parses an HTTP response from a UnspecifiedContentTypeWithResponse call
 func ParseUnspecifiedContentTypeResponse(rsp *http.Response) (*UnspecifiedContentTypeResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1321,7 +1320,7 @@ func ParseUnspecifiedContentTypeResponse(rsp *http.Response) (*UnspecifiedConten
 
 // ParseURLEncodedExampleResponse parses an HTTP response from a URLEncodedExampleWithResponse call
 func ParseURLEncodedExampleResponse(rsp *http.Response) (*URLEncodedExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -1337,7 +1336,7 @@ func ParseURLEncodedExampleResponse(rsp *http.Response) (*URLEncodedExampleRespo
 
 // ParseHeadersExampleResponse parses an HTTP response from a HeadersExampleWithResponse call
 func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
