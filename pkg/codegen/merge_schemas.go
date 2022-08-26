@@ -25,16 +25,33 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return GenerateGoSchema(allOf[0], path)
 	}
 
-	schema := *allOf[0].Value
+	schema := valueWithPropagatedRef(allOf[0])
 
 	for i := 1; i < n; i++ {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *allOf[i].Value)
+		schema, err = mergeOpenapiSchemas(schema, valueWithPropagatedRef(allOf[i]))
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+}
+
+// valueWithPropagatedRef returns a copy of ref schema with its Properties refs
+// updated if ref itself is external. Otherwise return ref.Value as-is.
+func valueWithPropagatedRef(ref *openapi3.SchemaRef) openapi3.Schema {
+	if ref.Ref == "" || ref.Ref[0] == '#' {
+		return *ref.Value
+	}
+
+	// remote ref
+	schema := *ref.Value
+	for name, value := range schema.Properties {
+		value.Ref = ref.Ref
+		schema.Properties[name] = value
+	}
+
+	return schema
 }
 
 func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
