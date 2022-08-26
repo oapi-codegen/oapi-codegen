@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -25,16 +26,48 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return GenerateGoSchema(allOf[0], path)
 	}
 
-	schema := *allOf[0].Value
+	schema, err := valueWithPropagatedRef(allOf[0])
+	if err != nil {
+		return Schema{}, err
+	}
 
 	for i := 1; i < n; i++ {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *allOf[i].Value)
+		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
+		if err != nil {
+			return Schema{}, err
+		}
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+}
+
+// valueWithPropagatedRef returns a copy of ref schema with its Properties refs
+// updated if ref itself is external. Otherwise return ref.Value as-is.
+func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
+		return *ref.Value, nil
+	}
+
+	pathParts := strings.Split(ref.Ref, "#")
+	if len(pathParts) != 2 {
+		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
+	}
+	remoteComponent, _ := pathParts[0], pathParts[1]
+
+	// remote ref
+	schema := *ref.Value
+	for _, value := range schema.Properties {
+		if len(value.Ref) > 0 && value.Ref[0] == '#' {
+			// local reference, should propagate remote
+			value.Ref = remoteComponent + value.Ref
+		}
+	}
+
+	return schema, nil
 }
 
 func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
