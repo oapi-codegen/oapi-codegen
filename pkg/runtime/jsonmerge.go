@@ -3,7 +3,7 @@ package runtime
 import (
 	"encoding/json"
 
-	"github.com/apapsch/go-jsonmerge/v2"
+	"github.com/apapsch/go-jsonmerge"
 )
 
 // JsonMerge merges two JSON representation into a single object. `data` is the
