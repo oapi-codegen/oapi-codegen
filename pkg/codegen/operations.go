@@ -751,7 +751,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: ToCamelCase(headerName), Schema: contentSchema}
+			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
