@@ -59,7 +59,7 @@ type strictHandler struct {
                         return
                     }
                 {{else if eq .NameTag "Text" -}}
-                    data, err := ioutil.ReadAll(ctx.Request.Body)
+                    data, err := io.ReadAll(ctx.Request.Body)
                     if err != nil {
                         ctx.Error(err)
                         return

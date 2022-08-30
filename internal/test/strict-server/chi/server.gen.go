@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -737,7 +736,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		}
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain") {
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 			return
@@ -843,7 +842,7 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 	var request TextExampleRequestObject
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 		return
