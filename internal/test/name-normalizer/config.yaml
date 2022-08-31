@@ -1,0 +1,9 @@
+package: name_normalizer
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output-options:
+  name-normalizer: ToCamelCaseWithInitialisms
+output: name_normalizer.gen.go
