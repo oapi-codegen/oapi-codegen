@@ -121,8 +121,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// if we provided an override for name normalizer update it
 	// default normalizer is ToCamelCase
 	nameNormalizer = ToCamelCase
-	if opts.OutputOptions.NameNormalizer != nil {
-		nameNormalizer = opts.OutputOptions.NameNormalizer
+	if opts.OutputOptions.NameNormalizer != "" {
+		nameNormalizer = nameNormalizerMap[opts.OutputOptions.NameNormalizer]
+		if nameNormalizer == nil {
+			return "", fmt.Errorf(`error cannot find name-normalizer "%s" among options %q`,
+				opts.OutputOptions.NameNormalizer, nameNormalizerMap.Options())
+		}
 	}
 
 	// This creates the golang templates text package

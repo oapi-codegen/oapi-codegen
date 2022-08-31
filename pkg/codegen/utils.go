@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
 	"go/token"
 	"net/url"
@@ -34,6 +35,27 @@ var (
 )
 
 type NameNormalizer func(string) string
+
+type NameNormalizerMap map[string]NameNormalizer
+
+func (m NameNormalizerMap) Options() []string {
+	options := make([]string, 0, len(m))
+
+	for key := range nameNormalizerMap {
+		options = append(options, key)
+	}
+
+	sort.Strings(options)
+
+	return options
+}
+
+var nameNormalizerMap = NameNormalizerMap{
+	"":                           ToCamelCase,
+	"ToCamelCase":                ToCamelCase,
+	"ToCamelCaseWithDigits":      ToCamelCaseWithDigits,
+	"ToCamelCaseWithInitialisms": ToCamelCaseWithInitialisms,
+}
 
 func init() {
 	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
@@ -182,6 +204,69 @@ func ToCamelCase(str string) string {
 		_, capNext = separatorSet[v]
 	}
 	return n
+}
+
+// ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
+// use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
+// The difference of ToCamelCase that letter after a number becomes capitalized.
+// So, "word.word-word+word:word;word_word~word word(word)word{word}[word]3word"
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord3Word
+func ToCamelCaseWithDigits(s string) string {
+	res := bytes.NewBuffer(nil)
+	capNext := true
+	for _, v := range s {
+		if unicode.IsUpper(v) {
+			res.WriteRune(v)
+			capNext = false
+			continue
+		}
+		if unicode.IsDigit(v) {
+			res.WriteRune(v)
+			capNext = true
+			continue
+		}
+		if unicode.IsLower(v) {
+			if capNext {
+				res.WriteRune(unicode.ToUpper(v))
+			} else {
+				res.WriteRune(v)
+			}
+			capNext = false
+			continue
+		}
+		capNext = true
+	}
+	return res.String()
+}
+
+// ToCamelCaseWithInitialisms function will convert query-arg style strings to CamelCase with initialisms in uppercase.
+// So, httpOperationId would be converted to HTTPOperationID
+func ToCamelCaseWithInitialisms(s string) string {
+	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
+	for i := range parts {
+		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+			parts[i] = v
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
+
+// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+var initialismsMap = makeInitialismsMap([]string{
+	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
+	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
+	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
+})
+
+func makeInitialismsMap(l []string) map[string]string {
+	m := make(map[string]string, len(l))
+	for i := range l {
+		m[strings.ToLower(l[i])] = l[i]
+	}
+	return m
 }
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
