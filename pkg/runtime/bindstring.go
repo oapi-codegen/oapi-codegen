@@ -63,12 +63,20 @@ func BindStringToObject(src string, dst interface{}) error {
 		var val int64
 		val, err = strconv.ParseInt(src, 10, 64)
 		if err == nil {
-			v.SetInt(val)
+			if v.OverflowInt(val) {
+				err = fmt.Errorf("value '%s' overflows destination of type: %s", src, t.Kind())
+			}
+			if err == nil {
+				v.SetInt(val)
+			}
 		}
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		var val uint64
 		val, err = strconv.ParseUint(src, 10, 64)
 		if err == nil {
+			if v.OverflowUint(val) {
+				err = fmt.Errorf("value '%s' overflows destination of type: %s", src, t.Kind())
+			}
 			v.SetUint(val)
 		}
 	case reflect.String:
@@ -78,6 +86,9 @@ func BindStringToObject(src string, dst interface{}) error {
 		var val float64
 		val, err = strconv.ParseFloat(src, 64)
 		if err == nil {
+			if v.OverflowFloat(val) {
+				err = fmt.Errorf("value '%s' overflows destination of type: %s", src, t.Kind())
+			}
 			v.SetFloat(val)
 		}
 	case reflect.Bool:
