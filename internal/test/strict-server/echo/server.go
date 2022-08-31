@@ -43,7 +43,7 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) interface{} {
 	switch {
 	case request.Body != nil:
-		return MultipleRequestAndResponseTypes200ImagepngResponse{Body: request.Body}
+		return MultipleRequestAndResponseTypes200ImagePngResponse{Body: request.Body}
 	case request.JSONBody != nil:
 		return MultipleRequestAndResponseTypes200JSONResponse(*request.JSONBody)
 	case request.FormdataBody != nil:
@@ -82,7 +82,7 @@ func (s StrictServer) TextExample(ctx context.Context, request TextExampleReques
 }
 
 func (s StrictServer) UnknownExample(ctx context.Context, request UnknownExampleRequestObject) interface{} {
-	return UnknownExample200Videomp4Response{Body: request.Body}
+	return UnknownExample200VideoMp4Response{Body: request.Body}
 }
 
 func (s StrictServer) UnspecifiedContentType(ctx context.Context, request UnspecifiedContentTypeRequestObject) interface{} {

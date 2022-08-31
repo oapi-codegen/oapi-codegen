@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -233,7 +233,7 @@ func (c *ClientWithResponses) GetHTTPPetWithResponse(ctx context.Context, petID 
 
 // ParseGetHTTPPetResponse parses an HTTP response from a GetHTTPPetWithResponse call
 func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err

@@ -299,7 +299,7 @@ func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, e
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
-type MultipleRequestAndResponseTypes200ImagepngResponse struct {
+type MultipleRequestAndResponseTypes200ImagePngResponse struct {
 	Body          io.Reader
 	ContentLength int64
 }
@@ -338,7 +338,7 @@ type UnknownExampleRequestObject struct {
 	Body io.Reader
 }
 
-type UnknownExample200Videomp4Response struct {
+type UnknownExample200VideoMp4Response struct {
 	Body          io.Reader
 	ContentLength int64
 }
@@ -591,7 +591,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		} else {
 			ctx.Data(200, "application/x-www-form-urlencoded", []byte(form.Encode()))
 		}
-	case MultipleRequestAndResponseTypes200ImagepngResponse:
+	case MultipleRequestAndResponseTypes200ImagePngResponse:
 		if closer, ok := v.Body.(io.ReadCloser); ok {
 			defer closer.Close()
 		}
@@ -704,7 +704,7 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 	response := handler(ctx, request)
 
 	switch v := response.(type) {
-	case UnknownExample200Videomp4Response:
+	case UnknownExample200VideoMp4Response:
 		if closer, ok := v.Body.(io.ReadCloser); ok {
 			defer closer.Close()
 		}

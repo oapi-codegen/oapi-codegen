@@ -451,7 +451,7 @@ func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, e
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
-type MultipleRequestAndResponseTypes200ImagepngResponse struct {
+type MultipleRequestAndResponseTypes200ImagePngResponse struct {
 	Body          io.Reader
 	ContentLength int64
 }
@@ -490,7 +490,7 @@ type UnknownExampleRequestObject struct {
 	Body io.Reader
 }
 
-type UnknownExample200Videomp4Response struct {
+type UnknownExample200VideoMp4Response struct {
 	Body          io.Reader
 	ContentLength int64
 }
@@ -767,7 +767,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		} else {
 			writeRaw(w, []byte(form.Encode()))
 		}
-	case MultipleRequestAndResponseTypes200ImagepngResponse:
+	case MultipleRequestAndResponseTypes200ImagePngResponse:
 		w.Header().Set("Content-Type", "image/png")
 		if v.ContentLength != 0 {
 			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
@@ -892,7 +892,7 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 	response := handler(r.Context(), w, r, request)
 
 	switch v := response.(type) {
-	case UnknownExample200Videomp4Response:
+	case UnknownExample200VideoMp4Response:
 		w.Header().Set("Content-Type", "video/mp4")
 		if v.ContentLength != 0 {
 			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
