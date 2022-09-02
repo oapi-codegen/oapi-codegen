@@ -495,10 +495,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "uint8"
 		} else if f == "uint" {
 			outSchema.GoType = "uint"
-		} else if f == "" {
-			outSchema.GoType = "int"
 		} else {
-			return fmt.Errorf("invalid integer format: %s", f)
+			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
