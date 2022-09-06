@@ -223,6 +223,9 @@ func TestXGoTypeImport(t *testing.T) {
 	// Check import
 	assert.Contains(t, code, `github.com/CavernaTechnologies/pgext`)
 
+	// Check import
+	assert.Contains(t, code, `go.mongodb.org/mongo-driver/bson/primitive`)
+
 	// Check generated struct
 	assert.Contains(t, code, "type Person struct {\n\tAge pgext.Puint `json:\"age\"`\n}")
 

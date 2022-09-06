@@ -30,6 +30,7 @@ import (
 )
 
 // Embed the templates directory
+//
 //go:embed templates
 var templates embed.FS
 
@@ -801,6 +802,16 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 		return nil, err
 	}
 
+	parameterImports, err := GetParameterImports(swagger.Components.Parameters, excludeSchemas)
+	if err != nil {
+		return nil, err
+	}
+
+	headerImports, err := GetHeaderImports(swagger.Components.Headers, excludeSchemas)
+	if err != nil {
+		return nil, err
+	}
+
 	reqBodiesImports, err := GetRequestBodiesImports(swagger.Components.RequestBodies)
 	if err != nil {
 		return nil, err
@@ -811,7 +822,7 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 		return nil, err
 	}
 
-	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports} {
+	for _, imprts := range []map[string]goImport{schemaImports, parameterImports, headerImports, reqBodiesImports, responsesImports} {
 		for k, v := range imprts {
 			res[k] = v
 		}
@@ -836,6 +847,62 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 		}
 
 		imprts, err := GetImports(schema.Properties)
+		if err != nil {
+			return nil, err
+		}
+
+		for s, gi := range imprts {
+			res[s] = gi
+		}
+	}
+	return res, nil
+}
+
+func GetParameterImports(parameters map[string]*openapi3.ParameterRef, excludeSchemas []string) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	excludeSchemasMap := make(map[string]bool)
+	for _, schema := range excludeSchemas {
+		excludeSchemasMap[schema] = true
+	}
+	for _, parameterName := range SortedParameterKeys(parameters) {
+		if _, ok := excludeSchemasMap[parameterName]; ok {
+			continue
+		}
+		parameter := parameters[parameterName].Value
+
+		if parameter == nil || parameter.Schema == nil || parameter.Schema.Value == nil || parameter.Schema.Value.Properties == nil {
+			continue
+		}
+
+		imprts, err := GetImports(parameter.Schema.Value.Properties)
+		if err != nil {
+			return nil, err
+		}
+
+		for s, gi := range imprts {
+			res[s] = gi
+		}
+	}
+	return res, nil
+}
+
+func GetHeaderImports(headers map[string]*openapi3.HeaderRef, excludeSchemas []string) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	excludeSchemasMap := make(map[string]bool)
+	for _, schema := range excludeSchemas {
+		excludeSchemasMap[schema] = true
+	}
+	for _, headerName := range SortedHeadersKeys(headers) {
+		if _, ok := excludeSchemasMap[headerName]; ok {
+			continue
+		}
+		header := headers[headerName].Value
+
+		if header == nil || header.Schema == nil || header.Schema.Value == nil || header.Schema.Value.Properties == nil {
+			continue
+		}
+
+		imprts, err := GetImports(header.Schema.Value.Properties)
 		if err != nil {
 			return nil, err
 		}

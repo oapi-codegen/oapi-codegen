@@ -60,13 +60,7 @@ paths:
       description: Returns a car based on a single ID
       operationId: findCarByID
       parameters:
-        - name: id
-          in: path
-          description: ID of car to fetch
-          required: true
-          schema:
-            type: integer
-            format: int64
+        - $ref: "#/components/parameters/CarId"
       responses:
         "200":
           description: car response
@@ -76,6 +70,17 @@ paths:
                 $ref: "#/components/schemas/Car"
 
 components:
+  parameters:
+    CarId:
+      name: id
+      in: path
+      description: ID of car to fetch
+      required: true
+      schema:
+        type: string
+        x-go-type: primitive.ObjectID
+        x-go-type-import:
+          path: go.mongodb.org/mongo-driver/bson/primitive
   schemas:
     Pet:
       properties:
