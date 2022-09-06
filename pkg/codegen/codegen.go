@@ -870,18 +870,20 @@ func GetParameterImports(parameters map[string]*openapi3.ParameterRef, excludeSc
 		}
 		parameter := parameters[parameterName].Value
 
-		if parameter == nil || parameter.Schema == nil || parameter.Schema.Value == nil || parameter.Schema.Value.Properties == nil {
+		if parameter == nil || parameter.Schema == nil || parameter.Schema.Value == nil {
 			continue
 		}
 
-		imprts, err := GetImports(parameter.Schema.Value.Properties)
+		imprt, ok, err := GetImport(parameter.Schema.Value.Extensions)
 		if err != nil {
 			return nil, err
 		}
 
-		for s, gi := range imprts {
-			res[s] = gi
+		if !ok {
+			continue
 		}
+
+		res[imprt.String()] = imprt
 	}
 	return res, nil
 }
@@ -898,18 +900,20 @@ func GetHeaderImports(headers map[string]*openapi3.HeaderRef, excludeSchemas []s
 		}
 		header := headers[headerName].Value
 
-		if header == nil || header.Schema == nil || header.Schema.Value == nil || header.Schema.Value.Properties == nil {
+		if header == nil || header.Schema == nil || header.Schema.Value == nil {
 			continue
 		}
 
-		imprts, err := GetImports(header.Schema.Value.Properties)
+		imprt, ok, err := GetImport(header.Schema.Value.Extensions)
 		if err != nil {
 			return nil, err
 		}
 
-		for s, gi := range imprts {
-			res[s] = gi
+		if !ok {
+			continue
 		}
+
+		res[imprt.String()] = imprt
 	}
 	return res, nil
 }

@@ -276,7 +276,6 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 // ./local/file.yml#/components/parameters/Bar  -> true
 // ./local/file.yml                             -> false
 // The function can be used to check whether RefPathToGoType($ref) is possible.
-//
 func IsGoTypeReference(ref string) bool {
 	return ref != "" && !IsWholeDocumentReference(ref)
 }
@@ -287,7 +286,6 @@ func IsGoTypeReference(ref string) bool {
 // ./local/file.yml                                     -> true
 // http://deepmap.com/schemas/document.json             -> true
 // http://deepmap.com/schemas/document.json#/Foo        -> false
-//
 func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
 }
@@ -295,14 +293,15 @@ func IsWholeDocumentReference(ref string) bool {
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to a
 // Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
-//   {param}
-//   {param*}
-//   {.param}
-//   {.param*}
-//   {;param}
-//   {;param*}
-//   {?param}
-//   {?param*}
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
 func SwaggerUriToEchoUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
@@ -310,14 +309,15 @@ func SwaggerUriToEchoUri(uri string) string {
 // SwaggerUriToChiUri converts a swagger style path URI with parameters to a
 // Chi compatible path URI. We need to replace all of Swagger parameters with
 // "{param}". Valid input parameters are:
-//   {param}
-//   {param*}
-//   {.param}
-//   {.param*}
-//   {;param}
-//   {;param*}
-//   {?param}
-//   {?param*}
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
 func SwaggerUriToChiUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
@@ -325,14 +325,15 @@ func SwaggerUriToChiUri(uri string) string {
 // This function converts a swagger style path URI with parameters to a
 // Gin compatible path URI. We need to replace all of Swagger parameters with
 // ":param". Valid input parameters are:
-//   {param}
-//   {param*}
-//   {.param}
-//   {.param*}
-//   {;param}
-//   {;param*}
-//   {?param}
-//   {?param*}
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
 func SwaggerUriToGinUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
@@ -340,14 +341,15 @@ func SwaggerUriToGinUri(uri string) string {
 // This function converts a swagger style path URI with parameters to a
 // Gorilla compatible path URI. We need to replace all of Swagger parameters with
 // ":param". Valid input parameters are:
-//   {param}
-//   {param*}
-//   {.param}
-//   {.param*}
-//   {;param}
-//   {;param*}
-//   {?param}
-//   {?param*}
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
 func SwaggerUriToGorillaUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
@@ -822,25 +824,45 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 
 func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
+
 	for _, v := range dict {
 		if v == nil || v.Value == nil {
 			continue
 		}
 
-		if v.Value.Extensions["x-go-type-import"] == nil || v.Value.Extensions["x-go-type"] == nil {
-			continue
+		gi, ok, err := GetImport(v.Value.Extensions)
+		if err != nil {
+			return nil, err
 		}
-		goTypeImportExt := v.Value.Extensions["x-go-type-import"]
 
-		if raw, ok := goTypeImportExt.(json.RawMessage); ok {
-			gi := goImport{}
-			if err := json.Unmarshal(raw, &gi); err != nil {
-				return nil, err
-			}
-			res[gi.String()] = gi
-		} else {
+		if !ok {
 			continue
 		}
+
+		res[gi.String()] = gi
 	}
+
 	return res, nil
+}
+
+func GetImport(extensions map[string]interface{}) (goImport, bool, error) {
+	if extensions["x-go-type-import"] == nil || extensions["x-go-type"] == nil {
+		return goImport{}, false, nil
+	}
+
+	goTypeImportExt := extensions["x-go-type-import"]
+
+	raw, ok := goTypeImportExt.(json.RawMessage)
+
+	if !ok {
+		return goImport{}, false, nil
+	}
+
+	gi := goImport{}
+	err := json.Unmarshal(raw, &gi)
+	if err != nil {
+		return goImport{}, false, err
+	}
+
+	return gi, true, nil
 }
