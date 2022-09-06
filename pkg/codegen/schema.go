@@ -268,6 +268,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
 		}
 		outSchema.GoType = typeName
+		outSchema.DefineViaAlias = true
 		return outSchema, nil
 	}
 
