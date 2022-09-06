@@ -275,17 +275,16 @@ function to bind the form to a struct. All other content types are represented b
 
 To form a response simply return one of the generated structs with corresponding status code and content type. For example,
 to return a status code 200 JSON response for a AddPet use the `AddPet200JSONResponse` struct which will set the correct
-Content-Type header, status code and will marshal the response data. You can also return an `error` interface, that will be
-cause an `Internal Server Error` response. If you return a response that is not supported by this method, you will get an error.
-Unfortunately go does not support union types outside generic code, so we can't type check in compile time.
+Content-Type header, status code and will marshal the response data. You can also return an error, that will
+cause an `Internal Server Error` response.
 
 Short example:
 ```go
 type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) interface{} {
+func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error) {
     var result []Pet
 	// Implement me
-    return GetPets200JSONResponse(result)
+    return GetPets200JSONResponse(result), nil
 }
 ```
 For a complete example see `/examples/petstore-expanded/strict`.
