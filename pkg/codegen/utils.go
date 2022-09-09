@@ -26,8 +26,11 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-var pathParamRE *regexp.Regexp
-var predeclaredSet map[string]struct{}
+var (
+	pathParamRE    *regexp.Regexp
+	predeclaredSet map[string]struct{}
+	separatorSet   map[rune]struct{}
+)
 
 func init() {
 	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
@@ -81,6 +84,12 @@ func init() {
 	for _, id := range predeclaredIdentifiers {
 		predeclaredSet[id] = struct{}{}
 	}
+
+	separators := "-#@!$&=.+:;_~ (){}[]"
+	separatorSet = map[rune]struct{}{}
+	for _, r := range separators {
+		separatorSet[r] = struct{}{}
+	}
 }
 
 // Uppercase the first character in a string. This assumes UTF-8, so we have
@@ -109,7 +118,6 @@ func LowercaseFirstCharacter(str string) string {
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
 // would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := "-#@!$&=.+:;_~ (){}[]"
 	s := strings.Trim(str, " ")
 
 	n := ""
@@ -128,12 +136,7 @@ func ToCamelCase(str string) string {
 				n += string(v)
 			}
 		}
-
-		if strings.ContainsRune(separators, v) {
-			capNext = true
-		} else {
-			capNext = false
-		}
+		_, capNext = separatorSet[v]
 	}
 	return n
 }
