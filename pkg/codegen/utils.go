@@ -16,6 +16,7 @@ package codegen
 import (
 	"encoding/json"
 	"fmt"
+	"go/token"
 	"net/url"
 	"regexp"
 	"sort"
@@ -444,40 +445,7 @@ func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinit
 
 // Returns whether the given string is a go keyword
 func IsGoKeyword(str string) bool {
-	keywords := []string{
-		"break",
-		"case",
-		"chan",
-		"const",
-		"continue",
-		"default",
-		"defer",
-		"else",
-		"fallthrough",
-		"for",
-		"func",
-		"go",
-		"goto",
-		"if",
-		"import",
-		"interface",
-		"map",
-		"package",
-		"range",
-		"return",
-		"select",
-		"struct",
-		"switch",
-		"type",
-		"var",
-	}
-
-	for _, k := range keywords {
-		if k == str {
-			return true
-		}
-	}
-	return false
+	return token.IsKeyword(str)
 }
 
 // IsPredeclaredGoIdentifier returns whether the given string
