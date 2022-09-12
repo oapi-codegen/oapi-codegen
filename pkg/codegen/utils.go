@@ -16,6 +16,7 @@ package codegen
 import (
 	"encoding/json"
 	"fmt"
+	"go/token"
 	"net/url"
 	"regexp"
 	"sort"
@@ -26,10 +27,70 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-var pathParamRE *regexp.Regexp
+var (
+	pathParamRE    *regexp.Regexp
+	predeclaredSet map[string]struct{}
+	separatorSet   map[rune]struct{}
+)
 
 func init() {
 	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+
+	predeclaredIdentifiers := []string{
+		// Types
+		"bool",
+		"byte",
+		"complex64",
+		"complex128",
+		"error",
+		"float32",
+		"float64",
+		"int",
+		"int8",
+		"int16",
+		"int32",
+		"int64",
+		"rune",
+		"string",
+		"uint",
+		"uint8",
+		"uint16",
+		"uint32",
+		"uint64",
+		"uintptr",
+		// Constants
+		"true",
+		"false",
+		"iota",
+		// Zero value
+		"nil",
+		// Functions
+		"append",
+		"cap",
+		"close",
+		"complex",
+		"copy",
+		"delete",
+		"imag",
+		"len",
+		"make",
+		"new",
+		"panic",
+		"print",
+		"println",
+		"real",
+		"recover",
+	}
+	predeclaredSet = map[string]struct{}{}
+	for _, id := range predeclaredIdentifiers {
+		predeclaredSet[id] = struct{}{}
+	}
+
+	separators := "-#@!$&=.+:;_~ (){}[]"
+	separatorSet = map[rune]struct{}{}
+	for _, r := range separators {
+		separatorSet[r] = struct{}{}
+	}
 }
 
 // Uppercase the first character in a string. This assumes UTF-8, so we have
@@ -58,7 +119,6 @@ func LowercaseFirstCharacter(str string) string {
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
 // would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
-	separators := "-#@!$&=.+:;_~ (){}[]"
 	s := strings.Trim(str, " ")
 
 	n := ""
@@ -77,12 +137,7 @@ func ToCamelCase(str string) string {
 				n += string(v)
 			}
 		}
-
-		if strings.ContainsRune(separators, v) {
-			capNext = true
-		} else {
-			capNext = false
-		}
+		_, capNext = separatorSet[v]
 	}
 	return n
 }
@@ -390,40 +445,7 @@ func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinit
 
 // Returns whether the given string is a go keyword
 func IsGoKeyword(str string) bool {
-	keywords := []string{
-		"break",
-		"case",
-		"chan",
-		"const",
-		"continue",
-		"default",
-		"defer",
-		"else",
-		"fallthrough",
-		"for",
-		"func",
-		"go",
-		"goto",
-		"if",
-		"import",
-		"interface",
-		"map",
-		"package",
-		"range",
-		"return",
-		"select",
-		"struct",
-		"switch",
-		"type",
-		"var",
-	}
-
-	for _, k := range keywords {
-		if k == str {
-			return true
-		}
-	}
-	return false
+	return token.IsKeyword(str)
 }
 
 // IsPredeclaredGoIdentifier returns whether the given string
@@ -431,59 +453,8 @@ func IsGoKeyword(str string) bool {
 //
 // See https://golang.org/ref/spec#Predeclared_identifiers
 func IsPredeclaredGoIdentifier(str string) bool {
-	predeclaredIdentifiers := []string{
-		// Types
-		"bool",
-		"byte",
-		"complex64",
-		"complex128",
-		"error",
-		"float32",
-		"float64",
-		"int",
-		"int8",
-		"int16",
-		"int32",
-		"int64",
-		"rune",
-		"string",
-		"uint",
-		"uint8",
-		"uint16",
-		"uint32",
-		"uint64",
-		"uintptr",
-		// Constants
-		"true",
-		"false",
-		"iota",
-		// Zero value
-		"nil",
-		// Functions
-		"append",
-		"cap",
-		"close",
-		"complex",
-		"copy",
-		"delete",
-		"imag",
-		"len",
-		"make",
-		"new",
-		"panic",
-		"print",
-		"println",
-		"real",
-		"recover",
-	}
-
-	for _, k := range predeclaredIdentifiers {
-		if k == str {
-			return true
-		}
-	}
-
-	return false
+	_, exists := predeclaredSet[str]
+	return exists
 }
 
 // IsGoIdentity checks if the given string can be used as an identity
