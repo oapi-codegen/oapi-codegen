@@ -43,6 +43,24 @@ func UppercaseFirstCharacter(str string) string {
 	return string(runes)
 }
 
+// Uppercase the first character in a identifier with pkg name. This assumes UTF-8, so we have
+// to be careful with unicode, don't treat it as a byte array.
+func UppercaseFirstCharacterWithPkgName(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	segs := strings.Split(str, ".")
+	var prefix string
+	if len(segs) == 2 {
+		prefix = segs[0] + "."
+		str = segs[1]
+	}
+	runes := []rune(str)
+	runes[0] = unicode.ToUpper(runes[0])
+	return prefix + string(runes)
+}
+
 // Same as above, except lower case
 func LowercaseFirstCharacter(str string) string {
 	if str == "" {
