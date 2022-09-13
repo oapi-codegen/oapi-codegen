@@ -5,7 +5,6 @@ package spec_ext
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -158,15 +157,11 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 type PascalJSONResponse PascalSchema
 
-func (t PascalJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((PascalSchema)(t))
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -194,16 +189,4 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		fmt.Fprintln(w, err)
-	}
-}
-
-func writeRaw(w http.ResponseWriter, b []byte) {
-	if _, err := w.Write(b); err != nil {
-		fmt.Fprintln(w, err)
-	}
 }

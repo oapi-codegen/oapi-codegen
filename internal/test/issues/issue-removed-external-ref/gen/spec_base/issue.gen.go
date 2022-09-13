@@ -23,14 +23,8 @@ type PackedBar struct {
 	Id      *string           `json:"id,omitempty"`
 }
 
-// ExternalRef0Pascal defines model for 201.
-type ExternalRef0Pascal = PascalSchema
-
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-
-	// (POST /ignoreExtRefTrouble)
-	PostIgnoreExtRefTrouble(w http.ResponseWriter, r *http.Request)
 
 	// (POST /invalidExtRefTrouble)
 	PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request)
@@ -47,21 +41,6 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
-
-// PostIgnoreExtRefTrouble operation middleware
-func (siw *ServerInterfaceWrapper) PostIgnoreExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostIgnoreExtRefTrouble(w, r)
-	})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r.WithContext(ctx))
-}
 
 // PostInvalidExtRefTrouble operation middleware
 func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
@@ -207,9 +186,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/ignoreExtRefTrouble", wrapper.PostIgnoreExtRefTrouble)
-	})
-	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/invalidExtRefTrouble", wrapper.PostInvalidExtRefTrouble)
 	})
 	r.Group(func(r chi.Router) {
@@ -219,23 +195,27 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	return r
 }
 
-type N201JSONResponse PascalSchema
-
-func (t N201JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((PascalSchema)(t))
-}
-
-type PostIgnoreExtRefTroubleRequestObject struct {
-}
-
-type PostIgnoreExtRefTrouble201JSONResponse = N201JSONResponse
-
 type PostInvalidExtRefTroubleRequestObject struct {
+}
+
+type PostInvalidExtRefTroubleResponseObject interface {
+	VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error
 }
 
 type PostInvalidExtRefTrouble300JSONResponse = ExternalRef0.PascalJSONResponse
 
+func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(300)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type PostNoTroubleRequestObject struct {
+}
+
+type PostNoTroubleResponseObject interface {
+	VisitPostNoTroubleResponse(w http.ResponseWriter) error
 }
 
 type PostNoTrouble200JSONResponse struct {
@@ -245,29 +225,24 @@ type PostNoTrouble200JSONResponse struct {
 	Name        *string           `json:"name,omitempty"`
 }
 
-func (t PostNoTrouble200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((struct {
-		DirectBar   *DirectBar        `json:"directBar,omitempty"`
-		DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty"`
-		IndirectFoo *PackedBar        `json:"indirectFoo,omitempty"`
-		Name        *string           `json:"name,omitempty"`
-	})(t))
+func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
-	// (POST /ignoreExtRefTrouble)
-	PostIgnoreExtRefTrouble(ctx context.Context, request PostIgnoreExtRefTroubleRequestObject) interface{}
-
 	// (POST /invalidExtRefTrouble)
-	PostInvalidExtRefTrouble(ctx context.Context, request PostInvalidExtRefTroubleRequestObject) interface{}
+	PostInvalidExtRefTrouble(ctx context.Context, request PostInvalidExtRefTroubleRequestObject) (PostInvalidExtRefTroubleResponseObject, error)
 
 	// (POST /noTrouble)
-	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) interface{}
+	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) (PostNoTroubleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -297,55 +272,27 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// PostIgnoreExtRefTrouble operation middleware
-func (sh *strictHandler) PostIgnoreExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	var request PostIgnoreExtRefTroubleRequestObject
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
-		return sh.ssi.PostIgnoreExtRefTrouble(ctx, request.(PostIgnoreExtRefTroubleRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PostIgnoreExtRefTrouble")
-	}
-
-	response := handler(r.Context(), w, r, request)
-
-	switch v := response.(type) {
-	case PostIgnoreExtRefTrouble201JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(201)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
-	}
-}
-
 // PostInvalidExtRefTrouble operation middleware
 func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
 	var request PostInvalidExtRefTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PostInvalidExtRefTrouble(ctx, request.(PostInvalidExtRefTroubleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "PostInvalidExtRefTrouble")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case PostInvalidExtRefTrouble300JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(300)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostInvalidExtRefTroubleResponseObject); ok {
+		if err := validResponse.VisitPostInvalidExtRefTroubleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -353,36 +300,22 @@ func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http
 func (sh *strictHandler) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
 	var request PostNoTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PostNoTrouble(ctx, request.(PostNoTroubleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "PostNoTrouble")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case PostNoTrouble200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
-	}
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		fmt.Fprintln(w, err)
-	}
-}
-
-func writeRaw(w http.ResponseWriter, b []byte) {
-	if _, err := w.Write(b); err != nil {
-		fmt.Fprintln(w, err)
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostNoTroubleResponseObject); ok {
+		if err := validResponse.VisitPostNoTroubleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
