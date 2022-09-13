@@ -37,12 +37,13 @@
         {{end}}
 
         {{range .Contents}}
+            {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
             {{if and $fixedStatusCode $isRef -}}
-                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response = {{$ref}}{{.NameTagOrContentType}}Response
+                type {{$receiverTypeName}} = struct{ {{$ref}}{{.NameTagOrContentType}}Response }
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
-                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
             {{else -}}
-                type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response struct {
+                type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
                         Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
@@ -62,7 +63,7 @@
                 }
             {{end}}
 
-            func (response {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) Visit{{$opid}}Response(w http.ResponseWriter) error {
+            func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{range $headers -}}
                     w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
                 {{end -}}
