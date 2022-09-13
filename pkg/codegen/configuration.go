@@ -76,6 +76,7 @@ type OutputOptions struct {
 
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	RequiredFieldTag   bool     `yaml:"required-field-tag"`             // Emit `required:"true"` tag for required fields
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

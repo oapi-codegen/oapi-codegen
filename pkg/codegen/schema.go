@@ -146,12 +146,13 @@ type Constants struct {
 //
 // Let's use this example schema:
 // components:
-//  schemas:
-//    Person:
-//      type: object
-//      properties:
-//      name:
-//        type: string
+//
+//	schemas:
+//	  Person:
+//	    type: object
+//	    properties:
+//	    name:
+//	      type: string
 type TypeDefinition struct {
 	// The name of the type, eg, type <...> Person
 	TypeName string
@@ -617,6 +618,11 @@ func GenFieldsFromProperties(props []Property) []string {
 				}
 			}
 		}
+
+		if p.Required && globalState.options.OutputOptions.RequiredFieldTag {
+			fieldTags["required"] = "true"
+		}
+
 		// Convert the fieldTags map into Go field annotations.
 		keys := SortedStringKeys(fieldTags)
 		tags := make([]string, len(keys))
