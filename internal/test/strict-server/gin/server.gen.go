@@ -409,7 +409,7 @@ type ReusableResponsesResponseObject interface {
 	VisitReusableResponsesResponse(w http.ResponseWriter) error
 }
 
-type ReusableResponses200JSONResponse = ReusableresponseJSONResponse
+type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
