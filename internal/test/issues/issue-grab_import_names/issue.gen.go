@@ -23,7 +23,7 @@ import (
 
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
-	// Foo base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.
+	// Foo base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. json. openapi3.
 	Foo *string `json:"Foo,omitempty"`
 
 	// Bar openapi_types. path. runtime. strings. time.Duration time.Time url. xml. yaml.
