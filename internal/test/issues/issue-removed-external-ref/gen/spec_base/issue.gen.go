@@ -202,7 +202,7 @@ type PostInvalidExtRefTroubleResponseObject interface {
 	VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error
 }
 
-type PostInvalidExtRefTrouble300JSONResponse = struct {
+type PostInvalidExtRefTrouble300JSONResponse struct {
 	externalRef0.PascalJSONResponse
 }
 
