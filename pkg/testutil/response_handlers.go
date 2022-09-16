@@ -40,5 +40,5 @@ func jsonHandler(_ string, r io.Reader, obj interface{}, strict bool) error {
 	if strict {
 		d.DisallowUnknownFields()
 	}
-	return json.NewDecoder(r).Decode(obj)
+	return d.Decode(obj)
 }
