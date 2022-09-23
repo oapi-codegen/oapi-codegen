@@ -30,6 +30,7 @@ import (
 
 func errExit(format string, args ...interface{}) {
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+	fmt.Println("")
 	os.Exit(1)
 }
 
@@ -237,7 +238,7 @@ func main() {
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
-		errExit("error generating code: %s\n", err)
+		errExit("error generating code: %s", err)
 	}
 
 	if opts.OutputFile != "" {
@@ -353,7 +354,7 @@ func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 		var err error
 		cfg.ImportMapping, err = util.ParseCommandlineMap(flagImportMapping)
 		if err != nil {
-			errExit("error parsing import-mapping: %s\n", err)
+			errExit("error parsing import-mapping: %s", err)
 		}
 	}
 	if cfg.ExcludeSchemas == nil {
@@ -411,7 +412,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
+		errExit("error loading template overrides: %s", err)
 	}
 	opts.OutputOptions.UserTemplates = templates
 
