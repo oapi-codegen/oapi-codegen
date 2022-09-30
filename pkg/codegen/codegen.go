@@ -386,7 +386,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
 
-	unionAndAdditionalBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, allTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
@@ -730,7 +730,7 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 		m[t.TypeName] = true
 
-		if t.Schema.HasAdditionalProperties && len(t.Schema.UnionElements) == 0 {
+		if t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}
 	}
@@ -747,7 +747,7 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 	for _, t := range typeDefs {
-		if len(t.Schema.UnionElements) != 0 && !t.Schema.HasAdditionalProperties {
+		if len(t.Schema.UnionElements) != 0 {
 			filteredTypes = append(filteredTypes, t)
 		}
 	}
@@ -776,14 +776,14 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 	if len(filteredTypes) == 0 {
 		return "", nil
 	}
-
+	return "", nil
 	context := struct {
 		Types []TypeDefinition
 	}{
 		Types: filteredTypes,
 	}
 
-	return GenerateTemplates([]string{"union-and-additonal-properties.tmpl"}, t, context)
+	return GenerateTemplates([]string{"union-and-additional-properties.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the
