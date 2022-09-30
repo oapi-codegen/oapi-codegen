@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
@@ -201,6 +202,34 @@ func TestAnyOf(t *testing.T) {
 	v5, err := dst.AsOneOfVariant5()
 	assert.NoError(t, err)
 	assert.Equal(t, OneOfVariant5{Discriminator: "all", Id: 456}, v5)
+}
+
+func TestOneOfWithAdditional(t *testing.T) {
+	x := OneOfObject13{
+		AdditionalProperties: map[string]interface{}{"x": "y"},
+	}
+	err := x.MergeOneOfVariant1(OneOfVariant1{Name: "test-name"})
+	require.NoError(t, err)
+	b, err := json.Marshal(x)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
+	var y OneOfObject13
+	err = json.Unmarshal(b, &y)
+	require.NoError(t, err)
+	assert.Equal(t, x.Type, y.Type)
+	xVariant, err := x.AsOneOfVariant1()
+	require.NoError(t, err)
+	yVariant, err := y.AsOneOfVariant1()
+	require.NoError(t, err)
+	assert.Equal(t, xVariant, yVariant)
+	xAdditional, ok := x.Get("x")
+	assert.True(t, ok)
+	yAdditional, ok := y.Get("x")
+	assert.True(t, ok)
+	assert.Equal(t, xAdditional, yAdditional)
+	b, err = json.Marshal(y)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
 }
 
 func TestMarshalWhenNoUnionValueSet(t *testing.T) {
