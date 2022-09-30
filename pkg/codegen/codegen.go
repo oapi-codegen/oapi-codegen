@@ -386,7 +386,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate}, "")
+	unionAndAdditionalBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
+	}
+
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -725,7 +730,7 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 		m[t.TypeName] = true
 
-		if t.Schema.HasAdditionalProperties {
+		if t.Schema.HasAdditionalProperties && len(t.Schema.UnionElements) == 0 {
 			filteredTypes = append(filteredTypes, t)
 		}
 	}
@@ -742,7 +747,7 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 	for _, t := range typeDefs {
-		if len(t.Schema.UnionElements) != 0 {
+		if len(t.Schema.UnionElements) != 0 && !t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}
 	}
@@ -758,6 +763,27 @@ func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (
 	}
 
 	return GenerateTemplates([]string{"union.tmpl"}, t, context)
+}
+
+func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var filteredTypes []TypeDefinition
+	for _, t := range typeDefs {
+		if len(t.Schema.UnionElements) != 0 && t.Schema.HasAdditionalProperties {
+			filteredTypes = append(filteredTypes, t)
+		}
+	}
+
+	if len(filteredTypes) == 0 {
+		return "", nil
+	}
+
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	return GenerateTemplates([]string{"union-and-additonal-properties.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the

@@ -325,6 +325,23 @@ components:
         - oneOf:
             - $ref: '#/components/schemas/OneOfVariant3'
             - $ref: '#/components/schemas/OneOfVariant4'
+    OneOfObject13:
+      description: oneOf with fixed discriminator and other fields allowed
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+      additionalProperties: true
     AnyOfObject1:
       description: simple anyOf case
       anyOf:

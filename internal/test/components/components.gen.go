@@ -217,6 +217,13 @@ type OneOfObject120 = string
 // OneOfObject121 defines model for .
 type OneOfObject121 = float32
 
+// OneOfObject13 oneOf with fixed discriminator and other fields allowed
+type OneOfObject13 struct {
+	Type                 string                 `json:"type"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+	union                json.RawMessage
+}
+
 // OneOfObject2 oneOf with inline elements
 type OneOfObject2 struct {
 	union json.RawMessage
