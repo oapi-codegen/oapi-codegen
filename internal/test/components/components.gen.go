@@ -779,6 +779,23 @@ func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for OneOfObject13. Returns the specified
+// element and whether it was found
+func (a OneOfObject13) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OneOfObject13
+func (a *OneOfObject13) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
 // AsOneOfVariant4 returns the union data inside the AnyOfObject1 as a OneOfVariant4
 func (t AnyOfObject1) AsOneOfVariant4() (OneOfVariant4, error) {
 	var body OneOfVariant4
@@ -1247,6 +1264,89 @@ func (t OneOfObject12) MarshalJSON() ([]byte, error) {
 func (t *OneOfObject12) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
+}
+
+// AsOneOfVariant1 returns the union data inside the OneOfObject13 as a OneOfVariant1
+func (t OneOfObject13) AsOneOfVariant1() (OneOfVariant1, error) {
+	var body OneOfVariant1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant1 overwrites any union data inside the OneOfObject13 as the provided OneOfVariant1
+func (t *OneOfObject13) FromOneOfVariant1(v OneOfVariant1) error {
+	t.Type = "v1"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant1 performs a merge with any union data inside the OneOfObject13, using the provided OneOfVariant1
+func (t *OneOfObject13) MergeOneOfVariant1(v OneOfVariant1) error {
+	t.Type = "v1"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+// AsOneOfVariant6 returns the union data inside the OneOfObject13 as a OneOfVariant6
+func (t OneOfObject13) AsOneOfVariant6() (OneOfVariant6, error) {
+	var body OneOfVariant6
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant6 overwrites any union data inside the OneOfObject13 as the provided OneOfVariant6
+func (t *OneOfObject13) FromOneOfVariant6(v OneOfVariant6) error {
+	t.Type = "v6"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant6 performs a merge with any union data inside the OneOfObject13, using the provided OneOfVariant6
+func (t *OneOfObject13) MergeOneOfVariant6(v OneOfVariant6) error {
+	t.Type = "v6"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+func (t OneOfObject13) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"type"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject13) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "v1":
+		return t.AsOneOfVariant1()
+	case "v6":
+		return t.AsOneOfVariant6()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
 }
 
 // AsOneOfObject20 returns the union data inside the OneOfObject2 as a OneOfObject20
@@ -1983,4 +2083,67 @@ func (t *OneOfObject9) UnmarshalJSON(b []byte) error {
 	}
 
 	return err
+}
+
+// Override default JSON handling for OneOfObject13 to handle AdditionalProperties and union
+func (a *OneOfObject13) UnmarshalJSON(b []byte) error {
+	err := a.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["type"]; found {
+		err = json.Unmarshal(raw, &a.Type)
+		if err != nil {
+			return fmt.Errorf("error reading 'type': %w", err)
+		}
+		delete(object, "type")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OneOfObject13 to handle AdditionalProperties and union
+func (a OneOfObject13) MarshalJSON() ([]byte, error) {
+	var err error
+	b, err := a.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if a.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["type"], err = json.Marshal(a.Type)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
 }

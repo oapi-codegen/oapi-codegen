@@ -776,7 +776,6 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 	if len(filteredTypes) == 0 {
 		return "", nil
 	}
-	return "", nil
 	context := struct {
 		Types []TypeDefinition
 	}{

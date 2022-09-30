@@ -7,7 +7,7 @@
 
 // Override default JSON handling for {{.TypeName}} to handle AdditionalProperties and union
 func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
-    err := t.union.UnmarshalJSON(b)
+    err := a.union.UnmarshalJSON(b)
     if err != nil {
         return err
     }
@@ -42,12 +42,12 @@ func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
 // Override default JSON handling for {{.TypeName}} to handle AdditionalProperties and union
 func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
     var err error
-    b, err := t.union.MarshalJSON()
+    b, err := a.union.MarshalJSON()
     if err != nil {
         return nil, err
     }
     object := make(map[string]json.RawMessage)
-    if t.union != nil {
+    if a.union != nil {
         err = json.Unmarshal(b, &object)
         if err != nil {
             return nil, err
