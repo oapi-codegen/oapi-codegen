@@ -16,6 +16,7 @@ package codegen
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"text/template"
@@ -26,6 +27,8 @@ import (
 // This generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
 func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
+	// ensure that any external file references are embedded into the embedded spec
+	swagger.InternalizeRefs(context.Background(), nil)
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
 	if err != nil {
