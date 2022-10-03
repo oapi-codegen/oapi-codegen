@@ -13,8 +13,8 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: Run `make tidy`
-        run: make tidy
+      - name: Install `tidied`
+        run: go install gitlab.com/jamietanna/tidied@latest
 
       - name: Check for no untracked files
-        run: git diff-index --quiet HEAD --
+        run: tidied -verbose
