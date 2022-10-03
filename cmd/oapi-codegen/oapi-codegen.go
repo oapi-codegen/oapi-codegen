@@ -16,7 +16,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime/debug"
@@ -182,7 +181,7 @@ func main() {
 	if !*oldConfigStyle {
 		// We simply read the configuration from disk.
 		if flagConfigFile != "" {
-			buf, err := ioutil.ReadFile(flagConfigFile)
+			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
 				errExit("error reading config file '%s': %v", flagConfigFile, err)
 			}
@@ -199,7 +198,7 @@ func main() {
 	} else {
 		var oldConfig oldConfiguration
 		if flagConfigFile != "" {
-			buf, err := ioutil.ReadFile(flagConfigFile)
+			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
 				errExit("error reading config file '%s': %v", flagConfigFile, err)
 			}
@@ -241,7 +240,7 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
-		err = ioutil.WriteFile(opts.OutputFile, []byte(code), 0644)
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
 		if err != nil {
 			errExit("error writing generated code to file: %s", err)
 		}
@@ -257,7 +256,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 		return templates, nil
 	}
 
-	files, err := ioutil.ReadDir(templatesDir)
+	files, err := os.ReadDir(templatesDir)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +275,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 			}
 			continue
 		}
-		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+		data, err := os.ReadFile(path.Join(templatesDir, f.Name()))
 		if err != nil {
 			return nil, err
 		}
