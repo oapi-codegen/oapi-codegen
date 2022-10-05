@@ -24,3 +24,21 @@ func TestLoader(t *testing.T) {
 		}
 	}
 }
+
+func TestWithNewline(t *testing.T) {
+	testmap := [][2]string {
+		{ "", "" },
+		{ "\n", "\n" },
+		{ "\n\n", "\n\n" },
+		{ "%s", "%s\n" },
+		{ "%s\n", "%s\n" },
+		{ "%s %d", "%s %d\n" },
+		{ "%s %d\n", "%s %d\n" },
+	}
+
+	for i := 0; i < len(testmap); i += 1 {
+		if withNewline(testmap[i][0]) != testmap[i][1] {
+			t.Errorf("withNewline(%q) != %q", testmap[i][0], testmap[i][1])
+		}
+	}
+}

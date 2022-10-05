@@ -28,9 +28,16 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
+func withNewline(s string) string {
+	if len(s) > 1 && s[len(s) - 1] != '\n' {
+		return s + "\n"
+	}
+	
+	return s
+}
+
 func errExit(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format, args...)
-	fmt.Println("")
+	_, _ = fmt.Fprintf(os.Stderr, withNewline(format), args...)
 	os.Exit(1)
 }
 
