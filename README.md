@@ -289,7 +289,7 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
 ```
 For a complete example see `/examples/petstore-expanded/strict`.
 
-Code is generation with a configuration flag `genrate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
+Code is generation with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
 ```go
 func SetupHandler() {
