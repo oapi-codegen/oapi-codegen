@@ -299,7 +299,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
-			assert.Contains(t, string(body), "parsing \\\"abc\\\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
@@ -407,7 +407,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
-			assert.Contains(t, string(body), "parsing \\\"abc\\\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}

@@ -73,16 +73,16 @@ const (
 
 // Defines values for EnumParam1.
 const (
-	EnumParam1Both  EnumParam1 = "both"
-	EnumParam1False EnumParam1 = "false"
-	EnumParam1True  EnumParam1 = "true"
+	EnumParam1Both EnumParam1 = "both"
+	EnumParam1Off  EnumParam1 = "off"
+	EnumParam1On   EnumParam1 = "on"
 )
 
 // Defines values for EnumParam2.
 const (
-	EnumParam2Both  EnumParam2 = "both"
-	EnumParam2False EnumParam2 = "false"
-	EnumParam2True  EnumParam2 = "true"
+	EnumParam2Both EnumParam2 = "both"
+	EnumParam2Off  EnumParam2 = "off"
+	EnumParam2On   EnumParam2 = "on"
 )
 
 // Defines values for EnumParam3.
