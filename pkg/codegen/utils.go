@@ -123,9 +123,15 @@ func ToCamelCase(str string) string {
 
 	n := ""
 	capNext := true
-	for _, v := range s {
+	for i, v := range s {
 		if unicode.IsUpper(v) {
+			if i > 0 && capNext {
+				n += "_"
+			}
 			n += string(v)
+			if i == 0 && capNext {
+				n += "_"
+			}
 		}
 		if unicode.IsDigit(v) {
 			n += string(v)
