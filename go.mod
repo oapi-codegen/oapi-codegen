@@ -2,7 +2,6 @@ module github.com/deepmap/oapi-codegen
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
-	github.com/cyberdelia/templates v1.0.0
 	github.com/getkin/kin-openapi v0.104.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-chi/chi/v5 v5.0.7
