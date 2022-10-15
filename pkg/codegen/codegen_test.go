@@ -4,7 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"go/format"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -114,7 +114,7 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 
 	cannedResponse := &http.Response{
 		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(bodyBytes)),
+		Body:       io.NopCloser(bytes.NewReader(bodyBytes)),
 		Header:     http.Header{},
 	}
 	cannedResponse.Header.Add("Content-type", "application/json")

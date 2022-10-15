@@ -497,10 +497,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "uint8"
 		} else if f == "uint" {
 			outSchema.GoType = "uint"
-		} else if f == "" {
-			outSchema.GoType = "int"
 		} else {
-			return fmt.Errorf("invalid integer format: %s", f)
+			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
@@ -611,6 +609,14 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		// Support x-go-json-ignore
+		if _, ok := p.ExtensionProps.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(p.ExtensionProps.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+				fieldTags["json"] = "-"
+			}
+		}
+
+		// Support x-oapi-codegen-extra-tags
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)

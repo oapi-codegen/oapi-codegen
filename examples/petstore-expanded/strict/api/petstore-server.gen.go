@@ -281,10 +281,17 @@ type FindPetsRequestObject struct {
 	Params FindPetsParams
 }
 
+type FindPetsResponseObject interface {
+	VisitFindPetsResponse(w http.ResponseWriter) error
+}
+
 type FindPets200JSONResponse []Pet
 
-func (t FindPets200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(([]Pet)(t))
+func (response FindPets200JSONResponse) VisitFindPetsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type FindPetsdefaultJSONResponse struct {
@@ -292,18 +299,28 @@ type FindPetsdefaultJSONResponse struct {
 	StatusCode int
 }
 
-func (t FindPetsdefaultJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
+func (response FindPetsdefaultJSONResponse) VisitFindPetsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type AddPetRequestObject struct {
 	Body *AddPetJSONRequestBody
 }
 
+type AddPetResponseObject interface {
+	VisitAddPetResponse(w http.ResponseWriter) error
+}
+
 type AddPet200JSONResponse Pet
 
-func (t AddPet200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Pet)(t))
+func (response AddPet200JSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type AddPetdefaultJSONResponse struct {
@@ -311,15 +328,27 @@ type AddPetdefaultJSONResponse struct {
 	StatusCode int
 }
 
-func (t AddPetdefaultJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
+func (response AddPetdefaultJSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type DeletePetRequestObject struct {
 	Id int64 `json:"id"`
 }
 
+type DeletePetResponseObject interface {
+	VisitDeletePetResponse(w http.ResponseWriter) error
+}
+
 type DeletePet204Response struct {
+}
+
+func (response DeletePet204Response) VisitDeletePetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
 }
 
 type DeletePetdefaultJSONResponse struct {
@@ -327,18 +356,28 @@ type DeletePetdefaultJSONResponse struct {
 	StatusCode int
 }
 
-func (t DeletePetdefaultJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
+func (response DeletePetdefaultJSONResponse) VisitDeletePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type FindPetByIDRequestObject struct {
 	Id int64 `json:"id"`
 }
 
+type FindPetByIDResponseObject interface {
+	VisitFindPetByIDResponse(w http.ResponseWriter) error
+}
+
 type FindPetByID200JSONResponse Pet
 
-func (t FindPetByID200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Pet)(t))
+func (response FindPetByID200JSONResponse) VisitFindPetByIDResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type FindPetByIDdefaultJSONResponse struct {
@@ -346,27 +385,30 @@ type FindPetByIDdefaultJSONResponse struct {
 	StatusCode int
 }
 
-func (t FindPetByIDdefaultJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
+func (response FindPetByIDdefaultJSONResponse) VisitFindPetByIDResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(ctx context.Context, request FindPetsRequestObject) interface{}
+	FindPets(ctx context.Context, request FindPetsRequestObject) (FindPetsResponseObject, error)
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(ctx context.Context, request AddPetRequestObject) interface{}
+	AddPet(ctx context.Context, request AddPetRequestObject) (AddPetResponseObject, error)
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(ctx context.Context, request DeletePetRequestObject) interface{}
+	DeletePet(ctx context.Context, request DeletePetRequestObject) (DeletePetResponseObject, error)
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) interface{}
+	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -402,29 +444,23 @@ func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params
 
 	request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.FindPets(ctx, request.(FindPetsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "FindPets")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case FindPets200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case FindPetsdefaultJSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(v.StatusCode)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(FindPetsResponseObject); ok {
+		if err := validResponse.VisitFindPetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -439,29 +475,23 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.AddPet(ctx, request.(AddPetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "AddPet")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case AddPet200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case AddPetdefaultJSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(v.StatusCode)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AddPetResponseObject); ok {
+		if err := validResponse.VisitAddPetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -471,27 +501,23 @@ func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id in
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeletePet(ctx, request.(DeletePetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "DeletePet")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case DeletePet204Response:
-		w.WriteHeader(204)
-	case DeletePetdefaultJSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(v.StatusCode)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeletePetResponseObject); ok {
+		if err := validResponse.VisitDeletePetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -501,41 +527,23 @@ func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id 
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.FindPetByID(ctx, request.(FindPetByIDRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "FindPetByID")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case FindPetByID200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case FindPetByIDdefaultJSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(v.StatusCode)
-		writeJSON(w, v)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
-	}
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		fmt.Fprintln(w, err)
-	}
-}
-
-func writeRaw(w http.ResponseWriter, b []byte) {
-	if _, err := w.Write(b); err != nil {
-		fmt.Fprintln(w, err)
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(FindPetByIDResponseObject); ok {
+		if err := validResponse.VisitFindPetByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 

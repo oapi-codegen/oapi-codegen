@@ -16,7 +16,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"runtime/debug"
@@ -60,7 +59,7 @@ type configuration struct {
 	OutputFile string `yaml:"output,omitempty"`
 }
 
-// This structure is deprecated. Please add no more flags here. It is here
+// oldConfiguration is deprecated. Please add no more flags here. It is here
 // for backwards compatibility and it will be removed in the future.
 type oldConfiguration struct {
 	PackageName        string                       `yaml:"package"`
@@ -113,34 +112,99 @@ func main() {
 		os.Exit(1)
 	}
 
+	// We will try to infer whether the user has an old-style config, or a new
+	// style. Start with the command line argument. If it's true, we know it's
+	// old config style.
+	var oldConfigStyle *bool
+	if flagOldConfigStyle {
+		oldConfigStyle = &flagOldConfigStyle
+	}
+
+	// We don't know yet, so keep looking. Try to parse the configuration file,
+	// if given.
+	if oldConfigStyle == nil && (flagConfigFile != "") {
+		configFile, err := os.ReadFile(flagConfigFile)
+		if err != nil {
+			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+		}
+		var oldConfig oldConfiguration
+		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
+
+		var newConfig configuration
+		newErr := yaml.UnmarshalStrict(configFile, &newConfig)
+
+		// If one of the two files parses, but the other fails, we know the
+		// answer.
+		if oldErr != nil && newErr == nil {
+			f := false
+			oldConfigStyle = &f
+		} else if oldErr == nil && newErr != nil {
+			t := true
+			oldConfigStyle = &t
+		} else if oldErr != nil && newErr != nil {
+			errExit("error parsing configuration style as old version or new version: %v\n", err)
+		}
+		// Else we fall through, and we still don't know, so we need to infer it from flags.
+	}
+
+	if oldConfigStyle == nil {
+		// If any deprecated flag is present, and config file structure is unknown,
+		// the presence of the deprecated flag means we must be using the old
+		// config style. It should work correctly if we go down the old path,
+		// even if we have a simple config file readable as both types.
+		deprecatedFlagNames := map[string]bool{
+			"generate":             true,
+			"include-tags":         true,
+			"exclude-tags":         true,
+			"templates":            true,
+			"import-mapping":       true,
+			"exclude-schemas":      true,
+			"response-type-suffix": true,
+			"alias-types":          true,
+		}
+		hasDeprecatedFlag := false
+		flag.Visit(func(f *flag.Flag) {
+			if deprecatedFlagNames[f.Name] {
+				hasDeprecatedFlag = true
+			}
+		})
+		if hasDeprecatedFlag {
+			t := true
+			oldConfigStyle = &t
+		} else {
+			f := false
+			oldConfigStyle = &f
+		}
+	}
+
 	var opts configuration
-	if !flagOldConfigStyle {
+	if !*oldConfigStyle {
 		// We simply read the configuration from disk.
 		if flagConfigFile != "" {
-			buf, err := ioutil.ReadFile(flagConfigFile)
+			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
-				errExit("error reading config file '%s': %v", flagConfigFile, err)
+				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
 			}
 			err = yaml.Unmarshal(buf, &opts)
 			if err != nil {
-				errExit("error parsing'%s' as YAML: %v", flagConfigFile, err)
+				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		}
 		var err error
 		opts, err = updateConfigFromFlags(opts)
 		if err != nil {
-			errExit("error processing flags: %v", err)
+			errExit("error processing flags: %v\n", err)
 		}
 	} else {
 		var oldConfig oldConfiguration
 		if flagConfigFile != "" {
-			buf, err := ioutil.ReadFile(flagConfigFile)
+			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
-				errExit("error reading config file '%s': %v", flagConfigFile, err)
+				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
 			}
 			err = yaml.Unmarshal(buf, &oldConfig)
 			if err != nil {
-				errExit("error parsing'%s' as YAML: %v", flagConfigFile, err)
+				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		}
 		opts = newConfigFromOldConfig(oldConfig)
@@ -152,14 +216,14 @@ func main() {
 
 	// Now, ensure that the config options are valid.
 	if err := opts.Validate(); err != nil {
-		errExit("configuration error: %v", err)
+		errExit("configuration error: %v\n", err)
 	}
 
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)
 		if err != nil {
-			errExit("error YAML marshaling configuration: %v", err)
+			errExit("error YAML marshaling configuration: %v\n", err)
 		}
 		fmt.Print(string(buf))
 		return
@@ -176,9 +240,9 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
-		err = ioutil.WriteFile(opts.OutputFile, []byte(code), 0644)
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
 		if err != nil {
-			errExit("error writing generated code to file: %s", err)
+			errExit("error writing generated code to file: %s\n", err)
 		}
 	} else {
 		fmt.Print(code)
@@ -192,7 +256,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 		return templates, nil
 	}
 
-	files, err := ioutil.ReadDir(templatesDir)
+	files, err := os.ReadDir(templatesDir)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +275,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 			}
 			continue
 		}
-		data, err := ioutil.ReadFile(path.Join(templatesDir, f.Name()))
+		data, err := os.ReadFile(path.Join(templatesDir, f.Name()))
 		if err != nil {
 			return nil, err
 		}

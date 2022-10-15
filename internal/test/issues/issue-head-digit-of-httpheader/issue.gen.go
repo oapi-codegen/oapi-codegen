@@ -5,6 +5,8 @@ package head_digit_of_httpheader
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 )
 
 type N200ResponseHeaders struct {
@@ -17,11 +19,21 @@ type N200Response struct {
 type GetFooRequestObject struct {
 }
 
+type GetFooResponseObject interface {
+	VisitGetFooResponse(w http.ResponseWriter) error
+}
+
 type GetFoo200Response = N200Response
+
+func (response GetFoo200Response) VisitGetFooResponse(w http.ResponseWriter) error {
+	w.Header().Set("000-foo", fmt.Sprint(response.Headers.N000Foo))
+	w.WriteHeader(200)
+	return nil
+}
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /foo)
-	GetFoo(ctx context.Context, request GetFooRequestObject) interface{}
+	GetFoo(ctx context.Context, request GetFooRequestObject) (GetFooResponseObject, error)
 }
