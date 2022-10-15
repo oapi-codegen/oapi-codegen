@@ -8,7 +8,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func mergeSchemas_V1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var outSchema Schema
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
