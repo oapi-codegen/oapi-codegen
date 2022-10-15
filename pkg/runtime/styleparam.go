@@ -28,6 +28,7 @@ import (
 )
 
 // Parameter escaping works differently based on where a header is found
+
 type ParamLocation int
 
 const (
@@ -38,7 +39,7 @@ const (
 	ParamLocationCookie
 )
 
-// This function is used by older generated code, and must remain compatible
+// StyleParam is used by older generated code, and must remain compatible
 // with that code. It is not to be used in new templates. Please see the
 // function below, which can specialize its output based on the location of
 // the parameter.

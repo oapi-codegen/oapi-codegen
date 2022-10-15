@@ -124,7 +124,7 @@ func TestPetStore(t *testing.T) {
 			2: api.Pet{},
 		}
 
-		// Filter pets by non existent tag, we should have 0
+		// Filter pets by non-existent tag, we should have 0
 		rr := doGet(t, r, "/pets?tags=NotExists")
 		assert.Equal(t, http.StatusOK, rr.Code)
 

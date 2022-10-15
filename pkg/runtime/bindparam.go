@@ -26,7 +26,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
-// This function binds a parameter as described in the Path Parameters
+// BindStyledParameter binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
 // It is a backward compatible function to clients generated with codegen
@@ -36,7 +36,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 	return BindStyledParameterWithLocation(style, explode, paramName, ParamLocationUndefined, value, dest)
 }
 
-// This function binds a parameter as described in the Path Parameters
+// BindStyledParameterWithLocation binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
 func BindStyledParameterWithLocation(style string, explode bool, paramName string,

@@ -34,7 +34,7 @@ const (
 	UserDataKey   = "oapi-codegen/user-data"
 )
 
-// Create validator middleware from a YAML file path
+// OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -49,7 +49,7 @@ func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 	return OapiRequestValidator(swagger), nil
 }
 
-// This is an gin middleware function which validates incoming HTTP requests
+// OapiRequestValidator is an gin middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400 with error message
 func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
@@ -72,7 +72,7 @@ type Options struct {
 	MultiErrorHandler MultiErrorHandler
 }
 
-// Create a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.HandlerFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
@@ -156,7 +156,7 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 	return nil
 }
 
-// Helper function to get the echo context from within requests. It returns
+// GetGinContext gets the echo context from within requests. It returns
 // nil if not found or wrong type.
 func GetGinContext(c context.Context) *gin.Context {
 	iface := c.Value(GinContextKey)

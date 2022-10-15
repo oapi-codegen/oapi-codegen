@@ -37,7 +37,7 @@ func sendPetstoreError(w http.ResponseWriter, code int, message string) {
 	json.NewEncoder(w).Encode(petErr)
 }
 
-// Here, we implement all of the handlers in the ServerInterface
+// FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()

@@ -30,6 +30,7 @@ import (
 )
 
 // Embed the templates directory
+//
 //go:embed templates
 var templates embed.FS
 
@@ -390,7 +391,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	return typeDefinitions, nil
 }
 
-// Generates operation ids, context keys, paths, etc. to be exported as constants
+// GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
 func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
 	constants := Constants{
 		SecuritySchemeProviderNames: []string{},
@@ -677,7 +678,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
 }
 
-// Generate our import statements and package definition.
+// GenerateImports generates our import statements and package definition.
 func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the

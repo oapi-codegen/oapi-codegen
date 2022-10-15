@@ -59,7 +59,7 @@ type configuration struct {
 }
 
 // oldConfiguration is deprecated. Please add no more flags here. It is here
-// for backwards compatibility and it will be removed in the future.
+// for backwards compatibility, and it will be removed in the future.
 type oldConfiguration struct {
 	PackageName        string                       `yaml:"package"`
 	GenerateTargets    []string                     `yaml:"generate"`
