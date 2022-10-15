@@ -3,16 +3,16 @@ info:
   version: 1.0.0
   title: Swagger Petstore
   description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
-  termsOfService: http://swagger.io/terms/
+  termsOfService: https://swagger.io/terms/
   contact:
     name: Swagger API Team
     email: apiteam@swagger.io
-    url: http://swagger.io
+    url: https://swagger.io
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
 servers:
-  - url: http://petstore.swagger.io/api
+  - url: https://petstore.swagger.io/api
 paths:
   /pets:
     get:
@@ -132,7 +132,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/NewPet'
         - required:
-          - id
+            - id
           properties:
             id:
               type: integer

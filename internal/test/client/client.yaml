@@ -11,7 +11,7 @@ paths:
     get:
       operationId: GetJson
       security:
-      - OpenId: [json.read, json.admin]
+        - OpenId: [ json.read, json.admin ]
       responses:
         200:
           application/json:
@@ -21,7 +21,7 @@ paths:
     get:
       operationId: GetJsonWithTrailingSlash
       security:
-        - OpenId: [json.read, json.admin]
+        - OpenId: [ json.read, json.admin ]
       responses:
         200:
           application/json:
