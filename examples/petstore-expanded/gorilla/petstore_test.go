@@ -7,13 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gorilla/api"
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func doGet(t *testing.T, mux *mux.Router, url string) *httptest.ResponseRecorder {

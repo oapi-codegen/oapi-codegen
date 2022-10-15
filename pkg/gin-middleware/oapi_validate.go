@@ -18,8 +18,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
