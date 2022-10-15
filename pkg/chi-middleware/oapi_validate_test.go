@@ -55,7 +55,7 @@ func TestOapiRequestValidator(t *testing.T) {
 }
 
 func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -154,7 +154,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 }
 
 func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -256,7 +256,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 }
 
 func TestOapiRequestValidatorWithOptions(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()

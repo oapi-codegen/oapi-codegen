@@ -589,7 +589,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
+	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")

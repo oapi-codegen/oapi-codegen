@@ -261,9 +261,9 @@ func TestParameterBinding(t *testing.T) {
 
 	var expectedPrimitive int32 = 5
 
-	var expectedPrimitiveString string = "123;456"
+	var expectedPrimitiveString = "123;456"
 
-	var expectedN1Param string = "foo"
+	var expectedN1Param = "foo"
 
 	// Check the passthrough case
 	//  (GET /passThrough/{param})
@@ -675,9 +675,9 @@ func TestClientQueryParams(t *testing.T) {
 
 	var expectedPrimitive1 int32 = 5
 	var expectedPrimitive2 int32 = 100
-	var expectedPrimitiveString string = "123;456"
+	var expectedPrimitiveString = "123;456"
 
-	var expectedStartingWithNumber string = "111"
+	var expectedStartingWithNumber = "111"
 
 	// Check query params
 	qParams := GetQueryFormParams{

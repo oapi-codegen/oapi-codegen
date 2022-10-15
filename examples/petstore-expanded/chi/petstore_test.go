@@ -84,8 +84,8 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("List all pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Now, list all pets, we should have two
@@ -120,8 +120,8 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Filter pets by tag", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Filter pets by non-existent tag, we should have 0
@@ -136,8 +136,8 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Delete pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Let's delete non-existent pet

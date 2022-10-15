@@ -17,9 +17,11 @@ type JWSValidator interface {
 	ValidateJWS(jws string) (jwt.Token, error)
 }
 
-var ErrNoAuthHeader = errors.New("Authorization header is missing")
-var ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
-var ErrClaimsInvalid = errors.New("Provided claims do not match expected scopes")
+var (
+	ErrNoAuthHeader      = errors.New("Authorization header is missing")
+	ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
+	ErrClaimsInvalid     = errors.New("Provided claims do not match expected scopes")
+)
 
 // GetJWSFromRequest extracts a JWS string from an Authorization: Bearer <jws> header
 func GetJWSFromRequest(req *http.Request) (string, error) {
