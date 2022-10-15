@@ -179,8 +179,8 @@ func (siw *ServerInterfaceWrapper) GetEveryTypeOptional(w http.ResponseWriter, r
 		siw.Handler.GetEveryTypeOptional(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -194,8 +194,8 @@ func (siw *ServerInterfaceWrapper) GetSimple(w http.ResponseWriter, r *http.Requ
 		siw.Handler.GetSimple(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -258,8 +258,8 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 		siw.Handler.GetWithArgs(w, r, params)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -293,8 +293,8 @@ func (siw *ServerInterfaceWrapper) GetWithReferences(w http.ResponseWriter, r *h
 		siw.Handler.GetWithReferences(w, r, globalArgument, argument)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -319,8 +319,8 @@ func (siw *ServerInterfaceWrapper) GetWithContentType(w http.ResponseWriter, r *
 		siw.Handler.GetWithContentType(w, r, contentType)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -334,8 +334,8 @@ func (siw *ServerInterfaceWrapper) GetReservedKeyword(w http.ResponseWriter, r *
 		siw.Handler.GetReservedKeyword(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -360,8 +360,8 @@ func (siw *ServerInterfaceWrapper) CreateResource(w http.ResponseWriter, r *http
 		siw.Handler.CreateResource(w, r, argument)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -397,8 +397,8 @@ func (siw *ServerInterfaceWrapper) CreateResource2(w http.ResponseWriter, r *htt
 		siw.Handler.CreateResource2(w, r, inlineArgument, params)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -423,8 +423,8 @@ func (siw *ServerInterfaceWrapper) UpdateResource3(w http.ResponseWriter, r *htt
 		siw.Handler.UpdateResource3(w, r, pFallthrough)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -438,8 +438,8 @@ func (siw *ServerInterfaceWrapper) GetResponseWithReference(w http.ResponseWrite
 		siw.Handler.GetResponseWithReference(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))

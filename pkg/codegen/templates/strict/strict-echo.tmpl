@@ -11,7 +11,7 @@ type strictHandler struct {
     middlewares []StrictMiddlewareFunc
 }
 
-{{range .}}
+{{range .Operations}}
     {{$opid := .OperationId}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {

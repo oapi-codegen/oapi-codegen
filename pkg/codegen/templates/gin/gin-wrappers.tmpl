@@ -6,7 +6,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-{{range .}}{{$opid := .OperationId}}
+{{range .Operations}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {

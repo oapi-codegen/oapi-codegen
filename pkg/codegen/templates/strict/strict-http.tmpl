@@ -28,7 +28,7 @@ type strictHandler struct {
     options StrictHTTPServerOptions
 }
 
-{{range .}}
+{{range .Operations}}
     {{$opid := .OperationId}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {

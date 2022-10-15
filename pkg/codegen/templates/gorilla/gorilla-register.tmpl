@@ -36,13 +36,13 @@ if options.ErrorHandlerFunc == nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
     }
 }
-{{if .}}wrapper := ServerInterfaceWrapper{
+{{if .Operations}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
-{{range .}}
+{{range .Operations}}
 r.HandleFunc(options.BaseURL+"{{.Path | swaggerUriToGorillaUri }}", wrapper.{{.OperationId}}).Methods("{{.Method }}")
 {{end}}
 return r

@@ -70,8 +70,8 @@ func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Re
 		siw.Handler.JSONExample(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -85,8 +85,8 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 		siw.Handler.MultipartExample(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -100,8 +100,8 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.Respon
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -115,8 +115,8 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 		siw.Handler.ReusableResponses(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -130,8 +130,8 @@ func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Re
 		siw.Handler.TextExample(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -145,8 +145,8 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 		siw.Handler.UnknownExample(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -160,8 +160,8 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter,
 		siw.Handler.UnspecifiedContentType(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -175,8 +175,8 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *h
 		siw.Handler.URLEncodedExample(w, r)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))
@@ -239,8 +239,8 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 		siw.Handler.HeadersExample(w, r, params)
 	})
 
-	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
-		handler = siw.HandlerMiddlewares[i](handler)
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
 	}
 
 	handler.ServeHTTP(w, r.WithContext(ctx))

@@ -11,12 +11,12 @@ func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
-{{if .}}wrapper := ServerInterfaceWrapper{
+{{if .Operations}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 }
 {{end}}
-{{range .}}
+{{range .Operations}}
 router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
 {{end}}
 return router

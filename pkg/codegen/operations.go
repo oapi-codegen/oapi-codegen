@@ -224,6 +224,12 @@ type OperationDefinition struct {
 	Spec                *openapi3.Operation
 }
 
+// TemplateParameters is the context we inject into a template containing its operations and options
+type TemplateParameters struct {
+	Operations []OperationDefinition
+	Options    Configuration
+}
+
 // Returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
@@ -887,40 +893,40 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
+func GenerateChiServer(t *template.Template, params TemplateParameters) (string, error) {
+	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, params)
 }
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
+func GenerateEchoServer(t *template.Template, params TemplateParameters) (string, error) {
+	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, params)
 }
 
 // GenerateGinServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
+func GenerateGinServer(t *template.Template, params TemplateParameters) (string, error) {
+	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, params)
 }
 
 // GenerateGinServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
+func GenerateGorillaServer(t *template.Template, params TemplateParameters) (string, error) {
+	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, params)
 }
 
-func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+func GenerateStrictServer(t *template.Template, params TemplateParameters) (string, error) {
 	templates := []string{"strict/strict-interface.tmpl"}
-	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
+	if params.Options.Generate.ChiServer || params.Options.Generate.GorillaServer {
 		templates = append(templates, "strict/strict-http.tmpl")
 	}
-	if opts.Generate.EchoServer {
+	if params.Options.Generate.EchoServer {
 		templates = append(templates, "strict/strict-echo.tmpl")
 	}
-	if opts.Generate.GinServer {
+	if params.Options.Generate.GinServer {
 		templates = append(templates, "strict/strict-gin.tmpl")
 	}
-	return GenerateTemplates(templates, t, operations)
+	return GenerateTemplates(templates, t, params)
 }
 
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
