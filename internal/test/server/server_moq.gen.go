@@ -14,46 +14,46 @@ var _ ServerInterface = &ServerInterfaceMock{}
 
 // ServerInterfaceMock is a mock implementation of ServerInterface.
 //
-// 	func TestSomethingThatUsesServerInterface(t *testing.T) {
+//	func TestSomethingThatUsesServerInterface(t *testing.T) {
 //
-// 		// make and configure a mocked ServerInterface
-// 		mockedServerInterface := &ServerInterfaceMock{
-// 			CreateResourceFunc: func(w http.ResponseWriter, r *http.Request, argument string)  {
-// 				panic("mock out the CreateResource method")
-// 			},
-// 			CreateResource2Func: func(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)  {
-// 				panic("mock out the CreateResource2 method")
-// 			},
-// 			GetEveryTypeOptionalFunc: func(w http.ResponseWriter, r *http.Request)  {
-// 				panic("mock out the GetEveryTypeOptional method")
-// 			},
-// 			GetReservedKeywordFunc: func(w http.ResponseWriter, r *http.Request)  {
-// 				panic("mock out the GetReservedKeyword method")
-// 			},
-// 			GetResponseWithReferenceFunc: func(w http.ResponseWriter, r *http.Request)  {
-// 				panic("mock out the GetResponseWithReference method")
-// 			},
-// 			GetSimpleFunc: func(w http.ResponseWriter, r *http.Request)  {
-// 				panic("mock out the GetSimple method")
-// 			},
-// 			GetWithArgsFunc: func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)  {
-// 				panic("mock out the GetWithArgs method")
-// 			},
-// 			GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)  {
-// 				panic("mock out the GetWithContentType method")
-// 			},
-// 			GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument string)  {
-// 				panic("mock out the GetWithReferences method")
-// 			},
-// 			UpdateResource3Func: func(w http.ResponseWriter, r *http.Request, pFallthrough int)  {
-// 				panic("mock out the UpdateResource3 method")
-// 			},
-// 		}
+//		// make and configure a mocked ServerInterface
+//		mockedServerInterface := &ServerInterfaceMock{
+//			CreateResourceFunc: func(w http.ResponseWriter, r *http.Request, argument string)  {
+//				panic("mock out the CreateResource method")
+//			},
+//			CreateResource2Func: func(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)  {
+//				panic("mock out the CreateResource2 method")
+//			},
+//			GetEveryTypeOptionalFunc: func(w http.ResponseWriter, r *http.Request)  {
+//				panic("mock out the GetEveryTypeOptional method")
+//			},
+//			GetReservedKeywordFunc: func(w http.ResponseWriter, r *http.Request)  {
+//				panic("mock out the GetReservedKeyword method")
+//			},
+//			GetResponseWithReferenceFunc: func(w http.ResponseWriter, r *http.Request)  {
+//				panic("mock out the GetResponseWithReference method")
+//			},
+//			GetSimpleFunc: func(w http.ResponseWriter, r *http.Request)  {
+//				panic("mock out the GetSimple method")
+//			},
+//			GetWithArgsFunc: func(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)  {
+//				panic("mock out the GetWithArgs method")
+//			},
+//			GetWithContentTypeFunc: func(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)  {
+//				panic("mock out the GetWithContentType method")
+//			},
+//			GetWithReferencesFunc: func(w http.ResponseWriter, r *http.Request, globalArgument int64, argument string)  {
+//				panic("mock out the GetWithReferences method")
+//			},
+//			UpdateResource3Func: func(w http.ResponseWriter, r *http.Request, pFallthrough int)  {
+//				panic("mock out the UpdateResource3 method")
+//			},
+//		}
 //
-// 		// use mockedServerInterface in code that requires ServerInterface
-// 		// and then make assertions.
+//		// use mockedServerInterface in code that requires ServerInterface
+//		// and then make assertions.
 //
-// 	}
+//	}
 type ServerInterfaceMock struct {
 	// CreateResourceFunc mocks the CreateResource method.
 	CreateResourceFunc func(w http.ResponseWriter, r *http.Request, argument string)
@@ -208,7 +208,8 @@ func (mock *ServerInterfaceMock) CreateResource(w http.ResponseWriter, r *http.R
 
 // CreateResourceCalls gets all the calls that were made to CreateResource.
 // Check the length with:
-//     len(mockedServerInterface.CreateResourceCalls())
+//
+//	len(mockedServerInterface.CreateResourceCalls())
 func (mock *ServerInterfaceMock) CreateResourceCalls() []struct {
 	W        http.ResponseWriter
 	R        *http.Request
@@ -249,7 +250,8 @@ func (mock *ServerInterfaceMock) CreateResource2(w http.ResponseWriter, r *http.
 
 // CreateResource2Calls gets all the calls that were made to CreateResource2.
 // Check the length with:
-//     len(mockedServerInterface.CreateResource2Calls())
+//
+//	len(mockedServerInterface.CreateResource2Calls())
 func (mock *ServerInterfaceMock) CreateResource2Calls() []struct {
 	W              http.ResponseWriter
 	R              *http.Request
@@ -288,7 +290,8 @@ func (mock *ServerInterfaceMock) GetEveryTypeOptional(w http.ResponseWriter, r *
 
 // GetEveryTypeOptionalCalls gets all the calls that were made to GetEveryTypeOptional.
 // Check the length with:
-//     len(mockedServerInterface.GetEveryTypeOptionalCalls())
+//
+//	len(mockedServerInterface.GetEveryTypeOptionalCalls())
 func (mock *ServerInterfaceMock) GetEveryTypeOptionalCalls() []struct {
 	W http.ResponseWriter
 	R *http.Request
@@ -323,7 +326,8 @@ func (mock *ServerInterfaceMock) GetReservedKeyword(w http.ResponseWriter, r *ht
 
 // GetReservedKeywordCalls gets all the calls that were made to GetReservedKeyword.
 // Check the length with:
-//     len(mockedServerInterface.GetReservedKeywordCalls())
+//
+//	len(mockedServerInterface.GetReservedKeywordCalls())
 func (mock *ServerInterfaceMock) GetReservedKeywordCalls() []struct {
 	W http.ResponseWriter
 	R *http.Request
@@ -358,7 +362,8 @@ func (mock *ServerInterfaceMock) GetResponseWithReference(w http.ResponseWriter,
 
 // GetResponseWithReferenceCalls gets all the calls that were made to GetResponseWithReference.
 // Check the length with:
-//     len(mockedServerInterface.GetResponseWithReferenceCalls())
+//
+//	len(mockedServerInterface.GetResponseWithReferenceCalls())
 func (mock *ServerInterfaceMock) GetResponseWithReferenceCalls() []struct {
 	W http.ResponseWriter
 	R *http.Request
@@ -393,7 +398,8 @@ func (mock *ServerInterfaceMock) GetSimple(w http.ResponseWriter, r *http.Reques
 
 // GetSimpleCalls gets all the calls that were made to GetSimple.
 // Check the length with:
-//     len(mockedServerInterface.GetSimpleCalls())
+//
+//	len(mockedServerInterface.GetSimpleCalls())
 func (mock *ServerInterfaceMock) GetSimpleCalls() []struct {
 	W http.ResponseWriter
 	R *http.Request
@@ -430,7 +436,8 @@ func (mock *ServerInterfaceMock) GetWithArgs(w http.ResponseWriter, r *http.Requ
 
 // GetWithArgsCalls gets all the calls that were made to GetWithArgs.
 // Check the length with:
-//     len(mockedServerInterface.GetWithArgsCalls())
+//
+//	len(mockedServerInterface.GetWithArgsCalls())
 func (mock *ServerInterfaceMock) GetWithArgsCalls() []struct {
 	W      http.ResponseWriter
 	R      *http.Request
@@ -469,7 +476,8 @@ func (mock *ServerInterfaceMock) GetWithContentType(w http.ResponseWriter, r *ht
 
 // GetWithContentTypeCalls gets all the calls that were made to GetWithContentType.
 // Check the length with:
-//     len(mockedServerInterface.GetWithContentTypeCalls())
+//
+//	len(mockedServerInterface.GetWithContentTypeCalls())
 func (mock *ServerInterfaceMock) GetWithContentTypeCalls() []struct {
 	W           http.ResponseWriter
 	R           *http.Request
@@ -510,7 +518,8 @@ func (mock *ServerInterfaceMock) GetWithReferences(w http.ResponseWriter, r *htt
 
 // GetWithReferencesCalls gets all the calls that were made to GetWithReferences.
 // Check the length with:
-//     len(mockedServerInterface.GetWithReferencesCalls())
+//
+//	len(mockedServerInterface.GetWithReferencesCalls())
 func (mock *ServerInterfaceMock) GetWithReferencesCalls() []struct {
 	W              http.ResponseWriter
 	R              *http.Request
@@ -551,7 +560,8 @@ func (mock *ServerInterfaceMock) UpdateResource3(w http.ResponseWriter, r *http.
 
 // UpdateResource3Calls gets all the calls that were made to UpdateResource3.
 // Check the length with:
-//     len(mockedServerInterface.UpdateResource3Calls())
+//
+//	len(mockedServerInterface.UpdateResource3Calls())
 func (mock *ServerInterfaceMock) UpdateResource3Calls() []struct {
 	W            http.ResponseWriter
 	R            *http.Request
