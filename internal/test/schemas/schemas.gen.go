@@ -955,7 +955,6 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -981,34 +980,28 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
 		var dest GenericObject
 		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.XML200 = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
 		var dest GenericObject
 		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.YAML200 = &dest
-
-	case rsp.StatusCode == 200:
-	// Content-type (text/markdown) unsupported
-
-	case true:
-		// Content-type (text/markdown) unsupported
-
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
+	case strings.Contains(rsp.Header.Get("Content-Type"), "text/markdown") && rsp.StatusCode == 200:
+		break // Content-type (text/markdown) unsupported
+	case strings.Contains(rsp.Header.Get("Content-Type"), "text/markdown"):
+		break // Content-type (text/markdown) unsupported
 	}
 
 	return response, nil
@@ -1082,7 +1075,6 @@ func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil

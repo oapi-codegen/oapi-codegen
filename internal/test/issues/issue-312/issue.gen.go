@@ -380,7 +380,6 @@ func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
 	}
 
 	return response, nil
@@ -406,14 +405,12 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json"):
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
-
 	}
 
 	return response, nil
