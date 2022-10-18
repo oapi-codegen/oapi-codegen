@@ -108,8 +108,9 @@ func main() {
 	}
 
 	if flag.NArg() < 1 {
-		fmt.Println("Please specify a path to a OpenAPI 3.0 spec file")
-		os.Exit(1)
+		errExit("Please specify a path to a OpenAPI 3.0 spec file\n")
+	} else if flag.NArg() > 1 {
+		errExit("Only one OpenAPI 3.0 spec file is accepted and it must be the last CLI argument\n")
 	}
 
 	// We will try to infer whether the user has an old-style config, or a new
