@@ -39,6 +39,7 @@ var (
 	flagOutputConfig   bool
 	flagPrintVersion   bool
 	flagPackageName    string
+	flagPrintUsage     bool
 
 	// The options below are deprecated, and they will be removed in a future
 	// release. Please use the new config file format.
@@ -81,6 +82,8 @@ func main() {
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
+	flag.BoolVar(&flagPrintUsage, "help", false, "show this help and exit")
+	flag.BoolVar(&flagPrintUsage, "h", false, "same as -help")
 
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
@@ -95,6 +98,11 @@ func main() {
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
 
 	flag.Parse()
+
+	if flagPrintUsage {
+		flag.Usage()
+		os.Exit(0)
+	}
 
 	if flagPrintVersion {
 		bi, ok := debug.ReadBuildInfo()
