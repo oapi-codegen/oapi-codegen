@@ -808,21 +808,3 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	return nil, nil
 }
-
-func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
-	res := map[string]goImport{}
-	for _, v := range dict {
-		if v == nil || v.Value == nil {
-			continue
-		}
-
-		if gi, err := ParseGoImportExtension(v); err == nil {
-			if gi != nil {
-				res[gi.String()] = *gi
-			}
-		} else {
-			return nil, err
-		}
-	}
-	return res, nil
-}
