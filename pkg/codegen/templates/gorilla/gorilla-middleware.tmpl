@@ -7,7 +7,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-{{range .Operations}}{{$opid := .OperationId}}
+{{range .}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {

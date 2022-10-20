@@ -1,4 +1,4 @@
-{{range .Operations}}
+{{range .}}
     {{$opid := .OperationId -}}
     type {{$opid | ucFirst}}RequestObject struct {
         {{range .PathParams -}}
@@ -128,7 +128,7 @@
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .Operations}}{{.SummaryAsComment }}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)

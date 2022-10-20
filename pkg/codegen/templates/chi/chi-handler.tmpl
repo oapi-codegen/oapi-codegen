@@ -36,13 +36,13 @@ if options.ErrorHandlerFunc == nil {
         http.Error(w, err.Error(), http.StatusBadRequest)
     }
 }
-{{if .Operations}}wrapper := ServerInterfaceWrapper{
+{{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
-{{range .Operations}}r.Group(func(r chi.Router) {
+{{range .}}r.Group(func(r chi.Router) {
 r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToChiUri}}", wrapper.{{.OperationId}})
 })
 {{end}}

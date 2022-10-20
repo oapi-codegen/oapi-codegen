@@ -138,11 +138,6 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
 
-	params := TemplateParameters{
-		Operations: ops,
-		Options:    opts,
-	}
-
 	var typeDefinitions, constantDefinitions string
 	var xGoTypeImports map[string]goImport
 	if opts.Generate.Models {
@@ -164,7 +159,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var echoServerOut string
 	if opts.Generate.EchoServer {
-		echoServerOut, err = GenerateEchoServer(t, params)
+		echoServerOut, err = GenerateEchoServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -172,7 +167,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var chiServerOut string
 	if opts.Generate.ChiServer {
-		chiServerOut, err = GenerateChiServer(t, params)
+		chiServerOut, err = GenerateChiServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -180,7 +175,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var ginServerOut string
 	if opts.Generate.GinServer {
-		ginServerOut, err = GenerateGinServer(t, params)
+		ginServerOut, err = GenerateGinServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -188,7 +183,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var gorillaServerOut string
 	if opts.Generate.GorillaServer {
-		gorillaServerOut, err = GenerateGorillaServer(t, params)
+		gorillaServerOut, err = GenerateGorillaServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -204,7 +199,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 		}
-		strictServerOut, err = GenerateStrictServer(t, params)
+		strictServerOut, err = GenerateStrictServer(t, ops, opts)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
