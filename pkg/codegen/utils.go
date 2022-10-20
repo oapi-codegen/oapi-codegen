@@ -791,6 +791,24 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	return "", nil
 }
 
+func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
+	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+		return nil, nil
+	}
+
+	goTypeImportExt := v.Value.Extensions[extPropGoImport]
+
+	if raw, ok := goTypeImportExt.(json.RawMessage); ok {
+		gi := goImport{}
+		if err := json.Unmarshal(raw, &gi); err != nil {
+			return nil, err
+		}
+		return &gi, nil
+	}
+
+	return nil, nil
+}
+
 func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, v := range dict {
@@ -798,19 +816,12 @@ func GetImports(dict map[string]*openapi3.SchemaRef) (map[string]goImport, error
 			continue
 		}
 
-		if v.Value.Extensions["x-go-type-import"] == nil || v.Value.Extensions["x-go-type"] == nil {
-			continue
-		}
-		goTypeImportExt := v.Value.Extensions["x-go-type-import"]
-
-		if raw, ok := goTypeImportExt.(json.RawMessage); ok {
-			gi := goImport{}
-			if err := json.Unmarshal(raw, &gi); err != nil {
-				return nil, err
+		if gi, err := ParseGoImportExtension(v); err == nil {
+			if gi != nil {
+				res[gi.String()] = *gi
 			}
-			res[gi.String()] = gi
 		} else {
-			continue
+			return nil, err
 		}
 	}
 	return res, nil
