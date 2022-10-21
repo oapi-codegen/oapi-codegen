@@ -808,3 +808,9 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	return nil, nil
 }
+
+func MergeImports(dst, src map[string]goImport) {
+	for k, v := range src {
+		dst[k] = v
+	}
+}

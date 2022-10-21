@@ -86,6 +86,35 @@ paths:
         '200':
           $ref: '#/components/responses/ComplexResponse'
 
+  /requests/{path}:
+    post:
+      parameters:
+        - name: version
+          in: query
+          schema:
+            x-go-type: easyjson.Json
+            x-go-type-import:
+              path: github.com/mailru/easyjson
+        - name: path
+          in: path
+          schema:
+            x-go-type: pgtype.Color
+            x-go-type-import:
+              path: github.com/jackc/pgtype
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  x-go-type: gotenv.Env
+                  x-go-type-import:
+                    path: github.com/subosito/gotenv
+      responses:
+        '200':
+            $ref: '#/components/responses/ComplexResponse'
 
 components:
   schemas:

@@ -138,8 +138,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
 
+	xGoTypeImports, err := OperationImports(ops)
+	if err != nil {
+		return "", fmt.Errorf("error getting operation imports: %w", err)
+	}
+
 	var typeDefinitions, constantDefinitions string
-	var xGoTypeImports map[string]goImport
 	if opts.Generate.Models {
 		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
@@ -151,10 +155,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
 
-		xGoTypeImports, err = GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
+		imprts, err := GetTypeDefinitionsImports(spec, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
+		MergeImports(xGoTypeImports, imprts)
 	}
 
 	var echoServerOut string
@@ -794,6 +799,60 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 	})
 }
 
+func OperationSchemaImports(s Schema) (map[string]goImport, error) {
+	res := map[string]goImport{}
+
+	for _, p := range s.Properties {
+		imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: p.Schema.OAPISchema})
+		if err != nil {
+			return nil, err
+		}
+		MergeImports(res, imprts)
+	}
+
+	imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: s.OAPISchema})
+	if err != nil {
+		return nil, err
+	}
+	MergeImports(res, imprts)
+	return res, nil
+}
+
+func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
+	res := map[string]goImport{}
+	for _, op := range ops {
+		for _, pd := range [][]ParameterDefinition{op.PathParams, op.QueryParams} {
+			for _, p := range pd {
+				imprts, err := OperationSchemaImports(p.Schema)
+				if err != nil {
+					return nil, err
+				}
+				MergeImports(res, imprts)
+			}
+		}
+
+		for _, b := range op.Bodies {
+			imprts, err := OperationSchemaImports(b.Schema)
+			if err != nil {
+				return nil, err
+			}
+			MergeImports(res, imprts)
+		}
+
+		for _, b := range op.Responses {
+			for _, c := range b.Contents {
+				imprts, err := OperationSchemaImports(c.Schema)
+				if err != nil {
+					return nil, err
+				}
+				MergeImports(res, imprts)
+			}
+		}
+
+	}
+	return res, nil
+}
+
 func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
@@ -817,48 +876,42 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 	}
 
 	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports, parametersImports} {
-		for k, v := range imprts {
-			res[k] = v
-		}
+		MergeImports(res, imprts)
 	}
 	return res, nil
 }
 
-func GoSchemaImports(sref *openapi3.SchemaRef) (map[string]goImport, error) {
+func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	if sref == nil || IsGoTypeReference(sref.Ref) {
-		return nil, nil
-	}
-	if gi, err := ParseGoImportExtension(sref); err != nil {
-		return nil, err
-	} else {
-		if gi != nil {
-			res[gi.String()] = *gi
+	for _, sref := range schemas {
+		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
+			return nil, nil
 		}
-	}
-	schemaVal := sref.Value
+		if gi, err := ParseGoImportExtension(sref); err != nil {
+			return nil, err
+		} else {
+			if gi != nil {
+				res[gi.String()] = *gi
+			}
+		}
+		schemaVal := sref.Value
 
-	t := schemaVal.Type
-	switch t {
-	case "", "object":
-		for _, v := range schemaVal.Properties {
-			imprts, err := GoSchemaImports(v)
+		t := schemaVal.Type
+		switch t {
+		case "", "object":
+			for _, v := range schemaVal.Properties {
+				imprts, err := GoSchemaImports(v)
+				if err != nil {
+					return nil, err
+				}
+				MergeImports(res, imprts)
+			}
+		case "array":
+			imprts, err := GoSchemaImports(schemaVal.Items)
 			if err != nil {
 				return nil, err
 			}
-
-			for s, gi := range imprts {
-				res[s] = gi
-			}
-		}
-	case "array":
-		imprts, err := GoSchemaImports(schemaVal.Items)
-		if err != nil {
-			return nil, err
-		}
-
-		for s, gi := range imprts {
-			res[s] = gi
+			MergeImports(res, imprts)
 		}
 	}
 	return res, nil
@@ -870,38 +923,31 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 	for _, schema := range excludeSchemas {
 		excludeSchemasMap[schema] = true
 	}
-	for _, schemaName := range SortedSchemaKeys(schemas) {
+	for schemaName, schema := range schemas {
 		if _, ok := excludeSchemasMap[schemaName]; ok {
 			continue
 		}
 
-		imprts, err := GoSchemaImports(schemas[schemaName])
+		imprts, err := GoSchemaImports(schema)
 		if err != nil {
 			return nil, err
 		}
-
-		for s, gi := range imprts {
-			res[s] = gi
-		}
+		MergeImports(res, imprts)
 	}
 	return res, nil
 }
 
 func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
-		requestBodyRef := bodies[requestBodyName]
-		response := requestBodyRef.Value
+	for _, r := range bodies {
+		response := r.Value
 		jsonBody, found := response.Content["application/json"]
 		if found {
 			imprts, err := GoSchemaImports(jsonBody.Schema)
 			if err != nil {
 				return nil, err
 			}
-
-			for s, gi := range imprts {
-				res[s] = gi
-			}
+			MergeImports(res, imprts)
 		}
 	}
 	return res, nil
@@ -909,19 +955,15 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 
 func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	for _, responseName := range SortedResponsesKeys(responses) {
-		responseOrRef := responses[responseName]
-		response := responseOrRef.Value
+	for _, r := range responses {
+		response := r.Value
 		jsonResponse, found := response.Content["application/json"]
 		if found {
 			imprts, err := GoSchemaImports(jsonResponse.Schema)
 			if err != nil {
 				return nil, err
 			}
-
-			for s, gi := range imprts {
-				res[s] = gi
-			}
+			MergeImports(res, imprts)
 		}
 	}
 	return res, nil
@@ -929,19 +971,15 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 
 func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	for _, paramName := range SortedParameterKeys(params) {
-		if params[paramName].Value == nil {
+	for _, param := range params {
+		if param.Value == nil {
 			continue
 		}
-
-		imprts, err := GoSchemaImports(params[paramName].Value.Schema)
+		imprts, err := GoSchemaImports(param.Value.Schema)
 		if err != nil {
 			return nil, err
 		}
-
-		for s, gi := range imprts {
-			res[s] = gi
-		}
+		MergeImports(res, imprts)
 	}
 	return res, nil
 }

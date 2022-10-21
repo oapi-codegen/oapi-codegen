@@ -195,7 +195,11 @@ func TestGoTypeImport(t *testing.T) {
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
-			Models: true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
+		OutputOptions: OutputOptions{
+			SkipFmt: true,
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"
@@ -215,15 +219,18 @@ func TestGoTypeImport(t *testing.T) {
 		`github.com/CavernaTechnologies/pgext`, //schemas - direct object
 		`myuuid "github.com/google/uuid"`,      // schemas - object
 		`github.com/lib/pq`,                    // schemas - array
-		`github.com/spf13/viper`,               //responses - direct object
-		`golang.org/x/text`,                    //responses - complex object
-		`golang.org/x/email`,                   //requestBodies - in components
-		`github.com/fatih/color`,               //parameters - query
-		`github.com/go-openapi/swag`,           //parameters - path
+		`github.com/spf13/viper`,               // responses - direct object
+		`golang.org/x/text`,                    // responses - complex object
+		`golang.org/x/email`,                   // requestBodies - in components
+		`github.com/fatih/color`,               // parameters - query
+		`github.com/go-openapi/swag`,           // parameters - path
+		`github.com/jackc/pgtype`,              // direct parameters - path
+		`github.com/mailru/easyjson`,           // direct parameters - query
+		`github.com/subosito/gotenv`,           // direct request body
 	}
 
+	// Check import
 	for _, imp := range imports {
-		// Check import
 		assert.Contains(t, code, imp)
 	}
 
