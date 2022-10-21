@@ -39,6 +39,7 @@ var (
 	flagOutputConfig   bool
 	flagPrintVersion   bool
 	flagPackageName    string
+	flagPrintUsage     bool
 
 	// The options below are deprecated, and they will be removed in a future
 	// release. Please use the new config file format.
@@ -81,6 +82,8 @@ func main() {
 	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
 	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
+	flag.BoolVar(&flagPrintUsage, "help", false, "show this help and exit")
+	flag.BoolVar(&flagPrintUsage, "h", false, "same as -help")
 
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
@@ -96,6 +99,11 @@ func main() {
 
 	flag.Parse()
 
+	if flagPrintUsage {
+		flag.Usage()
+		os.Exit(0)
+	}
+
 	if flagPrintVersion {
 		bi, ok := debug.ReadBuildInfo()
 		if !ok {
@@ -108,8 +116,9 @@ func main() {
 	}
 
 	if flag.NArg() < 1 {
-		fmt.Println("Please specify a path to a OpenAPI 3.0 spec file")
-		os.Exit(1)
+		errExit("Please specify a path to a OpenAPI 3.0 spec file\n")
+	} else if flag.NArg() > 1 {
+		errExit("Only one OpenAPI 3.0 spec file is accepted and it must be the last CLI argument\n")
 	}
 
 	// We will try to infer whether the user has an old-style config, or a new
