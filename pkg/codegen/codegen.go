@@ -799,7 +799,7 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 	})
 }
 
-func OperationSchemaImports(s Schema) (map[string]goImport, error) {
+func OperationSchemaImports(s *Schema) (map[string]goImport, error) {
 	res := map[string]goImport{}
 
 	for _, p := range s.Properties {
@@ -823,7 +823,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 	for _, op := range ops {
 		for _, pd := range [][]ParameterDefinition{op.PathParams, op.QueryParams} {
 			for _, p := range pd {
-				imprts, err := OperationSchemaImports(p.Schema)
+				imprts, err := OperationSchemaImports(&p.Schema)
 				if err != nil {
 					return nil, err
 				}
@@ -832,7 +832,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 		}
 
 		for _, b := range op.Bodies {
-			imprts, err := OperationSchemaImports(b.Schema)
+			imprts, err := OperationSchemaImports(&b.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -841,7 +841,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 
 		for _, b := range op.Responses {
 			for _, c := range b.Contents {
-				imprts, err := OperationSchemaImports(c.Schema)
+				imprts, err := OperationSchemaImports(&c.Schema)
 				if err != nil {
 					return nil, err
 				}

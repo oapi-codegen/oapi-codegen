@@ -216,7 +216,7 @@ func TestGoTypeImport(t *testing.T) {
 	assert.NoError(t, err)
 
 	imports := []string{
-		`github.com/CavernaTechnologies/pgext`, //schemas - direct object
+		`github.com/CavernaTechnologies/pgext`, // schemas - direct object
 		`myuuid "github.com/google/uuid"`,      // schemas - object
 		`github.com/lib/pq`,                    // schemas - array
 		`github.com/spf13/viper`,               // responses - direct object
