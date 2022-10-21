@@ -195,11 +195,9 @@ func TestGoTypeImport(t *testing.T) {
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
+			EchoServer:   true,
 			Models:       true,
 			EmbeddedSpec: true,
-		},
-		OutputOptions: OutputOptions{
-			SkipFmt: true,
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"
