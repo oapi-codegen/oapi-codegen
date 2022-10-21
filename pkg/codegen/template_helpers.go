@@ -29,9 +29,9 @@ const (
 )
 
 var (
-	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
+	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json", "application/problem+json"}
 	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
+	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML, "application/problems+xml"}
 
 	responseTypeSuffix = "Response"
 )
