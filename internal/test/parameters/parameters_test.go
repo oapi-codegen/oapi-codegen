@@ -170,8 +170,8 @@ func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) e
 	if params.Co != nil {
 		t.complexObject = params.Co
 	}
-	if params.N1S != nil {
-		t.n1param = params.N1S
+	if params.N1s != nil {
+		t.n1param = params.N1s
 	}
 	return nil
 }
@@ -230,8 +230,8 @@ func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
 	if params.Co != nil {
 		t.complexObject = params.Co
 	}
-	if params.N1S != nil {
-		t.n1param = params.N1S
+	if params.N1s != nil {
+		t.n1param = params.N1s
 	}
 	return nil
 }
@@ -690,7 +690,7 @@ func TestClientQueryParams(t *testing.T) {
 		P:   &expectedPrimitive2,
 		Ps:  &expectedPrimitiveString,
 		Co:  &expectedComplexObject,
-		N1S: &expectedStartingWithNumber,
+		N1s: &expectedStartingWithNumber,
 	}
 
 	req, err := NewGetQueryFormRequest(server, &qParams)
@@ -709,7 +709,7 @@ func TestClientQueryParams(t *testing.T) {
 		Ep:  &expectedPrimitive1,
 		P:   &expectedPrimitive2,
 		Co:  &expectedComplexObject,
-		N1S: &expectedStartingWithNumber,
+		N1s: &expectedStartingWithNumber,
 	}
 	req, err = NewGetCookieRequest(server, &cParams)
 	assert.NoError(t, err)

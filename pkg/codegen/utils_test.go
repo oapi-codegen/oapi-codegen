@@ -18,102 +18,14 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func TestToCamelCase(t *testing.T) {
-	tests := []struct {
-		str  string
-		want string
-	}{{
-		str:  "",
-		want: "",
-	}, {
-		str:  " foo_bar ",
-		want: "FooBar",
-	}, {
-		str:  "hi hello-hey-hallo",
-		want: "HiHelloHeyHallo",
-	}, {
-		str:  "foo#bar",
-		want: "FooBar",
-	}, {
-		str:  "foo2bar",
-		want: "Foo2Bar",
-	}, {
-		// Test that each substitution works
-		str:  "word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
-		want: "WordWordWORDWordWordWordWordWordWordWordWordWordWord",
-	}, {
-		// Make sure numbers don't interact in a funny way.
-		str:  "number-1234",
-		want: "Number1234",
-	},
-	}
-	for i := range tests {
-		tt := tests[i]
-		t.Run(tt.str, func(t *testing.T) {
-			require.Equal(t, tt.want, ToCamelCase(tt.str))
-		})
-	}
-}
+func TestStringOps(t *testing.T) {
+	// Test that each substitution works
+	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
 
-func TestToCamelCaseWithInitialisms(t *testing.T) {
-	tests := []struct {
-		str  string
-		want string
-	}{{
-		str:  "",
-		want: "",
-	}, {
-		str:  "hello",
-		want: "Hello",
-	}, {
-		str:  "DBError",
-		want: "DBError",
-	}, {
-		str:  "httpOperationId",
-		want: "HTTPOperationID",
-	}, {
-		str:  "OperationId",
-		want: "OperationID",
-	}, {
-		str:  "peer2peer",
-		want: "Peer2Peer",
-	}, {
-		str:  "makeUtf8",
-		want: "MakeUTF8",
-	}, {
-		str:  "utf8Hello",
-		want: "UTF8Hello",
-	}, {
-		str:  "myDBError",
-		want: "MyDBError",
-	}, {
-		str:  " DbLayer ",
-		want: "DBLayer",
-	}, {
-		str:  "FindPetById",
-		want: "FindPetByID",
-	}, {
-		str:  "MyHttpUrl",
-		want: "MyHTTPURL",
-	}, {
-		str:  "find_user_by_uuid",
-		want: "FindUserByUUID",
-	}, {
-		str:  "HelloПриветWorldМир42",
-		want: "HelloПриветWorldМир42",
-	}, {
-		str:  "пир2пир",
-		want: "Пир2Пир",
-	}}
-	for i := range tests {
-		tt := tests[i]
-		t.Run(tt.str, func(t *testing.T) {
-			require.Equal(t, tt.want, ToCamelCaseWithInitialisms(tt.str))
-		})
-	}
+	// Make sure numbers don't interact in a funny way.
+	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
 }
 
 func TestSortedSchemaKeys(t *testing.T) {
@@ -518,36 +430,5 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		".com":         "DotCom",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
-	}
-}
-
-func TestLowercaseFirstCharacters(t *testing.T) {
-	tests := []struct {
-		name     string
-		in       string
-		expected string
-	}{
-		{
-			name:     "id",
-			expected: "id",
-		},
-		{
-			name:     "CamelCase",
-			expected: "camelCase",
-		},
-		{
-			name:     "ID",
-			expected: "id",
-		},
-		{
-			name:     "DBTree",
-			expected: "dbTree",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, LowercaseFirstCharacters(tt.name))
-		})
 	}
 }

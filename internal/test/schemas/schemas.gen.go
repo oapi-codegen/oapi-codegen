@@ -178,7 +178,7 @@ type ClientInterface interface {
 	GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Issue41 request
-	Issue41(ctx context.Context, n1Param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
+	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Issue9 request with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -270,8 +270,8 @@ func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
-func (c *Client) Issue41(ctx context.Context, n1Param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewIssue41Request(c.Server, n1Param)
+func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIssue41Request(c.Server, n1param)
 	if err != nil {
 		return nil, err
 	}
@@ -496,12 +496,12 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 }
 
 // NewIssue41Request generates requests for Issue41
-func NewIssue41Request(server string, n1Param N5StartsWithNumber) (*http.Request, error) {
+func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1Param)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1param)
 	if err != nil {
 		return nil, err
 	}
@@ -649,7 +649,7 @@ type ClientWithResponsesInterface interface {
 	GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error)
 
 	// Issue41 request
-	Issue41WithResponse(ctx context.Context, n1Param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
+	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
 	// Issue9 request with any body
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
@@ -902,8 +902,8 @@ func (c *ClientWithResponses) GetIssues375WithResponse(ctx context.Context, reqE
 }
 
 // Issue41WithResponse request returning *Issue41Response
-func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1Param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
-	rsp, err := c.Issue41(ctx, n1Param, reqEditors...)
+func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
+	rsp, err := c.Issue41(ctx, n1param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -1142,7 +1142,7 @@ type ServerInterface interface {
 	GetIssues375(ctx echo.Context) error
 
 	// (GET /issues/41/{1param})
-	Issue41(ctx echo.Context, n1Param N5StartsWithNumber) error
+	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
 
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
@@ -1237,9 +1237,9 @@ func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "1param" -------------
-	var n1Param N5StartsWithNumber
+	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "1param", runtime.ParamLocationPath, ctx.Param("1param"), &n1Param)
+	err = runtime.BindStyledParameterWithLocation("simple", false, "1param", runtime.ParamLocationPath, ctx.Param("1param"), &n1param)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
@@ -1247,7 +1247,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	ctx.Set(Access_tokenScopes, []string{""})
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.Issue41(ctx, n1Param)
+	err = w.Handler.Issue41(ctx, n1param)
 	return err
 }
 

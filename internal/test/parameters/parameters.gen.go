@@ -63,8 +63,8 @@ type GetCookieParams struct {
 	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// N1S name starting with number
-	N1S *string `form:"1s,omitempty" json:"1s,omitempty"`
+	// N1s name starting with number
+	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
@@ -135,8 +135,8 @@ type GetQueryFormParams struct {
 	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// N1S name starting with number
-	N1S *string `form:"1s,omitempty" json:"1s,omitempty"`
+	// N1s name starting with number
+	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -273,7 +273,7 @@ type ClientInterface interface {
 	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetStartingWithNumber request
-	GetStartingWithNumber(ctx context.Context, n1Param string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -516,8 +516,8 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetStartingWithNumber(ctx context.Context, n1Param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetStartingWithNumberRequest(c.Server, n1Param)
+func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetStartingWithNumberRequest(c.Server, n1param)
 	if err != nil {
 		return nil, err
 	}
@@ -695,10 +695,10 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		req.AddCookie(cookie6)
 	}
 
-	if params.N1S != nil {
+	if params.N1s != nil {
 		var cookieParam7 string
 
-		cookieParam7, err = runtime.StyleParamWithLocation("simple", true, "1s", runtime.ParamLocationCookie, *params.N1S)
+		cookieParam7, err = runtime.StyleParamWithLocation("simple", true, "1s", runtime.ParamLocationCookie, *params.N1s)
 		if err != nil {
 			return nil, err
 		}
@@ -1366,9 +1366,9 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 
 	}
 
-	if params.N1S != nil {
+	if params.N1s != nil {
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "1s", runtime.ParamLocationQuery, *params.N1S); err != nil {
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "1s", runtime.ParamLocationQuery, *params.N1s); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err
@@ -1563,12 +1563,12 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 }
 
 // NewGetStartingWithNumberRequest generates requests for GetStartingWithNumber
-func NewGetStartingWithNumberRequest(server string, n1Param string) (*http.Request, error) {
+func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0 = n1Param
+	pathParam0 = n1param
 
 	serverURL, err := url.Parse(server)
 	if err != nil {
@@ -1697,7 +1697,7 @@ type ClientWithResponsesInterface interface {
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
 
 	// GetStartingWithNumber request
-	GetStartingWithNumberWithResponse(ctx context.Context, n1Param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error)
+	GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error)
 }
 
 type GetContentObjectResponse struct {
@@ -2322,8 +2322,8 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 }
 
 // GetStartingWithNumberWithResponse request returning *GetStartingWithNumberResponse
-func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Context, n1Param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error) {
-	rsp, err := c.GetStartingWithNumber(ctx, n1Param, reqEditors...)
+func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error) {
+	rsp, err := c.GetStartingWithNumber(ctx, n1param, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -2730,7 +2730,7 @@ type ServerInterface interface {
 	GetSimplePrimitive(ctx echo.Context, param int32) error
 
 	// (GET /startingWithNumber/{1param})
-	GetStartingWithNumber(ctx echo.Context, n1Param string) error
+	GetStartingWithNumber(ctx echo.Context, n1param string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -2850,7 +2850,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
 		}
-		params.N1S = &value
+		params.N1s = &value
 
 	}
 
@@ -3240,7 +3240,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	// ------------- Optional query parameter "1s" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "1s", ctx.QueryParams(), &params.N1S)
+	err = runtime.BindQueryParameter("form", true, false, "1s", ctx.QueryParams(), &params.N1s)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
 	}
@@ -3334,12 +3334,12 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetStartingWithNumber(ctx echo.Context) error {
 	var err error
 	// ------------- Path parameter "1param" -------------
-	var n1Param string
+	var n1param string
 
-	n1Param = ctx.Param("1param")
+	n1param = ctx.Param("1param")
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetStartingWithNumber(ctx, n1Param)
+	err = w.Handler.GetStartingWithNumber(ctx, n1param)
 	return err
 }
 
