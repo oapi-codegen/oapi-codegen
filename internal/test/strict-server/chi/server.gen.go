@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -404,36 +403,72 @@ type ReusableresponseJSONResponse struct {
 	Headers ReusableresponseResponseHeaders
 }
 
-func (t ReusableresponseJSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
-}
-
 type JSONExampleRequestObject struct {
 	Body *JSONExampleJSONRequestBody
 }
 
+type JSONExampleResponseObject interface {
+	VisitJSONExampleResponse(w http.ResponseWriter) error
+}
+
 type JSONExample200JSONResponse Example
 
-func (t JSONExample200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
+func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type JSONExample400Response = BadrequestResponse
 
+func (response JSONExample400Response) VisitJSONExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
 type JSONExampledefaultResponse struct {
 	StatusCode int
+}
+
+func (response JSONExampledefaultResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
 }
 
 type MultipartExampleRequestObject struct {
 	Body *multipart.Reader
 }
 
+type MultipartExampleResponseObject interface {
+	VisitMultipartExampleResponse(w http.ResponseWriter) error
+}
+
 type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
+
+func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
 
 type MultipartExample400Response = BadrequestResponse
 
+func (response MultipartExample400Response) VisitMultipartExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
 type MultipartExampledefaultResponse struct {
 	StatusCode int
+}
+
+func (response MultipartExampledefaultResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
 }
 
 type MultipleRequestAndResponseTypesRequestObject struct {
@@ -444,51 +479,155 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 	TextBody      *MultipleRequestAndResponseTypesTextRequestBody
 }
 
+type MultipleRequestAndResponseTypesResponseObject interface {
+	VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error
+}
+
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
-func (t MultipleRequestAndResponseTypes200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal((Example)(t))
+func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
+
+func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+
+	if form, err := runtime.MarshalForm(response, nil); err != nil {
+		return err
+	} else {
+		_, err := w.Write([]byte(form.Encode()))
+		return err
+	}
+}
 
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 	Body          io.Reader
 	ContentLength int64
 }
 
+func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "image/png")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.Writer) error
+
+func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
 
 type MultipleRequestAndResponseTypes200TextResponse string
 
+func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(response))
+	return err
+}
+
 type MultipleRequestAndResponseTypes400Response = BadrequestResponse
+
+func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
 
 type ReusableResponsesRequestObject struct {
 	Body *ReusableResponsesJSONRequestBody
 }
 
+type ReusableResponsesResponseObject interface {
+	VisitReusableResponsesResponse(w http.ResponseWriter) error
+}
+
 type ReusableResponses200JSONResponse = ReusableresponseJSONResponse
+
+func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
 
 type ReusableResponses400Response = BadrequestResponse
 
+func (response ReusableResponses400Response) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
 type ReusableResponsesdefaultResponse struct {
 	StatusCode int
+}
+
+func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
 }
 
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
 }
 
+type TextExampleResponseObject interface {
+	VisitTextExampleResponse(w http.ResponseWriter) error
+}
+
 type TextExample200TextResponse string
 
+func (response TextExample200TextResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(response))
+	return err
+}
+
 type TextExample400Response = BadrequestResponse
+
+func (response TextExample400Response) VisitTextExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
 
 type TextExampledefaultResponse struct {
 	StatusCode int
 }
 
+func (response TextExampledefaultResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type UnknownExampleRequestObject struct {
 	Body io.Reader
+}
+
+type UnknownExampleResponseObject interface {
+	VisitUnknownExampleResponse(w http.ResponseWriter) error
 }
 
 type UnknownExample200Videomp4Response struct {
@@ -496,15 +635,43 @@ type UnknownExample200Videomp4Response struct {
 	ContentLength int64
 }
 
+func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "video/mp4")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UnknownExample400Response = BadrequestResponse
+
+func (response UnknownExample400Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
 
 type UnknownExampledefaultResponse struct {
 	StatusCode int
 }
 
+func (response UnknownExampledefaultResponse) VisitUnknownExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type UnspecifiedContentTypeRequestObject struct {
 	ContentType string
 	Body        io.Reader
+}
+
+type UnspecifiedContentTypeResponseObject interface {
+	VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error
 }
 
 type UnspecifiedContentType200VideoResponse struct {
@@ -513,33 +680,97 @@ type UnspecifiedContentType200VideoResponse struct {
 	ContentLength int64
 }
 
+func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", response.ContentType)
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
 type UnspecifiedContentType400Response = BadrequestResponse
+
+func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
 
 type UnspecifiedContentType401Response struct {
 }
 
+func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type UnspecifiedContentType403Response struct {
+}
+
+func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(403)
+	return nil
 }
 
 type UnspecifiedContentTypedefaultResponse struct {
 	StatusCode int
 }
 
+func (response UnspecifiedContentTypedefaultResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type URLEncodedExampleRequestObject struct {
 	Body *URLEncodedExampleFormdataRequestBody
 }
 
+type URLEncodedExampleResponseObject interface {
+	VisitURLEncodedExampleResponse(w http.ResponseWriter) error
+}
+
 type URLEncodedExample200FormdataResponse Example
 
+func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+
+	if form, err := runtime.MarshalForm(response, nil); err != nil {
+		return err
+	} else {
+		_, err := w.Write([]byte(form.Encode()))
+		return err
+	}
+}
+
 type URLEncodedExample400Response = BadrequestResponse
+
+func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
 
 type URLEncodedExampledefaultResponse struct {
 	StatusCode int
 }
 
+func (response URLEncodedExampledefaultResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type HeadersExampleRequestObject struct {
 	Params HeadersExampleParams
 	Body   *HeadersExampleJSONRequestBody
+}
+
+type HeadersExampleResponseObject interface {
+	VisitHeadersExampleResponse(w http.ResponseWriter) error
 }
 
 type HeadersExample200ResponseHeaders struct {
@@ -552,48 +783,63 @@ type HeadersExample200JSONResponse struct {
 	Headers HeadersExample200ResponseHeaders
 }
 
-func (t HeadersExample200JSONResponse) MarshalJSON() ([]byte, error) {
-	return json.Marshal(t.Body)
+func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type HeadersExample400Response = BadrequestResponse
 
+func (response HeadersExample400Response) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
 type HeadersExampledefaultResponse struct {
 	StatusCode int
+}
+
+func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (POST /json)
-	JSONExample(ctx context.Context, request JSONExampleRequestObject) interface{}
+	JSONExample(ctx context.Context, request JSONExampleRequestObject) (JSONExampleResponseObject, error)
 
 	// (POST /multipart)
-	MultipartExample(ctx context.Context, request MultipartExampleRequestObject) interface{}
+	MultipartExample(ctx context.Context, request MultipartExampleRequestObject) (MultipartExampleResponseObject, error)
 
 	// (POST /multiple)
-	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) interface{}
+	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
 	// (POST /reusable-responses)
-	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) interface{}
+	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
 
 	// (POST /text)
-	TextExample(ctx context.Context, request TextExampleRequestObject) interface{}
+	TextExample(ctx context.Context, request TextExampleRequestObject) (TextExampleResponseObject, error)
 
 	// (POST /unknown)
-	UnknownExample(ctx context.Context, request UnknownExampleRequestObject) interface{}
+	UnknownExample(ctx context.Context, request UnknownExampleRequestObject) (UnknownExampleResponseObject, error)
 
 	// (POST /unspecified-content-type)
-	UnspecifiedContentType(ctx context.Context, request UnspecifiedContentTypeRequestObject) interface{}
+	UnspecifiedContentType(ctx context.Context, request UnspecifiedContentTypeRequestObject) (UnspecifiedContentTypeResponseObject, error)
 
 	// (POST /urlencoded)
-	URLEncodedExample(ctx context.Context, request URLEncodedExampleRequestObject) interface{}
+	URLEncodedExample(ctx context.Context, request URLEncodedExampleRequestObject) (URLEncodedExampleResponseObject, error)
 
 	// (POST /with-headers)
-	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) interface{}
+	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -634,29 +880,23 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "JSONExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case JSONExample200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case JSONExample400Response:
-		w.WriteHeader(400)
-	case JSONExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
+		if err := validResponse.VisitJSONExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -671,33 +911,23 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 		request.Body = reader
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.MultipartExample(ctx, request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case MultipartExample200MultipartResponse:
-		writer := multipart.NewWriter(w)
-		w.Header().Set("Content-Type", writer.FormDataContentType())
-		w.WriteHeader(200)
-		defer writer.Close()
-		if err := v(writer); err != nil {
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
+		if err := validResponse.VisitMultipartExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
-	case MultipartExample400Response:
-		w.WriteHeader(400)
-	case MultipartExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -737,7 +967,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		}
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain") {
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 			return
@@ -746,57 +976,23 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		request.TextBody = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.MultipleRequestAndResponseTypes(ctx, request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipleRequestAndResponseTypes")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case MultipleRequestAndResponseTypes200JSONResponse:
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case MultipleRequestAndResponseTypes200FormdataResponse:
-		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-		w.WriteHeader(200)
-		if form, err := runtime.MarshalForm(v, nil); err != nil {
-			fmt.Fprintln(w, err)
-		} else {
-			writeRaw(w, []byte(form.Encode()))
-		}
-	case MultipleRequestAndResponseTypes200ImagepngResponse:
-		w.Header().Set("Content-Type", "image/png")
-		if v.ContentLength != 0 {
-			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
-		}
-		w.WriteHeader(200)
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
-		}
-		_, _ = io.Copy(w, v.Body)
-	case MultipleRequestAndResponseTypes200MultipartResponse:
-		writer := multipart.NewWriter(w)
-		w.Header().Set("Content-Type", writer.FormDataContentType())
-		w.WriteHeader(200)
-		defer writer.Close()
-		if err := v(writer); err != nil {
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
+		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
-	case MultipleRequestAndResponseTypes200TextResponse:
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(200)
-		writeRaw(w, ([]byte)(v))
-	case MultipleRequestAndResponseTypes400Response:
-		w.WriteHeader(400)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -811,31 +1007,23 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReusableResponses")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case ReusableResponses200JSONResponse:
-		w.Header().Set("header1", fmt.Sprint(v.Headers.Header1))
-		w.Header().Set("header2", fmt.Sprint(v.Headers.Header2))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case ReusableResponses400Response:
-		w.WriteHeader(400)
-	case ReusableResponsesdefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
+		if err := validResponse.VisitReusableResponsesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -843,7 +1031,7 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 	var request TextExampleRequestObject
 
-	data, err := ioutil.ReadAll(r.Body)
+	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 		return
@@ -851,29 +1039,23 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 	body := TextExampleTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "TextExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case TextExample200TextResponse:
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(200)
-		writeRaw(w, ([]byte)(v))
-	case TextExample400Response:
-		w.WriteHeader(400)
-	case TextExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
+		if err := validResponse.VisitTextExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -883,35 +1065,23 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.UnknownExample(ctx, request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnknownExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case UnknownExample200Videomp4Response:
-		w.Header().Set("Content-Type", "video/mp4")
-		if v.ContentLength != 0 {
-			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
+		if err := validResponse.VisitUnknownExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
-		w.WriteHeader(200)
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
-		}
-		_, _ = io.Copy(w, v.Body)
-	case UnknownExample400Response:
-		w.WriteHeader(400)
-	case UnknownExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -923,39 +1093,23 @@ func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.R
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.UnspecifiedContentType(ctx, request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnspecifiedContentType")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case UnspecifiedContentType200VideoResponse:
-		w.Header().Set("Content-Type", v.ContentType)
-		if v.ContentLength != 0 {
-			w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
+		if err := validResponse.VisitUnspecifiedContentTypeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
-		w.WriteHeader(200)
-		if closer, ok := v.Body.(io.ReadCloser); ok {
-			defer closer.Close()
-		}
-		_, _ = io.Copy(w, v.Body)
-	case UnspecifiedContentType400Response:
-		w.WriteHeader(400)
-	case UnspecifiedContentType401Response:
-		w.WriteHeader(401)
-	case UnspecifiedContentType403Response:
-		w.WriteHeader(403)
-	case UnspecifiedContentTypedefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -974,33 +1128,23 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.URLEncodedExample(ctx, request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "URLEncodedExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case URLEncodedExample200FormdataResponse:
-		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-		w.WriteHeader(200)
-		if form, err := runtime.MarshalForm(v, nil); err != nil {
-			fmt.Fprintln(w, err)
-		} else {
-			writeRaw(w, []byte(form.Encode()))
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
+		if err := validResponse.VisitURLEncodedExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
-	case URLEncodedExample400Response:
-		w.WriteHeader(400)
-	case URLEncodedExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 
@@ -1017,43 +1161,23 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{} {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "HeadersExample")
 	}
 
-	response := handler(r.Context(), w, r, request)
+	response, err := handler(r.Context(), w, r, request)
 
-	switch v := response.(type) {
-	case HeadersExample200JSONResponse:
-		w.Header().Set("header1", fmt.Sprint(v.Headers.Header1))
-		w.Header().Set("header2", fmt.Sprint(v.Headers.Header2))
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(200)
-		writeJSON(w, v)
-	case HeadersExample400Response:
-		w.WriteHeader(400)
-	case HeadersExampledefaultResponse:
-		w.WriteHeader(v.StatusCode)
-	case error:
-		sh.options.ResponseErrorHandlerFunc(w, r, v)
-	case nil:
-	default:
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
-	}
-}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-	if err := json.NewEncoder(w).Encode(v); err != nil {
-		fmt.Fprintln(w, err)
-	}
-}
-
-func writeRaw(w http.ResponseWriter, b []byte) {
-	if _, err := w.Write(b); err != nil {
-		fmt.Fprintln(w, err)
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
+		if err := validResponse.VisitHeadersExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
 	}
 }
 

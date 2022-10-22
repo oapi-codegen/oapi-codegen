@@ -28,7 +28,7 @@ func NewPetStore() *PetStore {
 }
 
 // Here, we implement all of the handlers in the ServerInterface
-func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) interface{} {
+func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) (FindPetsResponseObject, error) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -56,10 +56,10 @@ func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) 
 		}
 	}
 
-	return FindPets200JSONResponse(result)
+	return FindPets200JSONResponse(result), nil
 }
 
-func (p *PetStore) AddPet(ctx context.Context, request AddPetRequestObject) interface{} {
+func (p *PetStore) AddPet(ctx context.Context, request AddPetRequestObject) (AddPetResponseObject, error) {
 	// We now have a pet, let's add it to our "database".
 	// We're always asynchronous, so lock unsafe operations below
 	p.Lock.Lock()
@@ -76,30 +76,30 @@ func (p *PetStore) AddPet(ctx context.Context, request AddPetRequestObject) inte
 	p.Pets[pet.Id] = pet
 
 	// Now, we have to return the NewPet
-	return AddPet200JSONResponse(pet)
+	return AddPet200JSONResponse(pet), nil
 }
 
-func (p *PetStore) FindPetByID(ctx context.Context, request FindPetByIDRequestObject) interface{} {
+func (p *PetStore) FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
 	pet, found := p.Pets[request.Id]
 	if !found {
-		return FindPetByIDdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
+		return FindPetByIDdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}, nil
 	}
 
-	return FindPetByID200JSONResponse(pet)
+	return FindPetByID200JSONResponse(pet), nil
 }
 
-func (p *PetStore) DeletePet(ctx context.Context, request DeletePetRequestObject) interface{} {
+func (p *PetStore) DeletePet(ctx context.Context, request DeletePetRequestObject) (DeletePetResponseObject, error) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
 	_, found := p.Pets[request.Id]
 	if !found {
-		return DeletePetdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}
+		return DeletePetdefaultJSONResponse{StatusCode: http.StatusNotFound, Body: Error{Code: http.StatusNotFound, Message: fmt.Sprintf("Could not find pet with ID %d", request.Id)}}, nil
 	}
 	delete(p.Pets, request.Id)
 
-	return DeletePet204Response{}
+	return DeletePet204Response{}, nil
 }

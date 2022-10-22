@@ -6,10 +6,11 @@ import (
 )
 
 const (
-	extPropGoType    = "x-go-type"
-	extGoName        = "x-go-name"
-	extPropOmitEmpty = "x-omitempty"
-	extPropExtraTags = "x-oapi-codegen-extra-tags"
+	extPropGoType       = "x-go-type"
+	extGoName           = "x-go-name"
+	extPropGoJsonIgnore = "x-go-json-ignore"
+	extPropOmitEmpty    = "x-omitempty"
+	extPropExtraTags    = "x-oapi-codegen-extra-tags"
 )
 
 func extString(extPropValue interface{}) (string, error) {
@@ -56,4 +57,18 @@ func extExtraTags(extPropValue interface{}) (map[string]string, error) {
 		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
 	}
 	return tags, nil
+}
+
+func extParseGoJsonIgnore(extPropValue interface{}) (bool, error) {
+	raw, ok := extPropValue.(json.RawMessage)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+
+	var goJsonIgnore bool
+	if err := json.Unmarshal(raw, &goJsonIgnore); err != nil {
+		return false, fmt.Errorf("failed to unmarshal json: %w", err)
+	}
+
+	return goJsonIgnore, nil
 }

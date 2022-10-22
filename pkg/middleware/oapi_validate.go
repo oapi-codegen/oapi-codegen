@@ -18,7 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"net/http"
 	"strings"
 
@@ -41,7 +41,7 @@ const (
 
 // Create validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error reading %s: %s", path, err)
 	}

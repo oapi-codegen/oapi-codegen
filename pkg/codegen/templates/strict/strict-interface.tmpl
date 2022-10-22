@@ -16,12 +16,17 @@
         {{end -}}
     }
 
+    type {{$opid | ucFirst}}ResponseObject interface {
+        Visit{{$opid}}Response(w http.ResponseWriter) error
+    }
+
     {{range .Responses}}
         {{$statusCode := .StatusCode -}}
         {{$hasHeaders := ne 0 (len .Headers) -}}
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
         {{$ref := .Ref  | ucFirst -}}
+        {{$headers := .Headers -}}
 
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
@@ -36,12 +41,6 @@
                 type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response = {{$ref}}{{.NameTagOrContentType}}Response
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
-
-                {{if and (not .Schema.IsRef) (eq .NameTag "JSON")}}
-                    func (t {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
-                        return json.Marshal(({{.Schema.GoType}})(t))
-                    }
-                {{end}}
             {{else -}}
                 type {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -61,12 +60,46 @@
                         ContentLength int64
                     {{end -}}
                 }
-                {{if eq .NameTag "JSON"}}
-                    func (t {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
-                        return json.Marshal(t.Body)
-                    }
-                {{end}}
             {{end}}
+
+            func (response {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response) Visit{{$opid}}Response(w http.ResponseWriter) error {
+                {{range $headers -}}
+                    w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                {{end -}}
+                {{if eq .NameTag "Multipart" -}}
+                    writer := multipart.NewWriter(w)
+                {{end -}}
+                w.Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}writer.FormDataContentType(){{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}response.ContentType{{end}})
+                {{if not .IsSupported -}}
+                    if response.ContentLength != 0 {
+                        w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+                    }
+                {{end -}}
+                w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{if eq .NameTag "JSON" -}}
+                    return json.NewEncoder(w).Encode({{if $hasBodyVar}}response.Body{{else}}response{{end}})
+                {{else if eq .NameTag "Text" -}}
+                    _, err := w.Write([]byte({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
+                    return err
+                {{else if eq .NameTag "Formdata" -}}
+                    if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil); err != nil {
+                        return err
+                    } else {
+                        _, err := w.Write([]byte(form.Encode()))
+                        return err
+                    }
+                {{else if eq .NameTag "Multipart" -}}
+                    defer writer.Close()
+                    return {{if $hasBodyVar}}response.Body{{else}}response{{end}}(writer);
+                {{else -}}
+                    if closer, ok := response.Body.(io.ReadCloser); ok {
+                        defer closer.Close()
+                    }
+                    _, err := io.Copy(w, response.Body)
+                    return err
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            }
         {{end}}
 
         {{if eq 0 (len .Contents) -}}
@@ -82,6 +115,13 @@
                     {{end -}}
                 }
             {{end -}}
+            func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(w http.ResponseWriter) error {
+                {{range $headers -}}
+                    w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                {{end -}}
+                w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                return nil
+            }
         {{end}}
     {{end}}
 {{end}}
@@ -91,6 +131,6 @@ type StrictServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
-{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) interface{}
+{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
 {{end}}{{/* range . */ -}}
 }

@@ -1,4 +1,4 @@
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) interface{}
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -76,7 +76,7 @@ type strictHandler struct {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
                 {{else if eq .NameTag "Text" -}}
-                    data, err := ioutil.ReadAll(r.Body)
+                    data, err := io.ReadAll(r.Body)
                     if err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
                         return
@@ -89,82 +89,23 @@ type strictHandler struct {
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
-        handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) interface{}{
+        handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
             return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {
             handler = middleware(handler, "{{.OperationId}}")
         }
 
-        response := handler(r.Context(), w, r, request)
+        response, err := handler(r.Context(), w, r, request)
 
-        switch v := response.(type) {
-            {{range .Responses -}}
-                {{$statusCode := .StatusCode -}}
-                {{$fixedStatusCode := .HasFixedStatusCode -}}
-                {{$headers := .Headers -}}
-                {{range .Contents -}}
-                    case {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response:
-                    {{range $headers -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
-                    {{end -}}
-                    {{if eq .NameTag "Multipart" -}}
-                        writer := multipart.NewWriter(w)
-                    {{end -}}
-                    w.Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}writer.FormDataContentType(){{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}})
-                    {{if not .IsSupported -}}
-                        if v.ContentLength != 0 {
-                            w.Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
-                        }
-                    {{end -}}
-                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
-                    {{if eq .NameTag "JSON" -}}
-                        writeJSON(w, v)
-                    {{else if eq .NameTag "Text" -}}
-                        writeRaw(w, ([]byte)(v))
-                    {{else if eq .NameTag "Formdata" -}}
-                        if form, err := runtime.MarshalForm(v, nil); err != nil {
-                            fmt.Fprintln(w, err)
-                        } else {
-                            writeRaw(w, []byte(form.Encode()))
-                        }
-                    {{else if eq .NameTag "Multipart" -}}
-                        defer writer.Close()
-                        if err := v(writer); err != nil {
-                            sh.options.ResponseErrorHandlerFunc(w, r, err)
-                        }
-                    {{else -}}
-                        if closer, ok := v.Body.(io.ReadCloser); ok {
-                            defer closer.Close()
-                        }
-                        _, _ = io.Copy(w, v.Body)
-                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
-                {{end}}{{/* range .Contents */ -}}
-                {{if eq 0 (len .Contents) -}}
-                    case {{$opid}}{{$statusCode}}Response:
-                    {{range $headers -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
-                    {{end -}}
-                    w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
-                {{end}}{{/* if eq 0 (len .Contents) */ -}}
-            {{end}}{{/* range .Responses */ -}}
-            case error:
-                sh.options.ResponseErrorHandlerFunc(w, r, v)
-            case nil:
-            default:
-                sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", v))
+        if err != nil {
+            sh.options.ResponseErrorHandlerFunc(w, r, err)
+        } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
+            if err := validResponse.Visit{{$opid}}Response(w); err != nil {
+                sh.options.ResponseErrorHandlerFunc(w, r, err)
+            }
+        } else if response != nil {
+            sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
         }
     }
 {{end}}
-
-func writeJSON(w http.ResponseWriter, v interface{}) {
-    if err := json.NewEncoder(w).Encode(v); err != nil {
-        fmt.Fprintln(w, err)
-    }
-}
-
-func writeRaw(w http.ResponseWriter, b []byte) {
-    if _, err := w.Write(b); err != nil {
-        fmt.Fprintln(w, err)
-    }
-}

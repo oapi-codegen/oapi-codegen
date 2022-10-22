@@ -18,7 +18,7 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -250,7 +250,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -264,7 +264,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -280,7 +280,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
 			assert.Contains(t, string(body), "number must be at most 100")
@@ -296,10 +296,10 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
-			assert.Contains(t, string(body), "parsing \\\"abc\\\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
@@ -358,7 +358,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -372,7 +372,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -388,7 +388,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
 			assert.Contains(t, string(body), "number must be at most 100")
@@ -404,10 +404,10 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \\\"id\\\"")
-			assert.Contains(t, string(body), "parsing \\\"abc\\\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \\\"id2\\\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
