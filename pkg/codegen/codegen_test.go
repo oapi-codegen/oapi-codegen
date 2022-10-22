@@ -20,9 +20,15 @@ import (
 	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 )
 
+const (
+	remoteRefFile = `https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded` +
+		`/petstore-expanded.yaml`
+	remoteRefImport = `github.com/deepmap/oapi-codegen/examples/petstore-expanded`
+)
+
 func checkLint(t *testing.T, filename string, code []byte) {
 	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", code)
+	problems, err := linter.Lint(filename, code)
 	assert.NoError(t, err)
 	assert.Len(t, problems, 0)
 }
@@ -231,6 +237,67 @@ func TestGoTypeImport(t *testing.T) {
 	for _, imp := range imports {
 		assert.Contains(t, code, imp)
 	}
+
+	// Make sure the generated code is valid:
+	checkLint(t, "test.gen.go", []byte(code))
+
+}
+
+func TestRemoteExternalReference(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		ImportMapping: map[string]string{
+			remoteRefFile: remoteRefImport,
+		},
+	}
+	spec := "test_specs/remote-external-reference.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check import
+	assert.Contains(t, code, `externalRef0 "github.com/deepmap/oapi-codegen/examples/petstore-expanded"`)
+
+	// Check generated oneOf structure:
+	assert.Contains(t, code, `
+// ExampleSchema_Item defines model for ExampleSchema.Item.
+type ExampleSchema_Item struct {
+	union json.RawMessage
+}
+`)
+
+	// Check generated oneOf structure As method:
+	assert.Contains(t, code, `
+// AsExternalRef0NewPet returns the union data inside the ExampleSchema_Item as a externalRef0.NewPet
+func (t ExampleSchema_Item) AsExternalRef0NewPet() (externalRef0.NewPet, error) {
+`)
+
+	// Check generated oneOf structure From method:
+	assert.Contains(t, code, `
+// FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
+func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
+`)
+
+	// Check generated oneOf structure Merge method:
+	assert.Contains(t, code, `
+// FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
+func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
+`)
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))

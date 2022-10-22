@@ -27,7 +27,7 @@ type Schema struct {
 
 	Description string // The description of the element
 
-	UnionElements []string       // Possible elements of oneOf/anyOf union
+	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -193,6 +193,23 @@ func (d *Discriminator) JSONTag() string {
 
 func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
+}
+
+// UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
+type UnionElement string
+
+// String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
+func (u UnionElement) String() string {
+	return string(u)
+}
+
+// Method generate union method name for template functions `As/From/Merge`.
+func (u UnionElement) Method() string {
+	var method string
+	for _, part := range strings.Split(string(u), `.`) {
+		method += UppercaseFirstCharacter(part)
+	}
+	return method
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -728,7 +745,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 				}
 			}
 		}
-		outSchema.UnionElements = append(outSchema.UnionElements, elementSchema.GoType)
+		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
 	return nil
