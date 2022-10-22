@@ -7,13 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/strict/api"
 	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
@@ -85,8 +84,8 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("List all pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Now, list all pets, we should have two
@@ -121,11 +120,11 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Filter pets by tag", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
-		// Filter pets by non existent tag, we should have 0
+		// Filter pets by non-existent tag, we should have 0
 		rr := doGet(t, r, "/pets?tags=NotExists")
 		assert.Equal(t, http.StatusOK, rr.Code)
 
@@ -137,8 +136,8 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Delete pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Let's delete non-existent pet

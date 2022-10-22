@@ -27,7 +27,7 @@ func NewPetStore() *PetStore {
 	}
 }
 
-// Here, we implement all of the handlers in the ServerInterface
+// FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) (FindPetsResponseObject, error) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()

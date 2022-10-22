@@ -48,7 +48,7 @@ func sendPetstoreError(c *gin.Context, code int, message string) {
 	c.JSON(code, petErr)
 }
 
-// Here, we implement all of the handlers in the ServerInterface
+// FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(c *gin.Context, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()

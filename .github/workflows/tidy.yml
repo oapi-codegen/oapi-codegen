@@ -1,5 +1,5 @@
 name: Ensure `go mod tidy` has been run
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   build:
     name: Build

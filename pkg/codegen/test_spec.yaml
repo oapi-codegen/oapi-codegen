@@ -135,4 +135,4 @@ components:
             tag2: value2
         cause:
           type: string
-          enum: [car, dog, oldage]
+          enum: [ car, dog, oldage ]

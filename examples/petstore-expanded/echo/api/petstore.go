@@ -22,9 +22,8 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api/models"
+	"github.com/labstack/echo/v4"
 )
 
 type PetStore struct {
@@ -51,7 +50,7 @@ func sendPetstoreError(ctx echo.Context, code int, message string) error {
 	return err
 }
 
-// Here, we implement all of the handlers in the ServerInterface
+// FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(ctx echo.Context, params models.FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()

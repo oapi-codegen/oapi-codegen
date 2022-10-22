@@ -8,16 +8,13 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/deepmap/oapi-codegen/pkg/util"
-
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
-
-	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/stretchr/testify/require"
 )
 
 const (

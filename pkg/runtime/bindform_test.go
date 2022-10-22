@@ -6,9 +6,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBindURLForm(t *testing.T) {

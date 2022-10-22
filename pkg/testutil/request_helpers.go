@@ -42,7 +42,7 @@ func NewRequest() *RequestBuilder {
 	}
 }
 
-// This structure caches request settings as we build up the request.
+// RequestBuilder caches request settings as we build up the request.
 type RequestBuilder struct {
 	Method  string
 	Path    string
@@ -52,7 +52,7 @@ type RequestBuilder struct {
 	Cookies []*http.Cookie
 }
 
-// Path operations
+// WithMethod sets the method and path
 func (r *RequestBuilder) WithMethod(method string, path string) *RequestBuilder {
 	r.Method = method
 	r.Path = path
@@ -79,7 +79,7 @@ func (r *RequestBuilder) Delete(path string) *RequestBuilder {
 	return r.WithMethod("DELETE", path)
 }
 
-// Header operations
+// WithHeader sets a header
 func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	r.Headers[header] = value
 	return r
@@ -117,7 +117,7 @@ func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 	return r
 }
 
-// This function takes an object as input, marshals it to JSON, and sends it
+// WithJsonBody takes an object as input, marshals it to JSON, and sends it
 // as the body with Content-Type: application/json
 func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
@@ -128,7 +128,7 @@ func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	return r.WithJsonContentType()
 }
 
-// Cookie operations
+// WithCookie sets a cookie
 func (r *RequestBuilder) WithCookie(c *http.Cookie) *RequestBuilder {
 	r.Cookies = append(r.Cookies, c)
 	return r
@@ -176,7 +176,7 @@ func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 	return r.GoWithHTTPHandler(t, e)
 }
 
-// This is the result of calling Go() on the request builder. We're wrapping the
+// CompletedRequest is the result of calling Go() on the request builder. We're wrapping the
 // ResponseRecorder with some nice helper functions.
 type CompletedRequest struct {
 	Recorder *httptest.ResponseRecorder
@@ -190,7 +190,7 @@ func (c *CompletedRequest) DisallowUnknownFields() {
 	c.Strict = true
 }
 
-// This function takes a destination object as input, and unmarshals the object
+// UnmarshalBodyToObject takes a destination object as input, and unmarshals the object
 // in the response based on the Content-Type header.
 func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 	ctype := c.Recorder.Header().Get("Content-Type")
@@ -206,13 +206,13 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 	return handler(ctype, c.Recorder.Body, obj, c.Strict)
 }
 
-// This function assumes that the response contains JSON and unmarshals it
+// UnmarshalJsonToObject assumes that the response contains JSON and unmarshals it
 // into the specified object.
 func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
-// Shortcut for response code
+// Code is a shortcut for response code
 func (c *CompletedRequest) Code() int {
 	return c.Recorder.Code
 }

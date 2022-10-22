@@ -21,10 +21,9 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
+	"gopkg.in/yaml.v2"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -61,7 +60,7 @@ type configuration struct {
 }
 
 // oldConfiguration is deprecated. Please add no more flags here. It is here
-// for backwards compatibility and it will be removed in the future.
+// for backwards compatibility, and it will be removed in the future.
 type oldConfiguration struct {
 	PackageName        string                       `yaml:"package"`
 	GenerateTargets    []string                     `yaml:"generate"`
