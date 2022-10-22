@@ -76,6 +76,7 @@ type OutputOptions struct {
 
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	NameNormalizer     string   `yaml:"name-normalizer,omitempty"`      // Method used to normalize golang names and types. See the options in pkg/codegen/utils.go:nameNormalizerMap
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
