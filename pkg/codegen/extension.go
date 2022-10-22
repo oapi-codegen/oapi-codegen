@@ -6,6 +6,7 @@ import (
 )
 
 const (
+	extPropGoImport     = "x-go-type-import"
 	extPropGoType       = "x-go-type"
 	extGoName           = "x-go-name"
 	extPropGoJsonIgnore = "x-go-json-ignore"

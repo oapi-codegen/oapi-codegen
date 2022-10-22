@@ -190,12 +190,14 @@ type GetTestByNameResponse struct {
 	checkLint(t, "test.gen.go", []byte(code))
 }
 
-func TestXGoTypeImport(t *testing.T) {
+func TestGoTypeImport(t *testing.T) {
 	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
-			Models: true,
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"
@@ -211,23 +213,24 @@ func TestXGoTypeImport(t *testing.T) {
 	_, err = format.Source([]byte(code))
 	assert.NoError(t, err)
 
-	// Check that we have a package:
-	assert.Contains(t, code, "package api")
+	imports := []string{
+		`github.com/CavernaTechnologies/pgext`, // schemas - direct object
+		`myuuid "github.com/google/uuid"`,      // schemas - object
+		`github.com/lib/pq`,                    // schemas - array
+		`github.com/spf13/viper`,               // responses - direct object
+		`golang.org/x/text`,                    // responses - complex object
+		`golang.org/x/email`,                   // requestBodies - in components
+		`github.com/fatih/color`,               // parameters - query
+		`github.com/go-openapi/swag`,           // parameters - path
+		`github.com/jackc/pgtype`,              // direct parameters - path
+		`github.com/mailru/easyjson`,           // direct parameters - query
+		`github.com/subosito/gotenv`,           // direct request body
+	}
 
 	// Check import
-	assert.Contains(t, code, `myuuid "github.com/google/uuid"`)
-
-	// Check generated struct
-	assert.Contains(t, code, "type Pet struct {\n\tAge myuuid.UUID `json:\"age\"`\n}")
-
-	// Check import
-	assert.Contains(t, code, `github.com/CavernaTechnologies/pgext`)
-
-	// Check generated struct
-	assert.Contains(t, code, "type Person struct {\n\tAge pgext.Puint `json:\"age\"`\n}")
-
-	// Check generated struct
-	assert.Contains(t, code, "type Car struct {\n\tAge int `json:\"age\"`\n}")
+	for _, imp := range imports {
+		assert.Contains(t, code, imp)
+	}
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
