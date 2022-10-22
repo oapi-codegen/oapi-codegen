@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"go/token"
@@ -31,7 +32,30 @@ var (
 	pathParamRE    *regexp.Regexp
 	predeclaredSet map[string]struct{}
 	separatorSet   map[rune]struct{}
+	nameNormalizer NameNormalizer = ToCamelCase
 )
+
+type NameNormalizer func(string) string
+
+type NameNormalizerMap map[string]NameNormalizer
+
+func (m NameNormalizerMap) Options() []string {
+	options := make([]string, 0, len(m))
+
+	for key := range nameNormalizerMap {
+		options = append(options, key)
+	}
+
+	sort.Strings(options)
+
+	return options
+}
+
+var nameNormalizerMap = NameNormalizerMap{
+	"":                           ToCamelCase,
+	"ToCamelCase":                ToCamelCase,
+	"ToCamelCaseWithInitialisms": ToCamelCaseWithInitialisms,
+}
 
 func init() {
 	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
@@ -114,32 +138,90 @@ func LowercaseFirstCharacter(str string) string {
 	return string(runes)
 }
 
-// This function will convert query-arg style strings to CamelCase. We will
+// Lowercase the first upper characters in a string for case of abbreviation.
+// This assumes UTF-8, so we have to be careful with unicode, don't treat it as a byte array.
+func LowercaseFirstCharacters(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	runes := []rune(str)
+
+	for i := 0; i < len(runes); i++ {
+		next := i + 1
+		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
+			break
+		}
+
+		runes[i] = unicode.ToLower(runes[i])
+	}
+
+	return string(runes)
+}
+
+// ToCamelCase function will convert query-arg style strings to CamelCase. We will
 // use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
 // would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
+	res := bytes.NewBuffer(nil)
 
-	n := ""
 	capNext := true
 	for _, v := range s {
 		if unicode.IsUpper(v) {
-			n += string(v)
+			res.WriteRune(v)
+			capNext = false
+			continue
 		}
 		if unicode.IsDigit(v) {
-			n += string(v)
+			res.WriteRune(v)
+			capNext = true
+			continue
 		}
 		if unicode.IsLower(v) {
 			if capNext {
-				n += strings.ToUpper(string(v))
+				res.WriteRune(unicode.ToUpper(v))
 			} else {
-				n += string(v)
+				res.WriteRune(v)
 			}
+			capNext = false
+			continue
 		}
+
 		_, capNext = separatorSet[v]
 	}
-	return n
+	return res.String()
+}
+
+// ToCamelCaseWithInitialisms function will convert query-arg style strings to CamelCase with initialisms in uppercase.
+// So, httpOperationId would be converted to HTTPOperationID
+func ToCamelCaseWithInitialisms(s string) string {
+	parts := camelCaseMatchParts.FindAllString(ToCamelCase(s), -1)
+	for i := range parts {
+		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+			parts[i] = v
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
+
+// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+var initialismsMap = makeInitialismsMap([]string{
+	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
+	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
+	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
+})
+
+func makeInitialismsMap(l []string) map[string]string {
+	m := make(map[string]string, len(l))
+	for i := range l {
+		m[strings.ToLower(l[i])] = l[i]
+	}
+	return m
 }
 
 // This function returns the keys of the given SchemaRef dictionary in sorted
@@ -594,7 +676,7 @@ func typeNamePrefix(name string) (prefix string) {
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	return typeNamePrefix(name) + ToCamelCase(name)
+	return typeNamePrefix(name) + nameNormalizer(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
@@ -618,7 +700,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 // type name.
 func PathToTypeName(path []string) string {
 	for i, p := range path {
-		path[i] = ToCamelCase(p)
+		path[i] = nameNormalizer(p)
 	}
 	return strings.Join(path, "_")
 }
