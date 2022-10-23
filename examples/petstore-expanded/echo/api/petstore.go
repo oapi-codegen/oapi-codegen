@@ -41,7 +41,7 @@ func NewPetStore() *PetStore {
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetstoreError(ctx echo.Context, code int, message string) error {
+func sendPetStoreError(ctx echo.Context, code int, message string) error {
 	petErr := models.Error{
 		Code:    int32(code),
 		Message: message,
@@ -86,7 +86,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	var newPet models.NewPet
 	err := ctx.Bind(&newPet)
 	if err != nil {
-		return sendPetstoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
+		return sendPetStoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
 	}
 	// We now have a pet, let's add it to our "database".
 
@@ -126,7 +126,7 @@ func (p *PetStore) FindPetByID(ctx echo.Context, petId int64) error {
 
 	pet, found := p.Pets[petId]
 	if !found {
-		return sendPetstoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(ctx, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", petId))
 	}
 	return ctx.JSON(http.StatusOK, pet)
@@ -138,7 +138,7 @@ func (p *PetStore) DeletePet(ctx echo.Context, id int64) error {
 
 	_, found := p.Pets[id]
 	if !found {
-		return sendPetstoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(ctx, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", id))
 	}
 	delete(p.Pets, id)
