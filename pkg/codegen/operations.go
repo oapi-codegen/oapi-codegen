@@ -934,7 +934,7 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 }
 
 // GenerateClientWithResponses generates a client which extends the basic client which does response
-// unmarshaling.
+// unmarshalling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }

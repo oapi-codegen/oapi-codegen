@@ -72,7 +72,7 @@ func TestPetStore(t *testing.T) {
 	// sure that its fields match.
 	var resultPet models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet)
-	assert.NoError(t, err, "error unmarshaling response")
+	assert.NoError(t, err, "error unmarshalling response")
 	assert.Equal(t, newPet.Name, resultPet.Name)
 	assert.Equal(t, *newPet.Tag, *resultPet.Tag)
 
@@ -106,7 +106,7 @@ func TestPetStore(t *testing.T) {
 	// We should have gotten a response from the server with the new pet. Make
 	// sure that its fields match.
 	err = result.UnmarshalBodyToObject(&resultPet)
-	assert.NoError(t, err, "error unmarshaling response")
+	assert.NoError(t, err, "error unmarshalling response")
 	petId2 := resultPet.Id
 
 	// Now, list all pets, we should have two
@@ -137,7 +137,7 @@ func TestPetStore(t *testing.T) {
 	result = testutil.NewRequest().Delete("/pets/7").Go(t, e)
 	assert.Equal(t, http.StatusNotFound, result.Code())
 	err = result.UnmarshalBodyToObject(&petError)
-	assert.NoError(t, err, "error unmarshaling PetError")
+	assert.NoError(t, err, "error unmarshalling PetError")
 	assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 	// Now, delete both real pets

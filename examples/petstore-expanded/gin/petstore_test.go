@@ -35,7 +35,7 @@ func TestPetStore(t *testing.T) {
 
 		var resultPet api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&resultPet)
-		assert.NoError(t, err, "error unmarshaling response")
+		assert.NoError(t, err, "error unmarshalling response")
 		assert.Equal(t, newPet.Name, resultPet.Name)
 		assert.Equal(t, *newPet.Tag, *resultPet.Tag)
 	})
@@ -119,7 +119,7 @@ func TestPetStore(t *testing.T) {
 
 		var petError api.Error
 		err = json.NewDecoder(rr.Body).Decode(&petError)
-		assert.NoError(t, err, "error unmarshaling PetError")
+		assert.NoError(t, err, "error unmarshalling PetError")
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 		// Now, delete both real pets
