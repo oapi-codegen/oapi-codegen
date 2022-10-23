@@ -20,6 +20,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/labstack/echo/v4"
 )
 
@@ -148,7 +149,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON):
+			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
