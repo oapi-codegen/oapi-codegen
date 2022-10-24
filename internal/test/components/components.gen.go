@@ -987,19 +987,25 @@ func (t OneOfObject10) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["one"], err = json.Marshal(t.One)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'one': %w", err)
+	if t.One != nil {
+		object["one"], err = json.Marshal(t.One)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'one': %w", err)
+		}
 	}
 
-	object["three"], err = json.Marshal(t.Three)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'three': %w", err)
+	if t.Three != nil {
+		object["three"], err = json.Marshal(t.Three)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'three': %w", err)
+		}
 	}
 
-	object["two"], err = json.Marshal(t.Two)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'two': %w", err)
+	if t.Two != nil {
+		object["two"], err = json.Marshal(t.Two)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'two': %w", err)
+		}
 	}
 	b, err = json.Marshal(object)
 	return b, err
@@ -1509,9 +1515,11 @@ func (t OneOfObject4) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["fixedProperty"], err = json.Marshal(t.FixedProperty)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'fixedProperty': %w", err)
+	if t.FixedProperty != nil {
+		object["fixedProperty"], err = json.Marshal(t.FixedProperty)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fixedProperty': %w", err)
+		}
 	}
 	b, err = json.Marshal(object)
 	return b, err
@@ -1824,9 +1832,11 @@ func (t OneOfObject8) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["fixed"], err = json.Marshal(t.Fixed)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'fixed': %w", err)
+	if t.Fixed != nil {
+		object["fixed"], err = json.Marshal(t.Fixed)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'fixed': %w", err)
+		}
 	}
 	b, err = json.Marshal(object)
 	return b, err
@@ -1953,6 +1963,7 @@ func (t OneOfObject9) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'type': %w", err)
 	}
+
 	b, err = json.Marshal(object)
 	return b, err
 }
