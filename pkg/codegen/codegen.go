@@ -113,6 +113,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
+	if globalState.options.OutputOptions.ClientTypeName == "" {
+		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
+	}
+
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)

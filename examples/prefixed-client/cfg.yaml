@@ -1,7 +1,0 @@
-package: prefixedclient
-output: prefixed-client.gen.go
-generate:
-  models: true
-  client: true
-output-options:
-  client-type-prefix: Prefixed

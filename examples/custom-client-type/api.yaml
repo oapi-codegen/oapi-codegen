@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Prefixed Client Example
+  title: Custom Client Type Example
 paths:
   /client:
     get:
