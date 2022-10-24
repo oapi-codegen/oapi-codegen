@@ -1,6 +1,5 @@
 package: api
 generate:
   fiber: true
-  models: true
   embedded-spec: true
-output: petstore.gen.go
+output: petstore-server.gen.go
