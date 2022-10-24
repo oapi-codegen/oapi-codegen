@@ -11,7 +11,7 @@ require (
 	github.com/labstack/echo/v4 v4.9.0
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/matryer/moq v0.2.7
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.1
 	golang.org/x/tools v0.1.12
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -46,7 +46,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/stretchr/objx v0.4.0 // indirect
+	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.1 // indirect
