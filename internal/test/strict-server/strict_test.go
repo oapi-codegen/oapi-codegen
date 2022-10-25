@@ -17,9 +17,10 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
-	api3 "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
-	api4 "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
-	api2 "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
+	clientAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
+	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
+	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
+	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
@@ -33,37 +34,37 @@ func TestChiServer(t *testing.T) {
 }
 
 func TestEchoServer(t *testing.T) {
-	server := api4.StrictServer{}
-	strictHandler := api4.NewStrictHandler(server, nil)
+	server := echoAPI.StrictServer{}
+	strictHandler := echoAPI.NewStrictHandler(server, nil)
 	e := echo.New()
-	api4.RegisterHandlers(e, strictHandler)
+	echoAPI.RegisterHandlers(e, strictHandler)
 	testImpl(t, e)
 }
 
 func TestGinServer(t *testing.T) {
-	server := api2.StrictServer{}
-	strictHandler := api2.NewStrictHandler(server, nil)
+	server := ginAPI.StrictServer{}
+	strictHandler := ginAPI.NewStrictHandler(server, nil)
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
-	api2.RegisterHandlers(r, strictHandler)
+	ginAPI.RegisterHandlers(r, strictHandler)
 	testImpl(t, r)
 }
 
 func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("JSONExample", func(t *testing.T) {
 		value := "123"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/json").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
 	t.Run("URLEncodedExample", func(t *testing.T) {
 		value := "456"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		requestBodyEncoded, err := runtime.MarshalForm(&requestBody, nil)
 		assert.NoError(t, err)
 		rr := testutil.NewRequest().Post("/urlencoded").WithContentType("application/x-www-form-urlencoded").WithBody([]byte(requestBodyEncoded.Encode())).GoWithHTTPHandler(t, handler).Recorder
@@ -71,7 +72,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.Equal(t, "application/x-www-form-urlencoded", rr.Header().Get("Content-Type"))
 		values, err := url.ParseQuery(rr.Body.String())
 		assert.NoError(t, err)
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err = runtime.BindForm(&responseBody, values, nil, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -116,18 +117,18 @@ func testImpl(t *testing.T, handler http.Handler) {
 	})
 	t.Run("MultipleRequestAndResponseTypesJSON", func(t *testing.T) {
 		value := "123"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/multiple").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
 	t.Run("MultipleRequestAndResponseTypesFormdata", func(t *testing.T) {
 		value := "456"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		requestBodyEncoded, err := runtime.MarshalForm(&requestBody, nil)
 		assert.NoError(t, err)
 		rr := testutil.NewRequest().Post("/multiple").WithContentType("application/x-www-form-urlencoded").WithBody([]byte(requestBodyEncoded.Encode())).GoWithHTTPHandler(t, handler).Recorder
@@ -135,7 +136,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.Equal(t, "application/x-www-form-urlencoded", rr.Header().Get("Content-Type"))
 		values, err := url.ParseQuery(rr.Body.String())
 		assert.NoError(t, err)
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err = runtime.BindForm(&responseBody, values, nil, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -182,11 +183,11 @@ func testImpl(t *testing.T, handler http.Handler) {
 		header1 := "value1"
 		header2 := "890"
 		value := "asdf"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/with-headers").WithHeader("header1", header1).WithHeader("header2", header2).WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -203,11 +204,11 @@ func testImpl(t *testing.T, handler http.Handler) {
 	})
 	t.Run("ReusableResponses", func(t *testing.T) {
 		value := "jkl;"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/reusable-responses").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
