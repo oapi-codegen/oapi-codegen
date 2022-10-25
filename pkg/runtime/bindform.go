@@ -131,7 +131,7 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 	case reflect.Slice:
 		if files := append(files[name], files[name+"[]"]...); len(files) != 0 {
 			if _, ok := v.Interface().([]types.File); ok {
-				result := make([]types.File, len(files), len(files))
+				result := make([]types.File, len(files))
 				for i, file := range files {
 					result[i].InitFromMultipart(file)
 				}
