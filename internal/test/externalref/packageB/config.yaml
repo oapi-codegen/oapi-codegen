@@ -1,4 +1,4 @@
-package: packageB
+package: packageb
 generate:
   models: true
   embedded-spec: true

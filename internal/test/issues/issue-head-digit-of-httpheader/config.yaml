@@ -1,5 +1,5 @@
 ---
-package: head_digit_of_httpheader
+package: headdigitofhttpheader
 generate:
   strict-server: true
 output: issue.gen.go

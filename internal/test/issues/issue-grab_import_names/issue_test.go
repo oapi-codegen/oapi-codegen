@@ -1,4 +1,4 @@
-package grab_import_names
+package grabimportnames
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestLineComments(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "grab_import_names",
+		PackageName: "grabimportnames",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,

@@ -1,4 +1,4 @@
-package: grab_import_names
+package: grabimportnames
 generate:
   echo-server: true
   client: true

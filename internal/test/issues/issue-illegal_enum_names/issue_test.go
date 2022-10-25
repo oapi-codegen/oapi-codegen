@@ -1,4 +1,4 @@
-package illegal_enum_names
+package illegalenumnames
 
 import (
 	"go/ast"
@@ -16,7 +16,7 @@ func TestIllegalEnumNames(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "illegal_enum_names",
+		PackageName: "illegalenumnames",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
