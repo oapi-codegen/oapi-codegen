@@ -87,7 +87,7 @@ func TestOneOf(t *testing.T) {
 	assert.NoError(t, err)
 	v2, err := dst.AsOneOfVariant2()
 	assert.NoError(t, err)
-	assert.Equal(t, OneOfVariant2([]int{1, 2, 3}), v2)
+	assert.Equal(t, []int{1, 2, 3}, v2)
 
 	err = json.Unmarshal([]byte(variant3), &dst)
 	assert.NoError(t, err)
