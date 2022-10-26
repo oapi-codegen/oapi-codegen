@@ -93,8 +93,8 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer &&
-		(!p.Required || p.Nullable ||
+	if p.Nullable && !p.Schema.SkipOptionalPointer &&
+		(!p.Required ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
 			p.WriteOnly) {
 
