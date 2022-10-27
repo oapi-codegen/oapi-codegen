@@ -130,7 +130,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 type GinServerOptions struct {
 	BaseURL      string
 	Middlewares  []MiddlewareFunc
-	ErrorHandler func(*gin.Context, error, int) bool
+	ErrorHandler func(*gin.Context, error, int)
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -144,9 +144,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 	errorHandler := options.ErrorHandler
 
 	if errorHandler == nil {
-		errorHandler = func(c *gin.Context, err error, statusCode int) bool {
+		errorHandler = func(c *gin.Context, err error, statusCode int) {
 			c.JSON(statusCode, gin.H{"msg": err.Error()})
-			return false
 		}
 	}
 
