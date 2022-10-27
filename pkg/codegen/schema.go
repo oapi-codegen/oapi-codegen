@@ -641,6 +641,24 @@ func GenFieldsFromProperties(props []Property) []string {
 				}
 			}
 		}
+
+		// Support for x-dynamodb
+		if extension, ok := p.ExtensionProps.Extensions[dynamoTags]; ok {
+			if config, err := extDynamoConfig(extension); err == nil {
+				if config == "omitempty" && (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty || (p.Required && p.ReadOnly && globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer) {
+					fieldTags["dynamodbav"] = p.JsonFieldName
+					if p.NeedsFormTag {
+						fieldTags["dynamodbav"] = p.JsonFieldName
+					}
+				} else {
+					fieldTags["dynamodbav"] = p.JsonFieldName + ",omitempty"
+					if p.NeedsFormTag {
+						fieldTags["dynamodbav"] = p.JsonFieldName + ",omitempty"
+					}
+				}
+			}
+		}
+
 		// Convert the fieldTags map into Go field annotations.
 		keys := SortedStringKeys(fieldTags)
 		tags := make([]string, len(keys))

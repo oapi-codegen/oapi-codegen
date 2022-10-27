@@ -12,6 +12,7 @@ const (
 	extPropGoJsonIgnore = "x-go-json-ignore"
 	extPropOmitEmpty    = "x-omitempty"
 	extPropExtraTags    = "x-oapi-codegen-extra-tags"
+	dynamoTags          = "x-dynamodb"
 )
 
 func extString(extPropValue interface{}) (string, error) {
@@ -27,6 +28,10 @@ func extString(extPropValue interface{}) (string, error) {
 	return str, nil
 }
 func extTypeName(extPropValue interface{}) (string, error) {
+	return extString(extPropValue)
+}
+
+func extDynamoConfig(extPropValue interface{}) (string, error) {
 	return extString(extPropValue)
 }
 
