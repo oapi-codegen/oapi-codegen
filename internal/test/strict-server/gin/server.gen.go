@@ -57,6 +57,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandler       func(*gin.Context, error, int)
 }
 
 type MiddlewareFunc func(c *gin.Context)
@@ -156,20 +157,20 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 		var Header1 string
 		n := len(valueList)
 		if n != 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for header1, got %d", n)})
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for header1, got %d", n), http.StatusBadRequest)
 			return
 		}
 
 		err = runtime.BindStyledParameterWithLocation("simple", false, "header1", runtime.ParamLocationHeader, valueList[0], &Header1)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter header1: %s", err)})
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter header1: %s", err), http.StatusBadRequest)
 			return
 		}
 
 		params.Header1 = Header1
 
 	} else {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Header parameter header1 is required, but not found: %s", err)})
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter header1 is required, but not found: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -178,13 +179,13 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 		var Header2 int
 		n := len(valueList)
 		if n != 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Expected one value for header2, got %d", n)})
+			siw.ErrorHandler(c, fmt.Errorf("Expected one value for header2, got %d", n), http.StatusBadRequest)
 			return
 		}
 
 		err = runtime.BindStyledParameterWithLocation("simple", false, "header2", runtime.ParamLocationHeader, valueList[0], &Header2)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter header2: %s", err)})
+			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter header2: %s", err), http.StatusBadRequest)
 			return
 		}
 
@@ -201,8 +202,9 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL      string
+	Middlewares  []MiddlewareFunc
+	ErrorHandler func(*gin.Context, error, int)
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -212,9 +214,19 @@ func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
+
+	errorHandler := options.ErrorHandler
+
+	if errorHandler == nil {
+		errorHandler = func(c *gin.Context, err error, statusCode int) {
+			c.JSON(statusCode, gin.H{"msg": err.Error()})
+		}
+	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
+		ErrorHandler:       errorHandler,
 	}
 
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample)
