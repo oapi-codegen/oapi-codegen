@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/strict/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/formatsocial/oapi-codegen/examples/petstore-expanded/strict/api"
+	middleware "github.com/formatsocial/oapi-codegen/pkg/chi-middleware"
+	"github.com/formatsocial/oapi-codegen/pkg/testutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

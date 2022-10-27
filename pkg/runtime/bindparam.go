@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/formatsocial/oapi-codegen/pkg/types"
 )
 
 // BindStyledParameter binds a parameter as described in the Path Parameters

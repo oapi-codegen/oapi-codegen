@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/formatsocial/oapi-codegen/pkg/types"
 )
 
 // Parameter escaping works differently based on where a header is found
@@ -65,7 +65,7 @@ func StyleParamWithLocation(style string, explode bool, paramName string, paramL
 	}
 
 	// If the value implements encoding.TextMarshaler we use it for marshaling
-	// https://github.com/deepmap/oapi-codegen/issues/504
+	// https://github.com/formatsocial/oapi-codegen/issues/504
 	if tu, ok := value.(encoding.TextMarshaler); ok {
 		t := reflect.Indirect(reflect.ValueOf(value)).Type()
 		convertableToTime := t.ConvertibleTo(reflect.TypeOf(time.Time{}))

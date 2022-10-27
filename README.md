@@ -38,7 +38,7 @@ write a lot of boilerplate code to perform all the marshalling and unmarshalling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    go install github.com/formatsocial/oapi-codegen/cmd/oapi-codegen@latest
     oapi-codegen petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
@@ -230,8 +230,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 ```go
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/formatsocial/oapi-codegen/examples/petstore-expanded/gin/api"
+	middleware "github.com/formatsocial/oapi-codegen/pkg/gin-middleware"
 )
 
 type PetStoreImpl struct {}
@@ -514,7 +514,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ```go
     import (
-        "github.com/deepmap/oapi-codegen/pkg/securityprovider"
+        "github.com/formatsocial/oapi-codegen/pkg/securityprovider"
     )
 
     func CreateSampleProviders() error {
@@ -734,7 +734,7 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`/internal/test/externalref/`](https://github.com/formatsocial/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
 
 ```yaml
@@ -743,14 +743,14 @@ generate:
   models: true
   embedded-spec: true
 import-mapping:
-  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
-  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+  ./packageA/spec.yaml: github.com/formatsocial/oapi-codegen/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/formatsocial/oapi-codegen/internal/test/externalref/packageB
 output: externalref.gen.go
 output-options:
   skip-prune: true
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/formatsocial/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
 to see all the fields on the configuration structure.
 
 ### Import Mappings

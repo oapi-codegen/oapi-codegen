@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/formatsocial/oapi-codegen/examples/petstore-expanded/gin/api"
+	middleware "github.com/formatsocial/oapi-codegen/pkg/gin-middleware"
 	"github.com/gin-gonic/gin"
 )
 

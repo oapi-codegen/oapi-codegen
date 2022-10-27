@@ -21,8 +21,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/formatsocial/oapi-codegen/pkg/codegen"
+	"github.com/formatsocial/oapi-codegen/pkg/util"
 	"gopkg.in/yaml.v2"
 )
 
