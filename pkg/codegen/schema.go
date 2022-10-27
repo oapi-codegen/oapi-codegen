@@ -645,7 +645,7 @@ func GenFieldsFromProperties(props []Property) []string {
 		// Support for x-dynamodb
 		if extension, ok := p.ExtensionProps.Extensions[dynamoTags]; ok {
 			if config, err := extDynamoConfig(extension); err == nil {
-				if config == "omitempty" && (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty || (p.Required && p.ReadOnly && globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer) {
+				if config != "omitempty" || (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty || (p.Required && p.ReadOnly && globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer) {
 					fieldTags["dynamodbav"] = p.JsonFieldName
 					if p.NeedsFormTag {
 						fieldTags["dynamodbav"] = p.JsonFieldName

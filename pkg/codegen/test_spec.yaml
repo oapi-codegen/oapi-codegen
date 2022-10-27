@@ -2,7 +2,7 @@ openapi: 3.0.1
 
 info:
   title: OpenAPI-CodeGen Test
-  description: 'This is a test OpenAPI Spec'
+  description: "This is a test OpenAPI Spec"
   version: 1.0.0
 
 servers:
@@ -35,12 +35,12 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Test'
+                  $ref: "#/components/schemas/Test"
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Test'
+                  $ref: "#/components/schemas/Test"
         422:
           description: InvalidArray
           content:
@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /cat:
     get:
       tags:
@@ -69,28 +69,45 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/CatAlive'
-                  - $ref: '#/components/schemas/CatDead'
+                  - $ref: "#/components/schemas/CatAlive"
+                  - $ref: "#/components/schemas/CatDead"
             application/xml:
               schema:
                 anyOf:
-                  - $ref: '#/components/schemas/CatAlive'
-                  - $ref: '#/components/schemas/CatDead'
+                  - $ref: "#/components/schemas/CatAlive"
+                  - $ref: "#/components/schemas/CatDead"
             application/yaml:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/CatAlive'
-                  - $ref: '#/components/schemas/CatDead'
+                  - $ref: "#/components/schemas/CatAlive"
+                  - $ref: "#/components/schemas/CatDead"
         default:
           description: Error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
+                $ref: "#/components/schemas/Error"
+  /dog:
+    get:
+      tags:
+        - dog
+      summary: Get dog
+      operationId: getDog
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dog"
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
-
     Test:
       properties:
         name:
@@ -98,7 +115,7 @@ components:
         cases:
           type: array
           items:
-            $ref: '#/components/schemas/TestCase'
+            $ref: "#/components/schemas/TestCase"
 
     TestCase:
       properties:
@@ -135,4 +152,23 @@ components:
             tag2: value2
         cause:
           type: string
-          enum: [ car, dog, oldage ]
+          enum: [car, dog, oldage]
+
+    Dog:
+      type: object
+      required:
+        - dogName
+        - dogAge
+      properties:
+        dogName:
+          type: string
+          x-dynamodb: full
+        dogAge:
+          type: string
+          x-dynamodb: omitempty
+        dogDob:
+          type: string
+          x-dynamodb: omitempty
+        dogBreakfastTreat:
+          type: string
+          x-dynamodb: full
