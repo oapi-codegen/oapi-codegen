@@ -8,69 +8,112 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
+	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
-// ErrorHandler is called when there is an error in validation
-type ErrorHandler func(w http.ResponseWriter, message string, statusCode int)
+const (
+	ctxKeyFiberContext = "oapi-codegen/fiber-context"
+	ctxKeyUserData     = "oapi-codegen/user-data"
+)
 
-// MultiErrorHandler is called when oapi returns a MultiError type
-type MultiErrorHandler func(openapi3.MultiError) (int, error)
+// OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
+func OapiValidatorFromYamlFile(path string) (fiber.Handler, error) {
 
-// Options to customize request validation, openapi3filter specified options will be passed through.
-type Options struct {
-	Options           openapi3filter.Options
-	ErrorHandler      ErrorHandler
-	MultiErrorHandler MultiErrorHandler
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error reading %s: %s", path, err)
+	}
+
+	swagger, err := openapi3.NewLoader().LoadFromData(data)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
+			path, err)
+	}
+
+	return OapiRequestValidator(swagger), nil
 }
 
-// OapiRequestValidator Creates middleware to validate request by swagger spec.
-// This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
+// OapiRequestValidator is a fiber middleware function which validates incoming HTTP requests
+// to make sure that they conform to the given OAPI 3.0 specification. When
+// OAPI validation fails on the request, we return an HTTP/400 with error message
+func OapiRequestValidator(swagger *openapi3.T) fiber.Handler {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
-// OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
-// This middleware is good for net/http either since go-chi is 100% compatible with net/http.
-func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
+// ErrorHandler is called when there is an error in validation
+type ErrorHandler func(c *fiber.Ctx, message string, statusCode int)
+
+// MultiErrorHandler is called when oapi returns a MultiError type
+type MultiErrorHandler func(openapi3.MultiError) error
+
+// Options to customize request validation. These are passed through to
+// openapi3filter.
+type Options struct {
+	Options           openapi3filter.Options
+	ErrorHandler      ErrorHandler
+	ParamDecoder      openapi3filter.ContentParameterDecoder
+	UserData          interface{}
+	MultiErrorHandler MultiErrorHandler
+}
+
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fiber.Handler {
+
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
 	}
 
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(c *fiber.Ctx) error {
 
-			// validate request
-			if statusCode, err := validateRequest(r, router, options); err != nil {
-				if options != nil && options.ErrorHandler != nil {
-					options.ErrorHandler(w, err.Error(), statusCode)
-				} else {
-					http.Error(w, err.Error(), statusCode)
-				}
-				return
+		err := ValidateRequestFromContext(c, router, options)
+		if err != nil {
+			if options != nil && options.ErrorHandler != nil {
+				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+				// in case the handler didn't internally call Abort, stop the chain
+				return nil
+			} else {
+				// note: I am not sure if this is the best way to handle this
+				return fiber.NewError(http.StatusBadRequest, err.Error())
 			}
-
-			// serve
-			next.ServeHTTP(w, r)
-		})
+		}
+		return c.Next()
 	}
-
 }
 
-// This function is called from the middleware above and actually does the work
+// ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
-func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
+func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Options) error {
 
-	// Find route
-	route, pathParams, err := router.FindRoute(r)
+	r := &http.Request{}
+
+	err := fasthttpadaptor.ConvertRequest(c.Context(), r, false)
 	if err != nil {
-		return http.StatusBadRequest, err // We failed to find a matching route for the request.
+		return err
+	}
+
+	route, pathParams, err := router.FindRoute(r)
+
+	// We failed to find a matching route for the request.
+	if err != nil {
+		switch e := err.(type) {
+		case *routers.RouteError:
+			// We've got a bad request, the path requested doesn't match
+			// either server, or path, or something.
+			return errors.New(e.Reason)
+		default:
+			// This should never happen today, but if our upstream code changes,
+			// we don't want to crash the server, so handle the unexpected error.
+			return fmt.Errorf("error validating route: %s", err.Error())
+		}
 	}
 
 	// Validate request
@@ -80,11 +123,18 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 		Route:      route,
 	}
 
+	// Pass the gin context into the request validator, so that any callbacks
+	// which it invokes make it available.
+	requestContext := context.WithValue(context.Background(), ctxKeyFiberContext, c)
+
 	if options != nil {
 		requestValidationInput.Options = &options.Options
+		requestValidationInput.ParamDecoder = options.ParamDecoder
+		requestContext = context.WithValue(requestContext, ctxKeyUserData, options.UserData)
 	}
 
-	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
+	err = openapi3filter.ValidateRequest(requestContext, requestValidationInput)
+	if err != nil {
 		me := openapi3.MultiError{}
 		if errors.As(err, &me) {
 			errFunc := getMultiErrorHandlerFromOptions(options)
@@ -97,20 +147,34 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
 			errorLines := strings.Split(e.Error(), "\n")
-			return http.StatusBadRequest, fmt.Errorf(errorLines[0])
+			return fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
 		case *openapi3filter.SecurityRequirementsError:
-			return http.StatusUnauthorized, err
+			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return http.StatusInternalServerError, fmt.Errorf("error validating route: %s", err.Error())
+			return fmt.Errorf("error validating request: %s", err)
 		}
 	}
-
-	return http.StatusOK, nil
+	return nil
 }
 
-// attempt to get the MultiErrorHandler from the options. If it is not set,
+// GetFiberContext gets the fiber context from within requests. It returns
+// nil if not found or wrong type.
+func GetFiberContext(c context.Context) *fiber.Ctx {
+	iface := c.Value(ctxKeyFiberContext)
+	if iface == nil {
+		return nil
+	}
+
+	fiberCtx, ok := iface.(*fiber.Ctx)
+	if ok {
+		return fiberCtx
+	}
+	return nil
+}
+
+// getMultiErrorHandlerFromOptions attempts to get the MultiErrorHandler from the options. If it is not set,
 // return a default handler
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
@@ -127,6 +191,6 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
 // of all the errors. This method is called if there are no other
 // methods defined on the options.
-func defaultMultiErrorHandler(me openapi3.MultiError) (int, error) {
-	return http.StatusBadRequest, me
+func defaultMultiErrorHandler(me openapi3.MultiError) error {
+	return fmt.Errorf("multiple errors encountered: %s", me)
 }
