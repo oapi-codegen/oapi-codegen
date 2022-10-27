@@ -38,6 +38,7 @@ type ServerInterface interface {
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandler       func(*gin.Context, error, int)
 }
 
 type MiddlewareFunc func(c *gin.Context)
@@ -54,7 +55,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", c.Request.URL.Query(), &params.Tags)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter tags: %s", err)})
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -62,7 +63,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter limit: %s", err)})
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -93,7 +94,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -114,7 +115,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"msg": fmt.Sprintf("Invalid format for parameter id: %s", err)})
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
 		return
 	}
 
@@ -127,8 +128,9 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL      string
+	Middlewares  []MiddlewareFunc
+	ErrorHandler func(*gin.Context, error, int)
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -138,9 +140,19 @@ func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
+
+	errorHandler := options.ErrorHandler
+
+	if errorHandler == nil {
+		errorHandler = func(c *gin.Context, err error, statusCode int) {
+			c.JSON(statusCode, gin.H{"msg": err.Error()})
+		}
+	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,
+		ErrorHandler:       errorHandler,
 	}
 
 	router.GET(options.BaseURL+"/pets", wrapper.FindPets)

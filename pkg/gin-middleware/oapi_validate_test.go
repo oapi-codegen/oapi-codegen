@@ -198,7 +198,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	{
 		rec := doGet(t, g, "http://deepmap.ai/protected_resource_401")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		assert.Equal(t, "test: error in openapi3filter.SecurityRequirementsError: Security requirements failed", rec.Body.String())
+		assert.Equal(t, "test: error in openapi3filter.SecurityRequirementsError: security requirements failed: unauthorized", rec.Body.String())
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
