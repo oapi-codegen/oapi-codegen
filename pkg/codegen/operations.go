@@ -510,10 +510,10 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
 			} else {
 				op.OperationID = ToCamelCase(op.OperationID)
 			}
+			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
