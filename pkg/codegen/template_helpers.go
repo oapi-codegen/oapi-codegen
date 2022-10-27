@@ -278,6 +278,7 @@ var TemplateFunctions = template.FuncMap{
 	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
 	"lcFirst":                    LowercaseFirstCharacter,
 	"ucFirst":                    UppercaseFirstCharacter,
+	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
 	"camelCase":                  ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
