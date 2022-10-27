@@ -13,9 +13,11 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
     return &ClientWithResponses{client}, nil
 }
 
+{{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
+
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
-	return func(c *Client) error {
+	return func(c *{{ $clientTypeName }}) error {
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
