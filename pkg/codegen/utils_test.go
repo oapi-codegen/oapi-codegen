@@ -280,6 +280,23 @@ func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg*}/foo"))
 }
 
+func TestSwaggerUriToFiberUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToFiberUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToFiberUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToFiberUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToFiberUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
+}
+
 func TestOrderedParamsFromUri(t *testing.T) {
 	result := OrderedParamsFromUri("/path/{param1}/{.param2}/{;param3*}/foo")
 	assert.EqualValues(t, []string{"param1", "param2", "param3"}, result)
