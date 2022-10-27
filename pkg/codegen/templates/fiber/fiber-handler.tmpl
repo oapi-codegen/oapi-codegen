@@ -1,57 +1,25 @@
-// Handler creates fiber.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) fiber.Handler {
-  return HandlerWithOptions(si, FiberServerOptions{})
-}
-
+// FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
     BaseURL string
-    BaseRouter *fiber.App
-    Middlewares []fiber.Handler
-    ErrorHandlerFunc   func(c *fiber.Ctx, err error) error
+    Middlewares []MiddlewareFunc
 }
 
-// HandlerFromMux creates fiber.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *fiber.App) fiber.Handler {
-    return HandlerWithOptions(si, FiberServerOptions {
-        BaseRouter: r,
-    })
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router fiber.Router, si ServerInterface) {
+  RegisterHandlersWithOptions(router, si, FiberServerOptions{})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *fiber.App, baseURL string) fiber.Handler {
-    return HandlerWithOptions(si, FiberServerOptions {
-        BaseURL: baseURL,
-        BaseRouter: r,
-    })
-}
-
-// HandlerWithOptions creates fiber.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options FiberServerOptions) fiber.Handler {
-r := options.BaseRouter
-
-if r == nil {
-r = fiber.New()
-}
-
-if options.ErrorHandlerFunc == nil {
-    options.ErrorHandlerFunc = func(c *fiber.Ctx, err error) error {
-
-        if err != nil {
-            c.Status(http.StatusBadRequest)
-            return c.SendString(err.Error())
-        }
-
-        return c.SendStatus(http.StatusBadRequest)
-    }
-}
-
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
-HandlerMiddlewares: options.Middlewares,
-ErrorHandlerFunc: options.ErrorHandlerFunc,
+}
+
+for _, m := range options.Middlewares {
+    router.Use(m)
 }
 {{end}}
 {{range .}}
-r.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.OperationId}})
+router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.OperationId}})
 {{end}}
-return r
 }
