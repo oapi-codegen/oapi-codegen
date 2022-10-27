@@ -513,9 +513,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			} else {
 				op.OperationID = ToCamelCase(op.OperationID)
 			}
-			if unicode.IsDigit([]rune(op.OperationID)[0]) {
-				op.OperationID = "Op" + op.OperationID
-			}
+			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.

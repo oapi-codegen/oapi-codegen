@@ -5,14 +5,19 @@ package head_digit_of_operation_id
 
 import (
 	"context"
+	"net/http"
 )
 
-type Op3GPPFooRequestObject struct {
+type N3GPPFooRequestObject struct {
+}
+
+type N3GPPFooResponseObject interface {
+	VisitN3GPPFooResponse(w http.ResponseWriter) error
 }
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /3gpp/foo)
-	Op3GPPFoo(ctx context.Context, request Op3GPPFooRequestObject) interface{}
+	N3GPPFoo(ctx context.Context, request N3GPPFooRequestObject) (N3GPPFooResponseObject, error)
 }
