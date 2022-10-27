@@ -24,7 +24,7 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
-// This function takes a string, and attempts to assign it to the destination
+// BindStringToObject takes a string, and attempts to assign it to the destination
 // interface via whatever type conversion is necessary. We have to do this
 // via reflection instead of a much simpler type switch so that we can handle
 // type aliases. This function was the easy way out, the better way, since we
@@ -100,7 +100,7 @@ func BindStringToObject(src string, dst interface{}) error {
 	case reflect.Array:
 		if tu, ok := dst.(encoding.TextUnmarshaler); ok {
 			if err := tu.UnmarshalText([]byte(src)); err != nil {
-				return fmt.Errorf("error unmarshaling '%s' text as %T: %s", src, dst, err)
+				return fmt.Errorf("error unmarshalling '%s' text as %T: %s", src, dst, err)
 			}
 
 			return nil

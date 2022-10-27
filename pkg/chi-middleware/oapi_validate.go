@@ -125,7 +125,7 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 }
 
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
-// of all of the errors. This method is called if there are no other
+// of all the errors. This method is called if there are no other
 // methods defined on the options.
 func defaultMultiErrorHandler(me openapi3.MultiError) (int, error) {
 	return http.StatusBadRequest, me

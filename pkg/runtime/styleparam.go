@@ -14,7 +14,9 @@
 package runtime
 
 import (
+	"bytes"
 	"encoding"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -28,6 +30,7 @@ import (
 )
 
 // Parameter escaping works differently based on where a header is found
+
 type ParamLocation int
 
 const (
@@ -38,7 +41,7 @@ const (
 	ParamLocationCookie
 )
 
-// This function is used by older generated code, and must remain compatible
+// StyleParam is used by older generated code, and must remain compatible
 // with that code. It is not to be used in new templates. Please see the
 // function below, which can specialize its output based on the location of
 // the parameter.
@@ -221,6 +224,27 @@ func styleStruct(style string, explode bool, paramName string, paramLocation Par
 		return MarshalDeepObject(value, paramName)
 	}
 
+	// If input has Marshaler, such as object has Additional Property or AnyOf,
+	// We use this Marshaler and convert into interface{} before styling.
+	if m, ok := value.(json.Marshaler); ok {
+		buf, err := m.MarshalJSON()
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
+		}
+		e := json.NewDecoder(bytes.NewReader(buf))
+		e.UseNumber()
+		var i2 interface{}
+		err = e.Decode(&i2)
+		if err != nil {
+			return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+		s, err := StyleParamWithLocation(style, explode, paramName, paramLocation, i2)
+		if err != nil {
+			return "", fmt.Errorf("error style JSON structure: %w", err)
+		}
+		return s, nil
+	}
+
 	// Otherwise, we need to build a dictionary of the struct's fields. Each
 	// field may only be a primitive value.
 	v := reflect.ValueOf(value)
@@ -401,6 +425,28 @@ func primitiveToString(value interface{}) (string, error) {
 		}
 	case reflect.String:
 		output = v.String()
+	case reflect.Struct:
+		// If input has Marshaler, such as object has Additional Property or AnyOf,
+		// We use this Marshaler and convert into interface{} before styling.
+		if m, ok := value.(json.Marshaler); ok {
+			buf, err := m.MarshalJSON()
+			if err != nil {
+				return "", fmt.Errorf("failed to marshal input to JSON: %w", err)
+			}
+			e := json.NewDecoder(bytes.NewReader(buf))
+			e.UseNumber()
+			var i2 interface{}
+			err = e.Decode(&i2)
+			if err != nil {
+				return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+			}
+			output, err = primitiveToString(i2)
+			if err != nil {
+				return "", fmt.Errorf("error convert JSON structure: %w", err)
+			}
+			break
+		}
+		fallthrough
 	default:
 		v, ok := value.(fmt.Stringer)
 		if !ok {

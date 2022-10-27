@@ -112,7 +112,7 @@ type ServerInterface interface {
 These are the functions which you will implement yourself in order to create
 a server conforming to the API specification. Normally, all the arguments and
 parameters are stored on the `echo.Context` in handlers, so we do the tedious
-work of of unmarshaling the JSON automatically, simply passing values into
+work of unmarshalling the JSON automatically, simply passing values into
 your handlers.
 
 Notice that `FindPetById` takes a parameter `id int64`. All path arguments
@@ -289,7 +289,7 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
 ```
 For a complete example see `/examples/petstore-expanded/strict`.
 
-Code is generation with a configuration flag `genrate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
+Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
 ```go
 func SetupHandler() {
@@ -556,6 +556,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-json-ignore`: sets tag to `-` to ignore the field in json completely.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
   are added are in addition to the regular json tags that are generated. If you specify your 
@@ -687,8 +688,6 @@ package: externalref
 generate:
   models: true
   embedded-spec: true
-output-options:
-  skip-prune: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB

@@ -20,6 +20,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/labstack/echo/v4"
 )
 
@@ -29,9 +30,9 @@ const (
 )
 
 var (
-	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json"}
+	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json", "application/problem+json"}
 	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML}
+	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML, "application/problems+xml"}
 
 	responseTypeSuffix = "Response"
 )
@@ -94,7 +95,7 @@ func genResponsePayload(operationID string) string {
 	return buffer.String()
 }
 
-// genResponseUnmarshal generates unmarshaling steps for structured response payloads
+// genResponseUnmarshal generates unmarshalling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
@@ -126,7 +127,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			continue
 		}
 
-		// If there is no content-type then we have no unmarshaling to do:
+		// If there is no content-type then we have no unmarshalling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
 			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
@@ -134,7 +135,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			continue
 		}
 
-		// If we made it this far then we need to handle unmarshaling for each content-type:
+		// If we made it this far then we need to handle unmarshalling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
 
@@ -148,7 +149,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON):
+			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -264,7 +265,7 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
-// This function map is passed to the template engine, and we can call each
+// TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,

@@ -35,11 +35,11 @@ paths:
       summary: Get pet given identifier.
       operationId: getPet
       parameters:
-      - name: petId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: valid pet

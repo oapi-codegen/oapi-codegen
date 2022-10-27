@@ -25,7 +25,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{if .IsJson}}
   err = json.Unmarshal([]byte(mux.Vars(r)["{{.ParamName}}"]), &{{$varName}})
   if err != nil {
-    siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+    siw.ErrorHandlerFunc(w, r, &UnmarshallingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
@@ -62,7 +62,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           var value {{.TypeDef}}
           err = json.Unmarshal([]byte(paramValue), &value)
           if err != nil {
-            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+            siw.ErrorHandlerFunc(w, r, &UnmarshallingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
           }
 
@@ -101,7 +101,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{if .IsJson}}
           err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
-            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+            siw.ErrorHandlerFunc(w, r, &UnmarshallingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
           }
         {{end}}
@@ -146,7 +146,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
         err = json.Unmarshal([]byte(decoded), &value)
         if err != nil {
-          siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+          siw.ErrorHandlerFunc(w, r, &UnmarshallingParamError{ParamName: "{{.ParamName}}", Err: err})
           return
         }
 
@@ -198,16 +198,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
     return e.Err
 }
 
-type UnmarshalingParamError struct {
+type UnmarshallingParamError struct {
     ParamName string
     Err error
 }
 
-func (e *UnmarshalingParamError) Error() string {
-    return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshallingParamError) Error() string {
+    return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshalingParamError) Unwrap() error {
+func (e *UnmarshallingParamError) Unwrap() error {
     return e.Err
 }
 

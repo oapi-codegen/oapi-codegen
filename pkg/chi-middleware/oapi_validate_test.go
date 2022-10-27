@@ -4,19 +4,18 @@ import (
 	"context"
 	_ "embed"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 //go:embed test_spec.yaml
@@ -56,7 +55,7 @@ func TestOapiRequestValidator(t *testing.T) {
 }
 
 func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -96,7 +95,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -110,7 +109,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -126,7 +125,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
 			assert.Contains(t, string(body), "number must be at most 100")
@@ -142,10 +141,10 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
-			assert.Contains(t, string(body), "parsing \"abc\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
@@ -155,7 +154,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 }
 
 func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -198,7 +197,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -212,7 +211,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
 			assert.Contains(t, string(body), "value is required but missing")
@@ -228,7 +227,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
 			assert.Contains(t, string(body), "number must be at most 100")
@@ -244,10 +243,10 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	{
 		rec := doGet(t, r, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
-		body, err := ioutil.ReadAll(rec.Body)
+		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "parameter \"id\"")
-			assert.Contains(t, string(body), "parsing \"abc\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
@@ -257,7 +256,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 }
 
 func TestOapiRequestValidatorWithOptions(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testSchema))
+	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
 	r := chi.NewRouter()
@@ -322,7 +321,7 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	{
 		rec := doGet(t, r, "http://deepmap.ai/protected_resource_401")
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
-		assert.Equal(t, "test: Security requirements failed\n", rec.Body.String())
+		assert.Equal(t, "test: security requirements failed: unauthorized\n", rec.Body.String())
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}

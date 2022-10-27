@@ -14,70 +14,111 @@ info:
 servers:
   - url: http://petstore.swagger.io/api
 paths:
-  /pets/{id}:
+  /schemas/pet-object:
     get:
-      summary: Returns a pet by ID
-      description: Returns a pet based on a single ID
-      operationId: findPetByID
-      parameters:
-        - name: id
-          in: path
-          description: ID of pet to fetch
-          required: true
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pet"
-  /person/{id}:
-    get:
-      summary: Returns a person by ID
-      description: Returns a person based on a single ID
-      operationId: findPersonByID
-      parameters:
-        - name: id
-          in: path
-          description: ID of person to fetch
-          required: true
-          schema:
-            type: integer
-            format: int64
+      description: return pet object
       responses:
         "200":
           description: person response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Person"
-  /car/{id}:
+                $ref: "#/components/schemas/PetObject"
+  /schemas/age-simple:
     get:
-      summary: Returns a car by ID
-      description: Returns a car based on a single ID
-      operationId: findCarByID
-      parameters:
-        - name: id
-          in: path
-          description: ID of car to fetch
-          required: true
-          schema:
-            type: integer
-            format: int64
+      description: return pet object
       responses:
         "200":
-          description: car response
+          description: person response
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Car"
+                $ref: "#/components/schemas/AgeSimple"
+
+  /schemas/schema-with-array:
+    get:
+      description: return schema object with array
+      responses:
+        "200":
+          description: person response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetArray"
+
+  /responses/type:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/StringResponse'
+
+  /responses/complex-response:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /requests/:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /parameters/query:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/Version"
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /parameters/{versionPath}:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/VersionPath"
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /requests/{path}:
+    post:
+      parameters:
+        - name: version
+          in: query
+          schema:
+            x-go-type: easyjson.Json
+            x-go-type-import:
+              path: github.com/mailru/easyjson
+        - name: path
+          in: path
+          schema:
+            x-go-type: pgtype.Color
+            x-go-type-import:
+              path: github.com/jackc/pgtype
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  x-go-type: gotenv.Env
+                  x-go-type-import:
+                    path: github.com/subosito/gotenv
+      responses:
+        '200':
+            $ref: '#/components/responses/ComplexResponse'
 
 components:
   schemas:
-    Pet:
+    PetObject:
       properties:
         age:
           x-go-type: myuuid.UUID
@@ -86,17 +127,67 @@ components:
             name: myuuid
       required:
         - age
-    Person:
-      properties:
-        age:
-          x-go-type: pgext.Puint
-          x-go-type-import:
-            path: github.com/CavernaTechnologies/pgext
-      required:
-        - age
-    Car:
-      properties:
-        age:
-          type: integer
-      required:
-        - age
+    AgeSimple:
+      x-go-type: pgext.Puint
+      x-go-type-import:
+        path: github.com/CavernaTechnologies/pgext
+    PetArray:
+      type: array
+      items:
+        x-go-type: pq.Int
+        x-go-type-import:
+          path: github.com/lib/pq
+
+  responses:
+    StringResponse:
+      description: An image.
+      content:
+        application/json:
+          schema:
+            type: string
+            x-go-type: viper.ID
+            x-go-type-import:
+              path: github.com/spf13/viper
+    ComplexResponse:
+      description: Complex response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              keys:
+                type: array
+                items:
+                  x-go-type: text.Text
+                  x-go-type-import:
+                    path: golang.org/x/text
+
+  requestBodies:
+    RegisterBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                x-go-type: email.Email
+                x-go-type-import:
+                  path: golang.org/x/email
+
+  parameters:
+    Version:
+      name: version
+      in: query
+      schema:
+        x-go-type: color.Color
+        x-go-type-import:
+          path: github.com/fatih/color
+
+    VersionPath:
+      name: versionPath
+      in: path
+      schema:
+        x-go-type: swag.Swag
+        x-go-type-import:
+          path: github.com/go-openapi/swag

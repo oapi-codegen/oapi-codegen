@@ -11,9 +11,9 @@ paths:
       description: |
         This endpoint exists so that components can be created in this
         spec and not be pruned
-    # TODO: figure out why uncommenting this causes failures
-    #   parameters:
-    #     - $ref: "#/components/parameters/ParameterObject"
+      # TODO: figure out why uncommenting this causes failures
+      #   parameters:
+      #     - $ref: "#/components/parameters/ParameterObject"
       requestBody:
         $ref: "#/components/requestBodies/RequestBody"
       responses:
@@ -93,7 +93,7 @@ paths:
                 type: object
                 additionalProperties:
                   type: string
-            required: [inner]
+            required: [ inner ]
       responses:
         default:
           description: placeholder
@@ -118,7 +118,7 @@ paths:
                   type: object
                   additionalProperties:
                     type: integer
-              required: [name, inner]
+              required: [ name, inner ]
               additionalProperties: true
       responses:
         default:
@@ -159,7 +159,7 @@ components:
           type: integer
         optional:
           type: string
-      required: [name, id]
+      required: [ name, id ]
       additionalProperties:
         type: integer
     AdditionalPropertiesObject2:
@@ -170,7 +170,7 @@ components:
           type: string
         id:
           type: integer
-      required: [name, id]
+      required: [ name, id ]
       additionalProperties: false
     AdditionalPropertiesObject3:
       description: Allows any additional property
@@ -178,7 +178,7 @@ components:
       properties:
         name:
           type: string
-      required: [name]
+      required: [ name ]
       additionalProperties: true
     AdditionalPropertiesObject4:
       description: Has anonymous field which has additional properties
@@ -191,9 +191,9 @@ components:
           properties:
             name:
               type: string
-          required: [name]
+          required: [ name ]
           additionalProperties: true
-      required: [inner, name]
+      required: [ inner, name ]
       additionalProperties: true
     AdditionalPropertiesObject5:
       description: Has additional properties with schema for dictionaries
@@ -234,7 +234,7 @@ components:
             - $ref: '#/components/schemas/OneOfVariant2'
             - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject4:
-      description: oneOf plus fixed type - custom marshaling/unmarshaling
+      description: oneOf plus fixed type - custom marshaling/unmarshalling
       type: object
       properties:
         fixedProperty:
@@ -381,13 +381,13 @@ components:
         value2:
           type: string
           format: json
-      required: [name, value1]
+      required: [ name, value1 ]
     Enum1:
       description: |
         Conflicts with Enum2, enum values need to be prefixed with type
         name.
       type: string
-      enum: [One, Two, Three]
+      enum: [ One, Two, Three ]
     Enum2:
       description: |
         Conflicts with Enum1, enum values need to be prefixed with type
@@ -420,8 +420,8 @@ components:
       description: |
         Two enums of the same type combined with allOf.
       allOf:
-      - $ref: "#/components/schemas/Enum1"
-      - enum: [ Seven ]
+        - $ref: "#/components/schemas/Enum1"
+        - enum: [ Seven ]
     FunnyValues:
       description: Edge cases for enum names
       type: string
@@ -440,14 +440,14 @@ components:
           type: string
         prop2:
           type: string
-      required: [prop1, prop2]
+      required: [ prop1, prop2 ]
     ReferenceToRenameMe:
       description: When a Schema is renamed, $ref should refer to the new name
       type: object
       properties:
         ToNewName:
           $ref: "#/components/schemas/RenameMe"
-      required: [ToNewName]
+      required: [ ToNewName ]
   responses:
     ResponseObject:
       x-go-name: RenamedResponseObject
@@ -484,7 +484,7 @@ components:
       in: query
       schema:
         type: string
-        enum: [on, off, both]
+        enum: [ on, off, both ]
     EnumParam2:
       name: ParamEnum2
       description: a parameter

@@ -2746,7 +2746,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 
 	err = json.Unmarshal([]byte(ctx.Param("param")), &param)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
+		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'param' as JSON")
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -2837,7 +2837,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		}
 		err = json.Unmarshal([]byte(decoded), &value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'co' as JSON")
 		}
 		params.Co = &value
 
@@ -2985,7 +2985,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'X-Complex-Object' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'X-Complex-Object' as JSON")
 		}
 
 		params.XComplexObject = &XComplexObject
@@ -3232,7 +3232,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 		var value ComplexObject
 		err = json.Unmarshal([]byte(paramValue), &value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'co' as JSON")
 		}
 		params.Co = &value
 

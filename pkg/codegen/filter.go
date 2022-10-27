@@ -30,7 +30,7 @@ func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool
 	}
 }
 
-//operationHasTag returns true if the operation is tagged with any of tags
+// operationHasTag returns true if the operation is tagged with any of tags
 func operationHasTag(op *openapi3.Operation, tags []string) bool {
 	if op == nil {
 		return false

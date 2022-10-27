@@ -1,5 +1,5 @@
 name: Ensure generated files are up-to-date
-on: [push, pull_request]
+on: [ push, pull_request ]
 jobs:
   build:
     name: Build

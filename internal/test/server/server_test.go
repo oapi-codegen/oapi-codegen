@@ -2,7 +2,7 @@ package server
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -55,7 +55,7 @@ func TestErrorHandlerFuncBackwardsCompatible(t *testing.T) {
 	defer s.Close()
 
 	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
-	b, _ := ioutil.ReadAll(req.Body)
+	b, _ := io.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, "text/plain; charset=utf-8", req.Header.Get("Content-Type"))
 	assert.Equal(t, "Query argument required_argument is required, but not found\n", string(b))

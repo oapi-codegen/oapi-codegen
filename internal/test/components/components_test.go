@@ -20,7 +20,7 @@ func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
 }
 
 func TestRawJSON(t *testing.T) {
-	// Check raw json unmarshaling
+	// Check raw json unmarshalling
 	const buf = `{"name":"bob","value1":{"present":true}}`
 	var dst ObjectWithJsonField
 	err := json.Unmarshal([]byte(buf), &dst)
@@ -204,7 +204,7 @@ func TestAnyOf(t *testing.T) {
 }
 
 func TestMarshalWhenNoUnionValueSet(t *testing.T) {
-	const expected = `{"one":null,"three":null,"two":null}`
+	const expected = `{}`
 
 	var dst OneOfObject10
 

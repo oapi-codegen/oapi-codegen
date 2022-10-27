@@ -44,7 +44,7 @@ paths:
         required: false
         content:
           application/json:
-            schema: {}
+            schema: { }
   /issues/30/{fallthrough}:
     get:
       operationId: Issue30
@@ -125,7 +125,7 @@ components:
   schemas:
     GenericObject:
       type: object
-    AnyType1: {}
+    AnyType1: { }
     AnyType2:
       description: |
         AnyType2 represents any type.
@@ -151,7 +151,7 @@ components:
         requiredAndNullable:
           type: string
           nullable: true
-      required: [required, requiredAndNullable]
+      required: [ required, requiredAndNullable ]
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
@@ -163,8 +163,8 @@ components:
           val:
             type: string
             enum:
-            - first
-            - second
+              - first
+              - second
   parameters:
     StringInPath:
       name: str
@@ -182,5 +182,5 @@ components:
       bearerFormat: |
         JWT-format access token.
 security:
-  - access-token: []
+  - access-token: [ ]
 

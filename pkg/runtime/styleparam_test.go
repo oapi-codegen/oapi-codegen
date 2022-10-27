@@ -17,10 +17,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 func TestStyleParam(t *testing.T) {
@@ -45,7 +44,7 @@ func TestStyleParam(t *testing.T) {
 	timestamp := AliasedTime(ti)
 
 	type AliasedDate types.Date
-	date := AliasedDate{time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
+	date := AliasedDate{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 
 	type AliasedUUID types.UUID
 	aUUID := AliasedUUID(uuid.MustParse("baa07328-452e-40bd-aa2e-fa823ec13605"))
@@ -670,7 +669,7 @@ func TestStyleParam(t *testing.T) {
 	object3 := testObject3{
 		TimeField: timeVal,
 		DateField: dateVal,
-		UUIDField: uuid.UUID(uuidVal),
+		UUIDField: uuidVal,
 	}
 
 	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, object3)

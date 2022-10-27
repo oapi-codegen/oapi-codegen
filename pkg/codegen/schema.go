@@ -27,7 +27,7 @@ type Schema struct {
 
 	Description string // The description of the element
 
-	UnionElements []string       // Possible elements of oneOf/anyOf union
+	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -146,12 +146,13 @@ type Constants struct {
 //
 // Let's use this example schema:
 // components:
-//  schemas:
-//    Person:
-//      type: object
-//      properties:
-//      name:
-//        type: string
+//
+//	schemas:
+//	  Person:
+//	    type: object
+//	    properties:
+//	    name:
+//	      type: string
 type TypeDefinition struct {
 	// The name of the type, eg, type <...> Person
 	TypeName string
@@ -165,7 +166,7 @@ type TypeDefinition struct {
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for
-// response unmarshaling in ClientWithResponses.
+// response unmarshalling in ClientWithResponses.
 type ResponseTypeDefinition struct {
 	TypeDefinition
 	// The content type name where this is used, eg, application/json
@@ -193,6 +194,23 @@ func (d *Discriminator) JSONTag() string {
 
 func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
+}
+
+// UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
+type UnionElement string
+
+// String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
+func (u UnionElement) String() string {
+	return string(u)
+}
+
+// Method generate union method name for template functions `As/From/Merge`.
+func (u UnionElement) Method() string {
+	var method string
+	for _, part := range strings.Split(string(u), `.`) {
+		method += UppercaseFirstCharacter(part)
+	}
+	return method
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -495,10 +513,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "uint8"
 		} else if f == "uint" {
 			outSchema.GoType = "uint"
-		} else if f == "" {
-			outSchema.GoType = "int"
 		} else {
-			return fmt.Errorf("invalid integer format: %s", f)
+			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
@@ -561,8 +577,8 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
-// Given a list of schema descriptors, produce corresponding field names with
-// JSON annotations
+// GenFieldsFromProperties produce corresponding field names with JSON annotations,
+// given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for i, p := range props {
@@ -609,6 +625,14 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		// Support x-go-json-ignore
+		if _, ok := p.ExtensionProps.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(p.ExtensionProps.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+				fieldTags["json"] = "-"
+			}
+		}
+
+		// Support x-oapi-codegen-extra-tags
 		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
@@ -722,7 +746,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 				}
 			}
 		}
-		outSchema.UnionElements = append(outSchema.UnionElements, elementSchema.GoType)
+		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
 	return nil
