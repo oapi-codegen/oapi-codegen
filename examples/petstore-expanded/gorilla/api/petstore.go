@@ -28,7 +28,7 @@ func NewPetStore() *PetStore {
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetstoreError(w http.ResponseWriter, code int, message string) {
+func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 	petErr := Error{
 		Code:    int32(code),
 		Message: message,
@@ -74,7 +74,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
 	if err := json.NewDecoder(r.Body).Decode(&newPet); err != nil {
-		sendPetstoreError(w, http.StatusBadRequest, "Invalid format for NewPet")
+		sendPetStoreError(w, http.StatusBadRequest, "Invalid format for NewPet")
 		return
 	}
 
@@ -105,7 +105,7 @@ func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 
 	pet, found := p.Pets[id]
 	if !found {
-		sendPetstoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
+		sendPetStoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
 		return
 	}
 
@@ -119,7 +119,7 @@ func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
 
 	_, found := p.Pets[id]
 	if !found {
-		sendPetstoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
+		sendPetStoreError(w, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
 		return
 	}
 	delete(p.Pets, id)
