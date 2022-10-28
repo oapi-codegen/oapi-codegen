@@ -8,7 +8,6 @@ import (
 	"compress/gzip"
 	"encoding/base64"
 	"fmt"
-	"net/http"
 	"net/url"
 	"path"
 	"strings"
@@ -17,48 +16,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
 )
-
-// Error defines model for Error.
-type Error struct {
-	// Code Error code
-	Code int32 `json:"code"`
-
-	// Message Error message
-	Message string `json:"message"`
-}
-
-// NewPet defines model for NewPet.
-type NewPet struct {
-	// Name Name of the pet
-	Name string `json:"name"`
-
-	// Tag Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// Pet defines model for Pet.
-type Pet struct {
-	// Id Unique id of the pet
-	Id int64 `json:"id"`
-
-	// Name Name of the pet
-	Name string `json:"name"`
-
-	// Tag Type of the pet
-	Tag *string `json:"tag,omitempty"`
-}
-
-// FindPetsParams defines parameters for FindPets.
-type FindPetsParams struct {
-	// Tags tags to filter by
-	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
-
-	// Limit maximum number of results to return
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
-}
-
-// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
-type AddPetJSONRequestBody = NewPet
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -78,240 +35,108 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []fiber.Handler
-	ErrorHandlerFunc   func(c *fiber.Ctx, err error) error
+	Handler ServerInterface
 }
+
+type MiddlewareFunc fiber.Handler
 
 // FindPets operation middleware
 func (siw *ServerInterfaceWrapper) FindPets(c *fiber.Ctx) error {
-	ctx := r.Context()
 
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 
+	query, err := url.ParseQuery(string(c.Request().URI().QueryString()))
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+	}
+
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
+	err = runtime.BindQueryParameter("form", true, false, "tags", query, &params.Tags)
 	if err != nil {
-		return siw.ErrorHandlerFunc(c, &InvalidParamFormatError{ParamName: "tags", Err: err})
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter tags: %w", err).Error())
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
 	if err != nil {
-		return siw.ErrorHandlerFunc(c, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
 	}
 
-	var handler fiber.Handler = fiber.Handler(func(c *fiber.Ctx) error {
-		return siw.Handler.FindPets(c, params)
-	})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(c, r.WithContext(ctx))
+	return siw.Handler.FindPets(c, params)
 }
 
 // AddPet operation middleware
 func (siw *ServerInterfaceWrapper) AddPet(c *fiber.Ctx) error {
-	ctx := r.Context()
 
-	var handler fiber.Handler = fiber.Handler(func(c *fiber.Ctx) error {
-		return siw.Handler.AddPet(c)
-	})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(c, r.WithContext(ctx))
+	return siw.Handler.AddPet(c)
 }
 
 // DeletePet operation middleware
 func (siw *ServerInterfaceWrapper) DeletePet(c *fiber.Ctx) error {
-	ctx := r.Context()
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, c.Params("id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Params("id"), &id)
 	if err != nil {
-		return siw.ErrorHandlerFunc(c, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	var handler fiber.Handler = fiber.Handler(func(c *fiber.Ctx) error {
-		return siw.Handler.DeletePet(c, id)
-	})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(c, r.WithContext(ctx))
+	return siw.Handler.DeletePet(c, id)
 }
 
 // FindPetByID operation middleware
 func (siw *ServerInterfaceWrapper) FindPetByID(c *fiber.Ctx) error {
-	ctx := r.Context()
 
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithLocation("simple", false, "id", runtime.ParamLocationPath, c.Params("id"), &id)
+	err = runtime.BindStyledParameter("simple", false, "id", c.Params("id"), &id)
 	if err != nil {
-		return siw.ErrorHandlerFunc(c, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	var handler fiber.Handler = fiber.Handler(func(c *fiber.Ctx) error {
-		return siw.Handler.FindPetByID(c, id)
-	})
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(c, r.WithContext(ctx))
+	return siw.Handler.FindPetByID(c, id)
 }
 
-type UnescapedCookieParamError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *UnescapedCookieParamError) Error() string {
-	return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
-}
-
-func (e *UnescapedCookieParamError) Unwrap() error {
-	return e.Err
-}
-
-type UnmarshallingParamError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
-}
-
-func (e *UnmarshallingParamError) Unwrap() error {
-	return e.Err
-}
-
-type RequiredParamError struct {
-	ParamName string
-}
-
-func (e *RequiredParamError) Error() string {
-	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
-}
-
-type RequiredHeaderError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *RequiredHeaderError) Error() string {
-	return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
-}
-
-func (e *RequiredHeaderError) Unwrap() error {
-	return e.Err
-}
-
-type InvalidParamFormatError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *InvalidParamFormatError) Error() string {
-	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
-}
-
-func (e *InvalidParamFormatError) Unwrap() error {
-	return e.Err
-}
-
-type TooManyValuesForParamError struct {
-	ParamName string
-	Count     int
-}
-
-func (e *TooManyValuesForParamError) Error() string {
-	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
-}
-
-// Handler creates fiber.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) fiber.Handler {
-	return HandlerWithOptions(si, FiberServerOptions{})
-}
-
+// FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
-	BaseURL          string
-	BaseRouter       *fiber.App
-	Middlewares      []fiber.Handler
-	ErrorHandlerFunc func(c *fiber.Ctx, err error) error
+	BaseURL     string
+	Middlewares []MiddlewareFunc
 }
 
-// HandlerFromMux creates fiber.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *fiber.App) fiber.Handler {
-	return HandlerWithOptions(si, FiberServerOptions{
-		BaseRouter: r,
-	})
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router fiber.Router, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, FiberServerOptions{})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *fiber.App, baseURL string) fiber.Handler {
-	return HandlerWithOptions(si, FiberServerOptions{
-		BaseURL:    baseURL,
-		BaseRouter: r,
-	})
-}
-
-// HandlerWithOptions creates fiber.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options FiberServerOptions) fiber.Handler {
-	r := options.BaseRouter
-
-	if r == nil {
-		r = fiber.New()
-	}
-
-	if options.ErrorHandlerFunc == nil {
-		options.ErrorHandlerFunc = func(c *fiber.Ctx, err error) error {
-
-			if err != nil {
-				c.Status(http.StatusBadRequest)
-				return c.SendString(err.Error())
-			}
-
-			return c.SendStatus(http.StatusBadRequest)
-		}
-	}
-
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+		Handler: si,
 	}
 
-	r.Get(options.BaseURL+"/pets", wrapper.FindPets)
+	for _, m := range options.Middlewares {
+		router.Use(m)
+	}
 
-	r.Post(options.BaseURL+"/pets", wrapper.AddPet)
+	router.Get(options.BaseURL+"/pets", wrapper.FindPets)
 
-	r.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet)
+	router.Post(options.BaseURL+"/pets", wrapper.AddPet)
 
-	r.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
+	router.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet)
 
-	return r
+	router.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
+
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
