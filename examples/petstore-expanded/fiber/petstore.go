@@ -18,7 +18,19 @@ import (
 func main() {
 
 	var port = flag.Int("port", 8080, "Port for test HTTP server")
+
 	flag.Parse()
+
+	// Create an instance of our handler which satisfies the generated interface
+	petStore := api.NewPetStore()
+
+	s := NewFiberPetServer(petStore)
+
+	// And we serve HTTP until the world ends.
+	log.Fatal(s.Listen(fmt.Sprintf("localhost:%d", *port)))
+}
+
+func NewFiberPetServer(petStore *api.PetStore) *fiber.App {
 
 	swagger, err := api.GetSwagger()
 	if err != nil {
@@ -30,9 +42,6 @@ func main() {
 	// that server names match. We don't know how this thing will be run.
 	swagger.Servers = nil
 
-	// Create an instance of our handler which satisfies the generated interface
-	petStore := api.NewPetStore()
-
 	// This is how you set up a basic fiber router
 	app := fiber.New()
 
@@ -41,8 +50,7 @@ func main() {
 	app.Use(middleware.OapiRequestValidator(swagger))
 
 	// We now register our petStore above as the handler for the interface
-	api.HandlerFromMux(petStore, app)
+	api.RegisterHandlers(app, petStore)
 
-	// And we serve HTTP until the world ends.
-	log.Fatal(app.Listen(fmt.Sprintf("0.0.0.0:%d", *port)))
+	return app
 }

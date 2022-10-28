@@ -1,46 +1,66 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/fiber-middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func doGet(t *testing.T, mux *fiber.App, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, mux)
-	return response.Recorder
+func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) {
+
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	req := httptest.NewRequest("GET", u.RequestURI(), nil)
+	req.Header.Add("Accept", "application/json")
+	req.Host = u.Host
+
+	return app.Test(req)
+}
+
+func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) (*http.Response, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	buf, err := json.Marshal(jsonBody)
+	if err != nil {
+		return nil, err
+	}
+	req := httptest.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/json")
+	req.Host = u.Host
+	return app.Test(req)
+}
+
+func doDelete(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		t.Fatalf("Invalid url: %s", rawURL)
+	}
+
+	req := httptest.NewRequest("DELETE", u.RequestURI(), nil)
+	req.Header.Add("Accept", "application/json")
+	req.Host = u.Host
+	return app.Test(req)
 }
 
 func TestPetStore(t *testing.T) {
-
 	var err error
-
-	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
-	require.NoError(t, err)
-
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
-
-	// This is how you set up a basic fiber router
-	r := fiber.New()
-
-	// Use our validation middleware to check all requests against the
-	// OpenAPI schema.
-	r.Use(middleware.OapiRequestValidator(swagger))
-
 	store := api.NewPetStore()
-	api.HandlerFromMux(store, r)
+	fiberPetServer := NewFiberPetServer(store)
 
 	t.Run("Add pet", func(t *testing.T) {
 		tag := "TagOfSpot"
@@ -49,12 +69,12 @@ func TestPetStore(t *testing.T) {
 			Tag:  &tag,
 		}
 
-		rr := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, r).Recorder
-		assert.Equal(t, http.StatusCreated, rr.Code)
+		rr, _ := doPost(t, fiberPetServer, "/pets", newPet)
+		assert.Equal(t, http.StatusCreated, rr.StatusCode)
 
 		var resultPet api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&resultPet)
-		assert.NoError(t, err, "error unmarshalling response")
+		assert.NoError(t, err, "error unmarshaling response")
 		assert.Equal(t, newPet.Name, resultPet.Name)
 		assert.Equal(t, *newPet.Tag, *resultPet.Tag)
 	})
@@ -65,7 +85,8 @@ func TestPetStore(t *testing.T) {
 		}
 
 		store.Pets[pet.Id] = pet
-		rr := doGet(t, r, fmt.Sprintf("/pets/%d", pet.Id))
+		rr, _ := doGet(t, fiberPetServer, fmt.Sprintf("/pets/%d", pet.Id))
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
 
 		var resultPet api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&resultPet)
@@ -74,8 +95,8 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("Pet not found", func(t *testing.T) {
-		rr := doGet(t, r, "/pets/27179095781")
-		assert.Equal(t, http.StatusNotFound, rr.Code)
+		rr, _ := doGet(t, fiberPetServer, "/pets/27179095781")
+		assert.Equal(t, http.StatusNotFound, rr.StatusCode)
 
 		var petError api.Error
 		err = json.NewDecoder(rr.Body).Decode(&petError)
@@ -84,14 +105,11 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("List all pets", func(t *testing.T) {
-		store.Pets = map[int64]api.Pet{
-			1: {},
-			2: {},
-		}
+		store.Pets = map[int64]api.Pet{1: {}, 2: {}}
 
 		// Now, list all pets, we should have two
-		rr := doGet(t, r, "/pets")
-		assert.Equal(t, http.StatusOK, rr.Code)
+		rr, _ := doGet(t, fiberPetServer, "/pets")
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
 
 		var petList []api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&petList)
@@ -110,8 +128,8 @@ func TestPetStore(t *testing.T) {
 		}
 
 		// Filter pets by tag, we should have 1
-		rr := doGet(t, r, "/pets?tags=TagOfFido")
-		assert.Equal(t, http.StatusOK, rr.Code)
+		rr, _ := doGet(t, fiberPetServer, "/pets?tags=TagOfFido")
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
 
 		var petList []api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&petList)
@@ -120,14 +138,11 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("Filter pets by tag", func(t *testing.T) {
-		store.Pets = map[int64]api.Pet{
-			1: {},
-			2: {},
-		}
+		store.Pets = map[int64]api.Pet{1: {}, 2: {}}
 
-		// Filter pets by non-existent tag, we should have 0
-		rr := doGet(t, r, "/pets?tags=NotExists")
-		assert.Equal(t, http.StatusOK, rr.Code)
+		// Filter pets by non existent tag, we should have 0
+		rr, _ := doGet(t, fiberPetServer, "/pets?tags=NotExists")
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
 
 		var petList []api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&petList)
@@ -136,31 +151,28 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("Delete pets", func(t *testing.T) {
-		store.Pets = map[int64]api.Pet{
-			1: {},
-			2: {},
-		}
+		store.Pets = map[int64]api.Pet{1: {}, 2: {}}
 
 		// Let's delete non-existent pet
-		rr := testutil.NewRequest().Delete("/pets/7").GoWithHTTPHandler(t, r).Recorder
-		assert.Equal(t, http.StatusNotFound, rr.Code)
+		rr, _ := doDelete(t, fiberPetServer, "/pets/7")
+		assert.Equal(t, http.StatusNotFound, rr.StatusCode)
 
 		var petError api.Error
 		err = json.NewDecoder(rr.Body).Decode(&petError)
-		assert.NoError(t, err, "error unmarshalling PetError")
+		assert.NoError(t, err, "error unmarshaling PetError")
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 		// Now, delete both real pets
-		rr = testutil.NewRequest().Delete("/pets/1").GoWithHTTPHandler(t, r).Recorder
-		assert.Equal(t, http.StatusNoContent, rr.Code)
+		rr, _ = doDelete(t, fiberPetServer, "/pets/1")
+		assert.Equal(t, http.StatusNoContent, rr.StatusCode)
 
-		rr = testutil.NewRequest().Delete("/pets/2").GoWithHTTPHandler(t, r).Recorder
-		assert.Equal(t, http.StatusNoContent, rr.Code)
+		rr, _ = doDelete(t, fiberPetServer, "/pets/2")
+		assert.Equal(t, http.StatusNoContent, rr.StatusCode)
 
 		// Should have no pets left.
 		var petList []api.Pet
-		rr = doGet(t, r, "/pets")
-		assert.Equal(t, http.StatusOK, rr.Code)
+		rr, _ = doGet(t, fiberPetServer, "/pets")
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
 		err = json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 0, len(petList))
