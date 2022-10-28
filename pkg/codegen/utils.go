@@ -851,3 +851,13 @@ func MergeImports(dst, src map[string]goImport) {
 		dst[k] = v
 	}
 }
+
+// TypeDefinitionsEquivalent checks for equality between two type definitions, but
+// not every field is considered. We only want to know if they are fundamentally
+// the same type.
+func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
+	if t1.TypeName != t2.TypeName {
+		return false
+	}
+	return t1.Schema.OAPISchema == t2.Schema.OAPISchema
+}

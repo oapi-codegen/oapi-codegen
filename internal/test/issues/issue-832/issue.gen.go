@@ -25,8 +25,8 @@ const (
 
 // Document defines model for Document.
 type Document struct {
-	Name            *string          `json:"name,omitempty"`
-	Document_Status *Document_Status `json:"status,omitempty"`
+	Name   *string          `json:"name,omitempty"`
+	Status *Document_Status `json:"status,omitempty"`
 }
 
 // Document_Status defines model for Document.status.
@@ -40,12 +40,12 @@ type DocumentStatus struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/7ySz0/rMAzH/5XK7x27tq/vljMIIYQ47AgIhdRbM9o4Styxaer/jpxuReOHxIlLkyb2",
-	"9/tx7AMY6j05dBxBHSCaFnudthdkhh4dy94H8hjYYrpxukdZee8RFEQO1q1hzCGy5iGFoBt6UPdADiEH",
-	"fiX5tgHlb0VDgMf8Q3oOu8WaFpP2bP60nCTHcY6n5w0aFrtT0HK2Pefc6m74CvSzlhxZtyIJbjCaYD1b",
-	"cqDgVr9gFoeAGbeas4BmCNFuMROFmOmAWatd02GTTebd/sFJsZY7ccCd7n0nZW8xxEmzKqrinxRAHp32",
-	"FhT8L6qihhy85jaxl6dEdYA1piaIuhas6wYUXE73V8iQQ8DoycWp7LqqZDHk+Ng+7X1nTcotN1EYTp2W",
-	"3d+AK1Dwp3wfhfI4B+U8BOmJzp/m7kZOx3xmrX8AW/8G7Tw03zGP41sAAAD//zZo9q75AgAA",
+	"H4sIAAAAAAAC/7ySz0/rMAzH/5XK7x27tq/vljMIIYQ47AgIhdRbM9o4Styxaer/jpxuReOHxIlL4zq2",
+	"vx/HPoCh3pNDxxHUAaJpsdfJvCAz9OhYbB/IY2CL6cbpHuXkvUdQEDlYt4Yxh8iahxSCbuhB3QM5hBz4",
+	"leTbBpS/FQ0BHvMP6TnsFmtaiHMxCcwET8up7jjOSfS8QcOieQpaztrnsFvdDV/Rfq4lLutWJMENRhOs",
+	"Z0sOFNzqF8ziEDDjVnMW0Awh2i1mUiFmOmDWatd02GSTeLd/cNKx5U4UcKd730nvWwxxqlkVVfFPGiCP",
+	"TnsLCv4XVVFDDl5zm9jLU6I6wBrTJKS6FqzrBhRcTvdXyJBDwOjJxantuqrkMOT4OEPtfWdNyi03URhO",
+	"4xbrb8AVKPhTvu9DeVyGct6E9ETnT3N3I94xn1nrH8DWv0E7L813zOP4FgAA//8tucJ2/gIAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

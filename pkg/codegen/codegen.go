@@ -589,18 +589,23 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 // GenerateTypes passes a bunch of types to the template engine, and buffers
 // its output into a string.
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
-	m := map[string]bool{}
-	ts := []TypeDefinition{}
+	m := map[string]TypeDefinition{}
+	var ts []TypeDefinition
 
 	for _, typ := range types {
-		if found := m[typ.TypeName]; found {
-			// We want to create an error when we try to define the same type
-			// twice.
+		if prevType, found := m[typ.TypeName]; found {
+			// If type names collide, we need to see if they refer to the same
+			// exact type definition, in which case, we can de-dupe. If they don't
+			// match, we error out.
+			if TypeDefinitionsEquivalent(prevType, typ) {
+				continue
+			}
+			// We want to create an error when we try to define the same type twice.
 			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
 				"please use x-go-name to specify your own name for one of them", typ.TypeName)
 		}
 
-		m[typ.TypeName] = true
+		m[typ.TypeName] = typ
 
 		ts = append(ts, typ)
 	}

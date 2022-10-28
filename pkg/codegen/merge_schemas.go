@@ -46,7 +46,7 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
-// updated if ref itself is external. Otherwise return ref.Value as-is.
+// updated if ref itself is external. Otherwise, return ref.Value as-is.
 func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
 		return *ref.Value, nil
