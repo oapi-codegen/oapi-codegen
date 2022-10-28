@@ -35,7 +35,8 @@ type strictHandler struct {
             {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if eq .NameTag "JSON" -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.Bind(&body); err != nil {
+                    if err := ctx.ShouldBind(&body); err != nil {
+                        ctx.Status(http.StatusBadRequest)
                         ctx.Error(err)
                         return
                     }
