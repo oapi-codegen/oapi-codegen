@@ -198,6 +198,21 @@ func main() {
 			if err != nil {
 				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
+		} else {
+			// In the case where no config file is provided, we assume some
+			// defaults, so that when this is invoked very simply, it's similar
+			// to old behavior.
+			opts = configuration{
+				Configuration: codegen.Configuration{
+					Generate: codegen.GenerateOptions{
+						EchoServer:   true,
+						Client:       true,
+						Models:       true,
+						EmbeddedSpec: true,
+					},
+				},
+				OutputFile: flagOutputFile,
+			}
 		}
 		var err error
 		opts, err = updateConfigFromFlags(opts)
