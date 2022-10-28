@@ -592,14 +592,17 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]bool{}
 	ts := []TypeDefinition{}
 
-	for _, t := range types {
-		if found := m[t.TypeName]; found {
-			continue
+	for _, typ := range types {
+		if found := m[typ.TypeName]; found {
+			// We want to create an error when we try to define the same type
+			// twice.
+			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
+				"please use x-go-name to specify your own name for one of them", typ.TypeName)
 		}
 
-		m[t.TypeName] = true
+		m[typ.TypeName] = true
 
-		ts = append(ts, t)
+		ts = append(ts, typ)
 	}
 
 	context := struct {
