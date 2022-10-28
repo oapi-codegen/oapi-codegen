@@ -21,9 +21,10 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
-	"gopkg.in/yaml.v2"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -332,6 +333,10 @@ func updateConfigFromFlags(cfg configuration) (configuration, error) {
 		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
 			"new config style, please use --old-config-style or update your configuration ",
 			strings.Join(unsupportedFlags, ", "))
+	}
+
+	if cfg.OutputFile == "" {
+		cfg.OutputFile = flagOutputFile
 	}
 
 	return cfg, nil
