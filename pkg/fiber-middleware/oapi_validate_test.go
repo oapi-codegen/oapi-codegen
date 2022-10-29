@@ -200,7 +200,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
-			assert.Equal(t, "test: error in openapi3filter.SecurityRequirementsError: Security requirements failed", string(body))
+			assert.Equal(t, "test: error in openapi3filter.SecurityRequirementsError: security requirements failed: unauthorized", string(body))
 		}
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -302,7 +302,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "multiple errors encountered")
 			assert.Contains(t, string(body), "parameter \"id\"")
-			assert.Contains(t, string(body), "parsing \"abc\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
@@ -409,7 +409,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 		if assert.NoError(t, err) {
 			assert.Contains(t, string(body), "Bad stuff")
 			assert.Contains(t, string(body), "parameter \"id\"")
-			assert.Contains(t, string(body), "parsing \"abc\": invalid syntax")
+			assert.Contains(t, string(body), "value abc: an invalid integer: invalid syntax")
 			assert.Contains(t, string(body), "parameter \"id2\"")
 			assert.Contains(t, string(body), "number must be at least 10")
 		}
