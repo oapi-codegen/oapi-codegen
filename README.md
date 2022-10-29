@@ -16,8 +16,9 @@ you can focus on implementing the business logic for your service.
 
 We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
-stubs, and [Chi](https://github.com/go-chi/chi), and [Gin](https://github.com/gin-gonic/gin)
-have also been added by contributors as additional routers. We chose Echo because
+stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin)
+and  [Fiber](https://github.com/gofiber/fiber) have also been added by contributors
+as additional routers. We chose Echo because
 the `Context` object is a mockable interface, and it allows for some advanced
 testing.
 
@@ -679,7 +680,9 @@ you can specify any combination of those.
 - `server`: generate the Echo server boilerplate. `server` requires the types in the
  same package to compile.
 - `chi-server`: generate the Chi server boilerplate. This code is dependent on
- that produced by the `types` target.
+  that produced by the `types` target.
+- `fiber`: generate the Fiber server boilerplate. This code is dependent
+  on that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
