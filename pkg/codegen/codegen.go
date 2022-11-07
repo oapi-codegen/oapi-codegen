@@ -233,8 +233,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	var inlinedSpec string
+	var refNameResolver openapi3.RefNameResolver
+	if opts.OutputOptions.InternalizeRefs {
+		refNameResolver = openapi3.DefaultRefNameResolver
+	}
 	if opts.Generate.EmbeddedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, spec)
+		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, spec, refNameResolver)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
