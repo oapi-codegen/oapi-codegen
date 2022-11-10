@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -59,7 +58,7 @@ func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
 		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
-			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
+			return fmt.Errorf("property '%s' already exists with a different type", e.JsonFieldName)
 		}
 	}
 	s.Properties = append(s.Properties, p)
@@ -504,37 +503,22 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.DefineViaAlias = true
 	case "integer":
 		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else {
+		switch f {
+		case "int64", "int32", "int16", "int18", "int",
+			"uint64", "uint32", "uint16", "uint18", "uint":
+			outSchema.GoType = f
+		default:
 			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
 		// We default to float for "number"
-		if f == "double" {
+		switch f {
+		case "double":
 			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
+		case "float", "":
 			outSchema.GoType = "float32"
-		} else {
+		default:
 			return fmt.Errorf("invalid number format: %s", f)
 		}
 		outSchema.DefineViaAlias = true
