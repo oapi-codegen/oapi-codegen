@@ -41,13 +41,13 @@ var globalState struct {
 	spec    *openapi3.T
 }
 
-// goImport represents a go package to be imported in the generated code
+// goImport represents a go package to be imported in the generated code.
 type goImport struct {
 	Name string // package name
 	Path string // package path
 }
 
-// String returns a go import statement
+// String returns a go import statement.
 func (gi goImport) String() string {
 	if gi.Name != "" {
 		return fmt.Sprintf("%s %q", gi.Name, gi.Path)
@@ -55,10 +55,10 @@ func (gi goImport) String() string {
 	return fmt.Sprintf("%q", gi.Path)
 }
 
-// importMap maps external OpenAPI specifications files/urls to external go packages
+// importMap maps external OpenAPI specifications files/urls to external go packages.
 type importMap map[string]goImport
 
-// GoImports returns a slice of go import statements
+// GoImports returns a slice of go import statements.
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
@@ -96,8 +96,8 @@ func constructImportMapping(importMapping map[string]string) importMap {
 
 // Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
-// opts defines
-func Generate(spec *openapi3.T, opts Configuration) (string, error) {
+// opts defines.
+func Generate(spec *openapi3.T, opts Configuration) (string, error) { //nolint: cyclop
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
@@ -106,7 +106,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	filterOperationsByTag(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
-		pruneUnusedComponents(spec)
+		if err := pruneUnusedComponents(spec); err != nil {
+			return "", err
+		}
 	}
 
 	// if we are provided an override for the response type suffix update it
@@ -405,7 +407,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 	return typeDefinitions, nil
 }
 
-// GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
+// GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants.
 func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
 	constants := Constants{
 		SecuritySchemeProviderNames: []string{},
@@ -419,7 +421,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		}
 	}
 
-	var providerNames []string
+	providerNames := make([]string, 0, len(providerNameMap))
 	for providerName := range providerNameMap {
 		providerNames = append(providerNames, providerName)
 	}
@@ -470,8 +472,9 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 // GenerateTypesForParameters generates type definitions for any custom types defined in the
 // components/parameters section of the Swagger spec.
 func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
-	var types []TypeDefinition
-	for _, paramName := range SortedParameterKeys(params) {
+	sorted := SortedParameterKeys(params)
+	types := make([]TypeDefinition, 0, len(sorted))
+	for _, paramName := range sorted {
 		paramOrRef := params[paramName]
 
 		goType, err := paramToGoType(paramOrRef.Value, nil)
@@ -506,10 +509,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 // GenerateTypesForResponses generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
-	var types []TypeDefinition
-
-	for _, responseName := range SortedResponsesKeys(responses) {
+func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) { //nolint: dupl
+	sorted := SortedResponsesKeys(responses)
+	types := make([]TypeDefinition, 0, len(sorted))
+	for _, responseName := range sorted {
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
@@ -517,76 +520,79 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
 		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
-			}
-
-			goTypeName, err := renameResponse(responseName, responseOrRef)
-			if err != nil {
-				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
-			}
-
-			typeDef := TypeDefinition{
-				JsonName: responseName,
-				Schema:   goType,
-				TypeName: goTypeName,
-			}
-
-			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
-			types = append(types, typeDef)
+		if !found {
+			continue
 		}
+
+		goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
+		}
+
+		goTypeName, err := renameResponse(responseName, responseOrRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: responseName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if responseOrRef.Ref != "" {
+			// Generate a reference type for referenced parameters
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
 	}
 	return types, nil
 }
 
 // GenerateTypesForRequestBodies generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
-func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
-	var types []TypeDefinition
-
-	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) { //nolint: dupl
+	sorted := SortedRequestBodyKeys(bodies)
+	types := make([]TypeDefinition, 0, len(sorted))
+	for _, requestBodyName := range sorted {
 		requestBodyRef := bodies[requestBodyName]
 
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
 		jsonBody, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
-			}
-
-			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
-			if err != nil {
-				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
-			}
-
-			typeDef := TypeDefinition{
-				JsonName: requestBodyName,
-				Schema:   goType,
-				TypeName: goTypeName,
-			}
-
-			if requestBodyRef.Ref != "" {
-				// Generate a reference type for referenced bodies
-				refType, err := RefPathToGoType(requestBodyRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
-			types = append(types, typeDef)
+		if !found {
+			continue
 		}
+		goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
+		}
+
+		goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: requestBodyName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if requestBodyRef.Ref != "" {
+			// Generate a reference type for referenced bodies
+			refType, err := RefPathToGoType(requestBodyRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
 	}
 	return types, nil
 }
@@ -594,9 +600,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 // GenerateTypes passes a bunch of types to the template engine, and buffers
 // its output into a string.
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
-	m := map[string]TypeDefinition{}
-	var ts []TypeDefinition
-
+	m := make(map[string]TypeDefinition, len(types))
+	ts := make([]TypeDefinition, 0, len(types))
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
 			// If type names collide, we need to see if they refer to the same
@@ -735,7 +740,7 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 }
 
 // GenerateAdditionalPropertyBoilerplate generates all the glue code which provides
-// the API for interacting with additional properties and JSON-ification
+// the API for interacting with additional properties and JSON-ification.
 func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
 
@@ -808,7 +813,7 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
-	return strings.Replace(goCode, "\uFEFF", "", -1)
+	return strings.ReplaceAll(goCode, "\uFEFF", "")
 }
 
 // LoadTemplates loads all of our template files into a text/template. The
@@ -886,7 +891,6 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 				MergeImports(res, imprts)
 			}
 		}
-
 	}
 	return res, nil
 }
@@ -923,15 +927,17 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 	res := map[string]goImport{}
 	for _, sref := range schemas {
 		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
-			return nil, nil
+			return nil, nil //nolint: nilnil
 		}
-		if gi, err := ParseGoImportExtension(sref); err != nil {
+		gi, err := ParseGoImportExtension(sref)
+		if err != nil {
 			return nil, err
-		} else {
-			if gi != nil {
-				res[gi.String()] = *gi
-			}
 		}
+
+		if gi != nil {
+			res[gi.String()] = *gi
+		}
+
 		schemaVal := sref.Value
 
 		t := schemaVal.Type

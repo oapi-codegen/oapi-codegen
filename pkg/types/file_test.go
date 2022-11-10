@@ -50,5 +50,4 @@ func TestFileJSON(t *testing.T) {
 	o4Bytes, err := o4.BinaryFieldPtr.Bytes()
 	require.NoError(t, err)
 	assert.Equal(t, []byte("hello"), o4Bytes)
-
 }

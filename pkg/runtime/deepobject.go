@@ -111,7 +111,6 @@ func (f *fieldOrValue) appendPathValue(path []string, value string) {
 }
 
 func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
-
 	f := fieldOrValue{
 		fields: make(map[string]fieldOrValue),
 	}
@@ -192,14 +191,12 @@ func fieldIndicesByJsonTag(i interface{}) (map[string]int, error) {
 	return fieldMap, nil
 }
 
-func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
-	//t := reflect.TypeOf(dst)
+func assignPathValues(dst interface{}, pathValues fieldOrValue) error { //nolint: cyclop
 	v := reflect.ValueOf(dst)
-
 	iv := reflect.Indirect(v)
 	it := iv.Type()
 
-	switch it.Kind() {
+	switch it.Kind() { //nolint: exhaustive
 	case reflect.Slice:
 		sliceLength := len(pathValues.fields)
 		dstSlice := reflect.MakeSlice(it, sliceLength, sliceLength)
@@ -242,12 +239,9 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 			tm, err = time.Parse(time.RFC3339Nano, pathValues.value)
 			if err != nil {
 				// Fall back to parsing it as a date.
-				// TODO: why is this marked as an ineffassign?
-				tm, err = time.Parse(types.DateFormat, pathValues.value) //nolint:ineffassign,staticcheck
-				if err != nil {
-					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %s", pathValues.value, err)
+				if tm, err = time.Parse(types.DateFormat, pathValues.value); err != nil {
+					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %w", pathValues.value, err)
 				}
-				return fmt.Errorf("invalid date format: %w", err)
 			}
 			dst := iv
 			if it != reflect.TypeOf(time.Time{}) {

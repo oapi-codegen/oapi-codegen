@@ -26,7 +26,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// MockBinder is just an independent version of Binder that has the Bind implemented
+const (
+	testId = "id"
+)
+
+// MockBinder is just an independent version of Binder that has the Bind implemented.
 type MockBinder struct {
 	time.Time
 }
@@ -38,7 +42,7 @@ func (d *MockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing '%s' as date: %w", src, err)
 	}
 	d.Time = parsedTime
 	return nil
@@ -77,7 +81,7 @@ func (b *AnotherMockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing '%s' as date: %w", src, err)
 	}
 	b.Time = parsedTime
 	return nil
@@ -95,204 +99,204 @@ func TestSplitParameter(t *testing.T) {
 	var result []string
 	var err error
 	//  ------------------------ simple style ---------------------------------
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		false,
 		false,
-		"id",
+		testId,
 		"5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		false,
 		false,
-		"id",
+		testId,
 		"3,4,5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		false,
 		true,
-		"id",
+		testId,
 		"role,admin,firstName,Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		true,
 		false,
-		"id",
+		testId,
 		"5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		true,
 		false,
-		"id",
+		testId,
 		"3,4,5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("simple",
+	result, err = splitStyledParameter(simple,
 		true,
 		true,
-		"id",
+		testId,
 		"role=admin,firstName=Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	//  ------------------------ label style ---------------------------------
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		false,
 		false,
-		"id",
+		testId,
 		".5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		false,
 		false,
-		"id",
+		testId,
 		".3,4,5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		false,
 		true,
-		"id",
+		testId,
 		".role,admin,firstName,Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		true,
 		false,
-		"id",
+		testId,
 		".5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		true,
 		false,
-		"id",
+		testId,
 		".3.4.5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("label",
+	result, err = splitStyledParameter(label,
 		true,
 		true,
-		"id",
+		testId,
 		".role=admin.firstName=Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	//  ------------------------ matrix style ---------------------------------
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		false,
 		false,
-		"id",
+		testId,
 		";id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		false,
 		false,
-		"id",
+		testId,
 		";id=3,4,5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		false,
 		true,
-		"id",
+		testId,
 		";id=role,admin,firstName,Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		true,
 		false,
-		"id",
+		testId,
 		";id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		true,
 		false,
-		"id",
+		testId,
 		";id=3;id=4;id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("matrix",
+	result, err = splitStyledParameter(matrix,
 		true,
 		true,
-		"id",
+		testId,
 		";role=admin;firstName=Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedExplodedObject, result)
 
 	// ------------------------ form style ---------------------------------
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		false,
 		false,
-		"id",
+		testId,
 		"id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		false,
 		false,
-		"id",
+		testId,
 		"id=3,4,5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		false,
 		true,
-		"id",
+		testId,
 		"id=role,admin,firstName,Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedObject, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		true,
 		false,
-		"id",
+		testId,
 		"id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedPrimitive, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		true,
 		false,
-		"id",
+		testId,
 		"id=3&id=4&id=5")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedArray, result)
 
-	result, err = splitStyledParameter("form",
+	result, err = splitStyledParameter(form,
 		true,
 		true,
-		"id",
+		testId,
 		"role=admin&firstName=Alex")
 	assert.NoError(t, err)
 	assert.EqualValues(t, expectedExplodedObject, result)
 }
 
 func TestBindQueryParameter(t *testing.T) {
-	t.Run("deepObject", func(t *testing.T) {
+	t.Run(deepObject, func(t *testing.T) {
 		type ID struct {
 			FirstName *string     `json:"firstName"`
 			LastName  *string     `json:"lastName"`
@@ -310,7 +314,7 @@ func TestBindQueryParameter(t *testing.T) {
 		}
 
 		actual := new(ID)
-		paramName := "id"
+		paramName := testId
 		queryParams := url.Values{
 			"id[firstName]": {"Alex"},
 			"id[role]":      {"admin"},
@@ -319,18 +323,18 @@ func TestBindQueryParameter(t *testing.T) {
 			"id[married]":   {"2020-02-02"},
 		}
 
-		err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+		err := BindQueryParameter(deepObject, true, false, paramName, queryParams, &actual)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedDeepObject, actual)
 	})
 
-	t.Run("form", func(t *testing.T) {
+	t.Run(form, func(t *testing.T) {
 		expected := &MockBinder{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 		birthday := &MockBinder{}
 		queryParams := url.Values{
 			"birthday": {"2020-01-01"},
 		}
-		err := BindQueryParameter("form", true, false, "birthday", queryParams, &birthday)
+		err := BindQueryParameter(form, true, false, "birthday", queryParams, &birthday)
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
@@ -342,21 +346,20 @@ func TestBindQueryParameter(t *testing.T) {
 		}
 		// An optional time will be a pointer to a time in a parameter object
 		var optionalTime *time.Time
-		err := BindQueryParameter("form", true, false, "notfound", queryParams, &optionalTime)
+		err := BindQueryParameter(form, true, false, "notfound", queryParams, &optionalTime)
 		require.NoError(t, err)
 		assert.Nil(t, optionalTime)
 
 		var optionalNumber *int
-		err = BindQueryParameter("form", true, false, "notfound", queryParams, &optionalNumber)
+		err = BindQueryParameter(form, true, false, "notfound", queryParams, &optionalNumber)
 		require.NoError(t, err)
 		assert.Nil(t, optionalNumber)
 
 		// If we require values, we require errors when they're not present.
-		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalTime)
+		err = BindQueryParameter(form, true, true, "notfound", queryParams, &optionalTime)
 		assert.Error(t, err)
-		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
+		err = BindQueryParameter(form, true, true, "notfound", queryParams, &optionalNumber)
 		assert.Error(t, err)
-
 	})
 }
 
@@ -401,7 +404,7 @@ func TestBindParameterViaAlias(t *testing.T) {
 
 	dst := new(AliasTortureTest)
 
-	err := BindQueryParameter("deepObject", true, false, "alias", queryParams, &dst)
+	err := BindQueryParameter(deepObject, true, false, "alias", queryParams, &dst)
 	require.NoError(t, err)
 
 	var sp AString = "strp"
@@ -493,7 +496,7 @@ func TestBindStyledParameterWithLocation(t *testing.T) {
 	expectedBig := big.NewInt(12345678910)
 
 	var dstBigNumber big.Int
-	err := BindStyledParameterWithLocation("simple", false, "id", ParamLocationUndefined,
+	err := BindStyledParameterWithLocation(simple, false, testId, ParamLocationUndefined,
 		"12345678910", &dstBigNumber)
 	assert.NoError(t, err)
 	assert.Equal(t, *expectedBig, dstBigNumber)

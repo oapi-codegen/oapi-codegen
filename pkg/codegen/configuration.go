@@ -10,7 +10,7 @@ type AdditionalImport struct {
 	Package string `yaml:"package"`
 }
 
-// Configuration defines code generation customizations
+// Configuration defines code generation customizations.
 type Configuration struct {
 	PackageName       string               `yaml:"package"` // PackageName to generate
 	Generate          GenerateOptions      `yaml:"generate,omitempty"`
@@ -89,7 +89,7 @@ type OutputOptions struct {
 	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 }
 
-// UpdateDefaults sets reasonable default values for unset fields in Configuration
+// UpdateDefaults sets reasonable default values for unset fields in Configuration.
 func (o Configuration) UpdateDefaults() Configuration {
 	if reflect.ValueOf(o.Generate).IsZero() {
 		o.Generate = GenerateOptions{
@@ -101,7 +101,7 @@ func (o Configuration) UpdateDefaults() Configuration {
 	return o
 }
 
-// Validate checks whether Configuration represent a valid configuration
+// Validate checks whether Configuration represent a valid configuration.
 func (o Configuration) Validate() error {
 	if o.PackageName == "" {
 		return errors.New("package name must be specified")

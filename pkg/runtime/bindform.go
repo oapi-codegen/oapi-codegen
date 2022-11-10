@@ -44,8 +44,8 @@ func BindForm(ptr interface{}, form map[string][]string, files map[string][]*mul
 		if !field.CanInterface() || tag == "-" {
 			continue
 		}
-		tag = strings.Split(tag, ",")[0] // extract the name of the tag
-		if encoding, ok := encodings[tag]; ok {
+		tag = strings.Split(tag, ",")[0]        // extract the name of the tag
+		if encoding, ok := encodings[tag]; ok { //nolint: nestif
 			// custom encoding
 			values := form[tag]
 			if len(values) == 0 {
@@ -113,9 +113,9 @@ func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url
 	return result, nil
 }
 
-func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]*multipart.FileHeader, name string) (bool, error) {
+func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]*multipart.FileHeader, name string) (bool, error) { //nolint: cyclop
 	var hasData bool
-	switch v.Kind() {
+	switch v.Kind() { //nolint: exhaustive
 	case reflect.Interface:
 		return bindFormImpl(v.Elem(), form, files, name)
 	case reflect.Ptr:
@@ -139,7 +139,10 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 				hasData = true
 			}
 		}
-		indexedElementsCount := indexedElementsCount(form, files, name)
+		indexedElementsCount, err := indexedElementsCount(form, files, name)
+		if err != nil {
+			return false, err
+		}
 		items := append(form[name], form[name+"[]"]...)
 		if indexedElementsCount+len(items) != 0 {
 			result := reflect.MakeSlice(v.Type(), indexedElementsCount+len(items), indexedElementsCount+len(items))
@@ -194,13 +197,17 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 	return hasData, nil
 }
 
-func indexedElementsCount(form map[string][]string, files map[string][]*multipart.FileHeader, name string) int {
+func indexedElementsCount(form map[string][]string, files map[string][]*multipart.FileHeader, name string) (int, error) {
 	name += "["
 	maxIndex := -1
 	for k := range form {
 		if strings.HasPrefix(k, name) {
 			str := strings.TrimPrefix(k, name)
-			str = str[:strings.Index(str, "]")]
+			idx := strings.Index(str, "]")
+			if idx == -1 {
+				return 0, fmt.Errorf("invalid form key: %q", k)
+			}
+			str = str[:idx]
 			if idx, err := strconv.Atoi(str); err == nil {
 				if idx > maxIndex {
 					maxIndex = idx
@@ -208,10 +215,15 @@ func indexedElementsCount(form map[string][]string, files map[string][]*multipar
 			}
 		}
 	}
+
 	for k := range files {
 		if strings.HasPrefix(k, name) {
 			str := strings.TrimPrefix(k, name)
-			str = str[:strings.Index(str, "]")]
+			idx := strings.Index(str, "]")
+			if idx == -1 {
+				return 0, fmt.Errorf("invalid form key: %q", k)
+			}
+			str = str[:idx]
 			if idx, err := strconv.Atoi(str); err == nil {
 				if idx > maxIndex {
 					maxIndex = idx
@@ -219,7 +231,7 @@ func indexedElementsCount(form map[string][]string, files map[string][]*multipar
 			}
 		}
 	}
-	return maxIndex + 1
+	return maxIndex + 1, nil
 }
 
 func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct reflect.Value, form map[string][]string, files map[string][]*multipart.FileHeader, name string) (bool, error) {
@@ -241,7 +253,11 @@ func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct r
 	for k := range form {
 		if strings.HasPrefix(k, name+"[") {
 			key := strings.TrimPrefix(k, name+"[")
-			key = key[:strings.Index(key, "]")]
+			idx := strings.Index(key, "]")
+			if idx == -1 {
+				return false, fmt.Errorf("invalid form key: %q", k)
+			}
+			key = key[:idx]
 			if _, ok := fieldsSet[key]; ok {
 				continue
 			}
@@ -257,7 +273,11 @@ func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct r
 	for k := range files {
 		if strings.HasPrefix(k, name+"[") {
 			key := strings.TrimPrefix(k, name+"[")
-			key = key[:strings.Index(key, "]")]
+			idx := strings.Index(key, "]")
+			if idx == -1 {
+				return false, fmt.Errorf("invalid form key: %q", k)
+			}
+			key = key[:idx]
 			if _, ok := fieldsSet[key]; ok {
 				continue
 			}
@@ -278,7 +298,7 @@ func bindAdditionalProperties(additionalProperties reflect.Value, parentStruct r
 }
 
 func marshalFormImpl(v reflect.Value, result url.Values, name string) {
-	switch v.Kind() {
+	switch v.Kind() { //nolint: exhaustive
 	case reflect.Interface, reflect.Ptr:
 		marshalFormImpl(v.Elem(), result, name)
 	case reflect.Slice:

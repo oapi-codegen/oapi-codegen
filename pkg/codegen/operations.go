@@ -45,7 +45,7 @@ func (pd ParameterDefinition) TypeDef() string {
 
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
-// 'json:"foo"'
+// 'json:"foo"'.
 func (pd *ParameterDefinition) JsonTag() string {
 	if pd.Required {
 		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
@@ -159,7 +159,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 
 		goType, err := paramToGoType(param, append(path, param.Name))
 		if err != nil {
-			return nil, fmt.Errorf("error generating type for param (%s): %s",
+			return nil, fmt.Errorf("error generating type for param (%s): %w",
 				param.Name, err)
 		}
 
@@ -177,7 +177,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
-				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
+				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %w",
 					paramOrRef.Ref, param.Name, err)
 			}
 			pd.Schema.GoType = goType
@@ -205,7 +205,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
-// OperationDefinition describes an Operation
+// OperationDefinition describes an Operation.
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
@@ -232,7 +232,7 @@ func (o *OperationDefinition) Params() []ParameterDefinition {
 	return result
 }
 
-// AllParams returns all parameters
+// AllParams returns all parameters.
 func (o *OperationDefinition) AllParams() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
 	result = append(result, o.CookieParams...)
@@ -254,7 +254,7 @@ func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// SummaryAsComment returns the Operations summary as a multi line comment
+// SummaryAsComment returns the Operations summary as a multi line comment.
 func (o *OperationDefinition) SummaryAsComment() string {
 	if o.Summary == "" {
 		return ""
@@ -337,7 +337,7 @@ func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
 	return false
 }
 
-// RequestBodyDefinition describes a request body
+// RequestBodyDefinition describes a request body.
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
 	Required bool
@@ -360,7 +360,7 @@ type RequestBodyDefinition struct {
 	Encoding map[string]RequestBodyEncoding
 }
 
-// TypeDef returns the Go type definition for a request body
+// TypeDef returns the Go type definition for a request body.
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
 		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
@@ -386,17 +386,17 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
-// IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
+// IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated.
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
 	return r.NameTag == "JSON" || r.NameTag == "Formdata" || r.NameTag == "Text"
 }
 
-// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
+// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated.
 func (r RequestBodyDefinition) IsSupported() bool {
 	return r.NameTag != ""
 }
 
-// IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+// IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol.
 func (r RequestBodyDefinition) IsFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
 }
@@ -440,7 +440,7 @@ type ResponseContentDefinition struct {
 	NameTag string
 }
 
-// TypeDef returns the Go type definition for a request body
+// TypeDef returns the Go type definition for a request body.
 func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDefinition {
 	return &TypeDefinition{
 		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTagOrContentType()),
@@ -452,7 +452,7 @@ func (r ResponseContentDefinition) IsSupported() bool {
 	return r.NameTag != ""
 }
 
-// HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+// HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol.
 func (r ResponseContentDefinition) HasFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
 }
@@ -484,15 +484,15 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 
 // OperationDefinitions returns all operations for a swagger definition.
 func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
-	var operations []OperationDefinition
-
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
+	sorted := SortedPathsKeys(swagger.Paths)
+	operations := make([]OperationDefinition, 0, len(sorted))
+	for _, requestPath := range sorted {
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
 		if err != nil {
-			return nil, fmt.Errorf("error describing global parameters for %s: %s",
+			return nil, fmt.Errorf("error describing global parameters for %s: %w",
 				requestPath, err)
 		}
 
@@ -507,7 +507,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			if op.OperationID == "" {
 				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
-					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
+					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %w",
 						opName, requestPath, err)
 				}
 			} else {
@@ -519,7 +519,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// we're iterating over.
 			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
 			if err != nil {
-				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
+				return nil, fmt.Errorf("error describing global parameters for %s/%s: %w",
 					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
@@ -572,7 +572,6 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
-
 			}
 
 			if op.RequestBody != nil {
@@ -616,10 +615,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	}
 	body := bodyOrRef.Value
 
-	var bodyDefinitions []RequestBodyDefinition
+	sorted := SortedContentKeys(body.Content)
+	bodyDefinitions := make([]RequestBodyDefinition, 0, len(sorted))
 	var typeDefinitions []TypeDefinition
 
-	for _, contentType := range SortedContentKeys(body.Content) {
+	for _, contentType := range sorted {
 		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
@@ -697,20 +697,20 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 }
 
 func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
-	var responseDefinitions []ResponseDefinition
+	sorted := SortedResponsesKeys(responses)
+	responseDefinitions := make([]ResponseDefinition, 0, len(sorted))
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
-
-	for _, statusCode := range SortedResponsesKeys(responses) {
+	for _, statusCode := range sorted {
 		responseOrRef := responses[statusCode]
 		if responseOrRef == nil {
 			continue
 		}
 		response := responseOrRef.Value
 
-		var responseContentDefinitions []ResponseContentDefinition
-
-		for _, contentType := range SortedContentKeys(response.Content) {
+		sortedKeys := SortedContentKeys(response.Content)
+		responseContentDefinitions := make([]ResponseContentDefinition, 0, len(sortedKeys))
+		for _, contentType := range sortedKeys {
 			content := response.Content[contentType]
 			var tag string
 			switch {
@@ -845,7 +845,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	return append(typeDefs, td)
 }
 
-// GenerateTypesForOperations generates code for all types produced within operations
+// GenerateTypesForOperations generates code for all types produced within operations.
 func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
@@ -854,9 +854,8 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	if err != nil {
 		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
-	if _, err := w.WriteString(addTypes); err != nil {
+	if _, err = w.WriteString(addTypes); err != nil {
 		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-
 	}
 
 	// Generate boiler plate for all additional types.
@@ -870,11 +869,11 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	if _, err := w.WriteString("\n"); err != nil {
+	if _, err = w.WriteString("\n"); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	if _, err := w.WriteString(addProps); err != nil {
+	if _, err = w.WriteString(addProps); err != nil {
 		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
@@ -939,20 +938,20 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }
 
-// GenerateTemplates used to generate templates
+// GenerateTemplates used to generate templates.
 func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
-	var generatedTemplates []string
-	for _, tmpl := range templates {
+	generatedTemplates := make([]string, len(templates))
+	for i, tmpl := range templates {
 		var buf bytes.Buffer
 		w := bufio.NewWriter(&buf)
 
 		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
-			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
+			return "", fmt.Errorf("error generating %s: %w", tmpl, err)
 		}
 		if err := w.Flush(); err != nil {
-			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
+			return "", fmt.Errorf("error flushing output buffer for %s: %w", tmpl, err)
 		}
-		generatedTemplates = append(generatedTemplates, buf.String())
+		generatedTemplates[i] = buf.String()
 	}
 
 	return strings.Join(generatedTemplates, "\n"), nil

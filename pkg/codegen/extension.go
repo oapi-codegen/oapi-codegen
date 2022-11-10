@@ -8,9 +8,9 @@ import (
 const (
 	// extPropGoType overrides the generated type definition.
 	extPropGoType = "x-go-type"
-	// extPropGoImport specifies the module to import which provides above type
+	// extPropGoImport specifies the module to import which provides above type.
 	extPropGoImport = "x-go-type-import"
-	// extGoName is used to override a field name
+	// extGoName is used to override a field name.
 	extGoName = "x-go-name"
 	// extGoTypeName is used to override a generated typename for something.
 	extGoTypeName       = "x-go-type-name"

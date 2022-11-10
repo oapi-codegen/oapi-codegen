@@ -28,16 +28,18 @@ func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error
 
 	for _, p := range swagger.Paths {
 		for _, param := range p.Parameters {
-			_ = walkParameterRef(param, doFn)
+			if err := walkParameterRef(param, doFn); err != nil {
+				return err
+			}
 		}
 		for _, op := range p.Operations() {
-			_ = walkOperation(op, doFn)
+			if err := walkOperation(op, doFn); err != nil {
+				return err
+			}
 		}
 	}
 
-	_ = walkComponents(&swagger.Components, doFn)
-
-	return nil
+	return walkComponents(&swagger.Components, doFn)
 }
 
 func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) error {
@@ -47,17 +49,25 @@ func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) 
 	}
 
 	for _, param := range op.Parameters {
-		_ = walkParameterRef(param, doFn)
+		if err := walkParameterRef(param, doFn); err != nil {
+			return err
+		}
 	}
 
-	_ = walkRequestBodyRef(op.RequestBody, doFn)
+	if err := walkRequestBodyRef(op.RequestBody, doFn); err != nil {
+		return err
+	}
 
 	for _, response := range op.Responses {
-		_ = walkResponseRef(response, doFn)
+		if err := walkResponseRef(response, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, callback := range op.Callbacks {
-		_ = walkCallbackRef(callback, doFn)
+		if err := walkCallbackRef(callback, doFn); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -70,39 +80,57 @@ func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool
 	}
 
 	for _, schema := range components.Schemas {
-		_ = walkSchemaRef(schema, doFn)
+		if err := walkSchemaRef(schema, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, param := range components.Parameters {
-		_ = walkParameterRef(param, doFn)
+		if err := walkParameterRef(param, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, header := range components.Headers {
-		_ = walkHeaderRef(header, doFn)
+		if err := walkHeaderRef(header, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, requestBody := range components.RequestBodies {
-		_ = walkRequestBodyRef(requestBody, doFn)
+		if err := walkRequestBodyRef(requestBody, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, response := range components.Responses {
-		_ = walkResponseRef(response, doFn)
+		if err := walkResponseRef(response, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, securityScheme := range components.SecuritySchemes {
-		_ = walkSecuritySchemeRef(securityScheme, doFn)
+		if err := walkSecuritySchemeRef(securityScheme, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, example := range components.Examples {
-		_ = walkExampleRef(example, doFn)
+		if err := walkExampleRef(example, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, link := range components.Links {
-		_ = walkLinkRef(link, doFn)
+		if err := walkLinkRef(link, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, callback := range components.Callbacks {
-		_ = walkCallbackRef(callback, doFn)
+		if err := walkCallbackRef(callback, doFn); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -126,27 +154,37 @@ func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error))
 	}
 
 	for _, ref := range ref.Value.OneOf {
-		_ = walkSchemaRef(ref, doFn)
+		if err := walkSchemaRef(ref, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, ref := range ref.Value.AnyOf {
-		_ = walkSchemaRef(ref, doFn)
+		if err := walkSchemaRef(ref, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, ref := range ref.Value.AllOf {
-		_ = walkSchemaRef(ref, doFn)
+		if err := walkSchemaRef(ref, doFn); err != nil {
+			return err
+		}
 	}
 
-	_ = walkSchemaRef(ref.Value.Not, doFn)
-	_ = walkSchemaRef(ref.Value.Items, doFn)
+	if err := walkSchemaRef(ref.Value.Not, doFn); err != nil {
+		return err
+	}
+	if err := walkSchemaRef(ref.Value.Items, doFn); err != nil {
+		return err
+	}
 
 	for _, ref := range ref.Value.Properties {
-		_ = walkSchemaRef(ref, doFn)
+		if err := walkSchemaRef(ref, doFn); err != nil {
+			return err
+		}
 	}
 
-	_ = walkSchemaRef(ref.Value.AdditionalProperties, doFn)
-
-	return nil
+	return walkSchemaRef(ref.Value.AdditionalProperties, doFn)
 }
 
 func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
@@ -166,20 +204,29 @@ func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, e
 		return nil
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
+	if err := walkSchemaRef(ref.Value.Schema, doFn); err != nil {
+		return err
+	}
 
 	for _, example := range ref.Value.Examples {
-		_ = walkExampleRef(example, doFn)
+		if err := walkExampleRef(example, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+
+		if err := walkSchemaRef(mediaType.Schema, doFn); err != nil {
+			return err
+		}
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			if err := walkExampleRef(example, doFn); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -207,10 +254,14 @@ func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (boo
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+		if err := walkSchemaRef(mediaType.Schema, doFn); err != nil {
+			return err
+		}
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			if err := walkExampleRef(example, doFn); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -235,22 +286,31 @@ func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, err
 	}
 
 	for _, header := range ref.Value.Headers {
-		_ = walkHeaderRef(header, doFn)
+		if err := walkHeaderRef(header, doFn); err != nil {
+			return err
+		}
 	}
 
 	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+
+		if err := walkSchemaRef(mediaType.Schema, doFn); err != nil {
+			return err
+		}
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			if err := walkExampleRef(example, doFn); err != nil {
+				return err
+			}
 		}
 	}
 
 	for _, link := range ref.Value.Links {
-		_ = walkLinkRef(link, doFn)
+		if err := walkLinkRef(link, doFn); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -275,19 +335,35 @@ func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, err
 
 	for _, pathItem := range *ref.Value {
 		for _, parameter := range pathItem.Parameters {
-			_ = walkParameterRef(parameter, doFn)
+			if err := walkParameterRef(parameter, doFn); err != nil {
+				return err
+			}
 		}
-		_ = walkOperation(pathItem.Connect, doFn)
-		_ = walkOperation(pathItem.Delete, doFn)
-		_ = walkOperation(pathItem.Get, doFn)
-		_ = walkOperation(pathItem.Head, doFn)
-		_ = walkOperation(pathItem.Options, doFn)
-		_ = walkOperation(pathItem.Patch, doFn)
-		_ = walkOperation(pathItem.Post, doFn)
-		_ = walkOperation(pathItem.Put, doFn)
-		_ = walkOperation(pathItem.Trace, doFn)
+		if err := walkOperations(doFn,
+			pathItem.Connect,
+			pathItem.Delete,
+			pathItem.Get,
+			pathItem.Head,
+			pathItem.Options,
+			pathItem.Patch,
+			pathItem.Post,
+			pathItem.Put,
+			pathItem.Trace,
+		); err != nil {
+			return err
+		}
 	}
 
+	return nil
+}
+
+// walkOperations calls walkOperation with doFn for each operation.
+func walkOperations(doFn func(RefWrapper) (bool, error), operations ...*openapi3.Operation) error {
+	for _, op := range operations {
+		if err := walkOperation(op, doFn); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -308,9 +384,7 @@ func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error))
 		return nil
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
-
-	return nil
+	return walkSchemaRef(ref.Value.Schema, doFn)
 }
 
 func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper) (bool, error)) error {
@@ -377,18 +451,20 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
-func findComponentRefs(swagger *openapi3.T) []string {
+func findComponentRefs(swagger *openapi3.T) ([]string, error) {
 	refs := []string{}
 
-	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
+	if err := walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
 		if ref.Ref != "" {
 			refs = append(refs, ref.Ref)
 			return false, nil
 		}
 		return true, nil
-	})
+	}); err != nil {
+		return nil, err
+	}
 
-	return refs
+	return refs, nil
 }
 
 func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
@@ -472,12 +548,17 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.T) {
+func pruneUnusedComponents(swagger *openapi3.T) error {
 	for {
-		refs := findComponentRefs(swagger)
+		refs, err := findComponentRefs(swagger)
+		if err != nil {
+			return err
+		}
 		countRemoved := removeOrphanedComponents(swagger, refs)
 		if countRemoved < 1 {
 			break
 		}
 	}
+
+	return nil
 }

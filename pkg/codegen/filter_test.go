@@ -9,55 +9,54 @@ import (
 
 func TestFilterOperationsByTag(t *testing.T) {
 	packageName := "testswagger"
-	t.Run("include tags", func(t *testing.T) {
-		opts := Configuration{
-			PackageName: packageName,
-			Generate: GenerateOptions{
-				EchoServer:   true,
-				Client:       true,
-				Models:       true,
-				EmbeddedSpec: true,
-			},
-			OutputOptions: OutputOptions{
+	tests := map[string]struct {
+		opts OutputOptions
+		fn   func(t *testing.T, code string)
+	}{
+		"include tags": {
+			opts: OutputOptions{
 				IncludeTags: []string{"hippo", "giraffe", "cat"},
 			},
-		}
-
-		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
-		assert.NoError(t, err)
-
-		// Run our code generation:
-		code, err := Generate(swagger, opts)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, code)
-		assert.NotContains(t, code, `"/test/:name"`)
-		assert.Contains(t, code, `"/cat"`)
-	})
-
-	t.Run("exclude tags", func(t *testing.T) {
-		opts := Configuration{
-			PackageName: packageName,
-			Generate: GenerateOptions{
-				EchoServer:   true,
-				Client:       true,
-				Models:       true,
-				EmbeddedSpec: true,
+			fn: func(t *testing.T, code string) {
+				t.Helper()
+				assert.NotContains(t, code, `"/test/:name"`)
+				assert.Contains(t, code, `"/cat"`)
 			},
-			OutputOptions: OutputOptions{
+		},
+		"exclude tags": {
+			opts: OutputOptions{
 				ExcludeTags: []string{"hippo", "giraffe", "cat"},
 			},
-		}
+			fn: func(t *testing.T, code string) {
+				t.Helper()
+				assert.Contains(t, code, `"/test/:name"`)
+				assert.NotContains(t, code, `"/cat"`)
+			},
+		},
+	}
 
-		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
-		assert.NoError(t, err)
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			opts := Configuration{
+				PackageName: packageName,
+				Generate: GenerateOptions{
+					EchoServer:   true,
+					Client:       true,
+					Models:       true,
+					EmbeddedSpec: true,
+				},
+				OutputOptions: tt.opts,
+			}
 
-		// Run our code generation:
-		code, err := Generate(swagger, opts)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, code)
-		assert.Contains(t, code, `"/test/:name"`)
-		assert.NotContains(t, code, `"/cat"`)
-	})
+			// Get a spec from the test definition in this file:
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+			assert.NoError(t, err)
+
+			// Run our code generation:
+			code, err := Generate(swagger, opts)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, code)
+			tt.fn(t, code)
+		})
+	}
 }

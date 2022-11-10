@@ -55,7 +55,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", c.Request.URL.Query(), &params.Tags)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter tags: %s", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter tags: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %s", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 	err = runtime.BindStyledParameter("simple", false, "id", c.Param("id"), &id)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %s", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -209,16 +209,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil

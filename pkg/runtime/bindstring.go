@@ -30,7 +30,7 @@ import (
 // type aliases. This function was the easy way out, the better way, since we
 // know the destination type each place that we use this, is to generate code
 // to read each specific type.
-func BindStringToObject(src string, dst interface{}) error {
+func BindStringToObject(src string, dst interface{}) error { //nolint: cyclop
 	var err error
 
 	v := reflect.ValueOf(dst)
@@ -58,7 +58,7 @@ func BindStringToObject(src string, dst interface{}) error {
 		return errors.New("destination is not settable")
 	}
 
-	switch t.Kind() {
+	switch t.Kind() { //nolint: exhaustive
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var val int64
 		val, err = strconv.ParseInt(src, 10, 64)
@@ -100,7 +100,7 @@ func BindStringToObject(src string, dst interface{}) error {
 	case reflect.Array:
 		if tu, ok := dst.(encoding.TextUnmarshaler); ok {
 			if err := tu.UnmarshalText([]byte(src)); err != nil {
-				return fmt.Errorf("error unmarshalling '%s' text as %T: %s", src, dst, err)
+				return fmt.Errorf("error unmarshalling '%s' text as %T: %w", src, dst, err)
 			}
 
 			return nil
@@ -122,7 +122,7 @@ func BindStringToObject(src string, dst interface{}) error {
 			if err != nil {
 				parsedTime, err = time.Parse(types.DateFormat, src)
 				if err != nil {
-					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %s", src, err)
+					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %w", src, err)
 				}
 			}
 			// So, assigning this gets a little fun. We have a value to the
@@ -145,7 +145,7 @@ func BindStringToObject(src string, dst interface{}) error {
 			}
 			parsedTime, err := time.Parse(types.DateFormat, src)
 			if err != nil {
-				return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+				return fmt.Errorf("error parsing '%s' as date: %w", src, err)
 			}
 			parsedDate := types.Date{Time: parsedTime}
 
@@ -168,7 +168,7 @@ func BindStringToObject(src string, dst interface{}) error {
 		err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())
 	}
 	if err != nil {
-		return fmt.Errorf("error binding string parameter: %s", err)
+		return fmt.Errorf("error binding string parameter: %w", err)
 	}
 	return nil
 }

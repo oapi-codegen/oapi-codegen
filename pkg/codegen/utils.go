@@ -28,70 +28,76 @@ import (
 )
 
 var (
-	pathParamRE    *regexp.Regexp
-	predeclaredSet map[string]struct{}
-	separatorSet   map[rune]struct{}
-)
-
-func init() {
-	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
-
-	predeclaredIdentifiers := []string{
+	pathParamRE    = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+	predeclaredSet = map[string]struct{}{
 		// Types
-		"bool",
-		"byte",
-		"complex64",
-		"complex128",
-		"error",
-		"float32",
-		"float64",
-		"int",
-		"int8",
-		"int16",
-		"int32",
-		"int64",
-		"rune",
-		"string",
-		"uint",
-		"uint8",
-		"uint16",
-		"uint32",
-		"uint64",
-		"uintptr",
+		"bool":       {},
+		"byte":       {},
+		"complex64":  {},
+		"complex128": {},
+		"error":      {},
+		"float32":    {},
+		"float64":    {},
+		"int":        {},
+		"int8":       {},
+		"int16":      {},
+		"int32":      {},
+		"int64":      {},
+		"rune":       {},
+		"string":     {},
+		"uint":       {},
+		"uint8":      {},
+		"uint16":     {},
+		"uint32":     {},
+		"uint64":     {},
+		"uintptr":    {},
 		// Constants
-		"true",
-		"false",
-		"iota",
+		"true":  {},
+		"false": {},
+		"iota":  {},
 		// Zero value
-		"nil",
+		"nil": {},
 		// Functions
-		"append",
-		"cap",
-		"close",
-		"complex",
-		"copy",
-		"delete",
-		"imag",
-		"len",
-		"make",
-		"new",
-		"panic",
-		"print",
-		"println",
-		"real",
-		"recover",
-	}
-	predeclaredSet = map[string]struct{}{}
-	for _, id := range predeclaredIdentifiers {
-		predeclaredSet[id] = struct{}{}
+		"append":  {},
+		"cap":     {},
+		"close":   {},
+		"complex": {},
+		"copy":    {},
+		"delete":  {},
+		"imag":    {},
+		"len":     {},
+		"make":    {},
+		"new":     {},
+		"panic":   {},
+		"print":   {},
+		"println": {},
+		"real":    {},
+		"recover": {},
 	}
 
-	separators := "-#@!$&=.+:;_~ (){}[]"
-	separatorSet = map[rune]struct{}{}
-	for _, r := range separators {
-		separatorSet[r] = struct{}{}
+	separatorSet = map[rune]struct{}{
+		'-': {},
+		'#': {},
+		'@': {},
+		'!': {},
+		'$': {},
+		'&': {},
+		'=': {},
+		'.': {},
+		'+': {},
+		':': {},
+		';': {},
+		'_': {},
+		'~': {},
+		' ': {},
+		'(': {},
+		')': {},
+		'{': {},
+		'}': {},
+		'[': {},
+		']': {},
 	}
-}
+)
 
 // UppercaseFirstCharacter Uppercases the first character in a string. This assumes UTF-8, so we have
 // to be careful with unicode, don't treat it as a byte array.
@@ -136,7 +142,7 @@ func LowercaseFirstCharacter(str string) string {
 // ToCamelCase will convert query-arg style strings to CamelCase. We will
 // use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
-// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord.
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
 
@@ -162,7 +168,7 @@ func ToCamelCase(str string) string {
 }
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
-// order, since Golang scrambles dictionary keys
+// order, since Golang scrambles dictionary keys.
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -187,7 +193,7 @@ func SortedPathsKeys(dict openapi3.Paths) []string {
 	return keys
 }
 
-// SortedOperationsKeys returns Operation dictionary keys in sorted order
+// SortedOperationsKeys returns Operation dictionary keys in sorted order.
 func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -199,7 +205,7 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 	return keys
 }
 
-// SortedResponsesKeys returns Responses dictionary keys in sorted order
+// SortedResponsesKeys returns Responses dictionary keys in sorted order.
 func SortedResponsesKeys(dict openapi3.Responses) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -222,7 +228,7 @@ func SortedHeadersKeys(dict openapi3.Headers) []string {
 	return keys
 }
 
-// SortedContentKeys returns Content dictionary keys in sorted order
+// SortedContentKeys returns Content dictionary keys in sorted order.
 func SortedContentKeys(dict openapi3.Content) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -234,7 +240,7 @@ func SortedContentKeys(dict openapi3.Content) []string {
 	return keys
 }
 
-// SortedStringKeys returns string map keys in sorted order
+// SortedStringKeys returns string map keys in sorted order.
 func SortedStringKeys(dict map[string]string) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -246,7 +252,7 @@ func SortedStringKeys(dict map[string]string) []string {
 	return keys
 }
 
-// SortedParameterKeys returns sorted keys for a ParameterRef dict
+// SortedParameterKeys returns sorted keys for a ParameterRef dict.
 func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
@@ -281,7 +287,7 @@ func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
 }
 
 // StringInArray checks whether the specified string is present in an array
-// of strings
+// of strings.
 func StringInArray(str string, array []string) bool {
 	for _, elt := range array {
 		if elt == str {
@@ -302,7 +308,7 @@ func RefPathToGoType(refPath string) (string, error) {
 	return refPathToGoType(refPath, true)
 }
 
-// refPathToGoType returns the Go typename for refPath given its
+// refPathToGoType returns the Go typename for refPath given its.
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
@@ -319,7 +325,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		// the spec.
 		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
 		if err != nil {
-			return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
+			return "", fmt.Errorf("error finding ref: %s in spec: %w", refPath, err)
 		}
 		if name != "" {
 			return name, nil
@@ -445,7 +451,7 @@ func SwaggerUriToGorillaUri(uri string) string {
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
-// /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
+// /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3.
 func OrderedParamsFromUri(uri string) []string {
 	matches := pathParamRE.FindAllStringSubmatch(uri, -1)
 	result := make([]string, len(matches))
@@ -455,7 +461,7 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s
+// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s.
 func ReplacePathParamsWithStr(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "%s")
 }
@@ -480,7 +486,7 @@ func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinit
 	return out, nil
 }
 
-// IsGoKeyword returns whether the given string is a go keyword
+// IsGoKeyword returns whether the given string is a go keyword.
 func IsGoKeyword(str string) bool {
 	return token.IsKeyword(str)
 }
@@ -553,7 +559,7 @@ func SanitizeGoIdentity(str string) string {
 }
 
 // SanitizeEnumNames fixes illegal chars in the enum names
-// and removes duplicates
+// and removes duplicates.
 func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
 	dupCheck := make(map[string]int, len(enumValues))
 	deDup := make([][]string, 0, len(enumValues))
@@ -626,15 +632,15 @@ func typeNamePrefix(name string) (prefix string) {
 			}
 
 			// break the loop, done parsing prefix
-			return
+			return prefix
 		}
 	}
 
-	return
+	return prefix
 }
 
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
-// valid in Go
+// valid in Go.
 func SchemaNameToTypeName(name string) string {
 	return typeNamePrefix(name) + ToCamelCase(name)
 }
@@ -684,17 +690,17 @@ func stringToGoCommentWithPrefix(in, prefix string) string {
 	}
 
 	// Normalize newlines from Windows/Mac to Linux
-	in = strings.Replace(in, "\r\n", "\n", -1)
-	in = strings.Replace(in, "\r", "\n", -1)
+	in = strings.ReplaceAll(in, "\r\n", "\n")
+	in = strings.ReplaceAll(in, "\r", "\n")
 
 	// Add comment to each line
-	var lines []string
-	for i, line := range strings.Split(in, "\n") {
+	lines := strings.Split(in, "\n")
+	for i, line := range lines {
 		s := "//"
 		if i == 0 && len(prefix) > 0 {
 			s += " " + prefix
 		}
-		lines = append(lines, fmt.Sprintf("%s %s", s, line))
+		lines[i] = fmt.Sprintf("%s %s", s, line)
 	}
 	in = strings.Join(lines, "\n")
 
@@ -740,7 +746,7 @@ func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, err
 }
 
 // renameParameter generates the name for a parameter, taking x-go-name into
-// account
+// account.
 func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
 	if parameterRef.Ref != "" {
 		return SchemaNameToTypeName(parameterName), nil
@@ -758,7 +764,7 @@ func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) 
 }
 
 // renameResponse generates the name for a parameter, taking x-go-name into
-// account
+// account.
 func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
 	if responseRef.Ref != "" {
 		return SchemaNameToTypeName(responseName), nil
@@ -776,7 +782,7 @@ func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (str
 }
 
 // renameRequestBody generates the name for a parameter, taking x-go-name into
-// account
+// account.
 func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
 	if requestBodyRef.Ref != "" {
 		return SchemaNameToTypeName(requestBodyName), nil
@@ -835,7 +841,7 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
-		return nil, nil
+		return nil, nil //nolint: nilnil
 	}
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
@@ -848,7 +854,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 		return &gi, nil
 	}
 
-	return nil, nil
+	return nil, nil //nolint: nilnil
 }
 
 func MergeImports(dst, src map[string]goImport) {

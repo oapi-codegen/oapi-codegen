@@ -80,7 +80,6 @@ func TestIsJson(t *testing.T) {
 			if got != test.want {
 				t.Fatalf("IsJson validation failed. Want [%v] Got [%v]", test.want, got)
 			}
-
 		})
 	}
 }

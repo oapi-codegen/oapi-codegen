@@ -7,7 +7,6 @@ import (
 )
 
 func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
-
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 

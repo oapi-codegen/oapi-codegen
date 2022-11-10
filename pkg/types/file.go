@@ -43,7 +43,7 @@ func (file File) Bytes() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer func() { _ = f.Close() }()
+		defer f.Close() //nolint: errcheck
 		return io.ReadAll(f)
 	}
 	return file.data, nil

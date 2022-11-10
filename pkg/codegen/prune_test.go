@@ -12,7 +12,8 @@ func TestFindReferences(t *testing.T) {
 		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 
-		refs := findComponentRefs(swagger)
+		refs, err := findComponentRefs(swagger)
+		assert.NoError(t, err)
 		assert.Len(t, refs, 14)
 	})
 	t.Run("only cat", func(t *testing.T) {
@@ -26,7 +27,8 @@ func TestFindReferences(t *testing.T) {
 
 		filterOperationsByTag(swagger, opts)
 
-		refs := findComponentRefs(swagger)
+		refs, err := findComponentRefs(swagger)
+		assert.NoError(t, err)
 		assert.Len(t, refs, 7)
 	})
 	t.Run("only dog", func(t *testing.T) {
@@ -41,7 +43,8 @@ func TestFindReferences(t *testing.T) {
 
 		filterOperationsByTag(swagger, opts)
 
-		refs := findComponentRefs(swagger)
+		refs, err := findComponentRefs(swagger)
+		assert.NoError(t, err)
 		assert.Len(t, refs, 7)
 	})
 }
@@ -57,21 +60,24 @@ func TestFilterOnlyCat(t *testing.T) {
 		},
 	}
 
-	refs := findComponentRefs(swagger)
+	refs, err := findComponentRefs(swagger)
+	assert.NoError(t, err)
 	assert.Len(t, refs, 14)
 
 	assert.Len(t, swagger.Components.Schemas, 5)
 
 	filterOperationsByTag(swagger, opts)
 
-	refs = findComponentRefs(swagger)
+	refs, err = findComponentRefs(swagger)
+	assert.NoError(t, err)
 	assert.Len(t, refs, 7)
 
 	assert.NotEmpty(t, swagger.Paths["/cat"], "/cat path should still be in spec")
 	assert.NotEmpty(t, swagger.Paths["/cat"].Get, "GET /cat operation should still be in spec")
 	assert.Empty(t, swagger.Paths["/dog"].Get, "GET /dog should have been removed from spec")
 
-	pruneUnusedComponents(swagger)
+	err = pruneUnusedComponents(swagger)
+	assert.NoError(t, err)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -87,12 +93,14 @@ func TestFilterOnlyDog(t *testing.T) {
 		},
 	}
 
-	refs := findComponentRefs(swagger)
+	refs, err := findComponentRefs(swagger)
+	assert.NoError(t, err)
 	assert.Len(t, refs, 14)
 
 	filterOperationsByTag(swagger, opts)
 
-	refs = findComponentRefs(swagger)
+	refs, err = findComponentRefs(swagger)
+	assert.NoError(t, err)
 	assert.Len(t, refs, 7)
 
 	assert.Len(t, swagger.Components.Schemas, 5)
@@ -101,7 +109,8 @@ func TestFilterOnlyDog(t *testing.T) {
 	assert.NotEmpty(t, swagger.Paths["/dog"].Get)
 	assert.Empty(t, swagger.Paths["/cat"].Get)
 
-	pruneUnusedComponents(swagger)
+	err = pruneUnusedComponents(swagger)
+	assert.NoError(t, err)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -121,7 +130,8 @@ func TestPruningUnusedComponents(t *testing.T) {
 	assert.Len(t, swagger.Components.Links, 1)
 	assert.Len(t, swagger.Components.Callbacks, 1)
 
-	pruneUnusedComponents(swagger)
+	err = pruneUnusedComponents(swagger)
+	assert.NoError(t, err)
 
 	assert.Len(t, swagger.Components.Schemas, 0)
 	assert.Len(t, swagger.Components.Parameters, 0)
