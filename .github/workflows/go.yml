@@ -1,0 +1,49 @@
+name: Go build, test and lint
+
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+  pull_request:
+permissions:
+  contents: read
+
+jobs:
+  go:
+    strategy:
+      matrix:
+        go: [1.19]
+        golangcli: [1.50.1]
+        os: [ubuntu-latest]
+    name: lint
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+          cache: true
+
+      - name: Validate go generate / mod
+        run: |
+          go generate ./...
+          go mod tidy
+          git --no-pager diff && [[ 0 -eq $(git status --porcelain | wc -l) ]]
+
+      - name: Go Lint Standard
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ matrix.golangci }}
+          args: "--out-${NO_FUTURE}format colored-line-number"
+          skip-cache: true
+
+      - name: Go Build
+        run: go build ./...
+
+      - name: Go Test
+        run: go test -race ./...

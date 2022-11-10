@@ -37,6 +37,7 @@ import (
 var testSchema []byte
 
 func doGet(t *testing.T, handler http.Handler, rawURL string) *httptest.ResponseRecorder {
+	t.Helper()
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -47,6 +48,7 @@ func doGet(t *testing.T, handler http.Handler, rawURL string) *httptest.Response
 }
 
 func doPost(t *testing.T, handler http.Handler, rawURL string, jsonBody interface{}) *httptest.ResponseRecorder {
+	t.Helper()
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -323,7 +325,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 			MultiError:            true,
 		},
 		MultiErrorHandler: func(me openapi3.MultiError) error {
-			return fmt.Errorf("Bad stuff -  %s", me.Error())
+			return fmt.Errorf("Bad stuff -  %w", me)
 		},
 	}
 

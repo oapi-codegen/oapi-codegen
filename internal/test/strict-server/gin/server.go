@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"io"
 	"mime/multipart"
 )
@@ -20,7 +21,7 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 	return MultipartExample200MultipartResponse(func(writer *multipart.Writer) error {
 		for {
 			part, err := request.Body.NextPart()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			} else if err != nil {
 				return err
@@ -54,7 +55,7 @@ func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, reque
 		return MultipleRequestAndResponseTypes200MultipartResponse(func(writer *multipart.Writer) error {
 			for {
 				part, err := request.MultipartBody.NextPart()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					return nil
 				} else if err != nil {
 					return err

@@ -394,10 +394,10 @@ func TestStyleParam(t *testing.T) {
 
 	// ------------------------  spaceDelimited Style --------------------------
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, array)
@@ -408,60 +408,60 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, object)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, object)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, dict)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, dict)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation("spaceDelimited", false, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation("spaceDelimited", true, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
 	// -------------------------  pipeDelimited Style --------------------------
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
 	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, array)
@@ -472,113 +472,113 @@ func TestStyleParam(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id=3&id=4&id=5", result)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, object)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, object)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, dict)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, dict)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, dict)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation("pipeDelimited", false, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation("pipeDelimited", true, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
 	// ---------------------------  deepObject Style ---------------------------
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, primitive)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, primitive)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, array)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, array)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, array)
+	result, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, array)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[0]=3&id[1]=4&id[2]=5", result)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, object)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, object)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, object)
+	result, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, object)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, dict)
+	result, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, dict)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "id[firstName]=Alex&id[role]=admin", result)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, timestamp)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &timestamp)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, &timestamp)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, date)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &date)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, &date)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, aUUID)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", false, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation(deepObject, false, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
-	result, err = StyleParamWithLocation("deepObject", true, "id", ParamLocationQuery, &aUUID)
+	_, err = StyleParamWithLocation(deepObject, true, "id", ParamLocationQuery, &aUUID)
 	assert.Error(t, err)
 
 	// Misc tests
@@ -629,7 +629,7 @@ func TestStyleParam(t *testing.T) {
 	assert.EqualValues(t, "1.05", result)
 
 	uuidValue := uuid.MustParse("c2d07ba4-5106-4eab-bcad-0bd6068dcb1a")
-	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, types.UUID(uuidValue))
+	result, err = StyleParamWithLocation("simple", false, "foo", ParamLocationQuery, uuidValue)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "c2d07ba4-5106-4eab-bcad-0bd6068dcb1a", result)
 
@@ -688,5 +688,4 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, uuidD)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "972beb41-e5ea-4b31-a79a-96f4999d8769", result)
-
 }

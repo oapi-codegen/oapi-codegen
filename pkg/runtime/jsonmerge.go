@@ -7,16 +7,16 @@ import (
 )
 
 // JsonMerge merges two JSON representation into a single object. `data` is the
-// existing representation and `patch` is the new data to be merged in
+// existing representation and `patch` is the new data to be merged in.
 func JsonMerge(data, patch json.RawMessage) (json.RawMessage, error) {
 	merger := jsonmerge.Merger{
 		CopyNonexistent: true,
 	}
 	if data == nil {
-		data = []byte(`{}`)
+		data = []byte(emptyJSON)
 	}
 	if patch == nil {
-		patch = []byte(`{}`)
+		patch = []byte(emptyJSON)
 	}
 	merged, err := merger.MergeBytes(data, patch)
 	if err != nil {

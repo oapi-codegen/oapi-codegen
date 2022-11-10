@@ -7,7 +7,6 @@ import (
 )
 
 func TestTemp(t *testing.T) {
-
 	var (
 		withTrailingSlash    = "https://my-api.com/some-base-url/v1/"
 		withoutTrailingSlash = "https://my-api.com/some-base-url/v1"

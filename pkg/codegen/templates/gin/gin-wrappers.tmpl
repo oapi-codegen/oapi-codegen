@@ -32,7 +32,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{if .IsStyled}}
   err = runtime.BindStyledParameter("{{.Style}}",{{.Explode}}, "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}})
   if err != nil {
-    siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+    siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
     return
   }
   {{end}}
@@ -62,14 +62,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           var value {{.TypeDef}}
           err = json.Unmarshal([]byte(paramValue), &value)
           if err != nil {
-            siw.ErrorHandler(c, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %s", err), http.StatusBadRequest) {
+            siw.ErrorHandler(c, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %w", err), http.StatusBadRequest) {
             return
           }
 
           params.{{.GoName}} = {{if not .Required}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
-           if !siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest) {
+           if !siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found: %w", err), http.StatusBadRequest) {
              return
            }
         }{{end}}
@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
       if err != nil {
-        siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+        siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
         return
       }
       {{end}}
@@ -111,7 +111,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{if .IsStyled}}
           err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
           if err != nil {
-            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
           }
         {{end}}
@@ -119,7 +119,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err), http.StatusBadRequest)
             return
         }{{end}}
 
@@ -157,7 +157,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         var value {{.TypeDef}}
         err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
         if err != nil {
-            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
         }
         params.{{.GoName}} = {{if not .Required}}&{{end}}value

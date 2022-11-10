@@ -20,7 +20,7 @@ func TestParameters(t *testing.T) {
 
 	h := Handler(&m)
 
-	req := httptest.NewRequest("POST", "http://openapitest.deepmap.ai/resource2/1?inline_query_argument=99", nil)
+	req := httptest.NewRequest(http.MethodPost, "http://openapitest.deepmap.ai/resource2/1?inline_query_argument=99", nil)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 
@@ -43,6 +43,7 @@ func TestErrorHandlerFunc(t *testing.T) {
 
 	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
 	assert.Nil(t, err)
+	defer req.Body.Close()
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 }
 
@@ -55,7 +56,10 @@ func TestErrorHandlerFuncBackwardsCompatible(t *testing.T) {
 	defer s.Close()
 
 	req, err := http.DefaultClient.Get(s.URL + "/get-with-args")
-	b, _ := io.ReadAll(req.Body)
+	assert.NoError(t, err)
+	defer req.Body.Close()
+	b, err := io.ReadAll(req.Body)
+	assert.NoError(t, err)
 	assert.Nil(t, err)
 	assert.Equal(t, "text/plain; charset=utf-8", req.Header.Get("Content-Type"))
 	assert.Equal(t, "Query argument required_argument is required, but not found\n", string(b))

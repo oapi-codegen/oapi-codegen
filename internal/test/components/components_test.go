@@ -8,6 +8,7 @@ import (
 )
 
 func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
+	t.Helper()
 	var v1, v2 interface{}
 
 	err := json.Unmarshal(j1, &v1)
@@ -30,7 +31,6 @@ func TestRawJSON(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertJsonEqual(t, []byte(buf), buf2)
-
 }
 
 func TestAdditionalProperties(t *testing.T) {
@@ -87,7 +87,7 @@ func TestOneOf(t *testing.T) {
 	assert.NoError(t, err)
 	v2, err := dst.AsOneOfVariant2()
 	assert.NoError(t, err)
-	assert.Equal(t, OneOfVariant2([]int{1, 2, 3}), v2)
+	assert.Equal(t, []int{1, 2, 3}, v2)
 
 	err = json.Unmarshal([]byte(variant3), &dst)
 	assert.NoError(t, err)

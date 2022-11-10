@@ -215,7 +215,7 @@ func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, reqEdit
 // ParseGetClientResponse parses an HTTP response from a GetClientWithResponse call
 func ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}

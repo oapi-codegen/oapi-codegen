@@ -21,19 +21,19 @@ const (
 	remoteRefFile = `https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded` +
 		`/petstore-expanded.yaml`
 	remoteRefImport = `github.com/deepmap/oapi-codegen/examples/petstore-expanded`
+	packageName     = "api"
 )
 
-func checkLint(t *testing.T, filename string, code []byte) {
+func checkLint(t *testing.T, code string) {
+	t.Helper()
 	linter := new(lint.Linter)
-	problems, err := linter.Lint(filename, code)
+	problems, err := linter.Lint("test.gen.go", []byte(code))
 	assert.NoError(t, err)
 	assert.Len(t, problems, 0)
 }
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
-	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
@@ -72,15 +72,13 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 `)
 
 	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
+	checkLint(t, code)
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
 	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
 
 	// Input vars for code generation:
-	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
@@ -107,16 +105,15 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 
 func TestExamplePetStoreParseFunction(t *testing.T) {
-
 	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
 
 	cannedResponse := &http.Response{
-		StatusCode: 200,
+		StatusCode: http.StatusOK,
 		Body:       io.NopCloser(bytes.NewReader(bodyBytes)),
 		Header:     http.Header{},
 	}
@@ -132,7 +129,6 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 }
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Configuration{
@@ -190,11 +186,10 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
 
 	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
+	checkLint(t, code)
 }
 
 func TestGoTypeImport(t *testing.T) {
-	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
@@ -236,12 +231,10 @@ func TestGoTypeImport(t *testing.T) {
 	}
 
 	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
-
+	checkLint(t, code)
 }
 
 func TestRemoteExternalReference(t *testing.T) {
-	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
@@ -297,8 +290,7 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 `)
 
 	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
-
+	checkLint(t, code)
 }
 
 //go:embed test_spec.yaml

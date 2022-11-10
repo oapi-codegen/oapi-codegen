@@ -17,8 +17,8 @@ const hostname = "http://host"
 
 func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 	doer := &HTTPRequestDoerMock{}
-	client, _ := NewClientWithResponses(hostname, WithHTTPClient(doer))
-	_ = client
+	client, err := NewClientWithResponses(hostname, WithHTTPClient(doer))
+	require.NoError(t, err)
 
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
@@ -26,16 +26,17 @@ func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "http://host/pets:validate", req.URL.String())
 	})
 
-	client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
+	_, err = client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
 		Names: []string{"fido"},
 	})
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
 func TestClient_WhenPathHasId_RequestHasCorrectPath(t *testing.T) {
 	doer := &HTTPRequestDoerMock{}
-	client, _ := NewClientWithResponses(hostname, WithHTTPClient(doer))
-	_ = client
+	client, err := NewClientWithResponses(hostname, WithHTTPClient(doer))
+	require.NoError(t, err)
 
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
@@ -43,14 +44,15 @@ func TestClient_WhenPathHasId_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "/pets/id", req.URL.Path)
 	})
 	petID := "id"
-	client.GetPetWithResponse(context.Background(), petID)
+	_, err = client.GetPetWithResponse(context.Background(), petID)
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
 func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t *testing.T) {
 	doer := &HTTPRequestDoerMock{}
-	client, _ := NewClientWithResponses(hostname, WithHTTPClient(doer))
-	_ = client
+	client, err := NewClientWithResponses(hostname, WithHTTPClient(doer))
+	require.NoError(t, err)
 
 	doer.On("Do", mock.Anything).Return(nil, errors.New("something went wrong")).Run(func(args mock.Arguments) {
 		req, ok := args.Get(0).(*http.Request)
@@ -58,12 +60,12 @@ func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t
 		assert.Equal(t, "http://host/pets/id1%2Fid2", req.URL.String())
 	})
 	petID := "id1/id2"
-	client.GetPetWithResponse(context.Background(), petID)
+	_, err = client.GetPetWithResponse(context.Background(), petID)
+	require.Error(t, err)
 	doer.AssertExpectations(t)
 }
 
 func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
-
 	e := echo.New()
 	m := &MockClient{}
 	RegisterHandlers(e, m)
@@ -99,7 +101,7 @@ func (m *HTTPRequestDoerMock) Do(req *http.Request) (*http.Response, error) {
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*http.Response), args.Error(1)
+	return args.Get(0).(*http.Response), args.Error(1) //nolint: forcetypeassert
 }
 
 // An implementation of the server interface which helps us check server

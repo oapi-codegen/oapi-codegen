@@ -11,7 +11,7 @@ import (
 
 const (
 	// ErrSecurityProviderApiKeyInvalidIn indicates a usage of an invalid In.
-	// Should be cookie, header or query
+	// Should be cookie, header or query.
 	ErrSecurityProviderApiKeyInvalidIn = SecurityProviderError("invalid 'in' specified for apiKey")
 )
 
@@ -71,15 +71,15 @@ func (s *SecurityProviderBearerToken) Intercept(ctx context.Context, req *http.R
 // either to a cookie, header or as a query parameter.
 func NewSecurityProviderApiKey(in, name, apiKey string) (*SecurityProviderApiKey, error) {
 	interceptors := map[string]func(ctx context.Context, req *http.Request) error{
-		"cookie": func(ctx context.Context, req *http.Request) error {
+		"cookie": func(_ context.Context, req *http.Request) error { //nolint: unparam
 			req.AddCookie(&http.Cookie{Name: name, Value: apiKey})
 			return nil
 		},
-		"header": func(ctx context.Context, req *http.Request) error {
+		"header": func(_ context.Context, req *http.Request) error { //nolint: unparam
 			req.Header.Add(name, apiKey)
 			return nil
 		},
-		"query": func(ctx context.Context, req *http.Request) error {
+		"query": func(_ context.Context, req *http.Request) error { //nolint: unparam
 			query := req.URL.Query()
 			query.Add(name, apiKey)
 			req.URL.RawQuery = query.Encode()

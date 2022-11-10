@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"io"
 	"mime/multipart"
 )
@@ -20,7 +21,7 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 	return MultipartExample200MultipartResponse(func(writer *multipart.Writer) error {
 		for {
 			part, err := request.Body.NextPart()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			} else if err != nil {
 				return err
@@ -54,7 +55,7 @@ func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, reque
 		return MultipleRequestAndResponseTypes200MultipartResponse(func(writer *multipart.Writer) error {
 			for {
 				part, err := request.MultipartBody.NextPart()
-				if err == io.EOF {
+				if errors.Is(err, io.EOF) {
 					return nil
 				} else if err != nil {
 					return err
@@ -94,7 +95,7 @@ func (s StrictServer) URLEncodedExample(ctx context.Context, request URLEncodedE
 }
 
 func (s StrictServer) HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error) {
-	return HeadersExample200JSONResponse{Body: Example(*request.Body), Headers: HeadersExample200ResponseHeaders{Header1: request.Params.Header1, Header2: *request.Params.Header2}}, nil
+	return HeadersExample200JSONResponse{Body: *request.Body, Headers: HeadersExample200ResponseHeaders{Header1: request.Params.Header1, Header2: *request.Params.Header2}}, nil
 }
 
 func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error) {

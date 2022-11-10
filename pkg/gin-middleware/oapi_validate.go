@@ -34,32 +34,31 @@ const (
 	UserDataKey   = "oapi-codegen/user-data"
 )
 
-// OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
+// OapiValidatorFromYamlFile creates a validator middleware from a YAML file path.
 func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
 
 // OapiRequestValidator is an gin middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
-// OAPI validation fails on the request, we return an HTTP/400 with error message
+// OAPI validation fails on the request, we return an HTTP/400 with error message.
 func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
-// ErrorHandler is called when there is an error in validation
+// ErrorHandler is called when there is an error in validation.
 type ErrorHandler func(c *gin.Context, message string, statusCode int)
 
-// MultiErrorHandler is called when oapi returns a MultiError type
+// MultiErrorHandler is called when oapi returns a MultiError type.
 type MultiErrorHandler func(openapi3.MultiError) error
 
 // Options to customize request validation. These are passed through to
@@ -72,7 +71,7 @@ type Options struct {
 	MultiErrorHandler MultiErrorHandler
 }
 
-// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options.
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.HandlerFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
@@ -102,16 +101,16 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 	// We failed to find a matching route for the request.
 	if err != nil {
-		switch e := err.(type) {
-		case *routers.RouteError:
+		var re *routers.RouteError
+		if errors.As(err, &re) {
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return errors.New(e.Reason)
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating route: %s", err.Error())
+			return errors.New(re.Reason)
 		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return fmt.Errorf("error validating route: %w", err)
 	}
 
 	validationInput := &openapi3filter.RequestValidationInput{
@@ -138,20 +137,24 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 			return errFunc(me)
 		}
 
-		switch e := err.(type) {
-		case *openapi3filter.RequestError:
+		var re *openapi3filter.RequestError
+
+		if errors.As(err, &re) {
 			// We've got a bad request
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
-			errorLines := strings.Split(e.Error(), "\n")
+			errorLines := strings.Split(re.Error(), "\n")
 			return fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
-		case *openapi3filter.SecurityRequirementsError:
-			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
 		}
+
+		var sre *openapi3filter.SecurityRequirementsError
+		if errors.As(err, &sre) {
+			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %w", sre)
+		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return fmt.Errorf("error validating request: %w", err)
 	}
 	return nil
 }
@@ -175,7 +178,7 @@ func GetUserData(c context.Context) interface{} {
 }
 
 // attempt to get the MultiErrorHandler from the options. If it is not set,
-// return a default handler
+// return a default handler.
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
 		return defaultMultiErrorHandler
@@ -192,5 +195,5 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // of all of the errors. This method is called if there are no other
 // methods defined on the options.
 func defaultMultiErrorHandler(me openapi3.MultiError) error {
-	return fmt.Errorf("multiple errors encountered: %s", me)
+	return fmt.Errorf("multiple errors encountered: %w", me)
 }

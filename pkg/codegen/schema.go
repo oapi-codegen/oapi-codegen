@@ -97,13 +97,12 @@ func (p Property) GoTypeDef() string {
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
 			p.WriteOnly) {
-
 		typeDef = "*" + typeDef
 	}
 	return typeDef
 }
 
-// EnumDefinition holds type information for enum
+// EnumDefinition holds type information for enum.
 type EnumDefinition struct {
 	// Schema is the scheme of a type which has a list of enum values, eg, the
 	// "container" of the enum.
@@ -120,7 +119,7 @@ type EnumDefinition struct {
 	PrefixTypeName bool
 }
 
-// GetValues generates enum names in a way to minimize global conflicts
+// GetValues generates enum names in a way to minimize global conflicts.
 func (e *EnumDefinition) GetValues() map[string]string {
 	// in case there are no conflicts, it's safe to use the values as-is
 	if !e.PrefixTypeName {
@@ -217,7 +216,7 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
-func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) { //nolint: cyclop
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
@@ -233,7 +232,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		// Convert the reference path to Go type
 		refType, err := RefPathToGoType(sref.Ref)
 		if err != nil {
-			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
+			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %w",
 				sref.Ref, err)
 		}
 		return Schema{
@@ -275,10 +274,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Schema type and format, eg. string / binary
 	t := schema.Type
 	// Handle objects and empty schemas first as a special case
-	if t == "" || t == "object" {
+	switch {
+	case t == "" || t == "object":
 		var outType string
 
-		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) && schema.AnyOf == nil && schema.OneOf == nil {
+		if len(schema.Properties) == 0 && //nolint: nestif
+			!SchemaHasAdditionalProperties(schema) &&
+			schema.AnyOf == nil &&
+			schema.OneOf == nil {
 			// If the object has no properties or additional properties, we
 			// have some special cases for its type.
 			if t == "object" {
@@ -406,7 +409,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.GoType = GenStructFromSchema(outSchema)
 		}
 		return outSchema, nil
-	} else if len(schema.Enum) > 0 {
+	case len(schema.Enum) > 0:
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
@@ -458,9 +461,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
 			outSchema.RefType = typeName
 		}
-	} else {
-		err := oapiSchemaToGoType(schema, path, &outSchema)
-		if err != nil {
+	default:
+		if err := oapiSchemaToGoType(schema, path, &outSchema); err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 	}
@@ -469,7 +471,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 // oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
 // all non-object types.
-func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error { //nolint: cyclop
 	f := schema.Format
 	t := schema.Type
 
@@ -504,37 +506,22 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.DefineViaAlias = true
 	case "integer":
 		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else {
+		switch f {
+		case "int64", "int32", "int16", "int18", "int",
+			"uint64", "uint32", "uint16", "uint18", "uint":
+			outSchema.GoType = f
+		default:
 			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
 		// We default to float for "number"
-		if f == "double" {
+		switch f {
+		case "double":
 			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
+		case "float", "":
 			outSchema.GoType = "float32"
-		} else {
+		default:
 			return fmt.Errorf("invalid number format: %s", f)
 		}
 		outSchema.DefineViaAlias = true
@@ -589,9 +576,9 @@ type FieldDescriptor struct {
 }
 
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
-// given a list of schema descriptors
-func GenFieldsFromProperties(props []Property) []string {
-	var fields []string
+// given a list of schema descriptors.
+func GenFieldsFromProperties(props []Property) []string { //nolint: cyclop
+	fields := make([]string, 0, len(props))
 	for i, p := range props {
 		field := ""
 
@@ -691,7 +678,7 @@ func GenStructFromSchema(schema Schema) string {
 }
 
 // This constructs a Go type for a parameter, looking at either the schema or
-// the content, whichever is available
+// the content, whichever is available.
 func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
 		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)

@@ -41,7 +41,7 @@ func LoadEcdsaPublicKey(buf []byte) (*ecdsa.PublicKey, error) {
 	return publicKey, nil
 }
 
-// LoadEcdsaPrivateKey reads an ECDSA private key from an X509 encoding stored in a PEM encoding
+// LoadEcdsaPrivateKey reads an ECDSA private key from an X509 encoding stored in a PEM encoding.
 func LoadEcdsaPrivateKey(buf []byte) (*ecdsa.PrivateKey, error) {
 	block, _ := pem.Decode(buf)
 
@@ -58,7 +58,7 @@ func LoadEcdsaPrivateKey(buf []byte) (*ecdsa.PrivateKey, error) {
 	return privateKey, nil
 }
 
-// StoreEcdsaPublicKey writes an ECDSA public key to a PEM encoding
+// StoreEcdsaPublicKey writes an ECDSA public key to a PEM encoding.
 func StoreEcdsaPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
 	encodedKey, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
@@ -71,7 +71,7 @@ func StoreEcdsaPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
 	return pemEncodedKey, nil
 }
 
-// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding
+// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding.
 func StoreEcdsaPrivateKey(privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	encodedKey, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {

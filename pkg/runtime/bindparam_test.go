@@ -26,7 +26,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// MockBinder is just an independent version of Binder that has the Bind implemented
+// MockBinder is just an independent version of Binder that has the Bind implemented.
 type MockBinder struct {
 	time.Time
 }
@@ -38,7 +38,7 @@ func (d *MockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing '%s' as date: %w", src, err)
 	}
 	d.Time = parsedTime
 	return nil
@@ -77,7 +77,7 @@ func (b *AnotherMockBinder) Bind(src string) error {
 	}
 	parsedTime, err := time.Parse(types.DateFormat, src)
 	if err != nil {
-		return fmt.Errorf("error parsing '%s' as date: %s", src, err)
+		return fmt.Errorf("error parsing '%s' as date: %w", src, err)
 	}
 	b.Time = parsedTime
 	return nil
@@ -292,7 +292,7 @@ func TestSplitParameter(t *testing.T) {
 }
 
 func TestBindQueryParameter(t *testing.T) {
-	t.Run("deepObject", func(t *testing.T) {
+	t.Run(deepObject, func(t *testing.T) {
 		type ID struct {
 			FirstName *string     `json:"firstName"`
 			LastName  *string     `json:"lastName"`
@@ -319,7 +319,7 @@ func TestBindQueryParameter(t *testing.T) {
 			"id[married]":   {"2020-02-02"},
 		}
 
-		err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+		err := BindQueryParameter(deepObject, true, false, paramName, queryParams, &actual)
 		assert.NoError(t, err)
 		assert.Equal(t, expectedDeepObject, actual)
 	})
@@ -356,7 +356,6 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.Error(t, err)
 		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
 		assert.Error(t, err)
-
 	})
 }
 
@@ -401,7 +400,7 @@ func TestBindParameterViaAlias(t *testing.T) {
 
 	dst := new(AliasTortureTest)
 
-	err := BindQueryParameter("deepObject", true, false, "alias", queryParams, &dst)
+	err := BindQueryParameter(deepObject, true, false, "alias", queryParams, &dst)
 	require.NoError(t, err)
 
 	var sp AString = "strp"

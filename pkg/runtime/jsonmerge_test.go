@@ -6,6 +6,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	fooBar = `{"foo":"bar"}`
+)
+
 func TestJsonMerge(t *testing.T) {
 	t.Run("when object", func(t *testing.T) {
 		t.Run("Merges properties defined in both objects", func(t *testing.T) {
@@ -19,7 +23,7 @@ func TestJsonMerge(t *testing.T) {
 		})
 
 		t.Run("Sets property defined in only src object", func(t *testing.T) {
-			data := `{}`
+			data := emptyJSON
 			patch := `{"source":"merge-me"}`
 			expected := `{"source":"merge-me"}`
 
@@ -39,9 +43,9 @@ func TestJsonMerge(t *testing.T) {
 		})
 
 		t.Run("Handles empty objects", func(t *testing.T) {
-			data := `{}`
-			patch := `{}`
-			expected := `{}`
+			data := emptyJSON
+			patch := emptyJSON
+			expected := emptyJSON
 
 			actual, err := JsonMerge([]byte(data), []byte(patch))
 			assert.NoError(t, err)
@@ -49,8 +53,8 @@ func TestJsonMerge(t *testing.T) {
 		})
 
 		t.Run("Handles nil data", func(t *testing.T) {
-			patch := `{"foo":"bar"}`
-			expected := `{"foo":"bar"}`
+			patch := fooBar
+			expected := fooBar
 
 			actual, err := JsonMerge(nil, []byte(patch))
 			assert.NoError(t, err)
@@ -58,8 +62,8 @@ func TestJsonMerge(t *testing.T) {
 		})
 
 		t.Run("Handles nil patch", func(t *testing.T) {
-			data := `{"foo":"bar"}`
-			expected := `{"foo":"bar"}`
+			data := fooBar
+			expected := fooBar
 
 			actual, err := JsonMerge([]byte(data), nil)
 			assert.NoError(t, err)

@@ -40,109 +40,109 @@ func (t *testServer) reset() {
 	t.headerParams = nil
 }
 
-// (GET /contentObject/{param})
+// (GET /contentObject/{param}).
 func (t *testServer) GetContentObject(ctx echo.Context, param ComplexObject) error {
 	t.complexObject = &param
 	return nil
 }
 
-// (GET /labelExplodeArray/{.param*})
+// (GET /labelExplodeArray/{.param*}).
 func (t *testServer) GetLabelExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /labelExplodeObject/{.param*})
+// (GET /labelExplodeObject/{.param*}).
 func (t *testServer) GetLabelExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /labelNoExplodeArray/{.param})
+// (GET /labelNoExplodeArray/{.param}).
 func (t *testServer) GetLabelNoExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /labelNoExplodeObject/{.param})
+// (GET /labelNoExplodeObject/{.param}).
 func (t *testServer) GetLabelNoExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /matrixExplodeArray/{.param*})
+// (GET /matrixExplodeArray/{.param*}).
 func (t *testServer) GetMatrixExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /matrixExplodeObject/{.param*})
+// (GET /matrixExplodeObject/{.param*}).
 func (t *testServer) GetMatrixExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /matrixNoExplodeArray/{.param})
+// (GET /matrixNoExplodeArray/{.param}).
 func (t *testServer) GetMatrixNoExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /matrixNoExplodeObject/{.param})
+// (GET /matrixNoExplodeObject/{.param}).
 func (t *testServer) GetMatrixNoExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /simpleExplodeArray/{param*})
+// (GET /simpleExplodeArray/{param*}).
 func (t *testServer) GetSimpleExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /simpleExplodeObject/{param*})
+// (GET /simpleExplodeObject/{param*}).
 func (t *testServer) GetSimpleExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /simpleNoExplodeArray/{param})
+// (GET /simpleNoExplodeArray/{param}).
 func (t *testServer) GetSimpleNoExplodeArray(ctx echo.Context, param []int32) error {
 	t.array = param
 	return nil
 }
 
-// (GET /simpleNoExplodeObject/{param})
+// (GET /simpleNoExplodeObject/{param}).
 func (t *testServer) GetSimpleNoExplodeObject(ctx echo.Context, param Object) error {
 	t.object = &param
 	return nil
 }
 
-// (GET /passThrough/{param})
+// (GET /passThrough/{param}).
 func (t *testServer) GetPassThrough(ctx echo.Context, param string) error {
 	t.passThrough = &param
 	return nil
 }
 
-// (GET /startingWithjNumber/{param})
+// (GET /startingWithjNumber/{param}).
 func (t *testServer) GetStartingWithNumber(ctx echo.Context, n1param string) error {
 	t.n1param = &n1param
 	return nil
 }
 
-// (GET /queryDeepObject)
+// (GET /queryDeepObject).
 func (t *testServer) GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error {
 	t.complexObject = &params.DeepObj
 	return nil
 }
 
-// (GET /simplePrimitive/{param})
+// (GET /simplePrimitive/{param}).
 func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 	t.primitive = &param
 	return nil
 }
 
-// (GET /queryForm)
+// (GET /queryForm).
 func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) error {
 	t.queryParams = &params
 	if params.Ea != nil {
@@ -175,7 +175,7 @@ func (t *testServer) GetQueryForm(ctx echo.Context, params GetQueryFormParams) e
 	return nil
 }
 
-// (GET /header)
+// (GET /header).
 func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 	t.headerParams = &params
 	if params.XPrimitive != nil {
@@ -205,7 +205,7 @@ func (t *testServer) GetHeader(ctx echo.Context, params GetHeaderParams) error {
 	return nil
 }
 
-// (GET /cookie)
+// (GET /cookie).
 func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
 	t.cookieParams = &params
 	if params.Ea != nil {
@@ -235,7 +235,7 @@ func (t *testServer) GetCookie(ctx echo.Context, params GetCookieParams) error {
 	return nil
 }
 
-// (GET /enums)
+// (GET /enums).
 func (t *testServer) EnumParams(ctx echo.Context, params EnumParamsParams) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
@@ -517,7 +517,8 @@ func TestParameterBinding(t *testing.T) {
 	ts.reset()
 }
 
-func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder {
+func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder { //nolint: unparam
+	t.Helper()
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
 	assert.Equal(t, code, rec.Code)

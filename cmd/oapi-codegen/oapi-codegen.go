@@ -21,14 +21,13 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
+	"gopkg.in/yaml.v2"
 )
 
-func errExit(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+func errExitf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
 }
 
@@ -75,7 +74,7 @@ type oldConfiguration struct {
 	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
-func main() {
+func main() { //nolint: cyclop
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
 	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "whether to use the older style config file format")
 	flag.BoolVar(&flagOutputConfig, "output-config", false, "when true, outputs a configuration file for oapi-codegen using current settings")
@@ -116,9 +115,9 @@ func main() {
 	}
 
 	if flag.NArg() < 1 {
-		errExit("Please specify a path to a OpenAPI 3.0 spec file\n")
+		errExitf("Please specify a path to a OpenAPI 3.0 spec file\n")
 	} else if flag.NArg() > 1 {
-		errExit("Only one OpenAPI 3.0 spec file is accepted and it must be the last CLI argument\n")
+		errExitf("Only one OpenAPI 3.0 spec file is accepted and it must be the last CLI argument\n")
 	}
 
 	// We will try to infer whether the user has an old-style config, or a new
@@ -134,7 +133,7 @@ func main() {
 	if oldConfigStyle == nil && (flagConfigFile != "") {
 		configFile, err := os.ReadFile(flagConfigFile)
 		if err != nil {
-			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+			errExitf("error reading config file '%s': %v\n", flagConfigFile, err)
 		}
 		var oldConfig oldConfiguration
 		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
@@ -144,14 +143,15 @@ func main() {
 
 		// If one of the two files parses, but the other fails, we know the
 		// answer.
-		if oldErr != nil && newErr == nil {
+		switch {
+		case oldErr != nil && newErr == nil:
 			f := false
 			oldConfigStyle = &f
-		} else if oldErr == nil && newErr != nil {
+		case oldErr == nil && newErr != nil:
 			t := true
 			oldConfigStyle = &t
-		} else if oldErr != nil && newErr != nil {
-			errExit("error parsing configuration style as old version or new version: %v\n", err)
+		case oldErr != nil && newErr != nil:
+			errExitf("error parsing configuration style as old version or new version: %v\n", err)
 		}
 		// Else we fall through, and we still don't know, so we need to infer it from flags.
 	}
@@ -187,16 +187,16 @@ func main() {
 	}
 
 	var opts configuration
-	if !*oldConfigStyle {
+	if !*oldConfigStyle { //nolint: nestif
 		// We simply read the configuration from disk.
 		if flagConfigFile != "" {
 			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
-				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+				errExitf("error reading config file '%s': %v\n", flagConfigFile, err)
 			}
 			err = yaml.Unmarshal(buf, &opts)
 			if err != nil {
-				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
+				errExitf("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		} else {
 			// In the case where no config file is provided, we assume some
@@ -217,18 +217,18 @@ func main() {
 		var err error
 		opts, err = updateConfigFromFlags(opts)
 		if err != nil {
-			errExit("error processing flags: %v\n", err)
+			errExitf("error processing flags: %v\n", err)
 		}
 	} else {
 		var oldConfig oldConfiguration
 		if flagConfigFile != "" {
 			buf, err := os.ReadFile(flagConfigFile)
 			if err != nil {
-				errExit("error reading config file '%s': %v\n", flagConfigFile, err)
+				errExitf("error reading config file '%s': %v\n", flagConfigFile, err)
 			}
 			err = yaml.Unmarshal(buf, &oldConfig)
 			if err != nil {
-				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
+				errExitf("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		}
 		opts = newConfigFromOldConfig(oldConfig)
@@ -240,14 +240,14 @@ func main() {
 
 	// Now, ensure that the config options are valid.
 	if err := opts.Validate(); err != nil {
-		errExit("configuration error: %v\n", err)
+		errExitf("configuration error: %v\n", err)
 	}
 
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)
 		if err != nil {
-			errExit("error YAML marshaling configuration: %v\n", err)
+			errExitf("error YAML marshaling configuration: %v\n", err)
 		}
 		fmt.Print(string(buf))
 		return
@@ -255,18 +255,18 @@ func main() {
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		errExitf("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
-		errExit("error generating code: %s\n", err)
+		errExitf("error generating code: %s\n", err)
 	}
 
 	if opts.OutputFile != "" {
 		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
 		if err != nil {
-			errExit("error writing generated code to file: %s\n", err)
+			errExitf("error writing generated code to file: %s\n", err)
 		}
 	} else {
 		fmt.Print(code)
@@ -311,7 +311,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 
 // updateConfigFromFlags updates a loaded configuration from flags. Flags
 // override anything in the file. We generate errors for command line options
-// associated with the old style configuration
+// associated with the old style configuration.
 func updateConfigFromFlags(cfg configuration) (configuration, error) {
 	if flagPackageName != "" {
 		cfg.PackageName = flagPackageName
@@ -380,7 +380,7 @@ func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 		var err error
 		cfg.ImportMapping, err = util.ParseCommandlineMap(flagImportMapping)
 		if err != nil {
-			errExit("error parsing import-mapping: %s\n", err)
+			errExitf("error parsing import-mapping: %s\n", err)
 		}
 	}
 	if cfg.ExcludeSchemas == nil {
@@ -438,7 +438,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
+		errExitf("error loading template overrides: %s\n", err)
 	}
 	opts.OutputOptions.UserTemplates = templates
 

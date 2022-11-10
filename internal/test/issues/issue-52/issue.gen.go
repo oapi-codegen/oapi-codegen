@@ -231,7 +231,7 @@ func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEdi
 // ParseExampleGetResponse parses an HTTP response from a ExampleGetWithResponse call
 func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
@@ -323,16 +323,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil

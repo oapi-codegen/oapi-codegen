@@ -6,15 +6,13 @@ import (
 	"sync"
 )
 
-func init() {
-	knownHandlers = make(map[string]ResponseHandler)
-
+func init() { //nolint: gochecknoinits
 	RegisterResponseHandler("application/json", jsonHandler)
 }
 
 var (
 	knownHandlersMu sync.Mutex
-	knownHandlers   map[string]ResponseHandler
+	knownHandlers   = make(map[string]ResponseHandler)
 )
 
 type ResponseHandler func(contentType string, raw io.Reader, obj interface{}, strict bool) error

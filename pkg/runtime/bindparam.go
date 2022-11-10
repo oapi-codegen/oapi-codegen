@@ -41,25 +41,24 @@ func BindStyledParameter(style string, explode bool, paramName string,
 // https://swagger.io/docs/specification/serialization/
 func BindStyledParameterWithLocation(style string, explode bool, paramName string,
 	paramLocation ParamLocation, value string, dest interface{}) error {
-
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}
 
 	// Based on the location of the parameter, we need to unescape it properly.
 	var err error
-	switch paramLocation {
+	switch paramLocation { //nolint: exhaustive
 	case ParamLocationQuery, ParamLocationUndefined:
 		// We unescape undefined parameter locations here for older generated code,
 		// since prior to this refactoring, they always query unescaped.
 		value, err = url.QueryUnescape(value)
 		if err != nil {
-			return fmt.Errorf("error unescaping query parameter '%s': %v", paramName, err)
+			return fmt.Errorf("error unescaping query parameter '%s': %w", paramName, err)
 		}
 	case ParamLocationPath:
 		value, err = url.PathUnescape(value)
 		if err != nil {
-			return fmt.Errorf("error unescaping path parameter '%s': %v", paramName, err)
+			return fmt.Errorf("error unescaping path parameter '%s': %w", paramName, err)
 		}
 	default:
 		// Headers and cookies aren't escaped.
@@ -68,7 +67,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 	// If the destination implements encoding.TextUnmarshaler we use it for binding
 	if tu, ok := dest.(encoding.TextUnmarshaler); ok {
 		if err := tu.UnmarshalText([]byte(value)); err != nil {
-			return fmt.Errorf("error unmarshalling '%s' text as %T: %s", value, dest, err)
+			return fmt.Errorf("error unmarshalling '%s' text as %T: %w", value, dest, err)
 		}
 
 		return nil
@@ -95,7 +94,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 		// Chop up the parameter into parts based on its style
 		parts, err := splitStyledParameter(style, explode, false, paramName, value)
 		if err != nil {
-			return fmt.Errorf("error splitting input '%s' into parts: %s", value, err)
+			return fmt.Errorf("error splitting input '%s' into parts: %w", value, err)
 		}
 
 		return bindSplitPartsToDestinationArray(parts, dest)
@@ -113,11 +112,11 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 // Why, oh why, great Swagger gods, did you have to make this so complicated?
 func splitStyledParameter(style string, explode bool, object bool, paramName string, value string) ([]string, error) {
 	switch style {
-	case "simple":
+	case simple:
 		// In the simple case, we always split on comma
 		parts := strings.Split(value, ",")
 		return parts, nil
-	case "label":
+	case label:
 		// In the label case, it's more tricky. In the no explode case, we have
 		// /users/.3,4,5 for arrays
 		// /users/.role,admin,firstName,Alex for objects
@@ -133,7 +132,6 @@ func splitStyledParameter(style string, explode bool, object bool, paramName str
 				return nil, fmt.Errorf("invalid format for label parameter '%s', should start with '.'", paramName)
 			}
 			return parts[1:], nil
-
 		} else {
 			// In the unexploded case, we strip off the leading period.
 			if value[0] != '.' {
@@ -143,7 +141,7 @@ func splitStyledParameter(style string, explode bool, object bool, paramName str
 			return strings.Split(value[1:], ","), nil
 		}
 
-	case "matrix":
+	case matrix:
 		if explode {
 			// In the exploded case, we break everything up on semicolon
 			parts := strings.Split(value, ";")
@@ -172,7 +170,7 @@ func splitStyledParameter(style string, explode bool, object bool, paramName str
 			str := strings.TrimPrefix(value, prefix)
 			return strings.Split(str, ","), nil
 		}
-	case "form":
+	case form:
 		var parts []string
 		if explode {
 			parts = strings.Split(value, "&")
@@ -212,7 +210,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 	for i, p := range parts {
 		err := BindStringToObject(p, newArray.Index(i).Addr().Interface())
 		if err != nil {
-			return fmt.Errorf("error setting array element: %s", err)
+			return fmt.Errorf("error setting array element: %w", err)
 		}
 	}
 	v.Set(newArray)
@@ -258,7 +256,7 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 	jsonParam := "{" + strings.Join(fields, ",") + "}"
 	err := json.Unmarshal([]byte(jsonParam), dest)
 	if err != nil {
-		return fmt.Errorf("error binding parameter %s fields: %s", paramName, err)
+		return fmt.Errorf("error binding parameter %s fields: %w", paramName, err)
 	}
 	return nil
 }
@@ -277,9 +275,8 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // tell them apart. This code tries to fail, but the moral of the story is that
 // you shouldn't pass objects via form styled query arguments, just use
 // the Content parameter form.
-func BindQueryParameter(style string, explode bool, required bool, paramName string,
+func BindQueryParameter(style string, explode bool, required bool, paramName string, //nolint: cyclop
 	queryParams url.Values, dest interface{}) error {
-
 	// dv = destination value.
 	dv := reflect.Indirect(reflect.ValueOf(dest))
 
@@ -322,9 +319,9 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 	k := t.Kind()
 
 	switch style {
-	case "form":
+	case form:
 		var parts []string
-		if explode {
+		if explode { //nolint: nestif
 			// ok, the explode case in query arguments is very, very annoying,
 			// because an exploded object, such as /users?role=admin&firstName=Alex
 			// isn't actually present in the parameter array. We have to do
@@ -332,7 +329,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			values, found := queryParams[paramName]
 			var err error
 
-			switch k {
+			switch k { //nolint: exhaustive
 			case reflect.Slice:
 				// In the slice case, we simply use the arguments provided by
 				// http library.
@@ -406,7 +403,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			parts = strings.Split(values[0], ",")
 		}
 		var err error
-		switch k {
+		switch k { //nolint: exhaustive
 		case reflect.Slice:
 			err = bindSplitPartsToDestinationArray(parts, output)
 		case reflect.Struct:
@@ -431,7 +428,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			dv.Set(reflect.ValueOf(output))
 		}
 		return nil
-	case "deepObject":
+	case deepObject:
 		if !explode {
 			return errors.New("deepObjects must be exploded")
 		}
@@ -440,7 +437,6 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		return fmt.Errorf("query arguments of style '%s' aren't yet supported", style)
 	default:
 		return fmt.Errorf("style '%s' on parameter '%s' is invalid", style, paramName)
-
 	}
 }
 
@@ -494,7 +490,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 			}
 			err := BindStringToObject(fieldVal[0], v.Field(i).Addr().Interface())
 			if err != nil {
-				return false, fmt.Errorf("could not bind query arg '%s' to request object: %s'", paramName, err)
+				return false, fmt.Errorf("could not bind query arg '%s' to request object: %w", paramName, err)
 			}
 			fieldsPresent = true
 		}
@@ -502,7 +498,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 	return fieldsPresent, nil
 }
 
-// indirect
+// indirect.
 func indirect(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
 	v := reflect.ValueOf(dest)
 	if v.Type().NumMethod() > 0 && v.CanInterface() {

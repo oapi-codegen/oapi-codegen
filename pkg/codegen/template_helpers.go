@@ -25,8 +25,8 @@ import (
 )
 
 const (
-	// These allow the case statements to be sorted later:
-	prefixMostSpecific, prefixLessSpecific, prefixLeastSpecific = "3", "6", "9"
+	// These allow the case statements to be sorted later:.
+	prefixLeastSpecific = "9"
 
 	defaultClientTypeName = "Client"
 )
@@ -72,7 +72,7 @@ func genParamTypes(params []ParameterDefinition) string {
 
 // This is another variation of the function above which generates only the
 // parameter names:
-// ", foo, bar, baz"
+// ", foo, bar, baz".
 func genParamNames(params []ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
@@ -84,7 +84,7 @@ func genParamNames(params []ParameterDefinition) string {
 	return ", " + strings.Join(parts, ", ")
 }
 
-// genResponsePayload generates the payload returned at the end of each client request function
+// genResponsePayload generates the payload returned at the end of each client request function.
 func genResponsePayload(operationID string) string {
 	var buffer = bytes.NewBufferString("")
 
@@ -97,7 +97,7 @@ func genResponsePayload(operationID string) string {
 	return buffer.String()
 }
 
-// genResponseUnmarshal generates unmarshalling steps for structured response payloads
+// genResponseUnmarshal generates unmarshalling steps for structured response payloads.
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
@@ -117,7 +117,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	buffer := new(bytes.Buffer)
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
-
 		responseRef, ok := responses[typeDefinition.ResponseName]
 		if !ok {
 			continue
@@ -140,7 +139,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		// If we made it this far then we need to handle unmarshalling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
-
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
 			if typeDefinition.TypeName == "interface{}" {
 				// Unable to unmarshal this, so we leave it out:
@@ -149,7 +147,6 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 			// Add content-types here (json / yaml / xml etc):
 			switch {
-
 			// JSON:
 			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
@@ -212,11 +209,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
 	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
-
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
 	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
-
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")
@@ -224,7 +219,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	return buffer.String()
 }
 
-// buildUnmarshalCase builds an unmarshalling case clause for different content-types:
+// buildUnmarshalCase builds an unmarshalling case clause for different content-types.
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
@@ -232,7 +227,7 @@ func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string
 	return caseKey, caseClause
 }
 
-// genResponseTypeName creates the name of generated response types (given the operationID):
+// genResponseTypeName creates the name of generated response types (given the operationID).
 func genResponseTypeName(operationID string) string {
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
@@ -257,7 +252,7 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 	}
 }
 
-// This outputs a string array
+// This outputs a string array.
 func toStringArray(sarr []string) string {
 	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
 }

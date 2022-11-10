@@ -38,17 +38,16 @@ const (
 // OapiValidatorFromYamlFile is an Echo middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400.
-// Create validator middleware from a YAML file path
+// Create validator middleware from a YAML file path.
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
@@ -58,10 +57,10 @@ func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
-// ErrorHandler is called when there is an error in validation
+// ErrorHandler is called when there is an error in validation.
 type ErrorHandler func(c echo.Context, err *echo.HTTPError) error
 
-// MultiErrorHandler is called when oapi returns a MultiError type
+// MultiErrorHandler is called when oapi returns a MultiError type.
 type MultiErrorHandler func(openapi3.MultiError) *echo.HTTPError
 
 // Options to customize request validation. These are passed through to
@@ -75,7 +74,7 @@ type Options struct {
 	MultiErrorHandler MultiErrorHandler
 }
 
-// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options.
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
@@ -109,17 +108,16 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 	// We failed to find a matching route for the request.
 	if err != nil {
-		switch e := err.(type) {
-		case *routers.RouteError:
+		var re *routers.RouteError
+		if errors.As(err, &re) {
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return echo.NewHTTPError(http.StatusInternalServerError,
-				fmt.Sprintf("error validating route: %s", err.Error()))
+			return echo.NewHTTPError(http.StatusBadRequest, re.Reason)
 		}
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return echo.NewHTTPError(http.StatusInternalServerError,
+			fmt.Sprintf("error validating route: %s", err))
 	}
 
 	validationInput := &openapi3filter.RequestValidationInput{
@@ -146,37 +144,39 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 			return errFunc(me)
 		}
 
-		switch e := err.(type) {
-		case *openapi3filter.RequestError:
+		var re *openapi3filter.RequestError
+		if errors.As(err, &re) {
 			// We've got a bad request
 			// Split up the verbose error by lines and return the first one
 			// openapi errors seem to be multi-line with a decent message on the first
-			errorLines := strings.Split(e.Error(), "\n")
+			errorLines := strings.Split(re.Error(), "\n")
 			return &echo.HTTPError{
 				Code:     http.StatusBadRequest,
 				Message:  errorLines[0],
 				Internal: err,
 			}
-		case *openapi3filter.SecurityRequirementsError:
-			for _, err := range e.Errors {
-				httpErr, ok := err.(*echo.HTTPError)
-				if ok {
-					return httpErr
+		}
+		var sre *openapi3filter.SecurityRequirementsError
+		if errors.As(err, &sre) {
+			var herr *echo.HTTPError
+			for _, err := range sre.Errors {
+				if errors.As(err, &herr) {
+					return herr
 				}
 			}
 			return &echo.HTTPError{
 				Code:     http.StatusForbidden,
-				Message:  e.Error(),
+				Message:  sre.Error(),
 				Internal: err,
 			}
-		default:
-			// This should never happen today, but if our upstream code changes,
-			// we don't want to crash the server, so handle the unexpected error.
-			return &echo.HTTPError{
-				Code:     http.StatusInternalServerError,
-				Message:  fmt.Sprintf("error validating request: %s", err),
-				Internal: err,
-			}
+		}
+
+		// This should never happen today, but if our upstream code changes,
+		// we don't want to crash the server, so handle the unexpected error.
+		return &echo.HTTPError{
+			Code:     http.StatusInternalServerError,
+			Message:  fmt.Sprintf("error validating request: %s", err),
+			Internal: err,
 		}
 	}
 	return nil
@@ -200,7 +200,7 @@ func GetUserData(c context.Context) interface{} {
 	return c.Value(UserDataKey)
 }
 
-// attempt to get the skipper from the options whether it is set or not
+// attempt to get the skipper from the options whether it is set or not.
 func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 	if options == nil {
 		return echomiddleware.DefaultSkipper
@@ -214,7 +214,7 @@ func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 }
 
 // attempt to get the MultiErrorHandler from the options. If it is not set,
-// return a default handler
+// return a default handler.
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
 		return defaultMultiErrorHandler

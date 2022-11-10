@@ -1,0 +1,71 @@
+run:
+  concurrency: 4
+  deadline: 5m
+
+linters-settings:
+  govet:
+    check-shadowing: false
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 4
+  cyclop:
+    max-complexity: 20
+  revive:
+    rules:
+      - name: var-naming
+        disabled: true
+  gocritic:
+    disabled-checks:
+      - singleCaseSwitch
+      - appendAssign
+  nestif:
+    min-complexity: 10
+
+linters:
+  enable-all: true
+  disable:
+    - interfacer
+    - gas
+    - megacheck
+    - structcheck
+    - varnamelen
+    - gochecknoglobals
+    - scopelint
+    - funlen
+    - godox
+    - exhaustivestruct
+    - goerr113
+    - wsl
+    - nlreturn
+    - gomnd
+    - paralleltest
+    - wrapcheck
+    - testpackage
+    - golint
+    - maligned
+    - gofumpt
+    - forbidigo
+    - exhaustruct
+    - nonamedreturns
+    - tagliatelle
+    - gomoddirectives
+    - ifshort
+    - ireturn
+    - nosnakecase
+    - deadcode
+    - varcheck
+    - lll
+    - stylecheck
+    - noctx
+    - contextcheck
+    - gocognit
+    - gocyclo
+    - maintidx
+
+issues:
+  exclude:
+    - .*Error return value of `.*.Body.Close` is not checked.*
+  exclude-use-default: false
+  max-same-issues: 0

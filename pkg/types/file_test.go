@@ -48,6 +48,6 @@ func TestFileJSON(t *testing.T) {
 	err = json.Unmarshal(buf, &o4)
 	require.NoError(t, err)
 	o4Bytes, err := o4.BinaryFieldPtr.Bytes()
+	require.NoError(t, err)
 	assert.Equal(t, []byte("hello"), o4Bytes)
-
 }
