@@ -19,7 +19,6 @@ import (
 	"os"
 	"path"
 	"runtime/debug"
-	"strings"
 
 	"gopkg.in/yaml.v2"
 
@@ -40,13 +39,13 @@ var (
 	flagPrintVersion   bool
 	flagPackageName    string
 	flagPrintUsage     bool
+	flagGenerate       string
+	flagTemplatesDir   string
 
-	// The options below are deprecated, and they will be removed in a future
+	// Deprecated: The options below will be removed in a future
 	// release. Please use the new config file format.
-	flagGenerate           string
 	flagIncludeTags        string
 	flagExcludeTags        string
-	flagTemplatesDir       string
 	flagImportMapping      string
 	flagExcludeSchemas     string
 	flagResponseTypeSuffix string
@@ -162,10 +161,8 @@ func main() {
 		// config style. It should work correctly if we go down the old path,
 		// even if we have a simple config file readable as both types.
 		deprecatedFlagNames := map[string]bool{
-			"generate":             true,
 			"include-tags":         true,
 			"exclude-tags":         true,
-			"templates":            true,
 			"import-mapping":       true,
 			"exclude-schemas":      true,
 			"response-type-suffix": true,
@@ -214,9 +211,8 @@ func main() {
 				OutputFile: flagOutputFile,
 			}
 		}
-		var err error
-		opts, err = updateConfigFromFlags(opts)
-		if err != nil {
+
+		if err := updateConfigFromFlags(&opts); err != nil {
 			errExit("error processing flags: %v\n", err)
 		}
 	} else {
@@ -310,51 +306,54 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 }
 
 // updateConfigFromFlags updates a loaded configuration from flags. Flags
-// override anything in the file. We generate errors for command line options
-// associated with the old style configuration
-func updateConfigFromFlags(cfg configuration) (configuration, error) {
+// override anything in the file. We generate errors for any unsupported
+// command line flags.
+func updateConfigFromFlags(cfg *configuration) error {
 	if flagPackageName != "" {
 		cfg.PackageName = flagPackageName
 	}
 
-	var unsupportedFlags []string
-
 	if flagGenerate != "types,client,server,spec" {
-		unsupportedFlags = append(unsupportedFlags, "--generate")
+		// Override generation and output options from generate command line flag.
+		if err := generationTargets(&cfg.Configuration, util.ParseCommandLineList(flagGenerate)); err != nil {
+			return err
+		}
 	}
 	if flagIncludeTags != "" {
-		unsupportedFlags = append(unsupportedFlags, "--include-tags")
+		cfg.OutputOptions.IncludeTags = util.ParseCommandLineList(flagIncludeTags)
 	}
 	if flagExcludeTags != "" {
-		unsupportedFlags = append(unsupportedFlags, "--exclude-tags")
+		cfg.OutputOptions.ExcludeTags = util.ParseCommandLineList(flagExcludeTags)
 	}
 	if flagTemplatesDir != "" {
-		unsupportedFlags = append(unsupportedFlags, "--templates")
+		templates, err := loadTemplateOverrides(flagTemplatesDir)
+		if err != nil {
+			return fmt.Errorf("load templates from %q: %w", flagTemplatesDir, err)
+		}
+		cfg.OutputOptions.UserTemplates = templates
 	}
 	if flagImportMapping != "" {
-		unsupportedFlags = append(unsupportedFlags, "--import-mapping")
+		var err error
+		cfg.ImportMapping, err = util.ParseCommandlineMap(flagImportMapping)
+		if err != nil {
+			return err
+		}
 	}
 	if flagExcludeSchemas != "" {
-		unsupportedFlags = append(unsupportedFlags, "--exclude-schemas")
+		cfg.OutputOptions.ExcludeSchemas = util.ParseCommandLineList(flagExcludeSchemas)
 	}
 	if flagResponseTypeSuffix != "" {
-		unsupportedFlags = append(unsupportedFlags, "--response-type-suffix")
+		cfg.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
 	}
 	if flagAliasTypes {
-		unsupportedFlags = append(unsupportedFlags, "--alias-types")
-	}
-
-	if len(unsupportedFlags) > 0 {
-		return configuration{}, fmt.Errorf("flags %s aren't supported in "+
-			"new config style, please use --old-config-style or update your configuration ",
-			strings.Join(unsupportedFlags, ", "))
+		return fmt.Errorf("--alias-types isn't supported any more")
 	}
 
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	return cfg, nil
+	return nil
 }
 
 // updateOldConfigFromFlags parses the flags and the config file. Anything which is
@@ -392,6 +391,40 @@ func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 	return cfg
 }
 
+// generationTargets sets cfg options based on the generation targets.
+func generationTargets(cfg *codegen.Configuration, targets []string) error {
+	opts := codegen.GenerateOptions{} // Blank to start with.
+	for _, opt := range targets {
+		switch opt {
+		case "chi-server", "chi":
+			opts.ChiServer = true
+		case "server", "echo-server", "echo":
+			opts.EchoServer = true
+		case "gin", "gin-server":
+			opts.GinServer = true
+		case "gorilla", "gorilla-server":
+			opts.GorillaServer = true
+		case "strict-server":
+			opts.Strict = true
+		case "client":
+			opts.Client = true
+		case "types", "models":
+			opts.Models = true
+		case "spec", "embedded-spec":
+			opts.EmbeddedSpec = true
+		case "skip-fmt":
+			cfg.OutputOptions.SkipFmt = true
+		case "skip-prune":
+			cfg.OutputOptions.SkipPrune = true
+		default:
+			return fmt.Errorf("unknown generate option %q", opt)
+		}
+	}
+	cfg.Generate = opts
+
+	return nil
+}
+
 func newConfigFromOldConfig(c oldConfiguration) configuration {
 	// Take flags into account.
 	cfg := updateOldConfigFromFlags(c)
@@ -403,33 +436,10 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 	}
 	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
 
-	for _, g := range cfg.GenerateTargets {
-		switch g {
-		case "client":
-			opts.Generate.Client = true
-		case "chi-server":
-			opts.Generate.ChiServer = true
-		case "server":
-			opts.Generate.EchoServer = true
-		case "gin":
-			opts.Generate.GinServer = true
-		case "gorilla":
-			opts.Generate.GorillaServer = true
-		case "strict-server":
-			opts.Generate.Strict = true
-		case "types":
-			opts.Generate.Models = true
-		case "spec":
-			opts.Generate.EmbeddedSpec = true
-		case "skip-fmt":
-			opts.OutputOptions.SkipFmt = true
-		case "skip-prune":
-			opts.OutputOptions.SkipPrune = true
-		default:
-			fmt.Printf("unknown generate option %s\n", g)
-			flag.PrintDefaults()
-			os.Exit(1)
-		}
+	if err := generationTargets(&opts, cfg.GenerateTargets); err != nil {
+		fmt.Println(err)
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	opts.OutputOptions.IncludeTags = cfg.IncludeTags
