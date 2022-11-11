@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 )
 
 type AdditionalImport struct {
@@ -221,8 +222,64 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	// TypeMappings provides the ability to configure how types are mapped including overriding the default behaviour.
+	// Entries keys are in the format: <schemaType>:<schemaFormat>.
+	//
+	// For instance, if you had the following field:
+	//
+	//   id:
+	//     type: string
+	//     format: uuid
+
+	// You could then write the following config:
+	//
+	//   type-mappings:
+	//     string-uuid:
+	//       go-type: string
+	//       skip-optional-pointer: true
+	//       define-via-alias: true
+	//
+	// Leaving the `go-type` will result in `oapi-codegen` detecting the type, as it usually attempts to do
+	//
+	// NOTE that this does not support the ability to import other packages, as per `x-go-type-import`.
+	TypeMappings map[string]TypeMapping `yaml:"type-mappings,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
-	return nil
+	all := make(map[string]string)
+
+	for k, v := range oo.TypeMappings {
+		if problems := v.Validate(); len(problems) > 0 {
+			var joined []string
+			for k2, v2 := range problems {
+				joined = append(joined, k2+" was invalid: "+v2)
+			}
+			all["TypeMappings "+k] = strings.Join(joined, "\n")
+		}
+	}
+
+	return all
+}
+
+// TypeMapping defines a schema type mapping override.
+type TypeMapping struct {
+	// GoType is the Go type that will be used to represent the schema.
+	GoType *string `yaml:"go-type,omitempty"`
+
+	// SkipOptionalPointer should be set to true if we don't need a pointer type even when they are optional.
+	SkipOptionalPointer *bool `yaml:"skip-optional-pointer,omitempty"`
+
+	// DefineViaAlias if true schema will declare a type via alias `type Foo = bool`, otherwise the type definition will be a classic `type Foo bool`
+	DefineViaAlias *bool `yaml:"define-via-alias,omitempty"`
+}
+
+func (tm TypeMapping) Validate() map[string]string {
+	problems := make(map[string]string)
+
+	if tm.GoType != nil && *tm.GoType == "" {
+		problems["GoType"] = "No GoType was provided"
+	}
+
+	return problems
 }
