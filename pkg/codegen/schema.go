@@ -549,6 +549,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 	f := schema.Format
 	t := schema.Type
 
+	var unhandled bool
 	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
@@ -647,8 +648,36 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		}
 		outSchema.DefineViaAlias = true
 	} else {
+		unhandled = true
+	}
+
+	for i, typ := range t.Slice() {
+		if i > 0 {
+			// TODO https://github.com/oapi-codegen/oapi-codegen/issues/373, as we don't support
+			// OpenAPI 3.1.x, which includes multiple options for `type`.
+			break
+		}
+
+		fmt.Println("type", typ, "format", f)
+		if tm, ok := globalState.options.OutputOptions.TypeMappings[typ+"-"+f]; ok {
+			// Config TypeMapping override.
+			if tm.GoType != nil {
+				outSchema.GoType = *tm.GoType
+			}
+			if tm.DefineViaAlias != nil {
+				outSchema.DefineViaAlias = *tm.DefineViaAlias
+			}
+			if tm.SkipOptionalPointer != nil {
+				outSchema.SkipOptionalPointer = *tm.SkipOptionalPointer
+			}
+			return nil
+		}
+	}
+
+	if unhandled {
 		return fmt.Errorf("unhandled Schema type: %v", t)
 	}
+
 	return nil
 }
 
