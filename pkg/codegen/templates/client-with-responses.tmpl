@@ -100,21 +100,104 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 
 {{end}}{{/* operations */}}
 
-{{/* Generate parse functions for responses*/}}
+{{- /* Generate parse functions for responses */ -}}
+{{- define "unmarshal-condition" -}}
+    {{- if eq . "1XX" "2XX" "3XX" "4XX" "5XX" -}}
+    case rsp.StatusCode / 100 == {{slice . 0 1}}:
+    {{- else if eq . "default" -}}
+    default:
+    {{- else -}}
+    case rsp.StatusCode == {{.}}:
+    {{- end}}
+{{- end}}{{- /* define "unmarshal-condition" */ -}}
+
+{{- define "unmarshal-case" -}}
+    var dest {{.TypeDecl}}
+    if err := {{.Handler}}.Unmarshal(bodyBytes, &dest); err != nil {
+        {{- $name := .TypeDecl}}
+        {{- if hasPrefix $name "struct {"}}
+        {{- $name = "struct"}}
+        {{- else}}
+        {{- $parts := split $name "."}}
+        {{- $name = index $parts (sum (len $parts) -1)}}
+        {{- end}}
+        return nil, fmt.Errorf(`decode {{.Handler}} for "{{$name}}": %w`, err)
+    }
+
+    resp.{{.TypeName}} = &dest
+{{- end}}{{- /* define "unmarshal-case" */ -}}
+
+{{- define "unmarshal-response" -}}
+    {{- if .GetResponseTypeDefinitions}}
+        {{- /* Find unique types */ -}}
+        {{ $typeHandlers := dict}}
+        {{ $typeCounts := dict}}
+        {{- range .GetResponseTypeDefinitions}}
+            {{- $handler := ""}}
+            {{- if or (eq .ContentTypeName "application/json" "text/x-json")
+                (hasSuffix .ContentTypeName "+json")}}
+                {{- $handler = "json"}}
+            {{- else if or (eq .ContentTypeName "application/yaml" "application/x-yaml" "text/yaml" "text/x-yaml")
+                (hasSuffix .ContentTypeName "+yaml")}}
+                {{- $handler = "yaml" -}}
+            {{- else if or (eq .ContentTypeName "application/xml" "text/xml" "application/problems+xml")
+                (hasSuffix .ContentTypeName "+xml")}}
+                {{- $handler = "xml" -}}
+            {{- end}}
+            {{- $typeHandlers = set $typeHandlers .ContentTypeName $handler}}
+            {{- $count := get $typeCounts $handler}}
+            {{- if not $count}}{{$count = 0}}{{end}}
+            {{- $typeCounts = set $typeCounts $handler (sum $count 1)}}
+        {{- end}}{{- /* range .GetResponseTypeDefinitions */}}
+
+        {{- $op := .}}
+        contentType := rsp.Header.Get("Content-Type")
+        switch {
+        {{- range $handler, $count := $typeCounts}}
+            {{- $i := 0 -}}
+            {{- range $op.GetResponseTypeDefinitions}}
+                {{- if not (eq (get $typeHandlers .ContentTypeName) $handler)}}
+                    {{- continue}}
+                {{- end}}
+
+                {{- $i = sum $i 1}}
+                {{- if eq $i 1 }}
+                case strings.Contains(contentType, "{{$handler}}"):
+                    switch {
+                {{- end}}
+                {{template "unmarshal-condition" .ResponseName}}
+                {{- if $handler}}
+                    {{template "unmarshal-case" dict "TypeName" .TypeName "TypeDecl" .Schema.TypeDecl "GoType" .Schema.GoType "Handler" $handler}}
+                {{- else}}
+                 // Unsupported Content-Type {{.ContentTypeName}} TypeName {{.TypeName}}
+                {{- end}}
+
+                {{- if eq $i $count}}
+                    }
+                {{- end}}
+            {{- end}}{{/* range $op.GetResponseTypeDefinitions */}}
+        {{- end}}{{/* range .GetResponseTypeDefinitions */ -}}
+        }
+    {{- end}}{{/* if .GetResponseTypeDefinitions */ -}}
+{{- end}}{{/* define "unmarshal-response" */ -}}
+
 {{range .}}{{$opid := .OperationId}}
 
-// Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
-func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+// Parse{{genResponseTypeName $opid}} parses an HTTP response from a {{$opid}}WithResponse call
+func Parse{{genResponseTypeName $opid}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := io.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
+    defer rsp.Body.Close() //nolint: errcheck
     if err != nil {
         return nil, err
     }
 
-    response := {{genResponsePayload $opid}}
+    resp := &{{genResponseTypeName $opid}}{
+        Body: bodyBytes,
+        HTTPResponse: rsp,
+    }
 
-    {{genResponseUnmarshal .}}
+    {{template "unmarshal-response" .}}
 
-    return response, nil
+    return resp, nil
 }
 {{end}}{{/* range . $opid := .OperationId */}}

@@ -311,13 +311,13 @@ func TestStringToGoComment(t *testing.T) {
 		},
 		{
 			input:    "Single Line",
-			expected: "// Single Line",
+			expected: "// Single Line.",
 			message:  "single line comment",
 		},
 		{
 			input:    "    Single Line",
-			expected: "//     Single Line",
-			message:  "single line comment preserving whitespace",
+			expected: "// Single Line.",
+			message:  "single line comment not preserving whitespace",
 		},
 		{
 			input: `Multi
@@ -346,16 +346,16 @@ Line
 
 func TestStringWithTypeNameToGoComment(t *testing.T) {
 	testCases := []struct {
-		input     string
-		inputName string
-		expected  string
-		message   string
+		input    string
+		typeName string
+		expected string
+		message  string
 	}{
 		{
-			input:     "",
-			inputName: "",
-			expected:  "",
-			message:   "blank string should be ignored due to human unreadable",
+			input:    "",
+			typeName: "",
+			expected: "",
+			message:  "blank string should be ignored due to human unreadable",
 		},
 		{
 			input:    " ",
@@ -363,16 +363,34 @@ func TestStringWithTypeNameToGoComment(t *testing.T) {
 			message:  "whitespace should be ignored due to human unreadable",
 		},
 		{
-			input:     "Single Line",
-			inputName: "SingleLine",
-			expected:  "// SingleLine Single Line",
-			message:   "single line comment",
+			input:    "Single Line",
+			typeName: "SingleLine",
+			expected: "// SingleLine single Line.",
+			message:  "single line comment",
 		},
 		{
-			input:     "    Single Line",
-			inputName: "SingleLine",
-			expected:  "// SingleLine     Single Line",
-			message:   "single line comment preserving whitespace",
+			input:    "SingleLine does a thing",
+			typeName: "SingleLine",
+			expected: "// SingleLine does a thing.",
+			message:  "duplicate prefix",
+		},
+		{
+			input:    "The SingleLine does a thing",
+			typeName: "SingleLine",
+			expected: "// SingleLine does a thing.",
+			message:  "duplicate prefix with the",
+		},
+		{
+			input:    "    Single Line",
+			typeName: "SingleLine",
+			expected: "// SingleLine single Line.",
+			message:  "single line comment not preserving whitespace",
+		},
+		{
+			input:    "    Single Line",
+			typeName: "SingleLine",
+			expected: "// SingleLine single Line.",
+			message:  "single line comment not preserving whitespace",
 		},
 		{
 			input: `Multi
@@ -382,8 +400,8 @@ Line
 	And
 		Tabs
 `,
-			inputName: "MultiLine",
-			expected: `// MultiLine Multi
+			typeName: "MultiLine",
+			expected: `// MultiLine multi
 // Line
 //   With
 //     Spaces
@@ -394,7 +412,7 @@ Line
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.message, func(t *testing.T) {
-			result := StringWithTypeNameToGoComment(testCase.input, testCase.inputName)
+			result := StringWithTypeNameToGoComment(testCase.input, testCase.typeName)
 			assert.EqualValues(t, testCase.expected, result, testCase.message)
 		})
 	}

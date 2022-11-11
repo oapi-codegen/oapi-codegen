@@ -267,6 +267,48 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+// dict is a template helper which adds key value pairs into a map and returns it.
+// Its useful for passing multiple values into a template.
+func dict(values ...interface{}) (map[string]interface{}, error) {
+	return set(nil, values...)
+}
+
+// set is a template helper which adds key value pairs into dict and returns it.
+func set(dict map[string]interface{}, values ...interface{}) (map[string]interface{}, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("dict: invalid values count %d (must be pairs)", len(values))
+	}
+
+	if dict == nil {
+		dict = make(map[string]interface{}, len(values)/2)
+	}
+
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("dict: invalue key type %T (must be string)", key)
+		}
+
+		dict[key] = values[i+1]
+	}
+
+	return dict, nil
+}
+
+// get is a template helper which adds returns the value of key in dict.
+func get(dict map[string]interface{}, key string) interface{} {
+	return dict[key]
+}
+
+// sum is a template helper which returns the sum of all passed vals.
+func sum(vals ...int) int {
+	ret := 0
+	for _, v := range vals {
+		ret += v
+	}
+	return ret
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -289,6 +331,13 @@ var TemplateFunctions = template.FuncMap{
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
 	"title":                      strings.Title,
+	"hasSuffix":                  strings.HasSuffix,
+	"hasPrefix":                  strings.HasPrefix,
+	"split":                      strings.Split,
+	"dict":                       dict,
+	"set":                        set,
+	"get":                        get,
+	"sum":                        sum,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,

@@ -93,13 +93,13 @@ type SimpleResponse struct {
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {
-	// OptionalArgument An optional query argument
+	// OptionalArgument an optional query argument.
 	OptionalArgument *int64 `form:"optional_argument,omitempty" json:"optional_argument,omitempty"`
 
-	// RequiredArgument An optional query argument
+	// RequiredArgument an optional query argument.
 	RequiredArgument int64 `form:"required_argument" json:"required_argument"`
 
-	// HeaderArgument An optional query argument
+	// HeaderArgument an optional query argument.
 	HeaderArgument *int32 `json:"header_argument,omitempty"`
 }
 
@@ -108,7 +108,7 @@ type GetWithContentTypeParamsContentType string
 
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
-	// InlineQueryArgument Some query argument
+	// InlineQueryArgument some query argument.
 	InlineQueryArgument *int `form:"inline_query_argument,omitempty" json:"inline_query_argument,omitempty"`
 }
 

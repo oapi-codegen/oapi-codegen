@@ -42,34 +42,34 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	// P primitive
+	// P primitive.
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// Ep primitive
+	// Ep primitive.
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// Ea exploded array
+	// Ea exploded array.
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// A array
+	// A array.
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// Eo exploded object
+	// Eo exploded object.
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// O object
+	// O object.
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// Co complex object
+	// Co complex object.
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// N1s name starting with number
+	// N1s name starting with number.
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
 type EnumParamsParams struct {
-	// EnumPathParam Parameter with enum values
+	// EnumPathParam parameter with enum values.
 	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
 }
 
@@ -78,64 +78,64 @@ type EnumParamsParamsEnumPathParam int32
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	// XPrimitive primitive
+	// XPrimitive primitive.
 	XPrimitive *int32 `json:"X-Primitive,omitempty"`
 
-	// XPrimitiveExploded primitive
+	// XPrimitiveExploded primitive.
 	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
 
-	// XArrayExploded exploded array
+	// XArrayExploded exploded array.
 	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
 
-	// XArray array
+	// XArray array.
 	XArray *[]int32 `json:"X-Array,omitempty"`
 
-	// XObjectExploded exploded object
+	// XObjectExploded exploded object.
 	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
 
-	// XObject object
+	// XObject object.
 	XObject *Object `json:"X-Object,omitempty"`
 
-	// XComplexObject complex object
+	// XComplexObject complex object.
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 
-	// N1StartingWithNumber name starting with number
+	// N1StartingWithNumber name starting with number.
 	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
-	// DeepObj deep object
+	// DeepObj deep object.
 	DeepObj ComplexObject `json:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	// Ea exploded array
+	// Ea exploded array.
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// A array
+	// A array.
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// Eo exploded object
+	// Eo exploded object.
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// O object
+	// O object.
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// Ep exploded primitive
+	// Ep exploded primitive.
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// P primitive
+	// P primitive.
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// Ps primitive string
+	// Ps primitive string.
 	Ps *string `form:"ps,omitempty" json:"ps,omitempty"`
 
-	// Co complex object
+	// Co complex object.
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// N1s name starting with number
+	// N1s name starting with number.
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
@@ -2333,337 +2333,337 @@ func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Cont
 // ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
 func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetContentObjectResponse{
+	resp := &GetContentObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
 func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetCookieResponse{
+	resp := &GetCookieResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseEnumParamsResponse parses an HTTP response from a EnumParamsWithResponse call
 func ParseEnumParamsResponse(rsp *http.Response) (*EnumParamsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &EnumParamsResponse{
+	resp := &EnumParamsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
 func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHeaderResponse{
+	resp := &GetHeaderResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
 func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelExplodeArrayResponse{
+	resp := &GetLabelExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
 func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelExplodeObjectResponse{
+	resp := &GetLabelExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
 func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelNoExplodeArrayResponse{
+	resp := &GetLabelNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
 func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetLabelNoExplodeObjectResponse{
+	resp := &GetLabelNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
 func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixExplodeArrayResponse{
+	resp := &GetMatrixExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
 func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixExplodeObjectResponse{
+	resp := &GetMatrixExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
 func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixNoExplodeArrayResponse{
+	resp := &GetMatrixNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
 func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetMatrixNoExplodeObjectResponse{
+	resp := &GetMatrixNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
 func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetPassThroughResponse{
+	resp := &GetPassThroughResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetDeepObjectResponse parses an HTTP response from a GetDeepObjectWithResponse call
 func ParseGetDeepObjectResponse(rsp *http.Response) (*GetDeepObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetDeepObjectResponse{
+	resp := &GetDeepObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
 func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetQueryFormResponse{
+	resp := &GetQueryFormResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
 func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleExplodeArrayResponse{
+	resp := &GetSimpleExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
 func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleExplodeObjectResponse{
+	resp := &GetSimpleExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
 func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplodeArrayResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleNoExplodeArrayResponse{
+	resp := &GetSimpleNoExplodeArrayResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
 func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExplodeObjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimpleNoExplodeObjectResponse{
+	resp := &GetSimpleNoExplodeObjectResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
 func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetSimplePrimitiveResponse{
+	resp := &GetSimplePrimitiveResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetStartingWithNumberResponse parses an HTTP response from a GetStartingWithNumberWithResponse call
 func ParseGetStartingWithNumberResponse(rsp *http.Response) (*GetStartingWithNumberResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetStartingWithNumberResponse{
+	resp := &GetStartingWithNumberResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ServerInterface represents all server handlers.

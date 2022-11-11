@@ -405,15 +405,15 @@ func (c *ClientWithResponses) GetTestWithResponse(ctx context.Context, params *G
 // ParseGetTestResponse parses an HTTP response from a GetTestWithResponse call
 func ParseGetTestResponse(rsp *http.Response) (*GetTestResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetTestResponse{
+	resp := &GetTestResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }

@@ -870,127 +870,127 @@ func (c *ClientWithResponses) PostVendorJsonWithResponse(ctx context.Context, bo
 // ParsePostBothResponse parses an HTTP response from a PostBothWithResponse call
 func ParsePostBothResponse(rsp *http.Response) (*PostBothResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostBothResponse{
+	resp := &PostBothResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetBothResponse parses an HTTP response from a GetBothWithResponse call
 func ParseGetBothResponse(rsp *http.Response) (*GetBothResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetBothResponse{
+	resp := &GetBothResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParsePostJsonResponse parses an HTTP response from a PostJsonWithResponse call
 func ParsePostJsonResponse(rsp *http.Response) (*PostJsonResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostJsonResponse{
+	resp := &PostJsonResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetJsonResponse parses an HTTP response from a GetJsonWithResponse call
 func ParseGetJsonResponse(rsp *http.Response) (*GetJsonResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetJsonResponse{
+	resp := &GetJsonResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParsePostOtherResponse parses an HTTP response from a PostOtherWithResponse call
 func ParsePostOtherResponse(rsp *http.Response) (*PostOtherResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostOtherResponse{
+	resp := &PostOtherResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetOtherResponse parses an HTTP response from a GetOtherWithResponse call
 func ParseGetOtherResponse(rsp *http.Response) (*GetOtherResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetOtherResponse{
+	resp := &GetOtherResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetJsonWithTrailingSlashResponse parses an HTTP response from a GetJsonWithTrailingSlashWithResponse call
 func ParseGetJsonWithTrailingSlashResponse(rsp *http.Response) (*GetJsonWithTrailingSlashResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetJsonWithTrailingSlashResponse{
+	resp := &GetJsonWithTrailingSlashResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParsePostVendorJsonResponse parses an HTTP response from a PostVendorJsonWithResponse call
 func ParsePostVendorJsonResponse(rsp *http.Response) (*PostVendorJsonResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &PostVendorJsonResponse{
+	resp := &PostVendorJsonResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }

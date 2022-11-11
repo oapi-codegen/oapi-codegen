@@ -34,13 +34,13 @@ const (
 	Second EnumInObjInArrayVal = "second"
 )
 
-// N5StartsWithNumber This schema name starts with a number
+// N5StartsWithNumber this schema name starts with a number.
 type N5StartsWithNumber = map[string]interface{}
 
 // AnyType1 defines model for AnyType1.
 type AnyType1 = interface{}
 
-// AnyType2 AnyType2 represents any type.
+// AnyType2 represents any type.
 //
 // This should be an interface{}
 type AnyType2 = interface{}
@@ -663,7 +663,7 @@ type EnsureEverythingIsReferencedResponse struct {
 	JSON200      *struct {
 		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
-		// AnyType2 AnyType2 represents any type.
+		// AnyType2 represents any type.
 		//
 		// This should be an interface{}
 		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
@@ -930,194 +930,206 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 // ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
 func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEverythingIsReferencedResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &EnsureEverythingIsReferencedResponse{
+	resp := &EnsureEverythingIsReferencedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest struct {
+				AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
-			// AnyType2 AnyType2 represents any type.
-			//
-			// This should be an interface{}
-			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+				// AnyType2 represents any type.
+				//
+				// This should be an interface{}
+				AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+				CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+			}
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "struct": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue127Response parses an HTTP response from a Issue127WithResponse call
 func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue127Response{
+	resp := &Issue127Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest GenericObject
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "GenericObject": %w`, err)
+			}
+
+			resp.JSON200 = &dest
+		default:
+			var dest GenericObject
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "GenericObject": %w`, err)
+			}
+
+			resp.JSONDefault = &dest
 		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "xml"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest GenericObject
+			if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode xml for "GenericObject": %w`, err)
+			}
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
+			resp.XML200 = &dest
 		}
-		response.JSONDefault = &dest
+	case strings.Contains(contentType, "yaml"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest GenericObject
+			if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode yaml for "GenericObject": %w`, err)
+			}
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
-		var dest GenericObject
-		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
+			resp.YAML200 = &dest
 		}
-		response.XML200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "yaml") && rsp.StatusCode == 200:
-		var dest GenericObject
-		if err := yaml.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.YAML200 = &dest
-
-	case rsp.StatusCode == 200:
-	// Content-type (text/markdown) unsupported
-
-	case true:
-		// Content-type (text/markdown) unsupported
-
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue185Response parses an HTTP response from a Issue185WithResponse call
 func ParseIssue185Response(rsp *http.Response) (*Issue185Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue185Response{
+	resp := &Issue185Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue209Response parses an HTTP response from a Issue209WithResponse call
 func ParseIssue209Response(rsp *http.Response) (*Issue209Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue209Response{
+	resp := &Issue209Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue30Response parses an HTTP response from a Issue30WithResponse call
 func ParseIssue30Response(rsp *http.Response) (*Issue30Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue30Response{
+	resp := &Issue30Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseGetIssues375Response parses an HTTP response from a GetIssues375WithResponse call
 func ParseGetIssues375Response(rsp *http.Response) (*GetIssues375Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetIssues375Response{
+	resp := &GetIssues375Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest EnumInObjInArray
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest EnumInObjInArray
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "EnumInObjInArray": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue41Response parses an HTTP response from a Issue41WithResponse call
 func ParseIssue41Response(rsp *http.Response) (*Issue41Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue41Response{
+	resp := &Issue41Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseIssue9Response parses an HTTP response from a Issue9WithResponse call
 func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &Issue9Response{
+	resp := &Issue9Response{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ServerInterface represents all server handlers.

@@ -674,29 +674,53 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 }
 
 func stringToGoCommentWithPrefix(in, prefix string) string {
-	if len(in) == 0 || len(strings.TrimSpace(in)) == 0 { // ignore empty comment
+	in = strings.TrimSpace(in)
+	if len(in) == 0 { // ignore empty comment.
 		return ""
 	}
 
-	// Normalize newlines from Windows/Mac to Linux
+	// Normalize newlines from Windows/Mac to Linux.
 	in = strings.Replace(in, "\r\n", "\n", -1)
 	in = strings.Replace(in, "\r", "\n", -1)
 
 	// Add comment to each line
-	var lines []string
-	for i, line := range strings.Split(in, "\n") {
-		s := "//"
-		if i == 0 && len(prefix) > 0 {
-			s += " " + prefix
+	lines := strings.Split(in, "\n")
+	if len(prefix) > 0 {
+		// Strip either "<prefix>" or "the <prefix>".
+		words := strings.Fields(strings.TrimSpace(lines[0]))
+		if len(words) == 1 {
+			if strings.EqualFold(words[0], prefix) {
+				words = words[1:]
+			}
+		} else {
+			if strings.EqualFold(words[0], "the") {
+				words = words[1:]
+			}
+			if strings.EqualFold(words[0], prefix) {
+				words = words[1:]
+			}
 		}
-		lines = append(lines, fmt.Sprintf("%s %s", s, line))
-	}
-	in = strings.Join(lines, "\n")
 
-	// in case we have a multiline string which ends with \n, we would generate
-	// empty-line-comments, like `// `. Therefore remove this line comment.
-	in = strings.TrimSuffix(in, "\n// ")
-	return in
+		// Lower case the first letter of the first word.
+		if len(words) > 0 && len(words[0]) > 0 {
+			r := []rune(words[0])
+			r[0] = unicode.ToLower(r[0])
+			words[0] = string(r)
+		}
+		lines[0] = strings.Join(append([]string{prefix}, words...), " ")
+	}
+
+	// Add go comment prefix.
+	for i, line := range lines {
+		lines[i] = "// " + line
+	}
+
+	// Terminate sentence for single line comments.
+	if len(lines) == 1 && !strings.HasSuffix(lines[0], ".") {
+		lines[0] += "."
+	}
+
+	return strings.Join(lines, "\n")
 }
 
 // EscapePathElements breaks apart a path, and looks at each element. If it's

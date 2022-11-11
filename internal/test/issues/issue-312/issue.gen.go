@@ -23,22 +23,22 @@ import (
 
 // Error defines model for Error.
 type Error struct {
-	// Code Error code
+	// Code error code.
 	Code int32 `json:"code"`
 
-	// Message Error message
+	// Message error message.
 	Message string `json:"message"`
 }
 
 // Pet defines model for Pet.
 type Pet struct {
-	// Name The name of the pet.
+	// Name of the pet.
 	Name string `json:"name"`
 }
 
 // PetNames defines model for PetNames.
 type PetNames struct {
-	// Names The names of the pets.
+	// Names of the pets.
 	Names []string `json:"names"`
 }
 
@@ -363,60 +363,68 @@ func (c *ClientWithResponses) ValidatePetsWithResponse(ctx context.Context, body
 // ParseGetPetResponse parses an HTTP response from a GetPetWithResponse call
 func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetPetResponse{
+	resp := &GetPetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Pet
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Pet
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Pet": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseValidatePetsResponse parses an HTTP response from a ValidatePetsWithResponse call
 func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ValidatePetsResponse{
+	resp := &ValidatePetsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Pet
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest []Pet
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "[]Pet": %w`, err)
+			}
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
+			resp.JSON200 = &dest
+		default:
+			var dest Error
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Error": %w`, err)
+			}
 
+			resp.JSONDefault = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ServerInterface represents all server handlers.

@@ -1176,186 +1176,199 @@ func (c *ClientWithResponses) HeadersExampleWithResponse(ctx context.Context, pa
 // ParseJSONExampleResponse parses an HTTP response from a JSONExampleWithResponse call
 func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &JSONExampleResponse{
+	resp := &JSONExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Example
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Example": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseMultipartExampleResponse parses an HTTP response from a MultipartExampleWithResponse call
 func ParseMultipartExampleResponse(rsp *http.Response) (*MultipartExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &MultipartExampleResponse{
+	resp := &MultipartExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseMultipleRequestAndResponseTypesResponse parses an HTTP response from a MultipleRequestAndResponseTypesWithResponse call
 func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*MultipleRequestAndResponseTypesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &MultipleRequestAndResponseTypesResponse{
+	resp := &MultipleRequestAndResponseTypesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Example
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Example": %w`, err)
+			}
+
+			resp.JSON200 = &dest
 		}
-		response.JSON200 = &dest
-
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseReusableResponsesResponse parses an HTTP response from a ReusableResponsesWithResponse call
 func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ReusableResponsesResponse{
+	resp := &ReusableResponsesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Example
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Example": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseTextExampleResponse parses an HTTP response from a TextExampleWithResponse call
 func ParseTextExampleResponse(rsp *http.Response) (*TextExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &TextExampleResponse{
+	resp := &TextExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseUnknownExampleResponse parses an HTTP response from a UnknownExampleWithResponse call
 func ParseUnknownExampleResponse(rsp *http.Response) (*UnknownExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UnknownExampleResponse{
+	resp := &UnknownExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseUnspecifiedContentTypeResponse parses an HTTP response from a UnspecifiedContentTypeWithResponse call
 func ParseUnspecifiedContentTypeResponse(rsp *http.Response) (*UnspecifiedContentTypeResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &UnspecifiedContentTypeResponse{
+	resp := &UnspecifiedContentTypeResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseURLEncodedExampleResponse parses an HTTP response from a URLEncodedExampleWithResponse call
 func ParseURLEncodedExampleResponse(rsp *http.Response) (*URLEncodedExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &URLEncodedExampleResponse{
+	resp := &URLEncodedExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseHeadersExampleResponse parses an HTTP response from a HeadersExampleWithResponse call
 func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &HeadersExampleResponse{
+	resp := &HeadersExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Example
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Example": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }

@@ -215,25 +215,29 @@ func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, reqEdit
 // ParseGetClientResponse parses an HTTP response from a GetClientWithResponse call
 func ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetClientResponse{
+	resp := &GetClientResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Client
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest Client
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "Client": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }

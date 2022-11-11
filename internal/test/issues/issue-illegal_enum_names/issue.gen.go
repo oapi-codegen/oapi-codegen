@@ -234,27 +234,31 @@ func (c *ClientWithResponses) GetFooWithResponse(ctx context.Context, reqEditors
 // ParseGetFooResponse parses an HTTP response from a GetFooWithResponse call
 func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetFooResponse{
+	resp := &GetFooResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Bar
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest []Bar
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "[]Bar": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ServerInterface represents all server handlers.

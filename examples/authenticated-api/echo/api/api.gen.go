@@ -26,10 +26,10 @@ const (
 
 // Error defines model for Error.
 type Error struct {
-	// Code Error code
+	// Code error code.
 	Code int32 `json:"code"`
 
-	// Message Error message
+	// Message error message.
 	Message string `json:"message"`
 }
 
@@ -357,53 +357,61 @@ func (c *ClientWithResponses) AddThingWithResponse(ctx context.Context, body Add
 // ParseListThingsResponse parses an HTTP response from a ListThingsWithResponse call
 func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListThingsResponse{
+	resp := &ListThingsResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ThingWithID
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 200:
+			var dest []ThingWithID
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "[]ThingWithID": %w`, err)
+			}
 
+			resp.JSON200 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ParseAddThingResponse parses an HTTP response from a AddThingWithResponse call
 func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
+	defer rsp.Body.Close() //nolint: errcheck
 	if err != nil {
 		return nil, err
 	}
 
-	response := &AddThingResponse{
+	resp := &AddThingResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
+	contentType := rsp.Header.Get("Content-Type")
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		var dest []ThingWithID
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON201 = &dest
+	case strings.Contains(contentType, "json"):
+		switch {
+		case rsp.StatusCode == 201:
+			var dest []ThingWithID
+			if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+				return nil, fmt.Errorf(`decode json for "[]ThingWithID": %w`, err)
+			}
 
+			resp.JSON201 = &dest
+		}
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 // ServerInterface represents all server handlers.
