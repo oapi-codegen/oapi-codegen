@@ -26,10 +26,10 @@ import (
 
 // GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T, refNameResolver openapi3.RefNameResolver) (string, error) {
+func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
 	// ensure that any external file references are embedded into the embedded spec
-	if refNameResolver != nil {
-		swagger.InternalizeRefs(context.Background(), refNameResolver)
+	if globalState.OutputOptions.InternalizeRefs {
+		swagger.InternalizeRefs(context.Background(), openapi3.DefaultRefNameResolver)
 	}
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
