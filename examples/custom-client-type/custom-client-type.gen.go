@@ -18,6 +18,9 @@ type Client struct {
 	Name string `json:"name"`
 }
 
+// GetClient200 defines model for /client.
+type GetClient200 = Client
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

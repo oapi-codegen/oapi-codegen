@@ -37,6 +37,12 @@ type DocumentStatus struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// ExampleGet200 defines model for /example.
+type ExampleGet200 = Document
+
+// ExampleGet2200 defines model for /example2.
+type ExampleGet2200 = DocumentStatus
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 

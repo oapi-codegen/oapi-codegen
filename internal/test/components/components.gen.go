@@ -330,6 +330,81 @@ type SchemaObject struct {
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
 
+// EnsureEverythingIsReferenced200 defines model for /ensure-everything-is-referenced.
+type EnsureEverythingIsReferenced200 struct {
+	// AnyOf1 simple anyOf case
+	AnyOf1 *AnyOfObject1 `json:"anyOf1,omitempty"`
+
+	// Five Has additional properties with schema for dictionaries
+	Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+
+	// Four Has anonymous field which has additional properties
+	Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
+	JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+
+	// One Has additional properties of type int
+	One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+	// OneOf1 oneOf with references and no disciminator
+	OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
+
+	// OneOf10 fixed properties, variable required - will compile, but not much sense
+	OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
+
+	// OneOf11 additional properties of oneOf
+	OneOf11 *OneOfObject11 `json:"oneOf11,omitempty"`
+
+	// OneOf12 allOf of oneOfs
+	OneOf12 *OneOfObject12 `json:"oneOf12,omitempty"`
+
+	// OneOf2 oneOf with inline elements
+	OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
+
+	// OneOf3 inline OneOf
+	OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
+
+	// OneOf4 oneOf plus fixed type - custom marshaling/unmarshalling
+	OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
+
+	// OneOf5 oneOf with disciminator but no mapping
+	OneOf5 *OneOfObject5 `json:"oneOf5,omitempty"`
+
+	// OneOf6 oneOf with discriminator and mapping
+	OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
+
+	// OneOf7 array of oneOf
+	OneOf7 *OneOfObject7 `json:"oneOf7,omitempty"`
+
+	// OneOf8 oneOf with fixed properties
+	OneOf8 *OneOfObject8 `json:"oneOf8,omitempty"`
+
+	// OneOf9 oneOf with fixed descriminator
+	OneOf9 *OneOfObject9 `json:"oneOf9,omitempty"`
+
+	// Six Array of object with additional properties
+	Six *AdditionalPropertiesObject6 `json:"six,omitempty"`
+
+	// Three Allows any additional property
+	Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+
+	// Two Does not allow additional properties
+	Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+}
+
+// EnsureEverythingIsReferenceddefaultJSON defines model for /ensure-everything-is-referenced.
+type EnsureEverythingIsReferenceddefaultJSON struct {
+	Field SchemaObject `json:"Field"`
+}
+
+// EnsureEverythingIsReferenceddefaultTextplain defines model for /ensure-everything-is-referenced.
+type EnsureEverythingIsReferenceddefaultTextplain = string
+
+// ParamsWithAddPropsdefault defines model for /params_with_add_props.
+type ParamsWithAddPropsdefault = string
+
+// BodyWithAddPropsdefault defines model for /params_with_add_props.
+type BodyWithAddPropsdefault = string
+
 // EnumParam1 defines model for EnumParam1.
 type EnumParam1 string
 

@@ -34,6 +34,9 @@ type Value struct {
 	StringValue *string     `json:"stringValue,omitempty"`
 }
 
+// ExampleGet200 defines model for /example.
+type ExampleGet200 = Document
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

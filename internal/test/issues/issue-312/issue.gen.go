@@ -42,6 +42,15 @@ type PetNames struct {
 	Names []string `json:"names"`
 }
 
+// GetPet200 defines model for /pets/{petId}.
+type GetPet200 = Pet
+
+// ValidatePets200 defines model for /pets:validate.
+type ValidatePets200 = []Pet
+
+// ValidatePetsdefault defines model for /pets:validate.
+type ValidatePetsdefault = Error
+
 // ValidatePetsJSONRequestBody defines body for ValidatePets for application/json ContentType.
 type ValidatePetsJSONRequestBody = PetNames
 

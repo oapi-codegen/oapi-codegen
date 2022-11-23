@@ -33,6 +33,27 @@ type Pet struct {
 	Tag *string `json:"tag,omitempty"`
 }
 
+// FindPets200 defines model for /pets.
+type FindPets200 = []Pet
+
+// FindPetsdefault defines model for /pets.
+type FindPetsdefault = Error
+
+// AddPet200 defines model for /pets.
+type AddPet200 = Pet
+
+// AddPetdefault defines model for /pets.
+type AddPetdefault = Error
+
+// DeletePetdefault defines model for /pets/{id}.
+type DeletePetdefault = Error
+
+// FindPetByID200 defines model for /pets/{id}.
+type FindPetByID200 = Pet
+
+// FindPetByIDdefault defines model for /pets/{id}.
+type FindPetByIDdefault = Error
+
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// Tags tags to filter by

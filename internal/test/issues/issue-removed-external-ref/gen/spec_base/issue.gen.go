@@ -23,6 +23,17 @@ type PackedBar struct {
 	Id      *string           `json:"id,omitempty"`
 }
 
+// PostInvalidExtRefTrouble300 defines model for /invalidExtRefTrouble.
+type PostInvalidExtRefTrouble300 = PascalSchema
+
+// PostNoTrouble200 defines model for /noTrouble.
+type PostNoTrouble200 struct {
+	DirectBar   *DirectBar        `json:"directBar,omitempty"`
+	DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty"`
+	IndirectFoo *PackedBar        `json:"indirectFoo,omitempty"`
+	Name        *string           `json:"name,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 

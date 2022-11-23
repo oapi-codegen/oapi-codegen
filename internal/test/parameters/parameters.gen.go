@@ -40,6 +40,66 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// GetContentObject200 defines model for /contentObject/{param}.
+type GetContentObject200 = string
+
+// GetCookiedefault defines model for /cookie.
+type GetCookiedefault = string
+
+// GetHeaderdefault defines model for /header.
+type GetHeaderdefault = string
+
+// GetLabelExplodeArray200 defines model for /labelExplodeArray/{.param*}.
+type GetLabelExplodeArray200 = string
+
+// GetLabelExplodeObject200 defines model for /labelExplodeObject/{.param*}.
+type GetLabelExplodeObject200 = string
+
+// GetLabelNoExplodeArray200 defines model for /labelNoExplodeArray/{.param}.
+type GetLabelNoExplodeArray200 = string
+
+// GetLabelNoExplodeObject200 defines model for /labelNoExplodeObject/{.param}.
+type GetLabelNoExplodeObject200 = string
+
+// GetMatrixExplodeArray200 defines model for /matrixExplodeArray/{.id*}.
+type GetMatrixExplodeArray200 = string
+
+// GetMatrixExplodeObject200 defines model for /matrixExplodeObject/{.id*}.
+type GetMatrixExplodeObject200 = string
+
+// GetMatrixNoExplodeArray200 defines model for /matrixNoExplodeArray/{.id}.
+type GetMatrixNoExplodeArray200 = string
+
+// GetMatrixNoExplodeObject200 defines model for /matrixNoExplodeObject/{.id}.
+type GetMatrixNoExplodeObject200 = string
+
+// GetPassThrough200 defines model for /passThrough/{param}.
+type GetPassThrough200 = string
+
+// GetDeepObjectdefault defines model for /queryDeepObject.
+type GetDeepObjectdefault = string
+
+// GetQueryForm200 defines model for /queryForm.
+type GetQueryForm200 = string
+
+// GetSimpleExplodeArray200 defines model for /simpleExplodeArray/{param*}.
+type GetSimpleExplodeArray200 = string
+
+// GetSimpleExplodeObject200 defines model for /simpleExplodeObject/{param*}.
+type GetSimpleExplodeObject200 = string
+
+// GetSimpleNoExplodeArray200 defines model for /simpleNoExplodeArray/{param}.
+type GetSimpleNoExplodeArray200 = string
+
+// GetSimpleNoExplodeObject200 defines model for /simpleNoExplodeObject/{param}.
+type GetSimpleNoExplodeObject200 = string
+
+// GetSimplePrimitive200 defines model for /simplePrimitive/{param}.
+type GetSimplePrimitive200 = string
+
+// GetStartingWithNumber200 defines model for /startingWithNumber/{1param}.
+type GetStartingWithNumber200 = string
+
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// P primitive

@@ -1,0 +1,5 @@
+package: complex
+generate:
+  models: true
+  client: true
+output: gen.gen.go

@@ -8,6 +8,45 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// JSONExample200 defines model for /json.
+type JSONExample200 = Example
+
+// MultipartExample200 defines model for /multipart.
+type MultipartExample200 = Example
+
+// MultipleRequestAndResponseTypes200JSON defines model for /multiple.
+type MultipleRequestAndResponseTypes200JSON = Example
+
+// MultipleRequestAndResponseTypes200ApplicationxWwwFormUrlencoded defines model for /multiple.
+type MultipleRequestAndResponseTypes200ApplicationxWwwFormUrlencoded = Example
+
+// MultipleRequestAndResponseTypes200Imagepng defines model for /multiple.
+type MultipleRequestAndResponseTypes200Imagepng = []byte
+
+// MultipleRequestAndResponseTypes200MultipartformData defines model for /multiple.
+type MultipleRequestAndResponseTypes200MultipartformData = Example
+
+// MultipleRequestAndResponseTypes200Textplain defines model for /multiple.
+type MultipleRequestAndResponseTypes200Textplain = string
+
+// ReusableResponses200 defines model for /reusable-responses.
+type ReusableResponses200 = Example
+
+// TextExample200 defines model for /text.
+type TextExample200 = string
+
+// UnknownExample200 defines model for /unknown.
+type UnknownExample200 = []byte
+
+// UnspecifiedContentType200 defines model for /unspecified-content-type.
+type UnspecifiedContentType200 = []byte
+
+// URLEncodedExample200 defines model for /urlencoded.
+type URLEncodedExample200 = Example
+
+// HeadersExample200 defines model for /with-headers.
+type HeadersExample200 = Example
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
