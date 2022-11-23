@@ -34,7 +34,7 @@ var (
 )
 
 func init() {
-	pathParamRE = regexp.MustCompile("{[.;?]?([^{}*]+)\\*?}")
+	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
 
 	predeclaredIdentifiers := []string{
 		// Types

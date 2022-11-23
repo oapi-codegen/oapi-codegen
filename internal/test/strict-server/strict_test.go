@@ -1,4 +1,4 @@
-package strict_server
+package strictserver
 
 import (
 	"bytes"

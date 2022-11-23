@@ -99,7 +99,7 @@ func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url
 		tag = strings.Split(tag, ",")[0] // extract the name of the tag
 		if encoding, ok := encodings[tag]; ok && encoding.ContentType != "" {
 			if strings.HasPrefix(encoding.ContentType, jsonContentType) {
-				if data, err := json.Marshal(field); err != nil {
+				if data, err := json.Marshal(field); err != nil { //nolint:staticcheck
 					return nil, err
 				} else {
 					result[tag] = append(result[tag], string(data))
@@ -131,7 +131,7 @@ func bindFormImpl(v reflect.Value, form map[string][]string, files map[string][]
 	case reflect.Slice:
 		if files := append(files[name], files[name+"[]"]...); len(files) != 0 {
 			if _, ok := v.Interface().([]types.File); ok {
-				result := make([]types.File, len(files), len(files))
+				result := make([]types.File, len(files))
 				for i, file := range files {
 					result[i].InitFromMultipart(file)
 				}

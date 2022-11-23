@@ -122,12 +122,12 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 	// Pass the gin context into the request validator, so that any callbacks
 	// which it invokes make it available.
-	requestContext := context.WithValue(context.Background(), GinContextKey, c)
+	requestContext := context.WithValue(context.Background(), GinContextKey, c) //nolint:staticcheck
 
 	if options != nil {
 		validationInput.Options = &options.Options
 		validationInput.ParamDecoder = options.ParamDecoder
-		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData)
+		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData) //nolint:staticcheck
 	}
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)

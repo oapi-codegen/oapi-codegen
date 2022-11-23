@@ -29,7 +29,7 @@ func TestBindURLForm(t *testing.T) {
 		OptStruct       *testSubStruct   `json:"opt_struct,omitempty"`
 		OptStructSlice  *[]testSubStruct `json:"opt_struct_slice,omitempty"`
 		NotSerializable int              `json:"-"`
-		unexported      int
+		unexported      int              //nolint:unused
 	}
 
 	testCases := map[string]testStruct{
@@ -137,7 +137,7 @@ func TestMarshalForm(t *testing.T) {
 		OptStruct       *testSubStruct   `json:"opt_struct,omitempty"`
 		OptStructSlice  *[]testSubStruct `json:"opt_struct_slice,omitempty"`
 		NotSerializable int              `json:"-"`
-		unexported      int
+		unexported      int              //nolint:unused
 	}
 
 	testCases := map[string]testStruct{
