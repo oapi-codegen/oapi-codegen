@@ -25,6 +25,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 )
@@ -344,11 +345,17 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
 	}
 
+	pathsTypes, err := GenerateTypesForPaths(t, swagger.Paths, excludeSchemas)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go types for paths: %w", err)
+	}
+	allTypes := append(schemaTypes, pathsTypes...)
+
 	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
 	if err != nil {
 		return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
 	}
-	allTypes := append(schemaTypes, paramTypes...)
+	allTypes = append(allTypes, paramTypes...)
 
 	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
 	if err != nil {
@@ -458,6 +465,65 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		})
 
 		types = append(types, goSchema.GetAdditionalTypeDefs()...)
+	}
+	return types, nil
+}
+
+// GenerateTypesForPaths generates type definitions for any custom types defined in the
+// paths section of the Swagger spec.
+func GenerateTypesForPaths(t *template.Template, paths openapi3.Paths, excludeSchemas []string) ([]TypeDefinition, error) {
+	types := make([]TypeDefinition, 0)
+
+	// We're going to define Go types for every object under paths
+	for _, pathName := range SortedPathsKeys(paths) {
+		for _, method := range SortedOperationsKeys(paths[pathName].Operations()) {
+			operation := paths[pathName].Operations()[method]
+
+			for _, statusCodeOrDefault := range SortedResponsesKeys(operation.Responses) {
+				v := operation.Responses[statusCodeOrDefault]
+				sortedContentKeys := SortedContentKeys(v.Value.Content)
+				for _, mediaTypeStr := range sortedContentKeys {
+					mediaType := v.Value.Content.Get(mediaTypeStr)
+
+					structName := ""
+					if operation.OperationID != "" {
+						structName += strings.Title(operation.OperationID)
+					} else {
+						structName += ToCamelCase(strings.ToLower(method)) + strings.Title(pathName)
+					}
+					structName += statusCodeOrDefault
+
+					if len(sortedContentKeys) > 1 {
+						switch {
+						case util.IsMediaTypeJson(mediaTypeStr):
+							structName += "JSON"
+						case StringInArray(mediaTypeStr, contentTypesYAML):
+							structName += "YAML"
+						case StringInArray(mediaTypeStr, contentTypesXML):
+							structName += "XML"
+						default:
+							structName += ToCamelCase(mediaTypeStr)
+						}
+					}
+
+					goSchema, err := GenerateGoSchema(mediaType.Schema, []string{structName})
+					if err != nil {
+						return nil, fmt.Errorf("error converting Schema %s to Go type: %w", pathName, err)
+					}
+
+					goTypeName, err := renameSchema(structName, mediaType.Schema)
+					if err != nil {
+						return nil, fmt.Errorf("error making name for %s with structName %s: %w", pathName, structName, err)
+					}
+
+					types = append(types, TypeDefinition{
+						JsonName: pathName,
+						TypeName: goTypeName,
+						Schema:   goSchema,
+					})
+				}
+			}
+		}
 	}
 	return types, nil
 }
