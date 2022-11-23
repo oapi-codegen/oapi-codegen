@@ -1,0 +1,4 @@
+package: issue626
+generate:
+  models: true
+output: issue.gen.go

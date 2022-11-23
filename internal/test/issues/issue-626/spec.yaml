@@ -1,0 +1,109 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 626 test
+  description: Checks that anonymously defined objects are created
+paths:
+
+  /no-content-defined:
+    get:
+      responses:
+        content: {}
+  /no-response-schema:
+    get:
+      responses:
+        content:
+          application/json: {}
+  /requestBody-is-ref:
+    post:
+      requestBody:
+        $ref: '#/components/requestBodies/RequiredBody'
+  /requestBody-conflicts:
+    post:
+      operationId: requestBodyConflicts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestBodyConflictsRequestBody'
+  /pets:
+    post:
+      operationId: newPet
+      parameters:
+        - name: tags
+          in: query
+          required: true
+          style: form
+          schema:
+            type: array
+            items:
+              type: string
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+          application/yaml:
+            schema:
+              type: object
+          # will conflict
+          # application/vnd.api+json:
+          #   schema:
+          #     type: object
+          application/json:
+            schema:
+              type: object
+              required:
+                - names
+              properties:
+                names:
+                  type: array
+                  description: The names of the pets.
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: valid pets
+          content:
+            text/plain:
+              schema:
+                type: object
+            application/yaml:
+              schema:
+                type: object
+            # will conflict
+            # application/vnd.api+json: {}
+            application/json:
+              schema:
+                type: object
+                required:
+                  - names
+                properties:
+                  names:
+                    type: array
+                    description: The names of the pets.
+                    items:
+                      type: string
+components:
+  requestBodies:
+    RequiredBody:
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                type: string
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+  schemas:
+    # a warning that types may clash
+    RequestBodyConflictsRequestBody:
+      x-go-name: Renamed_RequestBodyConflictsRequestBody
+      schema:
+        properties:
+          Field:
+            type: string
+        required: [ Field ]

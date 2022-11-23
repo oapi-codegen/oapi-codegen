@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"text/template"
 
@@ -41,6 +42,8 @@ var (
 	responseTypeSuffix = "Response"
 
 	titleCaser = cases.Title(language.English)
+
+	mediaTypeToGoNameRe = regexp.MustCompile(`[^a-zA-Z]`)
 )
 
 // This function takes an array of Parameter definition, and generates a valid
@@ -269,6 +272,11 @@ func toStringArray(sarr []string) string {
 func stripNewLines(s string) string {
 	r := strings.NewReplacer("\n", "")
 	return r.Replace(s)
+}
+
+func mediaTypeToGoName(mediaType string) string {
+	s := titleCaser.String(mediaType)
+	return mediaTypeToGoNameRe.ReplaceAllString(s, "")
 }
 
 // TemplateFunctions is passed to the template engine, and we can call each
