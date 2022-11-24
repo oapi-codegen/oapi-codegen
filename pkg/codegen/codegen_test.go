@@ -3,18 +3,20 @@ package codegen
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"go/format"
 	"io"
 	"net/http"
 	"testing"
 
-	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
 const (
@@ -76,39 +78,68 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
-	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
-
 	// Input vars for code generation:
 	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
 		Generate: GenerateOptions{
-			Models: true,
-		},
-		OutputOptions: OutputOptions{
-			UserTemplates: userTemplates,
+			ChiServer: true,
+			Models:    true,
 		},
 	}
 
-	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
-	assert.NoError(t, err)
+	for set := 0; set < 8; set++ {
+		var (
+			oo                   OutputOptions
+			useDirectoryOverride = set&4 != 0
+			useFileOverride      = set&2 != 0
+			useInlineOverride    = set&1 != 0
+		)
+		if useDirectoryOverride {
+			oo.UserTemplatesDir = "testdata"
+		}
+		if useFileOverride {
+			oo.UserTemplateFiles = map[string]string{"chi/chi-interface.tmpl": "testdata/chi-interface.tmpl"}
+		}
+		if useInlineOverride {
+			oo.UserTemplates = map[string]string{"chi/chi-interface.tmpl": "// inline override"}
+		}
+		opts.OutputOptions = oo
 
-	// Run our code generation:
-	code, err := Generate(swagger, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
+		testName := fmt.Sprintf(
+			"override: directory=%v, file=%v, inline=%v",
+			useDirectoryOverride,
+			useFileOverride,
+			useInlineOverride,
+		)
+		t.Run(testName, func(t *testing.T) {
+			// Get a spec from the example PetStore definition:
+			swagger, err := examplePetstore.GetSwagger()
+			assert.NoError(t, err)
 
-	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
+			// Run our code generation:
+			code, err := Generate(swagger, opts)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, code)
 
-	// Check that we have a package:
-	assert.Contains(t, code, "package api")
+			// Check that we have valid (formattable) code:
+			_, err = format.Source([]byte(code))
+			assert.NoError(t, err)
 
-	// Check that the built-in template has been overriden
-	assert.Contains(t, code, "//blah")
+			// Check that we have a package:
+			assert.Contains(t, code, "package api")
+
+			// Check that the generated code has the appropriate template override applied
+			switch {
+			case useInlineOverride:
+				assert.Contains(t, code, "// inline override")
+			case useFileOverride:
+				assert.Contains(t, code, "// file override")
+			case useDirectoryOverride:
+				assert.Contains(t, code, "// directory override")
+			}
+		})
+	}
 }
 
 func TestExamplePetStoreParseFunction(t *testing.T) {
