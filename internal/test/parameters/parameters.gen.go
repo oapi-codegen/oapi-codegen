@@ -40,6 +40,9 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// SimpleResponse defines model for SimpleResponse.
+type SimpleResponse json.RawMessage
+
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// P primitive
