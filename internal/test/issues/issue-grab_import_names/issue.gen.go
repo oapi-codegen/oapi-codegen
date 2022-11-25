@@ -21,6 +21,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetFooResponseBody200 defines model for the response body for GET /foo (200, application/json).
+type GetFooResponseBody200 = string
+
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
 	// Foo base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. json. openapi3.

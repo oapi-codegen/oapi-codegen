@@ -12,6 +12,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 const (
@@ -23,6 +25,21 @@ type SchemaObject struct {
 	FirstName string `json:"firstName"`
 	Role      string `json:"role"`
 }
+
+// PostBothRequestBodyApplicationJson defines model for the request body for POST /with_both_bodies (application/json).
+type PostBothRequestBodyApplicationJson = SchemaObject
+
+// PostBothRequestBodyApplicationOctetStream defines model for the request body for POST /with_both_bodies (application/octet-stream).
+type PostBothRequestBodyApplicationOctetStream = openapi_types.File
+
+// PostJsonRequestBody defines model for the request body for POST /with_json_body (application/json).
+type PostJsonRequestBody = SchemaObject
+
+// PostOtherRequestBody defines model for the request body for POST /with_other_body (application/octet-stream).
+type PostOtherRequestBody = openapi_types.File
+
+// PostVendorJsonRequestBody defines model for the request body for POST /with_vendor_json (application/vnd.api+json).
+type PostVendorJsonRequestBody = map[string]interface{}
 
 // PostVendorJsonJSONBody defines parameters for PostVendorJson.
 type PostVendorJsonJSONBody = map[string]interface{}

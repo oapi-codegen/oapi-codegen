@@ -37,6 +37,12 @@ type DocumentStatus struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// ExampleGetResponseBody200 defines model for the response body for GET /example (200, application/json).
+type ExampleGetResponseBody200 = Document
+
+// ExampleGet2ResponseBody200 defines model for the response body for GET /example2 (200, application/json).
+type ExampleGet2ResponseBody200 = DocumentStatus
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 

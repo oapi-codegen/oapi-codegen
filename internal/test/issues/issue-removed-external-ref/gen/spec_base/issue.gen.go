@@ -23,6 +23,17 @@ type PackedBar struct {
 	Id      *string           `json:"id,omitempty"`
 }
 
+// PostInvalidExtRefTroubleResponseBody300 defines model for the response body for POST /invalidExtRefTrouble (300, application/json).
+type PostInvalidExtRefTroubleResponseBody300 externalRef0.Pascal
+
+// PostNoTroubleResponseBody200 defines model for the response body for POST /noTrouble (200, application/json).
+type PostNoTroubleResponseBody200 struct {
+	DirectBar   *DirectBar        `json:"directBar,omitempty"`
+	DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty"`
+	IndirectFoo *PackedBar        `json:"indirectFoo,omitempty"`
+	Name        *string           `json:"name,omitempty"`
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 

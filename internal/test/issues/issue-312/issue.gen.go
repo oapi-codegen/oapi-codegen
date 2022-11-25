@@ -42,6 +42,18 @@ type PetNames struct {
 	Names []string `json:"names"`
 }
 
+// GetPetResponseBody200 defines model for the response body for GET /pets/{petId} (200, application/json).
+type GetPetResponseBody200 = Pet
+
+// ValidatePetsRequestBody defines model for the request body for POST /pets:validate (application/json).
+type ValidatePetsRequestBody = PetNames
+
+// ValidatePetsResponseBody200 defines model for the response body for POST /pets:validate (200, application/json).
+type ValidatePetsResponseBody200 = []Pet
+
+// ValidatePetsResponseBodyDefault defines model for the response body for POST /pets:validate (default, application/json).
+type ValidatePetsResponseBodyDefault = Error
+
 // ValidatePetsJSONRequestBody defines body for ValidatePets for application/json ContentType.
 type ValidatePetsJSONRequestBody = PetNames
 

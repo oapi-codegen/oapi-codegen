@@ -33,6 +33,30 @@ type Pet struct {
 	Tag *string `json:"tag,omitempty"`
 }
 
+// FindPetsResponseBody200 defines model for the response body for GET /pets (200, application/json).
+type FindPetsResponseBody200 = []Pet
+
+// FindPetsResponseBodyDefault defines model for the response body for GET /pets (default, application/json).
+type FindPetsResponseBodyDefault = Error
+
+// AddPetRequestBody defines model for the request body for POST /pets (application/json).
+type AddPetRequestBody = NewPet
+
+// AddPetResponseBody200 defines model for the response body for POST /pets (200, application/json).
+type AddPetResponseBody200 = Pet
+
+// AddPetResponseBodyDefault defines model for the response body for POST /pets (default, application/json).
+type AddPetResponseBodyDefault = Error
+
+// DeletePetResponseBodyDefault defines model for the response body for DELETE /pets/{id} (default, application/json).
+type DeletePetResponseBodyDefault = Error
+
+// FindPetByIDResponseBody200 defines model for the response body for GET /pets/{id} (200, application/json).
+type FindPetByIDResponseBody200 = Pet
+
+// FindPetByIDResponseBodyDefault defines model for the response body for GET /pets/{id} (default, application/json).
+type FindPetByIDResponseBodyDefault = Error
+
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// Tags tags to filter by
