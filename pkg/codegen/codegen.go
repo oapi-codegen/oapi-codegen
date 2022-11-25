@@ -574,6 +574,25 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
 		jsonBody, found := response.Content["application/json"]
+		if !found {
+			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+			if err != nil {
+				return nil, fmt.Errorf("error making name for components/requestBodies/%s: %w", requestBodyName, err)
+			}
+
+			typeDef := TypeDefinition{
+				JsonName: requestBodyName,
+				Schema: Schema{
+					GoType:              "json.RawMessage",
+					SkipOptionalPointer: true,
+				},
+				TypeName: goTypeName,
+			}
+
+			types = append(types, typeDef)
+			continue
+		}
+
 		if found {
 			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
 			if err != nil {
