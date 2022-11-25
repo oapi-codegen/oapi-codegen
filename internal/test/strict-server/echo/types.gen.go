@@ -12,6 +12,45 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// JSONExample200 defines model for POST /json (application/json).
+type JSONExample200 = Example
+
+// MultipartExample200 defines model for POST /multipart (multipart/form-data).
+type MultipartExample200 = Example
+
+// MultipleRequestAndResponseTypes200JSON defines model for POST /multiple (application/json).
+type MultipleRequestAndResponseTypes200JSON = Example
+
+// MultipleRequestAndResponseTypes200ApplicationxWwwFormUrlencoded defines model for POST /multiple (application/x-www-form-urlencoded).
+type MultipleRequestAndResponseTypes200ApplicationxWwwFormUrlencoded = Example
+
+// MultipleRequestAndResponseTypes200Imagepng defines model for POST /multiple (image/png).
+type MultipleRequestAndResponseTypes200Imagepng = []byte
+
+// MultipleRequestAndResponseTypes200MultipartformData defines model for POST /multiple (multipart/form-data).
+type MultipleRequestAndResponseTypes200MultipartformData = Example
+
+// MultipleRequestAndResponseTypes200Textplain defines model for POST /multiple (text/plain).
+type MultipleRequestAndResponseTypes200Textplain = string
+
+// ReusableResponses200 defines model for POST /reusable-responses (application/json).
+type ReusableResponses200 Reusableresponse
+
+// TextExample200 defines model for POST /text (text/plain).
+type TextExample200 = string
+
+// UnknownExample200 defines model for POST /unknown (video/mp4).
+type UnknownExample200 = []byte
+
+// UnspecifiedContentType200 defines model for POST /unspecified-content-type (video/*).
+type UnspecifiedContentType200 = []byte
+
+// URLEncodedExample200 defines model for POST /urlencoded (application/x-www-form-urlencoded).
+type URLEncodedExample200 = Example
+
+// HeadersExample200 defines model for POST /with-headers (application/json).
+type HeadersExample200 = Example
+
 // Badrequest defines model for badrequest.
 type Badrequest json.RawMessage
 

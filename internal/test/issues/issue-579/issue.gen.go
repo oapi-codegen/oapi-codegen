@@ -15,3 +15,6 @@ type Pet struct {
 	Born   *AliasedDate        `json:"born,omitempty"`
 	BornAt *openapi_types.Date `json:"born_at,omitempty"`
 }
+
+// GetPlaceholder200 defines model for GET /placeholder (text/plain).
+type GetPlaceholder200 = string

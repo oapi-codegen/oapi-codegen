@@ -40,6 +40,66 @@ type Object struct {
 	Role      string `json:"role"`
 }
 
+// GetContentObject200 defines model for GET /contentObject/{param} (text/plain).
+type GetContentObject200 SimpleResponse
+
+// GetCookiedefault defines model for GET /cookie (text/plain).
+type GetCookiedefault SimpleResponse
+
+// GetHeaderdefault defines model for GET /header (text/plain).
+type GetHeaderdefault SimpleResponse
+
+// GetLabelExplodeArray200 defines model for GET /labelExplodeArray/{.param*} (text/plain).
+type GetLabelExplodeArray200 SimpleResponse
+
+// GetLabelExplodeObject200 defines model for GET /labelExplodeObject/{.param*} (text/plain).
+type GetLabelExplodeObject200 SimpleResponse
+
+// GetLabelNoExplodeArray200 defines model for GET /labelNoExplodeArray/{.param} (text/plain).
+type GetLabelNoExplodeArray200 SimpleResponse
+
+// GetLabelNoExplodeObject200 defines model for GET /labelNoExplodeObject/{.param} (text/plain).
+type GetLabelNoExplodeObject200 SimpleResponse
+
+// GetMatrixExplodeArray200 defines model for GET /matrixExplodeArray/{.id*} (text/plain).
+type GetMatrixExplodeArray200 SimpleResponse
+
+// GetMatrixExplodeObject200 defines model for GET /matrixExplodeObject/{.id*} (text/plain).
+type GetMatrixExplodeObject200 SimpleResponse
+
+// GetMatrixNoExplodeArray200 defines model for GET /matrixNoExplodeArray/{.id} (text/plain).
+type GetMatrixNoExplodeArray200 SimpleResponse
+
+// GetMatrixNoExplodeObject200 defines model for GET /matrixNoExplodeObject/{.id} (text/plain).
+type GetMatrixNoExplodeObject200 SimpleResponse
+
+// GetPassThrough200 defines model for GET /passThrough/{param} (text/plain).
+type GetPassThrough200 SimpleResponse
+
+// GetDeepObjectdefault defines model for GET /queryDeepObject (text/plain).
+type GetDeepObjectdefault SimpleResponse
+
+// GetQueryForm200 defines model for GET /queryForm (text/plain).
+type GetQueryForm200 SimpleResponse
+
+// GetSimpleExplodeArray200 defines model for GET /simpleExplodeArray/{param*} (text/plain).
+type GetSimpleExplodeArray200 SimpleResponse
+
+// GetSimpleExplodeObject200 defines model for GET /simpleExplodeObject/{param*} (text/plain).
+type GetSimpleExplodeObject200 SimpleResponse
+
+// GetSimpleNoExplodeArray200 defines model for GET /simpleNoExplodeArray/{param} (text/plain).
+type GetSimpleNoExplodeArray200 SimpleResponse
+
+// GetSimpleNoExplodeObject200 defines model for GET /simpleNoExplodeObject/{param} (text/plain).
+type GetSimpleNoExplodeObject200 SimpleResponse
+
+// GetSimplePrimitive200 defines model for GET /simplePrimitive/{param} (text/plain).
+type GetSimplePrimitive200 SimpleResponse
+
+// GetStartingWithNumber200 defines model for GET /startingWithNumber/{1param} (text/plain).
+type GetStartingWithNumber200 SimpleResponse
+
 // SimpleResponse defines model for SimpleResponse.
 type SimpleResponse json.RawMessage
 

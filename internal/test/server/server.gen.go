@@ -80,6 +80,39 @@ type SomeObject struct {
 	Name string `json:"name"`
 }
 
+// GetEveryTypeOptional200 defines model for GET /every-type-optional (application/json).
+type GetEveryTypeOptional200 = EveryTypeOptional
+
+// GetSimple200 defines model for GET /get-simple (application/json).
+type GetSimple200 = SomeObject
+
+// GetWithArgs200 defines model for GET /get-with-args (application/json).
+type GetWithArgs200 SimpleResponse
+
+// GetWithReferences200 defines model for GET /get-with-references/{global_argument}/{argument} (application/json).
+type GetWithReferences200 SimpleResponse
+
+// GetWithContentType200JSON defines model for GET /get-with-type/{content_type} (application/json).
+type GetWithContentType200JSON = SomeObject
+
+// GetWithContentType200Textplain defines model for GET /get-with-type/{content_type} (text/plain).
+type GetWithContentType200Textplain = string
+
+// GetReservedKeyword200 defines model for GET /reserved-keyword (application/json).
+type GetReservedKeyword200 = ReservedKeyword
+
+// CreateResource200 defines model for POST /resource/{argument} (application/json).
+type CreateResource200 SimpleResponse
+
+// CreateResource2200 defines model for POST /resource2/{inline_argument} (application/json).
+type CreateResource2200 SimpleResponse
+
+// UpdateResource3200 defines model for PUT /resource3/{fallthrough} (application/json).
+type UpdateResource3200 SimpleResponse
+
+// GetResponseWithReference200 defines model for GET /response-with-reference (application/json).
+type GetResponseWithReference200 ResponseWithReference
+
 // Argument defines model for argument.
 type Argument = string
 

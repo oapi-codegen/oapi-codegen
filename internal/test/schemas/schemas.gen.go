@@ -67,6 +67,38 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
+// EnsureEverythingIsReferenced200 defines model for GET /ensure-everything-is-referenced (application/json).
+type EnsureEverythingIsReferenced200 struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// AnyType2 AnyType2 represents any type.
+	//
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+}
+
+// Issue127200JSON defines model for GET /issues/127 (application/json).
+type Issue127200JSON = GenericObject
+
+// Issue127200XML defines model for GET /issues/127 (application/xml).
+type Issue127200XML = GenericObject
+
+// Issue127200Textmarkdown defines model for GET /issues/127 (text/markdown).
+type Issue127200Textmarkdown = GenericObject
+
+// Issue127200YAML defines model for GET /issues/127 (text/yaml).
+type Issue127200YAML = GenericObject
+
+// Issue127defaultJSON defines model for GET /issues/127 (application/json).
+type Issue127defaultJSON = GenericObject
+
+// Issue127defaultTextmarkdown defines model for GET /issues/127 (text/markdown).
+type Issue127defaultTextmarkdown = GenericObject
+
+// GetIssues375200 defines model for GET /issues/375 (application/json).
+type GetIssues375200 = EnumInObjInArray
+
 // StringInPath defines model for StringInPath.
 type StringInPath = string
 

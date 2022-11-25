@@ -21,6 +21,9 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// GetFoo200 defines model for GET /foo (application/json).
+type GetFoo200 = string
+
 // GetFooParams defines parameters for GetFoo.
 type GetFooParams struct {
 	// Foo base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. json. openapi3.
