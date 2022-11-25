@@ -507,17 +507,13 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 	for _, responseName := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[responseName]
 
-		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
-		// simply be specified as strings or byte arrays.
+		// We have to generate the response object. We're only going to provide a
+		// struct for application/json media types here. Other responses will be
+		// generated as byte arrays
 		response := responseOrRef.Value
 		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
-			}
 
+		if !found {
 			goTypeName, err := renameResponse(responseName, responseOrRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
@@ -525,21 +521,44 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
-				Schema:   goType,
+				Schema: Schema{
+					GoType:              "json.RawMessage",
+					SkipOptionalPointer: true,
+				},
 				TypeName: goTypeName,
 			}
 
-			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
 			types = append(types, typeDef)
+			continue
 		}
+
+		goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
+		}
+
+		goTypeName, err := renameResponse(responseName, responseOrRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: responseName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if responseOrRef.Ref != "" {
+			// Generate a reference type for referenced parameters
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
 	}
+
 	return types, nil
 }
 
