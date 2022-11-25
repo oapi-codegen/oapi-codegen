@@ -21,6 +21,9 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// Badrequest defines model for badrequest.
+type Badrequest json.RawMessage
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
