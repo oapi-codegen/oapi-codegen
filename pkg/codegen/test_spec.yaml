@@ -82,6 +82,7 @@ paths:
                   - $ref: '#/components/schemas/CatAlive'
                   - $ref: '#/components/schemas/CatDead'
             text/plain: {}
+              # or content: {}
         default:
           description: Error
           content:
