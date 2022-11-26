@@ -81,6 +81,7 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/CatAlive'
                   - $ref: '#/components/schemas/CatDead'
+            text/plain: {}
         default:
           description: Error
           content:

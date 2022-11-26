@@ -718,6 +718,9 @@ func EscapePathElements(path string) string {
 // x-go-name, the new name is returned, otherwise, the original name is
 // returned.
 func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
+	if schemaRef == nil {
+		return schemaName, nil
+	}
 	// References will not change type names.
 	if schemaRef.Ref != "" {
 		return SchemaNameToTypeName(schemaName), nil
