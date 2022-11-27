@@ -562,6 +562,62 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 	return types, nil
 }
 
+func generateTypesForRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	// As for responses, we will only generate Go code for JSON bodies,
+	// the other body formats are up to the user.
+	response := requestBodyRef.Value
+	jsonBody, found := response.Content["application/json"]
+	if !found {
+		goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/requestBodies/%s: %w", requestBodyName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: requestBodyName,
+			Schema: Schema{
+				GoType:              "json.RawMessage",
+				SkipOptionalPointer: true,
+			},
+			TypeName: goTypeName,
+		}
+
+		types = append(types, typeDef)
+	}
+
+	if found {
+		goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
+		}
+
+		goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: requestBodyName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if requestBodyRef.Ref != "" {
+			// Generate a reference type for referenced bodies
+			refType, err := RefPathToGoType(requestBodyRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
+	}
+
+	return types, nil
+}
+
 // GenerateTypesForRequestBodies generates type definitions for any custom types defined in the
 // components/requestBodies section of the Swagger spec.
 func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
@@ -569,57 +625,11 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 
 	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
-
-		// As for responses, we will only generate Go code for JSON bodies,
-		// the other body formats are up to the user.
-		response := requestBodyRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if !found {
-			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
-			if err != nil {
-				return nil, fmt.Errorf("error making name for components/requestBodies/%s: %w", requestBodyName, err)
-			}
-
-			typeDef := TypeDefinition{
-				JsonName: requestBodyName,
-				Schema: Schema{
-					GoType:              "json.RawMessage",
-					SkipOptionalPointer: true,
-				},
-				TypeName: goTypeName,
-			}
-
-			types = append(types, typeDef)
-			continue
+		requestBodyTypes, err := generateTypesForRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, err
 		}
-
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
-			}
-
-			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
-			if err != nil {
-				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
-			}
-
-			typeDef := TypeDefinition{
-				JsonName: requestBodyName,
-				Schema:   goType,
-				TypeName: goTypeName,
-			}
-
-			if requestBodyRef.Ref != "" {
-				// Generate a reference type for referenced bodies
-				refType, err := RefPathToGoType(requestBodyRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
-			types = append(types, typeDef)
-		}
+		types = append(types, requestBodyTypes...)
 	}
 	return types, nil
 }
