@@ -55,7 +55,7 @@ func TestAPI(t *testing.T) {
 	jwts := []string{string(readerJWT), string(writerJWT)}
 	for _, jwt := range jwts {
 		response := testutil.NewRequest().Get("/things").
-			WithJWSAuth(string(jwt)).
+			WithJWSAuth(jwt).
 			WithAcceptJson().Go(t, e)
 		assert.Equal(t, http.StatusOK, response.Code())
 	}

@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -42,34 +42,34 @@ type Object struct {
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
-	// primitive
+	// P primitive
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// primitive
+	// Ep primitive
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// exploded array
+	// Ea exploded array
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// array
+	// A array
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// exploded object
+	// Eo exploded object
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// object
+	// O object
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// complex object
+	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// name starting with number
+	// N1s name starting with number
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
 type EnumParamsParams struct {
-	// Parameter with enum values
+	// EnumPathParam Parameter with enum values
 	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
 }
 
@@ -78,64 +78,64 @@ type EnumParamsParamsEnumPathParam int32
 
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
-	// primitive
+	// XPrimitive primitive
 	XPrimitive *int32 `json:"X-Primitive,omitempty"`
 
-	// primitive
+	// XPrimitiveExploded primitive
 	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
 
-	// exploded array
+	// XArrayExploded exploded array
 	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
 
-	// array
+	// XArray array
 	XArray *[]int32 `json:"X-Array,omitempty"`
 
-	// exploded object
+	// XObjectExploded exploded object
 	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
 
-	// object
+	// XObject object
 	XObject *Object `json:"X-Object,omitempty"`
 
-	// complex object
+	// XComplexObject complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 
-	// name starting with number
+	// N1StartingWithNumber name starting with number
 	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
-	// deep object
+	// DeepObj deep object
 	DeepObj ComplexObject `json:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
-	// exploded array
+	// Ea exploded array
 	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
 
-	// array
+	// A array
 	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
 
-	// exploded object
+	// Eo exploded object
 	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
 
-	// object
+	// O object
 	O *Object `form:"o,omitempty" json:"o,omitempty"`
 
-	// exploded primitive
+	// Ep exploded primitive
 	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
 
-	// primitive
+	// P primitive
 	P *int32 `form:"p,omitempty" json:"p,omitempty"`
 
-	// primitive string
+	// Ps primitive string
 	Ps *string `form:"ps,omitempty" json:"ps,omitempty"`
 
-	// complex object
+	// Co complex object
 	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
 
-	// name starting with number
+	// N1s name starting with number
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
@@ -2332,7 +2332,7 @@ func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Cont
 
 // ParseGetContentObjectResponse parses an HTTP response from a GetContentObjectWithResponse call
 func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2348,7 +2348,7 @@ func ParseGetContentObjectResponse(rsp *http.Response) (*GetContentObjectRespons
 
 // ParseGetCookieResponse parses an HTTP response from a GetCookieWithResponse call
 func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2364,7 +2364,7 @@ func ParseGetCookieResponse(rsp *http.Response) (*GetCookieResponse, error) {
 
 // ParseEnumParamsResponse parses an HTTP response from a EnumParamsWithResponse call
 func ParseEnumParamsResponse(rsp *http.Response) (*EnumParamsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2380,7 +2380,7 @@ func ParseEnumParamsResponse(rsp *http.Response) (*EnumParamsResponse, error) {
 
 // ParseGetHeaderResponse parses an HTTP response from a GetHeaderWithResponse call
 func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2396,7 +2396,7 @@ func ParseGetHeaderResponse(rsp *http.Response) (*GetHeaderResponse, error) {
 
 // ParseGetLabelExplodeArrayResponse parses an HTTP response from a GetLabelExplodeArrayWithResponse call
 func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2412,7 +2412,7 @@ func ParseGetLabelExplodeArrayResponse(rsp *http.Response) (*GetLabelExplodeArra
 
 // ParseGetLabelExplodeObjectResponse parses an HTTP response from a GetLabelExplodeObjectWithResponse call
 func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2428,7 +2428,7 @@ func ParseGetLabelExplodeObjectResponse(rsp *http.Response) (*GetLabelExplodeObj
 
 // ParseGetLabelNoExplodeArrayResponse parses an HTTP response from a GetLabelNoExplodeArrayWithResponse call
 func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2444,7 +2444,7 @@ func ParseGetLabelNoExplodeArrayResponse(rsp *http.Response) (*GetLabelNoExplode
 
 // ParseGetLabelNoExplodeObjectResponse parses an HTTP response from a GetLabelNoExplodeObjectWithResponse call
 func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2460,7 +2460,7 @@ func ParseGetLabelNoExplodeObjectResponse(rsp *http.Response) (*GetLabelNoExplod
 
 // ParseGetMatrixExplodeArrayResponse parses an HTTP response from a GetMatrixExplodeArrayWithResponse call
 func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2476,7 +2476,7 @@ func ParseGetMatrixExplodeArrayResponse(rsp *http.Response) (*GetMatrixExplodeAr
 
 // ParseGetMatrixExplodeObjectResponse parses an HTTP response from a GetMatrixExplodeObjectWithResponse call
 func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2492,7 +2492,7 @@ func ParseGetMatrixExplodeObjectResponse(rsp *http.Response) (*GetMatrixExplodeO
 
 // ParseGetMatrixNoExplodeArrayResponse parses an HTTP response from a GetMatrixNoExplodeArrayWithResponse call
 func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2508,7 +2508,7 @@ func ParseGetMatrixNoExplodeArrayResponse(rsp *http.Response) (*GetMatrixNoExplo
 
 // ParseGetMatrixNoExplodeObjectResponse parses an HTTP response from a GetMatrixNoExplodeObjectWithResponse call
 func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2524,7 +2524,7 @@ func ParseGetMatrixNoExplodeObjectResponse(rsp *http.Response) (*GetMatrixNoExpl
 
 // ParseGetPassThroughResponse parses an HTTP response from a GetPassThroughWithResponse call
 func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2540,7 +2540,7 @@ func ParseGetPassThroughResponse(rsp *http.Response) (*GetPassThroughResponse, e
 
 // ParseGetDeepObjectResponse parses an HTTP response from a GetDeepObjectWithResponse call
 func ParseGetDeepObjectResponse(rsp *http.Response) (*GetDeepObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2556,7 +2556,7 @@ func ParseGetDeepObjectResponse(rsp *http.Response) (*GetDeepObjectResponse, err
 
 // ParseGetQueryFormResponse parses an HTTP response from a GetQueryFormWithResponse call
 func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2572,7 +2572,7 @@ func ParseGetQueryFormResponse(rsp *http.Response) (*GetQueryFormResponse, error
 
 // ParseGetSimpleExplodeArrayResponse parses an HTTP response from a GetSimpleExplodeArrayWithResponse call
 func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2588,7 +2588,7 @@ func ParseGetSimpleExplodeArrayResponse(rsp *http.Response) (*GetSimpleExplodeAr
 
 // ParseGetSimpleExplodeObjectResponse parses an HTTP response from a GetSimpleExplodeObjectWithResponse call
 func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2604,7 +2604,7 @@ func ParseGetSimpleExplodeObjectResponse(rsp *http.Response) (*GetSimpleExplodeO
 
 // ParseGetSimpleNoExplodeArrayResponse parses an HTTP response from a GetSimpleNoExplodeArrayWithResponse call
 func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplodeArrayResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2620,7 +2620,7 @@ func ParseGetSimpleNoExplodeArrayResponse(rsp *http.Response) (*GetSimpleNoExplo
 
 // ParseGetSimpleNoExplodeObjectResponse parses an HTTP response from a GetSimpleNoExplodeObjectWithResponse call
 func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExplodeObjectResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2636,7 +2636,7 @@ func ParseGetSimpleNoExplodeObjectResponse(rsp *http.Response) (*GetSimpleNoExpl
 
 // ParseGetSimplePrimitiveResponse parses an HTTP response from a GetSimplePrimitiveWithResponse call
 func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2652,7 +2652,7 @@ func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveRes
 
 // ParseGetStartingWithNumberResponse parses an HTTP response from a GetStartingWithNumberWithResponse call
 func ParseGetStartingWithNumberResponse(rsp *http.Response) (*GetStartingWithNumberResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -2747,7 +2747,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 
 	err = json.Unmarshal([]byte(ctx.Param("param")), &param)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
+		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'param' as JSON")
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -2844,7 +2844,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		}
 		err = json.Unmarshal([]byte(decoded), &value)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'co' as JSON")
 		}
 
 		params.Co = &value
@@ -3008,7 +3008,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'X-Complex-Object' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'X-Complex-Object' as JSON")
 		}
 
 		params.XComplexObject = &XComplexObject
@@ -3269,7 +3269,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 		var Co ComplexObject
 		err = json.Unmarshal([]byte(paramValue), &Co)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
+			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter 'co' as JSON")
 		}
 		params.Co = &Co
 

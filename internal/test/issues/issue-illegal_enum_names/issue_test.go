@@ -1,4 +1,4 @@
-package illegal_enum_names
+package illegalenumnames
 
 import (
 	"go/ast"
@@ -6,10 +6,9 @@ import (
 	"go/token"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 )
 
 func TestIllegalEnumNames(t *testing.T) {
@@ -17,7 +16,7 @@ func TestIllegalEnumNames(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "illegal_enum_names",
+		PackageName: "illegalenumnames",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,

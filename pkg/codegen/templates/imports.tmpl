@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
-	"io/ioutil"
+	"os"
 	"net/http"
 	"net/url"
 	"path"
@@ -27,6 +27,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	{{- range .ExternalImports}}
 	{{ . }}
 	{{- end}}

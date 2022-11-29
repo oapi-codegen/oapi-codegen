@@ -64,6 +64,11 @@ type CompatibilityOptions struct {
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
+	// Our generated code for Chi has historically inverted the order in which Chi middleware is
+	// applied such that the last invoked middleware ends up executing first in the Chi chain
+	// This resolves the behavior such that middlewares are chained in the order they are invoked.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/786
+	ApplyChiMiddlewareFirstToLast bool `yaml:"apply-chi-middleware-first-to-last,omitempty"`
 
 	// Whether to remove duplicate global (referenced) param struct definitions (types + echo-server only)
 	DeduplicateRefParams bool `yaml:"deduplicate-ref-params,omitempty"`
@@ -79,6 +84,7 @@ type OutputOptions struct {
 
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

@@ -4,15 +4,15 @@
     {{$properties := .Schema.Properties -}}
     {{range .Schema.UnionElements}}
         {{$element := . -}}
-        // As{{.}} returns the union data inside the {{$typeName}} as a {{.}}
-        func (t {{$typeName}}) As{{.}}() ({{.}}, error) {
+        // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
+        func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
             err := json.Unmarshal(t.union, &body)
             return body, err
         }
 
-        // From{{.}} overwrites any union data inside the {{$typeName}} as the provided {{.}}
-        func (t *{{$typeName}}) From{{.}} (v {{.}}) error {
+        // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
+        func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
@@ -32,8 +32,8 @@
             return err
         }
 
-        // Merge{{.}} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
-        func (t *{{$typeName}}) Merge{{.}} (v {{.}}) error {
+        // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
+        func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
@@ -100,10 +100,12 @@
               }
             }
             {{range .Schema.Properties}}
+            {{if not .Required}}if t.{{.GoFieldName}} != nil { {{end}}
                 object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
                 if err != nil {
                     return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
                 }
+            {{if not .Required}} }{{end}}
             {{end -}}
             b, err = json.Marshal(object)
         {{end -}}

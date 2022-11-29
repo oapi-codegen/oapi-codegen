@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
@@ -27,10 +26,10 @@ const (
 
 // Error defines model for Error.
 type Error struct {
-	// Error code
+	// Code Error code
 	Code int32 `json:"code"`
 
-	// Error message
+	// Message Error message
 	Message string `json:"message"`
 }
 
@@ -357,7 +356,7 @@ func (c *ClientWithResponses) AddThingWithResponse(ctx context.Context, body Add
 
 // ParseListThingsResponse parses an HTTP response from a ListThingsWithResponse call
 func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
@@ -383,7 +382,7 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 
 // ParseAddThingResponse parses an HTTP response from a AddThingWithResponse call
 func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err

@@ -23,6 +23,7 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -35,7 +36,7 @@ type ParameterDefinition struct {
 	IsRef     bool
 }
 
-// This function is here as an adapter after a large refactoring so that I don't
+// TypeDef is here as an adapter after a large refactoring so that I don't
 // have to update all the templates. It returns the type definition for a parameter,
 // without the leading '*' for optional ones.
 func (pd ParameterDefinition) TypeDef() string {
@@ -43,7 +44,7 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
-// Generate the JSON annotation to map GoType to json type name. If Parameter
+// JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
@@ -57,8 +58,11 @@ func (pd *ParameterDefinition) JsonTag() string {
 func (pd *ParameterDefinition) IsJson() bool {
 	p := pd.Spec
 	if len(p.Content) == 1 {
-		_, found := p.Content["application/json"]
-		return found
+		for k := range p.Content {
+			if util.IsMediaTypeJson(k) {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -146,7 +150,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 	return nil
 }
 
-// This function walks the given parameters dictionary, and generates the above
+// DescribeParameters walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string, deduplicateGlobalParams bool) ([]ParameterDefinition, error) {
@@ -204,7 +208,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
-// This structure describes an Operation
+// OperationDefinition describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
@@ -223,7 +227,7 @@ type OperationDefinition struct {
 	Spec                *openapi3.Operation
 }
 
-// Returns the list of all parameters except Path parameters. Path parameters
+// Params returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
@@ -231,7 +235,7 @@ func (o *OperationDefinition) Params() []ParameterDefinition {
 	return result
 }
 
-// Returns all parameters
+// AllParams returns all parameters
 func (o *OperationDefinition) AllParams() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
 	result = append(result, o.CookieParams...)
@@ -281,14 +285,14 @@ func (o *OperationDefinition) nonReferenceParams() []ParameterDefinition {
 	return nonRefTypeParams
 }
 
-// This is called by the template engine to determine whether to generate body
-// marshaling code on the client. This is true for all body types, whether or
-// not we generate types for them.
+// HasBody is called by the template engine to determine whether to generate body
+// marshaling code on the client. This is true for all body types, whether
+// we generate types for them.
 func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// This returns the Operations summary as a multi line comment
+// SummaryAsComment returns the Operations summary as a multi line comment
 func (o *OperationDefinition) SummaryAsComment() string {
 	if o.Summary == "" {
 		return ""
@@ -301,7 +305,7 @@ func (o *OperationDefinition) SummaryAsComment() string {
 	return strings.Join(parts, "\n")
 }
 
-// Produces a list of type definitions for a given Operation for the response
+// GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
@@ -371,7 +375,7 @@ func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
 	return false
 }
 
-// This describes a request body
+// RequestBodyDefinition describes a request body
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
 	Required bool
@@ -394,7 +398,7 @@ type RequestBodyDefinition struct {
 	Encoding map[string]RequestBodyEncoding
 }
 
-// Returns the Go type definition for a request body
+// TypeDef returns the Go type definition for a request body
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
 		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
@@ -402,7 +406,7 @@ func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	}
 }
 
-// Returns whether the body is a custom inline type, or pre-defined. This is
+// CustomType returns whether the body is a custom inline type, or pre-defined. This is
 // poorly named, but it's here for compatibility reasons post-refactoring
 // TODO: clean up the templates code, it can be simpler.
 func (r RequestBodyDefinition) CustomType() bool {
@@ -420,17 +424,17 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
-// Returns true if we support this content type for client. Otherwise only generic method will ge generated
+// IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
 	return r.NameTag == "JSON" || r.NameTag == "Formdata" || r.NameTag == "Text"
 }
 
-// Returns true if we support this content type for server. Otherwise io.Reader will be generated
+// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
 func (r RequestBodyDefinition) IsSupported() bool {
 	return r.NameTag != ""
 }
 
-// Returns true if content type has fixed content type, i.e. contains no "*" symbol
+// IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r RequestBodyDefinition) IsFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
 }
@@ -486,7 +490,7 @@ func (r ResponseContentDefinition) IsSupported() bool {
 	return r.NameTag != ""
 }
 
-// Returns true if content type has fixed content type, i.e. contains no "*" symbol
+// HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r ResponseContentDefinition) HasFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
 }
@@ -504,7 +508,7 @@ type ResponseHeaderDefinition struct {
 	Schema Schema
 }
 
-// This function returns the subset of the specified parameters which are of the
+// FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {
 	var out []ParameterDefinition
@@ -544,10 +548,10 @@ func OperationDefinitions(swagger *openapi3.T, deduplicateRefParams bool) ([]Ope
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
 			} else {
 				op.OperationID = ToCamelCase(op.OperationID)
 			}
+			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
@@ -623,7 +627,7 @@ func OperationDefinitions(swagger *openapi3.T, deduplicateRefParams bool) ([]Ope
 }
 
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
+	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -642,7 +646,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 	return ToCamelCase(operationId), nil
 }
 
-// This function turns the Swagger body definitions into a list of our body
+// GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
 func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
@@ -659,7 +663,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var defaultBody bool
 
 		switch {
-		case contentType == "application/json":
+		case util.IsMediaTypeJson(contentType):
 			tag = "JSON"
 			defaultBody = true
 		case strings.HasPrefix(contentType, "multipart/"):
@@ -748,7 +752,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			content := response.Content[contentType]
 			var tag string
 			switch {
-			case contentType == "application/json":
+			case util.IsMediaTypeJson(contentType):
 				tag = "JSON"
 			case contentType == "application/x-www-form-urlencoded":
 				tag = "Formdata"
@@ -785,7 +789,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: ToCamelCase(headerName), Schema: contentSchema}
+			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
@@ -942,13 +946,13 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
-// GenerateGinServer This function generates all the go code for the ServerInterface as well as
+// GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
-// GenerateGinServer This function generates all the go code for the ServerInterface as well as
+// GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
@@ -956,8 +960,8 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 	templates := []string{"strict/strict-interface.tmpl"}
-	if opts.Generate.ChiServer {
-		templates = append(templates, "strict/strict-chi.tmpl")
+	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
+		templates = append(templates, "strict/strict-http.tmpl")
 	}
 	if opts.Generate.EchoServer {
 		templates = append(templates, "strict/strict-echo.tmpl")
@@ -972,14 +976,14 @@ func GenerateStrictResponses(t *template.Template, responses []ResponseDefinitio
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }
 
-// Uses the template engine to generate the function which registers our wrappers
+// GenerateClient uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
-// This generates a client which extends the basic client which does response
-// unmarshaling.
+// GenerateClientWithResponses generates a client which extends the basic client which does response
+// unmarshalling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }

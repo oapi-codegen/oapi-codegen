@@ -25,16 +25,16 @@ paths:
     get:
       operationId: getSimpleNoExplodeArray
       parameters:
-      - name: param
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: array
-          items:
-            type: integer
-            format: int32
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -342,7 +342,7 @@ paths:
             $ref: "#/components/schemas/ComplexObject"
       responses:
         default:
-         $ref: "#/components/responses/SimpleResponse"
+          $ref: "#/components/responses/SimpleResponse"
   /header:
     get:
       operationId: getHeader
@@ -490,14 +490,14 @@ paths:
     get:
       operationId: enumParams
       parameters:
-       - name: enumPathParam
-         description: Parameter with enum values
-         in: query
-         required: false
-         schema:
-           type: integer
-           format: int32
-           enum: [100, 200]
+        - name: enumPathParam
+          description: Parameter with enum values
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            enum: [ 100, 200 ]
       responses:
         204:
           description: no content

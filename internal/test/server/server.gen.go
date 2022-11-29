@@ -93,13 +93,13 @@ type SimpleResponse struct {
 
 // GetWithArgsParams defines parameters for GetWithArgs.
 type GetWithArgsParams struct {
-	// An optional query argument
+	// OptionalArgument An optional query argument
 	OptionalArgument *int64 `form:"optional_argument,omitempty" json:"optional_argument,omitempty"`
 
-	// An optional query argument
+	// RequiredArgument An optional query argument
 	RequiredArgument int64 `form:"required_argument" json:"required_argument"`
 
-	// An optional query argument
+	// HeaderArgument An optional query argument
 	HeaderArgument *int32 `json:"header_argument,omitempty"`
 }
 
@@ -108,7 +108,7 @@ type GetWithContentTypeParamsContentType string
 
 // CreateResource2Params defines parameters for CreateResource2.
 type CreateResource2Params struct {
-	// Some query argument
+	// InlineQueryArgument Some query argument
 	InlineQueryArgument *int `form:"inline_query_argument,omitempty" json:"inline_query_argument,omitempty"`
 }
 
@@ -458,16 +458,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshalingParamError struct {
+type UnmarshallingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshalingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshallingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshalingParamError) Unwrap() error {
+func (e *UnmarshallingParamError) Unwrap() error {
 	return e.Err
 }
 

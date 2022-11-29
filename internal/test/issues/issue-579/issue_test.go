@@ -1,4 +1,4 @@
-package issue_579
+package issue579
 
 import (
 	"encoding/json"

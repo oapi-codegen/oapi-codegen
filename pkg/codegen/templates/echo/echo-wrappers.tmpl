@@ -16,7 +16,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         {{ if .IsJson }}
     err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter '{{.ParamName}}' as JSON")
     }
         {{ end }}{{/* .IsJson */}}
         {{ if .IsStyled }}
@@ -79,7 +79,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var {{.GoName}} {{.TypeDef}}
     err = json.Unmarshal([]byte(paramValue), &{{.GoName}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter '{{.ParamName}}' as JSON")
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
                 {{ end }}{{/* .IsJson */}}
@@ -113,7 +113,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
         {{ if .IsJson }}
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
-            return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+            return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter '{{.ParamName}}' as JSON")
         }
         {{ end }}
         {{ if .IsStyled }}
@@ -153,7 +153,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     }
     err = json.Unmarshal([]byte(decoded), &value)
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshalling parameter '{{.ParamName}}' as JSON")
     }
             {{ if .IsRef }}
     {{ .GoVariableName }} = {{if not .Required}}&{{end}}value

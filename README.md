@@ -1,6 +1,10 @@
 OpenAPI Client and Server Code Generator
 ----------------------------------------
 
+⚠️ This README may be for the latest development version, which may contain
+unreleased changes. Please ensure you're looking at the README for the latest
+release version.
+
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
 [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
@@ -108,7 +112,7 @@ type ServerInterface interface {
 These are the functions which you will implement yourself in order to create
 a server conforming to the API specification. Normally, all the arguments and
 parameters are stored on the `echo.Context` in handlers, so we do the tedious
-work of of unmarshaling the JSON automatically, simply passing values into
+work of unmarshalling the JSON automatically, simply passing values into
 your handlers.
 
 Notice that `FindPetById` takes a parameter `id int64`. All path arguments
@@ -271,22 +275,21 @@ function to bind the form to a struct. All other content types are represented b
 
 To form a response simply return one of the generated structs with corresponding status code and content type. For example,
 to return a status code 200 JSON response for a AddPet use the `AddPet200JSONResponse` struct which will set the correct
-Content-Type header, status code and will marshal the response data. You can also return an `error` interface, that will be
-cause an `Internal Server Error` response. If you return a response that is not supported by this method, you will get an error.
-Unfortunately go does not support union types outside generic code, so we can't type check in compile time.
+Content-Type header, status code and will marshal the response data. You can also return an error, that will
+cause an `Internal Server Error` response.
 
 Short example:
 ```go
 type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) interface{} {
+func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error) {
     var result []Pet
 	// Implement me
-    return GetPets200JSONResponse(result)
+    return GetPets200JSONResponse(result), nil
 }
 ```
 For a complete example see `/examples/petstore-expanded/strict`.
 
-Code is generation with a configuration flag `genrate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
+Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
 ```go
 func SetupHandler() {
@@ -553,6 +556,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-json-ignore`: sets tag to `-` to ignore the field in json completely.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
   are added are in addition to the regular json tags that are generated. If you specify your 
@@ -645,7 +649,9 @@ you can specify any combination of those.
  that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
  present in its package.
-- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob. This
+- `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
+  This is then usable with the `OapiRequestValidator`, or to be used by other
+  methods that need access to the parsed OpenAPI specification
 - `skip-fmt`: skip running `goimports` on the generated code. This is useful for debugging
  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating
@@ -682,8 +688,6 @@ package: externalref
 generate:
   models: true
   embedded-spec: true
-output-options:
-  skip-prune: true
 import-mapping:
   ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
   ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB

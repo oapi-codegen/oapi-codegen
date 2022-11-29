@@ -6,9 +6,8 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestBindURLForm(t *testing.T) {
@@ -30,7 +29,7 @@ func TestBindURLForm(t *testing.T) {
 		OptStruct       *testSubStruct   `json:"opt_struct,omitempty"`
 		OptStructSlice  *[]testSubStruct `json:"opt_struct_slice,omitempty"`
 		NotSerializable int              `json:"-"`
-		unexported      int
+		unexported      int              //nolint:unused
 	}
 
 	testCases := map[string]testStruct{
@@ -138,7 +137,7 @@ func TestMarshalForm(t *testing.T) {
 		OptStruct       *testSubStruct   `json:"opt_struct,omitempty"`
 		OptStructSlice  *[]testSubStruct `json:"opt_struct_slice,omitempty"`
 		NotSerializable int              `json:"-"`
-		unexported      int
+		unexported      int              //nolint:unused
 	}
 
 	testCases := map[string]testStruct{

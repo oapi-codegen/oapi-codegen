@@ -40,7 +40,7 @@ func NewPetStore() *PetStore {
 
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetstoreError(c *gin.Context, code int, message string) {
+func sendPetStoreError(c *gin.Context, code int, message string) {
 	petErr := Error{
 		Code:    int32(code),
 		Message: message,
@@ -48,7 +48,7 @@ func sendPetstoreError(c *gin.Context, code int, message string) {
 	c.JSON(code, petErr)
 }
 
-// Here, we implement all of the handlers in the ServerInterface
+// FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(c *gin.Context, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
@@ -84,7 +84,7 @@ func (p *PetStore) AddPet(c *gin.Context) {
 	var newPet NewPet
 	err := c.Bind(&newPet)
 	if err != nil {
-		sendPetstoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
+		sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
 		return
 	}
 	// We now have a pet, let's add it to our "database".
@@ -114,7 +114,7 @@ func (p *PetStore) FindPetByID(c *gin.Context, petId int64) {
 
 	pet, found := p.Pets[petId]
 	if !found {
-		sendPetstoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", petId))
+		sendPetStoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", petId))
 		return
 	}
 	c.JSON(http.StatusOK, pet)
@@ -126,7 +126,7 @@ func (p *PetStore) DeletePet(c *gin.Context, id int64) {
 
 	_, found := p.Pets[id]
 	if !found {
-		sendPetstoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
+		sendPetStoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", id))
 	}
 	delete(p.Pets, id)
 	c.Status(http.StatusNoContent)

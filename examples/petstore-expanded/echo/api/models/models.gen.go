@@ -5,40 +5,40 @@ package models
 
 // Error defines model for Error.
 type Error struct {
-	// Error code
+	// Code Error code
 	Code int32 `json:"code"`
 
-	// Error message
+	// Message Error message
 	Message string `json:"message"`
 }
 
 // NewPet defines model for NewPet.
 type NewPet struct {
-	// Name of the pet
+	// Name Name of the pet
 	Name string `json:"name"`
 
-	// Type of the pet
+	// Tag Type of the pet
 	Tag *string `json:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
 type Pet struct {
-	// Unique id of the pet
+	// Id Unique id of the pet
 	Id int64 `json:"id"`
 
-	// Name of the pet
+	// Name Name of the pet
 	Name string `json:"name"`
 
-	// Type of the pet
+	// Tag Type of the pet
 	Tag *string `json:"tag,omitempty"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
-	// tags to filter by
+	// Tags tags to filter by
 	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
-	// maximum number of results to return
+	// Limit maximum number of results to return
 	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
 }
 

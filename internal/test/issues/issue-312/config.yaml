@@ -1,4 +1,4 @@
-package: issue_312
+package: issue312
 generate:
   echo-server: true
   client: true

@@ -21,10 +21,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 // MockBinder is just an independent version of Binder that has the Bind implemented

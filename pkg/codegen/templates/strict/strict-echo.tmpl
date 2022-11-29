@@ -1,4 +1,4 @@
-type StrictHandlerFunc func(ctx echo.Context, args interface{}) interface{}
+type StrictHandlerFunc func(ctx echo.Context, args interface{}) (interface{}, error)
 
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
@@ -56,7 +56,7 @@ type strictHandler struct {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
                 {{else if eq .NameTag "Text" -}}
-                    data, err := ioutil.ReadAll(ctx.Request().Body)
+                    data, err := io.ReadAll(ctx.Request().Body)
                     if err != nil {
                         return err
                     }
@@ -68,65 +68,21 @@ type strictHandler struct {
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
-        handler := func(ctx echo.Context, request interface{}) interface{}{
+        handler := func(ctx echo.Context, request interface{}) (interface{}, error){
             return sh.ssi.{{.OperationId}}(ctx.Request().Context(), request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {
             handler = middleware(handler, "{{.OperationId}}")
         }
 
-        response := handler(ctx, request)
+        response, err := handler(ctx, request)
 
-        switch v := response.(type) {
-            {{range .Responses -}}
-                {{$statusCode := .StatusCode -}}
-                {{$fixedStatusCode := .HasFixedStatusCode -}}
-                {{$headers := .Headers -}}
-                {{range .Contents -}}
-                    case {{$opid}}{{$statusCode}}{{.NameTagOrContentType}}Response:
-                    {{range $headers -}}
-                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
-                    {{end -}}
-                    {{if eq .NameTag "JSON" -}}
-                        return ctx.JSON({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, v)
-                    {{else if eq .NameTag "Text" -}}
-                        return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(v))
-                    {{else if eq .NameTag "Formdata" -}}
-                        if form, err := runtime.MarshalForm(v, nil); err != nil {
-                            return err
-                        } else {
-                            return ctx.Blob({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, "{{.ContentType}}", []byte(form.Encode()))
-                        }
-                    {{else if eq .NameTag "Multipart" -}}
-                        writer := multipart.NewWriter(ctx.Response())
-                        ctx.Response().Header().Set("Content-Type", writer.FormDataContentType())
-                        defer writer.Close()
-                        if err := v(writer); err != nil {
-                            return err
-                        }
-                    {{else -}}
-                        if v.ContentLength != 0 {
-                            ctx.Response().Header().Set("Content-Length", fmt.Sprint(v.ContentLength))
-                        }
-                        if closer, ok := v.Body.(io.ReadCloser); ok {
-                            defer closer.Close()
-                        }
-                        return ctx.Stream({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}}, {{if .HasFixedContentType }}"{{.ContentType}}"{{else}}v.ContentType{{end}}, v.Body)
-                    {{end}}{{/* if eq .NameTag "JSON" */ -}}
-                {{end}}{{/* range .Contents */ -}}
-                {{if eq 0 (len .Contents) -}}
-                    case {{$opid}}{{$statusCode}}Response:
-                    {{range $headers -}}
-                        ctx.Response().Header().Set("{{.Name}}", fmt.Sprint(v.Headers.{{.GoName}}))
-                    {{end -}}
-                    return ctx.NoContent({{if $fixedStatusCode}}{{$statusCode}}{{else}}v.StatusCode{{end}})
-                {{end}}{{/* if eq 0 (len .Contents) */ -}}
-            {{end}}{{/* range .Responses */ -}}
-            case error:
-                return v
-            case nil:
-            default:
-                return fmt.Errorf("Unexpected response type: %T", v)
+        if err != nil {
+            return err
+        } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
+            return validResponse.Visit{{$opid}}Response(ctx.Response())
+        } else if response != nil {
+            return fmt.Errorf("Unexpected response type: %T", response)
         }
         return nil
     }

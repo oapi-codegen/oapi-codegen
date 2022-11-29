@@ -25,7 +25,7 @@ func (file *File) InitFromBytes(data []byte, filename string) {
 	file.multipart = nil
 }
 
-func (file *File) MarshalJSON() ([]byte, error) {
+func (file File) MarshalJSON() ([]byte, error) {
 	b, err := file.Bytes()
 	if err != nil {
 		return nil, err
