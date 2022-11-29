@@ -245,7 +245,12 @@ func TestEchoReferenceParameters(t *testing.T) {
 			Models:     true,
 			EchoServer: true,
 		},
+		Compatibility: CompatibilityOptions{
+			DeduplicateRefParams: true,
+		},
 	}
+	require.NoError(t, opts.Validate())
+
 	spec := "test_specs/parameters-ref-type.yaml"
 	swagger, err := util.LoadSwagger(spec)
 	require.NoError(t, err)

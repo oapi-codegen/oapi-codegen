@@ -30,6 +30,7 @@ import (
 )
 
 // Embed the templates directory
+//
 //go:embed templates
 var templates embed.FS
 
@@ -133,7 +134,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
-	ops, err := OperationDefinitions(spec)
+	ops, err := OperationDefinitions(spec, opts.Compatibility.DeduplicateRefParams)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}

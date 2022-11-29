@@ -64,6 +64,9 @@ type CompatibilityOptions struct {
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
+
+	// Whether to remove duplicate global (referenced) param struct definitions (types + echo-server only)
+	DeduplicateRefParams bool `yaml:"deduplicate-ref-params,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.
@@ -110,5 +113,10 @@ func (o Configuration) Validate() error {
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
+
+	if !o.Generate.EchoServer && nServers > 0 && o.Compatibility.DeduplicateRefParams {
+		return errors.New("deduplicate-ref-params is only supported with echo-server or no server")
+	}
+
 	return nil
 }

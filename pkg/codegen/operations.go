@@ -149,7 +149,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // This function walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
-func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+func DescribeParameters(params openapi3.Parameters, path []string, deduplicateGlobalParams bool) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
@@ -178,7 +178,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 					paramOrRef.Ref, param.Name, err)
 			}
 			pd.Schema.GoType = goType
-			pd.IsRef = true
+			pd.IsRef = true && deduplicateGlobalParams // turned off in case deduplication is off
 
 		}
 		outParams = append(outParams, pd)
@@ -517,14 +517,14 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, deduplicateRefParams bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		globalParams, err := DescribeParameters(pathItem.Parameters, nil, deduplicateRefParams)
 		if err != nil {
 			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
@@ -551,7 +551,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"}, deduplicateRefParams)
 			if err != nil {
 				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
