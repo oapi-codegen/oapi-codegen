@@ -40,7 +40,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{end}}
 
 {{range .SecurityDefinitions}}
-  c.Set({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
+  c.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
