@@ -344,11 +344,17 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
 	}
 
+	pathsTypes, err := GenerateTypesForPaths(t, swagger.Paths, excludeSchemas)
+	if err != nil {
+		return "", fmt.Errorf("error generating Go types for paths: %w", err)
+	}
+	allTypes := append(schemaTypes, pathsTypes...)
+
 	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
 	if err != nil {
 		return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
 	}
-	allTypes := append(schemaTypes, paramTypes...)
+	allTypes = append(allTypes, paramTypes...)
 
 	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
 	if err != nil {
@@ -462,6 +468,127 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 	return types, nil
 }
 
+// GenerateTypesForPaths generates type definitions for any custom types defined in the
+// paths section of the Swagger spec.
+func GenerateTypesForPaths(t *template.Template, paths openapi3.Paths, excludeSchemas []string) ([]TypeDefinition, error) {
+	excludeSchemasMap := make(map[string]bool)
+	for _, schema := range excludeSchemas {
+		excludeSchemasMap[schema] = true
+	}
+
+	types := make([]TypeDefinition, 0)
+
+	// We're going to define Go types for every object under paths
+	for _, pathName := range SortedPathsKeys(paths) {
+		for _, operationName := range SortedOperationsKeys(paths[pathName].Operations()) {
+			operation := paths[pathName].Operations()[operationName]
+			// starting with request bodies
+			if operation.RequestBody != nil {
+				sortedContentKeys := SortedContentKeys(operation.RequestBody.Value.Content)
+				for _, mediaTypeStr := range sortedContentKeys {
+					mediaType := operation.RequestBody.Value.Content.Get(mediaTypeStr)
+
+					typeName := ""
+					if operation.OperationID != "" {
+						typeName += ToCamelCase(operation.OperationID)
+					} else {
+						typeName += ToCamelCase(strings.ToLower(operationName)) + ToCamelCase(pathName)
+					}
+					typeName += "RequestBody"
+
+					// when there are multiple media types provided for the Response, add a suffix for the media type
+					if len(sortedContentKeys) > 1 {
+						typeName += mediaTypeToGoName(mediaTypeStr)
+					}
+
+					goSchema, err := GenerateGoSchema(mediaType.Schema, []string{typeName})
+					if err != nil {
+						return nil, fmt.Errorf("error converting Schema for %s %s to Go type:: %w", operationName, pathName, err)
+					}
+
+					goTypeName, err := renameSchema(typeName, mediaType.Schema)
+					if err != nil {
+						return nil, fmt.Errorf("error generating a Go type name for %s %s with provided typeName %s: %w", operationName, pathName, typeName, err)
+					}
+
+					typeDef := TypeDefinition{
+						JsonName: fmt.Sprintf("the request body for %s %s (%s)", operationName, pathName, mediaTypeStr),
+						TypeName: goTypeName,
+						Schema:   goSchema,
+					}
+
+					if operation.RequestBody.Ref != "" {
+						// Generate a reference type for referenced types
+						refType, err := RefPathToGoType(operation.RequestBody.Ref)
+						if err != nil {
+							return nil, fmt.Errorf("error generating Go type for %s %s: %w", operationName, pathName, err)
+						}
+						typeDef.Schema = Schema{
+							RefType: refType,
+						}
+					}
+
+					types = append(types, typeDef)
+					types = append(types, goSchema.GetAdditionalTypeDefs()...)
+				}
+			}
+
+			// then with response bodies
+			for _, statusCodeOrDefault := range SortedResponsesKeys(operation.Responses) {
+				v := operation.Responses[statusCodeOrDefault]
+				sortedContentKeys := SortedContentKeys(v.Value.Content)
+				for _, mediaTypeStr := range sortedContentKeys {
+					mediaType := v.Value.Content.Get(mediaTypeStr)
+
+					typeName := ""
+					if operation.OperationID != "" {
+						typeName += ToCamelCase(operation.OperationID)
+					} else {
+						typeName += ToCamelCase(strings.ToLower(operationName)) + ToCamelCase(pathName)
+					}
+					typeName += fmt.Sprintf("ResponseBody%s", ToCamelCase(statusCodeOrDefault))
+
+					// when there are multiple media types provided for the Response, add a suffix for the media type
+					if len(sortedContentKeys) > 1 {
+						typeName += mediaTypeToGoName(mediaTypeStr)
+					}
+
+					goSchema, err := GenerateGoSchema(mediaType.Schema, []string{typeName})
+					if err != nil {
+						return nil, fmt.Errorf("error converting Schema for %s %s to Go type:: %w", operationName, pathName, err)
+					}
+
+					goTypeName, err := renameSchema(typeName, mediaType.Schema)
+					if err != nil {
+						return nil, fmt.Errorf("error generating a Go type name for %s %s with provided typeName %s: %w", operationName, pathName, typeName, err)
+					}
+
+					typeDef := TypeDefinition{
+						JsonName: fmt.Sprintf("the response body for %s %s (%s, %s)", operationName, pathName, statusCodeOrDefault, mediaTypeStr),
+						TypeName: goTypeName,
+						Schema:   goSchema,
+					}
+
+					if v.Ref != "" {
+						// Generate a reference type for referenced types
+						refType, err := RefPathToGoType(v.Ref)
+						if err != nil {
+							return nil, fmt.Errorf("error generating Go type for %s %s: %w", operationName, pathName, err)
+						}
+						typeDef.Schema = Schema{
+							RefType: refType,
+						}
+					}
+
+					types = append(types, typeDef)
+					types = append(types, goSchema.GetAdditionalTypeDefs()...)
+				}
+			}
+		}
+	}
+	return types, nil
+}
+
 // GenerateTypesForParameters generates type definitions for any custom types defined in the
 // components/parameters section of the Swagger spec.
 func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
@@ -507,17 +634,13 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 	for _, responseName := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[responseName]
 
-		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
-		// simply be specified as strings or byte arrays.
+		// We have to generate the response object. We're only going to provide a
+		// struct for application/json media types here. Other responses will be
+		// generated as byte arrays
 		response := responseOrRef.Value
 		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
-			}
 
+		if !found {
 			goTypeName, err := renameResponse(responseName, responseOrRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
@@ -525,21 +648,100 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
-				Schema:   goType,
+				Schema: Schema{
+					GoType:              "json.RawMessage",
+					SkipOptionalPointer: true,
+				},
 				TypeName: goTypeName,
 			}
 
-			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
 			types = append(types, typeDef)
+			continue
 		}
+
+		goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
+		}
+
+		goTypeName, err := renameResponse(responseName, responseOrRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: responseName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if responseOrRef.Ref != "" {
+			// Generate a reference type for referenced parameters
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
 	}
+
+	return types, nil
+}
+
+func generateTypesForRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	// As for responses, we will only generate Go code for JSON bodies,
+	// the other body formats are up to the user.
+	response := requestBodyRef.Value
+	jsonBody, found := response.Content["application/json"]
+	if !found {
+		goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/requestBodies/%s: %w", requestBodyName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: requestBodyName,
+			Schema: Schema{
+				GoType:              "json.RawMessage",
+				SkipOptionalPointer: true,
+			},
+			TypeName: goTypeName,
+		}
+
+		types = append(types, typeDef)
+	}
+
+	if found {
+		goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
+		}
+
+		goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
+		}
+
+		typeDef := TypeDefinition{
+			JsonName: requestBodyName,
+			Schema:   goType,
+			TypeName: goTypeName,
+		}
+
+		if requestBodyRef.Ref != "" {
+			// Generate a reference type for referenced bodies
+			refType, err := RefPathToGoType(requestBodyRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
+		types = append(types, typeDef)
+	}
+
 	return types, nil
 }
 
@@ -550,38 +752,11 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 
 	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
-
-		// As for responses, we will only generate Go code for JSON bodies,
-		// the other body formats are up to the user.
-		response := requestBodyRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
-			}
-
-			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
-			if err != nil {
-				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
-			}
-
-			typeDef := TypeDefinition{
-				JsonName: requestBodyName,
-				Schema:   goType,
-				TypeName: goTypeName,
-			}
-
-			if requestBodyRef.Ref != "" {
-				// Generate a reference type for referenced bodies
-				refType, err := RefPathToGoType(requestBodyRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
-			types = append(types, typeDef)
+		requestBodyTypes, err := generateTypesForRequestBody(requestBodyName, requestBodyRef)
+		if err != nil {
+			return nil, err
 		}
+		types = append(types, requestBodyTypes...)
 	}
 	return types, nil
 }

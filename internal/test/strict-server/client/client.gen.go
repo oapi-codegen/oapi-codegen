@@ -21,6 +21,87 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// JSONExampleRequestBody defines model for the request body for POST /json (application/json).
+type JSONExampleRequestBody = Example
+
+// JSONExampleResponseBody200 defines model for the response body for POST /json (200, application/json).
+type JSONExampleResponseBody200 = Example
+
+// MultipartExampleRequestBody defines model for the request body for POST /multipart (multipart/form-data).
+type MultipartExampleRequestBody = Example
+
+// MultipartExampleResponseBody200 defines model for the response body for POST /multipart (200, multipart/form-data).
+type MultipartExampleResponseBody200 = Example
+
+// MultipleRequestAndResponseTypesRequestBodyApplicationJson defines model for the request body for POST /multiple (application/json).
+type MultipleRequestAndResponseTypesRequestBodyApplicationJson = Example
+
+// MultipleRequestAndResponseTypesRequestBodyApplicationXWwwFormUrlencoded defines model for the request body for POST /multiple (application/x-www-form-urlencoded).
+type MultipleRequestAndResponseTypesRequestBodyApplicationXWwwFormUrlencoded = Example
+
+// MultipleRequestAndResponseTypesRequestBodyImagePng defines model for the request body for POST /multiple (image/png).
+type MultipleRequestAndResponseTypesRequestBodyImagePng = []byte
+
+// MultipleRequestAndResponseTypesRequestBodyMultipartFormData defines model for the request body for POST /multiple (multipart/form-data).
+type MultipleRequestAndResponseTypesRequestBodyMultipartFormData = Example
+
+// MultipleRequestAndResponseTypesRequestBodyTextPlain defines model for the request body for POST /multiple (text/plain).
+type MultipleRequestAndResponseTypesRequestBodyTextPlain = string
+
+// MultipleRequestAndResponseTypesResponseBody200ApplicationJson defines model for the response body for POST /multiple (200, application/json).
+type MultipleRequestAndResponseTypesResponseBody200ApplicationJson = Example
+
+// MultipleRequestAndResponseTypesResponseBody200ApplicationXWwwFormUrlencoded defines model for the response body for POST /multiple (200, application/x-www-form-urlencoded).
+type MultipleRequestAndResponseTypesResponseBody200ApplicationXWwwFormUrlencoded = Example
+
+// MultipleRequestAndResponseTypesResponseBody200ImagePng defines model for the response body for POST /multiple (200, image/png).
+type MultipleRequestAndResponseTypesResponseBody200ImagePng = []byte
+
+// MultipleRequestAndResponseTypesResponseBody200MultipartFormData defines model for the response body for POST /multiple (200, multipart/form-data).
+type MultipleRequestAndResponseTypesResponseBody200MultipartFormData = Example
+
+// MultipleRequestAndResponseTypesResponseBody200TextPlain defines model for the response body for POST /multiple (200, text/plain).
+type MultipleRequestAndResponseTypesResponseBody200TextPlain = string
+
+// ReusableResponsesRequestBody defines model for the request body for POST /reusable-responses (application/json).
+type ReusableResponsesRequestBody = Example
+
+// ReusableResponsesResponseBody200 defines model for the response body for POST /reusable-responses (200, application/json).
+type ReusableResponsesResponseBody200 Reusableresponse
+
+// TextExampleRequestBody defines model for the request body for POST /text (text/plain).
+type TextExampleRequestBody = string
+
+// TextExampleResponseBody200 defines model for the response body for POST /text (200, text/plain).
+type TextExampleResponseBody200 = string
+
+// UnknownExampleRequestBody defines model for the request body for POST /unknown (image/png).
+type UnknownExampleRequestBody = []byte
+
+// UnknownExampleResponseBody200 defines model for the response body for POST /unknown (200, video/mp4).
+type UnknownExampleResponseBody200 = []byte
+
+// UnspecifiedContentTypeRequestBody defines model for the request body for POST /unspecified-content-type (image/*).
+type UnspecifiedContentTypeRequestBody = []byte
+
+// UnspecifiedContentTypeResponseBody200 defines model for the response body for POST /unspecified-content-type (200, video/*).
+type UnspecifiedContentTypeResponseBody200 = []byte
+
+// URLEncodedExampleRequestBody defines model for the request body for POST /urlencoded (application/x-www-form-urlencoded).
+type URLEncodedExampleRequestBody = Example
+
+// URLEncodedExampleResponseBody200 defines model for the response body for POST /urlencoded (200, application/x-www-form-urlencoded).
+type URLEncodedExampleResponseBody200 = Example
+
+// HeadersExampleRequestBody defines model for the request body for POST /with-headers (application/json).
+type HeadersExampleRequestBody = Example
+
+// HeadersExampleResponseBody200 defines model for the response body for POST /with-headers (200, application/json).
+type HeadersExampleResponseBody200 = Example
+
+// Badrequest defines model for badrequest.
+type Badrequest json.RawMessage
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 

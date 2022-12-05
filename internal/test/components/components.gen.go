@@ -330,6 +330,92 @@ type SchemaObject struct {
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
 
+// EnsureEverythingIsReferencedRequestBodyApplicationJson defines model for the request body for GET /ensure-everything-is-referenced (application/json).
+type EnsureEverythingIsReferencedRequestBodyApplicationJson RenamedRequestBody
+
+// EnsureEverythingIsReferencedRequestBodyTextPlain defines model for the request body for GET /ensure-everything-is-referenced (text/plain).
+type EnsureEverythingIsReferencedRequestBodyTextPlain RenamedRequestBody
+
+// EnsureEverythingIsReferencedResponseBody200 defines model for the response body for GET /ensure-everything-is-referenced (200, application/json).
+type EnsureEverythingIsReferencedResponseBody200 struct {
+	// AnyOf1 simple anyOf case
+	AnyOf1 *AnyOfObject1 `json:"anyOf1,omitempty"`
+
+	// Five Has additional properties with schema for dictionaries
+	Five *AdditionalPropertiesObject5 `json:"five,omitempty"`
+
+	// Four Has anonymous field which has additional properties
+	Four      *AdditionalPropertiesObject4 `json:"four,omitempty"`
+	JsonField *ObjectWithJsonField         `json:"jsonField,omitempty"`
+
+	// One Has additional properties of type int
+	One *AdditionalPropertiesObject1 `json:"one,omitempty"`
+
+	// OneOf1 oneOf with references and no disciminator
+	OneOf1 *OneOfObject1 `json:"oneOf1,omitempty"`
+
+	// OneOf10 fixed properties, variable required - will compile, but not much sense
+	OneOf10 *OneOfObject10 `json:"oneOf10,omitempty"`
+
+	// OneOf11 additional properties of oneOf
+	OneOf11 *OneOfObject11 `json:"oneOf11,omitempty"`
+
+	// OneOf12 allOf of oneOfs
+	OneOf12 *OneOfObject12 `json:"oneOf12,omitempty"`
+
+	// OneOf2 oneOf with inline elements
+	OneOf2 *OneOfObject2 `json:"oneOf2,omitempty"`
+
+	// OneOf3 inline OneOf
+	OneOf3 *OneOfObject3 `json:"oneOf3,omitempty"`
+
+	// OneOf4 oneOf plus fixed type - custom marshaling/unmarshalling
+	OneOf4 *OneOfObject4 `json:"oneOf4,omitempty"`
+
+	// OneOf5 oneOf with disciminator but no mapping
+	OneOf5 *OneOfObject5 `json:"oneOf5,omitempty"`
+
+	// OneOf6 oneOf with discriminator and mapping
+	OneOf6 *OneOfObject6 `json:"oneOf6,omitempty"`
+
+	// OneOf7 array of oneOf
+	OneOf7 *OneOfObject7 `json:"oneOf7,omitempty"`
+
+	// OneOf8 oneOf with fixed properties
+	OneOf8 *OneOfObject8 `json:"oneOf8,omitempty"`
+
+	// OneOf9 oneOf with fixed descriminator
+	OneOf9 *OneOfObject9 `json:"oneOf9,omitempty"`
+
+	// Six Array of object with additional properties
+	Six *AdditionalPropertiesObject6 `json:"six,omitempty"`
+
+	// Three Allows any additional property
+	Three *AdditionalPropertiesObject3 `json:"three,omitempty"`
+
+	// Two Does not allow additional properties
+	Two *AdditionalPropertiesObject2 `json:"two,omitempty"`
+}
+
+// EnsureEverythingIsReferencedResponseBodyDefaultApplicationJson defines model for the response body for GET /ensure-everything-is-referenced (default, application/json).
+type EnsureEverythingIsReferencedResponseBodyDefaultApplicationJson RenamedResponseObject
+
+// EnsureEverythingIsReferencedResponseBodyDefaultTextPlain defines model for the response body for GET /ensure-everything-is-referenced (default, text/plain).
+type EnsureEverythingIsReferencedResponseBodyDefaultTextPlain RenamedResponseObject
+
+// ParamsWithAddPropsResponseBodyDefault defines model for the response body for GET /params_with_add_props (default, text/plain).
+type ParamsWithAddPropsResponseBodyDefault = string
+
+// BodyWithAddPropsRequestBody defines model for the request body for POST /params_with_add_props (application/json).
+type BodyWithAddPropsRequestBody struct {
+	Inner                map[string]int         `json:"inner"`
+	Name                 string                 `json:"name"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// BodyWithAddPropsResponseBodyDefault defines model for the response body for POST /params_with_add_props (default, text/plain).
+type BodyWithAddPropsResponseBodyDefault = string
+
 // EnumParam1 defines model for EnumParam1.
 type EnumParam1 string
 
@@ -757,6 +843,85 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
+
+	object["name"], err = json.Marshal(a.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'name': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for BodyWithAddPropsRequestBody. Returns the specified
+// element and whether it was found
+func (a BodyWithAddPropsRequestBody) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for BodyWithAddPropsRequestBody
+func (a *BodyWithAddPropsRequestBody) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for BodyWithAddPropsRequestBody to handle AdditionalProperties
+func (a *BodyWithAddPropsRequestBody) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["inner"]; found {
+		err = json.Unmarshal(raw, &a.Inner)
+		if err != nil {
+			return fmt.Errorf("error reading 'inner': %w", err)
+		}
+		delete(object, "inner")
+	}
+
+	if raw, found := object["name"]; found {
+		err = json.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return fmt.Errorf("error reading 'name': %w", err)
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for BodyWithAddPropsRequestBody to handle AdditionalProperties
+func (a BodyWithAddPropsRequestBody) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["inner"], err = json.Marshal(a.Inner)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'inner': %w", err)
+	}
 
 	object["name"], err = json.Marshal(a.Name)
 	if err != nil {

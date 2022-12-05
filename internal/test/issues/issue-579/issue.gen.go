@@ -15,3 +15,6 @@ type Pet struct {
 	Born   *AliasedDate        `json:"born,omitempty"`
 	BornAt *openapi_types.Date `json:"born_at,omitempty"`
 }
+
+// GetPlaceholderResponseBody200 defines model for the response body for GET /placeholder (200, text/plain).
+type GetPlaceholderResponseBody200 = string

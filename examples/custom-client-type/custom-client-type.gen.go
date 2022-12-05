@@ -18,6 +18,9 @@ type Client struct {
 	Name string `json:"name"`
 }
 
+// GetClientResponseBody200 defines model for the response body for GET /client (200, application/json).
+type GetClientResponseBody200 = Client
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

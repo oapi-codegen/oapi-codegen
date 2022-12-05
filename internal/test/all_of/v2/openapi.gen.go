@@ -38,6 +38,10 @@ type PersonWithID struct {
 	LastName           string `json:"LastName"`
 }
 
+// PlaceholderResponseBodyDefault This is a person record as returned from a Create endpoint. It contains
+// all the fields of a Person, with an additional resource UUID.
+type PlaceholderResponseBodyDefault = PersonWithID
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 

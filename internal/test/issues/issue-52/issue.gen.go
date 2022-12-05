@@ -34,6 +34,9 @@ type Value struct {
 	StringValue *string     `json:"stringValue,omitempty"`
 }
 
+// ExampleGetResponseBody200 defines model for the response body for GET /example (200, application/json).
+type ExampleGetResponseBody200 = Document
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

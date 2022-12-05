@@ -80,6 +80,51 @@ type SomeObject struct {
 	Name string `json:"name"`
 }
 
+// GetEveryTypeOptionalResponseBody200 defines model for the response body for GET /every-type-optional (200, application/json).
+type GetEveryTypeOptionalResponseBody200 = EveryTypeOptional
+
+// GetSimpleResponseBody200 defines model for the response body for GET /get-simple (200, application/json).
+type GetSimpleResponseBody200 = SomeObject
+
+// GetWithArgsResponseBody200 defines model for the response body for GET /get-with-args (200, application/json).
+type GetWithArgsResponseBody200 SimpleResponse
+
+// GetWithReferencesResponseBody200 defines model for the response body for GET /get-with-references/{global_argument}/{argument} (200, application/json).
+type GetWithReferencesResponseBody200 SimpleResponse
+
+// GetWithContentTypeResponseBody200ApplicationJson defines model for the response body for GET /get-with-type/{content_type} (200, application/json).
+type GetWithContentTypeResponseBody200ApplicationJson = SomeObject
+
+// GetWithContentTypeResponseBody200TextPlain defines model for the response body for GET /get-with-type/{content_type} (200, text/plain).
+type GetWithContentTypeResponseBody200TextPlain = string
+
+// GetReservedKeywordResponseBody200 defines model for the response body for GET /reserved-keyword (200, application/json).
+type GetReservedKeywordResponseBody200 = ReservedKeyword
+
+// CreateResourceRequestBody defines model for the request body for POST /resource/{argument} (application/json).
+type CreateResourceRequestBody = EveryTypeRequired
+
+// CreateResourceResponseBody200 defines model for the response body for POST /resource/{argument} (200, application/json).
+type CreateResourceResponseBody200 SimpleResponse
+
+// CreateResource2RequestBody defines model for the request body for POST /resource2/{inline_argument} (application/json).
+type CreateResource2RequestBody = Resource
+
+// CreateResource2ResponseBody200 defines model for the response body for POST /resource2/{inline_argument} (200, application/json).
+type CreateResource2ResponseBody200 SimpleResponse
+
+// UpdateResource3RequestBody defines model for the request body for PUT /resource3/{fallthrough} (application/json).
+type UpdateResource3RequestBody struct {
+	Id   *int    `json:"id,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+// UpdateResource3ResponseBody200 defines model for the response body for PUT /resource3/{fallthrough} (200, application/json).
+type UpdateResource3ResponseBody200 SimpleResponse
+
+// GetResponseWithReferenceResponseBody200 defines model for the response body for GET /response-with-reference (200, application/json).
+type GetResponseWithReferenceResponseBody200 ResponseWithReference
+
 // Argument defines model for argument.
 type Argument = string
 

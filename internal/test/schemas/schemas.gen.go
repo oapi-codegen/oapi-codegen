@@ -67,6 +67,44 @@ type NullableProperties struct {
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
 
+// EnsureEverythingIsReferencedResponseBody200 defines model for the response body for GET /ensure-everything-is-referenced (200, application/json).
+type EnsureEverythingIsReferencedResponseBody200 struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// AnyType2 AnyType2 represents any type.
+	//
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+}
+
+// Issue127ResponseBody200ApplicationJson defines model for the response body for GET /issues/127 (200, application/json).
+type Issue127ResponseBody200ApplicationJson = GenericObject
+
+// Issue127ResponseBody200ApplicationXml defines model for the response body for GET /issues/127 (200, application/xml).
+type Issue127ResponseBody200ApplicationXml = GenericObject
+
+// Issue127ResponseBody200TextMarkdown defines model for the response body for GET /issues/127 (200, text/markdown).
+type Issue127ResponseBody200TextMarkdown = GenericObject
+
+// Issue127ResponseBody200TextYaml defines model for the response body for GET /issues/127 (200, text/yaml).
+type Issue127ResponseBody200TextYaml = GenericObject
+
+// Issue127ResponseBodyDefaultApplicationJson defines model for the response body for GET /issues/127 (default, application/json).
+type Issue127ResponseBodyDefaultApplicationJson = GenericObject
+
+// Issue127ResponseBodyDefaultTextMarkdown defines model for the response body for GET /issues/127 (default, text/markdown).
+type Issue127ResponseBodyDefaultTextMarkdown = GenericObject
+
+// Issue185RequestBody defines model for the request body for GET /issues/185 (application/json).
+type Issue185RequestBody = NullableProperties
+
+// GetIssues375ResponseBody200 defines model for the response body for GET /issues/375 (200, application/json).
+type GetIssues375ResponseBody200 = EnumInObjInArray
+
+// Issue9RequestBody defines model for the request body for GET /issues/9 (application/json).
+type Issue9RequestBody = interface{}
+
 // StringInPath defines model for StringInPath.
 type StringInPath = string
 

@@ -44,6 +44,15 @@ type ThingWithID struct {
 	Name string `json:"name"`
 }
 
+// ListThingsResponseBody200 defines model for the response body for GET /things (200, application/json).
+type ListThingsResponseBody200 = []ThingWithID
+
+// AddThingRequestBody defines model for the request body for POST /things (application/json).
+type AddThingRequestBody = Thing
+
+// AddThingResponseBody201 defines model for the response body for POST /things (201, application/json).
+type AddThingResponseBody201 = []ThingWithID
+
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
 
