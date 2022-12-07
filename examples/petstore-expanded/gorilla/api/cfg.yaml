@@ -5,4 +5,4 @@ generate:
   embedded-spec: true
 output: petstore.gen.go
 compatibility:
-  apply-gorilla-mux-middleware-first-to-last: true
+  apply-gorilla-middleware-first-to-last: true

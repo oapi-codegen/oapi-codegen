@@ -73,7 +73,7 @@ type CompatibilityOptions struct {
 	// applied such that the last invoked middleware ends up executing first in the middlewares chain
 	// This resolves the behavior such that middlewares are chained in the order they are invoked.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/841
-	ApplyGorillaMuxMiddlewareFirstToLast bool `yaml:"apply-gorilla-mux-middleware-first-to-last,omitempty"`
+	ApplyGorillaMiddlewareFirstToLast bool `yaml:"apply-gorilla-middleware-first-to-last,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.
