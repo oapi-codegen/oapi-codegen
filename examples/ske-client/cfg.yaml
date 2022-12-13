@@ -15,3 +15,10 @@ tidy:
   - replace: Id
     with: ID
     suffix: true
+  schemas:
+  - replace: v1
+    with:
+    prefix: true
+  - replace: Id
+    with: ID
+    suffix: true

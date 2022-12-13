@@ -21,74 +21,56 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-// Defines values for V1CRIName.
+// Defines values for CRIName.
 const (
-	Containerd V1CRIName = "containerd"
-	Docker     V1CRIName = "docker"
+	Containerd CRIName = "containerd"
+	Docker     CRIName = "docker"
 )
 
-// Defines values for V1ClusterStatusState.
+// Defines values for ClusterStatusState.
 const (
-	V1ClusterStatusStateSTATECREATING    V1ClusterStatusState = "STATE_CREATING"
-	V1ClusterStatusStateSTATEDELETING    V1ClusterStatusState = "STATE_DELETING"
-	V1ClusterStatusStateSTATEHEALTHY     V1ClusterStatusState = "STATE_HEALTHY"
-	V1ClusterStatusStateSTATEHIBERNATED  V1ClusterStatusState = "STATE_HIBERNATED"
-	V1ClusterStatusStateSTATEHIBERNATING V1ClusterStatusState = "STATE_HIBERNATING"
-	V1ClusterStatusStateSTATERECONCILING V1ClusterStatusState = "STATE_RECONCILING"
-	V1ClusterStatusStateSTATEUNHEALTHY   V1ClusterStatusState = "STATE_UNHEALTHY"
-	V1ClusterStatusStateSTATEUNSPECIFIED V1ClusterStatusState = "STATE_UNSPECIFIED"
-	V1ClusterStatusStateSTATEWAKINGUP    V1ClusterStatusState = "STATE_WAKINGUP"
+	ClusterStatusStateSTATECREATING    ClusterStatusState = "STATE_CREATING"
+	ClusterStatusStateSTATEDELETING    ClusterStatusState = "STATE_DELETING"
+	ClusterStatusStateSTATEHEALTHY     ClusterStatusState = "STATE_HEALTHY"
+	ClusterStatusStateSTATEHIBERNATED  ClusterStatusState = "STATE_HIBERNATED"
+	ClusterStatusStateSTATEHIBERNATING ClusterStatusState = "STATE_HIBERNATING"
+	ClusterStatusStateSTATERECONCILING ClusterStatusState = "STATE_RECONCILING"
+	ClusterStatusStateSTATEUNHEALTHY   ClusterStatusState = "STATE_UNHEALTHY"
+	ClusterStatusStateSTATEUNSPECIFIED ClusterStatusState = "STATE_UNSPECIFIED"
+	ClusterStatusStateSTATEWAKINGUP    ClusterStatusState = "STATE_WAKINGUP"
 )
 
-// Defines values for V1ProjectState.
+// Defines values for ProjectState.
 const (
-	V1ProjectStateSTATECREATED     V1ProjectState = "STATE_CREATED"
-	V1ProjectStateSTATECREATING    V1ProjectState = "STATE_CREATING"
-	V1ProjectStateSTATEDELETING    V1ProjectState = "STATE_DELETING"
-	V1ProjectStateSTATEFAILED      V1ProjectState = "STATE_FAILED"
-	V1ProjectStateSTATEUNSPECIFIED V1ProjectState = "STATE_UNSPECIFIED"
+	ProjectStateSTATECREATED     ProjectState = "STATE_CREATED"
+	ProjectStateSTATECREATING    ProjectState = "STATE_CREATING"
+	ProjectStateSTATEDELETING    ProjectState = "STATE_DELETING"
+	ProjectStateSTATEFAILED      ProjectState = "STATE_FAILED"
+	ProjectStateSTATEUNSPECIFIED ProjectState = "STATE_UNSPECIFIED"
 )
 
-// Defines values for V1RuntimeErrorCode.
+// Defines values for RuntimeErrorCode.
 const (
-	SKEAPISERVERERROR       V1RuntimeErrorCode = "SKE_API_SERVER_ERROR"
-	SKECONFIGURATIONPROBLEM V1RuntimeErrorCode = "SKE_CONFIGURATION_PROBLEM"
-	SKEINFRAERROR           V1RuntimeErrorCode = "SKE_INFRA_ERROR"
-	SKEQUOTAEXCEEDED        V1RuntimeErrorCode = "SKE_QUOTA_EXCEEDED"
-	SKERATELIMITS           V1RuntimeErrorCode = "SKE_RATE_LIMITS"
-	SKEREMAININGRESOURCES   V1RuntimeErrorCode = "SKE_REMAINING_RESOURCES"
-	SKETMPAUTHERROR         V1RuntimeErrorCode = "SKE_TMP_AUTH_ERROR"
-	SKEUNREADYNODES         V1RuntimeErrorCode = "SKE_UNREADY_NODES"
-	SKEUNSPECIFIED          V1RuntimeErrorCode = "SKE_UNSPECIFIED"
+	SKEAPISERVERERROR       RuntimeErrorCode = "SKE_API_SERVER_ERROR"
+	SKECONFIGURATIONPROBLEM RuntimeErrorCode = "SKE_CONFIGURATION_PROBLEM"
+	SKEINFRAERROR           RuntimeErrorCode = "SKE_INFRA_ERROR"
+	SKEQUOTAEXCEEDED        RuntimeErrorCode = "SKE_QUOTA_EXCEEDED"
+	SKERATELIMITS           RuntimeErrorCode = "SKE_RATE_LIMITS"
+	SKEREMAININGRESOURCES   RuntimeErrorCode = "SKE_REMAINING_RESOURCES"
+	SKETMPAUTHERROR         RuntimeErrorCode = "SKE_TMP_AUTH_ERROR"
+	SKEUNREADYNODES         RuntimeErrorCode = "SKE_UNREADY_NODES"
+	SKEUNSPECIFIED          RuntimeErrorCode = "SKE_UNSPECIFIED"
 )
 
-// Defines values for V1TaintEffect.
+// Defines values for TaintEffect.
 const (
-	NoExecute        V1TaintEffect = "NoExecute"
-	NoSchedule       V1TaintEffect = "NoSchedule"
-	PreferNoSchedule V1TaintEffect = "PreferNoSchedule"
+	NoExecute        TaintEffect = "NoExecute"
+	NoSchedule       TaintEffect = "NoSchedule"
+	PreferNoSchedule TaintEffect = "PreferNoSchedule"
 )
 
-// MaintenanceAutoUpdate defines model for MaintenanceAutoUpdate.
-type MaintenanceAutoUpdate struct {
-	KubernetesVersion   *bool `json:"kubernetesVersion,omitempty"`
-	MachineImageVersion *bool `json:"machineImageVersion,omitempty"`
-}
-
-// SkeServiceCreateOrUpdateClusterRequest defines model for SkeService_CreateOrUpdateCluster_request.
-type SkeServiceCreateOrUpdateClusterRequest struct {
-	Extensions  *V1Extension   `json:"extensions,omitempty"`
-	Hibernation *V1Hibernation `json:"hibernation,omitempty"`
-
-	// Kubernetes For valid versions please take a look at /provider-options kubernetesVersions
-	Kubernetes  V1Kubernetes     `json:"kubernetes"`
-	Maintenance *V1Maintenance   `json:"maintenance,omitempty"`
-	Nodepools   []V1Nodepool     `json:"nodepools"`
-	Status      *V1ClusterStatus `json:"status,omitempty"`
-}
-
-// V1Argus defines model for v1Argus.
-type V1Argus struct {
+// Argus defines model for Argus.
+type Argus struct {
 	// ArgusInstanceId Argus instance ID to choose which Argus instance is used.
 	ArgusInstanceId string `json:"argusInstanceId"`
 
@@ -96,49 +78,49 @@ type V1Argus struct {
 	Enabled bool `json:"enabled"`
 }
 
-// V1AvailabilityZone defines model for v1AvailabilityZone.
-type V1AvailabilityZone struct {
+// AvailabilityZone defines model for AvailabilityZone.
+type AvailabilityZone struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// V1CRI defines model for v1CRI.
-type V1CRI struct {
-	Name *V1CRIName `json:"name,omitempty"`
+// CRI defines model for CRI.
+type CRI struct {
+	Name *CRIName `json:"name,omitempty"`
 }
 
-// V1CRIName defines model for V1CRI.Name.
-type V1CRIName string
+// CRIName defines model for CRI.Name.
+type CRIName string
 
-// V1Cluster defines model for v1Cluster.
-type V1Cluster struct {
-	Extensions  *V1Extension   `json:"extensions,omitempty"`
-	Hibernation *V1Hibernation `json:"hibernation,omitempty"`
+// Cluster defines model for Cluster.
+type Cluster struct {
+	Extensions  *Extension   `json:"extensions,omitempty"`
+	Hibernation *Hibernation `json:"hibernation,omitempty"`
 
 	// Kubernetes For valid versions please take a look at /provider-options kubernetesVersions
-	Kubernetes  V1Kubernetes     `json:"kubernetes"`
-	Maintenance *V1Maintenance   `json:"maintenance,omitempty"`
-	Name        *string          `json:"name,omitempty"`
-	Nodepools   []V1Nodepool     `json:"nodepools"`
-	Status      *V1ClusterStatus `json:"status,omitempty"`
+	Kubernetes  Kubernetes     `json:"kubernetes"`
+	Maintenance *Maintenance   `json:"maintenance,omitempty"`
+	Name        *string        `json:"name,omitempty"`
+	Nodepools   []Nodepool     `json:"nodepools"`
+	Status      *ClusterStatus `json:"status,omitempty"`
 }
 
-// V1ClusterStatus defines model for v1ClusterStatus.
-type V1ClusterStatus struct {
-	Aggregated *V1ClusterStatusState `json:"aggregated,omitempty"`
-	Error      *V1RuntimeError       `json:"error,omitempty"`
-	Hibernated *bool                 `json:"hibernated,omitempty"`
+// ClusterStatus defines model for ClusterStatus.
+type ClusterStatus struct {
+	Aggregated *ClusterStatusState `json:"aggregated,omitempty"`
+	Error      *RuntimeError       `json:"error,omitempty"`
+	Hibernated *bool               `json:"hibernated,omitempty"`
 }
 
-// V1ClusterStatusState defines model for v1ClusterStatusState.
-type V1ClusterStatusState string
+// ClusterStatusState defines model for ClusterStatusState.
+type ClusterStatusState string
 
-// V1Clusters defines model for v1Clusters.
-type V1Clusters struct {
-	Items *[]V1Cluster `json:"items,omitempty"`
+// Clusters defines model for Clusters.
+type Clusters struct {
+	Items *[]Cluster `json:"items,omitempty"`
 }
 
-// V1Credentials defines model for v1Credentials.
-type V1Credentials struct {
+// Credentials defines model for Credentials.
+type Credentials struct {
 	CertificateAuthorityData *string `json:"certificateAuthorityData,omitempty"`
 
 	// Kubeconfig This string contains the kubeconfig as yaml. If you want to directly get the yaml without any
@@ -148,31 +130,31 @@ type V1Credentials struct {
 	Token      *string `json:"token,omitempty"`
 }
 
-// V1Extension defines model for v1Extension.
-type V1Extension struct {
-	Argus *V1Argus `json:"argus,omitempty"`
+// Extension defines model for Extension.
+type Extension struct {
+	Argus *Argus `json:"argus,omitempty"`
 }
 
-// V1Hibernation defines model for v1Hibernation.
-type V1Hibernation struct {
-	Schedules []V1HibernationSchedule `json:"schedules"`
+// Hibernation defines model for Hibernation.
+type Hibernation struct {
+	Schedules []HibernationSchedule `json:"schedules"`
 }
 
-// V1HibernationSchedule defines model for v1HibernationSchedule.
-type V1HibernationSchedule struct {
+// HibernationSchedule defines model for HibernationSchedule.
+type HibernationSchedule struct {
 	End      string  `json:"end"`
 	Start    string  `json:"start"`
 	Timezone *string `json:"timezone,omitempty"`
 }
 
-// V1Image For valid names and versions please take a look at /provider-options machineImages
-type V1Image struct {
+// Image For valid names and versions please take a look at /provider-options machineImages
+type Image struct {
 	Name    *string `json:"name,omitempty"`
 	Version string  `json:"version"`
 }
 
-// V1Kubernetes For valid versions please take a look at /provider-options kubernetesVersions
-type V1Kubernetes struct {
+// Kubernetes For valid versions please take a look at /provider-options kubernetesVersions
+type Kubernetes struct {
 	// AllowPrivilegedContainers Flag to specify if privileged mode for containers is enabled or not.
 	// This should be used with care since it also disables a couple of other features like the use of some volume type (e.g. PVCs).
 	// By default this is set to true.
@@ -180,85 +162,91 @@ type V1Kubernetes struct {
 	Version                   string `json:"version"`
 }
 
-// V1KubernetesVersion defines model for v1KubernetesVersion.
-type V1KubernetesVersion struct {
+// KubernetesVersion defines model for KubernetesVersion.
+type KubernetesVersion struct {
 	ExpirationDate *time.Time         `json:"expirationDate,omitempty"`
 	FeatureGates   *map[string]string `json:"featureGates,omitempty"`
 	State          *string            `json:"state,omitempty"`
 	Version        *string            `json:"version,omitempty"`
 }
 
-// V1Machine defines model for v1Machine.
-type V1Machine struct {
+// Machine defines model for Machine.
+type Machine struct {
 	// Image For valid names and versions please take a look at /provider-options machineImages
-	Image V1Image `json:"image"`
+	Image Image `json:"image"`
 
 	// Type For valid types please take a look at /provider-options machineTypes
 	Type string `json:"type"`
 }
 
-// V1MachineImage defines model for v1MachineImage.
-type V1MachineImage struct {
-	Name     *string                  `json:"name,omitempty"`
-	Versions *[]V1MachineImageVersion `json:"versions,omitempty"`
+// MachineImage defines model for MachineImage.
+type MachineImage struct {
+	Name     *string                `json:"name,omitempty"`
+	Versions *[]MachineImageVersion `json:"versions,omitempty"`
 }
 
-// V1MachineImageVersion defines model for v1MachineImageVersion.
-type V1MachineImageVersion struct {
-	Cri            *[]V1CRI   `json:"cri,omitempty"`
+// MachineImageVersion defines model for MachineImageVersion.
+type MachineImageVersion struct {
+	Cri            *[]CRI     `json:"cri,omitempty"`
 	ExpirationDate *time.Time `json:"expirationDate,omitempty"`
 	State          *string    `json:"state,omitempty"`
 	Version        *string    `json:"version,omitempty"`
 }
 
-// V1MachineType defines model for v1MachineType.
-type V1MachineType struct {
+// MachineType defines model for MachineType.
+type MachineType struct {
 	Cpu    *int32  `json:"cpu,omitempty"`
 	Memory *int32  `json:"memory,omitempty"`
 	Name   *string `json:"name,omitempty"`
 }
 
-// V1Maintenance defines model for v1Maintenance.
-type V1Maintenance struct {
+// Maintenance defines model for Maintenance.
+type Maintenance struct {
 	AutoUpdate MaintenanceAutoUpdate `json:"autoUpdate"`
-	TimeWindow V1TimeWindow          `json:"timeWindow"`
+	TimeWindow TimeWindow            `json:"timeWindow"`
 }
 
-// V1Nodepool defines model for v1Nodepool.
-type V1Nodepool struct {
+// MaintenanceAutoUpdate defines model for MaintenanceAutoUpdate.
+type MaintenanceAutoUpdate struct {
+	KubernetesVersion   *bool `json:"kubernetesVersion,omitempty"`
+	MachineImageVersion *bool `json:"machineImageVersion,omitempty"`
+}
+
+// Nodepool defines model for Nodepool.
+type Nodepool struct {
 	AvailabilityZones []string           `json:"availabilityZones"`
-	Cri               *V1CRI             `json:"cri,omitempty"`
+	Cri               *CRI               `json:"cri,omitempty"`
 	Labels            *map[string]string `json:"labels,omitempty"`
-	Machine           V1Machine          `json:"machine"`
+	Machine           Machine            `json:"machine"`
 	MaxSurge          *int32             `json:"maxSurge,omitempty"`
 	MaxUnavailable    *int32             `json:"maxUnavailable,omitempty"`
 	Maximum           int32              `json:"maximum"`
 	Minimum           int32              `json:"minimum"`
 	Name              string             `json:"name"`
-	Taints            *[]V1Taint         `json:"taints,omitempty"`
-	Volume            V1Volume           `json:"volume"`
+	Taints            *[]Taint           `json:"taints,omitempty"`
+	Volume            Volume             `json:"volume"`
 }
 
-// V1Project defines model for v1Project.
-type V1Project struct {
-	ProjectId *string         `json:"projectId,omitempty"`
-	State     *V1ProjectState `json:"state,omitempty"`
+// Project defines model for Project.
+type Project struct {
+	ProjectId *string       `json:"projectId,omitempty"`
+	State     *ProjectState `json:"state,omitempty"`
 }
 
-// V1ProjectState defines model for v1ProjectState.
-type V1ProjectState string
+// ProjectState defines model for ProjectState.
+type ProjectState string
 
-// V1ProviderOptions defines model for v1ProviderOptions.
-type V1ProviderOptions struct {
-	AvailabilityZones  *[]V1AvailabilityZone  `json:"availabilityZones,omitempty"`
-	KubernetesVersions *[]V1KubernetesVersion `json:"kubernetesVersions,omitempty"`
-	MachineImages      *[]V1MachineImage      `json:"machineImages,omitempty"`
-	MachineTypes       *[]V1MachineType       `json:"machineTypes,omitempty"`
-	VolumeTypes        *[]V1VolumeType        `json:"volumeTypes,omitempty"`
+// ProviderOptions defines model for ProviderOptions.
+type ProviderOptions struct {
+	AvailabilityZones  *[]AvailabilityZone  `json:"availabilityZones,omitempty"`
+	KubernetesVersions *[]KubernetesVersion `json:"kubernetesVersions,omitempty"`
+	MachineImages      *[]MachineImage      `json:"machineImages,omitempty"`
+	MachineTypes       *[]MachineType       `json:"machineTypes,omitempty"`
+	VolumeTypes        *[]VolumeType        `json:"volumeTypes,omitempty"`
 }
 
-// V1RuntimeError defines model for v1RuntimeError.
-type V1RuntimeError struct {
+// RuntimeError defines model for RuntimeError.
+type RuntimeError struct {
 	// Code - Code:    "SKE_UNSPECIFIED"
 	//   Message: "An error occurred. Please open a support ticket if this error persists."
 	// - Code:    "SKE_TMP_AUTH_ERROR"
@@ -277,12 +265,12 @@ type V1RuntimeError struct {
 	//   Message: "Not all worker nodes are ready. Please open a support ticket if this error persists."
 	// - Code:    "SKE_API_SERVER_ERROR"
 	//   Message: "The Kubernetes API server is not reporting readiness. Please open a support ticket if this error persists."
-	Code    *V1RuntimeErrorCode `json:"code,omitempty"`
-	Details *string             `json:"details,omitempty"`
-	Message *string             `json:"message,omitempty"`
+	Code    *RuntimeErrorCode `json:"code,omitempty"`
+	Details *string           `json:"details,omitempty"`
+	Message *string           `json:"message,omitempty"`
 }
 
-// V1RuntimeErrorCode - Code:    "SKE_UNSPECIFIED"
+// RuntimeErrorCode - Code:    "SKE_UNSPECIFIED"
 //
 //		Message: "An error occurred. Please open a support ticket if this error persists."
 //	  - Code:    "SKE_TMP_AUTH_ERROR"
@@ -301,34 +289,46 @@ type V1RuntimeError struct {
 //	    Message: "Not all worker nodes are ready. Please open a support ticket if this error persists."
 //	  - Code:    "SKE_API_SERVER_ERROR"
 //	    Message: "The Kubernetes API server is not reporting readiness. Please open a support ticket if this error persists."
-type V1RuntimeErrorCode string
+type RuntimeErrorCode string
 
-// V1Taint defines model for v1Taint.
-type V1Taint struct {
-	Effect V1TaintEffect `json:"effect"`
-	Key    string        `json:"key"`
-	Value  *string       `json:"value,omitempty"`
+// SkeServiceCreateOrUpdateClusterRequest defines model for SkeService_CreateOrUpdateCluster_request.
+type SkeServiceCreateOrUpdateClusterRequest struct {
+	Extensions  *Extension   `json:"extensions,omitempty"`
+	Hibernation *Hibernation `json:"hibernation,omitempty"`
+
+	// Kubernetes For valid versions please take a look at /provider-options kubernetesVersions
+	Kubernetes  Kubernetes     `json:"kubernetes"`
+	Maintenance *Maintenance   `json:"maintenance,omitempty"`
+	Nodepools   []Nodepool     `json:"nodepools"`
+	Status      *ClusterStatus `json:"status,omitempty"`
 }
 
-// V1TaintEffect defines model for V1Taint.Effect.
-type V1TaintEffect string
+// Taint defines model for Taint.
+type Taint struct {
+	Effect TaintEffect `json:"effect"`
+	Key    string      `json:"key"`
+	Value  *string     `json:"value,omitempty"`
+}
 
-// V1TimeWindow defines model for v1TimeWindow.
-type V1TimeWindow struct {
+// TaintEffect defines model for Taint.Effect.
+type TaintEffect string
+
+// TimeWindow defines model for TimeWindow.
+type TimeWindow struct {
 	End   time.Time `json:"end"`
 	Start time.Time `json:"start"`
 }
 
-// V1Volume defines model for v1Volume.
-type V1Volume struct {
+// Volume defines model for Volume.
+type Volume struct {
 	Size int32 `json:"size"`
 
 	// Type For valid values please take a look at /provider-options volumeTypes
 	Type *string `json:"type,omitempty"`
 }
 
-// V1VolumeType defines model for v1VolumeType.
-type V1VolumeType struct {
+// VolumeType defines model for VolumeType.
+type VolumeType struct {
 	Name *string `json:"name,omitempty"`
 }
 
@@ -1272,7 +1272,7 @@ type DeleteProjectResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON400      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1294,9 +1294,9 @@ func (r DeleteProjectResponse) StatusCode() int {
 type GetProjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Project
+	JSON200      *Project
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1318,9 +1318,9 @@ func (r GetProjectResponse) StatusCode() int {
 type CreateProjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Project
+	JSON200      *Project
 	JSON400      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1342,10 +1342,10 @@ func (r CreateProjectResponse) StatusCode() int {
 type ListClustersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Clusters
+	JSON200      *Clusters
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1369,7 +1369,7 @@ type DeleteClusterResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1391,8 +1391,8 @@ func (r DeleteClusterResponse) StatusCode() int {
 type GetClusterResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Cluster
-	JSONDefault  *V1RuntimeError
+	JSON200      *Cluster
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1414,11 +1414,11 @@ func (r GetClusterResponse) StatusCode() int {
 type CreateOrUpdateClusterResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Cluster
+	JSON200      *Cluster
 	JSON202      *map[string]interface{}
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1440,10 +1440,10 @@ func (r CreateOrUpdateClusterResponse) StatusCode() int {
 type GetClusterCredentialsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1Credentials
+	JSON200      *Credentials
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1468,7 +1468,7 @@ type TriggerClusterHibernationResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1493,7 +1493,7 @@ type TriggerClusterMaintenanceResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1518,7 +1518,7 @@ type TriggerClusterReconciliationResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1543,7 +1543,7 @@ type TriggerClusterCredentialRotationResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1568,7 +1568,7 @@ type TriggerClusterWakeupResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
-	JSONDefault  *V1RuntimeError
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1590,8 +1590,8 @@ func (r TriggerClusterWakeupResponse) StatusCode() int {
 type GetProviderOptionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *V1ProviderOptions
-	JSONDefault  *V1RuntimeError
+	JSON200      *ProviderOptions
+	JSONDefault  *RuntimeError
 }
 
 // Status returns HTTPResponse.Status
@@ -1780,7 +1780,7 @@ func ParseDeleteProjectResponse(rsp *http.Response) (*DeleteProjectResponse, err
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1806,7 +1806,7 @@ func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Project
+		var dest Project
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1820,7 +1820,7 @@ func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1846,7 +1846,7 @@ func ParseCreateProjectResponse(rsp *http.Response) (*CreateProjectResponse, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Project
+		var dest Project
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1860,7 +1860,7 @@ func ParseCreateProjectResponse(rsp *http.Response) (*CreateProjectResponse, err
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1886,7 +1886,7 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Clusters
+		var dest Clusters
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1907,7 +1907,7 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1947,7 +1947,7 @@ func ParseDeleteClusterResponse(rsp *http.Response) (*DeleteClusterResponse, err
 		response.JSON202 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1973,14 +1973,14 @@ func ParseGetClusterResponse(rsp *http.Response) (*GetClusterResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Cluster
+		var dest Cluster
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2006,7 +2006,7 @@ func ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClus
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Cluster
+		var dest Cluster
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2034,7 +2034,7 @@ func ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClus
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2060,7 +2060,7 @@ func ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredenti
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1Credentials
+		var dest Credentials
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2081,7 +2081,7 @@ func ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredenti
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2128,7 +2128,7 @@ func ParseTriggerClusterHibernationResponse(rsp *http.Response) (*TriggerCluster
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2175,7 +2175,7 @@ func ParseTriggerClusterMaintenanceResponse(rsp *http.Response) (*TriggerCluster
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2222,7 +2222,7 @@ func ParseTriggerClusterReconciliationResponse(rsp *http.Response) (*TriggerClus
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2269,7 +2269,7 @@ func ParseTriggerClusterCredentialRotationResponse(rsp *http.Response) (*Trigger
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2316,7 +2316,7 @@ func ParseTriggerClusterWakeupResponse(rsp *http.Response) (*TriggerClusterWakeu
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2342,14 +2342,14 @@ func ParseGetProviderOptionsResponse(rsp *http.Response) (*GetProviderOptionsRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest V1ProviderOptions
+		var dest ProviderOptions
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest V1RuntimeError
+		var dest RuntimeError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

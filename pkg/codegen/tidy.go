@@ -20,6 +20,10 @@ func tidy(s *openapi3.T, opts Configuration) {
 		fmt.Fprintf(w, "\n\nParams tidy rule:\nReplace '%s' with '%s'\n\n", rule.Replace, rule.With)
 		tidyPaths(w, s, rule, false)
 	}
+	for _, rule := range opts.Tidy.Schemas {
+		fmt.Fprintf(w, "\n\nSchema tidy rule:\nReplace '%s' with '%s'\n\n", rule.Replace, rule.With)
+		tidySchemas(w, s, rule)
+	}
 
 	if opts.Tidy.Verbose {
 		fmt.Println(w.String())
@@ -81,4 +85,75 @@ func tidyOperation(w io.Writer, key *string, o *openapi3.Operation, rule TidyRul
 		ns := *key
 		*key = strings.ReplaceAll(ns, fmt.Sprintf("{%s}", k), fmt.Sprintf("{%s}", v))
 	}
+}
+
+func tidySchemas(w io.Writer, s *openapi3.T, rule TidyRule) {
+	tidySchemasInPaths(w, s, rule)
+	tidySchemasInComp(w, s, rule)
+}
+
+func tidySchemasInPaths(w io.Writer, s *openapi3.T, rule TidyRule) {
+	for k, path := range s.Paths {
+		_ = k
+		tidySchemaInOperation(w, path.Get, rule)
+		tidySchemaInOperation(w, path.Patch, rule)
+		tidySchemaInOperation(w, path.Post, rule)
+		tidySchemaInOperation(w, path.Put, rule)
+		tidySchemaInOperation(w, path.Delete, rule)
+		tidySchemaInOperation(w, path.Head, rule)
+		tidySchemaInOperation(w, path.Options, rule)
+		tidySchemaInOperation(w, path.Trace, rule)
+	}
+}
+
+func tidySchemasInComp(w io.Writer, s *openapi3.T, rule TidyRule) {
+	sc := s.Components.Schemas
+	for k, v := range sc {
+		newK := _tidy(w, rule, k)
+		delete(s.Components.Schemas, k)
+		if v.Value != nil {
+			properties := v.Value.Properties
+			if v.Value != nil {
+				for _, pv := range properties {
+					pv.Ref = tidySchemaRef(w, pv.Ref, rule)
+					if pv.Value.Items != nil {
+						pv.Value.Items.Ref = tidySchemaRef(w, pv.Value.Items.Ref, rule)
+					}
+				}
+			}
+		}
+		s.Components.Schemas[newK] = v
+	}
+}
+
+func tidySchemaInOperation(w io.Writer, o *openapi3.Operation, rule TidyRule) {
+	if o == nil {
+		return
+	}
+	for _, param := range o.Parameters {
+		param.Ref = tidySchemaRef(w, param.Ref, rule)
+	}
+	if o.RequestBody != nil {
+		o.RequestBody.Ref = tidySchemaRef(w, o.RequestBody.Ref, rule)
+	}
+
+	for k, param := range o.Responses {
+		param.Ref = tidySchemaRef(w, param.Ref, rule)
+		if param.Value != nil {
+			for _, cv := range param.Value.Content {
+				if cv.Schema != nil {
+					cv.Schema.Ref = tidySchemaRef(w, cv.Schema.Ref, rule)
+				}
+			}
+		}
+		o.Responses[k] = param
+	}
+}
+
+func tidySchemaRef(w io.Writer, ref string, rule TidyRule) string {
+	if ref == "" || !strings.HasPrefix(ref, "#/components/schemas/") {
+		return ref
+	}
+	t := strings.TrimPrefix(ref, "#/components/schemas/")
+	return "#/components/schemas/" + _tidy(w, rule, t)
 }

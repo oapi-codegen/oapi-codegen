@@ -25,7 +25,7 @@ type Tidy struct {
 	Verbose   bool       `yaml:"verbose,omitempty"`
 	Functions []TidyRule `yaml:"functions,omitempty"`
 	Params    []TidyRule `yaml:"params,omitempty"`
-	Consts    []TidyRule `yaml:"consts,omitempty"`
+	Schemas   []TidyRule `yaml:"schemas,omitempty"`
 }
 
 // Tidy is a list of rules for replacing strings in the openAPI file
