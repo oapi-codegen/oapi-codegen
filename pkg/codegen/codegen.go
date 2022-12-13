@@ -109,6 +109,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		pruneUnusedComponents(spec)
 	}
 
+	tidy(spec, opts)
+
 	// if we are provided an override for the response type suffix update it
 	if opts.OutputOptions.ResponseTypeSuffix != "" {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
