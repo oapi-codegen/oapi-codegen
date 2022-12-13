@@ -6,7 +6,7 @@ generate:
 output-options:
   client-type-name: SKEClient
 tidy:
-  verbose: true
+  verbose: false
   functions:
   - replace: SkeService_
     with: 
