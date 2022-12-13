@@ -22,3 +22,9 @@ tidy:
   - replace: Id
     with: ID
     suffix: true
+  - replace: Cri
+    with: CRI
+    match: true
+  - replace: Cpu
+    with: CPU
+    match: true

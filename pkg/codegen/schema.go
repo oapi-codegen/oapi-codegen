@@ -594,7 +594,7 @@ func GenFieldsFromProperties(props []Property) []string {
 	for i, p := range props {
 		field := ""
 
-		goFieldName := p.GoFieldName()
+		goFieldName := tidyFieldName(p.GoFieldName())
 		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
 			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
 				goFieldName = extGoFieldName

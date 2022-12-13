@@ -9,9 +9,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+var tidyMemConfig Configuration
+
 func tidy(s *openapi3.T, opts Configuration) {
 	var b bytes.Buffer
 	w := &b
+	tidyMemConfig = opts
 	for _, rule := range opts.Tidy.Functions {
 		fmt.Fprintf(w, "\nFunctions tidy rule:\nReplace '%s' with '%s'\n\n", rule.Replace, rule.With)
 		tidyPaths(w, s, rule, true)
@@ -32,6 +35,10 @@ func tidy(s *openapi3.T, opts Configuration) {
 
 func _tidy(w io.Writer, rule TidyRule, s string) string {
 	fmt.Fprintf(w, "- %s", s)
+
+	if rule.Match && s == rule.Replace {
+		s = rule.With
+	}
 	if rule.All {
 		s = strings.ReplaceAll(s, rule.Replace, rule.With)
 	}
@@ -43,6 +50,18 @@ func _tidy(w io.Writer, rule TidyRule, s string) string {
 	}
 
 	fmt.Fprintf(w, " -> %s\n", s)
+	return s
+}
+
+func tidyFieldName(s string) string {
+	var b bytes.Buffer
+	w := &b
+	for _, rule := range tidyMemConfig.Tidy.Schemas {
+		s = _tidy(w, rule, s)
+	}
+	if tidyMemConfig.Tidy.Verbose {
+		fmt.Println(w.String())
+	}
 	return s
 }
 

@@ -35,6 +35,7 @@ type TidyRule struct {
 	Prefix  bool   `yaml:"prefix,omitempty"`
 	Suffix  bool   `yaml:"suffix,omitempty"`
 	All     bool   `yaml:"all,omitempty"`
+	Match   bool   `yaml:"match,omitempty"`
 }
 
 // GenerateOptions specifies which supported output formats to generate.

@@ -72,7 +72,7 @@ const (
 // Argus defines model for Argus.
 type Argus struct {
 	// ArgusInstanceId Argus instance ID to choose which Argus instance is used.
-	ArgusInstanceId string `json:"argusInstanceId"`
+	ArgusInstanceID string `json:"argusInstanceId"`
 
 	// Enabled Enables the argus extension.
 	Enabled bool `json:"enabled"`
@@ -187,7 +187,7 @@ type MachineImage struct {
 
 // MachineImageVersion defines model for MachineImageVersion.
 type MachineImageVersion struct {
-	Cri            *[]CRI     `json:"cri,omitempty"`
+	CRI            *[]CRI     `json:"cri,omitempty"`
 	ExpirationDate *time.Time `json:"expirationDate,omitempty"`
 	State          *string    `json:"state,omitempty"`
 	Version        *string    `json:"version,omitempty"`
@@ -195,7 +195,7 @@ type MachineImageVersion struct {
 
 // MachineType defines model for MachineType.
 type MachineType struct {
-	Cpu    *int32  `json:"cpu,omitempty"`
+	CPU    *int32  `json:"cpu,omitempty"`
 	Memory *int32  `json:"memory,omitempty"`
 	Name   *string `json:"name,omitempty"`
 }
@@ -215,7 +215,7 @@ type MaintenanceAutoUpdate struct {
 // Nodepool defines model for Nodepool.
 type Nodepool struct {
 	AvailabilityZones []string           `json:"availabilityZones"`
-	Cri               *CRI               `json:"cri,omitempty"`
+	CRI               *CRI               `json:"cri,omitempty"`
 	Labels            *map[string]string `json:"labels,omitempty"`
 	Machine           Machine            `json:"machine"`
 	MaxSurge          *int32             `json:"maxSurge,omitempty"`
@@ -229,7 +229,7 @@ type Nodepool struct {
 
 // Project defines model for Project.
 type Project struct {
-	ProjectId *string       `json:"projectId,omitempty"`
+	ProjectID *string       `json:"projectId,omitempty"`
 	State     *ProjectState `json:"state,omitempty"`
 }
 
