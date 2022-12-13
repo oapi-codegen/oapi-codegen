@@ -1,0 +1,17 @@
+package: ske
+output: ./examples/ske-client/ske.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  client-type-name: SKEClient
+tidy:
+  verbose: true
+  functions:
+  - replace: SkeService_
+    with: 
+    prefix: true
+  params:
+  - replace: Id
+    with: ID
+    suffix: true

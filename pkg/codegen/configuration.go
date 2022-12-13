@@ -18,6 +18,23 @@ type Configuration struct {
 	OutputOptions     OutputOptions        `yaml:"output-options,omitempty"`
 	ImportMapping     map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
 	AdditionalImports []AdditionalImport   `yaml:"additional-imports,omitempty"`
+	Tidy              Tidy                 `yaml:"tidy,omitempty"`
+}
+
+type Tidy struct {
+	Verbose   bool       `yaml:"verbose,omitempty"`
+	Functions []TidyRule `yaml:"functions,omitempty"`
+	Params    []TidyRule `yaml:"params,omitempty"`
+	Consts    []TidyRule `yaml:"consts,omitempty"`
+}
+
+// Tidy is a list of rules for replacing strings in the openAPI file
+type TidyRule struct {
+	Replace string `yaml:"replace,omitempty"`
+	With    string `yaml:"with,omitempty"`
+	Prefix  bool   `yaml:"prefix,omitempty"`
+	Suffix  bool   `yaml:"suffix,omitempty"`
+	All     bool   `yaml:"all,omitempty"`
 }
 
 // GenerateOptions specifies which supported output formats to generate.
