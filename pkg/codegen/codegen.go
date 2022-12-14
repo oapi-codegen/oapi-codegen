@@ -389,7 +389,8 @@ func GenerateClientFactory(services []ClientService, opts Configuration) (string
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	importsOut, err := GenerateImports(t, []string{}, opts.PackageName)
+	importMapping = constructImportMapping(opts.ImportMapping)
+	importsOut, err := GenerateImports(t, importMapping.GoImports(), opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
