@@ -318,7 +318,7 @@ func multifiles(f string, opts configuration) {
 	}
 
 	ogopts := opts
-	packages := []string{}
+	svcs := []codegen.ClientService{}
 	for _, tag := range tags {
 		swagger, err = util.LoadSwagger(f)
 		if err != nil {
@@ -331,11 +331,17 @@ func multifiles(f string, opts configuration) {
 		opts.Configuration.OutputOptions.IncludeTags = []string{tag}
 
 		nonAlphanumericRegex := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
+		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(tag, ""))
 		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
 		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
 		opts.Configuration.PackageName = opts.PackageName
-		packages = append(packages, opts.PackageName)
 		dir := fmt.Sprintf("%s/%s", path.Dir(opts.OutputFile), newTag)
+
+		svcs = append(svcs, codegen.ClientService{
+			ServiceName: svcName,
+			PackageName: opts.PackageName,
+			PackagePath: dir,
+		})
 
 		code, err := codegen.Generate(swagger, opts.Configuration)
 		if err != nil {
@@ -352,11 +358,7 @@ func multifiles(f string, opts configuration) {
 	}
 
 	opts = ogopts
-
-	opts.Configuration.OutputOptions.ExcludeTags = []string{}
-	opts.Configuration.OutputOptions.IncludeTags = []string{"nullx"}
-
-	code, err := codegen.Generate(swagger, opts.Configuration)
+	code, err := codegen.GenerateClientFactory(svcs, opts.Configuration)
 	if err != nil {
 		errExit("error generating factory code: %s\n", err)
 	}
