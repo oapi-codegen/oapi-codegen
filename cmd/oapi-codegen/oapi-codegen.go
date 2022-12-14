@@ -26,7 +26,6 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
-	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -255,19 +254,19 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	if opts.Configuration.OutputOptions.SplitByTags.Enabled {
+		multifiles(flag.Arg(0), opts)
+		return
+	}
+	singlefile(flag.Arg(0), opts)
+}
+
+func singlefile(f string, opts configuration) {
+	swagger, err := util.LoadSwagger(f)
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
-	if opts.Configuration.OutputOptions.SplitByTags.Enabled {
-		multifiles(swagger, opts)
-		return
-	}
-	singlefile(swagger, opts)
-}
-
-func singlefile(swagger *openapi3.T, opts configuration) {
 	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
@@ -283,7 +282,12 @@ func singlefile(swagger *openapi3.T, opts configuration) {
 	}
 }
 
-func multifiles(swagger *openapi3.T, opts configuration) {
+func multifiles(f string, opts configuration) {
+	swagger, err := util.LoadSwagger(f)
+	if err != nil {
+		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+	}
+
 	s := opts.Configuration.OutputOptions.SplitByTags
 	tags := []string{}
 	if len(s.Include) > 0 {
@@ -292,7 +296,7 @@ func multifiles(swagger *openapi3.T, opts configuration) {
 		for _, t := range swagger.Tags {
 			skip := false
 			for i := 0; i < len(s.Exclude); i++ {
-				if s.Exclude[i] == t.Name {
+				if strings.EqualFold(s.Exclude[i], t.Name) {
 					skip = true
 					break
 				}
@@ -309,12 +313,17 @@ func multifiles(swagger *openapi3.T, opts configuration) {
 	}
 
 	if len(tags) == 1 {
-		singlefile(swagger, opts)
+		singlefile(f, opts)
 		return
 	}
 
 	ogopts := opts
 	for _, tag := range tags {
+		swagger, err = util.LoadSwagger(f)
+		if err != nil {
+			errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		}
+
 		opts = ogopts
 
 		opts.Configuration.OutputOptions.ExcludeTags = []string{}
@@ -340,6 +349,7 @@ func multifiles(swagger *openapi3.T, opts configuration) {
 			errExit("error writing generated code to file: %s\n", err)
 		}
 	}
+
 }
 
 func toSnakeCase(str string) string {

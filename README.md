@@ -36,7 +36,6 @@ Example:
 
 ```yaml
 output-options:
-  client-type-name: SKEClient
   split-by-tags:
     verbose: true
     enabled: true

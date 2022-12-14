@@ -268,8 +268,8 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-// SKEClient which conforms to the OpenAPI3 specification for this service.
-type SKEClient struct {
+// Client which conforms to the OpenAPI3 specification for this service.
+type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
 	// https://api.deepmap.com for example. This can contain a path relative
 	// to the server, such as https://api.deepmap.com/dev-test, and all the
@@ -286,12 +286,12 @@ type SKEClient struct {
 }
 
 // ClientOption allows setting custom parameters during construction
-type ClientOption func(*SKEClient) error
+type ClientOption func(*Client) error
 
-// Creates a new SKEClient, with reasonable defaults
-func NewClient(server string, opts ...ClientOption) (*SKEClient, error) {
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	// create a client with sane default values
-	client := SKEClient{
+	client := Client{
 		Server: server,
 	}
 	// mutate client and add all optional params
@@ -314,7 +314,7 @@ func NewClient(server string, opts ...ClientOption) (*SKEClient, error) {
 // WithHTTPClient allows overriding the default Doer, which is
 // automatically created using http.Client. This is useful for tests.
 func WithHTTPClient(doer HttpRequestDoer) ClientOption {
-	return func(c *SKEClient) error {
+	return func(c *Client) error {
 		c.Client = doer
 		return nil
 	}
@@ -323,7 +323,7 @@ func WithHTTPClient(doer HttpRequestDoer) ClientOption {
 // WithRequestEditorFn allows setting up a callback function, which will be
 // called right before sending the request. This can be used to mutate the request.
 func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
-	return func(c *SKEClient) error {
+	return func(c *Client) error {
 		c.RequestEditors = append(c.RequestEditors, fn)
 		return nil
 	}
@@ -358,7 +358,7 @@ type ClientInterface interface {
 	TriggerClusterWakeup(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *SKEClient) ListClusters(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) ListClusters(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListClustersRequest(c.Server, projectID)
 	if err != nil {
 		return nil, err
@@ -370,7 +370,7 @@ func (c *SKEClient) ListClusters(ctx context.Context, projectID string, reqEdito
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) DeleteCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteClusterRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -382,7 +382,7 @@ func (c *SKEClient) DeleteCluster(ctx context.Context, projectID string, cluster
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) GetCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClusterRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -394,7 +394,7 @@ func (c *SKEClient) GetCluster(ctx context.Context, projectID string, clusterNam
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) CreateOrUpdateClusterWithBody(ctx context.Context, projectID string, clusterName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateOrUpdateClusterWithBody(ctx context.Context, projectID string, clusterName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrUpdateClusterRequestWithBody(c.Server, projectID, clusterName, contentType, body)
 	if err != nil {
 		return nil, err
@@ -406,7 +406,7 @@ func (c *SKEClient) CreateOrUpdateClusterWithBody(ctx context.Context, projectID
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) CreateOrUpdateCluster(ctx context.Context, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) CreateOrUpdateCluster(ctx context.Context, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrUpdateClusterRequest(c.Server, projectID, clusterName, body)
 	if err != nil {
 		return nil, err
@@ -418,7 +418,7 @@ func (c *SKEClient) CreateOrUpdateCluster(ctx context.Context, projectID string,
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) TriggerClusterHibernation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) TriggerClusterHibernation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTriggerClusterHibernationRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -430,7 +430,7 @@ func (c *SKEClient) TriggerClusterHibernation(ctx context.Context, projectID str
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) TriggerClusterMaintenance(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) TriggerClusterMaintenance(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTriggerClusterMaintenanceRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -442,7 +442,7 @@ func (c *SKEClient) TriggerClusterMaintenance(ctx context.Context, projectID str
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) TriggerClusterReconciliation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) TriggerClusterReconciliation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTriggerClusterReconciliationRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -454,7 +454,7 @@ func (c *SKEClient) TriggerClusterReconciliation(ctx context.Context, projectID 
 	return c.Client.Do(req)
 }
 
-func (c *SKEClient) TriggerClusterWakeup(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) TriggerClusterWakeup(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTriggerClusterWakeupRequest(c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
@@ -800,7 +800,7 @@ func NewTriggerClusterWakeupRequest(server string, projectID string, clusterName
 	return req, nil
 }
 
-func (c *SKEClient) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err
@@ -831,7 +831,7 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
-	return func(c *SKEClient) error {
+	return func(c *Client) error {
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
