@@ -1,6 +1,6 @@
 # OpenAPI Client and Server Code Generator
 
-This repo is a fork of [deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen)
+This repo is a fork of [deepmap/oapi-codegen](https://github.com/do87/oapi-codegen)
 
 Only the changes from the original repo are documented below
 

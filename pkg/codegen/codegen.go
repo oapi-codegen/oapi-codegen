@@ -428,6 +428,10 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
 }
 
+func GenerateClientFactory(packages []string, opts Configuration) (string, error) {
+	return "// " + strings.Join(packages, ","), nil
+}
+
 // GenerateTypesForSchemas generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
 func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) ([]TypeDefinition, error) {

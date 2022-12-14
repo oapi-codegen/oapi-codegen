@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/do87/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -24,8 +24,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/do87/oapi-codegen/pkg/codegen"
+	"github.com/do87/oapi-codegen/pkg/util"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -318,6 +318,7 @@ func multifiles(f string, opts configuration) {
 	}
 
 	ogopts := opts
+	packages := []string{}
 	for _, tag := range tags {
 		swagger, err = util.LoadSwagger(f)
 		if err != nil {
@@ -333,7 +334,7 @@ func multifiles(f string, opts configuration) {
 		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
 		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
 		opts.Configuration.PackageName = opts.PackageName
-		flagPackageName = opts.PackageName
+		packages = append(packages, opts.PackageName)
 		dir := fmt.Sprintf("%s/%s", path.Dir(opts.OutputFile), newTag)
 
 		code, err := codegen.Generate(swagger, opts.Configuration)
@@ -350,6 +351,19 @@ func multifiles(f string, opts configuration) {
 		}
 	}
 
+	opts = ogopts
+
+	opts.Configuration.OutputOptions.ExcludeTags = []string{}
+	opts.Configuration.OutputOptions.IncludeTags = []string{"nullx"}
+
+	code, err := codegen.Generate(swagger, opts.Configuration)
+	if err != nil {
+		errExit("error generating factory code: %s\n", err)
+	}
+	err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+	if err != nil {
+		errExit("error writing generated factory code to file: %s\n", err)
+	}
 }
 
 func toSnakeCase(str string) string {

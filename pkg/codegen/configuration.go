@@ -58,26 +58,26 @@ type CompatibilityOptions struct {
 	// `allOf` merges at the schema definition level, not at the resulting model
 	// level. So, new behavior merges OpenAPI specs but generates different code
 	// than we have in the past. Set OldMergeSchemas to true for the old behavior.
-	// Please see https://github.com/deepmap/oapi-codegen/issues/531
+	// Please see https://github.com/do87/oapi-codegen/issues/531
 	OldMergeSchemas bool `yaml:"old-merge-schemas,omitempty"`
 	// Enum values can generate conflicting typenames, so we've updated the
 	// code for enum generation to avoid these conflicts, but it will result
 	// in some enum types being renamed in existing code. Set OldEnumConflicts to true
 	// to revert to old behavior. Please see:
-	// Please see https://github.com/deepmap/oapi-codegen/issues/549
+	// Please see https://github.com/do87/oapi-codegen/issues/549
 	OldEnumConflicts bool `yaml:"old-enum-conflicts,omitempty"`
 	// It was a mistake to generate a go type definition for every $ref in
 	// the OpenAPI schema. New behavior uses type aliases where possible, but
 	// this can generate code which breaks existing builds. Set OldAliasing to true
 	// for old behavior.
-	// Please see https://github.com/deepmap/oapi-codegen/issues/549
+	// Please see https://github.com/do87/oapi-codegen/issues/549
 	OldAliasing bool `yaml:"old-aliasing,omitempty"`
 	// When an object contains no members, and only an additionalProperties specification,
 	// it is flattened to a map. Set
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
 	// When an object property is both required and readOnly the go model is generated
 	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
-	// Please see https://github.com/deepmap/oapi-codegen/issues/604
+	// Please see https://github.com/do87/oapi-codegen/issues/604
 	DisableRequiredReadOnlyAsPointer bool `yaml:"disable-required-readonly-as-pointer,omitempty"`
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
@@ -85,7 +85,7 @@ type CompatibilityOptions struct {
 	// Our generated code for Chi has historically inverted the order in which Chi middleware is
 	// applied such that the last invoked middleware ends up executing first in the Chi chain
 	// This resolves the behavior such that middlewares are chained in the order they are invoked.
-	// Please see https://github.com/deepmap/oapi-codegen/issues/786
+	// Please see https://github.com/do87/oapi-codegen/issues/786
 	ApplyChiMiddlewareFirstToLast bool `yaml:"apply-chi-middleware-first-to-last,omitempty"`
 }
 

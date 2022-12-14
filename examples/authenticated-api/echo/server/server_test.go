@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/do87/oapi-codegen/examples/authenticated-api/echo/api"
+	"github.com/do87/oapi-codegen/pkg/testutil"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
