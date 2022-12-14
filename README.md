@@ -1,6 +1,6 @@
 # OpenAPI Client and Server Code Generator
 
-This repo is a fork of [deepmap/oapi-codegen](https://github.com/deepmap/oapi-codegen)
+This repo is a fork of [deepmap/oapi-codegen](https://github.com/do87/oapi-codegen)
 
 Only the changes from the original repo are documented below
 
@@ -27,3 +27,18 @@ tidy:
     match: true
 
 ```
+
+## Splitting client code by tags
+
+the config has been extended to support splitting the client code into multiple directories and files
+
+Example:
+
+```yaml
+output-options:
+  split-by-tags:
+    verbose: true
+    enabled: true
+```
+
+theres also an options to add a list under `split-by-tags` of `includes` or `excludes`

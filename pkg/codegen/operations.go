@@ -23,7 +23,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/do87/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -933,10 +933,21 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
+// GenerateServiceClient generates client of factory service
+func GenerateServiceClient(t *template.Template, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"client-service.tmpl"}, t, ops)
+}
+
 // GenerateClientWithResponses generates a client which extends the basic client which does response
 // unmarshalling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
+}
+
+// GenerateClientServiceWithResponses generates a client service which extends the basic client which does response
+// unmarshalling.
+func GenerateClientServiceWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"client-service-with-responses.tmpl"}, t, ops)
 }
 
 // GenerateTemplates used to generate templates

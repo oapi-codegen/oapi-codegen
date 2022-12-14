@@ -18,13 +18,14 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"runtime/debug"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/do87/oapi-codegen/pkg/codegen"
+	"github.com/do87/oapi-codegen/pkg/util"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -253,7 +254,15 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	if opts.Configuration.OutputOptions.SplitByTags.Enabled {
+		multifiles(flag.Arg(0), opts)
+		return
+	}
+	singlefile(flag.Arg(0), opts)
+}
+
+func singlefile(f string, opts configuration) {
+	swagger, err := util.LoadSwagger(f)
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
@@ -271,6 +280,100 @@ func main() {
 	} else {
 		fmt.Print(code)
 	}
+}
+
+func multifiles(f string, opts configuration) {
+	swagger, err := util.LoadSwagger(f)
+	if err != nil {
+		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+	}
+
+	s := opts.Configuration.OutputOptions.SplitByTags
+	tags := []string{}
+	if len(s.Include) > 0 {
+		tags = s.Include
+	} else {
+		for _, t := range swagger.Tags {
+			skip := false
+			for i := 0; i < len(s.Exclude); i++ {
+				if strings.EqualFold(s.Exclude[i], t.Name) {
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				tags = append(tags, t.Name)
+			}
+		}
+	}
+
+	if len(tags) == 0 {
+		fmt.Print("no available tags. exiting.")
+		return
+	}
+
+	if len(tags) == 1 {
+		singlefile(f, opts)
+		return
+	}
+
+	ogopts := opts
+	svcs := []codegen.ClientService{}
+	for _, tag := range tags {
+		swagger, err = util.LoadSwagger(f)
+		if err != nil {
+			errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		}
+
+		opts = ogopts
+
+		opts.Configuration.OutputOptions.ExcludeTags = []string{}
+		opts.Configuration.OutputOptions.IncludeTags = []string{tag}
+
+		nonAlphanumericRegex := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
+		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(tag, ""))
+		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
+		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
+		opts.Configuration.PackageName = opts.PackageName
+		dir := fmt.Sprintf("%s/%s", path.Dir(opts.OutputFile), newTag)
+
+		svcs = append(svcs, codegen.ClientService{
+			ServiceName: svcName,
+			PackageName: opts.PackageName,
+			PackagePath: dir,
+		})
+
+		code, err := codegen.Generate(swagger, opts.Configuration)
+		if err != nil {
+			errExit("error generating code: %s\n", err)
+		}
+		opts.OutputFile = fmt.Sprintf("%s/%s.go", dir, newTag)
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			errExit("error creating dir: %s\n", err)
+		}
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+		if err != nil {
+			errExit("error writing generated code to file: %s\n", err)
+		}
+	}
+
+	opts = ogopts
+	code, err := codegen.GenerateClientFactory(svcs, opts.Configuration)
+	if err != nil {
+		errExit("error generating factory code: %s\n", err)
+	}
+	err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+	if err != nil {
+		errExit("error writing generated factory code to file: %s\n", err)
+	}
+}
+
+func toSnakeCase(str string) string {
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {

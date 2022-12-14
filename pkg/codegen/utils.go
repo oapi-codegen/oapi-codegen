@@ -569,7 +569,7 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
 	for _, n := range deDup {
-		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
+		sanitized := SanitizeGoIdentity(SchemaNameToUpperSnake(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = n
@@ -632,6 +632,19 @@ func typeNamePrefix(name string) (prefix string) {
 // valid in Go
 func SchemaNameToTypeName(name string) string {
 	return typeNamePrefix(name) + ToCamelCase(name)
+}
+
+// SchemaNameToTypeNameNoCamel converts a Schema name to a valid Go type name. It doesn't converts to camel case
+func SchemaNameToUpperSnake(name string) string {
+	return strings.ToUpper(typeNamePrefix(name) + toSnakeCase(name))
+}
+
+func toSnakeCase(str string) string {
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }
 
 // According to the spec, additionalProperties may be true, false, or a

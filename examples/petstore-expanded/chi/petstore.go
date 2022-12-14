@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	"github.com/do87/oapi-codegen/examples/petstore-expanded/chi/api"
+	middleware "github.com/do87/oapi-codegen/pkg/chi-middleware"
 	"github.com/go-chi/chi/v5"
 )
 

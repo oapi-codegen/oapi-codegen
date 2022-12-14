@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/do87/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )

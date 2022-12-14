@@ -220,17 +220,31 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var clientOut string
 	if opts.Generate.Client {
-		clientOut, err = GenerateClient(t, ops)
-		if err != nil {
-			return "", fmt.Errorf("error generating client: %w", err)
+		if opts.OutputOptions.SplitByTags.Enabled {
+			clientOut, err = GenerateServiceClient(t, ops)
+			if err != nil {
+				return "", fmt.Errorf("error generating client: %w", err)
+			}
+		} else {
+			clientOut, err = GenerateClient(t, ops)
+			if err != nil {
+				return "", fmt.Errorf("error generating client: %w", err)
+			}
 		}
 	}
 
 	var clientWithResponsesOut string
 	if opts.Generate.Client {
-		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
-		if err != nil {
-			return "", fmt.Errorf("error generating client with responses: %w", err)
+		if opts.OutputOptions.SplitByTags.Enabled {
+			clientWithResponsesOut, err = GenerateClientServiceWithResponses(t, ops)
+			if err != nil {
+				return "", fmt.Errorf("error generating client with responses: %w", err)
+			}
+		} else {
+			clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
+			if err != nil {
+				return "", fmt.Errorf("error generating client with responses: %w", err)
+			}
 		}
 	}
 
@@ -317,6 +331,82 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing inlined spec: %w", err)
 		}
+	}
+
+	err = w.Flush()
+	if err != nil {
+		return "", fmt.Errorf("error flushing output buffer: %w", err)
+	}
+
+	// remove any byte-order-marks which break Go-Code
+	goCode := SanitizeCode(buf.String())
+
+	// The generation code produces unindented horrors. Use the Go Imports
+	// to make it all pretty.
+	if opts.OutputOptions.SkipFmt {
+		return goCode, nil
+	}
+
+	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
+	if err != nil {
+		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
+	}
+	return string(outBytes), nil
+}
+
+type ClientService struct {
+	ServiceName string
+	PackageName string
+	PackagePath string
+}
+
+func GenerateClientFactory(services []ClientService, opts Configuration) (string, error) {
+	// This creates the golang templates text package
+	globalState.options = opts // if we are provided an override for the response type suffix update it
+	if globalState.options.OutputOptions.ClientTypeName == "" {
+		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
+	}
+	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+
+	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
+
+	// This parses all of our own template files into the template object
+	// above
+	err := LoadTemplates(templates, t)
+	if err != nil {
+		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
+	}
+
+	// Override built-in templates with user-provided versions
+	for _, tpl := range t.Templates() {
+		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
+				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
+			}
+		}
+	}
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+
+	importMapping = constructImportMapping(opts.ImportMapping)
+	importsOut, err := GenerateImports(t, importMapping.GoImports(), opts.PackageName)
+	if err != nil {
+		return "", fmt.Errorf("error generating imports: %w", err)
+	}
+	_, err = w.WriteString(importsOut)
+	if err != nil {
+		return "", fmt.Errorf("error writing imports: %w", err)
+	}
+
+	factory, err := GenerateTemplates([]string{"client-factory.tmpl"}, t, services)
+	if err != nil {
+		return "", fmt.Errorf("error generating factory: %w", err)
+	}
+
+	_, err = w.WriteString(factory)
+	if err != nil {
+		return "", fmt.Errorf("error writing factory: %w", err)
 	}
 
 	err = w.Flush()

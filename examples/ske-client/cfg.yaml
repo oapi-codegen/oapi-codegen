@@ -4,7 +4,9 @@ generate:
   models: true
   client: true
 output-options:
-  client-type-name: SKEClient
+  split-by-tags:
+    verbose: true
+    enabled: true
 tidy:
   verbose: false
   functions:
