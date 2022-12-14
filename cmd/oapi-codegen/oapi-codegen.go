@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"runtime/debug"
 	"strings"
 
@@ -25,6 +26,7 @@ import (
 
 	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func errExit(format string, args ...interface{}) {
@@ -258,6 +260,14 @@ func main() {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
+	if opts.Configuration.OutputOptions.SplitByTags.Enabled {
+		multifiles(swagger, opts)
+		return
+	}
+	singlefile(swagger, opts)
+}
+
+func singlefile(swagger *openapi3.T, opts configuration) {
 	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
@@ -271,6 +281,73 @@ func main() {
 	} else {
 		fmt.Print(code)
 	}
+}
+
+func multifiles(swagger *openapi3.T, opts configuration) {
+	s := opts.Configuration.OutputOptions.SplitByTags
+	tags := []string{}
+	if len(s.Include) > 0 {
+		tags = s.Include
+	} else {
+		for _, t := range swagger.Tags {
+			skip := false
+			for i := 0; i < len(s.Exclude); i++ {
+				if s.Exclude[i] == t.Name {
+					skip = true
+					break
+				}
+			}
+			if !skip {
+				tags = append(tags, t.Name)
+			}
+		}
+	}
+
+	if len(tags) == 0 {
+		fmt.Print("no available tags. exiting.")
+		return
+	}
+
+	if len(tags) == 1 {
+		singlefile(swagger, opts)
+		return
+	}
+
+	ogopts := opts
+	for _, tag := range tags {
+		opts = ogopts
+
+		opts.Configuration.OutputOptions.ExcludeTags = []string{}
+		opts.Configuration.OutputOptions.IncludeTags = []string{tag}
+
+		nonAlphanumericRegex := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
+		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
+		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
+		opts.Configuration.PackageName = opts.PackageName
+		flagPackageName = opts.PackageName
+		dir := fmt.Sprintf("%s/%s", path.Dir(opts.OutputFile), newTag)
+
+		code, err := codegen.Generate(swagger, opts.Configuration)
+		if err != nil {
+			errExit("error generating code: %s\n", err)
+		}
+		opts.OutputFile = fmt.Sprintf("%s/%s.go", dir, newTag)
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			errExit("error creating dir: %s\n", err)
+		}
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+		if err != nil {
+			errExit("error writing generated code to file: %s\n", err)
+		}
+	}
+}
+
+func toSnakeCase(str string) string {
+	var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
+	var matchAllCap = regexp.MustCompile("([a-z0-9])([A-Z])")
+	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
+	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
+	return strings.ToLower(snake)
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {

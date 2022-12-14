@@ -431,9 +431,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				enumName = k
 			}
 			if globalState.options.Compatibility.OldEnumConflicts {
-				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
+				outSchema.EnumValues[SchemaNameToUpperSnake(PathToTypeName(append(path, enumName)))] = v
 			} else {
-				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+				outSchema.EnumValues[SchemaNameToUpperSnake(k)] = v
 			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types

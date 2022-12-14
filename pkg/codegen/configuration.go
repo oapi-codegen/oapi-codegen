@@ -100,6 +100,15 @@ type OutputOptions struct {
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
+
+	SplitByTags FileSplit `yaml:"split-by-tags,omitempty"` // FileSplit splits to separate files/dirs according to tags
+}
+
+type FileSplit struct {
+	Verbose bool     `yaml:"verbose,omitempty"`
+	Enabled bool     `yaml:"enabled,omitempty"`
+	Include []string `yaml:"include,omitempty"`
+	Exclude []string `yaml:"exclude,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
