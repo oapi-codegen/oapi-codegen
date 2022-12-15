@@ -15,6 +15,11 @@ func tidy(s *openapi3.T, opts Configuration) {
 	var b bytes.Buffer
 	w := &b
 	tidyMemConfig = opts
+	if len(opts.OutputOptions.IncludeTags) > 0 {
+		fmt.Fprintf(w, "\n------------------------\n")
+		fmt.Fprintf(w, "Tidying for %+v", opts.OutputOptions.IncludeTags)
+		fmt.Fprintf(w, "\n------------------------\n")
+	}
 	for _, rule := range opts.Tidy.Functions {
 		fmt.Fprintf(w, "\nFunctions tidy rule:\nReplace '%s' with '%s'\n\n", rule.Replace, rule.With)
 		tidyPaths(w, s, rule, true)
