@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -74,25 +75,37 @@ func tidyPaths(w io.Writer, s *openapi3.T, rule TidyRule, tidyFns bool) {
 	paths := s.Paths
 	for key, path := range s.Paths {
 		nkey := key
-		tidyOperation(w, &nkey, path.Get, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Patch, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Post, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Put, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Delete, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Head, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Options, rule, tidyFns)
-		tidyOperation(w, &nkey, path.Trace, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodGet, path.Get, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodPatch, path.Patch, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodPost, path.Post, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodPut, path.Put, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodDelete, path.Delete, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodHead, path.Head, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodOptions, path.Options, rule, tidyFns)
+		tidyOperation(w, &nkey, http.MethodTrace, path.Trace, rule, tidyFns)
 		delete(paths, key)
 		paths[nkey] = path
 	}
 	s.Paths = paths
 }
 
-func tidyOperation(w io.Writer, key *string, o *openapi3.Operation, rule TidyRule, tidyFns bool) {
+func tidyOperation(w io.Writer, key *string, method string, o *openapi3.Operation, rule TidyRule, tidyFns bool) {
 	if o == nil {
 		return
 	}
 	if tidyFns {
+
+		if o.OperationID == "" {
+			var err error
+			o.OperationID, err = generateDefaultOperationID(method, *key)
+			if err != nil {
+				fmt.Fprintf(w, "error generating default OperationID for %s/%s: %s",
+					method, *key, err)
+				return
+			}
+		} else {
+			o.OperationID = ToCamelCase(o.OperationID)
+		}
 		o.OperationID = _tidy(w, rule, o.OperationID)
 		return
 	}
