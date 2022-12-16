@@ -60,3 +60,26 @@ output-options:
     apply-to: ["*"]
     imports: ["errors"]
 ```
+
+which generates:
+
+```go
+type ListClustersResponse struct {
+  Body         []byte
+  HTTPResponse *http.Response
+  // ...
+  HasError     error // Aggregated error
+}
+```
+
+## Custom Doer interface
+
+in order to load a Doer interface from another package, the following configuration can be added
+
+```yaml
+output-options:
+  custom-doer:
+    enabled: true
+    import: skeclient "github.com/do87/oapi-codegen/examples/ske-client"
+    name: "skeclient.HttpRequestDoer"
+```

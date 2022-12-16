@@ -1,9 +1,12 @@
+{{- if not opts.OutputOptions.CustomDoer.Enabled}}
 // Doer performs HTTP requests.
 //
 // The standard http.Client implements this interface.
 type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
+{{- end}}
+{{$doerName :=  iif opts.OutputOptions.CustomDoer.Enabled opts.OutputOptions.CustomDoer.Name "HttpRequestDoer" }}
 
 {{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
 
@@ -23,7 +26,7 @@ type {{ $clientTypeName }} struct {
 
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+	Client {{$doerName}}
 
 }
 
@@ -61,7 +64,7 @@ func NewClient(server string, opts ...ClientOption) (*{{ $clientTypeName }}, err
 
 // WithHTTPClient allows overriding the default Doer, which is
 // automatically created using http.Client. This is useful for tests.
-func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+func WithHTTPClient(doer {{$doerName}}) ClientOption {
 	return func(c *{{ $clientTypeName }}) error {
 		c.Client = doer
 		return nil

@@ -280,6 +280,13 @@ func has(s string, sl []string) bool {
 	return false
 }
 
+func iif(flag bool, a, b string) string {
+	if flag {
+		return a
+	}
+	return b
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -306,4 +313,5 @@ var TemplateFunctions = template.FuncMap{
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"has":                        has,
+	"iif":                        iif,
 }

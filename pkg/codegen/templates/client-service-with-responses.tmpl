@@ -3,9 +3,10 @@ type ClientWithResponses struct {
     ClientInterface
 }
 
+{{$doerName :=  iif opts.OutputOptions.CustomDoer.Enabled opts.OutputOptions.CustomDoer.Name "HttpRequestDoer" }}
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
-func NewClientWithResponses(server string, httpClient HttpRequestDoer) *ClientWithResponses{
+func NewClientWithResponses(server string, httpClient {{$doerName}}) *ClientWithResponses{
     return &ClientWithResponses{NewClient(server, httpClient)}
 }
 

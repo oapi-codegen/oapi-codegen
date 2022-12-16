@@ -435,13 +435,27 @@ func addExtendedResponseImports(opts Configuration, importasSlice []string) []st
 	for _, v := range opts.OutputOptions.ExtendResponse {
 		if len(v.Imports) > 0 {
 			for _, imp := range v.Imports {
-				if strings.HasPrefix(imp, `"`) {
+				imp = strings.TrimSpace(imp)
+				if imp == "" {
+					continue
+				}
+				if strings.HasSuffix(imp, `"`) {
 					importasSlice = append(importasSlice, imp)
 				} else {
 					importasSlice = append(importasSlice, fmt.Sprintf(`"%s"`, imp))
 				}
 			}
+		}
+	}
 
+	if opts.OutputOptions.CustomDoer.Enabled {
+		cdi := strings.TrimSpace(opts.OutputOptions.CustomDoer.Import)
+		if cdi != "" {
+			if strings.HasSuffix(cdi, `"`) {
+				importasSlice = append(importasSlice, cdi)
+			} else {
+				importasSlice = append(importasSlice, fmt.Sprintf(`"%s"`, cdi))
+			}
 		}
 	}
 	return importasSlice
