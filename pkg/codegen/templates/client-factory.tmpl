@@ -84,3 +84,33 @@ func WithBaseURL(baseURL string) ClientOption {
 		return nil
 	}
 }
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	Client *{{ $clientTypeName }}
+
+    // list of connected client services
+    {{range . -}}
+    {{$pname := .PackageName -}}
+    {{$sname := .ServiceName -}}
+        {{$sname}} *{{$pname}}.{{ $clientTypeName }}WithResponses
+    {{end}}
+}
+
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+    client, err := NewClient(server, opts...)
+    if err != nil {
+        return nil, err
+    }
+
+    cwr := &ClientWithResponses{Client: client}
+    {{range . -}}
+    {{$pname := .PackageName -}}
+    {{$sname := .ServiceName -}}
+    cwr.{{$sname}} = {{$pname}}.NewClientWithResponses(server, client.Client)
+    {{end}}
+
+    return cwr, nil
+}

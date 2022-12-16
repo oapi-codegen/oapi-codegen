@@ -53,10 +53,6 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if !strings.HasSuffix(client.Server, "/") {
 		client.Server += "/"
 	}
-	// ensure the server URL always has a trailing slash
-	if !strings.HasSuffix(client.Server, "/") {
-		client.Server += "/"
-	}
 
 	client.Cluster = cluster.NewClient(server, client.Client)
 	client.Credentials = credentials.NewClient(server, client.Client)
@@ -86,4 +82,33 @@ func WithBaseURL(baseURL string) ClientOption {
 		c.Server = newBaseURL.String()
 		return nil
 	}
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	Client *Client
+
+	// list of connected client services
+	Cluster         *cluster.ClientWithResponses
+	Credentials     *credentials.ClientWithResponses
+	Operation       *operation.ClientWithResponses
+	ProviderOptions *provideroptions.ClientWithResponses
+	Project         *project.ClientWithResponses
+}
+
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
+	}
+
+	cwr := &ClientWithResponses{Client: client}
+	cwr.Cluster = cluster.NewClientWithResponses(server, client.Client)
+	cwr.Credentials = credentials.NewClientWithResponses(server, client.Client)
+	cwr.Operation = operation.NewClientWithResponses(server, client.Client)
+	cwr.ProviderOptions = provideroptions.NewClientWithResponses(server, client.Client)
+	cwr.Project = project.NewClientWithResponses(server, client.Client)
+	return cwr, nil
 }
