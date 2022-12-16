@@ -42,3 +42,21 @@ output-options:
 ```
 
 theres also an options to add a list under `split-by-tags` of `includes` or `excludes`
+
+## Extend responses struct
+
+For our use case we'd like to add an aggregated error if the response isn't 200
+
+In order to do that the response struct can be extended with the following config
+
+Example:
+
+```yaml
+output-options:
+  extend-response:
+  - field: HasError
+    type: error
+    description: "Aggregated error"
+    apply-to: ["*"]
+    imports: ["errors"]
+```
