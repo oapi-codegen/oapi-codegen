@@ -4,7 +4,6 @@
 package ske
 
 import (
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -54,9 +53,9 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 	if !strings.HasSuffix(client.Server, "/") {
 		client.Server += "/"
 	}
-	// create httpClient, if not already present
-	if client.Client == nil {
-		client.Client = &http.Client{}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
 	}
 
 	client.Cluster = cluster.NewClient(server, client.Client)
