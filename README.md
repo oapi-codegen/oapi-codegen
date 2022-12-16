@@ -83,3 +83,13 @@ output-options:
     import: skeclient "github.com/do87/oapi-codegen/examples/ske-client"
     name: "skeclient.HttpRequestDoer"
 ```
+
+## Copy supporting files
+
+```yaml
+output-options:
+  copy:
+  - from: wait/cluster/wait.go
+    to: cluster/wait.go
+    trim: "cluster."
+```

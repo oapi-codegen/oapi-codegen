@@ -1,6 +1,7 @@
 module github.com/do87/oapi-codegen
 
 require (
+	github.com/SchwarzIT/community-stackit-go-client v1.2.5
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
 	github.com/getkin/kin-openapi v0.107.0
 	github.com/gin-gonic/gin v1.8.1
