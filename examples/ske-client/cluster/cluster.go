@@ -818,6 +818,7 @@ type ListClustersResponse struct {
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -842,6 +843,7 @@ type DeleteClusterResponse struct {
 	JSON200      *map[string]interface{}
 	JSON202      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -865,6 +867,7 @@ type GetClusterResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *Cluster
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -891,6 +894,7 @@ type CreateOrUpdateClusterResponse struct {
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -916,6 +920,7 @@ type TriggerClusterHibernationResponse struct {
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -941,6 +946,7 @@ type TriggerClusterMaintenanceResponse struct {
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -966,6 +972,7 @@ type TriggerClusterReconciliationResponse struct {
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -991,6 +998,7 @@ type TriggerClusterWakeupResponse struct {
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status

@@ -345,6 +345,7 @@ func multifiles(f string, opts configuration) {
 
 		code, err := codegen.Generate(swagger, opts.Configuration)
 		if err != nil {
+			_ = os.WriteFile(opts.OutputFile+".err", []byte(err.Error()), 0644)
 			errExit("error generating code: %s\n", err)
 		}
 		opts.OutputFile = fmt.Sprintf("%s/%s.go", dir, newTag)

@@ -27,12 +27,19 @@ type ClientWithResponsesInterface interface {
 {{end}}{{/* range . $opid := .OperationId */}}
 }
 
+{{$extendResp := opts.OutputOptions.ExtendResponse -}}
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
-type {{genResponseTypeName $opid | ucFirst}} struct {
+{{$generatedTypeName := (genResponseTypeName $opid | ucFirst)}}
+type {{$generatedTypeName}} struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range getResponseTypeDefinitions .}}
     {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+    {{- range $extendResp}}
+    {{- if or (has $generatedTypeName .ApplyTo) (has "*" .ApplyTo) }}
+    {{.Field}} {{.Type}} {{if ne .Description ""}} // {{ .Description }}{{end}}
+    {{- end}}
     {{- end}}
 }
 

@@ -271,6 +271,15 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+func has(s string, sl []string) bool {
+	for _, v := range sl {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -296,4 +305,5 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"has":                        has,
 }

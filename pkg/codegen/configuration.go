@@ -101,7 +101,8 @@ type OutputOptions struct {
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 
-	SplitByTags FileSplit `yaml:"split-by-tags,omitempty"` // FileSplit splits to separate files/dirs according to tags
+	SplitByTags    FileSplit            `yaml:"split-by-tags,omitempty"`   // FileSplit splits to separate files/dirs according to tags
+	ExtendResponse []ExtendResponseItem `yaml:"extend-response,omitempty"` // FileSplit splits to separate files/dirs according to tags
 }
 
 type FileSplit struct {
@@ -109,6 +110,14 @@ type FileSplit struct {
 	Enabled bool     `yaml:"enabled,omitempty"`
 	Include []string `yaml:"include,omitempty"`
 	Exclude []string `yaml:"exclude,omitempty"`
+}
+
+type ExtendResponseItem struct {
+	Field       string   `yaml:"field,omitempty"`
+	Type        string   `yaml:"type,omitempty"`
+	Description string   `yaml:"description,omitempty"`
+	Imports     []string `imports:"imports,omitempty"`
+	ApplyTo     []string `yaml:"apply-to,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

@@ -273,6 +273,7 @@ type GetClusterCredentialsResponse struct {
 	JSON400      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -298,6 +299,7 @@ type TriggerClusterCredentialRotationResponse struct {
 	JSON202      *map[string]interface{}
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
