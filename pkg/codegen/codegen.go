@@ -260,7 +260,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	w := bufio.NewWriter(&buf)
 
 	externalImports := append(importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
-	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
+	importsOut, err := GenerateImports(t, addExtendedResponseImports(opts, externalImports), opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -390,7 +390,8 @@ func GenerateClientFactory(services []ClientService, opts Configuration) (string
 	w := bufio.NewWriter(&buf)
 
 	importMapping = constructImportMapping(opts.ImportMapping)
-	importsOut, err := GenerateImports(t, importMapping.GoImports(), opts.PackageName)
+	externalImports := importMapping.GoImports()
+	importsOut, err := GenerateImports(t, addExtendedResponseImports(opts, externalImports), opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -428,6 +429,22 @@ func GenerateClientFactory(services []ClientService, opts Configuration) (string
 		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
 	}
 	return string(outBytes), nil
+}
+
+func addExtendedResponseImports(opts Configuration, importasSlice []string) []string {
+	for _, v := range opts.OutputOptions.ExtendResponse {
+		if len(v.Imports) > 0 {
+			for _, imp := range v.Imports {
+				if strings.HasPrefix(imp, `"`) {
+					importasSlice = append(importasSlice, imp)
+				} else {
+					importasSlice = append(importasSlice, fmt.Sprintf(`"%s"`, imp))
+				}
+			}
+
+		}
+	}
+	return importasSlice
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {

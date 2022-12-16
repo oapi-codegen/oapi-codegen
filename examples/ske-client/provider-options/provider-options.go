@@ -248,6 +248,7 @@ type GetProviderOptionsResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *ProviderOptions
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status

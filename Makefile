@@ -29,4 +29,4 @@ tidy:
 	go mod tidy
 
 ske-client:
-	@go run ./cmd/oapi-codegen -config ./examples/ske-client/cfg.yaml ./examples/ske-client/ske.json
+	@go run ./cmd/oapi-codegen -config ./examples/ske-client/cfg.yaml ./examples/ske-client/ske.json 

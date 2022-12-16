@@ -318,6 +318,7 @@ type DeleteProjectResponse struct {
 	JSON202      *map[string]interface{}
 	JSON400      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -342,6 +343,7 @@ type GetProjectResponse struct {
 	JSON200      *Project
 	JSON404      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status
@@ -366,6 +368,7 @@ type CreateProjectResponse struct {
 	JSON200      *Project
 	JSON400      *map[string]interface{}
 	JSONDefault  *RuntimeError
+	HasError     error // Aggregated error
 }
 
 // Status returns HTTPResponse.Status

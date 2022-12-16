@@ -7,10 +7,15 @@ output-options:
   split-by-tags:
     verbose: true
     enabled: true
+  extend-response:
+  - field: HasError
+    type: error
+    description: "Aggregated error"
+    apply-to: ["*"]
 tidy:
   verbose: false
   functions:
-  - replace: SkeService_
+  - replace: SkeService
     with: 
     prefix: true
   params:
