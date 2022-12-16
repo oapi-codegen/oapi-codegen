@@ -49,10 +49,12 @@ func NewClient(server string, opts ...ClientOption) (*{{ $clientTypeName }}, err
     if !strings.HasSuffix(client.Server, "/") {
         client.Server += "/"
     }
+    {{- if not opts.OutputOptions.CustomDoer.Enabled}}
     // create httpClient, if not already present
     if client.Client == nil {
         client.Client = &http.Client{}
     }
+    {{- end}}
     return &client, nil
 }
 
