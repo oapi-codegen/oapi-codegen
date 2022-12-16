@@ -8,19 +8,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/do87/oapi-codegen/examples/ske-client/cluster"
-	"github.com/do87/oapi-codegen/examples/ske-client/credentials"
-	"github.com/do87/oapi-codegen/examples/ske-client/operation"
-	"github.com/do87/oapi-codegen/examples/ske-client/project"
-	provideroptions "github.com/do87/oapi-codegen/examples/ske-client/provider-options"
+	skeclient "github.com/do87/oapi-codegen/examples/ske-client"
+	"github.com/do87/oapi-codegen/examples/ske-client/src/cluster"
+	"github.com/do87/oapi-codegen/examples/ske-client/src/credentials"
+	"github.com/do87/oapi-codegen/examples/ske-client/src/operation"
+	"github.com/do87/oapi-codegen/examples/ske-client/src/project"
+	provideroptions "github.com/do87/oapi-codegen/examples/ske-client/src/provider-options"
 )
-
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
 
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
@@ -39,7 +33,7 @@ type Client struct {
 
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+	Client skeclient.HttpRequestDoer
 }
 
 // ClientOption allows setting custom parameters during construction
@@ -76,7 +70,7 @@ func NewClient(server string, opts ...ClientOption) (*Client, error) {
 
 // WithHTTPClient allows overriding the default Doer, which is
 // automatically created using http.Client. This is useful for tests.
-func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+func WithHTTPClient(doer skeclient.HttpRequestDoer) ClientOption {
 	return func(c *Client) error {
 		c.Client = doer
 		return nil

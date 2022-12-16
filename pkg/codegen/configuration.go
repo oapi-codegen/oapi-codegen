@@ -103,6 +103,7 @@ type OutputOptions struct {
 
 	SplitByTags    FileSplit            `yaml:"split-by-tags,omitempty"`   // FileSplit splits to separate files/dirs according to tags
 	ExtendResponse []ExtendResponseItem `yaml:"extend-response,omitempty"` // FileSplit splits to separate files/dirs according to tags
+	CustomDoer     CustomDoer           `yaml:"custom-doer,omitempty"`     // FileSplit splits to separate files/dirs according to tags
 }
 
 type FileSplit struct {
@@ -118,6 +119,12 @@ type ExtendResponseItem struct {
 	Description string   `yaml:"description,omitempty"`
 	Imports     []string `imports:"imports,omitempty"`
 	ApplyTo     []string `yaml:"apply-to,omitempty"`
+}
+
+type CustomDoer struct {
+	Enabled bool   `yaml:"enabled,omitempty"`
+	Name    string `yaml:"name,omitempty"`
+	Import  string `imports:"import,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

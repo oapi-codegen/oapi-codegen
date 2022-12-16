@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	skeclient "github.com/do87/oapi-codegen/examples/ske-client"
 	"github.com/do87/oapi-codegen/pkg/runtime"
 )
 
@@ -261,13 +262,6 @@ type CreateOrUpdateClusterJSONRequestBody = SkeServiceCreateOrUpdateClusterReque
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
-// Doer performs HTTP requests.
-//
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -278,11 +272,11 @@ type Client struct {
 
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+	Client skeclient.HttpRequestDoer
 }
 
 // Creates a new Client, with reasonable defaults
-func NewClient(server string, httpClient HttpRequestDoer) *Client {
+func NewClient(server string, httpClient skeclient.HttpRequestDoer) *Client {
 	// create a client with sane default values
 	client := Client{
 		Server: server,
@@ -778,7 +772,7 @@ type ClientWithResponses struct {
 
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
-func NewClientWithResponses(server string, httpClient HttpRequestDoer) *ClientWithResponses {
+func NewClientWithResponses(server string, httpClient skeclient.HttpRequestDoer) *ClientWithResponses {
 	return &ClientWithResponses{NewClient(server, httpClient)}
 }
 
