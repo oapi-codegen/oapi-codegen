@@ -87,6 +87,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /enum:
+    get:
+      tags:
+        - enum
+      summary: References enum
+      operationId: getEnum
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnumTest'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -136,3 +157,23 @@ components:
         cause:
           type: string
           enum: [ car, dog, oldage ]
+
+    EnumTest:
+      properties:
+        numerics:
+          type: integer
+          enum: [0, 1, 2]
+        enumNames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enumNames:
+            - zero
+            - one
+            - two
+        enumVarnames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enum-varnames:
+            - na
+            - single
+            - double
