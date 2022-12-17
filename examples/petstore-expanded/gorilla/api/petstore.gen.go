@@ -114,8 +114,8 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 		siw.Handler.FindPets(w, r, params)
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
 	handler(w, r.WithContext(ctx))
@@ -129,8 +129,8 @@ func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request
 		siw.Handler.AddPet(w, r)
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
 	handler(w, r.WithContext(ctx))
@@ -155,8 +155,8 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 		siw.Handler.DeletePet(w, r, id)
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
 	handler(w, r.WithContext(ctx))
@@ -181,8 +181,8 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 		siw.Handler.FindPetByID(w, r, id)
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
 	handler(w, r.WithContext(ctx))
