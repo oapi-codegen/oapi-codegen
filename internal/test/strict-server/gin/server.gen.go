@@ -208,15 +208,13 @@ type GinServerOptions struct {
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
-	return RegisterHandlersWithOptions(router, si, GinServerOptions{})
+func RegisterHandlers(router gin.IRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
-
+func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
 	errorHandler := options.ErrorHandler
-
 	if errorHandler == nil {
 		errorHandler = func(c *gin.Context, err error, statusCode int) {
 			c.JSON(statusCode, gin.H{"msg": err.Error()})
@@ -230,24 +228,14 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample)
-
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample)
-
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
-
 	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
-
 	router.POST(options.BaseURL+"/text", wrapper.TextExample)
-
 	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
-
 	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-
 	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-
 	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
-
-	return router
 }
 
 type BadrequestResponse struct {
