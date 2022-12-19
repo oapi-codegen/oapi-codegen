@@ -83,3 +83,53 @@ output-options:
     import: skeclient "github.com/do87/oapi-codegen/examples/ske-client"
     name: "skeclient.HttpRequestDoer"
 ```
+
+## Copy supporting files
+
+```yaml
+output-options:
+  copy:
+  - from: wait/cluster/wait.go
+    to: cluster/wait.go
+    trim: "cluster."
+```
+
+## Extend WithResponse Structs
+
+```yaml
+output-options:
+  extend-response:
+  - field: HasError
+    type: error
+    description: "Aggregated error"
+    apply-to: ["*"]
+    set: "nil"
+```
+
+Will result in:
+
+```go
+type CreateOrUpdateClusterResponse struct {
+  Body         []byte
+  HTTPResponse *http.Response
+  // ...
+  HasError     error // Aggregated error
+}
+```
+
+This is just one of the response structs. because the matching is "*" it'll be added to all of them.
+
+And because 'set' has a value, the corresponding Parse method will be modified to:
+
+```go
+// ParseCreateOrUpdateClusterResponse parses an HTTP response from a CreateOrUpdateClusterWithResponse call
+func (c *ClientWithResponses) ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClusterResponse, error) {
+  // ...
+
+  response := &CreateOrUpdateClusterResponse{
+    Body:         bodyBytes,
+    HTTPResponse: rsp,
+  }
+  response.HasError = nil
+
+```

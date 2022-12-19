@@ -22,6 +22,7 @@ import (
 	"runtime/debug"
 	"strings"
 
+	"golang.org/x/tools/imports"
 	"gopkg.in/yaml.v2"
 
 	"github.com/do87/oapi-codegen/pkg/codegen"
@@ -253,14 +254,36 @@ func main() {
 		fmt.Print(string(buf))
 		return
 	}
-
+	for _, cp := range opts.OutputOptions.Copy {
+		copyfile(cp, opts)
+	}
 	if opts.Configuration.OutputOptions.SplitByTags.Enabled {
 		multifiles(flag.Arg(0), opts)
 		return
 	}
 	singlefile(flag.Arg(0), opts)
 }
-
+func copyfile(cp codegen.CopyItem, opts configuration) {
+	outputDir := path.Dir(opts.OutputFile)
+	fileTo := path.Join(outputDir, cp.To)
+	dirTo := path.Dir(fileTo)
+	if err := os.MkdirAll(dirTo, os.ModePerm); err != nil {
+		errExit("error creating dir: %s\n", err)
+	}
+	cfgFileDir := path.Dir(flagConfigFile)
+	fileContents, err := os.ReadFile(path.Join(cfgFileDir, cp.From))
+	if err != nil {
+		errExit("can't load file: %v\n", err)
+	}
+	fileContents, err = imports.Process(fileTo, []byte(strings.ReplaceAll(string(fileContents), cp.Trim, "")), nil)
+	if err != nil {
+		errExit("can't process file: %v\n", err)
+	}
+	err = os.WriteFile(fileTo, fileContents, 0644)
+	if err != nil {
+		errExit("error writing copied file: %s\n", err)
+	}
+}
 func singlefile(f string, opts configuration) {
 	swagger, err := util.LoadSwagger(f)
 	if err != nil {

@@ -110,5 +110,6 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 	cwr.Operation = operation.NewClientWithResponses(server, client.Client)
 	cwr.ProviderOptions = provideroptions.NewClientWithResponses(server, client.Client)
 	cwr.Project = project.NewClientWithResponses(server, client.Client)
+
 	return cwr, nil
 }

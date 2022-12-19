@@ -12,10 +12,15 @@ output-options:
     type: error
     description: "Aggregated error"
     apply-to: ["*"]
+    set: "nil"
   custom-doer:
     enabled: true
     import: skeclient "github.com/do87/oapi-codegen/examples/ske-client"
     name: "skeclient.HttpRequestDoer"
+  copy:
+  - from: wait/cluster/wait.go
+    to: cluster/wait.go
+    trim: "cluster."
 tidy:
   verbose: false
   functions:

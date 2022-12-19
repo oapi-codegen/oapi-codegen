@@ -318,7 +318,7 @@ func (c *ClientWithResponses) GetClusterCredentialsWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetClusterCredentialsResponse(rsp)
+	return c.ParseGetClusterCredentialsResponse(rsp)
 }
 
 // TriggerClusterCredentialRotationWithResponse request returning *TriggerClusterCredentialRotationResponse
@@ -327,11 +327,11 @@ func (c *ClientWithResponses) TriggerClusterCredentialRotationWithResponse(ctx c
 	if err != nil {
 		return nil, err
 	}
-	return ParseTriggerClusterCredentialRotationResponse(rsp)
+	return c.ParseTriggerClusterCredentialRotationResponse(rsp)
 }
 
 // ParseGetClusterCredentialsResponse parses an HTTP response from a GetClusterCredentialsWithResponse call
-func ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredentialsResponse, error) {
+func (c *ClientWithResponses) ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredentialsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -342,6 +342,7 @@ func ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredenti
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -378,7 +379,7 @@ func ParseGetClusterCredentialsResponse(rsp *http.Response) (*GetClusterCredenti
 }
 
 // ParseTriggerClusterCredentialRotationResponse parses an HTTP response from a TriggerClusterCredentialRotationWithResponse call
-func ParseTriggerClusterCredentialRotationResponse(rsp *http.Response) (*TriggerClusterCredentialRotationResponse, error) {
+func (c *ClientWithResponses) ParseTriggerClusterCredentialRotationResponse(rsp *http.Response) (*TriggerClusterCredentialRotationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -389,6 +390,7 @@ func ParseTriggerClusterCredentialRotationResponse(rsp *http.Response) (*Trigger
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
