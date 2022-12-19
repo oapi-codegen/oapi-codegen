@@ -120,6 +120,7 @@ type ExtendResponseItem struct {
 	Description string   `yaml:"description,omitempty"`
 	Imports     []string `imports:"imports,omitempty"`
 	ApplyTo     []string `yaml:"apply-to,omitempty"`
+	Set         string   `yaml:"set,omitempty"`
 }
 
 type CustomDoer struct {

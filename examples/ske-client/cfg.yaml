@@ -12,6 +12,7 @@ output-options:
     type: error
     description: "Aggregated error"
     apply-to: ["*"]
+    set: "nil"
   custom-doer:
     enabled: true
     import: skeclient "github.com/do87/oapi-codegen/examples/ske-client"

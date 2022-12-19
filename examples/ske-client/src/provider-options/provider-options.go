@@ -268,11 +268,11 @@ func (c *ClientWithResponses) GetProviderOptionsWithResponse(ctx context.Context
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetProviderOptionsResponse(rsp)
+	return c.ParseGetProviderOptionsResponse(rsp)
 }
 
 // ParseGetProviderOptionsResponse parses an HTTP response from a GetProviderOptionsWithResponse call
-func ParseGetProviderOptionsResponse(rsp *http.Response) (*GetProviderOptionsResponse, error) {
+func (c *ClientWithResponses) ParseGetProviderOptionsResponse(rsp *http.Response) (*GetProviderOptionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -283,6 +283,7 @@ func ParseGetProviderOptionsResponse(rsp *http.Response) (*GetProviderOptionsRes
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:

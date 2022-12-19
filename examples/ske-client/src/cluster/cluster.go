@@ -1017,7 +1017,7 @@ func (c *ClientWithResponses) ListClustersWithResponse(ctx context.Context, proj
 	if err != nil {
 		return nil, err
 	}
-	return ParseListClustersResponse(rsp)
+	return c.ParseListClustersResponse(rsp)
 }
 
 // DeleteClusterWithResponse request returning *DeleteClusterResponse
@@ -1026,7 +1026,7 @@ func (c *ClientWithResponses) DeleteClusterWithResponse(ctx context.Context, pro
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteClusterResponse(rsp)
+	return c.ParseDeleteClusterResponse(rsp)
 }
 
 // GetClusterWithResponse request returning *GetClusterResponse
@@ -1035,7 +1035,7 @@ func (c *ClientWithResponses) GetClusterWithResponse(ctx context.Context, projec
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetClusterResponse(rsp)
+	return c.ParseGetClusterResponse(rsp)
 }
 
 // CreateOrUpdateClusterWithBodyWithResponse request with arbitrary body returning *CreateOrUpdateClusterResponse
@@ -1044,7 +1044,7 @@ func (c *ClientWithResponses) CreateOrUpdateClusterWithBodyWithResponse(ctx cont
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOrUpdateClusterResponse(rsp)
+	return c.ParseCreateOrUpdateClusterResponse(rsp)
 }
 
 func (c *ClientWithResponses) CreateOrUpdateClusterWithResponse(ctx context.Context, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrUpdateClusterResponse, error) {
@@ -1052,7 +1052,7 @@ func (c *ClientWithResponses) CreateOrUpdateClusterWithResponse(ctx context.Cont
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateOrUpdateClusterResponse(rsp)
+	return c.ParseCreateOrUpdateClusterResponse(rsp)
 }
 
 // TriggerClusterHibernationWithResponse request returning *TriggerClusterHibernationResponse
@@ -1061,7 +1061,7 @@ func (c *ClientWithResponses) TriggerClusterHibernationWithResponse(ctx context.
 	if err != nil {
 		return nil, err
 	}
-	return ParseTriggerClusterHibernationResponse(rsp)
+	return c.ParseTriggerClusterHibernationResponse(rsp)
 }
 
 // TriggerClusterMaintenanceWithResponse request returning *TriggerClusterMaintenanceResponse
@@ -1070,7 +1070,7 @@ func (c *ClientWithResponses) TriggerClusterMaintenanceWithResponse(ctx context.
 	if err != nil {
 		return nil, err
 	}
-	return ParseTriggerClusterMaintenanceResponse(rsp)
+	return c.ParseTriggerClusterMaintenanceResponse(rsp)
 }
 
 // TriggerClusterReconciliationWithResponse request returning *TriggerClusterReconciliationResponse
@@ -1079,7 +1079,7 @@ func (c *ClientWithResponses) TriggerClusterReconciliationWithResponse(ctx conte
 	if err != nil {
 		return nil, err
 	}
-	return ParseTriggerClusterReconciliationResponse(rsp)
+	return c.ParseTriggerClusterReconciliationResponse(rsp)
 }
 
 // TriggerClusterWakeupWithResponse request returning *TriggerClusterWakeupResponse
@@ -1088,11 +1088,11 @@ func (c *ClientWithResponses) TriggerClusterWakeupWithResponse(ctx context.Conte
 	if err != nil {
 		return nil, err
 	}
-	return ParseTriggerClusterWakeupResponse(rsp)
+	return c.ParseTriggerClusterWakeupResponse(rsp)
 }
 
 // ParseListClustersResponse parses an HTTP response from a ListClustersWithResponse call
-func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error) {
+func (c *ClientWithResponses) ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1103,6 +1103,7 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1139,7 +1140,7 @@ func ParseListClustersResponse(rsp *http.Response) (*ListClustersResponse, error
 }
 
 // ParseDeleteClusterResponse parses an HTTP response from a DeleteClusterWithResponse call
-func ParseDeleteClusterResponse(rsp *http.Response) (*DeleteClusterResponse, error) {
+func (c *ClientWithResponses) ParseDeleteClusterResponse(rsp *http.Response) (*DeleteClusterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1150,6 +1151,7 @@ func ParseDeleteClusterResponse(rsp *http.Response) (*DeleteClusterResponse, err
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1179,7 +1181,7 @@ func ParseDeleteClusterResponse(rsp *http.Response) (*DeleteClusterResponse, err
 }
 
 // ParseGetClusterResponse parses an HTTP response from a GetClusterWithResponse call
-func ParseGetClusterResponse(rsp *http.Response) (*GetClusterResponse, error) {
+func (c *ClientWithResponses) ParseGetClusterResponse(rsp *http.Response) (*GetClusterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1190,6 +1192,7 @@ func ParseGetClusterResponse(rsp *http.Response) (*GetClusterResponse, error) {
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1212,7 +1215,7 @@ func ParseGetClusterResponse(rsp *http.Response) (*GetClusterResponse, error) {
 }
 
 // ParseCreateOrUpdateClusterResponse parses an HTTP response from a CreateOrUpdateClusterWithResponse call
-func ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClusterResponse, error) {
+func (c *ClientWithResponses) ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClusterResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1223,6 +1226,7 @@ func ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClus
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1266,7 +1270,7 @@ func ParseCreateOrUpdateClusterResponse(rsp *http.Response) (*CreateOrUpdateClus
 }
 
 // ParseTriggerClusterHibernationResponse parses an HTTP response from a TriggerClusterHibernationWithResponse call
-func ParseTriggerClusterHibernationResponse(rsp *http.Response) (*TriggerClusterHibernationResponse, error) {
+func (c *ClientWithResponses) ParseTriggerClusterHibernationResponse(rsp *http.Response) (*TriggerClusterHibernationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1277,6 +1281,7 @@ func ParseTriggerClusterHibernationResponse(rsp *http.Response) (*TriggerCluster
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1313,7 +1318,7 @@ func ParseTriggerClusterHibernationResponse(rsp *http.Response) (*TriggerCluster
 }
 
 // ParseTriggerClusterMaintenanceResponse parses an HTTP response from a TriggerClusterMaintenanceWithResponse call
-func ParseTriggerClusterMaintenanceResponse(rsp *http.Response) (*TriggerClusterMaintenanceResponse, error) {
+func (c *ClientWithResponses) ParseTriggerClusterMaintenanceResponse(rsp *http.Response) (*TriggerClusterMaintenanceResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1324,6 +1329,7 @@ func ParseTriggerClusterMaintenanceResponse(rsp *http.Response) (*TriggerCluster
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1360,7 +1366,7 @@ func ParseTriggerClusterMaintenanceResponse(rsp *http.Response) (*TriggerCluster
 }
 
 // ParseTriggerClusterReconciliationResponse parses an HTTP response from a TriggerClusterReconciliationWithResponse call
-func ParseTriggerClusterReconciliationResponse(rsp *http.Response) (*TriggerClusterReconciliationResponse, error) {
+func (c *ClientWithResponses) ParseTriggerClusterReconciliationResponse(rsp *http.Response) (*TriggerClusterReconciliationResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1371,6 +1377,7 @@ func ParseTriggerClusterReconciliationResponse(rsp *http.Response) (*TriggerClus
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -1407,7 +1414,7 @@ func ParseTriggerClusterReconciliationResponse(rsp *http.Response) (*TriggerClus
 }
 
 // ParseTriggerClusterWakeupResponse parses an HTTP response from a TriggerClusterWakeupWithResponse call
-func ParseTriggerClusterWakeupResponse(rsp *http.Response) (*TriggerClusterWakeupResponse, error) {
+func (c *ClientWithResponses) ParseTriggerClusterWakeupResponse(rsp *http.Response) (*TriggerClusterWakeupResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -1418,6 +1425,7 @@ func ParseTriggerClusterWakeupResponse(rsp *http.Response) (*TriggerClusterWakeu
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:

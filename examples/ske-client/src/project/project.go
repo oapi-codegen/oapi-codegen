@@ -387,7 +387,7 @@ func (c *ClientWithResponses) DeleteProjectWithResponse(ctx context.Context, pro
 	if err != nil {
 		return nil, err
 	}
-	return ParseDeleteProjectResponse(rsp)
+	return c.ParseDeleteProjectResponse(rsp)
 }
 
 // GetProjectWithResponse request returning *GetProjectResponse
@@ -396,7 +396,7 @@ func (c *ClientWithResponses) GetProjectWithResponse(ctx context.Context, projec
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetProjectResponse(rsp)
+	return c.ParseGetProjectResponse(rsp)
 }
 
 // CreateProjectWithResponse request returning *CreateProjectResponse
@@ -405,11 +405,11 @@ func (c *ClientWithResponses) CreateProjectWithResponse(ctx context.Context, pro
 	if err != nil {
 		return nil, err
 	}
-	return ParseCreateProjectResponse(rsp)
+	return c.ParseCreateProjectResponse(rsp)
 }
 
 // ParseDeleteProjectResponse parses an HTTP response from a DeleteProjectWithResponse call
-func ParseDeleteProjectResponse(rsp *http.Response) (*DeleteProjectResponse, error) {
+func (c *ClientWithResponses) ParseDeleteProjectResponse(rsp *http.Response) (*DeleteProjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -420,6 +420,7 @@ func ParseDeleteProjectResponse(rsp *http.Response) (*DeleteProjectResponse, err
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -456,7 +457,7 @@ func ParseDeleteProjectResponse(rsp *http.Response) (*DeleteProjectResponse, err
 }
 
 // ParseGetProjectResponse parses an HTTP response from a GetProjectWithResponse call
-func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
+func (c *ClientWithResponses) ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -467,6 +468,7 @@ func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
@@ -496,7 +498,7 @@ func ParseGetProjectResponse(rsp *http.Response) (*GetProjectResponse, error) {
 }
 
 // ParseCreateProjectResponse parses an HTTP response from a CreateProjectWithResponse call
-func ParseCreateProjectResponse(rsp *http.Response) (*CreateProjectResponse, error) {
+func (c *ClientWithResponses) ParseCreateProjectResponse(rsp *http.Response) (*CreateProjectResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
@@ -507,6 +509,7 @@ func ParseCreateProjectResponse(rsp *http.Response) (*CreateProjectResponse, err
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
+	response.HasError = nil
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:

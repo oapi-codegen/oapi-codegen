@@ -87,7 +87,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
+    return c.Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 
 {{$hasParams := .RequiresParamObject -}}
@@ -100,7 +100,7 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
     if err != nil {
         return nil, err
     }
-    return Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
+    return c.Parse{{genResponseTypeName $opid | ucFirst}}(rsp)
 }
 {{end}}
 {{end}}
@@ -109,9 +109,9 @@ func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Conte
 
 {{/* Generate parse functions for responses*/}}
 {{range .}}{{$opid := .OperationId}}
-
-// Parse{{genResponseTypeName $opid | ucFirst}} parses an HTTP response from a {{$opid}}WithResponse call
-func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
+{{$generatedTypeName := (genResponseTypeName $opid | ucFirst)}}
+// Parse{{$generatedTypeName}} parses an HTTP response from a {{$opid}}WithResponse call
+func (c *ClientWithResponses) Parse{{$generatedTypeName}}(rsp *http.Response) (*{{genResponseTypeName $opid}}, error) {
     bodyBytes, err := io.ReadAll(rsp.Body)
     defer func() { _ = rsp.Body.Close() }()
     if err != nil {
@@ -119,7 +119,14 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
     }
 
     response := {{genResponsePayload $opid}}
-
+    {{- range $extendResp}}
+    {{- if or (has $generatedTypeName .ApplyTo) (has "*" .ApplyTo) }}
+    {{- if ne .Set ""}}
+    response.{{.Field}} = {{.Set}}
+    {{- end}}
+    {{- end}}
+    {{- end}}
+    
     {{genResponseUnmarshal .}}
 
     return response, nil
