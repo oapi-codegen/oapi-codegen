@@ -11,14 +11,16 @@ import (
 	"strings"
 	"testing"
 
+
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
 	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
+	chiAPI "github.com/gin-gonic/gin"
 	clientAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
 	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
 	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
@@ -28,10 +30,10 @@ import (
 )
 
 func TestChiServer(t *testing.T) {
-	server := api.StrictServer{}
-	strictHandler := api.NewStrictHandler(server, nil)
+	server := chiAPI.StrictServer{}
+	strictHandler := chiAPI.NewStrictHandler(server, nil)
 	r := chi.NewRouter()
-	handler := api.HandlerFromMux(strictHandler, r)
+	handler := chiAPI.HandlerFromMux(strictHandler, r)
 	testImpl(t, handler)
 }
 
