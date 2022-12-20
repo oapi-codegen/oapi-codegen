@@ -174,7 +174,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) GetProviderOptions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetProviderOptionsRequest(c.Server)
+	req, err := NewGetProviderOptionsRequest(ctx, c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (c *Client) GetProviderOptions(ctx context.Context, reqEditors ...RequestEd
 }
 
 // NewGetProviderOptionsRequest generates requests for GetProviderOptions
-func NewGetProviderOptionsRequest(server string) (*http.Request, error) {
+func NewGetProviderOptionsRequest(ctx context.Context, server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -204,7 +204,7 @@ func NewGetProviderOptionsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

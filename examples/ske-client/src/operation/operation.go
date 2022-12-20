@@ -124,7 +124,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) TriggerClusterHibernation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterHibernationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterHibernationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (c *Client) TriggerClusterHibernation(ctx context.Context, projectID string
 }
 
 func (c *Client) TriggerClusterMaintenance(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterMaintenanceRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterMaintenanceRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (c *Client) TriggerClusterMaintenance(ctx context.Context, projectID string
 }
 
 func (c *Client) TriggerClusterReconciliation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterReconciliationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterReconciliationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (c *Client) TriggerClusterReconciliation(ctx context.Context, projectID str
 }
 
 func (c *Client) TriggerClusterCredentialRotation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterCredentialRotationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterCredentialRotationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (c *Client) TriggerClusterCredentialRotation(ctx context.Context, projectID
 }
 
 func (c *Client) TriggerClusterWakeup(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterWakeupRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterWakeupRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (c *Client) TriggerClusterWakeup(ctx context.Context, projectID string, clu
 }
 
 // NewTriggerClusterHibernationRequest generates requests for TriggerClusterHibernation
-func NewTriggerClusterHibernationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterHibernationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -216,7 +216,7 @@ func NewTriggerClusterHibernationRequest(server string, projectID string, cluste
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func NewTriggerClusterHibernationRequest(server string, projectID string, cluste
 }
 
 // NewTriggerClusterMaintenanceRequest generates requests for TriggerClusterMaintenance
-func NewTriggerClusterMaintenanceRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterMaintenanceRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -257,7 +257,7 @@ func NewTriggerClusterMaintenanceRequest(server string, projectID string, cluste
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +266,7 @@ func NewTriggerClusterMaintenanceRequest(server string, projectID string, cluste
 }
 
 // NewTriggerClusterReconciliationRequest generates requests for TriggerClusterReconciliation
-func NewTriggerClusterReconciliationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterReconciliationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -298,7 +298,7 @@ func NewTriggerClusterReconciliationRequest(server string, projectID string, clu
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func NewTriggerClusterReconciliationRequest(server string, projectID string, clu
 }
 
 // NewTriggerClusterCredentialRotationRequest generates requests for TriggerClusterCredentialRotation
-func NewTriggerClusterCredentialRotationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterCredentialRotationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -339,7 +339,7 @@ func NewTriggerClusterCredentialRotationRequest(server string, projectID string,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +348,7 @@ func NewTriggerClusterCredentialRotationRequest(server string, projectID string,
 }
 
 // NewTriggerClusterWakeupRequest generates requests for TriggerClusterWakeup
-func NewTriggerClusterWakeupRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterWakeupRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -380,7 +380,7 @@ func NewTriggerClusterWakeupRequest(server string, projectID string, clusterName
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

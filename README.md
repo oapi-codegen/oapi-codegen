@@ -4,6 +4,10 @@ This repo is a fork of [deepmap/oapi-codegen](https://github.com/do87/oapi-codeg
 
 Only the changes from the original repo are documented below
 
+## Non-config changes
+
+- `NewRequest` has been modified to `NewRequestWithContext`
+
 ## Spec tidying
 
 In cases where the OpenAPI spec isn't created by whomever generates the client, a "tidy" functionality is used to make the client more readable / styled as needed

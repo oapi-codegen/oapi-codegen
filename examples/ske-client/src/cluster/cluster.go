@@ -315,7 +315,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) ListClusters(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListClustersRequest(c.Server, projectID)
+	req, err := NewListClustersRequest(ctx, c.Server, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -327,7 +327,7 @@ func (c *Client) ListClusters(ctx context.Context, projectID string, reqEditors 
 }
 
 func (c *Client) DeleteCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteClusterRequest(c.Server, projectID, clusterName)
+	req, err := NewDeleteClusterRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -339,7 +339,7 @@ func (c *Client) DeleteCluster(ctx context.Context, projectID string, clusterNam
 }
 
 func (c *Client) GetCluster(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterRequest(c.Server, projectID, clusterName)
+	req, err := NewGetClusterRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -351,7 +351,7 @@ func (c *Client) GetCluster(ctx context.Context, projectID string, clusterName s
 }
 
 func (c *Client) CreateOrUpdateClusterWithBody(ctx context.Context, projectID string, clusterName string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOrUpdateClusterRequestWithBody(c.Server, projectID, clusterName, contentType, body)
+	req, err := NewCreateOrUpdateClusterRequestWithBody(ctx, c.Server, projectID, clusterName, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -363,7 +363,7 @@ func (c *Client) CreateOrUpdateClusterWithBody(ctx context.Context, projectID st
 }
 
 func (c *Client) CreateOrUpdateCluster(ctx context.Context, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateOrUpdateClusterRequest(c.Server, projectID, clusterName, body)
+	req, err := NewCreateOrUpdateClusterRequest(ctx, c.Server, projectID, clusterName, body)
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +375,7 @@ func (c *Client) CreateOrUpdateCluster(ctx context.Context, projectID string, cl
 }
 
 func (c *Client) TriggerClusterHibernation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterHibernationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterHibernationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -387,7 +387,7 @@ func (c *Client) TriggerClusterHibernation(ctx context.Context, projectID string
 }
 
 func (c *Client) TriggerClusterMaintenance(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterMaintenanceRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterMaintenanceRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -399,7 +399,7 @@ func (c *Client) TriggerClusterMaintenance(ctx context.Context, projectID string
 }
 
 func (c *Client) TriggerClusterReconciliation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterReconciliationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterReconciliationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +411,7 @@ func (c *Client) TriggerClusterReconciliation(ctx context.Context, projectID str
 }
 
 func (c *Client) TriggerClusterWakeup(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterWakeupRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterWakeupRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -423,7 +423,7 @@ func (c *Client) TriggerClusterWakeup(ctx context.Context, projectID string, clu
 }
 
 // NewListClustersRequest generates requests for ListClusters
-func NewListClustersRequest(server string, projectID string) (*http.Request, error) {
+func NewListClustersRequest(ctx context.Context, server string, projectID string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -448,7 +448,7 @@ func NewListClustersRequest(server string, projectID string) (*http.Request, err
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +457,7 @@ func NewListClustersRequest(server string, projectID string) (*http.Request, err
 }
 
 // NewDeleteClusterRequest generates requests for DeleteCluster
-func NewDeleteClusterRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewDeleteClusterRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -489,7 +489,7 @@ func NewDeleteClusterRequest(server string, projectID string, clusterName string
 		return nil, err
 	}
 
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -498,7 +498,7 @@ func NewDeleteClusterRequest(server string, projectID string, clusterName string
 }
 
 // NewGetClusterRequest generates requests for GetCluster
-func NewGetClusterRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewGetClusterRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -530,7 +530,7 @@ func NewGetClusterRequest(server string, projectID string, clusterName string) (
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -539,18 +539,18 @@ func NewGetClusterRequest(server string, projectID string, clusterName string) (
 }
 
 // NewCreateOrUpdateClusterRequest calls the generic CreateOrUpdateCluster builder with application/json body
-func NewCreateOrUpdateClusterRequest(server string, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody) (*http.Request, error) {
+func NewCreateOrUpdateClusterRequest(ctx context.Context, server string, projectID string, clusterName string, body CreateOrUpdateClusterJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
-	return NewCreateOrUpdateClusterRequestWithBody(server, projectID, clusterName, "application/json", bodyReader)
+	return NewCreateOrUpdateClusterRequestWithBody(ctx, server, projectID, clusterName, "application/json", bodyReader)
 }
 
 // NewCreateOrUpdateClusterRequestWithBody generates requests for CreateOrUpdateCluster with any type of body
-func NewCreateOrUpdateClusterRequestWithBody(server string, projectID string, clusterName string, contentType string, body io.Reader) (*http.Request, error) {
+func NewCreateOrUpdateClusterRequestWithBody(ctx context.Context, server string, projectID string, clusterName string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -582,7 +582,7 @@ func NewCreateOrUpdateClusterRequestWithBody(server string, projectID string, cl
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	req, err := http.NewRequestWithContext(ctx, "PUT", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -593,7 +593,7 @@ func NewCreateOrUpdateClusterRequestWithBody(server string, projectID string, cl
 }
 
 // NewTriggerClusterHibernationRequest generates requests for TriggerClusterHibernation
-func NewTriggerClusterHibernationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterHibernationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -625,7 +625,7 @@ func NewTriggerClusterHibernationRequest(server string, projectID string, cluste
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -634,7 +634,7 @@ func NewTriggerClusterHibernationRequest(server string, projectID string, cluste
 }
 
 // NewTriggerClusterMaintenanceRequest generates requests for TriggerClusterMaintenance
-func NewTriggerClusterMaintenanceRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterMaintenanceRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -666,7 +666,7 @@ func NewTriggerClusterMaintenanceRequest(server string, projectID string, cluste
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -675,7 +675,7 @@ func NewTriggerClusterMaintenanceRequest(server string, projectID string, cluste
 }
 
 // NewTriggerClusterReconciliationRequest generates requests for TriggerClusterReconciliation
-func NewTriggerClusterReconciliationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterReconciliationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -707,7 +707,7 @@ func NewTriggerClusterReconciliationRequest(server string, projectID string, clu
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -716,7 +716,7 @@ func NewTriggerClusterReconciliationRequest(server string, projectID string, clu
 }
 
 // NewTriggerClusterWakeupRequest generates requests for TriggerClusterWakeup
-func NewTriggerClusterWakeupRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterWakeupRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -748,7 +748,7 @@ func NewTriggerClusterWakeupRequest(server string, projectID string, clusterName
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

@@ -126,7 +126,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) GetClusterCredentials(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClusterCredentialsRequest(c.Server, projectID, clusterName)
+	req, err := NewGetClusterCredentialsRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -138,7 +138,7 @@ func (c *Client) GetClusterCredentials(ctx context.Context, projectID string, cl
 }
 
 func (c *Client) TriggerClusterCredentialRotation(ctx context.Context, projectID string, clusterName string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewTriggerClusterCredentialRotationRequest(c.Server, projectID, clusterName)
+	req, err := NewTriggerClusterCredentialRotationRequest(ctx, c.Server, projectID, clusterName)
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (c *Client) TriggerClusterCredentialRotation(ctx context.Context, projectID
 }
 
 // NewGetClusterCredentialsRequest generates requests for GetClusterCredentials
-func NewGetClusterCredentialsRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewGetClusterCredentialsRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -182,7 +182,7 @@ func NewGetClusterCredentialsRequest(server string, projectID string, clusterNam
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func NewGetClusterCredentialsRequest(server string, projectID string, clusterNam
 }
 
 // NewTriggerClusterCredentialRotationRequest generates requests for TriggerClusterCredentialRotation
-func NewTriggerClusterCredentialRotationRequest(server string, projectID string, clusterName string) (*http.Request, error) {
+func NewTriggerClusterCredentialRotationRequest(ctx context.Context, server string, projectID string, clusterName string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -223,7 +223,7 @@ func NewTriggerClusterCredentialRotationRequest(server string, projectID string,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

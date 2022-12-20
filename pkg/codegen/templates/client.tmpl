@@ -100,7 +100,7 @@ type ClientInterface interface {
 {{$opid := .OperationId -}}
 
 func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
+    req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(ctx, c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
     }
@@ -114,7 +114,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx cont
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
 func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
+    req, err := New{{$opid}}Request{{.Suffix}}(ctx, c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
     }
@@ -138,7 +138,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genPar
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
-func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
+func New{{$opid}}Request{{.Suffix}}(ctx context.Context, server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
     {{if eq .NameTag "JSON" -}}
         buf, err := json.Marshal(body)
@@ -155,13 +155,13 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
     {{else if eq .NameTag "Text" -}}
         bodyReader = strings.NewReader(string(body))
     {{end -}}
-    return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+    return New{{$opid}}RequestWithBody(ctx, server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
 {{end -}}
 {{end}}
 
 // New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
-func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
+func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(ctx context.Context, server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string
@@ -230,7 +230,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{end}}
     queryURL.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequestWithContext(ctx, "{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

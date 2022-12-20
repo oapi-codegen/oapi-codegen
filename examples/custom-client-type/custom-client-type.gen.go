@@ -96,7 +96,7 @@ type ClientInterface interface {
 }
 
 func (c *CustomClientType) GetClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetClientRequest(c.Server)
+	req, err := NewGetClientRequest(ctx, c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (c *CustomClientType) GetClient(ctx context.Context, reqEditors ...RequestE
 }
 
 // NewGetClientRequest generates requests for GetClient
-func NewGetClientRequest(server string) (*http.Request, error) {
+func NewGetClientRequest(ctx context.Context, server string) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -126,7 +126,7 @@ func NewGetClientRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -209,11 +209,11 @@ func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, reqEdit
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetClientResponse(rsp)
+	return c.ParseGetClientResponse(rsp)
 }
 
 // ParseGetClientResponse parses an HTTP response from a GetClientWithResponse call
-func ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
+func (c *ClientWithResponses) ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
