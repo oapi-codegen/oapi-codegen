@@ -136,7 +136,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) DeleteProject(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewDeleteProjectRequest(c.Server, projectID)
+	req, err := NewDeleteProjectRequest(ctx, c.Server, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (c *Client) DeleteProject(ctx context.Context, projectID string, reqEditors
 }
 
 func (c *Client) GetProject(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetProjectRequest(c.Server, projectID)
+	req, err := NewGetProjectRequest(ctx, c.Server, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -160,7 +160,7 @@ func (c *Client) GetProject(ctx context.Context, projectID string, reqEditors ..
 }
 
 func (c *Client) CreateProject(ctx context.Context, projectID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCreateProjectRequest(c.Server, projectID)
+	req, err := NewCreateProjectRequest(ctx, c.Server, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (c *Client) CreateProject(ctx context.Context, projectID string, reqEditors
 }
 
 // NewDeleteProjectRequest generates requests for DeleteProject
-func NewDeleteProjectRequest(server string, projectID string) (*http.Request, error) {
+func NewDeleteProjectRequest(ctx context.Context, server string, projectID string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -197,7 +197,7 @@ func NewDeleteProjectRequest(server string, projectID string) (*http.Request, er
 		return nil, err
 	}
 
-	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "DELETE", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +206,7 @@ func NewDeleteProjectRequest(server string, projectID string) (*http.Request, er
 }
 
 // NewGetProjectRequest generates requests for GetProject
-func NewGetProjectRequest(server string, projectID string) (*http.Request, error) {
+func NewGetProjectRequest(ctx context.Context, server string, projectID string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -231,7 +231,7 @@ func NewGetProjectRequest(server string, projectID string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -240,7 +240,7 @@ func NewGetProjectRequest(server string, projectID string) (*http.Request, error
 }
 
 // NewCreateProjectRequest generates requests for CreateProject
-func NewCreateProjectRequest(server string, projectID string) (*http.Request, error) {
+func NewCreateProjectRequest(ctx context.Context, server string, projectID string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -265,7 +265,7 @@ func NewCreateProjectRequest(server string, projectID string) (*http.Request, er
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	req, err := http.NewRequestWithContext(ctx, "PUT", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
