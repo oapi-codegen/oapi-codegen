@@ -30,3 +30,6 @@ tidy:
 
 ske-client:
 	@go run ./cmd/oapi-codegen -config ./examples/ske-client/cfg.yaml ./examples/ske-client/ske.json 
+
+custom-client:
+	@go run ./cmd/oapi-codegen -config ./examples/custom-client-type/cfg.yaml ./examples/custom-client-type/api.yaml

@@ -1,5 +1,5 @@
 package: customclienttype
-output: custom-client-type.gen.go
+output: ./examples/custom-client-type/custom-client-type.gen.go
 generate:
   models: true
   client: true
