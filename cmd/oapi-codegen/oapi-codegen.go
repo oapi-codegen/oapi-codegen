@@ -275,7 +275,11 @@ func copyfile(cp codegen.CopyItem, opts configuration) {
 	if err != nil {
 		errExit("can't load file: %v\n", err)
 	}
-	fileContents, err = imports.Process(fileTo, []byte(strings.ReplaceAll(string(fileContents), cp.Trim, "")), nil)
+	fc := string(fileContents)
+	for _, t := range cp.Tidy {
+		fc = codegen.DoTidy(nil, t, fc)
+	}
+	fileContents, err = imports.Process(fileTo, []byte(fc), nil)
 	if err != nil {
 		errExit("can't process file: %v\n", err)
 	}
@@ -354,7 +358,7 @@ func multifiles(f string, opts configuration) {
 		opts.Configuration.OutputOptions.IncludeTags = []string{tag}
 
 		nonAlphanumericRegex := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
-		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(tag, ""))
+		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(codegen.ToCamelCase(tag), ""))
 		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
 		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
 		opts.Configuration.PackageName = opts.PackageName

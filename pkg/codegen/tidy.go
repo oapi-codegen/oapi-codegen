@@ -39,8 +39,10 @@ func tidy(s *openapi3.T, opts Configuration) {
 	}
 }
 
-func _tidy(w io.Writer, rule TidyRule, s string) string {
-	fmt.Fprintf(w, "- %s", s)
+func DoTidy(w io.Writer, rule TidyRule, s string) string {
+	if w != nil {
+		fmt.Fprintf(w, "- %s", s)
+	}
 
 	if rule.Match && s == rule.Replace {
 		s = rule.With
@@ -54,8 +56,9 @@ func _tidy(w io.Writer, rule TidyRule, s string) string {
 	if rule.Suffix && strings.HasSuffix(s, rule.Replace) {
 		s = strings.TrimSuffix(s, rule.Replace) + rule.With
 	}
-
-	fmt.Fprintf(w, " -> %s\n", s)
+	if w != nil {
+		fmt.Fprintf(w, " -> %s\n", s)
+	}
 	return s
 }
 
@@ -63,7 +66,7 @@ func tidyFieldName(s string) string {
 	var b bytes.Buffer
 	w := &b
 	for _, rule := range tidyMemConfig.Tidy.Schemas {
-		s = _tidy(w, rule, s)
+		s = DoTidy(w, rule, s)
 	}
 	if tidyMemConfig.Tidy.Verbose {
 		fmt.Println(w.String())
@@ -106,7 +109,7 @@ func tidyOperation(w io.Writer, key *string, method string, o *openapi3.Operatio
 		} else {
 			o.OperationID = ToCamelCase(o.OperationID)
 		}
-		o.OperationID = _tidy(w, rule, o.OperationID)
+		o.OperationID = DoTidy(w, rule, o.OperationID)
 		return
 	}
 	beforeAndAfter := map[string]string{}
@@ -115,7 +118,7 @@ func tidyOperation(w io.Writer, key *string, method string, o *openapi3.Operatio
 			continue
 		}
 		v := param.Value.Name
-		beforeAndAfter[v] = _tidy(w, rule, param.Value.Name)
+		beforeAndAfter[v] = DoTidy(w, rule, param.Value.Name)
 		param.Value.Name = beforeAndAfter[v]
 	}
 	for k, v := range beforeAndAfter {
@@ -146,7 +149,7 @@ func tidySchemasInPaths(w io.Writer, s *openapi3.T, rule TidyRule) {
 func tidySchemasInComp(w io.Writer, s *openapi3.T, rule TidyRule) {
 	sc := s.Components.Schemas
 	for k, v := range sc {
-		newK := _tidy(w, rule, k)
+		newK := DoTidy(w, rule, k)
 		delete(s.Components.Schemas, k)
 		if v.Value != nil {
 			properties := v.Value.Properties
@@ -192,5 +195,5 @@ func tidySchemaRef(w io.Writer, ref string, rule TidyRule) string {
 		return ref
 	}
 	t := strings.TrimPrefix(ref, "#/components/schemas/")
-	return "#/components/schemas/" + _tidy(w, rule, t)
+	return "#/components/schemas/" + DoTidy(w, rule, t)
 }

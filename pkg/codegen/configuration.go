@@ -130,9 +130,9 @@ type CustomDoer struct {
 }
 
 type CopyItem struct {
-	From string `yaml:"from,omitempty"`
-	To   string `yaml:"to,omitempty"`
-	Trim string `imports:"trim,omitempty"`
+	From string     `yaml:"from,omitempty"`
+	To   string     `yaml:"to,omitempty"`
+	Tidy []TidyRule `imports:"tidy,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
