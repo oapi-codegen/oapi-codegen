@@ -923,6 +923,17 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	return GenerateTemplates(templates, t, operations)
 }
 
+// GenerateProtobuf generates all the protobuf proto file for the service
+func GenerateProtobuf(t *template.Template, operations []OperationDefinition, options Configuration) (string, error) {
+	return GenerateTemplates([]string{"protobuf/protobuf.tmpl"}, t, struct {
+		Operations []OperationDefinition
+		Options    Configuration
+	}{
+		Operations: operations,
+		Options:    options,
+	})
+}
+
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }

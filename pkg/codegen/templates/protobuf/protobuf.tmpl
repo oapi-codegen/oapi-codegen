@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package {{ .Options.PackageName }};
+
+option go_package = "{{ .Options.PackageName }}";
+
+import "googleapis/google/api/annotations.proto";
+
+service Service {
+    {{ range .Operations }}{{ .SummaryAsComment }}
+    // ({{ .Method }} {{ .Path }})
+    rpc {{ .OperationId }}({{ .OperationId }}Request) returns ({{ .OperationId }}Response) {
+        option (google.api.http) = {
+            {{ .Method | ToLower }}: "{{ .Path }}"
+        };
+    }
+    {{end}}
+}

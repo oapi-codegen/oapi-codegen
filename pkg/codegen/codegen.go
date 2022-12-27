@@ -120,6 +120,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	TemplateFunctions["ToLower"] = strings.ToLower
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -143,13 +144,16 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
 
-	xGoTypeImports, err := OperationImports(ops)
-	if err != nil {
-		return "", fmt.Errorf("error getting operation imports: %w", err)
+	var xGoTypeImports map[string]goImport
+	if !opts.Generate.Protobuf {
+		xGoTypeImports, err = OperationImports(ops)
+		if err != nil {
+			return "", fmt.Errorf("error getting operation imports: %w", err)
+		}
 	}
 
 	var typeDefinitions, constantDefinitions string
-	if opts.Generate.Models {
+	if opts.Generate.Models && !opts.Generate.Protobuf {
 		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
 			return "", fmt.Errorf("error generating type definitions: %w", err)
@@ -216,6 +220,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		strictServerOut = strictServerResponses + strictServerOut
 	}
 
+	var protobufOut string
+	if opts.Generate.Protobuf {
+		protobufOut, err = GenerateProtobuf(t, ops, opts)
+		if err != nil {
+			return "", fmt.Errorf("error generating protobuf files for Paths: %w", err)
+		}
+	}
+
 	var clientOut string
 	if opts.Generate.Client {
 		clientOut, err = GenerateClient(t, ops)
@@ -247,6 +259,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
+	}
+
+	if opts.Generate.Protobuf {
+		importsOut = ""
 	}
 
 	_, err = w.WriteString(importsOut)
@@ -310,6 +326,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.Protobuf {
+		_, err = w.WriteString(protobufOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
 	if opts.Generate.EmbeddedSpec {
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
@@ -327,7 +350,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// The generation code produces unindented horrors. Use the Go Imports
 	// to make it all pretty.
-	if opts.OutputOptions.SkipFmt {
+	if opts.OutputOptions.SkipFmt || opts.Generate.Protobuf {
 		return goCode, nil
 	}
 

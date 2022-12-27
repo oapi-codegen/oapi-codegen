@@ -417,6 +417,8 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 			opts.Generate.GorillaServer = true
 		case "strict-server":
 			opts.Generate.Strict = true
+		case "protobuf":
+			opts.Generate.Protobuf = true
 		case "types":
 			opts.Generate.Models = true
 		case "spec":
