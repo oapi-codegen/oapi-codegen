@@ -95,7 +95,10 @@ output-options:
   copy:
   - from: wait/cluster/wait.go
     to: cluster/wait.go
-    trim: "cluster."
+    tidy: 
+    - replace: "cluster."
+      with:
+      all: true
 ```
 
 ## Extend WithResponse Structs
