@@ -40,7 +40,9 @@ func tidy(s *openapi3.T, opts Configuration) {
 }
 
 func DoTidy(w io.Writer, rule TidyRule, s string) string {
-	fmt.Fprintf(w, "- %s", s)
+	if w != nil {
+		fmt.Fprintf(w, "- %s", s)
+	}
 
 	if rule.Match && s == rule.Replace {
 		s = rule.With
@@ -54,8 +56,9 @@ func DoTidy(w io.Writer, rule TidyRule, s string) string {
 	if rule.Suffix && strings.HasSuffix(s, rule.Replace) {
 		s = strings.TrimSuffix(s, rule.Replace) + rule.With
 	}
-
-	fmt.Fprintf(w, " -> %s\n", s)
+	if w != nil {
+		fmt.Fprintf(w, " -> %s\n", s)
+	}
 	return s
 }
 
