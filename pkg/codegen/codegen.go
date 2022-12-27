@@ -763,7 +763,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			}
 			enums = append(enums, EnumDefinition{
 				Schema:         tp.Schema,
-				TypeName:       tp.TypeName,
+				TypeName:       ToCamelCase(strings.ToLower(tp.TypeName)),
 				ValueWrapper:   wrapper,
 				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
 			})
