@@ -314,4 +314,5 @@ var TemplateFunctions = template.FuncMap{
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"has":                        has,
 	"iif":                        iif,
+	"toSnakeCase":                toSnakeCase,
 }

@@ -9,7 +9,7 @@ const (
 // Defines values for {{$Enum.TypeName}}.
 const (
 {{range $name, $value := $Enum.GetValues}}
-  {{$name}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
+  {{$name | toSnakeCase}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
 {{end}}
 )
 {{end}}
