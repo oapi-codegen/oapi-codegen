@@ -275,7 +275,11 @@ func copyfile(cp codegen.CopyItem, opts configuration) {
 	if err != nil {
 		errExit("can't load file: %v\n", err)
 	}
-	fileContents, err = imports.Process(fileTo, []byte(strings.ReplaceAll(string(fileContents), cp.Trim, "")), nil)
+	fc := string(fileContents)
+	for _, t := range cp.Trim {
+		fc = strings.ReplaceAll(fc, t, "")
+	}
+	fileContents, err = imports.Process(fileTo, []byte(fc), nil)
 	if err != nil {
 		errExit("can't process file: %v\n", err)
 	}
