@@ -358,7 +358,7 @@ func multifiles(f string, opts configuration) {
 		opts.Configuration.OutputOptions.IncludeTags = []string{tag}
 
 		nonAlphanumericRegex := regexp.MustCompile(`[^a-zA-Z0-9 ]+`)
-		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(toCamelCase(tag), ""))
+		svcName := strings.Title(nonAlphanumericRegex.ReplaceAllString(codegen.ToCamelCase(tag), ""))
 		newTag := strings.ToLower(nonAlphanumericRegex.ReplaceAllString(toSnakeCase(tag), "-"))
 		opts.PackageName = strings.ReplaceAll(newTag, "-", "")
 		opts.Configuration.PackageName = opts.PackageName
@@ -402,27 +402,6 @@ func toSnakeCase(str string) string {
 	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
 	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
 	return strings.ToLower(snake)
-}
-
-func toCamelCase(s string) (camelCase string) {
-	isToUpper := false
-	for k, v := range s {
-		if k == 0 {
-			camelCase = strings.ToUpper(string(s[0]))
-		} else {
-			if isToUpper {
-				camelCase += strings.ToUpper(string(v))
-				isToUpper = false
-			} else {
-				if v == '_' || v == ' ' {
-					isToUpper = true
-				} else {
-					camelCase += string(v)
-				}
-			}
-		}
-	}
-	return
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
