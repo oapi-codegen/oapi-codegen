@@ -277,7 +277,7 @@ func copyfile(cp codegen.CopyItem, opts configuration) {
 	}
 	fc := string(fileContents)
 	for _, t := range cp.Tidy {
-		fc = codegen.DoTidy(nil, t, fc)
+		fc = codegen.DoTidy(os.Stdout, t, fc)
 	}
 	fileContents, err = imports.Process(fileTo, []byte(fc), nil)
 	if err != nil {
