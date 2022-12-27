@@ -276,8 +276,8 @@ func copyfile(cp codegen.CopyItem, opts configuration) {
 		errExit("can't load file: %v\n", err)
 	}
 	fc := string(fileContents)
-	for _, t := range cp.Trim {
-		fc = strings.ReplaceAll(fc, t, "")
+	for _, t := range cp.Tidy {
+		fc = codegen.DoTidy(nil, t, fc)
 	}
 	fileContents, err = imports.Process(fileTo, []byte(fc), nil)
 	if err != nil {
