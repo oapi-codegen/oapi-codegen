@@ -924,14 +924,18 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 }
 
 // GenerateProtobuf generates all the protobuf proto file for the service
-func GenerateProtobuf(t *template.Template, operations []OperationDefinition, options Configuration) (string, error) {
-	return GenerateTemplates([]string{"protobuf/protobuf.tmpl"}, t, struct {
+func GenerateProtobuf(t *template.Template, operations []OperationDefinition, options Configuration, spec *openapi3.T) (string, error) {
+	bunchOfBullshit := struct {
 		Operations []OperationDefinition
 		Options    Configuration
+		Spec       *openapi3.T
 	}{
 		Operations: operations,
 		Options:    options,
-	})
+		Spec:       spec,
+	}
+
+	return GenerateTemplates([]string{"protobuf/protobuf.tmpl"}, t, bunchOfBullshit)
 }
 
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {

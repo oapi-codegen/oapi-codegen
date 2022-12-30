@@ -7,12 +7,86 @@ option go_package = "{{ .Options.PackageName }}";
 import "googleapis/google/api/annotations.proto";
 
 service Service {
-    {{ range .Operations }}{{ .SummaryAsComment }}
+    {{ range .Operations }}
+    {{ if ne .SummaryAsComment "" }}{{ .SummaryAsComment }}{{ end }}
     // {{ .Method }} {{ .Path }}
     rpc {{ .OperationId }}({{ .OperationId }}Request) returns ({{ .OperationId }}Response) {
         option (google.api.http) = {
             {{ .Method | ToLower }}: "{{ .Path }}"
+            {{ if ne (.Method | ToLower) "get" }}body: "*"{{ end }}
         };
     }
-    {{end}}
+    {{ end }}
 }
+
+///////////
+// requests
+///////////
+
+{{ range .Operations }}
+message {{ .OperationId }}Request {
+    {{ if ne (len .HeaderParams) 0 }}
+    message headers {
+        {{ $index := 0 }}
+        // @todo
+    }
+    {{ end }}
+    {{ if ne (len .PathParams) 0 }}
+    message parameters {
+        {{ $index := 0 }}
+        {{ range .PathParams }}
+        {{ $index = (Add $index 1) }}
+        {{ GoType2ProtobufType .Schema.GoType }} {{ .ParamName }} = {{ $index }};
+        {{ end }}
+    }
+    {{ end }}
+    {{ if ne (Add (len .QueryParams) (len .Bodies)) 0 }}
+    message body {
+        {{ $index := 0 }}
+        {{ if eq (.Method | ToLower) "get" }}
+        {{ range .QueryParams }}
+        {{ $index = (Add $index 1) }}
+        {{ GoType2ProtobufType .Schema.GoType }} {{ .ParamName }} = {{ $index }};
+        {{ end }}
+        {{ else }}
+        {{ range .Bodies }}
+        {{ $index = (Add $index 1) }}
+        {{ GoType2ProtobufType .Schema.GoType }} {{ GoType2FieldName .Schema.GoType }} = {{ $index }};
+        {{ end }}
+        {{ end }}
+    }
+    {{ end }}
+}
+{{ end }}
+
+////////////
+// responses
+////////////
+
+{{ range .Operations }}
+message {{ .OperationId }}Response {
+    {{ range .Responses }}
+    {{ $index := 0 }}
+    message {{ StatusCode2FieldName .StatusCode }} {
+        {{ range .Contents }}
+        {{ $index = (Add $index 1) }}
+        {{ GoType2ProtobufType .Schema.GoType }} {{ GoType2FieldName .Schema.GoType }} = {{ $index }};
+        {{ end }}
+    }
+    {{ end }}
+}
+{{ end }}
+
+//////////////////////////////////////////////////
+// types/models/schemas/whatever you wanna call it
+//////////////////////////////////////////////////
+
+{{ range $schema, $i := .Spec.Components.Schemas }}
+message {{ $schema }} {
+    {{ $index := 0 }}
+    {{ range $property, $j := .Value.Properties }}
+    {{ $index = (Add $index 1) }}
+    {{ .Value.Format }} {{ $property }} = {{ $index }};
+    {{ end }}
+}
+{{ end }}

@@ -26,6 +26,7 @@ import (
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/iancoleman/strcase"
 	"golang.org/x/tools/imports"
 )
 
@@ -121,6 +122,25 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	TemplateFunctions["ToLower"] = strings.ToLower
+	TemplateFunctions["Add"] = func(a int, b int) int { return a + b }
+	TemplateFunctions["GoType2ProtobufType"] = func(t string) string {
+		if strings.Index(t, "[]") == 0 {
+			return fmt.Sprintf("repeated %s", t[2:])
+		}
+
+		return t
+	}
+	TemplateFunctions["Camel2Snake"] = strcase.ToSnake
+	TemplateFunctions["GoType2FieldName"] = func(t string) string {
+		if strings.Index(t, "[]") == 0 {
+			t = t[2:]
+		}
+
+		return strcase.ToSnake(t)
+	}
+	TemplateFunctions["StatusCode2FieldName"] = func(sc string) string {
+		return fmt.Sprintf("http_%s", sc) //<< @todo
+	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -222,7 +242,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var protobufOut string
 	if opts.Generate.Protobuf {
-		protobufOut, err = GenerateProtobuf(t, ops, opts)
+		protobufOut, err = GenerateProtobuf(t, ops, opts, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating protobuf files for Paths: %w", err)
 		}

@@ -1,0 +1,231 @@
+syntax = "proto3";
+
+package protobuf;
+
+option go_package = "protobuf";
+
+import "googleapis/google/api/annotations.proto";
+
+service Service {
+    
+    // Returns all pets
+    // GET /pets
+    rpc FindPets(FindPetsRequest) returns (FindPetsResponse) {
+        option (google.api.http) = {
+            get: "/pets"
+            
+        };
+    }
+    
+    // Creates a new pet
+    // POST /pets
+    rpc AddPet(AddPetRequest) returns (AddPetResponse) {
+        option (google.api.http) = {
+            post: "/pets"
+            body: "*"
+        };
+    }
+    
+    // Deletes a pet by ID
+    // DELETE /pets/{id}
+    rpc DeletePet(DeletePetRequest) returns (DeletePetResponse) {
+        option (google.api.http) = {
+            delete: "/pets/{id}"
+            body: "*"
+        };
+    }
+    
+    // Returns a pet by ID
+    // GET /pets/{id}
+    rpc FindPetByID(FindPetByIDRequest) returns (FindPetByIDResponse) {
+        option (google.api.http) = {
+            get: "/pets/{id}"
+            
+        };
+    }
+    
+}
+
+///////////
+// requests
+///////////
+
+
+message FindPetsRequest {
+    
+    
+    
+    message body {
+        
+        
+        
+        
+        repeated string tags = 1;
+        
+        
+        int32 limit = 2;
+        
+        
+    }
+    
+}
+
+message AddPetRequest {
+    
+    
+    
+    message body {
+        
+        
+        
+        
+        NewPet new_pet = 1;
+        
+        
+    }
+    
+}
+
+message DeletePetRequest {
+    
+    
+    message parameters {
+        
+        
+        
+        int64 id = 1;
+        
+    }
+    
+    
+}
+
+message FindPetByIDRequest {
+    
+    
+    message parameters {
+        
+        
+        
+        int64 id = 1;
+        
+    }
+    
+    
+}
+
+
+////////////
+// responses
+////////////
+
+
+message FindPetsResponse {
+    
+    
+    message http_200 {
+        
+        
+        repeated Pet pet = 1;
+        
+    }
+    
+    
+    message http_default {
+        
+        
+        Error error = 1;
+        
+    }
+    
+}
+
+message AddPetResponse {
+    
+    
+    message http_200 {
+        
+        
+        Pet pet = 1;
+        
+    }
+    
+    
+    message http_default {
+        
+        
+        Error error = 1;
+        
+    }
+    
+}
+
+message DeletePetResponse {
+    
+    
+    message http_204 {
+        
+    }
+    
+    
+    message http_default {
+        
+        
+        Error error = 1;
+        
+    }
+    
+}
+
+message FindPetByIDResponse {
+    
+    
+    message http_200 {
+        
+        
+        Pet pet = 1;
+        
+    }
+    
+    
+    message http_default {
+        
+        
+        Error error = 1;
+        
+    }
+    
+}
+
+
+//////////////////////////////////////////////////
+// types/models/schemas/whatever you wanna call it
+//////////////////////////////////////////////////
+
+
+message Error {
+    
+    
+    
+    int32 code = 1;
+    
+    
+     message = 2;
+    
+}
+
+message NewPet {
+    
+    
+    
+     name = 1;
+    
+    
+     tag = 2;
+    
+}
+
+message Pet {
+    
+    
+}
