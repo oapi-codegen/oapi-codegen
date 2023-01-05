@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/lestrrat-go/jwx/jwt"
 )
@@ -73,6 +74,11 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 	if err != nil {
 		return fmt.Errorf("token claims don't match: %w", err)
 	}
+
+	// Set the user property on the echo context so the handler is able to use the token we generate in here.
+	eCtx := middleware.GetEchoContext(ctx)
+	eCtx.Set("user", token)
+
 	return nil
 }
 
