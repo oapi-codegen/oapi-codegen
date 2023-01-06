@@ -12,4 +12,9 @@ const (
   {{$name}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
 {{end}}
 )
+var All{{$Enum.TypeName}}s = []{{$Enum.TypeName}}{
+{{range $name, $value := $Enum.GetValues -}}
+  {{$name}},
+{{end}}
+}
 {{end}}
