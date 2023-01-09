@@ -12,7 +12,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/matryer/moq v0.3.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/text v0.5.0
+	golang.org/x/text v0.6.0
 	golang.org/x/tools v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
 )
