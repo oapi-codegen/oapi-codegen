@@ -557,7 +557,31 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
-			allParams := append(globalParams, localParams...)
+			// Parameter duplication check and override local parameters to global parameters.
+			allParams := make([]ParameterDefinition, 0, len(globalParams)+len(localParams))
+			dupCheck := make(map[string]map[string]string)
+			for _, p := range localParams {
+				if dupCheck[p.In] == nil {
+					dupCheck[p.In] = make(map[string]string)
+				}
+				if _, exist := dupCheck[p.In][p.ParamName]; !exist {
+					dupCheck[p.In][p.ParamName] = "local"
+					allParams = append(allParams, p)
+				} else {
+					return nil, fmt.Errorf("duplicate local parameter %s/%s", p.In, p.ParamName)
+				}
+			}
+			for _, p := range globalParams {
+				if dupCheck[p.In] == nil {
+					dupCheck[p.In] = make(map[string]string)
+				}
+				if t, exist := dupCheck[p.In][p.ParamName]; !exist {
+					dupCheck[p.In][p.ParamName] = "global"
+					allParams = append(allParams, p)
+				} else if t == "global" {
+					return nil, fmt.Errorf("duplicate global parameter %s/%s", p.In, p.ParamName)
+				}
+			}
 
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
