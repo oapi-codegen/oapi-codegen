@@ -4,16 +4,16 @@ require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
 	github.com/getkin/kin-openapi v0.107.0
 	github.com/gin-gonic/gin v1.8.1
-	github.com/go-chi/chi/v5 v5.0.7
+	github.com/go-chi/chi/v5 v5.0.8
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/labstack/echo/v4 v4.9.1
 	github.com/lestrrat-go/jwx v1.2.25
-	github.com/matryer/moq v0.2.7
+	github.com/matryer/moq v0.3.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/text v0.4.0
-	golang.org/x/tools v0.3.0
+	golang.org/x/text v0.5.0
+	golang.org/x/tools v0.4.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -53,8 +53,8 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/mod v0.7.0 // indirect
-	golang.org/x/net v0.2.0 // indirect
-	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/net v0.3.0 // indirect
+	golang.org/x/sys v0.3.0 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect
 	google.golang.org/protobuf v1.28.1 // indirect

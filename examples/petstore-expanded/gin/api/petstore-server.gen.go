@@ -134,15 +134,13 @@ type GinServerOptions struct {
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router *gin.Engine, si ServerInterface) *gin.Engine {
-	return RegisterHandlersWithOptions(router, si, GinServerOptions{})
+func RegisterHandlers(router gin.IRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, GinServerOptions{})
 }
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
-
+func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
 	errorHandler := options.ErrorHandler
-
 	if errorHandler == nil {
 		errorHandler = func(c *gin.Context, err error, statusCode int) {
 			c.JSON(statusCode, gin.H{"msg": err.Error()})
@@ -156,14 +154,9 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/pets", wrapper.FindPets)
-
 	router.POST(options.BaseURL+"/pets", wrapper.AddPet)
-
 	router.DELETE(options.BaseURL+"/pets/:id", wrapper.DeletePet)
-
 	router.GET(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
-
-	return router
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

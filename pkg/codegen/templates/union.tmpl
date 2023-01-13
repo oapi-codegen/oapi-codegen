@@ -86,6 +86,8 @@
         {{end}}
     {{end}}
 
+    {{if not .Schema.HasAdditionalProperties}}
+
     func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
         b, err := t.union.MarshalJSON()
         {{if ne 0 (len .Schema.Properties) -}}
@@ -134,4 +136,5 @@
         {{end -}}
         return err
     }
+    {{end}}
 {{end}}

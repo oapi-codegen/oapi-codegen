@@ -17,7 +17,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime/debug"
 	"strings"
 
@@ -238,6 +240,10 @@ func main() {
 	// fields.
 	opts.Configuration = opts.UpdateDefaults()
 
+	if err := detectPackageName(&opts); err != nil {
+		errExit("%s\n", err)
+	}
+
 	// Now, ensure that the config options are valid.
 	if err := opts.Validate(); err != nil {
 		errExit("configuration error: %v\n", err)
@@ -307,6 +313,42 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 	}
 
 	return templates, nil
+}
+
+// detectPackageName detects and sets PackageName if not already set.
+func detectPackageName(cfg *configuration) error {
+	if cfg.PackageName != "" {
+		return nil
+	}
+
+	if cfg.OutputFile != "" {
+		// Determine from the package name of the output file.
+		dir := filepath.Dir(cfg.PackageName)
+		cmd := exec.Command("go", "list", "-f", "{{.Name}}", dir)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			outStr := string(out)
+			switch {
+			case strings.Contains(outStr, "expected 'package', found 'EOF'"):
+				// Redirecting the output to current directory which hasn't
+				// written anything yet, ignore.
+			case strings.HasPrefix(outStr, "no Go files in"):
+				// No go files yet, ignore.
+			default:
+				// Unexpected failure report.
+				return fmt.Errorf("detect package name for %q output: %q: %w", dir, string(out), err)
+			}
+		} else {
+			cfg.PackageName = string(out)
+			return nil
+		}
+	}
+
+	// Fallback to determining from the spec file name.
+	parts := strings.Split(filepath.Base(flag.Arg(0)), ".")
+	cfg.PackageName = codegen.LowercaseFirstCharacter(codegen.ToCamelCase(parts[0]))
+
+	return nil
 }
 
 // updateConfigFromFlags updates a loaded configuration from flags. Flags

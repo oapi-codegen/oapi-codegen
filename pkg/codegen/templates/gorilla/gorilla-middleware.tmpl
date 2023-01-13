@@ -40,7 +40,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{end}}
 
 {{range .SecurityDefinitions}}
-  ctx = context.WithValue(ctx, {{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
+  ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -177,9 +177,15 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 
+  {{if opts.Compatibility.ApplyGorillaMiddlewareFirstToLast}}
+  for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
+    handler = siw.HandlerMiddlewares[i](handler)
+  }
+  {{else}}
   for _, middleware := range siw.HandlerMiddlewares {
     handler = middleware(handler)
   }
+  {{end}}
 
   handler(w, r.WithContext(ctx))
 }
@@ -253,4 +259,3 @@ type TooManyValuesForParamError struct {
 func (e *TooManyValuesForParamError) Error() string {
     return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
-

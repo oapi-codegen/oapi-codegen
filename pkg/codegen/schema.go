@@ -420,7 +420,17 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			enumValues[i] = fmt.Sprintf("%v", enumValue)
 		}
 
-		sanitizedValues := SanitizeEnumNames(enumValues)
+		enumNames := enumValues
+		for _, key := range []string{extEnumVarNames, extEnumNames} {
+			if _, ok := schema.ExtensionProps.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(schema.ExtensionProps.Extensions[key]); err == nil {
+					enumNames = extEnumNames
+					break
+				}
+			}
+		}
+
+		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
 		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
 
 		for k, v := range sanitizedValues {

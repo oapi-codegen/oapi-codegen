@@ -4,3 +4,5 @@ generate:
   models: true
   embedded-spec: true
 output: petstore.gen.go
+compatibility:
+  apply-gorilla-middleware-first-to-last: true

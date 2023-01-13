@@ -40,7 +40,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{end}}
 
 {{range .SecurityDefinitions}}
-  c.Set({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
+  c.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -126,18 +126,19 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
     {{end}}
 
     {{range .CookieParams}}
-      var cookie *http.Cookie
+      {
+      var cookie string
 
       if cookie, err = c.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie
       {{end}}
 
       {{- if .IsJson}}
         var value {{.TypeDef}}
         var decoded string
-        decoded, err := url.QueryUnescape(cookie.Value)
+        decoded, err := url.QueryUnescape(cookie)
         if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Error unescaping cookie parameter '{{.ParamName}}'"), http.StatusBadRequest)
             return
@@ -154,7 +155,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie.Value, &value)
+        err = runtime.BindStyledParameter("simple",{{.Explode}}, "{{.ParamName}}", cookie, &value)
         if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %s", err), http.StatusBadRequest)
             return
@@ -169,6 +170,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         return
       }
       {{- end}}
+      }
     {{end}}
   {{end}}
 
