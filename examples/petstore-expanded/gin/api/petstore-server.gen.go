@@ -69,6 +69,9 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.FindPets(c, params)
@@ -79,6 +82,9 @@ func (siw *ServerInterfaceWrapper) AddPet(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.AddPet(c)
@@ -100,6 +106,9 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.DeletePet(c, id)
@@ -121,6 +130,9 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.FindPetByID(c, id)

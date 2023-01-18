@@ -67,6 +67,9 @@ func (siw *ServerInterfaceWrapper) JSONExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.JSONExample(c)
@@ -77,6 +80,9 @@ func (siw *ServerInterfaceWrapper) MultipartExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.MultipartExample(c)
@@ -87,6 +93,9 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *gin.Contex
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.MultipleRequestAndResponseTypes(c)
@@ -97,6 +106,9 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.ReusableResponses(c)
@@ -107,6 +119,9 @@ func (siw *ServerInterfaceWrapper) TextExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.TextExample(c)
@@ -117,6 +132,9 @@ func (siw *ServerInterfaceWrapper) UnknownExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.UnknownExample(c)
@@ -127,6 +145,9 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.UnspecifiedContentType(c)
@@ -137,6 +158,9 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.URLEncodedExample(c)
@@ -195,6 +219,9 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		middleware(c)
+		if c.isAborted() {
+			return
+		}
 	}
 
 	siw.Handler.HeadersExample(c, params)
