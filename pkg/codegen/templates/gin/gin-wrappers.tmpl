@@ -176,7 +176,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
   for _, middleware := range siw.HandlerMiddlewares {
     middleware(c)
-    if c.isAborted() {
+    if c.IsAborted() {
       return
     }
   }
