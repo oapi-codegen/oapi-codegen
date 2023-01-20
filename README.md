@@ -813,13 +813,13 @@ So, for example, if you would like to produce only the server code, you could
 run `oapi-codegen -generate types,server`. You could generate `types` and
 `server` into separate files, but both are required for the server code.
 
-`oapi-codegen` can filter paths base on their tags in the openapi definition.
-Use either `-include-tags` or `-exclude-tags` followed by a comma-separated list
-of tags. For instance, to generate a server that serves all paths except those
-tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
+`oapi-codegen` can filter paths base on their tags or operationId in the openapi definition.
+Use either `-include-tags`, `include-operation-ids` or `-exclude-tags`, `-exclude-operation-ids` 
+followed by a comma-separated list of tags or operation ids. For instance, to generate a server
+that serves all paths except those tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
 To generate a server that only handles `admin` paths, use the argument
-`-include-tags="admin"`. When neither of these arguments is present, all paths
-are generated.
+`-include-tags="admin"` or use `-include-operation-ids="getPets"` to include this specific operation.
+When neither of these arguments is present, all paths are generated.
 
 `oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
 a comma separated list of schema names. For instance, `--exclude-schemas=Pet,NewPet`
