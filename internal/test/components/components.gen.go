@@ -256,13 +256,23 @@ type OneOfObject4 struct {
 	union         json.RawMessage
 }
 
-// OneOfObject5 oneOf with disciminator but no mapping
+// OneOfObject5 oneOf with discriminator but no mapping
 type OneOfObject5 struct {
 	union json.RawMessage
 }
 
 // OneOfObject6 oneOf with discriminator and mapping
 type OneOfObject6 struct {
+	union json.RawMessage
+}
+
+// OneOfObject61 oneOf with discriminator and partial mapping
+type OneOfObject61 struct {
+	union json.RawMessage
+}
+
+// OneOfObject62 oneOf with snake_case discriminator and partial snake_case mapping
+type OneOfObject62 struct {
 	union json.RawMessage
 }
 
@@ -335,6 +345,12 @@ type SchemaObject struct {
 	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
 	Role                  string  `json:"role"`
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
+}
+
+// OneOfVariant51 defines model for one_of_variant51.
+type OneOfVariant51 struct {
+	Discriminator string `json:"discriminator"`
+	Id            int    `json:"id"`
 }
 
 // EnumParam1 defines model for EnumParam1.
@@ -1662,6 +1678,7 @@ func (t OneOfObject5) AsOneOfVariant4() (OneOfVariant4, error) {
 
 // FromOneOfVariant4 overwrites any union data inside the OneOfObject5 as the provided OneOfVariant4
 func (t *OneOfObject5) FromOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "OneOfVariant4"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1669,6 +1686,7 @@ func (t *OneOfObject5) FromOneOfVariant4(v OneOfVariant4) error {
 
 // MergeOneOfVariant4 performs a merge with any union data inside the OneOfObject5, using the provided OneOfVariant4
 func (t *OneOfObject5) MergeOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "OneOfVariant4"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1688,6 +1706,7 @@ func (t OneOfObject5) AsOneOfVariant5() (OneOfVariant5, error) {
 
 // FromOneOfVariant5 overwrites any union data inside the OneOfObject5 as the provided OneOfVariant5
 func (t *OneOfObject5) FromOneOfVariant5(v OneOfVariant5) error {
+	v.Discriminator = "OneOfVariant5"
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1695,6 +1714,7 @@ func (t *OneOfObject5) FromOneOfVariant5(v OneOfVariant5) error {
 
 // MergeOneOfVariant5 performs a merge with any union data inside the OneOfObject5, using the provided OneOfVariant5
 func (t *OneOfObject5) MergeOneOfVariant5(v OneOfVariant5) error {
+	v.Discriminator = "OneOfVariant5"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -1711,6 +1731,21 @@ func (t OneOfObject5) Discriminator() (string, error) {
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject5) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "OneOfVariant4":
+		return t.AsOneOfVariant4()
+	case "OneOfVariant5":
+		return t.AsOneOfVariant5()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
 }
 
 func (t OneOfObject5) MarshalJSON() ([]byte, error) {
@@ -1808,6 +1843,184 @@ func (t OneOfObject6) MarshalJSON() ([]byte, error) {
 }
 
 func (t *OneOfObject6) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsOneOfVariant4 returns the union data inside the OneOfObject61 as a OneOfVariant4
+func (t OneOfObject61) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant4 overwrites any union data inside the OneOfObject61 as the provided OneOfVariant4
+func (t *OneOfObject61) FromOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "v4"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant4 performs a merge with any union data inside the OneOfObject61, using the provided OneOfVariant4
+func (t *OneOfObject61) MergeOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "v4"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+// AsOneOfVariant5 returns the union data inside the OneOfObject61 as a OneOfVariant5
+func (t OneOfObject61) AsOneOfVariant5() (OneOfVariant5, error) {
+	var body OneOfVariant5
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant5 overwrites any union data inside the OneOfObject61 as the provided OneOfVariant5
+func (t *OneOfObject61) FromOneOfVariant5(v OneOfVariant5) error {
+	v.Discriminator = "OneOfVariant5"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant5 performs a merge with any union data inside the OneOfObject61, using the provided OneOfVariant5
+func (t *OneOfObject61) MergeOneOfVariant5(v OneOfVariant5) error {
+	v.Discriminator = "OneOfVariant5"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+func (t OneOfObject61) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"discriminator"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject61) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "OneOfVariant5":
+		return t.AsOneOfVariant5()
+	case "v4":
+		return t.AsOneOfVariant4()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OneOfObject61) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfObject61) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsOneOfVariant4 returns the union data inside the OneOfObject62 as a OneOfVariant4
+func (t OneOfObject62) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant4 overwrites any union data inside the OneOfObject62 as the provided OneOfVariant4
+func (t *OneOfObject62) FromOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "variant_four"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant4 performs a merge with any union data inside the OneOfObject62, using the provided OneOfVariant4
+func (t *OneOfObject62) MergeOneOfVariant4(v OneOfVariant4) error {
+	v.Discriminator = "variant_four"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+// AsOneOfVariant51 returns the union data inside the OneOfObject62 as a OneOfVariant51
+func (t OneOfObject62) AsOneOfVariant51() (OneOfVariant51, error) {
+	var body OneOfVariant51
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant51 overwrites any union data inside the OneOfObject62 as the provided OneOfVariant51
+func (t *OneOfObject62) FromOneOfVariant51(v OneOfVariant51) error {
+	v.Discriminator = "one_of_variant51"
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant51 performs a merge with any union data inside the OneOfObject62, using the provided OneOfVariant51
+func (t *OneOfObject62) MergeOneOfVariant51(v OneOfVariant51) error {
+	v.Discriminator = "one_of_variant51"
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(b, t.union)
+	t.union = merged
+	return err
+}
+
+func (t OneOfObject62) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"discriminator"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject62) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "one_of_variant51":
+		return t.AsOneOfVariant51()
+	case "variant_four":
+		return t.AsOneOfVariant4()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OneOfObject62) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfObject62) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
