@@ -17,20 +17,20 @@ type InnerObject struct {
 
 // These are all possible field types, mandatory and optional.
 type AllFields struct {
-	I   int                `json:"i"`
-	Oi  *int               `json:"oi,omitempty"`
-	F   float32            `json:"f"`
-	Of  *float32           `json:"of,omitempty"`
-	B   bool               `json:"b"`
-	Ob  *bool              `json:"ob,omitempty"`
-	As  []string           `json:"as"`
-	Oas *[]string          `json:"oas,omitempty"`
-	O   InnerObject        `json:"o"`
-	Oo  *InnerObject       `json:"oo,omitempty"`
-	D   MockBinder         `json:"d"`
-	Od  *MockBinder        `json:"od,omitempty"`
-	M   map[string]string  `json:"m"`
-	Om  *map[string]string `json:"om,omitempty"`
+	I   int             `json:"i"`
+	Oi  *int            `json:"oi,omitempty"`
+	F   float32         `json:"f"`
+	Of  *float32        `json:"of,omitempty"`
+	B   bool            `json:"b"`
+	Ob  *bool           `json:"ob,omitempty"`
+	As  []string        `json:"as"`
+	Oas *[]string       `json:"oas,omitempty"`
+	O   InnerObject     `json:"o"`
+	Oo  *InnerObject    `json:"oo,omitempty"`
+	D   MockBinder      `json:"d"`
+	Od  *MockBinder     `json:"od,omitempty"`
+	M   map[string]int  `json:"m"`
+	Om  *map[string]int `json:"om,omitempty"`
 }
 
 func TestDeepObject(t *testing.T) {
@@ -42,8 +42,8 @@ func TestDeepObject(t *testing.T) {
 		Name: "Marcin Romaszewicz",
 		ID:   123,
 	}
-	om := map[string]string{
-		"additional": "foo",
+	om := map[string]int{
+		"additional": 1,
 	}
 	d := MockBinder{Time: time.Date(2020, 2, 1, 0, 0, 0, 0, time.UTC)}
 
