@@ -653,45 +653,25 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	// Now, go through all the enums, and figure out if we have conflicts with
-	// any others.
-	for i := range enums {
-		// Look through all other enums not compared so far. Make sure we don't
-		// compare against self.
-		e1 := enums[i]
-		for j := i + 1; j < len(enums); j++ {
-			e2 := enums[j]
-
-			for e1key := range e1.GetValues() {
-				_, found := e2.GetValues()[e1key]
-				if found {
-					e1.PrefixTypeName = true
-					e2.PrefixTypeName = true
-					enums[i] = e1
-					enums[j] = e2
-					break
-				}
-			}
+	// any others or with any types.
+	enumValues := make(map[string][]int) // key => enumValue, value => slice of matching indexes into enums
+	for i, e := range enums {
+		for value := range e.Schema.EnumValues {
+			enumValues[value] = append(enumValues[value], i)
 		}
 
-		// now see if this enum conflicts with any global type names.
 		for _, tp := range types {
-			// Skip over enums, since we've handled those above.
-			if len(tp.Schema.EnumValues) > 0 {
-				continue
-			}
-			_, found := e1.Schema.EnumValues[tp.TypeName]
+			_, found := e.Schema.EnumValues[tp.TypeName]
 			if found {
-				e1.PrefixTypeName = true
-				enums[i] = e1
+				enums[i].PrefixTypeName = true
 			}
 		}
-
-		// Another edge case is that an enum value can conflict with its own
-		// type name.
-		_, found := e1.GetValues()[e1.TypeName]
-		if found {
-			e1.PrefixTypeName = true
-			enums[i] = e1
+	}
+	for _, enumIndexes := range enumValues {
+		if len(enumIndexes) > 1 {
+			for _, i := range enumIndexes {
+				enums[i].PrefixTypeName = true
+			}
 		}
 	}
 
