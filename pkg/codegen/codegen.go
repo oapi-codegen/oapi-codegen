@@ -652,16 +652,18 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
+	typeConflicts := make(map[string]struct{}) // key => type, value => slice of matching indexes into enums
+	for _, tp := range types {
+		typeConflicts[tp.TypeName] = struct{}{}
+	}
 	// Now, go through all the enums, and figure out if we have conflicts with
 	// any others or with any types.
 	enumValues := make(map[string][]int) // key => enumValue, value => slice of matching indexes into enums
 	for i, e := range enums {
 		for value := range e.Schema.EnumValues {
 			enumValues[value] = append(enumValues[value], i)
-		}
 
-		for _, tp := range types {
-			_, found := e.Schema.EnumValues[tp.TypeName]
+			_, found := typeConflicts[value]
 			if found {
 				enums[i].PrefixTypeName = true
 			}
@@ -674,8 +676,6 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			}
 		}
 	}
-
-	// Now see if enums conflict with any non-enum typenames
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
 }
