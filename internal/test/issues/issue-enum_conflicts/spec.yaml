@@ -1,0 +1,63 @@
+openapi: 3.0.2
+
+info:
+  title: ...
+  version: 0.0.0
+
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          description: ...
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fruit:
+                    $ref: '#/components/schemas/Fruit'
+                  color:
+                    $ref: '#/components/schemas/Color'
+                  vegetable:
+                    $ref: '#/components/schemas/Vegetable'
+                  food:
+                    $ref: '#/components/schemas/FoodGroup'
+                  town:
+                    $ref: '#/components/schemas/Town'
+
+
+components:
+  schemas:
+
+    Fruit: # Orange conflicts
+      type: string
+      enum:
+        - Apple
+        - Banana
+        - Orange
+
+    Color: # Orange conflicts
+      type: string
+      enum:
+        - Red
+        - Orange
+
+    Vegetable: # has no conflicts
+      type: string
+      enum:
+        - Carrot
+        - Potato
+
+    FoodGroup: # conflicts with type
+      type: string
+      enum:
+        - Vegetable
+        - Fruit
+
+    Town: # Orange conflicts
+      type: string
+      enum:
+        - Orange
+        - Parks
+        - Goulburn
