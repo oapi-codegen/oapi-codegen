@@ -652,7 +652,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-	typeConflicts := make(map[string]struct{}) // key => type, value => slice of matching indexes into enums
+	typeConflicts := make(map[string]struct{}) // key => type
 	for _, tp := range types {
 		typeConflicts[tp.TypeName] = struct{}{}
 	}
