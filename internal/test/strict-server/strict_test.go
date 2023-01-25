@@ -16,7 +16,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
+	api "github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
 	api3 "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
 	api4 "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
 	api2 "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
@@ -205,6 +205,17 @@ func testImpl(t *testing.T, handler http.Handler) {
 		value := "jkl;"
 		requestBody := api3.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/reusable-responses").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
+		var responseBody api3.Example
+		err := json.NewDecoder(rr.Body).Decode(&responseBody)
+		assert.NoError(t, err)
+		assert.Equal(t, requestBody, responseBody)
+	})
+	t.Run("UnionResponses", func(t *testing.T) {
+		value := "union"
+		requestBody := api3.Example{Value: &value}
+		rr := testutil.NewRequest().Post("/with-union").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody api3.Example
