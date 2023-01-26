@@ -53,10 +53,10 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	}
 
 	pathParts := strings.Split(ref.Ref, "#")
-	if len(pathParts) != 2 {
+	if len(pathParts) < 1 || len(pathParts) > 2 {
 		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
 	}
-	remoteComponent, _ := pathParts[0], pathParts[1]
+	remoteComponent := pathParts[0]
 
 	// remote ref
 	schema := *ref.Value
