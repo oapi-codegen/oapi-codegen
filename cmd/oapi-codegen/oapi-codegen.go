@@ -198,6 +198,15 @@ func main() {
 			if err != nil {
 				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
+
+			// We load the user templates if provided
+			if opts.Generate.CustomTemplates && opts.Generate.TemplatesDir != "" {
+				templates, err := loadTemplateOverrides(opts.Generate.TemplatesDir)
+				if err != nil {
+					errExit("error loading template overrides: %s\n", err)
+				}
+				opts.OutputOptions.UserTemplates = templates
+			}
 		} else {
 			// In the case where no config file is provided, we assume some
 			// defaults, so that when this is invoked very simply, it's similar

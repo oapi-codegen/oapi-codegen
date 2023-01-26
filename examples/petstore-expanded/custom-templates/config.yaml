@@ -1,0 +1,6 @@
+package: petstore
+generate:
+  models: true
+  custom-templates: true
+  templates-dir: ./examples/petstore-expanded/custom-templates/templates/
+output: ./examples/petstore-expanded/custom-templates/petstore-custom-server.gen.go

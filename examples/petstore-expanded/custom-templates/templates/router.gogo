@@ -1,0 +1,11 @@
+// NewRouter creates a new router
+func (s server) NewRouter(options HttpRouterServerOptions) *httprouter.Router {
+    router := httprouter.New()
+
+    {{range .}}
+    // {{.Method }} {{.Path | swaggerUriToGinUri }}
+    router.{{.Method }}(options.PathPrefix+"{{.Path | swaggerUriToGinUri }}", s.{{.OperationId}})
+    {{end}}
+
+    return router
+}

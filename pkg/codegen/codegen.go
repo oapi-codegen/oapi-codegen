@@ -219,6 +219,26 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		strictServerOut = strictServerResponses + strictServerOut
 	}
 
+	var customTemplatesOut string
+	if opts.Generate.CustomTemplates {
+		tplNames := make([]string, 0)
+
+		// load user templates
+		for tpl, _ := range opts.OutputOptions.UserTemplates {
+			utpl := t.New(tpl)
+			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl]); err != nil {
+				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl, err)
+			}
+
+			tplNames = append(tplNames, tpl)
+		}
+
+		customTemplatesOut, err = GenerateCustomServer(t, ops, tplNames)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var clientOut string
 	if opts.Generate.Client {
 		clientOut, err = GenerateClient(t, ops)
@@ -308,6 +328,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.Strict {
 		_, err = w.WriteString(strictServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.CustomTemplates {
+		_, err = w.WriteString(customTemplatesOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}

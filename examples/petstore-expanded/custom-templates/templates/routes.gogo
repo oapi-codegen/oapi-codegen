@@ -1,0 +1,24 @@
+// helper structs that are not used but could be useful
+type endpoint struct {
+    Name string
+    Route string
+    Method string
+}
+
+type endpoints struct {
+{{range .}}{{$opid := .OperationId}}
+{{$opid}} endpoint
+{{- end}}
+}
+
+var ( // Endpoints describe the current configured endpoints
+    Endpoints = endpoints{
+        {{range .}}{{$opid := .OperationId}}
+        {{$opid}}: endpoint{    
+            Name: "{{$opid}}",
+            Route: "{{.Path | swaggerUriToGinUri }}",
+            Method: "{{.Method}}",
+        },
+        {{end}}
+    }
+)

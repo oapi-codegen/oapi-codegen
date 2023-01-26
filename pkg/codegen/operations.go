@@ -934,6 +934,10 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	return GenerateTemplates(templates, t, operations)
 }
 
+func GenerateCustomServer(t *template.Template, operations []OperationDefinition, userTemplates []string) (string, error) {
+	return GenerateTemplates(userTemplates, t, operations)
+}
+
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }

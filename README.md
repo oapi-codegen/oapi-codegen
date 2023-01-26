@@ -789,3 +789,30 @@ on-the-fly at run time. Example:
         -templates my-templates/ \
         -generate types,client \
         petstore-expanded.yaml
+
+
+## Using custom templates
+
+oapi-codegen also supports custom templates as an input to generate server code. This option does not use any of the existing templates, all the templates must be provided by the user.
+The goal of this option is to allow users to experiment with code generation for other frameworks or even to avoid frameworks if they want.
+
+The user provided folder with templates can have as many files as desired, they will be parsed and concatenated into a single file.
+
+Example config (oapi-codegen/examples/petstore-expanded/custom-templates/config.yaml):
+
+```yaml
+package: petstore
+generate:
+  models: true
+  custom-templates: true
+  templates-dir: ./examples/petstore-expanded/custom-templates/templates/
+output: ./examples/petstore-expanded/custom-templates/petstore-custom-server.gen.go
+```
+
+The templates in the examples folder (oapi-codegen/examples/petstore-expanded/custom-templates/templates) have bugs and they are just for demonstration purposes.
+
+Example usage:
+
+```bash
+oapi-codegen -config examples/petstore-expanded/custom-templates/config.yaml examples/petstore-expanded/petstore-expanded.yaml
+```
