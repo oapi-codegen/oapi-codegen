@@ -224,7 +224,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		tplNames := make([]string, 0)
 
 		// load user templates
-		for tpl, _ := range opts.OutputOptions.UserTemplates {
+		for tpl := range opts.OutputOptions.UserTemplates {
 			utpl := t.New(tpl)
 			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl]); err != nil {
 				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl, err)
