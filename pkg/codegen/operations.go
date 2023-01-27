@@ -293,7 +293,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					var typeName string
 					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
+					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
