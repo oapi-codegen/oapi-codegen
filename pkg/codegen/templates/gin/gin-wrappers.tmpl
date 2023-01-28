@@ -7,7 +7,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
-{{range .}}{{$opid := .OperationId}}
+{{range .OperationDefinitions}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
@@ -174,7 +174,11 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
     {{end}}
   {{end}}
 
-  for _, middleware := range siw.HandlerMiddlewares {
+  middlewares := siw.HandlerMiddlewares
+  {{- range .SanitizedMiddlewares}}
+  middlewares = append(middlewares, siw.TaggedMiddlewares.{{.}})
+  {{- end}}
+  for _, middleware := range middlewares {
     middleware(c)
     if c.IsAborted() {
       return

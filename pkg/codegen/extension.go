@@ -19,6 +19,7 @@ const (
 	extPropExtraTags    = "x-oapi-codegen-extra-tags"
 	extEnumVarNames     = "x-enum-varnames"
 	extEnumNames        = "x-enumNames"
+	extMiddlewares      = "x-oapi-codegen-middlewares"
 )
 
 func extString(extPropValue interface{}) (string, error) {
@@ -91,4 +92,16 @@ func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
 		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
 	}
 	return names, nil
+}
+
+func extParseMiddlewares(extPropValue interface{}) ([]string, error) {
+	raw, ok := extPropValue.(json.RawMessage)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	var middlewares []string
+	if err := json.Unmarshal(raw, &middlewares); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	}
+	return middlewares, nil
 }

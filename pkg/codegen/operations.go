@@ -222,6 +222,26 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	Middlewares         []string // Sent as part of x-oapi-codegen-middlewares
+}
+
+type Data struct {
+	OperationDefinitions []OperationDefinition
+}
+
+func (data Data) GetAllSanitizedMiddlewares() []string {
+	middlewaresMap := make(map[string]bool)
+	for _, operationDefinition := range data.OperationDefinitions {
+		for _, middleware := range operationDefinition.Middlewares {
+			middlewaresMap[middleware] = true
+		}
+	}
+	var middlewares []string
+	for middleware := range middlewaresMap {
+		middlewares = append(middlewares, SchemaNameToTypeName(middleware))
+	}
+	sort.Strings(middlewares)
+	return middlewares
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -265,6 +285,14 @@ func (o *OperationDefinition) SummaryAsComment() string {
 		parts[i] = "// " + p
 	}
 	return strings.Join(parts, "\n")
+}
+
+func (o *OperationDefinition) SanitizedMiddlewares() []string {
+	result := make([]string, len(o.Middlewares))
+	for i, value := range o.Middlewares {
+		result[i] = SchemaNameToTypeName(value)
+	}
+	return result
 }
 
 // GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
@@ -496,6 +524,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				requestPath, err)
 		}
 
+		var pathMiddlewares []string
+		if extension, exists := pathItem.Extensions[extMiddlewares]; exists {
+			var err error
+			pathMiddlewares, err = extParseMiddlewares(extension)
+			if err != nil {
+				return nil, fmt.Errorf("invalid value for %q: %w", extMiddlewares, err)
+			}
+		}
+
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
@@ -535,6 +572,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
+			middlewares := pathMiddlewares
+			if extension, exists := op.Extensions[extMiddlewares]; exists {
+				opMiddlewares, err := extParseMiddlewares(extension)
+				if err != nil {
+					return nil, fmt.Errorf("invalid value for %q: %w", extMiddlewares, err)
+				}
+				middlewares = append(middlewares, opMiddlewares...)
+			}
+
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
@@ -559,6 +605,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				Middlewares:     middlewares,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -900,7 +947,8 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
+	data := Data{operations}
+	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, data)
 }
 
 // GenerateGorillaServer generates all the go code for the ServerInterface as well as

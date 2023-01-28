@@ -12,7 +12,7 @@ func RegisterHandlers(router gin.IRouter, si ServerInterface) {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
-    {{- if . -}}
+    {{- if .OperationDefinitions -}}
     errorHandler := options.ErrorHandler
     if errorHandler == nil {
         errorHandler = func(c *gin.Context, err error, statusCode int) {
@@ -27,7 +27,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
     }
     {{end}}
 
-    {{range . -}}
+    {{range .OperationDefinitions -}}
     router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
     {{end -}}
 }
