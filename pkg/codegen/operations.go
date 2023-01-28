@@ -225,13 +225,11 @@ type OperationDefinition struct {
 	Middlewares         []string // Sent as part of x-oapi-codegen-middlewares
 }
 
-type Data struct {
-	OperationDefinitions []OperationDefinition
-}
+type Data []OperationDefinition
 
 func (data Data) GetAllSanitizedMiddlewares() []string {
 	middlewaresMap := make(map[string]bool)
-	for _, operationDefinition := range data.OperationDefinitions {
+	for _, operationDefinition := range data {
 		for _, middleware := range operationDefinition.Middlewares {
 			middlewaresMap[middleware] = true
 		}
@@ -946,8 +944,7 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	data := Data{operations}
+func GenerateGinServer(t *template.Template, data Data) (string, error) {
 	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, data)
 }
 

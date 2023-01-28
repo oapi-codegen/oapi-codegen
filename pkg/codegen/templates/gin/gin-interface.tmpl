@@ -7,7 +7,7 @@ type ServerInterface interface {
 {{- end}}
 
 {{end}}
-{{range .OperationDefinitions}}{{.SummaryAsComment }}
+{{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}
