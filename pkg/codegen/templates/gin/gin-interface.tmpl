@@ -1,17 +1,14 @@
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+{{- if gt (len .GetAllSanitizedMiddlewares ) 0}}
+// Middlewares represented by "x-oapi-codegen-middlewares" API extension
+{{- range .GetAllSanitizedMiddlewares }}
+{{.}}(c *gin.Context)
+{{- end}}
+
+{{end}}
 {{range .OperationDefinitions}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}
 }
-
-{{if gt (len .GetAllSanitizedMiddlewares ) 0}}
-// TaggedMiddlewaresInterface represents all middlewares specified with
-// "x-oapi-codegen-middlewares" API extension
-type TaggedMiddlewaresInterface interface {
-{{range .GetAllSanitizedMiddlewares }}
-{{.}}(c *gin.Context)
-{{- end}}
-}
-{{end}}

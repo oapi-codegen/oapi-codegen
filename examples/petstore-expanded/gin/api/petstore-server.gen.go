@@ -20,6 +20,10 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Middlewares represented by "x-oapi-codegen-middlewares" API extension
+	LogRequest(c *gin.Context)
+	N123InvalidName(c *gin.Context)
+
 	// Returns all pets
 	// (GET /pets)
 	FindPets(c *gin.Context, params FindPetsParams)
@@ -34,18 +38,10 @@ type ServerInterface interface {
 	FindPetByID(c *gin.Context, id int64)
 }
 
-// TaggedMiddlewaresInterface represents all middlewares specified with
-// "x-oapi-codegen-middlewares" API extension
-type TaggedMiddlewaresInterface interface {
-	LogRequest(c *gin.Context)
-	N123InvalidName(c *gin.Context)
-}
-
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []MiddlewareFunc
-	TaggedMiddlewares  TaggedMiddlewaresInterface
 	ErrorHandler       func(*gin.Context, error, int)
 }
 
@@ -76,8 +72,8 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 	}
 
 	middlewares := siw.HandlerMiddlewares
-	middlewares = append(middlewares, siw.TaggedMiddlewares.N123InvalidName)
-	middlewares = append(middlewares, siw.TaggedMiddlewares.LogRequest)
+	middlewares = append(middlewares, siw.Handler.N123InvalidName)
+	middlewares = append(middlewares, siw.Handler.LogRequest)
 	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
@@ -92,7 +88,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 func (siw *ServerInterfaceWrapper) AddPet(c *gin.Context) {
 
 	middlewares := siw.HandlerMiddlewares
-	middlewares = append(middlewares, siw.TaggedMiddlewares.N123InvalidName)
+	middlewares = append(middlewares, siw.Handler.N123InvalidName)
 	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {

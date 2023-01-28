@@ -176,7 +176,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
   middlewares := siw.HandlerMiddlewares
   {{- range .SanitizedMiddlewares}}
-  middlewares = append(middlewares, siw.TaggedMiddlewares.{{.}})
+  middlewares = append(middlewares, siw.Handler.{{.}})
   {{- end}}
   for _, middleware := range middlewares {
     middleware(c)

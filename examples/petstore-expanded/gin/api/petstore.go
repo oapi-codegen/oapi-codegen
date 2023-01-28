@@ -48,6 +48,17 @@ func sendPetStoreError(c *gin.Context, code int, message string) {
 	c.JSON(code, petErr)
 }
 
+// LogRequest implements "LogRequest" middleware defined in
+// "x-oapi-codegen-middlewares" API extension
+func (p *PetStore) LogRequest(c *gin.Context) {
+	fmt.Printf("Incoming request!")
+}
+
+// N123InvalidName implements "123-inalid-name" middleware defined in
+// "x-oapi-codegen-middlewares" API extension
+func (p *PetStore) N123InvalidName(c *gin.Context) {
+}
+
 // FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(c *gin.Context, params FindPetsParams) {
 	p.Lock.Lock()
