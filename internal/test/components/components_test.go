@@ -63,6 +63,20 @@ func TestAdditionalProperties(t *testing.T) {
 	err = json.Unmarshal([]byte(buf2), &obj5)
 	assert.NoError(t, err)
 	assert.Equal(t, bossSchema, obj5["boss"])
+
+	bossSchemaNullable := &SchemaObjectNullable{
+		FirstName: "bob",
+		Role:      "warehouse manager",
+	}
+
+	buf3 := `{"boss": { "firstName": "bob", "role": "warehouse manager" }, "employee": null}`
+	var obj7 AdditionalPropertiesObject7
+	err = json.Unmarshal([]byte(buf3), &obj7)
+	assert.NoError(t, err)
+	employee, ok := obj7["employee"]
+	assert.True(t, ok)
+	assert.Equal(t, bossSchemaNullable, obj7["boss"])
+	assert.Nil(t, employee)
 }
 
 func TestOneOf(t *testing.T) {

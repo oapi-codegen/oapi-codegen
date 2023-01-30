@@ -131,6 +131,9 @@ type AdditionalPropertiesObject5 map[string]SchemaObject
 // AdditionalPropertiesObject6 Array of object with additional properties
 type AdditionalPropertiesObject6 = []map[string]SchemaObject
 
+// AdditionalPropertiesObject7 Has additional properties with schema for dictionaries
+type AdditionalPropertiesObject7 map[string]*SchemaObjectNullable
+
 // AnyOfObject1 simple anyOf case
 type AnyOfObject1 struct {
 	union json.RawMessage
@@ -338,6 +341,17 @@ type NewName struct {
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
+	FirstName string `json:"firstName"`
+
+	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
+	// as it will not be included when it is sent from client to server.
+	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
+	Role                  string  `json:"role"`
+	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
+}
+
+// SchemaObjectNullable defines model for SchemaObjectNullable.
+type SchemaObjectNullable struct {
 	FirstName string `json:"firstName"`
 
 	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
