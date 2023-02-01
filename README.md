@@ -677,9 +677,15 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 - `x-oapi-codegen-middlewares`: specifies a list of middlewares. These can be middlewares that are
   operation-specific, as well as path-specific. This is very useful when you want to give some
-  specific routes an extra middleware, but not to all operations. The middlewares are always
-  called in the order of definition, after global middlewares. All middlewares specified in this
-  way will be added to ServerInterface and must be provided by server implementation.
+  specific routes an extra middleware, but not to all operations.
+  
+  The middlewares call order is as follows:
+  * Global middlewares
+  * Path-specific middlewares (in order of `x-oapi-codegen-middlewares`)
+  * Operation-specific middlewares (in order of `x-oapi-codegen-middlewares`)
+  
+  All middlewares specified in this way will be added to ServerInterface and must be provided by
+  the server implementation.
 
   Example for `Gin`:
   ```yaml
@@ -702,7 +708,6 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
   And this code will be added to your handler:
   ```golang
-  // Operation specific middleware
   func (siw *ServerInterfaceWrapper) GetPets(c *gin.Context) {
     ...
 
