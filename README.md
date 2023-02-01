@@ -711,7 +711,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   func (siw *ServerInterfaceWrapper) GetPets(c *gin.Context) {
     ...
 
-    middlewares := siw.HandlerMiddlewares
+    middlewares := siw.HandlerMiddlewares // Global middlewares
     middlewares = append(middlewares, siw.Handler.ValidateJSON)
     middlewares = append(middlewares, siw.Handler.Limit)
     for _, middleware := range middlewares {
