@@ -65,7 +65,8 @@ type MiddlewareFunc func(c *gin.Context)
 // JSONExample operation middleware
 func (siw *ServerInterfaceWrapper) JSONExample(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -78,7 +79,8 @@ func (siw *ServerInterfaceWrapper) JSONExample(c *gin.Context) {
 // MultipartExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartExample(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -91,7 +93,8 @@ func (siw *ServerInterfaceWrapper) MultipartExample(c *gin.Context) {
 // MultipleRequestAndResponseTypes operation middleware
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -104,7 +107,8 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *gin.Contex
 // ReusableResponses operation middleware
 func (siw *ServerInterfaceWrapper) ReusableResponses(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -117,7 +121,8 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(c *gin.Context) {
 // TextExample operation middleware
 func (siw *ServerInterfaceWrapper) TextExample(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -130,7 +135,8 @@ func (siw *ServerInterfaceWrapper) TextExample(c *gin.Context) {
 // UnknownExample operation middleware
 func (siw *ServerInterfaceWrapper) UnknownExample(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -143,7 +149,8 @@ func (siw *ServerInterfaceWrapper) UnknownExample(c *gin.Context) {
 // UnspecifiedContentType operation middleware
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -156,7 +163,8 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(c *gin.Context) {
 // URLEncodedExample operation middleware
 func (siw *ServerInterfaceWrapper) URLEncodedExample(c *gin.Context) {
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return
@@ -217,7 +225,8 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 
 	}
 
-	for _, middleware := range siw.HandlerMiddlewares {
+	middlewares := siw.HandlerMiddlewares
+	for _, middleware := range middlewares {
 		middleware(c)
 		if c.IsAborted() {
 			return

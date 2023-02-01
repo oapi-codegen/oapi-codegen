@@ -225,9 +225,9 @@ type OperationDefinition struct {
 	Middlewares         []string // Sent as part of x-oapi-codegen-middlewares
 }
 
-type Data []OperationDefinition
+type OperationDefinitionsData []OperationDefinition
 
-func (data Data) GetAllSanitizedMiddlewares() []string {
+func (data OperationDefinitionsData) GetAllSanitizedMiddlewares() []string {
 	middlewaresMap := make(map[string]bool)
 	for _, operationDefinition := range data {
 		for _, middleware := range operationDefinition.Middlewares {
@@ -891,7 +891,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 }
 
 // GenerateTypesForOperations generates code for all types produced within operations
-func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateTypesForOperations(t *template.Template, ops OperationDefinitionsData) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -932,29 +932,29 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateChiServer(t *template.Template, operations OperationDefinitionsData) (string, error) {
 	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateEchoServer(t *template.Template, operations OperationDefinitionsData) (string, error) {
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateGinServer(t *template.Template, data Data) (string, error) {
-	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, data)
+func GenerateGinServer(t *template.Template, operations OperationDefinitionsData) (string, error) {
+	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
 // GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
-func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
+func GenerateGorillaServer(t *template.Template, operations OperationDefinitionsData) (string, error) {
 	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
 }
 
-func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+func GenerateStrictServer(t *template.Template, operations OperationDefinitionsData, opts Configuration) (string, error) {
 	templates := []string{"strict/strict-interface.tmpl"}
 	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
 		templates = append(templates, "strict/strict-http.tmpl")
@@ -974,13 +974,13 @@ func GenerateStrictResponses(t *template.Template, responses []ResponseDefinitio
 
 // GenerateClient uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
-func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClient(t *template.Template, ops OperationDefinitionsData) (string, error) {
 	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
 // GenerateClientWithResponses generates a client which extends the basic client which does response
 // unmarshalling.
-func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
+func GenerateClientWithResponses(t *template.Template, ops OperationDefinitionsData) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }
 
