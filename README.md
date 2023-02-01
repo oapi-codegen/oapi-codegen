@@ -546,17 +546,30 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ## Extensions
 
+| **Extensions**               |    **net/http**    |      **Echo**      |       **Chi**      |       **Gin**      |
+|------------------------------|:------------------:|:------------------:|:------------------:|:------------------:|
+| `x-go-type`                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-go-name`                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-go-json-ignore`           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-oapi-codegen-extra-tags`  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-go-type-import`           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-enum-varnames`            | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| `x-oapi-codegen-middlewares` | :x:                | :x:                | :x:                | :heavy_check_mark: |
+
 `oapi-codegen` supports the following extended properties:
 
 - `x-go-type`: specifies Go type name. It allows you to specify the type name for a schema, and
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+
 - `x-go-name`: specifies Go field name. It allows you to specify the field name for a schema, and
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+
 - `x-go-json-ignore`: sets tag to `-` to ignore the field in json completely.
+
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
   are added are in addition to the regular json tags that are generated. If you specify your 
@@ -661,6 +674,53 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
     // ObjectCategory defines model for Object.Category.
     type ObjectCategory int
     ```
+
+- `x-oapi-codegen-middlewares`: specifies a list of middlewares. These can be middlewares that are
+  operation-specific, as well as path-specific. This is very useful when you want to give some
+  specific routes an extra middleware, but not to all operations. The middlewares are always
+  called in the order of definition, after global middlewares. All middlewares specified in this
+  way will be added to ServerInterface and must be provided by server implementation.
+
+  Example for `Gin`:
+  ```yaml
+    /pets:
+      x-oapi-codegen-middlewares: [validateJSON]
+      get:
+        x-oapi-codegen-middlewares: [limit]
+    ```
+
+  In the example above, the following middlewares will be added to your ServerInterface:
+  ```golang
+  type ServerInterface interface {
+	// Middlewares represented by "x-oapi-codegen-middlewares" API extension
+    ValidateJSON(c *gin.Context)
+    Limit(c *gin.Context)
+
+    ...
+  }
+  ```
+
+  And this code will be added to your handler:
+
+  In the example above, the following middleware calls will be added to your handler:
+  ```golang
+  // Operation specific middleware
+  func (siw *ServerInterfaceWrapper) GetPets(c *gin.Context) {
+    ...
+
+    middlewares := siw.HandlerMiddlewares
+    middlewares = append(middlewares, siw.Handler.ValidateJSON)
+    middlewares = append(middlewares, siw.Handler.Limit)
+    for _, middleware := range middlewares {
+      middleware(c)
+      if c.IsAborted() {
+        return
+      }
+    }
+    
+    ...
+  }
+  ```
 
 ## Using `oapi-codegen`
 
