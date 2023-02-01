@@ -701,8 +701,6 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   ```
 
   And this code will be added to your handler:
-
-  In the example above, the following middleware calls will be added to your handler:
   ```golang
   // Operation specific middleware
   func (siw *ServerInterfaceWrapper) GetPets(c *gin.Context) {
@@ -717,7 +715,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         return
       }
     }
-    
+
     ...
   }
   ```
