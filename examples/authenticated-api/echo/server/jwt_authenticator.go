@@ -18,6 +18,8 @@ type JWSValidator interface {
 	ValidateJWS(jws string) (jwt.Token, error)
 }
 
+const JWTClaimsContextKey = "jwt_claims"
+
 var (
 	ErrNoAuthHeader      = errors.New("Authorization header is missing")
 	ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
@@ -75,9 +77,10 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 		return fmt.Errorf("token claims don't match: %w", err)
 	}
 
-	// Set the user property on the echo context so the handler is able to use the token we generate in here.
+	// Set the property on the echo context so the handler is able to
+	// access the claims data we generate in here.
 	eCtx := middleware.GetEchoContext(ctx)
-	eCtx.Set("user", token)
+	eCtx.Set(JWTClaimsContextKey, token)
 
 	return nil
 }
