@@ -208,7 +208,7 @@ components:
         additionalProperties:
           $ref: '#/components/schemas/SchemaObject'
     OneOfObject1:
-      description: oneOf with references and no disciminator
+      description: oneOf with references and no discriminator
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
@@ -244,7 +244,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant2'
         - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject5:
-      description: oneOf with disciminator but no mapping
+      description: oneOf with discriminator but no mapping
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant4'
         - $ref: '#/components/schemas/OneOfVariant5'
