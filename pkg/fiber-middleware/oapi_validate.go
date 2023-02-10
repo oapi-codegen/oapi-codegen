@@ -19,10 +19,8 @@ import (
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
-const (
-	ctxKeyFiberContext = "oapi-codegen/fiber-context"
-	ctxKeyUserData     = "oapi-codegen/user-data"
-)
+type ctxKeyFiberContext struct{}
+type ctxKeyUserData struct{}
 
 // OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (fiber.Handler, error) {
@@ -123,14 +121,14 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 		Route:      route,
 	}
 
-	// Pass the gin context into the request validator, so that any callbacks
+	// Pass the fiber context into the request validator, so that any callbacks
 	// which it invokes make it available.
-	requestContext := context.WithValue(context.Background(), ctxKeyFiberContext, c)
+	requestContext := context.WithValue(context.Background(), ctxKeyFiberContext{}, c) //nolint:staticcheck
 
 	if options != nil {
 		requestValidationInput.Options = &options.Options
 		requestValidationInput.ParamDecoder = options.ParamDecoder
-		requestContext = context.WithValue(requestContext, ctxKeyUserData, options.UserData)
+		requestContext = context.WithValue(requestContext, ctxKeyUserData{}, options.UserData) //nolint:staticcheck
 	}
 
 	err = openapi3filter.ValidateRequest(requestContext, requestValidationInput)
@@ -162,7 +160,7 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 // GetFiberContext gets the fiber context from within requests. It returns
 // nil if not found or wrong type.
 func GetFiberContext(c context.Context) *fiber.Ctx {
-	iface := c.Value(ctxKeyFiberContext)
+	iface := c.Value(ctxKeyFiberContext{})
 	if iface == nil {
 		return nil
 	}
@@ -172,6 +170,10 @@ func GetFiberContext(c context.Context) *fiber.Ctx {
 		return fiberCtx
 	}
 	return nil
+}
+
+func GetUserData(c context.Context) interface{} {
+	return c.Value(ctxKeyUserData{})
 }
 
 // getMultiErrorHandlerFromOptions attempts to get the MultiErrorHandler from the options. If it is not set,

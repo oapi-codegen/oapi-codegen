@@ -66,7 +66,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	// access to "someScope", but disallow others.
 	options := Options{
 		ErrorHandler: func(c *fiber.Ctx, message string, statusCode int) {
-			c.Status(statusCode).SendString("test: " + message)
+			_ = c.Status(statusCode).SendString("test: " + message)
 		},
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
@@ -74,7 +74,7 @@ func TestOapiRequestValidator(t *testing.T) {
 				gCtx := GetFiberContext(c)
 				assert.NotNil(t, gCtx)
 				// As should user data
-				assert.EqualValues(t, "hi!", c.Value(ctxKeyUserData))
+				assert.EqualValues(t, "hi!", GetUserData(c))
 
 				for _, s := range input.Scopes {
 					if s == "someScope" {
