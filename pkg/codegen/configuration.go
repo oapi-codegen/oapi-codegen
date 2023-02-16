@@ -23,7 +23,7 @@ type Configuration struct {
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
 	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
-	FiberServer   bool `yaml:"fiber,omitempty"`          // FiberServer specifies whether to generate fiber server boilerplate
+	FiberServer   bool `yaml:"fiber-server,omitempty"`   // FiberServer specifies whether to generate fiber server boilerplate
 	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
 	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate gin server boilerplate
 	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
