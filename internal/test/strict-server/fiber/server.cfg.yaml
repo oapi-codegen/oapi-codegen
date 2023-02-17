@@ -1,6 +1,6 @@
 package: api
 generate:
-  fiber: true
+  fiber-server: true
   strict-server: true
   embedded-spec: true
 output: server.gen.go
