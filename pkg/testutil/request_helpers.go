@@ -60,15 +60,15 @@ func (r *RequestBuilder) WithMethod(method string, path string) *RequestBuilder 
 }
 
 func (r *RequestBuilder) Get(path string) *RequestBuilder {
-	return r.WithMethod("GET", path)
+	return r.WithMethod(http.MethodGet, path)
 }
 
 func (r *RequestBuilder) Post(path string) *RequestBuilder {
-	return r.WithMethod("POST", path)
+	return r.WithMethod(http.MethodPost, path)
 }
 
 func (r *RequestBuilder) Put(path string) *RequestBuilder {
-	return r.WithMethod("PUT", path)
+	return r.WithMethod(http.MethodPut, path)
 }
 
 func (r *RequestBuilder) Patch(path string) *RequestBuilder {
@@ -76,7 +76,7 @@ func (r *RequestBuilder) Patch(path string) *RequestBuilder {
 }
 
 func (r *RequestBuilder) Delete(path string) *RequestBuilder {
-	return r.WithMethod("DELETE", path)
+	return r.WithMethod(http.MethodDelete, path)
 }
 
 // WithHeader sets a header
