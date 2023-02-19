@@ -3,8 +3,10 @@ package codegen
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"go/format"
 	"io"
+	"net"
 	"net/http"
 	"testing"
 
@@ -78,6 +80,88 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 
 	userTemplates := map[string]string{"typedef.tmpl": "//blah\n//blah"}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: userTemplates,
+		},
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "//blah")
+}
+
+func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
+
+	userTemplates := map[string]string{"typedef.tmpl": "./templates/typedef.tmpl"}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: userTemplates,
+		},
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overriden
+	assert.Contains(t, code, "// Package api provides primitives to interact with the openapi")
+}
+
+func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	assert.NoError(t, err)
+	defer ln.Close()
+
+	go http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("//blah"))
+	}))
+
+	t.Logf("Listening on %s", ln.Addr().String())
+
+	userTemplates := map[string]string{"typedef.tmpl": fmt.Sprintf("http://%s", ln.Addr().String())}
 
 	// Input vars for code generation:
 	packageName := "api"
