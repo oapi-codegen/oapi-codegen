@@ -77,7 +77,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 
-	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
+	userTemplates := map[string]string{"typedef.tmpl": "//blah\n//blah"}
 
 	// Input vars for code generation:
 	packageName := "api"

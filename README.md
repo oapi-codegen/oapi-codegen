@@ -789,3 +789,16 @@ on-the-fly at run time. Example:
         -templates my-templates/ \
         -generate types,client \
         petstore-expanded.yaml
+
+When using the configuration file, it is possible to provide templates directly
+as text, as a local path, or as a URL. If the data provided to the
+configuration file is more than one line, the local path and URL checks will be
+ignored and will be treated as raw template text. If one line, the string
+will be used to check for a local file, followed by checking performing a HTTP
+GET request. If the file lookup returns any error other than not found, or the
+HTTP request returns a non 200 response code, the generator will error.
+
+Using the configuration file to load in templates **will** load in templates 
+with names other than those defined by the built in templates. These user
+templates will not be called unless the user overrides a built in template to
+call them however.
