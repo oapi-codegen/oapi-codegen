@@ -131,20 +131,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
-	// Override built-in templates with user-provided versions
-	for _, tpl := range t.Templates() {
-		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
-			utpl := t.New(tpl.Name())
+	// load user-provided templates. Will Override built-in versions.
+	for name, template := range opts.OutputOptions.UserTemplates {
+		utpl := t.New(name)
 
-			txt, err := GetUserTemplateText(opts.OutputOptions.UserTemplates[tpl.Name()])
-			if err != nil {
-				return "", fmt.Errorf("error loading user-provided template %q: %w", tpl.Name(), err)
-			}
+		txt, err := GetUserTemplateText(template)
+		if err != nil {
+			return "", fmt.Errorf("error loading user-provided template %q: %w", name, err)
+		}
 
-			_, err = utpl.Parse(txt)
-			if err != nil {
-				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
-			}
+		_, err = utpl.Parse(txt)
+		if err != nil {
+			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
 		}
 	}
 
