@@ -75,15 +75,15 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description    string
-	JsonFieldName  string
-	Schema         Schema
-	Required       bool
-	Nullable       bool
-	ReadOnly       bool
-	WriteOnly      bool
-	NeedsFormTag   bool
-	ExtensionProps *openapi3.ExtensionProps
+	Description   string
+	JsonFieldName string
+	Schema        Schema
+	Required      bool
+	Nullable      bool
+	ReadOnly      bool
+	WriteOnly     bool
+	NeedsFormTag  bool
+	Extensions    map[string]interface{}
 }
 
 func (p Property) GoFieldName() string {
@@ -308,8 +308,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			// If additional properties are defined, we will override the default
 			// above with the specific definition.
-			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+			if schema.AdditionalProperties.Schema != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -379,14 +379,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					description = p.Value.Description
 				}
 				prop := Property{
-					JsonFieldName:  pName,
-					Schema:         pSchema,
-					Required:       required,
-					Description:    description,
-					Nullable:       p.Value.Nullable,
-					ReadOnly:       p.Value.ReadOnly,
-					WriteOnly:      p.Value.WriteOnly,
-					ExtensionProps: &p.Value.ExtensionProps,
+					JsonFieldName: pName,
+					Schema:        pSchema,
+					Required:      required,
+					Description:   description,
+					Nullable:      p.Value.Nullable,
+					ReadOnly:      p.Value.ReadOnly,
+					WriteOnly:     p.Value.WriteOnly,
+					Extensions:    p.Value.Extensions,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -422,8 +422,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		enumNames := enumValues
 		for _, key := range []string{extEnumVarNames, extEnumNames} {
-			if _, ok := schema.ExtensionProps.Extensions[key]; ok {
-				if extEnumNames, err := extParseEnumVarNames(schema.ExtensionProps.Extensions[key]); err == nil {
+			if _, ok := schema.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(schema.Extensions[key]); err == nil {
 					enumNames = extEnumNames
 					break
 				}
@@ -605,8 +605,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		field := ""
 
 		goFieldName := p.GoFieldName()
-		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
+		if _, ok := p.Extensions[extGoName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
 				goFieldName = extGoFieldName
 			}
 		}
@@ -625,8 +625,8 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		// Support x-omitempty
 		overrideOmitEmpty := true
-		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
+		if _, ok := p.Extensions[extPropOmitEmpty]; ok {
+			if extOmitEmpty, err := extParseOmitEmpty(p.Extensions[extPropOmitEmpty]); err == nil {
 				overrideOmitEmpty = extOmitEmpty
 			}
 		}
@@ -646,14 +646,14 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		// Support x-go-json-ignore
-		if _, ok := p.ExtensionProps.Extensions[extPropGoJsonIgnore]; ok {
-			if goJsonIgnore, err := extParseGoJsonIgnore(p.ExtensionProps.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+		if _, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(p.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
 				fieldTags["json"] = "-"
 			}
 		}
 
 		// Support x-oapi-codegen-extra-tags
-		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
+		if extension, ok := p.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
 				for _, k := range keys {

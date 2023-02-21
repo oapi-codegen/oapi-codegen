@@ -170,7 +170,7 @@ type ObjectWithJsonField struct {
 	Value2 json.RawMessage `json:"value2,omitempty"`
 }
 
-// OneOfObject1 oneOf with references and no disciminator
+// OneOfObject1 oneOf with references and no discriminator
 type OneOfObject1 struct {
 	union json.RawMessage
 }
@@ -256,7 +256,7 @@ type OneOfObject4 struct {
 	union         json.RawMessage
 }
 
-// OneOfObject5 oneOf with disciminator but no mapping
+// OneOfObject5 oneOf with discriminator but no mapping
 type OneOfObject5 struct {
 	union json.RawMessage
 }

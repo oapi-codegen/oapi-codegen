@@ -9,7 +9,7 @@ import (
 
 func Test_extTypeName(t *testing.T) {
 	type args struct {
-		extPropValue interface{}
+		extPropValue json.RawMessage
 	}
 	tests := []struct {
 		name    string
@@ -24,21 +24,27 @@ func Test_extTypeName(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "type conversion error",
+			name:    "nil conversion error",
 			args:    args{nil},
 			want:    "",
 			wantErr: true,
 		},
 		{
-			name:    "json unmarshal error",
-			args:    args{json.RawMessage("invalid json format")},
+			name:    "type conversion error",
+			args:    args{json.RawMessage(`12`)},
 			want:    "",
 			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := extTypeName(tt.args.extPropValue)
+			// kin-openapi no longer returns these as RawMessage
+			var extPropValue interface{}
+			if tt.args.extPropValue != nil {
+				err := json.Unmarshal(tt.args.extPropValue, &extPropValue)
+				assert.NoError(t, err)
+			}
+			got, err := extTypeName(extPropValue)
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

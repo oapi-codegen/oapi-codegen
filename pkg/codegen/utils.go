@@ -14,7 +14,6 @@
 package codegen
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/token"
 	"net/url"
@@ -646,11 +645,11 @@ func SchemaNameToTypeName(name string) string {
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
 func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
-	if schema.AdditionalPropertiesAllowed != nil && *schema.AdditionalPropertiesAllowed {
+	if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
 		return true
 	}
 
-	if schema.AdditionalProperties != nil {
+	if schema.AdditionalProperties.Schema != nil {
 		return true
 	}
 	return false
@@ -840,15 +839,30 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	if raw, ok := goTypeImportExt.(json.RawMessage); ok {
-		gi := goImport{}
-		if err := json.Unmarshal(raw, &gi); err != nil {
-			return nil, err
-		}
-		return &gi, nil
+	importI, ok := goTypeImportExt.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
 
-	return nil, nil
+	gi := goImport{}
+	// replicate the case-insensitive field mapping json.Unmarshal would do
+	for k, v := range importI {
+		if strings.EqualFold(k, "name") {
+			if vs, ok := v.(string); ok {
+				gi.Name = vs
+			} else {
+				return nil, fmt.Errorf("failed to convert type: %T", v)
+			}
+		} else if strings.EqualFold(k, "path") {
+			if vs, ok := v.(string); ok {
+				gi.Path = vs
+			} else {
+				return nil, fmt.Errorf("failed to convert type: %T", v)
+			}
+		}
+	}
+
+	return &gi, nil
 }
 
 func MergeImports(dst, src map[string]goImport) {
