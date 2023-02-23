@@ -677,6 +677,15 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 	return stringToGoCommentWithPrefix(in, typeName)
 }
 
+func DeprecationComment(reason string) string {
+	var content = "Deprecated:" // The colon is required at the end even without reason
+	if reason != "" {
+		content += fmt.Sprintf(" %s", reason)
+	}
+
+	return stringToGoCommentWithPrefix(content, "")
+}
+
 func stringToGoCommentWithPrefix(in, prefix string) string {
 	if len(in) == 0 || len(strings.TrimSpace(in)) == 0 { // ignore empty comment
 		return ""

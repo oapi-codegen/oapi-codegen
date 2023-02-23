@@ -48,6 +48,24 @@ type AnyType2 = interface{}
 // CustomStringType defines model for CustomStringType.
 type CustomStringType = string
 
+// DeprecatedProperty defines model for DeprecatedProperty.
+type DeprecatedProperty struct {
+	// NewProp Use this now!
+	NewProp string `json:"newProp"`
+	// Deprecated:
+	OldProp1 *string `json:"oldProp1,omitempty"`
+
+	// OldProp2 It used to do this and that
+	// Deprecated:
+	OldProp2 *string `json:"oldProp2,omitempty"`
+	// Deprecated: Use NewProp instead!
+	OldProp3 *string `json:"oldProp3,omitempty"`
+
+	// OldProp4 It used to do this and that
+	// Deprecated: Use NewProp instead!
+	OldProp4 *string `json:"oldProp4,omitempty"`
+}
+
 // EnumInObjInArray defines model for EnumInObjInArray.
 type EnumInObjInArray = []struct {
 	Val *EnumInObjInArrayVal `json:"val,omitempty"`
@@ -184,6 +202,9 @@ type ClientInterface interface {
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// Issue975 request
+	Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -296,6 +317,18 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIssue975Request(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -585,6 +618,33 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	return req, nil
 }
 
+// NewIssue975Request generates requests for Issue975
+func NewIssue975Request(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/issues/975")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -655,6 +715,9 @@ type ClientWithResponsesInterface interface {
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+
+	// Issue975 request
+	Issue975WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue975Response, error)
 }
 
 type EnsureEverythingIsReferencedResponse struct {
@@ -839,6 +902,28 @@ func (r Issue9Response) StatusCode() int {
 	return 0
 }
 
+type Issue975Response struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DeprecatedProperty
+}
+
+// Status returns HTTPResponse.Status
+func (r Issue975Response) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r Issue975Response) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
 func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx, reqEditors...)
@@ -925,6 +1010,15 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 		return nil, err
 	}
 	return ParseIssue9Response(rsp)
+}
+
+// Issue975WithResponse request returning *Issue975Response
+func (c *ClientWithResponses) Issue975WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue975Response, error) {
+	rsp, err := c.Issue975(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue975Response(rsp)
 }
 
 // ParseEnsureEverythingIsReferencedResponse parses an HTTP response from a EnsureEverythingIsReferencedWithResponse call
@@ -1120,6 +1214,32 @@ func ParseIssue9Response(rsp *http.Response) (*Issue9Response, error) {
 	return response, nil
 }
 
+// ParseIssue975Response parses an HTTP response from a Issue975WithResponse call
+func ParseIssue975Response(rsp *http.Response) (*Issue975Response, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &Issue975Response{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DeprecatedProperty
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -1146,6 +1266,9 @@ type ServerInterface interface {
 
 	// (GET /issues/9)
 	Issue9(ctx echo.Context, params Issue9Params) error
+
+	// (GET /issues/975)
+	Issue975(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1271,6 +1394,17 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	return err
 }
 
+// Issue975 converts echo context to params.
+func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
+	var err error
+
+	ctx.Set(Access_tokenScopes, []string{""})
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.Issue975(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -1307,33 +1441,37 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/issues/375", wrapper.GetIssues375)
 	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
 	router.GET(baseURL+"/issues/9", wrapper.Issue9)
+	router.GET(baseURL+"/issues/975", wrapper.Issue975)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"zYWfRoiRRCxyXoy4Io7/KwAA//8OSkt3mRIAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

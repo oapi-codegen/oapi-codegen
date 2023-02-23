@@ -84,6 +84,7 @@ type Property struct {
 	WriteOnly     bool
 	NeedsFormTag  bool
 	Extensions    map[string]interface{}
+	Deprecated    bool
 }
 
 func (p Property) GoFieldName() string {
@@ -387,6 +388,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					ReadOnly:      p.Value.ReadOnly,
 					WriteOnly:     p.Value.WriteOnly,
 					Extensions:    p.Value.Extensions,
+					Deprecated:    p.Value.Deprecated,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -619,6 +621,18 @@ func GenFieldsFromProperties(props []Property) []string {
 				field += "\n"
 			}
 			field += fmt.Sprintf("%s\n", StringWithTypeNameToGoComment(p.Description, p.GoFieldName()))
+		}
+
+		if p.Deprecated {
+			// This comment has to be on its own line for godoc & IDEs to pick up
+			var deprecationReason string
+			if _, ok := p.Extensions[extDeprecationReason]; ok {
+				if extOmitEmpty, err := extParseDeprecationReason(p.Extensions[extDeprecationReason]); err == nil {
+					deprecationReason = extOmitEmpty
+				}
+			}
+
+			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())

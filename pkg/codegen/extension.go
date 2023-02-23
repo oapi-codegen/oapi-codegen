@@ -12,12 +12,13 @@ const (
 	// extGoName is used to override a field name
 	extGoName = "x-go-name"
 	// extGoTypeName is used to override a generated typename for something.
-	extGoTypeName       = "x-go-type-name"
-	extPropGoJsonIgnore = "x-go-json-ignore"
-	extPropOmitEmpty    = "x-omitempty"
-	extPropExtraTags    = "x-oapi-codegen-extra-tags"
-	extEnumVarNames     = "x-enum-varnames"
-	extEnumNames        = "x-enumNames"
+	extGoTypeName        = "x-go-type-name"
+	extPropGoJsonIgnore  = "x-go-json-ignore"
+	extPropOmitEmpty     = "x-omitempty"
+	extPropExtraTags     = "x-oapi-codegen-extra-tags"
+	extEnumVarNames      = "x-enum-varnames"
+	extEnumNames         = "x-enumNames"
+	extDeprecationReason = "x-deprecated-reason"
 )
 
 func extString(extPropValue interface{}) (string, error) {
@@ -81,4 +82,8 @@ func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
 		names[i] = vs
 	}
 	return names, nil
+}
+
+func extParseDeprecationReason(extPropValue interface{}) (string, error) {
+	return extString(extPropValue)
 }
