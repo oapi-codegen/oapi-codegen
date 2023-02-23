@@ -301,13 +301,13 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/pets", wrapper.FindPets).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/pets", wrapper.FindPets).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/pets", wrapper.AddPet).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/pets", wrapper.AddPet).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/pets/{id}", wrapper.DeletePet).Methods("DELETE")
+	r.HandleFunc(options.BaseURL+"/pets/{id}", wrapper.DeletePet).Methods(http.MethodDelete)
 
-	r.HandleFunc(options.BaseURL+"/pets/{id}", wrapper.FindPetByID).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/pets/{id}", wrapper.FindPetByID).Methods(http.MethodGet)
 
 	return r
 }
