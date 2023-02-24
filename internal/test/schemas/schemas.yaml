@@ -128,7 +128,7 @@ paths:
         Deprecated fields should get a proper comment
       responses:
         200:
-          description: A struct with 3 deprecated fields with varying level of documentation
+          description: A struct with deprecated fields with varying level of documentation
           content:
             application/json:
               schema:
