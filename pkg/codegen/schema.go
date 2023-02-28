@@ -421,7 +421,21 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
+				description := ""
 				p := schema.Properties[pName]
+				if p.Value != nil {
+					description = p.Value.Description
+					// Get x-go-name for property, if it exists
+					if extGoFieldName, ok := p.Value.Extensions[extGoName]; ok {
+						if parsedFieldName, err := extParseGoFieldName(extGoFieldName); err == nil {
+							delete(p.Value.Extensions, pName)
+							schema.Properties[parsedFieldName] = p
+							pName = parsedFieldName
+						} else {
+							return Schema{}, fmt.Errorf("error parsing %s for %s", extGoName, pName)
+						}
+					}
+				}
 				propertyPath := append(path, pName)
 				pSchema, err := GenerateGoSchema(p, propertyPath)
 				if err != nil {
@@ -445,10 +459,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					pSchema.AdditionalTypes = append(pSchema.AdditionalTypes, typeDef)
 
 					pSchema.RefType = typeName
-				}
-				description := ""
-				if p.Value != nil {
-					description = p.Value.Description
 				}
 				prop := Property{
 					JsonFieldName: pName,
