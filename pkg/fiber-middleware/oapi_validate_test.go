@@ -35,7 +35,7 @@ func doGet(t *testing.T, app *fiber.App, rawURL string) *http.Response {
 
 	r, err := app.Test(req)
 	if err != nil {
-		t.Fatalf("Failed to test request: %s", rawURL)
+		t.Fatalf("Failed to test request, URL=%q: %v", rawURL, err)
 	}
 
 	return r
