@@ -23,7 +23,7 @@ import (
 //go:embed test_spec.yaml
 var testSchema []byte
 
-func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) {
+func doGet(t *testing.T, app *fiber.App, rawURL string) *http.Response {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -33,10 +33,15 @@ func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) 
 	req.Header.Add("Accept", "application/json")
 	req.Host = u.Host
 
-	return app.Test(req)
+	r, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("Failed to test request: %s", rawURL)
+	}
+
+	return r
 }
 
-func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) (*http.Response, error) {
+func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) *http.Response {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)
@@ -44,14 +49,20 @@ func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) (
 
 	buf, err := json.Marshal(jsonBody)
 	if err != nil {
-		return nil, err
+		t.Fatalf("Failed to marshal: %s", rawURL)
 	}
+
 	req := httptest.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
 	req.Host = u.Host
 
-	return app.Test(req)
+	r, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("Failed to test request: %s", rawURL)
+	}
+
+	return r
 }
 
 func TestOapiRequestValidator(t *testing.T) {
@@ -103,14 +114,14 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Let's send the request to the wrong server, this should fail validation
 	{
-		res, _ := doGet(t, app, "https://not.deepmap.ai/resource")
+		res := doGet(t, app, "https://not.deepmap.ai/resource")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		assert.False(t, called, "Handler should not have been called")
 	}
 
 	// Let's send a good request, it should pass
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/resource")
+		res := doGet(t, app, "https://deepmap.ai/resource")
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -118,7 +129,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Send an out-of-spec parameter
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/resource?id=500")
+		res := doGet(t, app, "https://deepmap.ai/resource?id=500")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -126,7 +137,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Send a bad parameter type
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/resource?id=foo")
+		res := doGet(t, app, "https://deepmap.ai/resource?id=foo")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -146,7 +157,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		}{
 			Name: "Marcin",
 		}
-		res, _ := doPost(t, app, "https://deepmap.ai/resource", body)
+		res := doPost(t, app, "https://deepmap.ai/resource", body)
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -159,7 +170,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		}{
 			Name: 7,
 		}
-		res, _ := doPost(t, app, "https://deepmap.ai/resource", body)
+		res := doPost(t, app, "https://deepmap.ai/resource", body)
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -172,7 +183,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Call a protected function to which we have access
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/protected_resource")
+		res := doGet(t, app, "https://deepmap.ai/protected_resource")
 		assert.Equal(t, http.StatusNoContent, res.StatusCode)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -184,7 +195,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Call a protected function to which we don't have access
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/protected_resource2")
+		res := doGet(t, app, "https://deepmap.ai/protected_resource2")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -196,7 +207,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Call a protected function without credentials
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/protected_resource_401")
+		res := doGet(t, app, "https://deepmap.ai/protected_resource_401")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -238,7 +249,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 
 	// Let's send a good request, it should pass
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50&id2=50")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50&id2=50")
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -247,7 +258,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a missing parameter, it should return
 	// a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -262,7 +273,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a 2 missing parameters, it should return
 	// a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -279,7 +290,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a 1 missing parameter, and another outside
 	// or the parameters. It should return a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=500")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -296,7 +307,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a parameters that do not meet spec. It should
 	// return a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=abc&id2=1")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -345,7 +356,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 
 	// Let's send a good request, it should pass
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50&id2=50")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50&id2=50")
 		assert.Equal(t, http.StatusOK, res.StatusCode)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -354,7 +365,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a missing parameter, it should return
 	// a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -369,7 +380,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a 2 missing parameters, it should return
 	// a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -386,7 +397,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a 1 missing parameter, and another outside
 	// or the parameters. It should return a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=500")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
@@ -403,7 +414,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a parameters that do not meet spec. It should
 	// return a bad status
 	{
-		res, _ := doGet(t, app, "https://deepmap.ai/multiparamresource?id=abc&id2=1")
+		res := doGet(t, app, "https://deepmap.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 		body, err := io.ReadAll(res.Body)
 		if assert.NoError(t, err) {
