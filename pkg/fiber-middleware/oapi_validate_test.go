@@ -49,7 +49,7 @@ func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) *
 
 	buf, err := json.Marshal(jsonBody)
 	if err != nil {
-		t.Fatalf("Failed to marshal: %s", rawURL)
+		t.Fatalf("failed to marshal: %v", err)
 	}
 
 	req := httptest.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
