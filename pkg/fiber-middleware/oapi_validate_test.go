@@ -44,7 +44,7 @@ func doGet(t *testing.T, app *fiber.App, rawURL string) *http.Response {
 func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) *http.Response {
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		t.Fatalf("Invalid url: %s", rawURL)
+		t.Fatalf("invalid url %q: %v", rawURL, err)
 	}
 
 	buf, err := json.Marshal(jsonBody)
