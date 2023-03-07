@@ -278,14 +278,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	sortedResponsesKeys := SortedResponsesKeys(responses)
 	for _, responseName := range sortedResponsesKeys {
 		responseRef := responses[responseName]
-
+		refParts := strings.Split(responseRef.Ref, "#")
+		_, isExternalImport := importMapping[refParts[0]]
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
 			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
+				schemaCopy := contentType.Schema
+				schemaParts := strings.Split(schemaCopy.Ref, "#")
 				if contentType.Schema != nil {
+					if isExternalImport {
+						refDef := schemaParts[len(schemaParts)-1]
+						schemaCopy.Ref = fmt.Sprintf("%s#%s", refParts[0], refDef)
+					}
 					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
