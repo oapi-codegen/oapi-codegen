@@ -1,0 +1,8 @@
+package: issue958
+generate:
+  client: true
+output: issue.gen.go
+output-options:
+  skip-prune: true
+import-mapping:
+  ./pkga/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/issues/issue-958/pkga
