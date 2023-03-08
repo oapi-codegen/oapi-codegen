@@ -101,7 +101,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{end}}
 
         {{if .IsJson}}
-          err = json.Unmarshal([]byte(valueList[0]]), &{{.GoName}})
+          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
             siw.ErrorHandlerFunc(w, r, &UnmarshallingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
