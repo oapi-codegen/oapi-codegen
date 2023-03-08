@@ -138,10 +138,6 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
-func (pd ParameterDefinition) GoType() string {
-	return pd.Schema.GoType
-}
-
 func (pd ParameterDefinition) IsSingleValue() bool {
 	return pd.Spec.Schema.Value.Type != "array"
 }
