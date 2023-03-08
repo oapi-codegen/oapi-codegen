@@ -39,7 +39,8 @@ type FindPetsParams struct {
 	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
 	// Limit maximum number of results to return
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit          *int32   `form:"limit,omitempty" json:"limit,omitempty"`
+	AcceptLanguage []string `json:"Accept-Language"`
 }
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.

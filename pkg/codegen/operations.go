@@ -138,6 +138,18 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
+func (pd ParameterDefinition) GoType() string {
+	return pd.Schema.GoType
+}
+
+func (pd ParameterDefinition) IsSingleValue() bool {
+	return pd.Spec.Schema.Value.Type != "array"
+}
+
+func (pd ParameterDefinition) IsMultiValue() bool {
+	return pd.Spec.Schema.Value.Type == "array"
+}
+
 type ParameterDefinitions []ParameterDefinition
 
 func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {

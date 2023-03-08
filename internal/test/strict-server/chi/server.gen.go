@@ -196,6 +196,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 	// ------------- Required header parameter "header1" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header1")]; found {
 		var Header1 string
+
 		n := len(valueList)
 		if n != 1 {
 			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "header1", Count: n})
@@ -219,6 +220,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 	// ------------- Optional header parameter "header2" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header2")]; found {
 		var Header2 int
+
 		n := len(valueList)
 		if n != 1 {
 			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "header2", Count: n})

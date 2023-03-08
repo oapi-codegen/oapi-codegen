@@ -238,6 +238,7 @@ func (siw *ServerInterfaceWrapper) GetWithArgs(w http.ResponseWriter, r *http.Re
 	// ------------- Optional header parameter "header_argument" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header_argument")]; found {
 		var HeaderArgument int32
+
 		n := len(valueList)
 		if n != 1 {
 			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "header_argument", Count: n})
