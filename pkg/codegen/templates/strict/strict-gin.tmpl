@@ -18,8 +18,7 @@ type strictHandler struct {
         var request {{$opid | ucFirst}}RequestObject
 
         {{range .PathParams -}}
-            {{$varName := .GoVariableName -}}
-            request.{{$varName | ucFirst}} = {{$varName}}
+            request.{{.GoName}} = {{.GoVariableName}}
         {{end -}}
 
         {{if .RequiresParamObject -}}

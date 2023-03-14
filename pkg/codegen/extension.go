@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -22,15 +21,10 @@ const (
 )
 
 func extString(extPropValue interface{}) (string, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+	str, ok := extPropValue.(string)
 	if !ok {
 		return "", fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var str string
-	if err := json.Unmarshal(raw, &str); err != nil {
-		return "", fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
 	return str, nil
 }
 func extTypeName(extPropValue interface{}) (string, error) {
@@ -42,53 +36,49 @@ func extParseGoFieldName(extPropValue interface{}) (string, error) {
 }
 
 func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+	omitEmpty, ok := extPropValue.(bool)
 	if !ok {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-
-	var omitEmpty bool
-	if err := json.Unmarshal(raw, &omitEmpty); err != nil {
-		return false, fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
 	return omitEmpty, nil
 }
 
 func extExtraTags(extPropValue interface{}) (map[string]string, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+	tagsI, ok := extPropValue.(map[string]interface{})
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var tags map[string]string
-	if err := json.Unmarshal(raw, &tags); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	tags := make(map[string]string, len(tagsI))
+	for k, v := range tagsI {
+		vs, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert type: %T", v)
+		}
+		tags[k] = vs
 	}
 	return tags, nil
 }
 
 func extParseGoJsonIgnore(extPropValue interface{}) (bool, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+	goJsonIgnore, ok := extPropValue.(bool)
 	if !ok {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-
-	var goJsonIgnore bool
-	if err := json.Unmarshal(raw, &goJsonIgnore); err != nil {
-		return false, fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
 	return goJsonIgnore, nil
 }
 
 func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+	namesI, ok := extPropValue.([]interface{})
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var names []string
-	if err := json.Unmarshal(raw, &names); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	names := make([]string, len(namesI))
+	for i, v := range namesI {
+		vs, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert type: %T", v)
+		}
+		names[i] = vs
 	}
 	return names, nil
 }

@@ -1,0 +1,14 @@
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure client with responses can reference external responses
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        200:
+          $ref: "./pkga/spec.yaml#/components/responses/200"
+
