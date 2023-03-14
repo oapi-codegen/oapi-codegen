@@ -208,7 +208,7 @@ components:
         additionalProperties:
           $ref: '#/components/schemas/SchemaObject'
     OneOfObject1:
-      description: oneOf with references and no disciminator
+      description: oneOf with references and no discriminator
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
@@ -244,7 +244,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant2'
         - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject5:
-      description: oneOf with disciminator but no mapping
+      description: oneOf with discriminator but no mapping
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant4'
         - $ref: '#/components/schemas/OneOfVariant5'
@@ -260,6 +260,24 @@ components:
         mapping:
           v4: '#/components/schemas/OneOfVariant4'
           v5: '#/components/schemas/OneOfVariant5'
+    OneOfObject61:
+      description: oneOf with discriminator and partial mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+    OneOfObject62:
+      description: oneOf with snake_case discriminator and partial snake_case mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/one_of_variant51'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          variant_four: '#/components/schemas/OneOfVariant4'
     OneOfObject7:
       description: array of oneOf
       type: array
@@ -371,6 +389,16 @@ components:
         - discriminator
         - name
     OneOfVariant5:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
+    one_of_variant51:
       type: object
       properties:
         discriminator:
