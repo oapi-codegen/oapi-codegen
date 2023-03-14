@@ -156,6 +156,9 @@ type ClientInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ReservedGoKeywordParameters request
+	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ReusableResponses request with any body
 	ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -257,6 +260,18 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReservedGoKeywordParametersRequest(c.Server, pType)
 	if err != nil {
 		return nil, err
 	}
@@ -510,6 +525,40 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewReservedGoKeywordParametersRequest generates requests for ReservedGoKeywordParameters
+func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "type", runtime.ParamLocationPath, pType)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/reserved-go-keyword-parameters/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -808,6 +857,9 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// ReservedGoKeywordParameters request
+	ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error)
+
 	// ReusableResponses request with any body
 	ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
@@ -894,6 +946,27 @@ func (r MultipleRequestAndResponseTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ReservedGoKeywordParametersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r ReservedGoKeywordParametersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1087,6 +1160,15 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// ReservedGoKeywordParametersWithResponse request returning *ReservedGoKeywordParametersResponse
+func (c *ClientWithResponses) ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error) {
+	rsp, err := c.ReservedGoKeywordParameters(ctx, pType, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReservedGoKeywordParametersResponse(rsp)
+}
+
 // ReusableResponsesWithBodyWithResponse request with arbitrary body returning *ReusableResponsesResponse
 func (c *ClientWithResponses) ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error) {
 	rsp, err := c.ReusableResponsesWithBody(ctx, contentType, body, reqEditors...)
@@ -1239,6 +1321,22 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	case rsp.StatusCode == 200:
 		// Content-type (text/plain) unsupported
 
+	}
+
+	return response, nil
+}
+
+// ParseReservedGoKeywordParametersResponse parses an HTTP response from a ReservedGoKeywordParametersWithResponse call
+func ParseReservedGoKeywordParametersResponse(rsp *http.Response) (*ReservedGoKeywordParametersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReservedGoKeywordParametersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
