@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-958/pkga"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -180,7 +179,6 @@ type ClientWithResponsesInterface interface {
 type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *externalRef0.Document
 	JSON200      *Document
 }
 
@@ -224,7 +222,7 @@ func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest externalRef0.Document
+		var dest Document
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
