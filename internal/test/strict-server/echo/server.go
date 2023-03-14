@@ -118,3 +118,6 @@ func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequ
 		},
 	}, nil
 }
+func (s StrictServer) ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error) {
+	return ReservedGoKeywordParameters200TextResponse(""), nil
+}
