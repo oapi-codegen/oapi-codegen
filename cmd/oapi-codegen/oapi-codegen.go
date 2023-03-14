@@ -21,6 +21,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime/debug"
+	"strings"
 
 	"gopkg.in/yaml.v2"
 
