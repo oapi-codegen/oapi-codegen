@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -759,14 +760,29 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		}
 
 		if discriminator != nil {
+			if len(discriminator.Mapping) != 0 && element.Ref == "" {
+				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
+			}
+
+			// Explicit mapping.
+			var mapped bool
 			for k, v := range discriminator.Mapping {
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
+					mapped = true
 					break
 				}
 			}
+			// Implicit mapping.
+			if !mapped {
+				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
+			}
 		}
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+	}
+
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+		return errors.New("discriminator: not all schemas were mapped")
 	}
 
 	return nil

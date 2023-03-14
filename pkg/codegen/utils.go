@@ -290,6 +290,23 @@ func StringInArray(str string, array []string) bool {
 	return false
 }
 
+// RefPathToObjName returns the name of referenced object without changes.
+//
+//	#/components/schemas/Foo -> Foo
+//	#/components/parameters/Bar -> Bar
+//	#/components/responses/baz_baz -> baz_baz
+//	document.json#/Foo -> Foo
+//	http://deepmap.com/schemas/document.json#/objObj -> objObj
+//
+// Does not check refPath correctness.
+func RefPathToObjName(refPath string) string {
+	parts := strings.Split(refPath, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
 // RefPathToGoType takes a $ref value and converts it to a Go typename.
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar

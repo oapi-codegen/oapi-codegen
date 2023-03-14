@@ -432,3 +432,17 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
 }
+
+func TestRefPathToObjName(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"#/components/schemas/Foo":                         "Foo",
+		"#/components/parameters/Bar":                      "Bar",
+		"#/components/responses/baz_baz":                   "baz_baz",
+		"document.json#/Foo":                               "Foo",
+		"http://deepmap.com/schemas/document.json#/objObj": "objObj",
+	} {
+		assert.Equal(t, want, RefPathToObjName(in))
+	}
+}
