@@ -108,6 +108,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /user:
+    get:
+      tags:
+        - mergeAllOf
+      summary: Merges allOf ref-ing a JSON schema
+      operationId: getUser
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -177,3 +196,12 @@ components:
             - na
             - single
             - double
+    User:
+      allOf:
+        - $ref: ./test_schema.json
+        - type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              description: User name
