@@ -1870,7 +1870,7 @@ func (t *OneOfObject61) MergeOneOfVariant4(v OneOfVariant4) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(b, t.union)
+	merged, err := runtime.JsonMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -1898,7 +1898,7 @@ func (t *OneOfObject61) MergeOneOfVariant5(v OneOfVariant5) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(b, t.union)
+	merged, err := runtime.JsonMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -1959,7 +1959,7 @@ func (t *OneOfObject62) MergeOneOfVariant4(v OneOfVariant4) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(b, t.union)
+	merged, err := runtime.JsonMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -1987,7 +1987,7 @@ func (t *OneOfObject62) MergeOneOfVariant51(v OneOfVariant51) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(b, t.union)
+	merged, err := runtime.JsonMerge(t.union, b)
 	t.union = merged
 	return err
 }
