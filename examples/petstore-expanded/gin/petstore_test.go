@@ -13,7 +13,7 @@ import (
 )
 
 func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, handler)
+	response := testutil.NewRequest().Get(url).WithAcceptJson().WithMultipleAcceptLanguageHeaders().GoWithHTTPHandler(t, handler)
 	return response.Recorder
 }
 

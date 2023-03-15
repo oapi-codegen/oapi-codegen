@@ -16,7 +16,7 @@ import (
 )
 
 func doGet(t *testing.T, mux *mux.Router, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, mux)
+	response := testutil.NewRequest().Get(url).WithAcceptJson().WithMultipleAcceptLanguageHeaders().GoWithHTTPHandler(t, mux)
 	return response.Recorder
 }
 
