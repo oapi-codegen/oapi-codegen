@@ -616,8 +616,12 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	}
 	body := bodyOrRef.Value
 
-	var bodyDefinitions []RequestBodyDefinition
-	var typeDefinitions []TypeDefinition
+	var (
+		bodyDefinitions         []RequestBodyDefinition
+		bodyDefinitionsNamesMap map[string]struct{}
+		typeDefinitions         []TypeDefinition
+	)
+	bodyDefinitionsNamesMap = make(map[string]struct{})
 
 	for _, contentType := range SortedContentKeys(body.Content) {
 		content := body.Content[contentType]
@@ -644,6 +648,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bodyTypeName := operationID + tag + "Body"
+		if _, ok := bodyDefinitionsNamesMap[bodyTypeName]; ok {
+			continue
+		}
+		bodyDefinitionsNamesMap[bodyTypeName] = struct{}{}
+
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
 			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
