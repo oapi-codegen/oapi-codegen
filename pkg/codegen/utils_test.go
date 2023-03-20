@@ -462,7 +462,7 @@ func Test_replaceInitialisms(t *testing.T) {
 			want: "",
 		},
 		{
-			name: "no initialisms",
+			name: "no initialism",
 			args: args{s: "foo"},
 			want: "foo",
 		},
@@ -472,8 +472,13 @@ func Test_replaceInitialisms(t *testing.T) {
 			want: "fooID",
 		},
 		{
-			name: "two initialisms",
+			name: "two initialism",
 			args: args{s: "fooIdBarApi"},
+			want: "fooIDBarAPI",
+		},
+		{
+			name: "already initialism",
+			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
 		},
 	}
