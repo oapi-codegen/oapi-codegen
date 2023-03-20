@@ -398,9 +398,7 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	if flagInitalismOverrides {
-		cfg.OutputOptions.InitialismOverrides = flagInitalismOverrides
-	}
+	cfg.OutputOptions.InitialismOverrides = flagInitalismOverrides
 
 	return nil
 }
