@@ -799,6 +799,7 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
 		if err := validResponse.VisitJSONExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -830,6 +831,7 @@ func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -896,6 +898,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -922,6 +925,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *gin.Context, pType str
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
 		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -954,6 +958,7 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
 		if err := validResponse.VisitReusableResponsesResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -986,6 +991,7 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
 		if err := validResponse.VisitTextExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -1012,6 +1018,7 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
 		if err := validResponse.VisitUnknownExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -1040,6 +1047,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
 		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -1075,6 +1083,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
 		if err := validResponse.VisitURLEncodedExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
@@ -1109,6 +1118,7 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 
 	if err != nil {
 		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
 		if err := validResponse.VisitHeadersExampleResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
