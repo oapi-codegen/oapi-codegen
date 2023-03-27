@@ -1,0 +1,9 @@
+package: pkga
+generate:
+  echo-server: false
+  client: false
+  models: true
+  embedded-spec: false
+output-options:
+  skip-prune: true
+output: responses.gen.go
