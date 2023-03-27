@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
 	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-958/pkga"
 )
 
@@ -181,7 +182,6 @@ type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *externalRef0.Document
-	JSON200      *Document
 }
 
 // Status returns HTTPResponse.Status

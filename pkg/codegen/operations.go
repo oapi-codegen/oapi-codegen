@@ -278,7 +278,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	sortedResponsesKeys := SortedResponsesKeys(responses)
 	for _, responseName := range sortedResponsesKeys {
 		responseRef := responses[responseName]
-
+		refParts := strings.Split(responseRef.Ref, "#")
+		// Checking to see if reference belongs to external doc so child content can be adjusted.
+		_, isExternalImport := importMapping[refParts[0]]
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
 			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
@@ -286,7 +288,15 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					// Create a copy as to not disturb original.
+					schemaCopy := *contentType.Schema
+					// When an external reference is provided, adjust the ref to contain full path so imports can be attached.
+					if isExternalImport && IsGoTypeReference(schemaCopy.Ref) {
+						schemaParts := strings.Split(schemaCopy.Ref, "#")
+						refDef := schemaParts[len(schemaParts)-1]
+						schemaCopy.Ref = fmt.Sprintf("%s#%s", refParts[0], refDef)
+					}
+					responseSchema, err := GenerateGoSchema(&schemaCopy, []string{responseName})
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -312,13 +322,6 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						},
 						ResponseName:    responseName,
 						ContentTypeName: contentTypeName,
-					}
-					if IsGoTypeReference(contentType.Schema.Ref) {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
-						if err != nil {
-							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
-						}
-						td.Schema.RefType = refType
 					}
 					tds = append(tds, td)
 				}

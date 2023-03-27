@@ -11,4 +11,8 @@ paths:
       responses:
         200:
           $ref: "./pkga/spec.yaml#/components/responses/200"
+components:
+  schemas:
+
+
 
