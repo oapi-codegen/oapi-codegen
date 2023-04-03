@@ -653,10 +653,18 @@ func GenFieldsFromProperties(props []Property) []string {
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
 			}
+
+			for _, tag := range globalState.options.OutputOptions.AdditionalTags {
+				fieldTags[tag] = p.JsonFieldName
+			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName + ",omitempty"
+			}
+
+			for _, tag := range globalState.options.OutputOptions.AdditionalTags {
+				fieldTags[tag] = p.JsonFieldName + ",omitempty"
 			}
 		}
 
