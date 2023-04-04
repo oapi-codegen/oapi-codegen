@@ -87,6 +87,7 @@ type OutputOptions struct {
 	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
 	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
+	AdditionalTags     []string `yaml:"additional-tags,omitempty"`      // Defines the list of additional struct tags to add to the generated models.
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
