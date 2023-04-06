@@ -706,9 +706,8 @@ type StrictServerInterface interface {
 	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx echo.Context, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictEchoHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictEchoMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
