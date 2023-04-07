@@ -908,6 +908,17 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
+// GenerateFiberServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	for index := range operations {
+		m := operations[index].Method
+		operations[index].Method = fmt.Sprintf("%s%s", strings.ToUpper(m[:1]), strings.ToLower(m[1:]))
+	}
+
+	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-wrappers.tmpl", "fiber/fiber-register.tmpl"}, t, operations)
+}
+
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -927,6 +938,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	}
 	if opts.Generate.EchoServer {
 		templates = append(templates, "strict/strict-echo.tmpl")
+	}
+	if opts.Generate.FiberServer {
+		templates = append(templates, "strict/strict-fiber.tmpl")
 	}
 	if opts.Generate.GinServer {
 		templates = append(templates, "strict/strict-gin.tmpl")

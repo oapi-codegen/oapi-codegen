@@ -24,6 +24,7 @@ type Configuration struct {
 type GenerateOptions struct {
 	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
 	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
+	FiberServer    bool `yaml:"fiber-server,omitempty"`    // FiberServer specifies whether to generate fiber server boilerplate
 	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate gin server boilerplate
 	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
 	Strict        bool `yaml:"strict-server,omitempty"`  // Strict specifies whether to generate strict server wrapper
@@ -113,6 +114,9 @@ func (o Configuration) Validate() error {
 		nServers++
 	}
 	if o.Generate.EchoServer {
+		nServers++
+	}
+	if o.Generate.FiberServer {
 		nServers++
 	}
 	if o.Generate.GinServer {

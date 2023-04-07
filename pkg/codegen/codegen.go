@@ -183,6 +183,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var fiberServerOut string
+	if opts.Generate.FiberServer {
+		fiberServerOut, err = GenerateFiberServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var ginServerOut string
 	if opts.Generate.GinServer {
 		ginServerOut, err = GenerateGinServer(t, ops)
@@ -287,6 +295,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.FiberServer {
+		_, err = w.WriteString(fiberServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
