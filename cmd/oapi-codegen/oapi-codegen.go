@@ -90,7 +90,7 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "fiber", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune"`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates")
@@ -443,6 +443,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.ChiServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "fiber", "fiber-server":
+			opts.FiberServer = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":
