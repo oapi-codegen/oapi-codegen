@@ -114,11 +114,12 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx *fiber.Ctx) error {
 	return err
 }
 
-// This is a simple interface which specifies echo.Route addition functions which
+// This is a simple interface which specifies fiber.Router addition functions which
 // are present on both fiber.App and fiber.Router, since we want to allow using
 // either of them for path registration
 type FiberRouter interface {
-	// HTTP methods
+	Use(args ...interface{}) fiber.Router
+
 	Get(path string, handlers ...fiber.Handler) fiber.Router
 	Head(path string, handlers ...fiber.Handler) fiber.Router
 	Post(path string, handlers ...fiber.Handler) fiber.Router
@@ -129,12 +130,17 @@ type FiberRouter interface {
 	Trace(path string, handlers ...fiber.Handler) fiber.Router
 	Patch(path string, handlers ...fiber.Handler) fiber.Router
 
-	// Add allows you to specifiy a method as value
 	Add(method, path string, handlers ...fiber.Handler) fiber.Router
-
-	// All will register the route on all HTTP methods
-	// Almost the same as app.Use but not bound to prefixes
+	Static(prefix, root string, config ...fiber.Static) fiber.Router
 	All(path string, handlers ...fiber.Handler) fiber.Router
+
+	Group(prefix string, handlers ...fiber.Handler) fiber.Router
+
+	Route(prefix string, fn func(router fiber.Router), name ...string) fiber.Router
+
+	Mount(prefix string, fiber *fiber.App) fiber.Router
+
+	Name(name string) fiber.Router
 }
 
 // RegisterHandlers adds each server route to the FiberRouter.
