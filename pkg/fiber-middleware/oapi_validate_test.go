@@ -63,7 +63,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
-	// Create a new echo router
+	// Create a new fiber app
 	a := fiber.New()
 
 	// Set up an authenticator to check authenticated function. It will allow
@@ -74,7 +74,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		},
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
-				// The echo context should be propagated into here.
+				// The fiber context should be propagated into here.
 				eCtx := GetFiberContext(c)
 				assert.NotNil(t, eCtx)
 				// As should user data
@@ -213,7 +213,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
-	// Create a new echo router
+	// Create a new fiber app
 	a := fiber.New()
 
 	// Set up an authenticator to check authenticated function. It will allow
@@ -314,7 +314,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 
-	// Create a new echo router
+	// Create a new fiber app
 	a := fiber.New()
 
 	// Set up an authenticator to check authenticated function. It will allow

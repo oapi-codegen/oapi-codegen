@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api"
-	// "github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -34,7 +33,7 @@ func main() {
 	// Create an instance of our handler which satisfies the generated interface
 	petStore := api.NewPetStore()
 
-	// This is how you set up a basic Echo router
+	// This is how you set up a basic Fiber app
 	app := fiber.New()
 	// Log all requests
 	app.Use(logger.New())

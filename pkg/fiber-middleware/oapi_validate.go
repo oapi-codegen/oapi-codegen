@@ -36,7 +36,7 @@ const (
 	UserDataKey     = "oapi-codegen/user-data"
 )
 
-// OapiValidatorFromYamlFile is an Echo middleware function which validates incoming HTTP requests
+// OapiValidatorFromYamlFile is an Fiber middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400.
 // Create validator middleware from a YAML file path
@@ -142,7 +142,7 @@ func ValidateRequestFromContext(ctx *fiber.Ctx, router routers.Router, options *
 		Route:      route,
 	}
 
-	// Pass the Echo context into the request validator, so that any callbacks
+	// Pass the Fiber context into the request validator, so that any callbacks
 	// which it invokes make it available.
 	requestContext := context.WithValue(context.Background(), FiberContextKey, ctx) //nolint:staticcheck
 
@@ -193,7 +193,7 @@ func ValidateRequestFromContext(ctx *fiber.Ctx, router routers.Router, options *
 	return nil
 }
 
-// GetEchoContext gets the echo context from within requests. It returns
+// GetFiberContext gets the fiber context from within requests. It returns
 // nil if not found or wrong type.
 func GetFiberContext(c context.Context) *fiber.Ctx {
 	iface := c.Value(FiberContextKey)

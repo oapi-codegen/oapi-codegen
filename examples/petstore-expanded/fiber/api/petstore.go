@@ -92,15 +92,15 @@ func (p *PetStore) AddPet(ctx *fiber.Ctx) error {
 	// Now, we have to return the NewPet
 	err = ctx.Status(http.StatusCreated).JSON(pet)
 	if err != nil {
-		// Something really bad happened, tell Echo that our handler failed
+		// Something really bad happened, tell Fiber that our handler failed
 		return err
 	}
 
 	// Return no error. This refers to the handler. Even if we return an HTTP
-	// error, but everything else is working properly, tell Echo that we serviced
-	// the error. We should only return errors from Echo handlers if the actual
+	// error, but everything else is working properly, tell Fiber that we serviced
+	// the error. We should only return errors from Fiber handlers if the actual
 	// servicing of the error on the infrastructure level failed. Returning an
-	// HTTP/400 or HTTP/500 from here means Echo/HTTP are still working, so
+	// HTTP/400 or HTTP/500 from here means Fiber/HTTP are still working, so
 	// return nil.
 	return nil
 }
