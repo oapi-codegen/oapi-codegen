@@ -1,0 +1,8 @@
+package: api
+output: petstore-server.gen.go
+additional-imports:
+  - package: github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api/models
+    alias: .
+generate:
+  fiber-server: true
+  embedded-spec: true
