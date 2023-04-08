@@ -21,8 +21,9 @@ import (
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api"
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api/models"
-	"github.com/deepmap/oapi-codegen/pkg/fiber-middleware"
+	middleware "github.com/deepmap/oapi-codegen/pkg/fiber-middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/stretchr/testify/assert"
@@ -64,7 +65,7 @@ func TestPetStore(t *testing.T) {
 		Name: "Spot",
 		Tag:  &tag,
 	}
-	handler := testutil.FiberHandler{App: app, T: t}
+	handler := adaptor.FiberApp(app) 
 	result := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, handler)
 	// We expect 201 code on successful pet insertion
 	assert.Equal(t, http.StatusCreated, result.Code())
