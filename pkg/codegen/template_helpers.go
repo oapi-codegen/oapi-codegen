@@ -284,6 +284,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamFmtString":          ReplacePathParamsWithStr,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
+	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
 	"swaggerUriToGinUri":         SwaggerUriToGinUri,
 	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
 	"lcFirst":                    LowercaseFirstCharacter,

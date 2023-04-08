@@ -940,6 +940,7 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 		templates = append(templates, "strict/strict-echo.tmpl")
 	}
 	if opts.Generate.FiberServer {
+		templates[0] = "strict/strict-interface-fiber.tmpl"
 		templates = append(templates, "strict/strict-fiber.tmpl")
 	}
 	if opts.Generate.GinServer {

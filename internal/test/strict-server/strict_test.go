@@ -13,12 +13,15 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
+	api "github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
 	api3 "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
 	api4 "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
+	api5 "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
 	api2 "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
@@ -38,6 +41,14 @@ func TestEchoServer(t *testing.T) {
 	e := echo.New()
 	api4.RegisterHandlers(e, strictHandler)
 	testImpl(t, e)
+}
+
+func TestFiberServer(t *testing.T) {
+	server := api5.StrictServer{}
+	strictHandler := api5.NewStrictHandler(server, nil)
+	app := fiber.New()
+	api5.RegisterHandlers(app, strictHandler)
+	testImpl(t, adaptor.FiberApp(app))
 }
 
 func TestGinServer(t *testing.T) {
