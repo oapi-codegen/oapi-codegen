@@ -9,9 +9,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/fiber/api"
 )
 
 func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) {

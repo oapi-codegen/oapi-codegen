@@ -11,7 +11,6 @@ import (
 	"strings"
 	"testing"
 
-
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
 	"github.com/gofiber/adaptor/v2"
