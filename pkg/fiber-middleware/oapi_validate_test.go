@@ -24,6 +24,8 @@ import (
 var testSchema []byte
 
 func doGet(t *testing.T, app *fiber.App, rawURL string) *http.Response {
+	t.Helper()
+
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("invalid URL %q: %v", rawURL, err)
@@ -42,6 +44,8 @@ func doGet(t *testing.T, app *fiber.App, rawURL string) *http.Response {
 }
 
 func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) *http.Response {
+	t.Helper()
+
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("invalid url %q: %v", rawURL, err)
