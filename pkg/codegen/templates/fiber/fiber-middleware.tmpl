@@ -44,7 +44,8 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
     var params {{.OperationId}}Params
 
     {{if .QueryParams}}
-    query, err := url.ParseQuery(string(c.Request().URI().QueryString()))
+    var query url.Values
+    query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
     if err != nil {
       return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
     }

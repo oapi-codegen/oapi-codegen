@@ -22,21 +22,17 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 			part, err := request.Body.NextPart()
 			if err == io.EOF {
 				return nil
-			}
-			if err != nil {
+			} else if err != nil {
 				return err
 			}
-
 			w, err := writer.CreatePart(part.Header)
 			if err != nil {
 				return err
 			}
-
 			_, err = io.Copy(w, part)
 			if err != nil {
 				return err
 			}
-
 			if err = part.Close(); err != nil {
 				return err
 			}
@@ -47,10 +43,7 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error) {
 	switch {
 	case request.Body != nil:
-		return MultipleRequestAndResponseTypes200ImagepngResponse{
-			Body:          request.Body,
-			ContentLength: 0,
-		}, nil
+		return MultipleRequestAndResponseTypes200ImagepngResponse{Body: request.Body}, nil
 	case request.JSONBody != nil:
 		return MultipleRequestAndResponseTypes200JSONResponse(*request.JSONBody), nil
 	case request.FormdataBody != nil:
@@ -63,21 +56,17 @@ func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, reque
 				part, err := request.MultipartBody.NextPart()
 				if err == io.EOF {
 					return nil
-				}
-				if err != nil {
+				} else if err != nil {
 					return err
 				}
-
 				w, err := writer.CreatePart(part.Header)
 				if err != nil {
 					return err
 				}
-
 				_, err = io.Copy(w, part)
 				if err != nil {
 					return err
 				}
-
 				if err = part.Close(); err != nil {
 					return err
 				}
@@ -93,18 +82,11 @@ func (s StrictServer) TextExample(ctx context.Context, request TextExampleReques
 }
 
 func (s StrictServer) UnknownExample(ctx context.Context, request UnknownExampleRequestObject) (UnknownExampleResponseObject, error) {
-	return UnknownExample200Videomp4Response{
-		Body:          request.Body,
-		ContentLength: 0,
-	}, nil
+	return UnknownExample200Videomp4Response{Body: request.Body}, nil
 }
 
 func (s StrictServer) UnspecifiedContentType(ctx context.Context, request UnspecifiedContentTypeRequestObject) (UnspecifiedContentTypeResponseObject, error) {
-	return UnspecifiedContentType200VideoResponse{
-		Body:          request.Body,
-		ContentType:   request.ContentType,
-		ContentLength: 0,
-	}, nil
+	return UnspecifiedContentType200VideoResponse{Body: request.Body, ContentType: request.ContentType}, nil
 }
 
 func (s StrictServer) URLEncodedExample(ctx context.Context, request URLEncodedExampleRequestObject) (URLEncodedExampleResponseObject, error) {
@@ -112,18 +94,9 @@ func (s StrictServer) URLEncodedExample(ctx context.Context, request URLEncodedE
 }
 
 func (s StrictServer) HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error) {
-	return HeadersExample200JSONResponse{
-		Body: *request.Body,
-		Headers: HeadersExample200ResponseHeaders{
-			Header1: request.Params.Header1,
-			Header2: *request.Params.Header2,
-		},
-	}, nil
+	return HeadersExample200JSONResponse{Body: *request.Body, Headers: HeadersExample200ResponseHeaders{Header1: request.Params.Header1, Header2: *request.Params.Header2}}, nil
 }
 
 func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error) {
-	return ReusableResponses200JSONResponse{
-		Body:    *request.Body,
-		Headers: ReusableresponseResponseHeaders{},
-	}, nil
+	return ReusableResponses200JSONResponse{ReusableresponseJSONResponse: ReusableresponseJSONResponse{Body: *request.Body}}, nil
 }

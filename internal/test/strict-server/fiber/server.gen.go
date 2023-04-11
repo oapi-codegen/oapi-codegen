@@ -361,7 +361,7 @@ type ReusableResponsesResponseObject interface {
 	VisitReusableResponsesResponse(ctx *fiber.Ctx) error
 }
 
-type ReusableResponses200JSONResponse = ReusableresponseJSONResponse
+type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("header1", fmt.Sprint(response.Headers.Header1))

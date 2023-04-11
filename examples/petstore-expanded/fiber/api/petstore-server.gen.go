@@ -48,7 +48,8 @@ func (siw *ServerInterfaceWrapper) FindPets(c *fiber.Ctx) error {
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 
-	query, err := url.ParseQuery(string(c.Request().URI().QueryString()))
+	var query url.Values
+	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
 	}
