@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: MRE oapi-codegen duplicate types
+  description: Minimal reproducible example for a bug in https://github.com/deepmap/oapi-codegen/ generating wrong enum reference
+  version: 0.0.0
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  test:
+                    type: string
+                    enum:
+                      - test1
+                      - test2
