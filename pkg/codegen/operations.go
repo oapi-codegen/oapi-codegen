@@ -286,24 +286,25 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					var formatName string
+					switch {
+					case StringInArray(contentTypeName, contentTypesJSON):
+						formatName = "JSON"
+					// YAML:
+					case StringInArray(contentTypeName, contentTypesYAML):
+						formatName = "YAML"
+					// XML:
+					case StringInArray(contentTypeName, contentTypesXML):
+						formatName = "XML"
+					default:
+						continue
+					}
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName, formatName, "Response"})
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
 
-					var typeName string
-					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
-						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
-					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
-					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
-						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
-					default:
-						continue
-					}
+					var typeName = fmt.Sprintf("%s%s", formatName, ToCamelCase(responseName))
 
 					td := ResponseTypeDefinition{
 						TypeDefinition: TypeDefinition{
@@ -535,12 +536,12 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, bodyTypeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			responseDefinitions, responseTypeDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
@@ -558,7 +559,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
-				TypeDefinitions: typeDefinitions,
+				TypeDefinitions: append(bodyTypeDefinitions, responseTypeDefinitions...),
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -707,8 +708,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
+func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, []TypeDefinition, error) {
 	var responseDefinitions []ResponseDefinition
+	var typeDefinitions []TypeDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
 
@@ -744,7 +746,30 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			responseTypeName := operationID + statusCode + tag + "Response"
 			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
 			if err != nil {
-				return nil, fmt.Errorf("error generating request body definition: %w", err)
+				return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			// If the body is a pre-defined type
+			if IsGoTypeReference(content.Schema.Ref) {
+				// Convert the reference path to Go type
+				refType, err := RefPathToGoType(content.Schema.Ref)
+				if err != nil {
+					return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.Ref, err)
+				}
+				contentSchema.RefType = refType
+			}
+
+			// If the request has a body, but it's not a user defined
+			// type under #/components, we'll define a type for it, so
+			// that we have an easy to use type for marshaling.
+			if contentSchema.RefType == "" {
+				td := TypeDefinition{
+					TypeName: responseTypeName,
+					Schema:   contentSchema,
+				}
+				typeDefinitions = append(typeDefinitions, td)
+				// The body schema now is a reference to a type
+				contentSchema.RefType = responseTypeName
 			}
 
 			rcd := ResponseContentDefinition{
@@ -760,7 +785,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
-				return nil, fmt.Errorf("error generating response header definition: %w", err)
+				return nil, nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
 			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
@@ -778,7 +803,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(responseOrRef.Ref)
 			if err != nil {
-				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
 			}
 			// Check if this ref is already used by another response definition. If not use the ref
 			// If we let multiple response definitions alias to same response it will break the type switch
@@ -791,7 +816,7 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 		responseDefinitions = append(responseDefinitions, rd)
 	}
 
-	return responseDefinitions, nil
+	return responseDefinitions, typeDefinitions, nil
 }
 
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
@@ -808,6 +833,12 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 
 	for _, body := range op.Bodies {
 		typeDefs = append(typeDefs, body.Schema.GetAdditionalTypeDefs()...)
+	}
+
+	for _, response := range op.Responses {
+		for _, content := range response.Contents {
+			typeDefs = append(typeDefs, content.Schema.GetAdditionalTypeDefs()...)
+		}
 	}
 	return typeDefs
 }
