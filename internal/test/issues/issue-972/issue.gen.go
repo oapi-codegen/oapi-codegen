@@ -13,6 +13,20 @@ import (
 	"strings"
 )
 
+// Defines values for Test200JSONResponseTest.
+const (
+	Test1 Test200JSONResponseTest = "test1"
+	Test2 Test200JSONResponseTest = "test2"
+)
+
+// Test200JSONResponse defines parameters for Test.
+type Test200JSONResponse struct {
+	Test *Test200JSONResponseTest `json:"test,omitempty"`
+}
+
+// Test200JSONResponseTest defines parameters for Test.
+type Test200JSONResponseTest string
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -180,7 +194,7 @@ type TestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Test *N200Test `json:"test,omitempty"`
+		Test *Test200JSONResponseTest `json:"test,omitempty"`
 	}
 }
 
@@ -225,7 +239,7 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Test *N200Test `json:"test,omitempty"`
+			Test *Test200JSONResponseTest `json:"test,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
