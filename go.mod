@@ -2,7 +2,7 @@ module github.com/deepmap/oapi-codegen
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
-	github.com/getkin/kin-openapi v0.114.0
+	github.com/getkin/kin-openapi v0.115.0
 	github.com/gin-gonic/gin v1.9.0
 	github.com/go-chi/chi/v5 v5.0.8
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
