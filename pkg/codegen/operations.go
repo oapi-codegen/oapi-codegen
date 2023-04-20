@@ -293,6 +293,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					var typeName string
 					switch {
+					// HAL+JSON:
+					case StringInArray(contentTypeName, contentTypesHalJSON):
+						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
+					// JSON:
 					case StringInArray(contentTypeName, contentTypesJSON):
 						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
 					// YAML:
