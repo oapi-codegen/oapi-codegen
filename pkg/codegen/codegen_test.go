@@ -155,8 +155,11 @@ func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 	assert.NoError(t, err)
 	defer ln.Close()
 
+	//nolint:errcheck
+	//Does not matter if the server returns an error on close etc.
 	go http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("//blah"))
+		_, writeErr := w.Write([]byte("//blah"))
+		assert.NoError(t, writeErr)
 	}))
 
 	t.Logf("Listening on %s", ln.Addr().String())
