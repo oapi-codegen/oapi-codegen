@@ -228,6 +228,23 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /reserved-go-keyword-parameters/{type}:
+    get:
+        operationId: ReservedGoKeywordParameters
+        description: Parameters can be named after Go keywords
+        parameters:
+          - name: type
+            in: path
+            required: true
+            schema:
+                type: string
+        responses:
+          200:
+            description: OK
+            content:
+              text/plain:
+                schema:
+                  type: string
 components:
   responses:
     badrequest:

@@ -263,7 +263,11 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 
 // This outputs a string array
 func toStringArray(sarr []string) string {
-	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
+	s := strings.Join(sarr, `","`)
+	if len(s) > 0 {
+		s = `"` + s + `"`
+	}
+	return `[]string{` + s + `}`
 }
 
 func stripNewLines(s string) string {

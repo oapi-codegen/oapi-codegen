@@ -126,8 +126,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoName]); err == nil {
+	if _, ok := pd.Spec.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(pd.Spec.Extensions[extGoName]); err == nil {
 			goName = extGoFieldName
 		}
 	}
@@ -663,6 +663,17 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
+			if contentType == "application/x-www-form-urlencoded" {
+				// Apply the appropriate structure tag if the request
+				// schema was defined under the operations' section.
+				for i := range bodySchema.Properties {
+					bodySchema.Properties[i].NeedsFormTag = true
+				}
+
+				// Regenerate the Golang struct adding the new form tag.
+				bodySchema.GoType = GenStructFromSchema(bodySchema)
+			}
+
 			td := TypeDefinition{
 				TypeName: bodyTypeName,
 				Schema:   bodySchema,
@@ -825,12 +836,12 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
-			Description:    param.Spec.Description,
-			JsonFieldName:  param.ParamName,
-			Required:       param.Required,
-			Schema:         pSchema,
-			NeedsFormTag:   param.Style() == "form",
-			ExtensionProps: &param.Spec.ExtensionProps,
+			Description:   param.Spec.Description,
+			JsonFieldName: param.ParamName,
+			Required:      param.Required,
+			Schema:        pSchema,
+			NeedsFormTag:  param.Style() == "form",
+			Extensions:    param.Spec.Extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
