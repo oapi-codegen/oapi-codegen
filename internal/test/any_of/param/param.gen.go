@@ -15,6 +15,14 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 )
 
+// Defines values for GetTestParamsTest31.
+const (
+	Value0 GetTestParamsTest31 = "value0"
+	Value1 GetTestParamsTest31 = "value1"
+	Value2 GetTestParamsTest31 = "value2"
+	Value3 GetTestParamsTest31 = "value3"
+)
+
 // Test defines model for test.
 type Test struct {
 	union json.RawMessage
@@ -43,11 +51,28 @@ type Test20 = int
 // Test21 defines model for .
 type Test21 = string
 
+// Test3enum defines model for test3enum.
+type Test3enum struct {
+	union json.RawMessage
+}
+
+// Test3enum0 defines model for .
+type Test3enum0 = int
+
+// Test3enum1 defines model for .
+type Test3enum1 = string
+
 // GetTestParams defines parameters for GetTest.
 type GetTestParams struct {
 	Test  *Test    `form:"test,omitempty" json:"test,omitempty"`
 	Test2 *[]Test2 `form:"test2,omitempty" json:"test2,omitempty"`
+	Test3 *struct {
+		union json.RawMessage
+	} `form:"test3,omitempty" json:"test3,omitempty"`
 }
+
+// GetTestParamsTest31 defines parameters for GetTest.
+type GetTestParamsTest31 GetTestParamsTest3
 
 // AsTest0 returns the union data inside the Test as a Test0
 func (t Test) AsTest0() (Test0, error) {
@@ -169,6 +194,68 @@ func (t Test2) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Test2) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTest3enum0 returns the union data inside the Test3enum as a Test3enum0
+func (t Test3enum) AsTest3enum0() (Test3enum0, error) {
+	var body Test3enum0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTest3enum0 overwrites any union data inside the Test3enum as the provided Test3enum0
+func (t *Test3enum) FromTest3enum0(v Test3enum0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTest3enum0 performs a merge with any union data inside the Test3enum, using the provided Test3enum0
+func (t *Test3enum) MergeTest3enum0(v Test3enum0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTest3enum1 returns the union data inside the Test3enum as a Test3enum1
+func (t Test3enum) AsTest3enum1() (Test3enum1, error) {
+	var body Test3enum1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTest3enum1 overwrites any union data inside the Test3enum as the provided Test3enum1
+func (t *Test3enum) FromTest3enum1(v Test3enum1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTest3enum1 performs a merge with any union data inside the Test3enum, using the provided Test3enum1
+func (t *Test3enum) MergeTest3enum1(v Test3enum1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Test3enum) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Test3enum) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -302,6 +389,22 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 	if params.Test2 != nil {
 
 		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.Test3 != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test3", runtime.ParamLocationQuery, *params.Test3); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err

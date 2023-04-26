@@ -17,6 +17,18 @@ paths:
           type: array
           items:
             $ref: '#/components/schemas/test2'
+      - name: test3
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - "$ref": "#/components/schemas/test3enum"
+          - type: string
+            enum:
+            - value0
+            - value1
+            - value2
+            - value3
 components:
   schemas:
     test:
@@ -37,6 +49,10 @@ components:
             item3:
               type: string
     test2:
+      oneOf:
+        - type: integer
+        - type: string
+    test3enum:
       oneOf:
         - type: integer
         - type: string
