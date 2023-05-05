@@ -34,6 +34,9 @@ type ServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(c *gin.Context)
 
+	// (GET /reserved-go-keyword-parameters/{type})
+	ReservedGoKeywordParameters(c *gin.Context, pType string)
+
 	// (POST /reusable-responses)
 	ReusableResponses(c *gin.Context)
 
@@ -99,6 +102,30 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *gin.Contex
 	}
 
 	siw.Handler.MultipleRequestAndResponseTypes(c)
+}
+
+// ReservedGoKeywordParameters operation middleware
+func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "type" -------------
+	var pType string
+
+	err = runtime.BindStyledParameter("simple", false, "type", c.Param("type"), &pType)
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter type: %s", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.ReservedGoKeywordParameters(c, pType)
 }
 
 // ReusableResponses operation middleware
@@ -257,6 +284,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample)
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
 	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.POST(options.BaseURL+"/text", wrapper.TextExample)
 	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
@@ -426,6 +454,24 @@ type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
 	return nil
+}
+
+type ReservedGoKeywordParametersRequestObject struct {
+	Type string `json:"type"`
+}
+
+type ReservedGoKeywordParametersResponseObject interface {
+	VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error
+}
+
+type ReservedGoKeywordParameters200TextResponse string
+
+func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(response))
+	return err
 }
 
 type ReusableResponsesRequestObject struct {
@@ -695,6 +741,9 @@ type StrictServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
+	// (GET /reserved-go-keyword-parameters/{type})
+	ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error)
+
 	// (POST /reusable-responses)
 	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
 
@@ -714,9 +763,8 @@ type StrictServerInterface interface {
 	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *gin.Context, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictGinHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictGinMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -849,6 +897,32 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		ctx.Error(err)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+	}
+}
+
+// ReservedGoKeywordParameters operation middleware
+func (sh *strictHandler) ReservedGoKeywordParameters(ctx *gin.Context, pType string) {
+	var request ReservedGoKeywordParametersRequestObject
+
+	request.Type = pType
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ReservedGoKeywordParameters(ctx, request.(ReservedGoKeywordParametersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReservedGoKeywordParameters")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
+		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -1046,21 +1120,23 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"AP//O0NNuucUAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

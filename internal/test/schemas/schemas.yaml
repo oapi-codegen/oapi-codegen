@@ -121,6 +121,19 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnumInObjInArray"
+  /issues/975:
+    get:
+      operationId: Issue975
+      description: |
+        Deprecated fields should get a proper comment
+      responses:
+        200:
+          description: A struct with deprecated fields with varying level of documentation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeprecatedProperty"
+
 components:
   schemas:
     GenericObject:
@@ -165,6 +178,32 @@ components:
             enum:
               - first
               - second
+    DeprecatedProperty:
+      type: object
+      required:
+        - newProp
+        - oldProp
+      properties:
+        newProp:
+          type: string
+          description: Use this now!
+        oldProp1:
+          type: string
+          deprecated: true
+          # description: No description on this one to test generation in that case
+        oldProp2:
+          type: string
+          deprecated: true
+          description: It used to do this and that
+        oldProp3:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+        oldProp4:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+          description: It used to do this and that
   parameters:
     StringInPath:
       name: str
@@ -183,4 +222,3 @@ components:
         JWT-format access token.
 security:
   - access-token: [ ]
-

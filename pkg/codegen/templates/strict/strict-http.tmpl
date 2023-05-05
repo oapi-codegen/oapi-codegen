@@ -1,6 +1,5 @@
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
     RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -35,8 +34,7 @@ type strictHandler struct {
         var request {{$opid | ucFirst}}RequestObject
 
         {{range .PathParams -}}
-            {{$varName := .GoVariableName -}}
-            request.{{$varName | ucFirst}} = {{$varName}}
+            request.{{.GoName}} = {{.GoVariableName}}
         {{end -}}
 
         {{if .RequiresParamObject -}}

@@ -1,0 +1,15 @@
+{
+  "title": "node",
+  "type": "object",
+  "description": "Represents a node",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uri-reference"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$"
+    }
+  }
+}

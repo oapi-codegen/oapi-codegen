@@ -34,9 +34,10 @@ const (
 )
 
 var (
-	contentTypesJSON = []string{echo.MIMEApplicationJSON, "text/x-json", "application/problem+json"}
-	contentTypesYAML = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML  = []string{echo.MIMEApplicationXML, echo.MIMETextXML, "application/problems+xml"}
+	contentTypesJSON    = []string{echo.MIMEApplicationJSON, "text/x-json", "application/problem+json"}
+	contentTypesHalJSON = []string{"application/hal+json"}
+	contentTypesYAML    = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
+	contentTypesXML     = []string{echo.MIMEApplicationXML, echo.MIMETextXML, "application/problems+xml"}
 
 	responseTypeSuffix = "Response"
 
@@ -263,7 +264,11 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 
 // This outputs a string array
 func toStringArray(sarr []string) string {
-	return `[]string{"` + strings.Join(sarr, `","`) + `"}`
+	s := strings.Join(sarr, `","`)
+	if len(s) > 0 {
+		s = `"` + s + `"`
+	}
+	return `[]string{` + s + `}`
 }
 
 func stripNewLines(s string) string {
