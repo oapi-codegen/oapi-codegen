@@ -433,6 +433,18 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
+
+func TestTypeDefinitionsEquivalent(t *testing.T) {
+	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &openapi3.Schema{},
+	}}
+	def2 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &openapi3.Schema{},
+	}}
+	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
+}
+
+
 func TestRefPathToObjName(t *testing.T) {
 	t.Parallel()
 

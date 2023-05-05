@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"go/token"
 	"net/url"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -922,5 +923,5 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
-	return t1.Schema.OAPISchema == t2.Schema.OAPISchema
+	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
