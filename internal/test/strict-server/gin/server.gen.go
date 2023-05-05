@@ -54,9 +54,6 @@ type ServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(c *gin.Context, params HeadersExampleParams)
-
-	// (POST /with-union)
-	UnionExample(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -257,19 +254,6 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 	siw.Handler.HeadersExample(c, params)
 }
 
-// UnionExample operation middleware
-func (siw *ServerInterfaceWrapper) UnionExample(c *gin.Context) {
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		middleware(c)
-		if c.IsAborted() {
-			return
-		}
-	}
-
-	siw.Handler.UnionExample(c)
-}
-
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -307,7 +291,6 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
-	router.POST(options.BaseURL+"/with-union", wrapper.UnionExample)
 }
 
 type BadrequestResponse struct {
@@ -746,51 +729,6 @@ func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(w http
 	return nil
 }
 
-type UnionExampleRequestObject struct {
-	Body *UnionExampleJSONRequestBody
-}
-
-type UnionExampleResponseObject interface {
-	VisitUnionExampleResponse(w http.ResponseWriter) error
-}
-
-type UnionExample200ResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-
-type UnionExample200JSONResponse struct {
-	Body struct {
-		union json.RawMessage
-	}
-	Headers UnionExample200ResponseHeaders
-}
-
-func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body.union)
-}
-
-type UnionExample400Response = BadrequestResponse
-
-func (response UnionExample400Response) VisitUnionExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
-	return nil
-}
-
-type UnionExampledefaultResponse struct {
-	StatusCode int
-}
-
-func (response UnionExampledefaultResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
-	return nil
-}
-
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -823,9 +761,6 @@ type StrictServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
-
-	// (POST /with-union)
-	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
 type StrictHandlerFunc = runtime.StrictGinHandlerFunc
@@ -1192,59 +1127,26 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	}
 }
 
-// UnionExample operation middleware
-func (sh *strictHandler) UnionExample(ctx *gin.Context) {
-	var request UnionExampleRequestObject
-
-	var body UnionExampleJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
-	}
-	request.Body = &body
-
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "UnionExample")
-	}
-
-	response, err := handler(ctx, request)
-
-	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
-	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
-		if err := validResponse.VisitUnionExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
-		}
-	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
-	}
-}
-
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"AP//O0NNuucUAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
