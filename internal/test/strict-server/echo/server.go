@@ -5,6 +5,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"mime/multipart"
 )
@@ -101,6 +102,22 @@ func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableRes
 	return ReusableResponses200JSONResponse{ReusableresponseJSONResponse: ReusableresponseJSONResponse{Body: *request.Body}}, nil
 }
 
+func (s StrictServer) ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error) {
+	return ReservedGoKeywordParameters200TextResponse(""), nil
+}
+
+func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error) {
+	union, err := json.Marshal(*request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return UnionExample200JSONResponse{
+		Body: struct{ union json.RawMessage }{
+			union: union,
+		},
+	}, nil
+}
 func (s StrictServer) ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error) {
 	return ReservedGoKeywordParameters200TextResponse(""), nil
 }
