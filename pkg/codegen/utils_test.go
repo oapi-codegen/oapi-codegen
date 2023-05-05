@@ -446,3 +446,45 @@ func TestRefPathToObjName(t *testing.T) {
 		assert.Equal(t, want, RefPathToObjName(in))
 	}
 }
+
+func Test_replaceInitialisms(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "empty string",
+			args: args{s: ""},
+			want: "",
+		},
+		{
+			name: "no initialism",
+			args: args{s: "foo"},
+			want: "foo",
+		},
+		{
+			name: "one initialism",
+			args: args{s: "fooId"},
+			want: "fooID",
+		},
+		{
+			name: "two initialism",
+			args: args{s: "fooIdBarApi"},
+			want: "fooIDBarAPI",
+		},
+		{
+			name: "already initialism",
+			args: args{s: "fooIDBarAPI"},
+			want: "fooIDBarAPI",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
+		})
+	}
+}

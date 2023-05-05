@@ -84,9 +84,10 @@ type OutputOptions struct {
 	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`   // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
 
-	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
-	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
-	ClientTypeName     string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
+	ExcludeSchemas      []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
+	ResponseTypeSuffix  string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
+	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

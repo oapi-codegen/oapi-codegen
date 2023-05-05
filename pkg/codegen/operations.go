@@ -483,8 +483,15 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
+
+	var toCamelCaseFunc func(string) string
+	if initialismOverrides {
+		toCamelCaseFunc = ToCamelCaseWithInitialism
+	} else {
+		toCamelCaseFunc = ToCamelCase
+	}
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
@@ -505,13 +512,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
+				op.OperationID = toCamelCaseFunc(op.OperationID)
 			}
 			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
@@ -550,7 +557,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  ToCamelCase(op.OperationID),
+				OperationId:  toCamelCaseFunc(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -588,7 +595,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string) (string, error) {
+func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
 	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
@@ -605,7 +612,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 		}
 	}
 
-	return ToCamelCase(operationId), nil
+	return toCamelCaseFunc(operationId), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
