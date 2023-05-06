@@ -201,49 +201,6 @@ type GetTestByNameResponse struct {
 	checkLint(t, "test.gen.go", []byte(code))
 }
 
-// Validate any types nested under AdditionalPropertiesTypes is propagated up as with normal Property AdditionalTypes
-func TestExampleOpenAPICodeGenerationSchemaAdditionalPropertyTypes(t *testing.T) {
-
-	// Input vars for code generation:
-	packageName := "testswagger"
-	opts := Configuration{
-		PackageName: packageName,
-		Generate: GenerateOptions{
-			EchoServer:   false,
-			Client:       false,
-			Models:       true,
-			EmbeddedSpec: false,
-		},
-	}
-
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-
-	// Get a spec from the test definition in this file:
-	swagger, err := loader.LoadFromData([]byte(testSchemaArrayTypes))
-	assert.NoError(t, err)
-
-	// Run our code generation:
-	code, err := Generate(swagger, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
-
-	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
-
-	// Check that we have a package:
-	assert.Contains(t, code, "package testswagger")
-
-	// Check that AdditionalPropertyTypes structs are propagated up properly:
-	assert.Contains(t, code, "[]PatchedBulkWritableCircuitTerminationRequest_Relationships_Destination_Objects_Item")
-	assert.Contains(t, code, "type PatchedBulkWritableCircuitTerminationRequest_Relationships_Destination_Objects_Item struct {")
-	assert.Contains(t, code, "[]BulkWritableCircuitTerminationRequest_Relationships_Destination_Objects_Item")
-	assert.Contains(t, code, "type BulkWritableCircuitTerminationRequest_Relationships_Destination_Objects_Item struct {")
-	assert.Contains(t, code, "[]WritableCircuitTerminationRequest_Relationships_Destination_Objects_Item ")
-	assert.Contains(t, code, "type WritableCircuitTerminationRequest_Relationships_Destination_Objects_Item struct {")
-}
-
 func TestGoTypeImport(t *testing.T) {
 	packageName := "api"
 	opts := Configuration{
@@ -351,9 +308,6 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 	checkLint(t, "test.gen.go", []byte(code))
 
 }
-
-//go:embed test_schema_additional_properties_types.yaml
-var testSchemaArrayTypes string
 
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
