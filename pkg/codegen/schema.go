@@ -71,6 +71,11 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 	for _, p := range s.Properties {
 		result = append(result, p.Schema.GetAdditionalTypeDefs()...)
 	}
+	// Some schema definitions may be used for key/value and not specify any properties, but provide properties
+	// within the additionalProperties. See test_schema_array_types.yaml in tests.
+	if s.AdditionalPropertiesType != nil {
+		result = append(result, s.AdditionalPropertiesType.GetAdditionalTypeDefs()...)
+	}
 	result = append(result, s.AdditionalTypes...)
 	return result
 }
