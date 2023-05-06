@@ -200,6 +200,19 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 	it := iv.Type()
 
 	switch it.Kind() {
+	case reflect.Map:
+		dstMap := reflect.MakeMap(iv.Type())
+		for key, value := range pathValues.fields {
+			dstKey := reflect.ValueOf(key)
+			dstVal := reflect.New(iv.Type().Elem())
+			err := assignPathValues(dstVal.Interface(), value)
+			if err != nil {
+				return fmt.Errorf("error binding map: %w", err)
+			}
+			dstMap.SetMapIndex(dstKey, dstVal.Elem())
+		}
+		iv.Set(dstMap)
+		return nil
 	case reflect.Slice:
 		sliceLength := len(pathValues.fields)
 		dstSlice := reflect.MakeSlice(it, sliceLength, sliceLength)
