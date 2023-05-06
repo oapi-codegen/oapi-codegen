@@ -37,8 +37,9 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options Configuration
-	spec    *openapi3.T
+	options       Configuration
+	spec          *openapi3.T
+	importMapping importMap
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -66,8 +67,6 @@ func (im importMap) GoImports() []string {
 	}
 	return goImports
 }
-
-var importMapping importMap
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
@@ -101,8 +100,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
-
-	importMapping = constructImportMapping(opts.ImportMapping)
+	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
@@ -237,7 +235,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, spec)
+		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -246,7 +244,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	externalImports := append(importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
+	externalImports := append(globalState.importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)

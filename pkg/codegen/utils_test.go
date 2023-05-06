@@ -134,12 +134,12 @@ func TestSortedRequestBodyKeys(t *testing.T) {
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	old := importMapping
-	importMapping = constructImportMapping(map[string]string{
+	old := globalState.importMapping
+	globalState.importMapping = constructImportMapping(map[string]string{
 		"doc.json":                    "externalref0",
 		"http://deepmap.com/doc.json": "externalref1",
 	})
-	defer func() { importMapping = old }()
+	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
 		name   string
