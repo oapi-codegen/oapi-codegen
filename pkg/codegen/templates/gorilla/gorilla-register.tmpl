@@ -43,7 +43,7 @@ ErrorHandlerFunc: options.ErrorHandlerFunc,
 }
 {{end}}
 {{range .}}
-r.HandleFunc(options.BaseURL+"{{.Path | swaggerUriToGorillaUri }}", wrapper.{{.OperationId}}).Methods("{{.Method }}")
+r.HandleFunc(options.BaseURL+"{{.Path | swaggerUriToGorillaUri }}", wrapper.{{.OperationId}}).Methods(http.Method{{.Method | title}})
 {{end}}
 return r
 }

@@ -225,7 +225,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{end}}
     queryURL.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest(http.Method{{.Method | title}}, queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }
