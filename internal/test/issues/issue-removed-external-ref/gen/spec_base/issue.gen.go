@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -244,9 +245,8 @@ type StrictServerInterface interface {
 	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) (PostNoTroubleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"go/token"
 	"net/url"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -158,6 +159,24 @@ func ToCamelCase(str string) string {
 		_, capNext = separatorSet[v]
 	}
 	return n
+}
+
+func ToCamelCaseWithInitialism(str string) string {
+	return replaceInitialism(ToCamelCase(str))
+}
+
+func replaceInitialism(s string) string {
+	// These strings do not apply CamelCase
+	// Do not do CamelCase when these characters match when the preceding character is lowercase
+	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
+	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
+	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
+		// If the preceding character is lowercase, do not do CamelCase
+		if unicode.IsLower(rune(s[0])) {
+			return s
+		}
+		return strings.ToUpper(s)
+	})
 }
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
@@ -350,7 +369,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	if goImport, ok := importMapping[remoteComponent]; !ok {
+	if goImport, ok := globalState.importMapping[remoteComponent]; !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
 		goType, err := refPathToGoType("#"+flatComponent, false)
@@ -904,5 +923,5 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
-	return t1.Schema.OAPISchema == t2.Schema.OAPISchema
+	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
