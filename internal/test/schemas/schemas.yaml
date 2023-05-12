@@ -204,6 +204,19 @@ components:
           deprecated: true
           x-deprecated-reason: Use NewProp instead!
           description: It used to do this and that
+    OuterTypeWithAnonymousInner:
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          x-go-type-name: InnerRenamedAnonymousObject
+          properties:
+            id:
+              type: integer
+          required: [ id ]
+      required: [ name, inner ]
   parameters:
     StringInPath:
       name: str

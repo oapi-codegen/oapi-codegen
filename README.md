@@ -556,6 +556,10 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-type-name`: This property allows for assigning a Go type name to some part of a schema,
+  such as generating a type name for an anonymous object inside another object, or renaming
+  an enum. It differs from `x-go-type`, in that it doesn't completely replace some type reference,
+  but simply names it.
 - `x-go-json-ignore`: sets tag to `-` to ignore the field in json completely.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that

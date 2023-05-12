@@ -5,3 +5,5 @@ generate:
   models: true
   embedded-spec: true
 output: schemas.gen.go
+output-options:
+  skip-prune: true

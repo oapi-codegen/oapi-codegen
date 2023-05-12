@@ -262,7 +262,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
-	// Check for custom Go type extension
+	// Check x-go-type, which will completely override the definition of this
+	// schema with the provided type.
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
@@ -270,6 +271,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		outSchema.GoType = typeName
 		outSchema.DefineViaAlias = true
+
 		return outSchema, nil
 	}
 
@@ -407,6 +409,28 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
 		}
+
+		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
+		// create a type definition for the named type, and use the named type in place
+		// of this schema.
+		if extension, ok := schema.Extensions[extGoTypeName]; ok {
+			typeName, err := extTypeName(extension)
+			if err != nil {
+				return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+			}
+
+			newTypeDef := TypeDefinition{
+				TypeName: typeName,
+				Schema:   outSchema,
+			}
+			outSchema = Schema{
+				Description:     newTypeDef.Schema.Description,
+				GoType:          typeName,
+				DefineViaAlias:  true,
+				AdditionalTypes: []TypeDefinition{newTypeDef},
+			}
+		}
+
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
