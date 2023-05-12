@@ -155,7 +155,7 @@ func main() {
 			t := true
 			oldConfigStyle = &t
 		} else if oldErr != nil && newErr != nil {
-			errExit("error parsing configuration style as old version or new version: %v\n", err)
+			errExit("error parsing configuration style as old version or new version\n\nerror when parsing using old config version:\n%v\n\nerror when parsing using new config version:\n%v\n", oldErr, newErr)
 		}
 		// Else we fall through, and we still don't know, so we need to infer it from flags.
 	}
