@@ -19,7 +19,10 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
+	"os"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -126,13 +129,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
-	// Override built-in templates with user-provided versions
-	for _, tpl := range t.Templates() {
-		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
-			utpl := t.New(tpl.Name())
-			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
-				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
-			}
+	// load user-provided templates. Will Override built-in versions.
+	for name, template := range opts.OutputOptions.UserTemplates {
+		utpl := t.New(name)
+
+		txt, err := GetUserTemplateText(template)
+		if err != nil {
+			return "", fmt.Errorf("error loading user-provided template %q: %w", name, err)
+		}
+
+		_, err = utpl.Parse(txt)
+		if err != nil {
+			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
 		}
 	}
 
@@ -813,6 +821,44 @@ func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
 	return strings.Replace(goCode, "\uFEFF", "", -1)
+}
+
+// GetUserTemplateText attempts to retrieve the template text from a passed in URL or file
+// path when inputData is more than one line.
+// This function will attempt to load a file first, and if it fails, will try to get the
+// data from the remote endpoint.
+func GetUserTemplateText(inputData string) (template string, err error) {
+	//if the input data is more than one line, assume its a template and return that data.
+	if strings.Contains(inputData, "\n") {
+		return inputData, nil
+	}
+
+	//load data from file
+	data, err := os.ReadFile(inputData)
+	//return data if found and loaded
+	if err == nil {
+		return string(data), nil
+	}
+
+	//check for non "not found" errors
+	if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
+	}
+
+	//attempt to get data from url
+	resp, err := http.Get(inputData)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
+	}
+	data, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body from GET %s: %w", inputData, err)
+	}
+
+	return string(data), nil
 }
 
 // LoadTemplates loads all of our template files into a text/template. The

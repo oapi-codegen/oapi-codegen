@@ -793,3 +793,54 @@ on-the-fly at run time. Example:
         -templates my-templates/ \
         -generate types,client \
         petstore-expanded.yaml
+
+When using the configuration file, it is possible to provide templates directly
+as text, as a local path, or as a URL. If the data provided to the
+configuration file is more than one line, the local path and URL checks will be
+ignored and will be treated as raw template text. If one line, the string
+will be used to check for a local file, followed by checking performing a HTTP
+GET request. If the file lookup returns any error other than not found, or the
+HTTP request returns a non 200 response code, the generator will error.
+
+⚠️ Warning: If using urls that tracks against git repositories such as
+`raw.githubusercontent.com`, it is strongly encouraged to use a tag or a hash
+instead of a branch like `main`. Tracking a branch can lead to unexpected API
+drift, and loss of the ability to reproduce a build.
+
+Examples: 
+```yaml
+output: api.gen.go
+package: api
+output-options:
+  user-templates:
+    # using a local file
+    client-with-responses.tmpl: /home/username/workspace/templatesProject/my-client-with-responses.tmpl
+
+    # The following are referencing a versuion of the default
+    # client-with-responses.tmpl file, but loaded in through 
+    # github's raw.githubusercontent.com. The general form 
+    # to use raw.githubusercontent.com is as follows
+    # https://raw.githubusercontent.com/<username>/<project>/<hash|tag|branch>/path/to/template/template.tmpl
+
+    # using raw.githubusercontent.com with a hash
+    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/7b010099dcf1192b3bfaa3898b5f375bb9590ddf/pkg/codegen/templates/client-with-responses.tmpl
+    # using raw.githubusercontent.com with a tag
+    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/v1.12.4/pkg/codegen/templates/client-with-responses.tmpl
+    # using raw.githubusercontent.com with a branch
+    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
+
+    #This example is directly embedding the template into the config file.
+    client-with-responses.tmpl: |
+        // ClientWithResponses builds on ClientInterface to offer response payloads
+        type ClientWithResponses struct {
+            ClientInterface
+        }
+        ...
+    # template shortened for brevity
+
+```
+
+Using the configuration file to load in templates **will** load in templates 
+with names other than those defined by the built in templates. These user
+templates will not be called unless the user overrides a built in template to
+call them however.
