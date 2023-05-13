@@ -661,7 +661,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if IsGoTypeReference(content.Schema.Ref) {
+		if content.Schema != nil && IsGoTypeReference(content.Schema.Ref) {
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(content.Schema.Ref)
 			if err != nil {
