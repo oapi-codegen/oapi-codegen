@@ -445,6 +445,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 		switch opt {
 		case "chi-server", "chi":
 			opts.ChiServer = true
+		case "fiber-server", "fiber":
+			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
 		case "gin", "gin-server":
