@@ -87,7 +87,7 @@
                     if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil); err != nil {
                         return err
                     } else {
-                        _, err := ctx.Write([]byte(form.Encode()))
+                        _, err := ctx.WriteString(form.Encode())
                         return err
                     }
                 {{else if eq .NameTag "Multipart" -}}

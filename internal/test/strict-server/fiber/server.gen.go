@@ -301,7 +301,7 @@ func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultiple
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
 	} else {
-		_, err := ctx.Write([]byte(form.Encode()))
+		_, err := ctx.WriteString(form.Encode())
 		return err
 	}
 }
@@ -543,7 +543,7 @@ func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleRespo
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
 	} else {
-		_, err := ctx.Write([]byte(form.Encode()))
+		_, err := ctx.WriteString(form.Encode())
 		return err
 	}
 }
