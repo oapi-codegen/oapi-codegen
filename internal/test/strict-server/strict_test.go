@@ -18,8 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
-	chiAPI "github.com/gin-gonic/gin"
+	chiAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
 	clientAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
 	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
 	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
