@@ -42,7 +42,7 @@ func BindStringToObject(src string, dst interface{}) error {
 		t = v.Type()
 	}
 
-	// For some optioinal args
+	// For some optional args
 	if t.Kind() == reflect.Ptr {
 		if v.IsNil() {
 			v.Set(reflect.New(t.Elem()))
