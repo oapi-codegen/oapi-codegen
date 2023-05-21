@@ -54,6 +54,17 @@ func (pd *ParameterDefinition) JsonTag() string {
 	}
 }
 
+// YamlTag generates the YAML annotation to map GoType to yaml type name. If Parameter
+// Foo is marshaled to yaml as "foo", this will create the annotation
+// 'yaml:"foo"'
+func (pd *ParameterDefinition) YamlTag() string {
+	if pd.Required {
+		return fmt.Sprintf("`yaml:\"%s\"`", pd.ParamName)
+	} else {
+		return fmt.Sprintf("`yaml:\"%s,omitempty\"`", pd.ParamName)
+	}
+}
+
 func (pd *ParameterDefinition) IsJson() bool {
 	p := pd.Spec
 	if len(p.Content) == 1 {

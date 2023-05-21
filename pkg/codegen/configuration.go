@@ -85,6 +85,7 @@ type OutputOptions struct {
 	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
 
 	ExcludeSchemas      []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
+	ExcludeDepreciated  bool     `yaml:"exclude-depreciated,omitempty"`  // Exclude operations from generation if they are depreciated. Ignored if false or blank.
 	ResponseTypeSuffix  string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides

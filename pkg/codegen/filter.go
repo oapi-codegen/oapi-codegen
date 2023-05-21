@@ -15,12 +15,14 @@ func excludeOperationsWithTags(paths openapi3.Paths, tags []string) {
 	includeOperationsWithTags(paths, tags, true)
 }
 
-func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
+type OperationPredicate func(op *openapi3.Operation) bool
+
+func includeOperations(paths openapi3.Paths, filter OperationPredicate, exclude bool) {
 	for _, pathItem := range paths {
 		ops := pathItem.Operations()
 		names := make([]string, 0, len(ops))
 		for name, op := range ops {
-			if operationHasTag(op, tags) == exclude {
+			if filter(op) == exclude {
 				names = append(names, name)
 			}
 		}
@@ -28,6 +30,11 @@ func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool
 			pathItem.SetOperation(name, nil)
 		}
 	}
+}
+
+
+func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
+	return includeOperations(paths, func(op *openapi3.Operation) { return operationHasTag(op, tags)} )
 }
 
 // operationHasTag returns true if the operation is tagged with any of tags
@@ -43,4 +50,13 @@ func operationHasTag(op *openapi3.Operation, tags []string) bool {
 		}
 	}
 	return false
+}
+
+func excludeOperationsIfDepreciated(paths openapi3.Paths) {
+	return includeOperations(paths, func(op *openapi3.Operation) {
+		if op == nil {
+			return false
+		}
+		return op.Deprecated
+	}, false)
 }

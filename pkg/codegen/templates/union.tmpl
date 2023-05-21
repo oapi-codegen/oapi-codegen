@@ -62,7 +62,7 @@
     {{if $discriminator}}
         func (t {{.TypeName}}) Discriminator() (string, error) {
             var discriminator struct {
-                Discriminator string {{$discriminator.JSONTag}}
+                Discriminator string {{$discriminator.JSONTag}} {{$discriminator.YAMLTag}}
             }
             err := json.Unmarshal(t.union, &discriminator)
             return discriminator.Discriminator, err

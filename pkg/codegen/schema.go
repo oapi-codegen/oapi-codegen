@@ -193,6 +193,10 @@ func (d *Discriminator) JSONTag() string {
 	return fmt.Sprintf("`json:\"%s\"`", d.Property)
 }
 
+func (d *Discriminator) YAMLTag() string {
+	return fmt.Sprintf("`yaml:\"%s\"`", d.Property)
+}
+
 func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
 }
