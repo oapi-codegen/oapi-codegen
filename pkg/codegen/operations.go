@@ -48,20 +48,9 @@ func (pd ParameterDefinition) TypeDef() string {
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
 	if pd.Required {
-		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
+		return fmt.Sprintf("`json:\"%s\" yaml:\"%s\"`", pd.ParamName, pd.ParamName)
 	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
-	}
-}
-
-// YamlTag generates the YAML annotation to map GoType to yaml type name. If Parameter
-// Foo is marshaled to yaml as "foo", this will create the annotation
-// 'yaml:"foo"'
-func (pd *ParameterDefinition) YamlTag() string {
-	if pd.Required {
-		return fmt.Sprintf("`yaml:\"%s\"`", pd.ParamName)
-	} else {
-		return fmt.Sprintf("`yaml:\"%s,omitempty\"`", pd.ParamName)
+		return fmt.Sprintf("`json:\"%s,omitempty\" yaml:\"%s,omitempty\"`", pd.ParamName, pd.ParamName)
 	}
 }
 

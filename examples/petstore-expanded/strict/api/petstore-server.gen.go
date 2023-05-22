@@ -336,7 +336,7 @@ func (response AddPetdefaultJSONResponse) VisitAddPetResponse(w http.ResponseWri
 }
 
 type DeletePetRequestObject struct {
-	Id int64 `json:"id"`
+	Id int64 `json:"id" yaml:"id"`
 }
 
 type DeletePetResponseObject interface {
@@ -364,7 +364,7 @@ func (response DeletePetdefaultJSONResponse) VisitDeletePetResponse(w http.Respo
 }
 
 type FindPetByIDRequestObject struct {
-	Id int64 `json:"id"`
+	Id int64 `json:"id" yaml:"id"`
 }
 
 type FindPetByIDResponseObject interface {

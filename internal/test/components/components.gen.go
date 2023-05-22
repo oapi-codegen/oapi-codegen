@@ -1350,7 +1350,7 @@ func (t *OneOfObject13) MergeOneOfVariant6(v OneOfVariant6) error {
 
 func (t OneOfObject13) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"type"`
+		Discriminator string `json:"type" yaml:"type"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -1727,7 +1727,7 @@ func (t *OneOfObject5) MergeOneOfVariant5(v OneOfVariant5) error {
 
 func (t OneOfObject5) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"discriminator"`
+		Discriminator string `json:"discriminator" yaml:"discriminator"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -1816,7 +1816,7 @@ func (t *OneOfObject6) MergeOneOfVariant5(v OneOfVariant5) error {
 
 func (t OneOfObject6) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"discriminator"`
+		Discriminator string `json:"discriminator" yaml:"discriminator"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -1905,7 +1905,7 @@ func (t *OneOfObject61) MergeOneOfVariant5(v OneOfVariant5) error {
 
 func (t OneOfObject61) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"discriminator"`
+		Discriminator string `json:"discriminator" yaml:"discriminator"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -1994,7 +1994,7 @@ func (t *OneOfObject62) MergeOneOfVariant51(v OneOfVariant51) error {
 
 func (t OneOfObject62) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"discriminator"`
+		Discriminator string `json:"discriminator" yaml:"discriminator"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -2245,7 +2245,7 @@ func (t *OneOfObject9) MergeOneOfVariant6(v OneOfVariant6) error {
 
 func (t OneOfObject9) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"type"`
+		Discriminator string `json:"type" yaml:"type"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err

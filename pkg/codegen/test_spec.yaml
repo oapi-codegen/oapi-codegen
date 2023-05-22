@@ -93,6 +93,7 @@ paths:
         - enum
       summary: References enum
       operationId: getEnum
+      deprecated: true
       responses:
         200:
           description: Success

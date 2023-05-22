@@ -1,5 +1,8 @@
 package codegen
 
+import (
+	"fmt"
+)
 import "github.com/getkin/kin-openapi/openapi3"
 
 func filterOperationsByTag(swagger *openapi3.T, opts Configuration) {
@@ -34,7 +37,7 @@ func includeOperations(paths openapi3.Paths, filter OperationPredicate, exclude 
 
 
 func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
-	return includeOperations(paths, func(op *openapi3.Operation) { return operationHasTag(op, tags)} )
+	includeOperations(paths, func(op *openapi3.Operation) bool { return operationHasTag(op, tags)}, exclude)
 }
 
 // operationHasTag returns true if the operation is tagged with any of tags
@@ -53,10 +56,11 @@ func operationHasTag(op *openapi3.Operation, tags []string) bool {
 }
 
 func excludeOperationsIfDepreciated(paths openapi3.Paths) {
-	return includeOperations(paths, func(op *openapi3.Operation) {
+	includeOperations(paths, func(op *openapi3.Operation) bool {
 		if op == nil {
 			return false
 		}
+		fmt.Printf("%s - Deprecated: %t\n", op.Summary, op.Deprecated)
 		return op.Deprecated
-	}, false)
+	}, true)
 }

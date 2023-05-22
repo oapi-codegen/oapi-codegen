@@ -586,7 +586,7 @@ func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestA
 }
 
 type ReservedGoKeywordParametersRequestObject struct {
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 }
 
 type ReservedGoKeywordParametersResponseObject interface {
