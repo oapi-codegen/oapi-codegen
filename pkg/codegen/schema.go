@@ -677,11 +677,13 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		if !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
+			fieldTags["yaml"] = p.JsonFieldName
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
 			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName + ",omitempty"
 			}

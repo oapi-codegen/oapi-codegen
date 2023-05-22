@@ -1,8 +1,5 @@
 package codegen
 
-import (
-	"fmt"
-)
 import "github.com/getkin/kin-openapi/openapi3"
 
 func filterOperationsByTag(swagger *openapi3.T, opts Configuration) {
@@ -60,7 +57,6 @@ func excludeOperationsIfDepreciated(paths openapi3.Paths) {
 		if op == nil {
 			return false
 		}
-		fmt.Printf("%s - Deprecated: %t\n", op.Summary, op.Deprecated)
 		return op.Deprecated
 	}, true)
 }
