@@ -69,7 +69,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           params.{{.GoName}} = {{if not .Required}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
-           siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+           siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found"), http.StatusBadRequest)
            return
         }{{end}}
       {{end}}
@@ -118,7 +118,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %s", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found"), http.StatusBadRequest)
             return
         }{{end}}
 
