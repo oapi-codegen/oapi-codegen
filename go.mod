@@ -11,7 +11,7 @@ require (
 	github.com/labstack/echo/v4 v4.10.2
 	github.com/lestrrat-go/jwx v1.2.25
 	github.com/matryer/moq v0.3.1
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	golang.org/x/text v0.9.0
 	golang.org/x/tools v0.8.0
 	gopkg.in/yaml.v2 v2.4.0
