@@ -25,9 +25,9 @@ type Person struct {
 // PersonProperties These are fields that specify a person. They are all optional, and
 // would be used by an `Edit` style API endpoint, where each is optional.
 type PersonProperties struct {
-	FirstName          *string `json:"FirstName,omitempty"`
-	GovernmentIDNumber *int64  `json:"GovernmentIDNumber,omitempty"`
-	LastName           *string `json:"LastName,omitempty"`
+	FirstName          *string `json:"FirstName,omitempty" yaml:"FirstName,omitempty"`
+	GovernmentIDNumber *int64  `json:"GovernmentIDNumber,omitempty" yaml:"GovernmentIDNumber,omitempty"`
+	LastName           *string `json:"LastName,omitempty" yaml:"LastName,omitempty"`
 }
 
 // PersonWithID defines model for PersonWithID.
@@ -35,7 +35,7 @@ type PersonWithID struct {
 	// Embedded struct due to allOf(#/components/schemas/Person)
 	Person `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
-	ID int64 `json:"ID"`
+	ID int64 `json:"ID" yaml:"ID"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

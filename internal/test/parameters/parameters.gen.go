@@ -29,48 +29,48 @@ const (
 
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
-	Id      int    `json:"Id"`
-	IsAdmin bool   `json:"IsAdmin"`
-	Object  Object `json:"Object"`
+	Id      int    `json:"Id" yaml:"Id"`
+	IsAdmin bool   `json:"IsAdmin" yaml:"IsAdmin"`
+	Object  Object `json:"Object" yaml:"Object"`
 }
 
 // Object defines model for Object.
 type Object struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" yaml:"firstName"`
+	Role      string `json:"role" yaml:"role"`
 }
 
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// P primitive
-	P *int32 `form:"p,omitempty" json:"p,omitempty"`
+	P *int32 `form:"p,omitempty" json:"p,omitempty" yaml:"p,omitempty"`
 
 	// Ep primitive
-	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
+	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty" yaml:"ep,omitempty"`
 
 	// Ea exploded array
-	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
+	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty" yaml:"ea,omitempty"`
 
 	// A array
-	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
+	A *[]int32 `form:"a,omitempty" json:"a,omitempty" yaml:"a,omitempty"`
 
 	// Eo exploded object
-	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
+	Eo *Object `form:"eo,omitempty" json:"eo,omitempty" yaml:"eo,omitempty"`
 
 	// O object
-	O *Object `form:"o,omitempty" json:"o,omitempty"`
+	O *Object `form:"o,omitempty" json:"o,omitempty" yaml:"o,omitempty"`
 
 	// Co complex object
-	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
+	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty" yaml:"co,omitempty"`
 
 	// N1s name starting with number
-	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
+	N1s *string `form:"1s,omitempty" json:"1s,omitempty" yaml:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
 type EnumParamsParams struct {
 	// EnumPathParam Parameter with enum values
-	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
+	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty" yaml:"enumPathParam,omitempty"`
 }
 
 // EnumParamsParamsEnumPathParam defines parameters for EnumParams.
@@ -79,64 +79,64 @@ type EnumParamsParamsEnumPathParam int32
 // GetHeaderParams defines parameters for GetHeader.
 type GetHeaderParams struct {
 	// XPrimitive primitive
-	XPrimitive *int32 `json:"X-Primitive,omitempty"`
+	XPrimitive *int32 `json:"X-Primitive,omitempty" yaml:"X-Primitive,omitempty"`
 
 	// XPrimitiveExploded primitive
-	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty"`
+	XPrimitiveExploded *int32 `json:"X-Primitive-Exploded,omitempty" yaml:"X-Primitive-Exploded,omitempty"`
 
 	// XArrayExploded exploded array
-	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty"`
+	XArrayExploded *[]int32 `json:"X-Array-Exploded,omitempty" yaml:"X-Array-Exploded,omitempty"`
 
 	// XArray array
-	XArray *[]int32 `json:"X-Array,omitempty"`
+	XArray *[]int32 `json:"X-Array,omitempty" yaml:"X-Array,omitempty"`
 
 	// XObjectExploded exploded object
-	XObjectExploded *Object `json:"X-Object-Exploded,omitempty"`
+	XObjectExploded *Object `json:"X-Object-Exploded,omitempty" yaml:"X-Object-Exploded,omitempty"`
 
 	// XObject object
-	XObject *Object `json:"X-Object,omitempty"`
+	XObject *Object `json:"X-Object,omitempty" yaml:"X-Object,omitempty"`
 
 	// XComplexObject complex object
-	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
+	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty" yaml:"X-Complex-Object,omitempty"`
 
 	// N1StartingWithNumber name starting with number
-	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
+	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty" yaml:"1-Starting-With-Number,omitempty"`
 }
 
 // GetDeepObjectParams defines parameters for GetDeepObject.
 type GetDeepObjectParams struct {
 	// DeepObj deep object
-	DeepObj ComplexObject `json:"deepObj"`
+	DeepObj ComplexObject `json:"deepObj" yaml:"deepObj"`
 }
 
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 	// Ea exploded array
-	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
+	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty" yaml:"ea,omitempty"`
 
 	// A array
-	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
+	A *[]int32 `form:"a,omitempty" json:"a,omitempty" yaml:"a,omitempty"`
 
 	// Eo exploded object
-	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
+	Eo *Object `form:"eo,omitempty" json:"eo,omitempty" yaml:"eo,omitempty"`
 
 	// O object
-	O *Object `form:"o,omitempty" json:"o,omitempty"`
+	O *Object `form:"o,omitempty" json:"o,omitempty" yaml:"o,omitempty"`
 
 	// Ep exploded primitive
-	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
+	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty" yaml:"ep,omitempty"`
 
 	// P primitive
-	P *int32 `form:"p,omitempty" json:"p,omitempty"`
+	P *int32 `form:"p,omitempty" json:"p,omitempty" yaml:"p,omitempty"`
 
 	// Ps primitive string
-	Ps *string `form:"ps,omitempty" json:"ps,omitempty"`
+	Ps *string `form:"ps,omitempty" json:"ps,omitempty" yaml:"ps,omitempty"`
 
 	// Co complex object
-	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
+	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty" yaml:"co,omitempty"`
 
 	// N1s name starting with number
-	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
+	N1s *string `form:"1s,omitempty" json:"1s,omitempty" yaml:"1s,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

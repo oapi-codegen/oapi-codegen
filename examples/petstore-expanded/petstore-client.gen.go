@@ -19,40 +19,40 @@ import (
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
-	Code int32 `json:"code"`
+	Code int32 `json:"code" yaml:"code"`
 
 	// Message Error message
-	Message string `json:"message"`
+	Message string `json:"message" yaml:"message"`
 }
 
 // NewPet defines model for NewPet.
 type NewPet struct {
 	// Name Name of the pet
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Tag Type of the pet
-	Tag *string `json:"tag,omitempty"`
+	Tag *string `json:"tag,omitempty" yaml:"tag,omitempty"`
 }
 
 // Pet defines model for Pet.
 type Pet struct {
 	// Id Unique id of the pet
-	Id int64 `json:"id"`
+	Id int64 `json:"id" yaml:"id"`
 
 	// Name Name of the pet
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 
 	// Tag Type of the pet
-	Tag *string `json:"tag,omitempty"`
+	Tag *string `json:"tag,omitempty" yaml:"tag,omitempty"`
 }
 
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// Tags tags to filter by
-	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty" yaml:"tags,omitempty"`
 
 	// Limit maximum number of results to return
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty" yaml:"limit,omitempty"`
 }
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.

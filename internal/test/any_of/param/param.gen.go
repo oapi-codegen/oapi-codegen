@@ -22,14 +22,14 @@ type Test struct {
 
 // Test0 defines model for .
 type Test0 struct {
-	Item1 string `json:"item1"`
-	Item2 string `json:"item2"`
+	Item1 string `json:"item1" yaml:"item1"`
+	Item2 string `json:"item2" yaml:"item2"`
 }
 
 // Test1 defines model for .
 type Test1 struct {
-	Item2 *string `json:"item2,omitempty"`
-	Item3 *string `json:"item3,omitempty"`
+	Item2 *string `json:"item2,omitempty" yaml:"item2,omitempty"`
+	Item3 *string `json:"item3,omitempty" yaml:"item3,omitempty"`
 }
 
 // Test2 defines model for test2.
@@ -45,8 +45,8 @@ type Test21 = string
 
 // GetTestParams defines parameters for GetTest.
 type GetTestParams struct {
-	Test  *Test    `form:"test,omitempty" json:"test,omitempty"`
-	Test2 *[]Test2 `form:"test2,omitempty" json:"test2,omitempty"`
+	Test  *Test    `form:"test,omitempty" json:"test,omitempty" yaml:"test,omitempty"`
+	Test2 *[]Test2 `form:"test2,omitempty" json:"test2,omitempty" yaml:"test2,omitempty"`
 }
 
 // AsTest0 returns the union data inside the Test as a Test0

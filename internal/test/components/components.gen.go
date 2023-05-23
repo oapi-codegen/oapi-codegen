@@ -94,34 +94,34 @@ const (
 
 // AdditionalPropertiesObject1 Has additional properties of type int
 type AdditionalPropertiesObject1 struct {
-	Id                   int            `json:"id"`
-	Name                 string         `json:"name"`
-	Optional             *string        `json:"optional,omitempty"`
+	Id                   int            `json:"id" yaml:"id"`
+	Name                 string         `json:"name" yaml:"name"`
+	Optional             *string        `json:"optional,omitempty" yaml:"optional,omitempty"`
 	AdditionalProperties map[string]int `json:"-"`
 }
 
 // AdditionalPropertiesObject2 Does not allow additional properties
 type AdditionalPropertiesObject2 struct {
-	Id   int    `json:"id"`
-	Name string `json:"name"`
+	Id   int    `json:"id" yaml:"id"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // AdditionalPropertiesObject3 Allows any additional property
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name" yaml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
 // AdditionalPropertiesObject4 Has anonymous field which has additional properties
 type AdditionalPropertiesObject4 struct {
-	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
-	Name                 string                            `json:"name"`
+	Inner                AdditionalPropertiesObject4_Inner `json:"inner" yaml:"inner"`
+	Name                 string                            `json:"name" yaml:"name"`
 	AdditionalProperties map[string]interface{}            `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name"`
+	Name                 string                 `json:"name" yaml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
@@ -165,9 +165,9 @@ type FunnyValues string
 
 // ObjectWithJsonField defines model for ObjectWithJsonField.
 type ObjectWithJsonField struct {
-	Name   string          `json:"name"`
-	Value1 json.RawMessage `json:"value1"`
-	Value2 json.RawMessage `json:"value2,omitempty"`
+	Name   string          `json:"name" yaml:"name"`
+	Value1 json.RawMessage `json:"value1" yaml:"value1"`
+	Value2 json.RawMessage `json:"value2,omitempty" yaml:"value2,omitempty"`
 }
 
 // OneOfObject1 oneOf with references and no discriminator
@@ -177,9 +177,9 @@ type OneOfObject1 struct {
 
 // OneOfObject10 fixed properties, variable required - will compile, but not much sense
 type OneOfObject10 struct {
-	One   *string `json:"one,omitempty"`
-	Three *bool   `json:"three,omitempty"`
-	Two   *int    `json:"two,omitempty"`
+	One   *string `json:"one,omitempty" yaml:"one,omitempty"`
+	Three *bool   `json:"three,omitempty" yaml:"three,omitempty"`
+	Two   *int    `json:"two,omitempty" yaml:"two,omitempty"`
 	union json.RawMessage
 }
 
@@ -219,7 +219,7 @@ type OneOfObject121 = float32
 
 // OneOfObject13 oneOf with fixed discriminator and other fields allowed
 type OneOfObject13 struct {
-	Type                 string                 `json:"type"`
+	Type                 string                 `json:"type" yaml:"type"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 	union                json.RawMessage
 }
@@ -231,7 +231,7 @@ type OneOfObject2 struct {
 
 // OneOfObject20 defines model for .
 type OneOfObject20 struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
 // OneOfObject21 defines model for .
@@ -242,7 +242,7 @@ type OneOfObject22 = bool
 
 // OneOfObject3 inline OneOf
 type OneOfObject3 struct {
-	Union *OneOfObject3_Union `json:"union,omitempty"`
+	Union *OneOfObject3_Union `json:"union,omitempty" yaml:"union,omitempty"`
 }
 
 // OneOfObject3_Union defines model for OneOfObject3.Union.
@@ -252,7 +252,7 @@ type OneOfObject3_Union struct {
 
 // OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshalling
 type OneOfObject4 struct {
-	FixedProperty *string `json:"fixedProperty,omitempty"`
+	FixedProperty *string `json:"fixedProperty,omitempty" yaml:"fixedProperty,omitempty"`
 	union         json.RawMessage
 }
 
@@ -286,19 +286,19 @@ type OneOfObject7_Item struct {
 
 // OneOfObject8 oneOf with fixed properties
 type OneOfObject8 struct {
-	Fixed *string `json:"fixed,omitempty"`
+	Fixed *string `json:"fixed,omitempty" yaml:"fixed,omitempty"`
 	union json.RawMessage
 }
 
 // OneOfObject9 oneOf with fixed descriminator
 type OneOfObject9 struct {
-	Type  string `json:"type"`
+	Type  string `json:"type" yaml:"type"`
 	union json.RawMessage
 }
 
 // OneOfVariant1 defines model for OneOfVariant1.
 type OneOfVariant1 struct {
-	Name string `json:"name"`
+	Name string `json:"name" yaml:"name"`
 }
 
 // OneOfVariant2 defines model for OneOfVariant2.
@@ -309,48 +309,48 @@ type OneOfVariant3 = bool
 
 // OneOfVariant4 defines model for OneOfVariant4.
 type OneOfVariant4 struct {
-	Discriminator string `json:"discriminator"`
-	Name          string `json:"name"`
+	Discriminator string `json:"discriminator" yaml:"discriminator"`
+	Name          string `json:"name" yaml:"name"`
 }
 
 // OneOfVariant5 defines model for OneOfVariant5.
 type OneOfVariant5 struct {
-	Discriminator string `json:"discriminator"`
-	Id            int    `json:"id"`
+	Discriminator string `json:"discriminator" yaml:"discriminator"`
+	Id            int    `json:"id" yaml:"id"`
 }
 
 // OneOfVariant6 defines model for OneOfVariant6.
 type OneOfVariant6 struct {
-	Values OneOfVariant2 `json:"values"`
+	Values OneOfVariant2 `json:"values" yaml:"values"`
 }
 
 // ReferenceToRenameMe When a Schema is renamed, $ref should refer to the new name
 type ReferenceToRenameMe struct {
 	// ToNewName This schema should be renamed via x-go-name when generating
-	NewName NewName `json:"ToNewName"`
+	NewName NewName `json:"ToNewName" yaml:"ToNewName"`
 }
 
 // NewName This schema should be renamed via x-go-name when generating
 type NewName struct {
-	Prop1 string `json:"prop1"`
-	Prop2 string `json:"prop2"`
+	Prop1 string `json:"prop1" yaml:"prop1"`
+	Prop2 string `json:"prop2" yaml:"prop2"`
 }
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName"`
+	FirstName string `json:"firstName" yaml:"firstName"`
 
 	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
 	// as it will not be included when it is sent from client to server.
-	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
-	Role                  string  `json:"role"`
-	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
+	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty" yaml:"readOnlyRequiredProp,omitempty"`
+	Role                  string  `json:"role" yaml:"role"`
+	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty" yaml:"writeOnlyRequiredProp,omitempty"`
 }
 
 // OneOfVariant51 defines model for one_of_variant51.
 type OneOfVariant51 struct {
-	Discriminator string `json:"discriminator"`
-	Id            int    `json:"id"`
+	Discriminator string `json:"discriminator" yaml:"discriminator"`
+	Id            int    `json:"id" yaml:"id"`
 }
 
 // EnumParam1 defines model for EnumParam1.
@@ -367,17 +367,17 @@ type RenamedParameterObject string
 
 // RenamedResponseObject defines model for ResponseObject.
 type RenamedResponseObject struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field" yaml:"Field"`
 }
 
 // RenamedRequestBody defines model for RequestBody.
 type RenamedRequestBody struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field" yaml:"Field"`
 }
 
 // EnsureEverythingIsReferencedJSONBody defines parameters for EnsureEverythingIsReferenced.
 type EnsureEverythingIsReferencedJSONBody struct {
-	Field SchemaObject `json:"Field"`
+	Field SchemaObject `json:"Field" yaml:"Field"`
 }
 
 // EnsureEverythingIsReferencedTextBody defines parameters for EnsureEverythingIsReferenced.
@@ -386,19 +386,19 @@ type EnsureEverythingIsReferencedTextBody = string
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
 	// P1 This parameter has additional properties
-	P1 map[string]interface{} `json:"p1"`
+	P1 map[string]interface{} `json:"p1" yaml:"p1"`
 
 	// P2 This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
-		Inner map[string]string `json:"inner"`
-	} `form:"p2" json:"p2"`
+		Inner map[string]string `json:"inner" yaml:"inner"`
+	} `form:"p2" json:"p2" yaml:"p2"`
 }
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
-	Inner                map[string]int         `json:"inner"`
-	Name                 string                 `json:"name"`
+	Inner                map[string]int         `json:"inner" yaml:"inner"`
+	Name                 string                 `json:"name" yaml:"name"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 

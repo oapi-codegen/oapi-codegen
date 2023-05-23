@@ -51,24 +51,24 @@ type CustomStringType = string
 // DeprecatedProperty defines model for DeprecatedProperty.
 type DeprecatedProperty struct {
 	// NewProp Use this now!
-	NewProp string `json:"newProp"`
+	NewProp string `json:"newProp" yaml:"newProp"`
 	// Deprecated:
-	OldProp1 *string `json:"oldProp1,omitempty"`
+	OldProp1 *string `json:"oldProp1,omitempty" yaml:"oldProp1,omitempty"`
 
 	// OldProp2 It used to do this and that
 	// Deprecated:
-	OldProp2 *string `json:"oldProp2,omitempty"`
+	OldProp2 *string `json:"oldProp2,omitempty" yaml:"oldProp2,omitempty"`
 	// Deprecated: Use NewProp instead!
-	OldProp3 *string `json:"oldProp3,omitempty"`
+	OldProp3 *string `json:"oldProp3,omitempty" yaml:"oldProp3,omitempty"`
 
 	// OldProp4 It used to do this and that
 	// Deprecated: Use NewProp instead!
-	OldProp4 *string `json:"oldProp4,omitempty"`
+	OldProp4 *string `json:"oldProp4,omitempty" yaml:"oldProp4,omitempty"`
 }
 
 // EnumInObjInArray defines model for EnumInObjInArray.
 type EnumInObjInArray = []struct {
-	Val *EnumInObjInArrayVal `json:"val,omitempty"`
+	Val *EnumInObjInArrayVal `json:"val,omitempty" yaml:"val,omitempty"`
 }
 
 // EnumInObjInArrayVal defines model for EnumInObjInArray.Val.
@@ -79,21 +79,21 @@ type GenericObject = map[string]interface{}
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
-	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable"`
-	Required            string  `json:"required"`
-	RequiredAndNullable *string `json:"requiredAndNullable"`
+	Optional            *string `json:"optional,omitempty" yaml:"optional,omitempty"`
+	OptionalAndNullable *string `json:"optionalAndNullable" yaml:"optionalAndNullable"`
+	Required            string  `json:"required" yaml:"required"`
+	RequiredAndNullable *string `json:"requiredAndNullable" yaml:"requiredAndNullable"`
 }
 
 // OuterTypeWithAnonymousInner defines model for OuterTypeWithAnonymousInner.
 type OuterTypeWithAnonymousInner struct {
-	Inner InnerRenamedAnonymousObject `json:"inner"`
-	Name  string                      `json:"name"`
+	Inner InnerRenamedAnonymousObject `json:"inner" yaml:"inner"`
+	Name  string                      `json:"name" yaml:"name"`
 }
 
 // InnerRenamedAnonymousObject defines model for .
 type InnerRenamedAnonymousObject struct {
-	Id int `json:"id"`
+	Id int `json:"id" yaml:"id"`
 }
 
 // StringInPath defines model for StringInPath.
@@ -104,7 +104,7 @@ type Issue9JSONBody = interface{}
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
-	Foo string `form:"foo" json:"foo"`
+	Foo string `form:"foo" json:"foo" yaml:"foo"`
 }
 
 // Issue185JSONRequestBody defines body for Issue185 for application/json ContentType.
@@ -735,13 +735,13 @@ type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+		AnyType1 *AnyType1 `json:"anyType1,omitempty" yaml:"anyType1,omitempty"`
 
 		// AnyType2 AnyType2 represents any type.
 		//
 		// This should be an interface{}
-		AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+		AnyType2         *AnyType2         `json:"anyType2,omitempty" yaml:"anyType2,omitempty"`
+		CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty" yaml:"customStringType,omitempty"`
 	}
 }
 
@@ -1048,13 +1048,13 @@ func ParseEnsureEverythingIsReferencedResponse(rsp *http.Response) (*EnsureEvery
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+			AnyType1 *AnyType1 `json:"anyType1,omitempty" yaml:"anyType1,omitempty"`
 
 			// AnyType2 AnyType2 represents any type.
 			//
 			// This should be an interface{}
-			AnyType2         *AnyType2         `json:"anyType2,omitempty"`
-			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+			AnyType2         *AnyType2         `json:"anyType2,omitempty" yaml:"anyType2,omitempty"`
+			CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty" yaml:"customStringType,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

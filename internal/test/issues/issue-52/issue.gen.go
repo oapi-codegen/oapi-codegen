@@ -25,13 +25,13 @@ type ArrayValue = []Value
 
 // Document defines model for Document.
 type Document struct {
-	Fields *map[string]Value `json:"fields,omitempty"`
+	Fields *map[string]Value `json:"fields,omitempty" yaml:"fields,omitempty"`
 }
 
 // Value defines model for Value.
 type Value struct {
-	ArrayValue  *ArrayValue `json:"arrayValue,omitempty"`
-	StringValue *string     `json:"stringValue,omitempty"`
+	ArrayValue  *ArrayValue `json:"arrayValue,omitempty" yaml:"arrayValue,omitempty"`
+	StringValue *string     `json:"stringValue,omitempty" yaml:"stringValue,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

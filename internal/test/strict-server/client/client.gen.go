@@ -18,7 +18,7 @@ import (
 
 // Example defines model for example.
 type Example struct {
-	Value *string `json:"value,omitempty"`
+	Value *string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // Reusableresponse defines model for reusableresponse.
@@ -32,8 +32,8 @@ type TextExampleTextBody = string
 
 // HeadersExampleParams defines parameters for HeadersExample.
 type HeadersExampleParams struct {
-	Header1 string `json:"header1"`
-	Header2 *int   `json:"header2,omitempty"`
+	Header1 string `json:"header1" yaml:"header1"`
+	Header2 *int   `json:"header2,omitempty" yaml:"header2,omitempty"`
 }
 
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.

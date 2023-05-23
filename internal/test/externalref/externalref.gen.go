@@ -19,9 +19,9 @@ import (
 
 // Container defines model for Container.
 type Container struct {
-	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
-	ObjectB *externalRef1.ObjectB   `json:"object_b,omitempty"`
-	ObjectC *map[string]interface{} `json:"object_c,omitempty"`
+	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty" yaml:"object_a,omitempty"`
+	ObjectB *externalRef1.ObjectB   `json:"object_b,omitempty" yaml:"object_b,omitempty"`
+	ObjectC *map[string]interface{} `json:"object_c,omitempty" yaml:"object_c,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

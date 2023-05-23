@@ -25,8 +25,8 @@ const (
 
 // Document defines model for Document.
 type Document struct {
-	Name   *string          `json:"name,omitempty"`
-	Status *Document_Status `json:"status,omitempty"`
+	Name   *string          `json:"name,omitempty" yaml:"name,omitempty"`
+	Status *Document_Status `json:"status,omitempty" yaml:"status,omitempty"`
 }
 
 // Document_Status defines model for Document.status.
@@ -34,7 +34,7 @@ type Document_Status string
 
 // DocumentStatus defines model for DocumentStatus.
 type DocumentStatus struct {
-	Value *string `json:"value,omitempty"`
+	Value *string `json:"value,omitempty" yaml:"value,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

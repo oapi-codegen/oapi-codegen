@@ -17,7 +17,7 @@ import (
 
 // ObjectB defines model for ObjectB.
 type ObjectB struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

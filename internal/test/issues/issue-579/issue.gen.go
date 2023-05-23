@@ -12,6 +12,6 @@ type AliasedDate = openapi_types.Date
 
 // Pet defines model for Pet.
 type Pet struct {
-	Born   *AliasedDate        `json:"born,omitempty"`
-	BornAt *openapi_types.Date `json:"born_at,omitempty"`
+	Born   *AliasedDate        `json:"born,omitempty" yaml:"born,omitempty"`
+	BornAt *openapi_types.Date `json:"born_at,omitempty" yaml:"born_at,omitempty"`
 }

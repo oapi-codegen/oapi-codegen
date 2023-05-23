@@ -17,25 +17,25 @@ import (
 
 // Person defines model for Person.
 type Person struct {
-	FirstName          string `json:"FirstName"`
-	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
-	LastName           string `json:"LastName"`
+	FirstName          string `json:"FirstName" yaml:"FirstName"`
+	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty" yaml:"GovernmentIDNumber,omitempty"`
+	LastName           string `json:"LastName" yaml:"LastName"`
 }
 
 // PersonProperties These are fields that specify a person. They are all optional, and
 // would be used by an `Edit` style API endpoint, where each is optional.
 type PersonProperties struct {
-	FirstName          *string `json:"FirstName,omitempty"`
-	GovernmentIDNumber *int64  `json:"GovernmentIDNumber,omitempty"`
-	LastName           *string `json:"LastName,omitempty"`
+	FirstName          *string `json:"FirstName,omitempty" yaml:"FirstName,omitempty"`
+	GovernmentIDNumber *int64  `json:"GovernmentIDNumber,omitempty" yaml:"GovernmentIDNumber,omitempty"`
+	LastName           *string `json:"LastName,omitempty" yaml:"LastName,omitempty"`
 }
 
 // PersonWithID defines model for PersonWithID.
 type PersonWithID struct {
-	FirstName          string `json:"FirstName"`
-	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
-	ID                 int64  `json:"ID"`
-	LastName           string `json:"LastName"`
+	FirstName          string `json:"FirstName" yaml:"FirstName"`
+	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty" yaml:"GovernmentIDNumber,omitempty"`
+	ID                 int64  `json:"ID" yaml:"ID"`
+	LastName           string `json:"LastName" yaml:"LastName"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object

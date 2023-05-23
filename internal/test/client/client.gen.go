@@ -20,8 +20,8 @@ const (
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
-	FirstName string `json:"firstName"`
-	Role      string `json:"role"`
+	FirstName string `json:"firstName" yaml:"firstName"`
+	Role      string `json:"role" yaml:"role"`
 }
 
 // PostVendorJsonJSONBody defines parameters for PostVendorJson.

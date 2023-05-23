@@ -19,9 +19,9 @@ type DirectBar = externalRef0.Foo
 
 // PackedBar defines model for PackedBar.
 type PackedBar struct {
-	Core    *externalRef0.Foo `json:"core,omitempty"`
-	Directd *DirectBar        `json:"directd,omitempty"`
-	Id      *string           `json:"id,omitempty"`
+	Core    *externalRef0.Foo `json:"core,omitempty" yaml:"core,omitempty"`
+	Directd *DirectBar        `json:"directd,omitempty" yaml:"directd,omitempty"`
+	Id      *string           `json:"id,omitempty" yaml:"id,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -222,10 +222,10 @@ type PostNoTroubleResponseObject interface {
 }
 
 type PostNoTrouble200JSONResponse struct {
-	DirectBar   *DirectBar        `json:"directBar,omitempty"`
-	DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty"`
-	IndirectFoo *PackedBar        `json:"indirectFoo,omitempty"`
-	Name        *string           `json:"name,omitempty"`
+	DirectBar   *DirectBar        `json:"directBar,omitempty" yaml:"directBar,omitempty"`
+	DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty" yaml:"directFoo,omitempty"`
+	IndirectFoo *PackedBar        `json:"indirectFoo,omitempty" yaml:"indirectFoo,omitempty"`
+	Name        *string           `json:"name,omitempty" yaml:"name,omitempty"`
 }
 
 func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.ResponseWriter) error {
