@@ -499,6 +499,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
+
+		if schema.Type == "string" || schema.Type == "integer" || schema.Type == "number" {
+			enum := generateEnum(schema)
+			outSchema.EnumValues = enum
+		}
 	}
 	return outSchema, nil
 }
@@ -827,4 +832,32 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 	}
 
 	return nil
+}
+
+func generateEnum(schema *openapi3.Schema) map[string]string {
+	enum := make(map[string]string)
+
+	// If we have at least one OneOf, check for possible enum representation
+	if len(schema.OneOf) > 1 {
+		oneOfEnum := true
+		// All elements must be of type "const" to be considered enum
+		for _, elem := range schema.OneOf {
+			if !elem.Value.IsEmpty() && elem.Value.Type != "const" {
+				oneOfEnum = false
+				break
+			}
+		}
+
+		if oneOfEnum {
+			for _, elem := range schema.OneOf {
+				// Ignore element if no value in const
+				if elem.Value.Extensions["const"] == nil {
+					continue
+				}
+				enum[elem.Value.Title] = fmt.Sprint(elem.Value.Extensions["const"])
+			}
+		}
+	}
+
+	return enum
 }
