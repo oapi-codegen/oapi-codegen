@@ -13,8 +13,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
-	"github.com/gofiber/adaptor/v2"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
