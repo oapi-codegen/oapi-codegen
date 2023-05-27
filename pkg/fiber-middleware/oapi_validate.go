@@ -16,7 +16,7 @@ import (
 	"github.com/getkin/kin-openapi/routers"
 	"github.com/getkin/kin-openapi/routers/gorillamux"
 	"github.com/gofiber/fiber/v2"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 )
 
 type ctxKeyFiberContext struct{}
@@ -91,9 +91,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fibe
 // of validating a request.
 func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Options) error {
 
-	r := &http.Request{}
-
-	err := fasthttpadaptor.ConvertRequest(c.Context(), r, false)
+	r, err := adaptor.ConvertRequest(c, false)
 	if err != nil {
 		return err
 	}
