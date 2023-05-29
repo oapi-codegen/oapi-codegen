@@ -77,7 +77,7 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
-		return http.StatusBadRequest, err // We failed to find a matching route for the request.
+		return http.StatusNotFound, err // We failed to find a matching route for the request.
 	}
 
 	// Validate request
