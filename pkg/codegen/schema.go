@@ -167,7 +167,7 @@ type TypeDefinition struct {
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for
-// response unmarshalling in ClientWithResponses.
+// response unmarshaling in ClientWithResponses.
 type ResponseTypeDefinition struct {
 	TypeDefinition
 	// The content type name where this is used, eg, application/json

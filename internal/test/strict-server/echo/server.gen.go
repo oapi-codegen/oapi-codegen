@@ -65,7 +65,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.JSONExample(ctx)
 	return err
 }
@@ -74,7 +74,7 @@ func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.MultipartExample(ctx)
 	return err
 }
@@ -83,7 +83,7 @@ func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.MultipleRequestAndResponseTypes(ctx)
 	return err
 }
@@ -99,7 +99,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter type: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ReservedGoKeywordParameters(ctx, pType)
 	return err
 }
@@ -108,7 +108,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ReusableResponses(ctx)
 	return err
 }
@@ -117,7 +117,7 @@ func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.TextExample(ctx)
 	return err
 }
@@ -126,7 +126,7 @@ func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UnknownExample(ctx)
 	return err
 }
@@ -135,7 +135,7 @@ func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.UnspecifiedContentType(ctx)
 	return err
 }
@@ -144,7 +144,7 @@ func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error 
 func (w *ServerInterfaceWrapper) URLEncodedExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.URLEncodedExample(ctx)
 	return err
 }
@@ -190,7 +190,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 		params.Header2 = &Header2
 	}
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.HeadersExample(ctx, params)
 	return err
 }
@@ -1044,18 +1044,18 @@ var swaggerSpec = []string{
 	"Xt3LZ0YT6FZVWFuoTHjV5Ivz+ivusjmUwv/6EWHGU/5DsnElCf+6BB5FaQvgTdNE33jw6SOP+ByEBGy9",
 	"DT+vdrFpaYGn3BEqnXMPEsSuB8WUJsgBvTUv2jnhBXo/0hW3aCwgqcDRQhQVDFvqVsz0C2QUdqD0zOxz",
 	"eWs0CaUdk2o2AwRNrCOPeQzHXGWtQQLJpkvmLWTEHOACkEecFHnH+N32OuscdjziC0AXDF2NxqOxj5ex",
-	"oIVVPOVv26WIW0HzdkPrAFkzFPdf7z79wZRjoiJTClKZKIolKwW6uSgKkExpMt7HKiM34q0pbCP/i+zU",
-	"33dc+rRpM+idkctzZEybmFv5fD0ev1JiNhG/CcaGMNZOJVsV1sLMRFUMkP5Zf9Wm1gwQDXY7S8qqIGUF",
-	"0nawdtn+vRd5DuVrvGRmsIylIHEm1k9l6aLEd81gsEju5qZ2bG5qRoZJEAWrFc1Zr/hNdSvNBHNK5wWw",
-	"3qloMJIFdD33Jy0n3V7uPcbZaynaQXmM67qO2+BVWIDOjAT5MlhVihwSq/NddY8tiKd8uiSftvvd9URJ",
-	"FHGCR0psIZQ+fHS8Ujv5zvTJCjuUK0J7JMo4N/FXWNYGZWwFihII0CUrb73xwDkMlPKfa0mWCc2mwLQo",
-	"QTIxI0D2wbAO0u2V7KSz+8F8DCIbqPa8XX+kf624p6Q9g3nEvQGeBlZCXSv0QSesIDpA28O/5ud/CkDP",
-	"Zpj04h1Tw22wb1Fr6hBmzrfEocgN8BcsTbYkLjMwHM64vdn3Nc4gH8mnz/17eHzWkX/C1vfatX0sYVVY",
-	"fJqzTus5tL2wkz6DxYWSYJLS3hyJfDFSnYVMzRTIuNtFHHx7qiXcGp0h0O4I5O8T2hBbg/lrDs2BBQYi",
-	"5gyrgZWVI2aFc0xR20UKFa5KEvaax+eNZ7fB0v2mnR6K6pszxfTNpSJ6M746XuXtmfNmZ5R5oh4nv70P",
-	"MsfeF082Mx058Z3O7oXK2V9S4q0XleES/jkIbM70DNTCT0RaMgSqUINkCyX6R4C92uwANmEdmoWCG5tp",
-	"qH/dOWYgig5iXfPo0AvQw//4eeKc72bnztMm4uGJKyRLhYWPKJFNkyQ8jY1cLfIccKRMIqzizUPzTwAA",
-	"AP//O0NNuucUAAA=",
+	"oIVVPOVv26WIW0HzdkPrAFkzFPdf7z79wZRjoiJTClKZKIolKwW6uShAMqXJeBerjNyIt5awDfwvstN+",
+	"31Hps6ZNoHdGLs+RMG1ebqXz9Xj8SnnZRPwmGBvCWDuVbBVYCzMTVTHA+Wf9VZtaM0A02O0sKauClBVI",
+	"27HaZfv3XuQ5lK/xkpnBMpaCxJlYP5WlixLf9YLBGrmbm9qxuakZGSZBFKxWNGe94jfFrTQTzCmdF8B6",
+	"p6LBSBbQtdyftJx0e7n3GGevpWgH5TGu6zpug1dhATozEuTLYFUpckisznfVPbYgnvLpknza7jfXEyVR",
+	"xAkeKbGFUPrwyfFK7eQ70ycr7FCuCO2JKOPcxF9hWRuUsRUoSiBAl6y89cYD5zBQyn+uJVkmNJsC06IE",
+	"ycSMANkHwzpIt1eyk87uB/MxiGyg2uN2/ZH+teKekvYI5hH3BngaWAl1rdAHnbCC6ABtD/+an/8pAD2b",
+	"YdCLd0wNt8G+Ra2pQ5g53xKHIjfAX7A02ZK4zMBwOOP2Rt/XOIN8JJ8+9+/h8VlH/glb32vX9rGEVWHx",
+	"ac46refQ9sJO+gwWF0qCSUp7cyTyxUh1FjI1UyDjbhdx8O2plnBrdIZAuyOQv05oQ2wN5m85NAcWGIiY",
+	"M6wGVlaOmBXOMUVtFylUuClJ2Gsenzee3QZL95t2eiiqb84U0zeXiujN+Op4lbdnzpudUeaJepz89j7I",
+	"HHtfPNnMdOTEdzq7Fypnf0mJtx5Uhkv45yCwOdMzUAs/EWnJEKhCDZItlOgfAfZqswPYhHVoFgpubKah",
+	"/nHnmIEoOoh1zaNDD0AP/+PniXM+m507T5uIhxeukCwVFj6iRDZNkvAyNnK1yHPAkTKJsIo3D80/AQAA",
+	"///iKNcc5hQAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

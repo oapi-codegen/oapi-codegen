@@ -14,7 +14,7 @@
 package testutil
 
 // This is a set of fluent request builders for tests, which help us to
-// simplify constructing and unmarshalling test objects. For example, to post
+// simplify constructing and unmarshaling test objects. For example, to post
 // a body and return a response, you would do something like:
 //
 //   var body RequestBody

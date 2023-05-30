@@ -86,16 +86,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshallingParamError struct {
+type UnmarshalingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshallingParamError) Unwrap() error {
+func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 

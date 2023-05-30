@@ -445,7 +445,7 @@ func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetPet(ctx, petId)
 	return err
 }
@@ -454,7 +454,7 @@ func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) ValidatePets(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ValidatePets(ctx)
 	return err
 }

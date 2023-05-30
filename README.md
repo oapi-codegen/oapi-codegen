@@ -34,7 +34,7 @@ We're going to use the OpenAPI example of the
 in the descriptions below, please have a look at it.
 
 In order to create a Go server to serve this exact schema, you would have to
-write a lot of boilerplate code to perform all the marshalling and unmarshalling
+write a lot of boilerplate code to perform all the marshaling and unmarshaling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
@@ -111,7 +111,7 @@ type ServerInterface interface {
 These are the functions which you will implement yourself in order to create
 a server conforming to the API specification. Normally, all the arguments and
 parameters are stored on the `echo.Context` in handlers, so we do the tedious
-work of unmarshalling the JSON automatically, simply passing values into
+work of unmarshaling the JSON automatically, simply passing values into
 your handlers.
 
 Notice that `FindPetById` takes a parameter `id int64`. All path arguments
