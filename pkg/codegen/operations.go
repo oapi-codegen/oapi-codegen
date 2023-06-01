@@ -33,7 +33,7 @@ type ParameterDefinition struct {
 	ParamName string // The original json parameter name, eg param_name
 	In        string // Where the parameter is defined - path, header, cookie, query
 	Required  bool   // Is this a required parameter?
-	Spec      *openapi3.Parameter
+	Spec      *v3.Parameter
 	Schema    Schema
 }
 
@@ -154,7 +154,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // DescribeParameters walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
-func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+func DescribeParameters(params []*v3.Parameter, path []string) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
@@ -194,7 +194,7 @@ type SecurityDefinition struct {
 	Scopes       []string
 }
 
-func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequirements) []SecurityDefinition {
+func DescribeSecurityDefinition(securityRequirements map[string]*v3.SecurityScheme) []SecurityDefinition {
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
@@ -499,8 +499,8 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 		toCamelCaseFunc = ToCamelCase
 	}
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[requestPath]
+	for _, requestPath := range SortedPathsKeys(swagger.Model.Paths) {
+		pathItem := swagger.Model.Paths.PathItems[requestPath]
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)

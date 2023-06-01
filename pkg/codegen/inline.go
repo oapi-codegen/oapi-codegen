@@ -16,21 +16,25 @@ package codegen
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"text/template"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 // GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
 func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *libopenapi.DocumentModel[v3.Document]) (string, error) {
-	// ensure that any external file references are embedded into the embedded spec
-	swagger.InternalizeRefs(context.Background(), nil)
-	// Marshal to json
-	encoded, err := swagger.MarshalJSON()
+	// // TODO JVT
+	// // ensure that any external file references are embedded into the embedded spec
+	// swagger.InternalizeRefs(context.Background(), nil)
+	// // Marshal to json
+	// // TODO JVT
+
+	encoded, err := json.Marshal(swagger)
 	if err != nil {
 		return "", fmt.Errorf("error marshaling swagger: %s", err)
 	}

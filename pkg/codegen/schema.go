@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 // Schema describes an OpenAPI schema, with lots of helper fields to use in the
@@ -219,7 +219,7 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
-func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
@@ -506,11 +506,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 // oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
 // all non-object types.
-func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func oapiSchemaToGoType(schema *base.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
 	t := schema.Type
 
-	switch t {
+	switch t[0] {
 	case "array":
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
@@ -744,7 +744,7 @@ func GenStructFromSchema(schema Schema) string {
 
 // This constructs a Go type for a parameter, looking at either the schema or
 // the content, whichever is available
-func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
+func paramToGoType(param *v3.Parameter, path []string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
 		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
 	}
@@ -778,7 +778,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	return GenerateGoSchema(mt.Schema, path)
 }
 
-func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+func generateUnion(outSchema *Schema, elements base.Schema, discriminator *base.Discriminator, path []string) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property: discriminator.PropertyName,
