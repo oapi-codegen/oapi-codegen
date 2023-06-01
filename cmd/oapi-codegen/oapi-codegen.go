@@ -258,12 +258,12 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	openapi, err := util.ParseOpenAPI(flag.Arg(0))
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
-	code, err := codegen.Generate(swagger, opts.Configuration)
+	code, err := codegen.Generate(openapi, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}

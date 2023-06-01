@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 func stringInSlice(a string, list []string) bool {
@@ -21,26 +23,26 @@ type RefWrapper struct {
 	SourceRef interface{}
 }
 
-func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
+func walkSwagger(swagger *libopenapi.DocumentModel[v3.Document], doFn func(RefWrapper) (bool, error)) error {
 	if swagger == nil {
 		return nil
 	}
 
-	for _, p := range swagger.Paths {
+	for _, p := range swagger.Model.Paths.PathItems {
 		for _, param := range p.Parameters {
 			_ = walkParameterRef(param, doFn)
 		}
-		for _, op := range p.Operations() {
+		for _, op := range p.GetOperations() {
 			_ = walkOperation(op, doFn)
 		}
 	}
 
-	_ = walkComponents(swagger.Components, doFn)
+	_ = walkComponents(swagger.Model.Components, doFn)
 
 	return nil
 }
 
-func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) error {
+func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if op == nil {
 		return nil
@@ -149,7 +151,7 @@ func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error))
 	return nil
 }
 
-func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
+func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -377,7 +379,7 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
-func findComponentRefs(swagger *openapi3.T) []string {
+func findComponentRefs(swagger *libopenapi.DocumentModel[v3.Document]) []string {
 	refs := []string{}
 
 	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
@@ -391,7 +393,7 @@ func findComponentRefs(swagger *openapi3.T) []string {
 	return refs
 }
 
-func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
+func removeOrphanedComponents(swagger *libopenapi.DocumentModel[v3.Document], refs []string) int {
 	if swagger.Components == nil {
 		return 0
 	}
@@ -476,7 +478,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.T) {
+func pruneUnusedComponents(swagger *libopenapi.DocumentModel[v3.Document]) {
 	for {
 		refs := findComponentRefs(swagger)
 		countRemoved := removeOrphanedComponents(swagger, refs)

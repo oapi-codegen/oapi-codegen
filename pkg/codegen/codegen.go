@@ -29,6 +29,8 @@ import (
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 	"golang.org/x/tools/imports"
 )
 
@@ -41,7 +43,7 @@ var templates embed.FS
 // else so that we can easily track it.
 var globalState struct {
 	options       Configuration
-	spec          *openapi3.T
+	spec          *libopenapi.DocumentModel[v3.Document]
 	importMapping importMap
 }
 
@@ -99,7 +101,7 @@ func constructImportMapping(importMapping map[string]string) importMap {
 // Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(spec *openapi3.T, opts Configuration) (string, error) {
+func Generate(spec *libopenapi.DocumentModel[v3.Document], opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
