@@ -603,21 +603,23 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		return nil, err
 	}
 
-	queryValues := queryURL.Query()
+	if params != nil {
+		queryValues := queryURL.Query()
 
-	if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
-		return nil, err
-	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-		return nil, err
-	} else {
-		for k, v := range parsed {
-			for _, v2 := range v {
-				queryValues.Add(k, v2)
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
 			}
 		}
-	}
 
-	queryURL.RawQuery = queryValues.Encode()
+		queryURL.RawQuery = queryValues.Encode()
+	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), body)
 	if err != nil {

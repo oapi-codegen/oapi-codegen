@@ -221,7 +221,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 		params.Header1 = Header1
 
 	} else {
-		siw.ErrorHandler(c, fmt.Errorf("Header parameter header1 is required, but not found: %s", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("Header parameter header1 is required, but not found"), http.StatusBadRequest)
 		return
 	}
 
