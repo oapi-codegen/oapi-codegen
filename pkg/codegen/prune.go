@@ -3,8 +3,8 @@ package codegen
 import (
 	"fmt"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
@@ -65,7 +65,7 @@ func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error 
 	return nil
 }
 
-func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool, error)) error {
+func walkComponents(components *v3.Components, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if components == nil {
 		return nil
@@ -110,7 +110,7 @@ func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool
 	return nil
 }
 
-func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) error {
+func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -188,7 +188,7 @@ func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) er
 	return nil
 }
 
-func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (bool, error)) error {
+func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -219,7 +219,7 @@ func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (boo
 	return nil
 }
 
-func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, error)) error {
+func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -258,7 +258,7 @@ func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, err
 	return nil
 }
 
-func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, error)) error {
+func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -293,7 +293,7 @@ func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, err
 	return nil
 }
 
-func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error)) error {
+func walkHeaderRef(ref *v3.Header, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -315,7 +315,7 @@ func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error))
 	return nil
 }
 
-func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper) (bool, error)) error {
+func walkSecuritySchemeRef(ref *v3.SecurityScheme, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -337,7 +337,7 @@ func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper
 	return nil
 }
 
-func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) error {
+func walkLinkRef(ref *v3.Link, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
@@ -357,7 +357,7 @@ func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) err
 	return nil
 }
 
-func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error)) error {
+func walkExampleRef(ref *base.Example, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
