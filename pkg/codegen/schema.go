@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
 // Schema describes an OpenAPI schema, with lots of helper fields to use in the
@@ -36,7 +37,7 @@ type Schema struct {
 	DefineViaAlias bool
 
 	// The original OpenAPIv3 Schema.
-	OAPISchema *openapi3.Schema
+	OAPISchema *base.Schema
 }
 
 func (s Schema) IsRef() bool {
