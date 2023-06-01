@@ -210,8 +210,8 @@ func Generate(spec *libopenapi.DocumentModel[v3.Document], opts Configuration) (
 	var strictServerOut string
 	if opts.Generate.Strict {
 		var responses []ResponseDefinition
-		if spec.Components != nil {
-			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
+		if spec.Model.Components != nil {
+			responses, err = GenerateResponseDefinitions("", spec.Model.Components.Responses)
 			if err != nil {
 				return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 			}
@@ -349,7 +349,7 @@ func Generate(spec *libopenapi.DocumentModel[v3.Document], opts Configuration) (
 	return string(outBytes), nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
+func GenerateTypeDefinitions(t *template.Template, swagger *libopenapi.DocumentModel[v3.Document], ops []OperationDefinition, excludeSchemas []string) (string, error) {
 	var allTypes []TypeDefinition
 	if swagger.Components != nil {
 		schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
@@ -943,28 +943,28 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 	return res, nil
 }
 
-func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
+func GetTypeDefinitionsImports(swagger *libopenapi.DocumentModel[v3.Document], excludeSchemas []string) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	if swagger.Components == nil {
+	if swagger.Model.Components == nil {
 		return res, nil
 	}
 
-	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
+	schemaImports, err := GetSchemaImports(swagger.Model.Components.Schemas, excludeSchemas)
 	if err != nil {
 		return nil, err
 	}
 
-	reqBodiesImports, err := GetRequestBodiesImports(swagger.Components.RequestBodies)
+	reqBodiesImports, err := GetRequestBodiesImports(swagger.Model.Components.RequestBodies)
 	if err != nil {
 		return nil, err
 	}
 
-	responsesImports, err := GetResponsesImports(swagger.Components.Responses)
+	responsesImports, err := GetResponsesImports(swagger.Model.Components.Responses)
 	if err != nil {
 		return nil, err
 	}
 
-	parametersImports, err := GetParametersImports(swagger.Components.Parameters)
+	parametersImports, err := GetParametersImports(swagger.Model.Components.Parameters)
 	if err != nil {
 		return nil, err
 	}

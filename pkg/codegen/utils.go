@@ -24,7 +24,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/datamodel/low/base"
 )
 
 var (
@@ -181,7 +183,7 @@ func replaceInitialism(s string) string {
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
-func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
+func SortedSchemaKeys(dict map[string]*base.Schema) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -194,10 +196,10 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 
 // SortedPathsKeys is the same as above, except it sorts the keys for a Paths
 // dictionary.
-func SortedPathsKeys(dict openapi3.Paths) []string {
-	keys := make([]string, len(dict))
+func SortedPathsKeys(dict v3.Paths) []string {
+	keys := make([]string, len(dict.PathItems))
 	i := 0
-	for key := range dict {
+	for key := range dict.PathItems {
 		keys[i] = key
 		i++
 	}
@@ -206,7 +208,7 @@ func SortedPathsKeys(dict openapi3.Paths) []string {
 }
 
 // SortedOperationsKeys returns Operation dictionary keys in sorted order
-func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
+func SortedOperationsKeys(dict map[string]*v3.Operation) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -218,7 +220,7 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 }
 
 // SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict openapi3.Responses) []string {
+func SortedResponsesKeys(dict map[string]*v3.Response) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -229,7 +231,7 @@ func SortedResponsesKeys(dict openapi3.Responses) []string {
 	return keys
 }
 
-func SortedHeadersKeys(dict openapi3.Headers) []string {
+func SortedHeadersKeys(dict v3.Headers) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -241,7 +243,7 @@ func SortedHeadersKeys(dict openapi3.Headers) []string {
 }
 
 // SortedContentKeys returns Content dictionary keys in sorted order
-func SortedContentKeys(dict openapi3.Content) []string {
+func SortedContentKeys(dict v3.Content) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -265,7 +267,7 @@ func SortedStringKeys(dict map[string]string) []string {
 }
 
 // SortedParameterKeys returns sorted keys for a ParameterRef dict
-func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
+func SortedParameterKeys(dict map[string]*v3.ParameterRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -276,7 +278,7 @@ func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
 	return keys
 }
 
-func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
+func SortedRequestBodyKeys(dict map[string]*v3.RequestBodyRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -287,7 +289,7 @@ func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
 	return keys
 }
 
-func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
+func SortedSecurityRequirementKeys(sr v3.SecurityRequirement) []string {
 	keys := make([]string, len(sr))
 	i := 0
 	for key := range sr {
@@ -680,7 +682,7 @@ func SchemaNameToTypeName(name string) string {
 // differently, in that if you want additionalProperties code to be generated,
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
-func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
+func SchemaHasAdditionalProperties(schema *v3.Schema) bool {
 	if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
 		return true
 	}
@@ -766,7 +768,7 @@ func EscapePathElements(path string) string {
 // and the definition of the schema. If the schema overrides the name via
 // x-go-name, the new name is returned, otherwise, the original name is
 // returned.
-func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
+func renameSchema(schemaName string, schemaRef *v3.SchemaRef) (string, error) {
 	// References will not change type names.
 	if schemaRef.Ref != "" {
 		return SchemaNameToTypeName(schemaName), nil
@@ -785,7 +787,7 @@ func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, err
 
 // renameParameter generates the name for a parameter, taking x-go-name into
 // account
-func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
+func renameParameter(parameterName string, parameterRef *v3.ParameterRef) (string, error) {
 	if parameterRef.Ref != "" {
 		return SchemaNameToTypeName(parameterName), nil
 	}
@@ -803,7 +805,7 @@ func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) 
 
 // renameResponse generates the name for a parameter, taking x-go-name into
 // account
-func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
+func renameResponse(responseName string, responseRef *v3.Response) (string, error) {
 	if responseRef.Ref != "" {
 		return SchemaNameToTypeName(responseName), nil
 	}
@@ -821,7 +823,7 @@ func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (str
 
 // renameRequestBody generates the name for a parameter, taking x-go-name into
 // account
-func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
+func renameRequestBody(requestBodyName string, requestBodyRef *v3.RequestBodyRef) (string, error) {
 	if requestBodyRef.Ref != "" {
 		return SchemaNameToTypeName(requestBodyName), nil
 	}
@@ -840,7 +842,7 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // findSchemaByRefPath turns a $ref path into a schema. This will return ""
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
-func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+func findSchemaNameByRefPath(refPath string, spec *libopenapi.DocumentModel[v3.Document]) (string, error) {
 	pathElements := strings.Split(refPath, "/")
 	// All local references will have 4 path elements.
 	if len(pathElements) != 4 {
@@ -858,26 +860,26 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	propertyName := pathElements[3]
 	switch pathElements[2] {
 	case "schemas":
-		if schema, found := spec.Components.Schemas[propertyName]; found {
+		if schema, found := spec.Model.Components.Schemas[propertyName]; found {
 			return renameSchema(propertyName, schema)
 		}
 	case "parameters":
-		if parameter, found := spec.Components.Parameters[propertyName]; found {
+		if parameter, found := spec.Model.Components.Parameters[propertyName]; found {
 			return renameParameter(propertyName, parameter)
 		}
 	case "responses":
-		if response, found := spec.Components.Responses[propertyName]; found {
+		if response, found := spec.Model.Components.Responses[propertyName]; found {
 			return renameResponse(propertyName, response)
 		}
 	case "requestBodies":
-		if requestBody, found := spec.Components.RequestBodies[propertyName]; found {
+		if requestBody, found := spec.Model.Components.RequestBodies[propertyName]; found {
 			return renameRequestBody(propertyName, requestBody)
 		}
 	}
 	return "", nil
 }
 
-func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
+func ParseGoImportExtension(v *base.Schema) (*goImport, error) {
 	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
 		return nil, nil
 	}
