@@ -10,7 +10,7 @@ func filterOperationsByTag(swagger *libopenapi.DocumentModel[v3.Document], opts 
 		excludeOperationsWithTags(swagger.Model.Paths, opts.OutputOptions.ExcludeTags)
 	}
 	if len(opts.OutputOptions.IncludeTags) > 0 {
-		includeOperationsWithTags(swagger.Paths, opts.OutputOptions.IncludeTags, false)
+		includeOperationsWithTags(swagger.Model.Paths, opts.OutputOptions.IncludeTags, false)
 	}
 }
 
@@ -28,7 +28,7 @@ func includeOperationsWithTags(paths *v3.Paths, tags []string, exclude bool) {
 			}
 		}
 		for _, name := range names {
-			paths.PathItems[name] = nil // TODO clear?
+			paths.PathItems[name] = nil // TODO jvt clear?
 		}
 	}
 }

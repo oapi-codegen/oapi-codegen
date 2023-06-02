@@ -219,7 +219,7 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
-func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []string) (Schema, error) {
+func GenerateGoSchema(sref *base.SchemaProxy, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
@@ -227,16 +227,19 @@ func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []s
 		return Schema{GoType: "interface{}"}, nil
 	}
 
-	schema := sref.Value
+	schema, err := sref.BuildSchema()
+	if err != nil {
+		return Schema{}, err
+	}
 
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
-	if IsGoTypeReference(sref.Ref) {
+	if IsGoTypeReference(sref.GetReference()) {
 		// Convert the reference path to Go type
-		refType, err := RefPathToGoType(sref.Ref)
+		refType, err := RefPathToGoType(sref.GetReference())
 		if err != nil {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
-				sref.Ref, err)
+				sref.GetReference(), err)
 		}
 		return Schema{
 			GoType:         refType,
@@ -277,7 +280,11 @@ func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []s
 	}
 
 	// Schema type and format, eg. string / binary
-	t := schema.Type
+	t := ""
+	if len(schema.Type) > 0 {
+		t = schema.Type[0] // TODO: support OpenAPI 3.1 multi-types
+	}
+
 	// Handle objects and empty schemas first as a special case
 	if t == "" || t == "object" {
 		var outType string
@@ -313,8 +320,9 @@ func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []s
 
 			// If additional properties are defined, we will override the default
 			// above with the specific definition.
-			if schema.AdditionalProperties.Schema != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
+			schemaAdditionalProperties, ok := schema.AdditionalProperties.(*base.SchemaProxy)
+			if ok {
+				additionalSchema, err := GenerateGoSchema(schemaAdditionalProperties, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -379,20 +387,25 @@ func GenerateGoSchema(sref *base.DynamicValue[*base.SchemaProxy, bool], path []s
 
 					pSchema.RefType = typeName
 				}
-				description := ""
-				if p.Value != nil {
-					description = p.Value.Description
-				}
 				prop := Property{
 					JsonFieldName: pName,
 					Schema:        pSchema,
 					Required:      required,
-					Description:   description,
-					Nullable:      p.Value.Nullable,
-					ReadOnly:      p.Value.ReadOnly,
-					WriteOnly:     p.Value.WriteOnly,
-					Extensions:    p.Value.Extensions,
-					Deprecated:    p.Value.Deprecated,
+				}
+				if !p.IsReference() {
+					sp := p.Schema()
+					if sp != nil {
+						prop.Description = sp.Description
+						if sp.Nullable != nil {
+							prop.Nullable = *sp.Nullable
+						}
+						prop.ReadOnly = sp.ReadOnly
+						prop.WriteOnly = sp.WriteOnly
+						prop.Extensions = sp.Extensions
+						if sp.Deprecated != nil {
+							prop.Deprecated = *sp.Deprecated
+						}
+					}
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -778,7 +791,7 @@ func paramToGoType(param *v3.Parameter, path []string) (Schema, error) {
 	return GenerateGoSchema(mt.Schema, path)
 }
 
-func generateUnion(outSchema *Schema, elements base.Schema, discriminator *base.Discriminator, path []string) error {
+func generateUnion(outSchema *Schema, elements []*base.SchemaProxy, discriminator *base.Discriminator, path []string) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property: discriminator.PropertyName,
@@ -793,23 +806,23 @@ func generateUnion(outSchema *Schema, elements base.Schema, discriminator *base.
 			return err
 		}
 
-		if element.Ref == "" {
+		if !element.IsReference() {
 			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
 			elementSchema.GoType = td.TypeName
 		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
+			refToGoTypeMap[element.GetReference()] = elementSchema.GoType
 		}
 
 		if discriminator != nil {
-			if len(discriminator.Mapping) != 0 && element.Ref == "" {
+			if len(discriminator.Mapping) != 0 && !element.IsReference() {
 				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
 			}
 
 			// Explicit mapping.
 			var mapped bool
 			for k, v := range discriminator.Mapping {
-				if v == element.Ref {
+				if v == element.GetReference() {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
 					break
@@ -817,7 +830,7 @@ func generateUnion(outSchema *Schema, elements base.Schema, discriminator *base.
 			}
 			// Implicit mapping.
 			if !mapped {
-				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
+				outSchema.Discriminator.Mapping[RefPathToObjName(element.GetReference())] = elementSchema.GoType
 			}
 		}
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))

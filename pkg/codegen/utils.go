@@ -183,7 +183,7 @@ func replaceInitialism(s string) string {
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
-func SortedSchemaKeys(dict map[string]*base.Schema) []string {
+func SortedSchemaKeys(dict map[string]*base.SchemaProxy) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -682,12 +682,7 @@ func SchemaNameToTypeName(name string) string {
 // differently, in that if you want additionalProperties code to be generated,
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
-func SchemaHasAdditionalProperties(sch *base.SchemaProxy) bool {
-	schema := sch.Schema()
-	if schema == nil {
-		return false
-	}
-
+func SchemaHasAdditionalProperties(sch *base.Schema) bool {
 	// if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
 	// 	return true
 	// }
@@ -696,7 +691,7 @@ func SchemaHasAdditionalProperties(sch *base.SchemaProxy) bool {
 	// 	return true
 	// }
 	// TODO jvt
-	return schema.AdditionalProperties != nil
+	return sch.AdditionalProperties != nil
 }
 
 // PathToTypeName converts a path, like Object/field1/nestedField into a go

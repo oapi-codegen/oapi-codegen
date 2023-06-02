@@ -447,7 +447,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 
 // GenerateTypesForSchemas generates type definitions for any custom types defined in the
 // components/schemas section of the Swagger spec.
-func GenerateTypesForSchemas(t *template.Template, schemas *v3.Components, excludeSchemas []string) ([]TypeDefinition, error) {
+func GenerateTypesForSchemas(t *template.Template, schemas map[string]*base.SchemaProxy, excludeSchemas []string) ([]TypeDefinition, error) {
 	excludeSchemasMap := make(map[string]bool)
 	for _, schema := range excludeSchemas {
 		excludeSchemasMap[schema] = true
@@ -488,7 +488,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*v3.Para
 	for _, paramName := range SortedParameterKeys(params) {
 		paramOrRef := params[paramName]
 
-		goType, err := paramToGoType(paramOrRef.Value, nil)
+		goType, err := paramToGoType(paramOrRef, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
 		}
@@ -504,14 +504,15 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*v3.Para
 			TypeName: goTypeName,
 		}
 
-		if paramOrRef.Ref != "" {
-			// Generate a reference type for referenced parameters
-			refType, err := RefPathToGoType(paramOrRef.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", paramOrRef.Ref, paramName, err)
-			}
-			typeDef.TypeName = SchemaNameToTypeName(refType)
-		}
+		// TODO is ref jvt
+		// if paramOrRef.Ref != "" {
+		// 	// Generate a reference type for referenced parameters
+		// 	refType, err := RefPathToGoType(paramOrRef.Ref)
+		// 	if err != nil {
+		// 		return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", paramOrRef.Ref, paramName, err)
+		// 	}
+		// 	typeDef.TypeName = SchemaNameToTypeName(refType)
+		// }
 
 		types = append(types, typeDef)
 	}
@@ -529,8 +530,7 @@ func GenerateTypesForResponses(t *template.Template, responses map[string]*v3.Re
 		// We have to generate the response object. We're only going to
 		// handle application/json media types here. Other responses should
 		// simply be specified as strings or byte arrays.
-		response := responseOrRef.Value
-		jsonResponse, found := response.Content["application/json"]
+		jsonResponse, found := responseOrRef.Content["application/json"]
 		if found {
 			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
 			if err != nil {
@@ -548,14 +548,15 @@ func GenerateTypesForResponses(t *template.Template, responses map[string]*v3.Re
 				TypeName: goTypeName,
 			}
 
-			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
+			// TODO ref jvt
+			// if responseOrRef.Ref != "" {
+			// 	// Generate a reference type for referenced parameters
+			// 	refType, err := RefPathToGoType(responseOrRef.Ref)
+			// 	if err != nil {
+			// 		return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
+			// 	}
+			// 	typeDef.TypeName = SchemaNameToTypeName(refType)
+			// }
 			types = append(types, typeDef)
 		}
 	}
@@ -572,7 +573,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*v3.R
 
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
-		response := requestBodyRef.Value
+		response := requestBodyRef
 		jsonBody, found := response.Content["application/json"]
 		if found {
 			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
@@ -591,14 +592,15 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*v3.R
 				TypeName: goTypeName,
 			}
 
-			if requestBodyRef.Ref != "" {
-				// Generate a reference type for referenced bodies
-				refType, err := RefPathToGoType(requestBodyRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
+			// TODO jvt
+			// if requestBodyRef.Ref != "" {
+			// 	// Generate a reference type for referenced bodies
+			// 	refType, err := RefPathToGoType(requestBodyRef.Ref)
+			// 	if err != nil {
+			// 		return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
+			// 	}
+			// 	typeDef.TypeName = SchemaNameToTypeName(refType)
+			// }
 			types = append(types, typeDef)
 		}
 	}
@@ -991,10 +993,12 @@ func GoSchemaImports(schemas ...*base.SchemaProxy) (map[string]goImport, error) 
 				res[gi.String()] = *gi
 			}
 		}
-		schemaVal := sref.Value
-
+		schemaVal := sref.Schema()
+		if schemaVal == nil {
+			return nil, sref.GetBuildError()
+		}
 		t := schemaVal.Type
-		switch t {
+		switch t[0] { // TODO multi-value
 		case "", "object":
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)
@@ -1004,11 +1008,13 @@ func GoSchemaImports(schemas ...*base.SchemaProxy) (map[string]goImport, error) 
 				MergeImports(res, imprts)
 			}
 		case "array":
-			imprts, err := GoSchemaImports(schemaVal.Items)
-			if err != nil {
-				return nil, err
+			if schemaVal.Items.IsA() {
+				imprts, err := GoSchemaImports(schemaVal.Items.A)
+				if err != nil {
+					return nil, err
+				}
+				MergeImports(res, imprts)
 			}
-			MergeImports(res, imprts)
 		}
 	}
 	return res, nil
