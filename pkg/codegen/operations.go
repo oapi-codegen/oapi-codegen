@@ -554,11 +554,6 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(op.OperationId, op.Responses.Codes)
-			if err != nil {
-				return nil, fmt.Errorf("error generating response definitions: %w", err)
-			}
-
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
@@ -571,8 +566,15 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 				Path:            requestPath,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
-				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+			}
+
+			if op.Responses != nil {
+				responseDefinitions, err := GenerateResponseDefinitions(op.OperationId, op.Responses.Codes)
+				if err != nil {
+					return nil, fmt.Errorf("error generating response definitions: %w", err)
+				}
+				opDef.Responses = responseDefinitions
 			}
 
 			// check for overrides of SecurityDefinitions.

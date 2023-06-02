@@ -998,7 +998,12 @@ func GoSchemaImports(schemas ...*base.SchemaProxy) (map[string]goImport, error) 
 			return nil, sref.GetBuildError()
 		}
 		t := schemaVal.Type
-		switch t[0] { // TODO multi-value
+		// handle cases where there isn't a `type` set
+		if len(t) == 0 {
+			t = append(t, "")
+		}
+
+		switch t[0] { // TODO multi-value with OpenAPI 3.1
 		case "", "object":
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)
