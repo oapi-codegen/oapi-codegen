@@ -548,15 +548,15 @@ func GenerateTypesForResponses(t *template.Template, responses map[string]*v3.Re
 				TypeName: goTypeName,
 			}
 
-			// TODO ref jvt
-			// if responseOrRef.Ref != "" {
-			// 	// Generate a reference type for referenced parameters
-			// 	refType, err := RefPathToGoType(responseOrRef.Ref)
-			// 	if err != nil {
-			// 		return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-			// 	}
-			// 	typeDef.TypeName = SchemaNameToTypeName(refType)
-			// }
+			ref := responseOrRef.GoLow().GetReference()
+			if ref != "" {
+				// Generate a reference type for referenced parameters
+				refType, err := RefPathToGoType(ref)
+				if err != nil {
+					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", ref, responseName, err)
+				}
+				typeDef.TypeName = SchemaNameToTypeName(refType)
+			}
 			types = append(types, typeDef)
 		}
 	}

@@ -730,8 +730,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *v3.RequestBody) ([]R
 func GenerateResponseDefinitions(operationID string, responses map[string]*v3.Response) ([]ResponseDefinition, error) {
 	var responseDefinitions []ResponseDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
-	// TODO jvt
-	// refSet := make(map[string]struct{})
+	refSet := make(map[string]struct{})
 
 	for _, statusCode := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[statusCode]
@@ -793,21 +792,22 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*v3.Re
 			Headers:    responseHeaderDefinitions,
 		}
 		rd.Description = response.Description
-		// TODO jvt
-		// if IsGoTypeReference(responseOrRef) {
-		// 	// Convert the reference path to Go type
-		// 	refType, err := RefPathToGoType(responseOrRef.Ref)
-		// 	if err != nil {
-		// 		return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
-		// 	}
-		// 	// Check if this ref is already used by another response definition. If not use the ref
-		// 	// If we let multiple response definitions alias to same response it will break the type switch
-		// 	// so only the first response will use the ref, other will generate new structs
-		// 	if _, ok := refSet[refType]; !ok {
-		// 		rd.Ref = refType
-		// 		refSet[refType] = struct{}{}
-		// 	}
-		// }
+
+		ref := responseOrRef.GoLow().GetReference()
+		if IsGoTypeReference(ref) {
+			// Convert the reference path to Go type
+			refType, err := RefPathToGoType(ref)
+			if err != nil {
+				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", ref, err)
+			}
+			// Check if this ref is already used by another response definition. If not use the ref
+			// If we let multiple response definitions alias to same response it will break the type switch
+			// so only the first response will use the ref, other will generate new structs
+			if _, ok := refSet[refType]; !ok {
+				rd.Ref = refType
+				refSet[refType] = struct{}{}
+			}
+		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
 
