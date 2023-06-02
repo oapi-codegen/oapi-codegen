@@ -157,7 +157,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 func DescribeParameters(params []*v3.Parameter, path []string) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0)
 	for _, paramOrRef := range params {
-		param := paramOrRef.Value
+		param := paramOrRef
 
 		goType, err := paramToGoType(param, append(path, param.Name))
 		if err != nil {
@@ -173,17 +173,18 @@ func DescribeParameters(params []*v3.Parameter, path []string) ([]ParameterDefin
 			Schema:    goType,
 		}
 
-		// If this is a reference to a predefined type, simply use the reference
-		// name as the type. $ref: "#/components/schemas/custom_type" becomes
-		// "CustomType".
-		if IsGoTypeReference(paramOrRef.Ref) {
-			goType, err := RefPathToGoType(paramOrRef.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
-					paramOrRef.Ref, param.Name, err)
-			}
-			pd.Schema.GoType = goType
-		}
+		// // If this is a reference to a predefined type, simply use the reference
+		// // name as the type. $ref: "#/components/schemas/custom_type" becomes
+		// // "CustomType".
+		// if IsGoTypeReference(paramOrRef.Ref) {
+		// 	goType, err := RefPathToGoType(paramOrRef.Ref)
+		// 	if err != nil {
+		// 		return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
+		// 			paramOrRef.Ref, param.Name, err)
+		// 	}
+		// 	pd.Schema.GoType = goType
+		// TODO jvt low?
+		// }
 		outParams = append(outParams, pd)
 	}
 	return outParams, nil
