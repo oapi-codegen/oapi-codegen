@@ -793,10 +793,10 @@ func renameSchema(schemaName string, schemaRef *base.SchemaProxy) (string, error
 // renameParameter generates the name for a parameter, taking x-go-name into
 // account
 func renameParameter(parameterName string, parameterRef *v3.Parameter) (string, error) {
-	// TODO jvt low?
-	// if parameterRef.Ref != "" {
-	// 	return SchemaNameToTypeName(parameterName), nil
-	// }
+	if parameterRef.Schema.GetReference() != "" {
+		return SchemaNameToTypeName(parameterName), nil
+	}
+
 	if extension, ok := parameterRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
@@ -810,11 +810,10 @@ func renameParameter(parameterName string, parameterRef *v3.Parameter) (string, 
 // renameResponse generates the name for a parameter, taking x-go-name into
 // account
 func renameResponse(responseName string, responseRef *v3.Response) (string, error) {
-	// if responseRef.Ref != "" {
-	// 	return SchemaNameToTypeName(responseName), nil
-	// }
-	// response := responseRef.Value
-	// TODO JVT
+	if responseRef.GoLow().GetReference() != "" {
+		return SchemaNameToTypeName(responseName), nil
+	}
+
 	if extension, ok := responseRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
@@ -828,9 +827,9 @@ func renameResponse(responseName string, responseRef *v3.Response) (string, erro
 // renameRequestBody generates the name for a parameter, taking x-go-name into
 // account
 func renameRequestBody(requestBodyName string, requestBodyRef *v3.RequestBody) (string, error) {
-	// if requestBodyRef.Ref != "" {
-	// 	return SchemaNameToTypeName(requestBodyName), nil
-	// }
+	if requestBodyRef.GoLow().GetReference() != "" {
+		return SchemaNameToTypeName(requestBodyName), nil
+	}
 	if extension, ok := requestBodyRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
