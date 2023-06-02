@@ -919,6 +919,12 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
+// GenerateFiberServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+}
+
 // GenerateEchoServer This function generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -938,16 +944,22 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
-	templates := []string{"strict/strict-interface.tmpl"}
+
+	var templates []string
+
 	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
-		templates = append(templates, "strict/strict-http.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
 	}
 	if opts.Generate.EchoServer {
-		templates = append(templates, "strict/strict-echo.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl")
 	}
 	if opts.Generate.GinServer {
-		templates = append(templates, "strict/strict-gin.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl")
 	}
+	if opts.Generate.FiberServer {
+		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+
 	return GenerateTemplates(templates, t, operations)
 }
 
