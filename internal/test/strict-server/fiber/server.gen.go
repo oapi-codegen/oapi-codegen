@@ -807,7 +807,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *fiber.Ctx) error {
 func (sh *strictHandler) ReservedGoKeywordParameters(ctx *fiber.Ctx, pType string) error {
 	var request ReservedGoKeywordParametersRequestObject
 
-	request.PType = pType
+	request.Type = pType
 
 	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
 		return sh.ssi.ReservedGoKeywordParameters(ctx.UserContext(), request.(ReservedGoKeywordParametersRequestObject))
