@@ -15,9 +15,9 @@ you can focus on implementing the business logic for your service.
 
 We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
-stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin)
-and [Fiber](https://github.com/gofiber/fiber) have also been added by contributors
-as additional routers. We chose Echo because
+stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin),
+[gorilla/mux](https://github.com/gorilla/mux), and [Fiber](https://github.com/gofiber/fiber)
+have also been added by contributors as additional routers. We chose Echo because
 the `Context` object is a mockable interface, and it allows for some advanced
 testing.
 

@@ -133,7 +133,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DeprecatedProperty"
-
+  /issues/1051:
+    get:
+      operationId: Issue1051
+      description: |
+        Multiple media types contain JSON
+      responses:
+        '200':
+          content:
+            application/vnd.something.v1+json:
+              schema:
+                type: object
+            application/json:
+              schema:
+                type: object
 components:
   schemas:
     GenericObject:
