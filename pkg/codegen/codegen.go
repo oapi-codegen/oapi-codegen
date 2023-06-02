@@ -820,7 +820,7 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
-	return strings.Replace(goCode, "\uFEFF", "", -1)
+	return strings.ReplaceAll(goCode, "\uFEFF", "")
 }
 
 // GetUserTemplateText attempts to retrieve the template text from a passed in URL or file
