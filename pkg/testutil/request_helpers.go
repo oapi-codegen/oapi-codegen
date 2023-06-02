@@ -110,6 +110,10 @@ func (r *RequestBuilder) WithAcceptJson() *RequestBuilder {
 	return r.WithAccept("application/json")
 }
 
+func (r *RequestBuilder) WithMultipleAcceptLanguageHeaders() *RequestBuilder {
+	return r.WithHeader("Accept-Language", "en").WithHeader("Accept-Language", "nl")
+}
+
 // Request body operations
 
 func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {

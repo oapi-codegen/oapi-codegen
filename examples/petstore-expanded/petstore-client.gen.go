@@ -52,7 +52,8 @@ type FindPetsParams struct {
 	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
 
 	// Limit maximum number of results to return
-	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+	Limit          *int32   `form:"limit,omitempty" json:"limit,omitempty"`
+	AcceptLanguage []string `json:"Accept-Language"`
 }
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
@@ -267,6 +268,15 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 	if err != nil {
 		return nil, err
 	}
+
+	var headerParam0 string
+
+	headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Accept-Language", runtime.ParamLocationHeader, params.AcceptLanguage)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept-Language", headerParam0)
 
 	return req, nil
 }

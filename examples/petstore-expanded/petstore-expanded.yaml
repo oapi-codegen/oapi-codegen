@@ -40,6 +40,13 @@ paths:
           schema:
             type: integer
             format: int32
+        - name: Accept-Language
+          in: header
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: pet response

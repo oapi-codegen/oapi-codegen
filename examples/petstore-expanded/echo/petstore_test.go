@@ -110,7 +110,7 @@ func TestPetStore(t *testing.T) {
 	petId2 := resultPet.Id
 
 	// Now, list all pets, we should have two
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJson().WithMultipleAcceptLanguageHeaders().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	var petList []models.Pet
 	err = result.UnmarshalBodyToObject(&petList)
@@ -119,7 +119,7 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by tag, we should have 1
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJson().WithMultipleAcceptLanguageHeaders().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
@@ -127,7 +127,7 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by non existent tag, we should have 0
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJson().WithMultipleAcceptLanguageHeaders().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
@@ -148,7 +148,7 @@ func TestPetStore(t *testing.T) {
 
 	// Should have no pets left.
 	petList = nil
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJson().WithMultipleAcceptLanguageHeaders().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
