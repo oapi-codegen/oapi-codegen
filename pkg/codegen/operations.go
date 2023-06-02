@@ -562,7 +562,7 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 				OperationId:  toCamelCaseFunc(op.OperationId),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
-				Method:          opName,
+				Method:          strings.ToUpper(opName),
 				Path:            requestPath,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
