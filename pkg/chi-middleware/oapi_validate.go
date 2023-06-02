@@ -70,7 +70,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 }
 
-// This function is called from the middleware above and actually does the work
+// validateRequest is called from the middleware above and actually does the work
 // of validating a request.
 func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
 
