@@ -29,7 +29,7 @@ func ParseOpenAPI(filepath string) (*libopenapi.DocumentModel[v3.Document], erro
 	return d, nil
 }
 
-func LoadSwagger(filePath string) (swagger *libopenapi.DocumentModel[v3.Document], err error) {
+func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

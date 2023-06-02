@@ -978,10 +978,10 @@ func GetTypeDefinitionsImports(swagger *libopenapi.DocumentModel[v3.Document], e
 	return res, nil
 }
 
-func GoSchemaImports(schemas ...*base.Schema) (map[string]goImport, error) {
+func GoSchemaImports(schemas ...*base.SchemaProxy) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, sref := range schemas {
-		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
+		if sref == nil || sref.IsReference() || IsGoTypeReference(sref.GetReference()) {
 			return nil, nil
 		}
 		if gi, err := ParseGoImportExtension(sref); err != nil {
@@ -1014,7 +1014,7 @@ func GoSchemaImports(schemas ...*base.Schema) (map[string]goImport, error) {
 	return res, nil
 }
 
-func GetSchemaImports(schemas map[string]*base.Schema, excludeSchemas []string) (map[string]goImport, error) {
+func GetSchemaImports(schemas map[string]*base.SchemaProxy, excludeSchemas []string) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	excludeSchemasMap := make(map[string]bool)
 	for _, schema := range excludeSchemas {
@@ -1036,8 +1036,7 @@ func GetSchemaImports(schemas map[string]*base.Schema, excludeSchemas []string) 
 
 func GetRequestBodiesImports(bodies map[string]*v3.RequestBody) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	for _, r := range bodies {
-		response := r.Value
+	for _, response := range bodies {
 		jsonBody, found := response.Content["application/json"]
 		if found {
 			imprts, err := GoSchemaImports(jsonBody.Schema)
@@ -1052,8 +1051,7 @@ func GetRequestBodiesImports(bodies map[string]*v3.RequestBody) (map[string]goIm
 
 func GetResponsesImports(responses map[string]*v3.Response) (map[string]goImport, error) {
 	res := map[string]goImport{}
-	for _, r := range responses {
-		response := r.Value
+	for _, response := range responses {
 		jsonResponse, found := response.Content["application/json"]
 		if found {
 			imprts, err := GoSchemaImports(jsonResponse.Schema)
@@ -1069,10 +1067,7 @@ func GetResponsesImports(responses map[string]*v3.Response) (map[string]goImport
 func GetParametersImports(params map[string]*v3.Parameter) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, param := range params {
-		if param.Value == nil {
-			continue
-		}
-		imprts, err := GoSchemaImports(param.Value.Schema)
+		imprts, err := GoSchemaImports(param.Schema)
 		if err != nil {
 			return nil, err
 		}

@@ -25,8 +25,8 @@ import (
 	"unicode"
 
 	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/pb33f/libopenapi/datamodel/low/base"
 )
 
 var (
@@ -231,7 +231,7 @@ func SortedResponsesKeys(dict map[string]*v3.Response) []string {
 	return keys
 }
 
-func SortedHeadersKeys(dict v3.Headers) []string {
+func SortedHeadersKeys(dict map[string]*v3.Header) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -243,7 +243,7 @@ func SortedHeadersKeys(dict v3.Headers) []string {
 }
 
 // SortedContentKeys returns Content dictionary keys in sorted order
-func SortedContentKeys(dict v3.Content) []string {
+func SortedContentKeys(dict map[string]*v3.MediaType) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -267,7 +267,7 @@ func SortedStringKeys(dict map[string]string) []string {
 }
 
 // SortedParameterKeys returns sorted keys for a ParameterRef dict
-func SortedParameterKeys(dict map[string]*v3.ParameterRef) []string {
+func SortedParameterKeys(dict map[string]*v3.Parameter) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -278,7 +278,7 @@ func SortedParameterKeys(dict map[string]*v3.ParameterRef) []string {
 	return keys
 }
 
-func SortedRequestBodyKeys(dict map[string]*v3.RequestBodyRef) []string {
+func SortedRequestBodyKeys(dict map[string]*v3.RequestBody) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -289,7 +289,7 @@ func SortedRequestBodyKeys(dict map[string]*v3.RequestBodyRef) []string {
 	return keys
 }
 
-func SortedSecurityRequirementKeys(sr v3.SecurityRequirement) []string {
+func SortedSecurityRequirementKeys(sr map[string]*v3.SecurityScheme) []string {
 	keys := make([]string, len(sr))
 	i := 0
 	for key := range sr {
@@ -682,15 +682,21 @@ func SchemaNameToTypeName(name string) string {
 // differently, in that if you want additionalProperties code to be generated,
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
-func SchemaHasAdditionalProperties(schema *v3.Schema) bool {
-	if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
-		return true
+func SchemaHasAdditionalProperties(sch *base.SchemaProxy) bool {
+	schema := sch.Schema()
+	if schema == nil {
+		return false
 	}
 
-	if schema.AdditionalProperties.Schema != nil {
-		return true
-	}
-	return false
+	// if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
+	// 	return true
+	// }
+	//
+	// if schema.AdditionalProperties.Schema != nil {
+	// 	return true
+	// }
+	// TODO jvt
+	return schema.AdditionalProperties != nil
 }
 
 // PathToTypeName converts a path, like Object/field1/nestedField into a go
@@ -768,12 +774,16 @@ func EscapePathElements(path string) string {
 // and the definition of the schema. If the schema overrides the name via
 // x-go-name, the new name is returned, otherwise, the original name is
 // returned.
-func renameSchema(schemaName string, schemaRef *v3.SchemaRef) (string, error) {
+func renameSchema(schemaName string, schemaRef *base.SchemaProxy) (string, error) {
 	// References will not change type names.
-	if schemaRef.Ref != "" {
+	if schemaRef.IsReference() {
 		return SchemaNameToTypeName(schemaName), nil
 	}
-	schema := schemaRef.Value
+
+	schema, err := schemaRef.BuildSchema()
+	if err != nil {
+		return "", err
+	}
 
 	if extension, ok := schema.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
@@ -787,13 +797,12 @@ func renameSchema(schemaName string, schemaRef *v3.SchemaRef) (string, error) {
 
 // renameParameter generates the name for a parameter, taking x-go-name into
 // account
-func renameParameter(parameterName string, parameterRef *v3.ParameterRef) (string, error) {
-	if parameterRef.Ref != "" {
-		return SchemaNameToTypeName(parameterName), nil
-	}
-	parameter := parameterRef.Value
-
-	if extension, ok := parameter.Extensions[extGoName]; ok {
+func renameParameter(parameterName string, parameterRef *v3.Parameter) (string, error) {
+	// TODO jvt low?
+	// if parameterRef.Ref != "" {
+	// 	return SchemaNameToTypeName(parameterName), nil
+	// }
+	if extension, ok := parameterRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -806,12 +815,12 @@ func renameParameter(parameterName string, parameterRef *v3.ParameterRef) (strin
 // renameResponse generates the name for a parameter, taking x-go-name into
 // account
 func renameResponse(responseName string, responseRef *v3.Response) (string, error) {
-	if responseRef.Ref != "" {
-		return SchemaNameToTypeName(responseName), nil
-	}
-	response := responseRef.Value
-
-	if extension, ok := response.Extensions[extGoName]; ok {
+	// if responseRef.Ref != "" {
+	// 	return SchemaNameToTypeName(responseName), nil
+	// }
+	// response := responseRef.Value
+	// TODO JVT
+	if extension, ok := responseRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -823,13 +832,11 @@ func renameResponse(responseName string, responseRef *v3.Response) (string, erro
 
 // renameRequestBody generates the name for a parameter, taking x-go-name into
 // account
-func renameRequestBody(requestBodyName string, requestBodyRef *v3.RequestBodyRef) (string, error) {
-	if requestBodyRef.Ref != "" {
-		return SchemaNameToTypeName(requestBodyName), nil
-	}
-	requestBody := requestBodyRef.Value
-
-	if extension, ok := requestBody.Extensions[extGoName]; ok {
+func renameRequestBody(requestBodyName string, requestBodyRef *v3.RequestBody) (string, error) {
+	// if requestBodyRef.Ref != "" {
+	// 	return SchemaNameToTypeName(requestBodyName), nil
+	// }
+	if extension, ok := requestBodyRef.Extensions[extGoName]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -879,12 +886,16 @@ func findSchemaNameByRefPath(refPath string, spec *libopenapi.DocumentModel[v3.D
 	return "", nil
 }
 
-func ParseGoImportExtension(v *base.Schema) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+func ParseGoImportExtension(v *base.SchemaProxy) (*goImport, error) {
+	schema := v.Schema()
+	if schema == nil {
+		return nil, v.GetBuildError()
+	}
+	if schema.Extensions[extPropGoImport] == nil || schema.Extensions[extPropGoType] == nil {
 		return nil, nil
 	}
 
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
+	goTypeImportExt := schema.Extensions[extPropGoImport]
 
 	importI, ok := goTypeImportExt.(map[string]interface{})
 	if !ok {
