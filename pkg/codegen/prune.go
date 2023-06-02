@@ -54,7 +54,7 @@ func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error 
 
 	_ = walkRequestBodyRef(op.RequestBody, doFn)
 
-	for _, response := range op.Responses {
+	for _, response := range op.Responses.Codes {
 		_ = walkResponseRef(response, doFn)
 	}
 
@@ -115,7 +115,7 @@ func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) e
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GetReference(), HasValue: ref.Schema() != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -123,30 +123,37 @@ func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) e
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	// TODO jvt
+	// if ref.Value == nil {
+	if ref == nil {
+		return nil
+	}
+	// TODO jvt
+
+	schema := ref.Schema()
+	if schema == nil {
 		return nil
 	}
 
-	for _, ref := range ref.Value.OneOf {
+	for _, ref := range schema.OneOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	for _, ref := range ref.Value.AnyOf {
+	for _, ref := range schema.AnyOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	for _, ref := range ref.Value.AllOf {
+	for _, ref := range schema.AllOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	_ = walkSchemaRef(ref.Value.Not, doFn)
-	_ = walkSchemaRef(ref.Value.Items, doFn)
-
-	for _, ref := range ref.Value.Properties {
+	_ = walkSchemaRef(schema.Not, doFn)
+	// _ = walkSchemaRef(schema.Items, doFn) // TODO JVT
+	for _, ref := range schema.Properties {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
+	// _ = walkSchemaRef(schema.AdditionalProperties.Schema, doFn) // TODO JVT
 
 	return nil
 }
@@ -156,7 +163,8 @@ func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) er
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref.Schema != nil, SourceRef: ref} // TODO jvt
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -164,17 +172,18 @@ func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) er
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	schema := ref.Schema
+	if schema == nil {
 		return nil
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
+	_ = walkSchemaRef(schema, doFn)
 
-	for _, example := range ref.Value.Examples {
+	for _, example := range ref.Examples {
 		_ = walkExampleRef(example, doFn)
 	}
 
-	for _, mediaType := range ref.Value.Content {
+	for _, mediaType := range ref.Content {
 		if mediaType == nil {
 			continue
 		}
@@ -193,7 +202,7 @@ func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref} // TODO ref.Value != nil
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -201,11 +210,12 @@ func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	// if ref.Value == nil {
+	if ref == nil { // TODO
 		return nil
 	}
 
-	for _, mediaType := range ref.Value.Content {
+	for _, mediaType := range ref.Content {
 		if mediaType == nil {
 			continue
 		}
@@ -224,7 +234,8 @@ func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) erro
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	//refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref.Value != nil, SourceRef: ref} TODO
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -232,15 +243,16 @@ func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) erro
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	// if ref.Value == nil { // TODO
+	if ref == nil {
 		return nil
 	}
 
-	for _, header := range ref.Value.Headers {
+	for _, header := range ref.Headers {
 		_ = walkHeaderRef(header, doFn)
 	}
 
-	for _, mediaType := range ref.Value.Content {
+	for _, mediaType := range ref.Content {
 		if mediaType == nil {
 			continue
 		}
@@ -251,7 +263,7 @@ func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) erro
 		}
 	}
 
-	for _, link := range ref.Value.Links {
+	for _, link := range ref.Links {
 		_ = walkLinkRef(link, doFn)
 	}
 
@@ -263,7 +275,7 @@ func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) erro
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref} // TODO
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -271,15 +283,16 @@ func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) erro
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	// if ref.Value == nil { TODO
+	if ref == nil {
 		return nil
 	}
 
-	for _, pathItem := range *ref.Value {
+	for _, pathItem := range ref.Expression {
 		for _, parameter := range pathItem.Parameters {
 			_ = walkParameterRef(parameter, doFn)
 		}
-		_ = walkOperation(pathItem.Connect, doFn)
+		// _ = walkOperation(pathItem.Connect, doFn) TODO
 		_ = walkOperation(pathItem.Delete, doFn)
 		_ = walkOperation(pathItem.Get, doFn)
 		_ = walkOperation(pathItem.Head, doFn)
@@ -298,7 +311,7 @@ func walkHeaderRef(ref *v3.Header, doFn func(RefWrapper) (bool, error)) error {
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref} // TODO
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -306,11 +319,11 @@ func walkHeaderRef(ref *v3.Header, doFn func(RefWrapper) (bool, error)) error {
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	if ref == nil { // TODO
 		return nil
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
+	_ = walkSchemaRef(ref.Schema, doFn)
 
 	return nil
 }
@@ -320,7 +333,7 @@ func walkSecuritySchemeRef(ref *v3.SecurityScheme, doFn func(RefWrapper) (bool, 
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref} // TODO
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -328,7 +341,7 @@ func walkSecuritySchemeRef(ref *v3.SecurityScheme, doFn func(RefWrapper) (bool, 
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	if ref == nil { // TODO
 		return nil
 	}
 
@@ -342,7 +355,7 @@ func walkLinkRef(ref *v3.Link, doFn func(RefWrapper) (bool, error)) error {
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref != nil, SourceRef: ref} // TODO
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -350,7 +363,7 @@ func walkLinkRef(ref *v3.Link, doFn func(RefWrapper) (bool, error)) error {
 	if !shouldContinue {
 		return nil
 	}
-	if ref.Value == nil {
+	if ref == nil { // TODO
 		return nil
 	}
 
@@ -362,7 +375,7 @@ func walkExampleRef(ref *base.Example, doFn func(RefWrapper) (bool, error)) erro
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -394,25 +407,25 @@ func findComponentRefs(swagger *libopenapi.DocumentModel[v3.Document]) []string 
 }
 
 func removeOrphanedComponents(swagger *libopenapi.DocumentModel[v3.Document], refs []string) int {
-	if swagger.Components == nil {
+	if swagger.Model.Components == nil {
 		return 0
 	}
 
 	countRemoved := 0
 
-	for key := range swagger.Components.Schemas {
+	for key := range swagger.Model.Components.Schemas {
 		ref := fmt.Sprintf("#/components/schemas/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Schemas, key)
+			delete(swagger.Model.Components.Schemas, key)
 		}
 	}
 
-	for key := range swagger.Components.Parameters {
+	for key := range swagger.Model.Components.Parameters {
 		ref := fmt.Sprintf("#/components/parameters/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Parameters, key)
+			delete(swagger.Model.Components.Parameters, key)
 		}
 	}
 
@@ -427,51 +440,51 @@ func removeOrphanedComponents(swagger *libopenapi.DocumentModel[v3.Document], re
 	// 	}
 	// }
 
-	for key := range swagger.Components.RequestBodies {
+	for key := range swagger.Model.Components.RequestBodies {
 		ref := fmt.Sprintf("#/components/requestBodies/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.RequestBodies, key)
+			delete(swagger.Model.Components.RequestBodies, key)
 		}
 	}
 
-	for key := range swagger.Components.Responses {
+	for key := range swagger.Model.Components.Responses {
 		ref := fmt.Sprintf("#/components/responses/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Responses, key)
+			delete(swagger.Model.Components.Responses, key)
 		}
 	}
 
-	for key := range swagger.Components.Headers {
+	for key := range swagger.Model.Components.Headers {
 		ref := fmt.Sprintf("#/components/headers/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Headers, key)
+			delete(swagger.Model.Components.Headers, key)
 		}
 	}
 
-	for key := range swagger.Components.Examples {
+	for key := range swagger.Model.Components.Examples {
 		ref := fmt.Sprintf("#/components/examples/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Examples, key)
+			delete(swagger.Model.Components.Examples, key)
 		}
 	}
 
-	for key := range swagger.Components.Links {
+	for key := range swagger.Model.Components.Links {
 		ref := fmt.Sprintf("#/components/links/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Links, key)
+			delete(swagger.Model.Components.Links, key)
 		}
 	}
 
-	for key := range swagger.Components.Callbacks {
+	for key := range swagger.Model.Components.Callbacks {
 		ref := fmt.Sprintf("#/components/callbacks/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			delete(swagger.Components.Callbacks, key)
+			delete(swagger.Model.Components.Callbacks, key)
 		}
 	}
 

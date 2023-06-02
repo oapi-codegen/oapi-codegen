@@ -527,31 +527,35 @@ func oapiSchemaToGoType(schema *base.Schema, path []string, outSchema *Schema) e
 	case "array":
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
-		arrayType, err := GenerateGoSchema(schema.Items, path)
-		if err != nil {
-			return fmt.Errorf("error generating type for array: %w", err)
-		}
-		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
-			// If we have items which have additional properties or union values,
-			// but are not a pre-defined type, we need to define a type
-			// for them, which will be based on the field names we followed
-			// to get to the type.
-			typeName := PathToTypeName(append(path, "Item"))
-
-			typeDef := TypeDefinition{
-				TypeName: typeName,
-				JsonName: strings.Join(append(path, "Item"), "."),
-				Schema:   arrayType,
+		items := schema.Items
+		// if it's a Schema
+		if items.IsA() {
+			arrayType, err := GenerateGoSchema(items.A, path)
+			if err != nil {
+				return fmt.Errorf("error generating type for array: %w", err)
 			}
-			arrayType.AdditionalTypes = append(arrayType.AdditionalTypes, typeDef)
+			if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
+				// If we have items which have additional properties or union values,
+				// but are not a pre-defined type, we need to define a type
+				// for them, which will be based on the field names we followed
+				// to get to the type.
+				typeName := PathToTypeName(append(path, "Item"))
 
-			arrayType.RefType = typeName
+				typeDef := TypeDefinition{
+					TypeName: typeName,
+					JsonName: strings.Join(append(path, "Item"), "."),
+					Schema:   arrayType,
+				}
+				arrayType.AdditionalTypes = append(arrayType.AdditionalTypes, typeDef)
+
+				arrayType.RefType = typeName
+			}
+			outSchema.ArrayType = &arrayType
+			outSchema.GoType = "[]" + arrayType.TypeDecl()
+			outSchema.AdditionalTypes = arrayType.AdditionalTypes
+			outSchema.Properties = arrayType.Properties
+			outSchema.DefineViaAlias = true
 		}
-		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
-		outSchema.AdditionalTypes = arrayType.AdditionalTypes
-		outSchema.Properties = arrayType.Properties
-		outSchema.DefineViaAlias = true
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {

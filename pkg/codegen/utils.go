@@ -196,7 +196,7 @@ func SortedSchemaKeys(dict map[string]*base.SchemaProxy) []string {
 
 // SortedPathsKeys is the same as above, except it sorts the keys for a Paths
 // dictionary.
-func SortedPathsKeys(dict v3.Paths) []string {
+func SortedPathsKeys(dict *v3.Paths) []string {
 	keys := make([]string, len(dict.PathItems))
 	i := 0
 	for key := range dict.PathItems {

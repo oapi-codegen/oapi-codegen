@@ -123,19 +123,19 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
 
-		responseRef, ok := responses[typeDefinition.ResponseName]
+		responseRef, ok := responses.Codes[typeDefinition.ResponseName]
 		if !ok {
 			continue
 		}
 
 		// We can't do much without a value:
-		if responseRef.Value == nil {
+		if responseRef == nil {
 			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
 			continue
 		}
 
 		// If there is no content-type then we have no unmarshalling to do:
-		if len(responseRef.Value.Content) == 0 {
+		if len(responseRef.Content) == 0 {
 			caseAction := "break // No content-type"
 			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
 			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
@@ -143,7 +143,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshalling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		sortedContentKeys := SortedContentKeys(responseRef.Content)
 		for _, contentTypeName := range sortedContentKeys {
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):

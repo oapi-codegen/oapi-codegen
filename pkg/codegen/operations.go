@@ -24,8 +24,8 @@ import (
 	"unicode"
 
 	"github.com/deepmap/oapi-codegen/pkg/util"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
@@ -183,7 +183,6 @@ func DescribeParameters(params []*v3.Parameter, path []string) ([]ParameterDefin
 		// 			paramOrRef.Ref, param.Name, err)
 		// 	}
 		// 	pd.Schema.GoType = goType
-		// TODO jvt low?
 		// }
 		outParams = append(outParams, pd)
 	}
@@ -195,15 +194,16 @@ type SecurityDefinition struct {
 	Scopes       []string
 }
 
-func DescribeSecurityDefinition(securityRequirements map[string]*v3.SecurityScheme) []SecurityDefinition {
+func DescribeSecurityDefinition(securityRequirements []*base.SecurityRequirement) []SecurityDefinition {
 	outDefs := make([]SecurityDefinition, 0)
 
-	for _, sr := range securityRequirements {
-		for _, k := range SortedSecurityRequirementKeys(sr) {
-			v := sr[k]
-			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
-		}
-	}
+	// TODO jvt
+	// for _, sr := range securityRequirements {
+	// 	for _, k := range SortedSecurityRequirementKeys(sr) {
+	// 		v := sr[k]
+	// 		outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
+	// 	}
+	// }
 
 	return outDefs
 }
@@ -224,7 +224,7 @@ type OperationDefinition struct {
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
-	Spec                *openapi3.Operation
+	Spec                *v3.Operation
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -278,15 +278,15 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
-	sortedResponsesKeys := SortedResponsesKeys(responses)
+	sortedResponsesKeys := SortedResponsesKeys(responses.Codes)
 	for _, responseName := range sortedResponsesKeys {
-		responseRef := responses[responseName]
+		responseRef := responses.Codes[responseName]
 
 		// We can only generate a type if we have a value:
-		if responseRef.Value != nil {
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		if responseRef != nil {
+			sortedContentKeys := SortedContentKeys(responseRef.Content)
 			for _, contentTypeName := range sortedContentKeys {
-				contentType := responseRef.Value.Content[contentTypeName]
+				contentType := responseRef.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
 					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
@@ -320,8 +320,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						ResponseName:    responseName,
 						ContentTypeName: contentTypeName,
 					}
-					if IsGoTypeReference(contentType.Schema.Ref) {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+					if IsGoTypeReference(contentType.Schema.GetReference()) {
+						refType, err := RefPathToGoType(contentType.Schema.GetReference())
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
@@ -511,27 +511,27 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 		}
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
-		pathOps := pathItem.Operations()
+		pathOps := pathItem.GetOperations()
 		for _, opName := range SortedOperationsKeys(pathOps) {
 			op := pathOps[opName]
 			if pathItem.Servers != nil {
-				op.Servers = &pathItem.Servers
+				op.Servers = pathItem.Servers
 			}
 			// We rely on OperationID to generate function names, it's required
-			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
+			if op.OperationId == "" {
+				op.OperationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = toCamelCaseFunc(op.OperationID)
+				op.OperationId = toCamelCaseFunc(op.OperationId)
 			}
-			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
+			op.OperationId = typeNamePrefix(op.OperationId) + op.OperationId
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationId + "Params"})
 			if err != nil {
 				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
@@ -549,12 +549,12 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationId, op.RequestBody)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			responseDefinitions, err := GenerateResponseDefinitions(op.OperationId, op.Responses.Codes)
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
@@ -564,7 +564,7 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  toCamelCaseFunc(op.OperationID),
+				OperationId:  toCamelCaseFunc(op.OperationId),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -579,18 +579,18 @@ func OperationDefinitions(swagger *libopenapi.DocumentModel[v3.Document], initia
 			// See: "Step 2. Applying security:" from the spec:
 			// https://swagger.io/docs/specification/authentication/
 			if op.Security != nil {
-				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(op.Security)
 			} else {
 				// use global securityDefinitions
 				// globalSecurityDefinitions contains the top-level securityDefinitions.
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
-				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Model.Security)
 
 			}
 
-			if op.RequestBody != nil {
-				opDef.BodyRequired = op.RequestBody.Value.Required
+			if op.RequestBody != nil && op.RequestBody.Required != nil {
+				opDef.BodyRequired = *op.RequestBody.Required
 			}
 
 			// Generate all the type definitions needed for this operation
@@ -624,11 +624,11 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+func GenerateBodyDefinitions(operationID string, bodyOrRef *v3.RequestBody) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
-	body := bodyOrRef.Value
+	body := bodyOrRef
 
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
@@ -650,8 +650,10 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			tag = "Text"
 		default:
 			bd := RequestBodyDefinition{
-				Required:    body.Required,
 				ContentType: contentType,
+			}
+			if body.Required != nil {
+				bd.Required = *body.Required
 			}
 			bodyDefinitions = append(bodyDefinitions, bd)
 			continue
@@ -664,11 +666,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if content.Schema != nil && IsGoTypeReference(content.Schema.Ref) {
+		if content.Schema != nil && IsGoTypeReference(content.Schema.GetReference()) {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(content.Schema.Ref)
+			refType, err := RefPathToGoType(content.Schema.GetReference())
 			if err != nil {
-				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.Ref, err)
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.GetReference(), err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -698,11 +700,13 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		bd := RequestBodyDefinition{
-			Required:    body.Required,
 			Schema:      bodySchema,
 			NameTag:     tag,
 			ContentType: contentType,
 			Default:     defaultBody,
+		}
+		if body.Required != nil {
+			bd.Required = *body.Required
 		}
 
 		if len(content.Encoding) != 0 {
@@ -724,14 +728,15 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 func GenerateResponseDefinitions(operationID string, responses map[string]*v3.Response) ([]ResponseDefinition, error) {
 	var responseDefinitions []ResponseDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
-	refSet := make(map[string]struct{})
+	// TODO jvt
+	// refSet := make(map[string]struct{})
 
 	for _, statusCode := range SortedResponsesKeys(responses) {
 		responseOrRef := responses[statusCode]
 		if responseOrRef == nil {
 			continue
 		}
-		response := responseOrRef.Value
+		response := responseOrRef
 
 		var responseContentDefinitions []ResponseContentDefinition
 
@@ -772,7 +777,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*v3.Re
 		var responseHeaderDefinitions []ResponseHeaderDefinition
 		for _, headerName := range SortedHeadersKeys(response.Headers) {
 			header := response.Headers[headerName]
-			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
+			contentSchema, err := GenerateGoSchema(header.Schema, []string{})
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
@@ -785,23 +790,22 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*v3.Re
 			Contents:   responseContentDefinitions,
 			Headers:    responseHeaderDefinitions,
 		}
-		if response.Description != nil {
-			rd.Description = *response.Description
-		}
-		if IsGoTypeReference(responseOrRef.Ref) {
-			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(responseOrRef.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
-			}
-			// Check if this ref is already used by another response definition. If not use the ref
-			// If we let multiple response definitions alias to same response it will break the type switch
-			// so only the first response will use the ref, other will generate new structs
-			if _, ok := refSet[refType]; !ok {
-				rd.Ref = refType
-				refSet[refType] = struct{}{}
-			}
-		}
+		rd.Description = response.Description
+		// TODO jvt
+		// if IsGoTypeReference(responseOrRef) {
+		// 	// Convert the reference path to Go type
+		// 	refType, err := RefPathToGoType(responseOrRef.Ref)
+		// 	if err != nil {
+		// 		return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+		// 	}
+		// 	// Check if this ref is already used by another response definition. If not use the ref
+		// 	// If we let multiple response definitions alias to same response it will break the type switch
+		// 	// so only the first response will use the ref, other will generate new structs
+		// 	if _, ok := refSet[refType]; !ok {
+		// 		rd.Ref = refType
+		// 		refSet[refType] = struct{}{}
+		// 	}
+		// }
 		responseDefinitions = append(responseDefinitions, rd)
 	}
 
