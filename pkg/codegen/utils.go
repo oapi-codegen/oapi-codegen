@@ -521,7 +521,7 @@ func IsGoKeyword(str string) bool {
 }
 
 // IsPredeclaredGoIdentifier returns whether the given string
-// is a predefined go indentifier.
+// is a predefined go identifier.
 //
 // See https://golang.org/ref/spec#Predeclared_identifiers
 func IsPredeclaredGoIdentifier(str string) bool {

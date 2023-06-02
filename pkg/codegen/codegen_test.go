@@ -109,7 +109,7 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 
@@ -145,7 +145,7 @@ func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "// Package api provides primitives to interact with the openapi")
 }
 
@@ -194,7 +194,7 @@ func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 

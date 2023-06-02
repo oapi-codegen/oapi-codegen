@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// The input mapping is experessed on the command line as `key1:value1,key2:value2,...`
+// The input mapping is expressed on the command line as `key1:value1,key2:value2,...`
 // We parse it here, but need to keep in mind that keys or values may contain
 // commas and colons. We will allow escaping those using double quotes, so
 // when passing in "key1":"value1", we will not look inside the quoted sections.
@@ -47,7 +47,7 @@ func ParseCommandLineList(input string) []string {
 	return args
 }
 
-// This function splits a string along the specifed separator, but it
+// This function splits a string along the specified separator, but it
 // ignores anything between double quotes for splitting. We do simple
 // inside/outside quote counting. Quotes are not stripped from output.
 func splitString(s string, sep rune) []string {

@@ -74,7 +74,7 @@ func (f *FakeAuthenticator) ValidateJWS(jwsString string) (jwt.Token, error) {
 		jwt.WithAudience(FakeAudience), jwt.WithIssuer(FakeIssuer))
 }
 
-// SignToken takes a JWT and signs it with our priviate key, returning a JWS.
+// SignToken takes a JWT and signs it with our private key, returning a JWS.
 func (f *FakeAuthenticator) SignToken(t jwt.Token) ([]byte, error) {
 	hdr := jws.NewHeaders()
 	if err := hdr.Set(jws.AlgorithmKey, jwa.ES256); err != nil {
