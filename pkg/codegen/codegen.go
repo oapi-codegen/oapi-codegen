@@ -504,15 +504,15 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*v3.Para
 			TypeName: goTypeName,
 		}
 
-		// TODO is ref jvt
-		// if paramOrRef.Ref != "" {
-		// 	// Generate a reference type for referenced parameters
-		// 	refType, err := RefPathToGoType(paramOrRef.Ref)
-		// 	if err != nil {
-		// 		return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", paramOrRef.Ref, paramName, err)
-		// 	}
-		// 	typeDef.TypeName = SchemaNameToTypeName(refType)
-		// }
+		ref := paramOrRef.Schema.GetReference()
+		if ref != "" {
+			// Generate a reference type for referenced parameters
+			refType, err := RefPathToGoType(ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", ref, paramName, err)
+			}
+			typeDef.TypeName = SchemaNameToTypeName(refType)
+		}
 
 		types = append(types, typeDef)
 	}
@@ -592,15 +592,15 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*v3.R
 				TypeName: goTypeName,
 			}
 
-			// TODO jvt
-			// if requestBodyRef.Ref != "" {
-			// 	// Generate a reference type for referenced bodies
-			// 	refType, err := RefPathToGoType(requestBodyRef.Ref)
-			// 	if err != nil {
-			// 		return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
-			// 	}
-			// 	typeDef.TypeName = SchemaNameToTypeName(refType)
-			// }
+			ref := requestBodyRef.GoLow().GetReference()
+			if ref != "" {
+				// Generate a reference type for referenced bodies
+				refType, err := RefPathToGoType(ref)
+				if err != nil {
+					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", ref, requestBodyName, err)
+				}
+				typeDef.TypeName = SchemaNameToTypeName(refType)
+			}
 			types = append(types, typeDef)
 		}
 	}
