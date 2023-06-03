@@ -23,8 +23,10 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/gedex/inflector"
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
 type ParameterDefinition struct {
@@ -616,9 +618,53 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 		return "", fmt.Errorf("request path cannot be an empty string")
 	}
 
-	for _, part := range strings.Split(requestPath, "/") {
-		if part != "" {
+	single := false
+	if strings.HasSuffix(requestPath, "Id}") || operationId == "post" {
+		single = true
+	}
+
+	segments := strings.Split(requestPath, "/")
+	for i, part := range segments {
+		if i == len(segments)-1 {
+			if strings.HasSuffix(part, "Id}") {
+				part = part[:len(part)-3]
+			} else if single {
+				part = inflector.Singularize(part)
+			}
 			operationId = operationId + "-" + part
+		}
+	}
+
+	return toCamelCaseFunc(operationId), nil
+}
+
+func _generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
+	var operationId = strings.ToLower(opName)
+
+	if opName == "" {
+		return "", fmt.Errorf("operation name cannot be an empty string")
+	}
+
+	if requestPath == "" {
+		return "", fmt.Errorf("request path cannot be an empty string")
+	}
+
+	segments := strings.Split(requestPath, "/")
+	for i, part := range segments {
+		if operationId == "get" || operationId == "put" || operationId == "delete" {
+			if i == len(segments)-1 {
+				if strings.HasSuffix(part, "Id") {
+					part = part[:len(part)-2]
+				}
+				operationId = operationId + "-" + part
+			}
+		} else {
+			if i == len(segments)-1 {
+				if strings.HasSuffix(part, "s") {
+					part = part[:len(part)-1]
+				}
+				operationId = operationId + "-" + part
+			}
 		}
 	}
 

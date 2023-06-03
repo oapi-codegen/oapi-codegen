@@ -2,6 +2,7 @@ module github.com/deepmap/oapi-codegen
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
+	github.com/gedex/inflector v0.0.0-20170307190818-16278e9db813
 	github.com/getkin/kin-openapi v0.117.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi/v5 v5.0.8
