@@ -253,7 +253,7 @@ type OneOfObject3_Union struct {
 	union json.RawMessage
 }
 
-// OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshalling
+// OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshaling
 type OneOfObject4 struct {
 	FixedProperty *string `json:"fixedProperty,omitempty"`
 	union         json.RawMessage
@@ -472,7 +472,7 @@ func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -559,7 +559,7 @@ func (a *AdditionalPropertiesObject1) UnmarshalJSON(b []byte) error {
 			var fieldVal int
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -637,7 +637,7 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -711,7 +711,7 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -782,7 +782,7 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}

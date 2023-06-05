@@ -260,7 +260,7 @@ components:
             - $ref: '#/components/schemas/OneOfVariant2'
             - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject4:
-      description: oneOf plus fixed type - custom marshaling/unmarshalling
+      description: oneOf plus fixed type - custom marshaling/unmarshaling
       type: object
       properties:
         fixedProperty:

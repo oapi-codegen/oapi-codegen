@@ -102,7 +102,7 @@ func genResponsePayload(operationID string) string {
 	return buffer.String()
 }
 
-// genResponseUnmarshal generates unmarshalling steps for structured response payloads
+// genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
@@ -134,7 +134,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			continue
 		}
 
-		// If there is no content-type then we have no unmarshalling to do:
+		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
 			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
@@ -142,7 +142,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			continue
 		}
 
-		// If we made it this far then we need to handle unmarshalling for each content-type:
+		// If we made it this far then we need to handle unmarshaling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 		for _, contentTypeName := range sortedContentKeys {
 
@@ -229,7 +229,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	return buffer.String()
 }
 
-// buildUnmarshalCase builds an unmarshalling case clause for different content-types:
+// buildUnmarshalCase builds an unmarshaling case clause for different content-types:
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)

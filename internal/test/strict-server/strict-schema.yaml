@@ -9,7 +9,7 @@ paths:
   /json:
     post:
       operationId: JSONExample
-      description: JSON is automatically marshalled into structs.
+      description: JSON is automatically marshaled into structs.
       requestBody:
         content:
           application/json:

@@ -273,7 +273,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetFoo(ctx)
 	return err
 }
