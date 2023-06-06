@@ -589,7 +589,6 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				// They are the default securityPermissions which are injected into each
 				// path, except for the case where a path explicitly overrides them.
 				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
-
 			}
 
 			if op.RequestBody != nil {
@@ -606,7 +605,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 }
 
 func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
-	var operationId = strings.ToLower(opName)
+	operationId := strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -884,7 +883,6 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
 		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-
 	}
 
 	// Generate boiler plate for all additional types.
@@ -911,6 +909,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 
 	return buf.String(), nil
+}
+
+// GenerateIrisServer This function generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl", "iris/iris-handler.tmpl"}, t, operations)
 }
 
 // GenerateChiServer This function generates all the go code for the ServerInterface as well as
@@ -944,7 +948,6 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
-
 	var templates []string
 
 	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
@@ -958,6 +961,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	}
 	if opts.Generate.FiberServer {
 		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+	if opts.Generate.IrisServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-iris.tmpl")
 	}
 
 	return GenerateTemplates(templates, t, operations)

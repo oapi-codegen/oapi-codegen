@@ -173,6 +173,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		MergeImports(xGoTypeImports, imprts)
 	}
 
+	var irisServerOut string
+	if opts.Generate.IrisServer {
+		irisServerOut, err = GenerateIrisServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var echoServerOut string
 	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
@@ -290,6 +298,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
 		}
+	}
+
+	if opts.Generate.IrisServer {
+		_, err = w.WriteString(irisServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+
 	}
 
 	if opts.Generate.EchoServer {
@@ -843,24 +859,24 @@ func SanitizeCode(goCode string) string {
 // This function will attempt to load a file first, and if it fails, will try to get the
 // data from the remote endpoint.
 func GetUserTemplateText(inputData string) (template string, err error) {
-	//if the input data is more than one line, assume its a template and return that data.
+	// if the input data is more than one line, assume its a template and return that data.
 	if strings.Contains(inputData, "\n") {
 		return inputData, nil
 	}
 
-	//load data from file
+	// load data from file
 	data, err := os.ReadFile(inputData)
-	//return data if found and loaded
+	// return data if found and loaded
 	if err == nil {
 		return string(data), nil
 	}
 
-	//check for non "not found" errors
+	// check for non "not found" errors
 	if !os.IsNotExist(err) {
 		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
 	}
 
-	//attempt to get data from url
+	// attempt to get data from url
 	resp, err := http.Get(inputData)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
