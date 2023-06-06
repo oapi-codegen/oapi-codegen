@@ -7,13 +7,17 @@ type MiddlewareFunc iris.Handler
 
 {{range .}}{{$opid := .OperationId}}// {{$opid}} converts iris context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
+{{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+    var err error
+{{end}}
+
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 {{if .IsPassThrough}}
     {{$varName}} = ctx.URLParam("{{.ParamName}}")
 {{end}}
 {{if .IsJson}}
-    err := json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
+    err = json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
@@ -21,7 +25,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     }
 {{end}}
 {{if .IsStyled}}
-    err := runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.URLParam("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.URLParam("{{.ParamName}}"), &{{$varName}})
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
@@ -42,10 +46,10 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
       // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
     {{ end }}
     {{if .IsStyled}}
-    err := runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Invalid format for parameter {{.ParamName}}: %s", err)
+        ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
         return
     }
     {{else}}
@@ -55,7 +59,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
-    err := json.Unmarshal([]byte(paramValue), &value)
+    err = json.Unmarshal([]byte(paramValue), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
@@ -86,7 +90,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
 {{end}}
 {{if .IsJson}}
-        err := json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
@@ -94,7 +98,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         }
 {{end}}
 {{if .IsStyled}}
-        err := runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
+        err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, valueList[0], &{{.GoName}})
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
@@ -124,7 +128,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         ctx.WriteString("Error unescaping cookie parameter '{{.ParamName}}'")
         return
     }
-    err := json.Unmarshal([]byte(decoded), &value)
+    err = json.Unmarshal([]byte(decoded), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
@@ -134,7 +138,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
-    err := runtime.BindStyledParameterWithLocation("simple",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, cookie.Value, &value)
+    err = runtime.BindStyledParameterWithLocation("simple",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, cookie.Value, &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
