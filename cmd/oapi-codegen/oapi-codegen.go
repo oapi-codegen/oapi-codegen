@@ -91,7 +91,7 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber".`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "iris, "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates.")
@@ -269,7 +269,7 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
-		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)
 		}
@@ -279,7 +279,7 @@ func main() {
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
-	var templates = make(map[string]string)
+	templates := make(map[string]string)
 
 	if templatesDir == "" {
 		return templates, nil
@@ -443,6 +443,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 	opts := codegen.GenerateOptions{} // Blank to start with.
 	for _, opt := range targets {
 		switch opt {
+		case "iris", "iris-server":
+			opts.IrisServer = true
 		case "chi-server", "chi":
 			opts.ChiServer = true
 		case "fiber-server", "fiber":
