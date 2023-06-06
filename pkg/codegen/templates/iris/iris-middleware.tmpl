@@ -16,9 +16,6 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err := json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
-    	ctx.JSON(iris.Map{
-            "error": "Error unmarshalling parameter '{{.ParamName}}' as JSON",
-        })
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
     }
 {{end}}
@@ -145,3 +142,4 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 {{end}}
+

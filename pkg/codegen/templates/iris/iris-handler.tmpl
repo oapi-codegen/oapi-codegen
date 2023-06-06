@@ -1,11 +1,11 @@
 // IrisServerOption is the option for iris server
-type IrisServerOptions strict {
+type IrisServerOptions struct {
     BaseURL string
     Middlewares []MiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router *iris.Application, si ServerInterface {
+func RegisterHandlers(router *iris.Application, si ServerInterface) {
     RegisterHandlersWithOptions(router, si, IrisServerOptions{})
 }
 
@@ -21,3 +21,4 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 {{end}}
     router.Build()
 }
+

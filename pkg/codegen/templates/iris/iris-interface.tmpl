@@ -5,3 +5,4 @@ type ServerInterface interface {
 {{.OperationId}}(ctx iris.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}
 }
+
