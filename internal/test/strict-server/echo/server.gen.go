@@ -54,6 +54,9 @@ type ServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(ctx echo.Context, params HeadersExampleParams) error
+
+	// (POST /with-union)
+	UnionExample(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -195,6 +198,15 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 	return err
 }
 
+// UnionExample converts echo context to params.
+func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnionExample(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -233,6 +245,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(baseURL+"/with-headers", wrapper.HeadersExample)
+	router.POST(baseURL+"/with-union", wrapper.UnionExample)
 
 }
 
@@ -672,6 +685,51 @@ func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(w http
 	return nil
 }
 
+type UnionExampleRequestObject struct {
+	Body *UnionExampleJSONRequestBody
+}
+
+type UnionExampleResponseObject interface {
+	VisitUnionExampleResponse(w http.ResponseWriter) error
+}
+
+type UnionExample200ResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type UnionExample200JSONResponse struct {
+	Body struct {
+		union json.RawMessage
+	}
+	Headers UnionExample200ResponseHeaders
+}
+
+func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body.union)
+}
+
+type UnionExample400Response = BadrequestResponse
+
+func (response UnionExample400Response) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UnionExampledefaultResponse struct {
+	StatusCode int
+}
+
+func (response UnionExampledefaultResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -704,6 +762,9 @@ type StrictServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
+
+	// (POST /with-union)
+	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
 type StrictHandlerFunc = runtime.StrictEchoHandlerFunc
@@ -1036,26 +1097,55 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 	return nil
 }
 
+// UnionExample operation middleware
+func (sh *strictHandler) UnionExample(ctx echo.Context) error {
+	var request UnionExampleRequestObject
+
+	var body UnionExampleJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnionExample(ctx.Request().Context(), request.(UnionExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnionExample")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
+		return validResponse.VisitUnionExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("Unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYX2/bNhD/KgS3p0KynDRPeluDotu6rYOTPg15oMWzzFYiuePJimHouw8UJf+pFS/O",
-	"7BgY+mbRd787/u4Pj1zxzJTWaNDkeLriCM4a7aD9mAqJ8HcFjvyXBJehsqSM5il/J+Sk+6+JOELlxLSA",
-	"Xt3LZ0YT6FZVWFuoTHjV5Ivz+ivusjmUwv/6EWHGU/5DsnElCf+6BB5FaQvgTdNE33jw6SOP+ByEBGy9",
-	"DT+vdrFpaYGn3BEqnXMPEsSuB8WUJsgBvTUv2jnhBXo/0hW3aCwgqcDRQhQVDFvqVsz0C2QUdqD0zOxz",
-	"eWs0CaUdk2o2AwRNrCOPeQzHXGWtQQLJpkvmLWTEHOACkEecFHnH+N32OuscdjziC0AXDF2NxqOxj5ex",
-	"oIVVPOVv26WIW0HzdkPrAFkzFPdf7z79wZRjoiJTClKZKIolKwW6uShAMqXJeBerjNyIt5awDfwvstN+",
-	"31Hps6ZNoHdGLs+RMG1ebqXz9Xj8SnnZRPwmGBvCWDuVbBVYCzMTVTHA+Wf9VZtaM0A02O0sKauClBVI",
-	"27HaZfv3XuQ5lK/xkpnBMpaCxJlYP5WlixLf9YLBGrmbm9qxuakZGSZBFKxWNGe94jfFrTQTzCmdF8B6",
-	"p6LBSBbQtdyftJx0e7n3GGevpWgH5TGu6zpug1dhATozEuTLYFUpckisznfVPbYgnvLpknza7jfXEyVR",
-	"xAkeKbGFUPrwyfFK7eQ70ycr7FCuCO2JKOPcxF9hWRuUsRUoSiBAl6y89cYD5zBQyn+uJVkmNJsC06IE",
-	"ycSMANkHwzpIt1eyk87uB/MxiGyg2uN2/ZH+teKekvYI5hH3BngaWAl1rdAHnbCC6ABtD/+an/8pAD2b",
-	"YdCLd0wNt8G+Ra2pQ5g53xKHIjfAX7A02ZK4zMBwOOP2Rt/XOIN8JJ8+9+/h8VlH/glb32vX9rGEVWHx",
-	"ac46refQ9sJO+gwWF0qCSUp7cyTyxUh1FjI1UyDjbhdx8O2plnBrdIZAuyOQv05oQ2wN5m85NAcWGIiY",
-	"M6wGVlaOmBXOMUVtFylUuClJ2Gsenzee3QZL95t2eiiqb84U0zeXiujN+Op4lbdnzpudUeaJepz89j7I",
-	"HHtfPNnMdOTEdzq7Fypnf0mJtx5Uhkv45yCwOdMzUAs/EWnJEKhCDZItlOgfAfZqswPYhHVoFgpubKah",
-	"/nHnmIEoOoh1zaNDD0AP/+PniXM+m507T5uIhxeukCwVFj6iRDZNkvAyNnK1yHPAkTKJsIo3D80/AQAA",
-	"///iKNcc5hQAAA==",
+	"H4sIAAAAAAAC/+xYS2/jNhD+KwO2p4VkOdmcdOsGi227bVM4yanIgRZHNnclkiVHVgzD/72gKL9ixbW3",
+	"fqDB3vSYF795cmYs06XRChU5ls6YRWe0cti8DLmw+HeFjvybQJdZaUhqxVL2gYtB+28eMYuV48MCF+ye",
+	"PtOKUDWs3JhCZtyzJl+c558xl42x5P7pR4s5S9kPycqUJPx1CT7z0hTI5vN59MKCu88sYmPkAm1jbXi8",
+	"2pRNU4MsZY6sVCPmhQSy604yqQhHaL02T9oa4QkWdqQzZqw2aEkGjCa8qLBbU/tFD79gRuEEUuV6G8tb",
+	"rYhL5UDIPEeLiqAFD7wMB64yRltCAcMpeA0ZgUM7QcsiRpK8Yex+/Tu0BjsWsQlaFxRd9fq9vveXNqi4",
+	"kSxl75tPETOcxs2Blg4yusvvv97f/QHSAa9Il5xkxotiCiW3bswLFCAVaW9ilZHrsUaTbRz/i2i5P7ZQ",
+	"+qhpAuiDFtNTBEwTl2vhfN3vnyku5xG7Ccq6ZCyNStYSrBGT86rowPxRfVW6VoDWatueLCmrgqThltZ9",
+	"tYn27wuSfSBfyktybctYcOInQv1Ymi4KfFsLOnPkfqxrB2NdA2kQyAuoJY1hwfgiuaUCDk6qUYGwMCrq",
+	"9GSBbcn9SYlBe5YHL+PkuRRtSHmO67qOG+dVtkCVaYHi28TKko8wMWq0ye5lc2IpG07Jh+12cT1SEEWM",
+	"8JkSU3CpdneOM5WT70gfLbFDulpsOqKIRzr+itNaWxEbbnmJhNYlM6997gWPsCOV/1xSQsYVDBEUL1EA",
+	"zwktfNLQinRbKTto9X7SnwPJSlTTbpcv6V8z5iFpWjCLmFfA0oBKyGtpvdPJVhjtgO3pX+PzPzlggWYY",
+	"9OINVd1lcFGiltBZzJ0viV2e68AvaBqsUVxmYNgdcVuj7zl6kPfk633/AZ/3avlHLH3nzu1DAavCx9cx",
+	"a7n2ge0bK+keKE6kQJ2U5uZAyRcD1RnMZC5RxO0p4mDbayXhVqvMIm2OQP46oTTBUpi/5dAYISAQgdNQ",
+	"I5SVIzDcOZDUVJFChpuSwK3i8biy7DZoeliV011efXcin767lEdv+leHs7w/cdxsjDKv5OPgt4+B5tD7",
+	"4tFmpgMnvuPpvVA6+0tKvLZQ6U7hnwPBqqdnKCd+IlICLFJlFQqYSL5YAmzlZitg5dauWSiYsZqGFsud",
+	"QwaiaKesaxbtWgA9veH1xCnXZueK00rJXWuqR/8b2hn6ZW+QWv1vllBa4V3e5MULn0R7mvD09mJgHrGw",
+	"5QwFo7KFz2oikyZJ2I72XM1HI7Q9qRNupEfhnwAAAP//4wU1quoWAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
