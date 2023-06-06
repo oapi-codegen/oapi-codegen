@@ -976,7 +976,7 @@ func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 type ReusableResponsesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	JSON200      *Reusableresponse
 }
 
 // Status returns HTTPResponse.Status
@@ -1357,7 +1357,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
+		var dest Reusableresponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

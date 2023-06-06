@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strings"
 
-	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/external-refs-issue/deps"
+	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1087/deps"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -199,11 +199,11 @@ type ClientWithResponsesInterface interface {
 type GetThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ThingList
-	JSON401      *Error
-	JSON403      *Error
-	JSON404      *externalRef0.Error
-	JSON500      *Error
+	JSON200      *ThingResponse
+	JSON401      *externalRef0.N401
+	JSON403      *externalRef0.N403
+	JSON404      *N404
+	JSON500      *externalRef0.DefaultError
 }
 
 // Status returns HTTPResponse.Status
@@ -246,35 +246,35 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ThingList
+		var dest ThingResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Error
+		var dest externalRef0.N401
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
-		var dest Error
+		var dest externalRef0.N403
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest externalRef0.Error
+		var dest N404
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
-		var dest Error
+		var dest externalRef0.DefaultError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
