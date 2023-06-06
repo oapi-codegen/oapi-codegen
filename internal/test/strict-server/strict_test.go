@@ -25,6 +25,8 @@ import (
 	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
 	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
 	irisAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/iris"
+
+	// "github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )

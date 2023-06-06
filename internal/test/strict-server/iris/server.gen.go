@@ -8,7 +8,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -93,6 +92,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx iris.Context) {
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter type: %s", err)
+		return
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
@@ -148,18 +148,21 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 		if n != 1 {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Expected one value for header1, got %d", n)
+			return
 		}
 
 		err := runtime.BindStyledParameterWithLocation("simple", false, "header1", runtime.ParamLocationHeader, valueList[0], &Header1)
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Invalid format for parameter header1: %s", err)
+			return
 		}
 
 		params.Header1 = Header1
 	} else {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.WriteString("Header header1 is required, but not found")
+		return
 	}
 	// ------------- Optional header parameter "header2" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header2")]; found {
@@ -168,12 +171,14 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 		if n != 1 {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Expected one value for header2, got %d", n)
+			return
 		}
 
 		err := runtime.BindStyledParameterWithLocation("simple", false, "header2", runtime.ParamLocationHeader, valueList[0], &Header2)
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Invalid format for parameter header2: %s", err)
+			return
 		}
 
 		params.Header2 = &Header2
@@ -233,22 +238,22 @@ type JSONExampleRequestObject struct {
 }
 
 type JSONExampleResponseObject interface {
-	VisitJSONExampleResponse(w http.ResponseWriter) error
+	VisitJSONExampleResponse(ctx iris.Context) error
 }
 
 type JSONExample200JSONResponse Example
 
-func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
+	ctx.StatusCode(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return ctx.JSON(&response)
 }
 
 type JSONExample400Response = BadrequestResponse
 
-func (response JSONExample400Response) VisitJSONExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response JSONExample400Response) VisitJSONExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -256,8 +261,8 @@ type JSONExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response JSONExampledefaultResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response JSONExampledefaultResponse) VisitJSONExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -266,15 +271,15 @@ type MultipartExampleRequestObject struct {
 }
 
 type MultipartExampleResponseObject interface {
-	VisitMultipartExampleResponse(w http.ResponseWriter) error
+	VisitMultipartExampleResponse(ctx iris.Context) error
 }
 
 type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
-func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
-	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", writer.FormDataContentType())
-	w.WriteHeader(200)
+func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(ctx iris.Context) error {
+	writer := multipart.NewWriter(ctx.ResponseWriter())
+	ctx.ResponseWriter().Header().Set("Content-Type", writer.FormDataContentType())
+	ctx.StatusCode(200)
 
 	defer writer.Close()
 	return response(writer)
@@ -282,8 +287,8 @@ func (response MultipartExample200MultipartResponse) VisitMultipartExampleRespon
 
 type MultipartExample400Response = BadrequestResponse
 
-func (response MultipartExample400Response) VisitMultipartExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response MultipartExample400Response) VisitMultipartExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -291,8 +296,8 @@ type MultipartExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response MultipartExampledefaultResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response MultipartExampledefaultResponse) VisitMultipartExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -305,28 +310,28 @@ type MultipleRequestAndResponseTypesRequestObject struct {
 }
 
 type MultipleRequestAndResponseTypesResponseObject interface {
-	VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error
+	VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error
 }
 
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
-func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
+	ctx.StatusCode(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return ctx.JSON(&response)
 }
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
-func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
+func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx.StatusCode(200)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
 	} else {
-		_, err := w.Write([]byte(form.Encode()))
+		_, err := ctx.WriteString(form.Encode())
 		return err
 	}
 }
@@ -336,26 +341,26 @@ type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 	ContentLength int64
 }
 
-func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "image/png")
+func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "image/png")
 	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	ctx.StatusCode(200)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
-	_, err := io.Copy(w, response.Body)
+	_, err := io.Copy(ctx.ResponseWriter(), response.Body)
 	return err
 }
 
 type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.Writer) error
 
-func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", writer.FormDataContentType())
-	w.WriteHeader(200)
+func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	writer := multipart.NewWriter(ctx.ResponseWriter())
+	ctx.ResponseWriter().Header().Set("Content-Type", writer.FormDataContentType())
+	ctx.StatusCode(200)
 
 	defer writer.Close()
 	return response(writer)
@@ -363,18 +368,18 @@ func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipl
 
 type MultipleRequestAndResponseTypes200TextResponse string
 
-func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
+	ctx.StatusCode(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := ctx.WriteString(string(response))
 	return err
 }
 
 type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
-func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -383,16 +388,16 @@ type ReservedGoKeywordParametersRequestObject struct {
 }
 
 type ReservedGoKeywordParametersResponseObject interface {
-	VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error
+	VisitReservedGoKeywordParametersResponse(ctx iris.Context) error
 }
 
 type ReservedGoKeywordParameters200TextResponse string
 
-func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
+	ctx.StatusCode(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := ctx.WriteString(string(response))
 	return err
 }
 
@@ -401,24 +406,24 @@ type ReusableResponsesRequestObject struct {
 }
 
 type ReusableResponsesResponseObject interface {
-	VisitReusableResponsesResponse(w http.ResponseWriter) error
+	VisitReusableResponsesResponse(ctx iris.Context) error
 }
 
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
-func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
+	ctx.StatusCode(200)
 
-	return json.NewEncoder(w).Encode(response.Body)
+	return ctx.JSON(&response.Body)
 }
 
 type ReusableResponses400Response = BadrequestResponse
 
-func (response ReusableResponses400Response) VisitReusableResponsesResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response ReusableResponses400Response) VisitReusableResponsesResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -426,8 +431,8 @@ type ReusableResponsesdefaultResponse struct {
 	StatusCode int
 }
 
-func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -436,23 +441,23 @@ type TextExampleRequestObject struct {
 }
 
 type TextExampleResponseObject interface {
-	VisitTextExampleResponse(w http.ResponseWriter) error
+	VisitTextExampleResponse(ctx iris.Context) error
 }
 
 type TextExample200TextResponse string
 
-func (response TextExample200TextResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+func (response TextExample200TextResponse) VisitTextExampleResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
+	ctx.StatusCode(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := ctx.WriteString(string(response))
 	return err
 }
 
 type TextExample400Response = BadrequestResponse
 
-func (response TextExample400Response) VisitTextExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response TextExample400Response) VisitTextExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -460,8 +465,8 @@ type TextExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response TextExampledefaultResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response TextExampledefaultResponse) VisitTextExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -470,7 +475,7 @@ type UnknownExampleRequestObject struct {
 }
 
 type UnknownExampleResponseObject interface {
-	VisitUnknownExampleResponse(w http.ResponseWriter) error
+	VisitUnknownExampleResponse(ctx iris.Context) error
 }
 
 type UnknownExample200Videomp4Response struct {
@@ -478,24 +483,24 @@ type UnknownExample200Videomp4Response struct {
 	ContentLength int64
 }
 
-func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "video/mp4")
+func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "video/mp4")
 	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	ctx.StatusCode(200)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
-	_, err := io.Copy(w, response.Body)
+	_, err := io.Copy(ctx.ResponseWriter(), response.Body)
 	return err
 }
 
 type UnknownExample400Response = BadrequestResponse
 
-func (response UnknownExample400Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response UnknownExample400Response) VisitUnknownExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -503,8 +508,8 @@ type UnknownExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response UnknownExampledefaultResponse) VisitUnknownExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response UnknownExampledefaultResponse) VisitUnknownExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -514,7 +519,7 @@ type UnspecifiedContentTypeRequestObject struct {
 }
 
 type UnspecifiedContentTypeResponseObject interface {
-	VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error
+	VisitUnspecifiedContentTypeResponse(ctx iris.Context) error
 }
 
 type UnspecifiedContentType200VideoResponse struct {
@@ -523,40 +528,40 @@ type UnspecifiedContentType200VideoResponse struct {
 	ContentLength int64
 }
 
-func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", response.ContentType)
+func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", response.ContentType)
 	if response.ContentLength != 0 {
-		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	ctx.StatusCode(200)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
-	_, err := io.Copy(w, response.Body)
+	_, err := io.Copy(ctx.ResponseWriter(), response.Body)
 	return err
 }
 
 type UnspecifiedContentType400Response = BadrequestResponse
 
-func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
 type UnspecifiedContentType401Response struct {
 }
 
-func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
+func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
+	ctx.StatusCode(401)
 	return nil
 }
 
 type UnspecifiedContentType403Response struct {
 }
 
-func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
+func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
+	ctx.StatusCode(403)
 	return nil
 }
 
@@ -564,8 +569,8 @@ type UnspecifiedContentTypedefaultResponse struct {
 	StatusCode int
 }
 
-func (response UnspecifiedContentTypedefaultResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response UnspecifiedContentTypedefaultResponse) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -574,27 +579,27 @@ type URLEncodedExampleRequestObject struct {
 }
 
 type URLEncodedExampleResponseObject interface {
-	VisitURLEncodedExampleResponse(w http.ResponseWriter) error
+	VisitURLEncodedExampleResponse(ctx iris.Context) error
 }
 
 type URLEncodedExample200FormdataResponse Example
 
-func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
+func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	ctx.StatusCode(200)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
 	} else {
-		_, err := w.Write([]byte(form.Encode()))
+		_, err := ctx.WriteString(form.Encode())
 		return err
 	}
 }
 
 type URLEncodedExample400Response = BadrequestResponse
 
-func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -602,8 +607,8 @@ type URLEncodedExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response URLEncodedExampledefaultResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response URLEncodedExampledefaultResponse) VisitURLEncodedExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -613,7 +618,7 @@ type HeadersExampleRequestObject struct {
 }
 
 type HeadersExampleResponseObject interface {
-	VisitHeadersExampleResponse(w http.ResponseWriter) error
+	VisitHeadersExampleResponse(ctx iris.Context) error
 }
 
 type HeadersExample200ResponseHeaders struct {
@@ -626,19 +631,19 @@ type HeadersExample200JSONResponse struct {
 	Headers HeadersExample200ResponseHeaders
 }
 
-func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
+	ctx.StatusCode(200)
 
-	return json.NewEncoder(w).Encode(response.Body)
+	return ctx.JSON(&response.Body)
 }
 
 type HeadersExample400Response = BadrequestResponse
 
-func (response HeadersExample400Response) VisitHeadersExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+func (response HeadersExample400Response) VisitHeadersExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(400)
 	return nil
 }
 
@@ -646,8 +651,8 @@ type HeadersExampledefaultResponse struct {
 	StatusCode int
 }
 
-func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(response.StatusCode)
+func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(ctx iris.Context) error {
+	ctx.StatusCode(response.StatusCode)
 	return nil
 }
 
@@ -704,6 +709,7 @@ func (sh *strictHandler) JSONExample(ctx iris.Context) {
 	var body JSONExampleJSONRequestBody
 	if err := ctx.ReadJSON(&body); err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	request.Body = &body
 
@@ -718,12 +724,15 @@ func (sh *strictHandler) JSONExample(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
-		if err := validResponse.VisitJSONExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitJSONExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -731,10 +740,11 @@ func (sh *strictHandler) JSONExample(ctx iris.Context) {
 func (sh *strictHandler) MultipartExample(ctx iris.Context) {
 	var request MultipartExampleRequestObject
 
-	if reader, err := ctx.Request().MultipartReader(); err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
-	} else {
+	if reader, err := ctx.Request().MultipartReader(); err == nil {
 		request.Body = reader
+	} else {
+		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 
 	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
@@ -748,12 +758,15 @@ func (sh *strictHandler) MultipartExample(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
-		if err := validResponse.VisitMultipartExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitMultipartExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -761,37 +774,42 @@ func (sh *strictHandler) MultipartExample(ctx iris.Context) {
 func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx iris.Context) {
 	var request MultipleRequestAndResponseTypesRequestObject
 
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/json") {
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := ctx.ReadJSON(&body); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 		request.JSONBody = &body
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
-		if err := ctx.Request().ParseForm(); err == nil {
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/x-www-form-urlencoded") {
+		if err := ctx.Request().ParseForm(); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 		var body MultipleRequestAndResponseTypesFormdataRequestBody
 		if err := runtime.BindForm(&body, ctx.Request().Form, nil, nil); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 		request.FormdataBody = &body
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "image/png") {
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "image/png") {
 		request.Body = ctx.Request().Body
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "multipart/form-data") {
-		if reader, err := ctx.Request().MultipartReader(); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
-		} else {
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "multipart/form-data") {
+		if reader, err := ctx.Request().MultipartReader(); err == nil {
 			request.MultipartBody = reader
+		} else {
+			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "text/plain") {
+	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "text/plain") {
 		data, err := io.ReadAll(ctx.Request().Body)
 		if err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 		body := MultipleRequestAndResponseTypesTextRequestBody(data)
 		request.TextBody = &body
@@ -808,12 +826,15 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
-		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -834,12 +855,15 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx iris.Context, pType str
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
-		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -850,6 +874,7 @@ func (sh *strictHandler) ReusableResponses(ctx iris.Context) {
 	var body ReusableResponsesJSONRequestBody
 	if err := ctx.ReadJSON(&body); err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	request.Body = &body
 
@@ -864,12 +889,15 @@ func (sh *strictHandler) ReusableResponses(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
-		if err := validResponse.VisitReusableResponsesResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitReusableResponsesResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -880,6 +908,7 @@ func (sh *strictHandler) TextExample(ctx iris.Context) {
 	data, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	body := TextExampleTextRequestBody(data)
 	request.Body = &body
@@ -895,12 +924,15 @@ func (sh *strictHandler) TextExample(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
-		if err := validResponse.VisitTextExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitTextExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -921,12 +953,15 @@ func (sh *strictHandler) UnknownExample(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
-		if err := validResponse.VisitUnknownExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitUnknownExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -934,7 +969,7 @@ func (sh *strictHandler) UnknownExample(ctx iris.Context) {
 func (sh *strictHandler) UnspecifiedContentType(ctx iris.Context) {
 	var request UnspecifiedContentTypeRequestObject
 
-	request.ContentType = ctx.GetContentType()
+	request.ContentType = ctx.GetContentTypeRequested()
 
 	request.Body = ctx.Request().Body
 
@@ -949,12 +984,15 @@ func (sh *strictHandler) UnspecifiedContentType(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
-		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -962,12 +1000,14 @@ func (sh *strictHandler) UnspecifiedContentType(ctx iris.Context) {
 func (sh *strictHandler) URLEncodedExample(ctx iris.Context) {
 	var request URLEncodedExampleRequestObject
 
-	if err := ctx.Request().ParseForm(); err == nil {
+	if err := ctx.Request().ParseForm(); err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	var body URLEncodedExampleFormdataRequestBody
 	if err := runtime.BindForm(&body, ctx.Request().Form, nil, nil); err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	request.Body = &body
 
@@ -982,12 +1022,15 @@ func (sh *strictHandler) URLEncodedExample(ctx iris.Context) {
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
-		if err := validResponse.VisitURLEncodedExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitURLEncodedExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 
@@ -1000,6 +1043,7 @@ func (sh *strictHandler) HeadersExample(ctx iris.Context, params HeadersExampleP
 	var body HeadersExampleJSONRequestBody
 	if err := ctx.ReadJSON(&body); err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	}
 	request.Body = &body
 
@@ -1014,12 +1058,15 @@ func (sh *strictHandler) HeadersExample(ctx iris.Context, params HeadersExampleP
 
 	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
+		return
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
-		if err := validResponse.VisitHeadersExampleResponse(ctx.ResponseWriter()); err != nil {
+		if err := validResponse.VisitHeadersExampleResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
 	} else if response != nil {
 		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
 }
 

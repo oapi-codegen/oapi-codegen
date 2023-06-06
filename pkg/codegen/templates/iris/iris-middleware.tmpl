@@ -17,6 +17,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        return
     }
 {{end}}
 {{if .IsStyled}}
@@ -24,6 +25,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
     }
 {{end}}
 {{end}}
@@ -44,6 +46,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
     }
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
@@ -56,12 +59,14 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Query argument {{.ParamName}} is required, but not found")
+        return
     }{{end}}
     {{end}}
 {{end}}
@@ -75,6 +80,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         if n != 1 {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.Writef("Expected one value for {{.ParamName}}, got %d", n)
+            return
         }
 {{if .IsPassThrough}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
@@ -84,6 +90,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+            return
         }
 {{end}}
 {{if .IsStyled}}
@@ -91,12 +98,14 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+            return
         }
 {{end}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
         } {{if .Required}}else {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.WriteString("Header {{.ParamName}} is required, but not found")
+            return
         }{{end}}
 {{end}}
 {{end}}
@@ -113,11 +122,13 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unescaping cookie parameter '{{.ParamName}}'")
+        return
     }
     err := json.Unmarshal([]byte(decoded), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
     {{end}}
@@ -127,12 +138,14 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Cookie {{.ParamName}} is required, but not found")
+        return
     }{{end}}
 
 {{end}}{{/* .CookieParams */}}

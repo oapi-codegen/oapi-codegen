@@ -963,7 +963,7 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
 	}
 	if opts.Generate.IrisServer {
-		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-iris.tmpl")
+		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
 
 	return GenerateTemplates(templates, t, operations)
