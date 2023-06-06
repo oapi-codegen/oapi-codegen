@@ -25,7 +25,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     }
 {{end}}
 {{if .IsStyled}}
-    err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.URLParam("{{.ParamName}}"), &{{$varName}})
+    err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, ctx.Params().Get("{{.ParamName}}"), &{{$varName}})
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)

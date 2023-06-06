@@ -82,7 +82,7 @@ func (p *PetStore) FindPets(c iris.Context, params FindPetsParams) {
 func (p *PetStore) AddPet(c iris.Context) {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
-	err := c.ReadBody(&newPet)
+	err := c.ReadJSON(&newPet)
 	if err != nil {
 		sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
 		return
