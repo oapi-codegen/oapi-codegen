@@ -623,7 +623,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
-
+	var removedAliases []TypeDefinition
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
 			// If type names collide, we need to see if they refer to the same
@@ -632,6 +632,17 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
+
+			// If there is a type name conflict, but another type is just an alias, skip it.
+			if prevType.Schema.DefineViaAlias {
+				m[typ.TypeName] = typ
+				ts = append(ts, typ)
+				removedAliases = append(removedAliases, prevType)
+				continue
+			} else if typ.Schema.DefineViaAlias {
+				continue
+			}
+
 			// We want to create an error when we try to define the same type twice.
 			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
 				"please use x-go-name to specify your own name for one of them", typ.TypeName)
@@ -640,6 +651,22 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 		m[typ.TypeName] = typ
 
 		ts = append(ts, typ)
+	}
+
+	if removedAliases != nil {
+		deduped := make([]TypeDefinition, 0, len(ts))
+	toplevel:
+		for _, typ := range ts {
+			if typ.Schema.DefineViaAlias {
+				for _, x := range removedAliases {
+					if x.TypeName == typ.TypeName {
+						continue toplevel
+					}
+				}
+			}
+			deduped = append(deduped, typ)
+		}
+		ts = deduped
 	}
 
 	context := struct {
