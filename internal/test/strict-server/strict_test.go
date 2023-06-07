@@ -235,4 +235,15 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
+	t.Run("UnionResponses", func(t *testing.T) {
+		value := "union"
+		requestBody := clientAPI.Example{Value: &value}
+		rr := testutil.NewRequest().Post("/with-union").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
+		var responseBody clientAPI.Example
+		err := json.NewDecoder(rr.Body).Decode(&responseBody)
+		assert.NoError(t, err)
+		assert.Equal(t, requestBody, responseBody)
+	})
 }

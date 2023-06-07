@@ -52,3 +52,6 @@ type URLEncodedExampleFormdataRequestBody = Example
 
 // HeadersExampleJSONRequestBody defines body for HeadersExample for application/json ContentType.
 type HeadersExampleJSONRequestBody = Example
+
+// UnionExampleJSONRequestBody defines body for UnionExample for application/json ContentType.
+type UnionExampleJSONRequestBody = Example

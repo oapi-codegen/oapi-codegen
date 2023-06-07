@@ -1412,7 +1412,7 @@ func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshalled arguments
+	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue1051(ctx)
 	return err
 }
