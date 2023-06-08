@@ -27,7 +27,7 @@ func doGet(t *testing.T, mux *chi.Mux, rawURL string) *httptest.ResponseRecorder
 		t.Fatalf("Invalid url: %s", rawURL)
 	}
 
-	response := testutil.NewRequest().Get(u.RequestURI()).WithHost(u.Host).WithAcceptJson().GoWithHTTPHandler(t, mux)
+	response := testutil.NewRequest().Get(u.RequestURI()).WithHost(u.Host).WithAcceptJSON().GoWithHTTPHandler(t, mux)
 	return response.Recorder
 }
 
@@ -37,7 +37,7 @@ func doPost(t *testing.T, mux *chi.Mux, rawURL string, jsonBody interface{}) *ht
 		t.Fatalf("Invalid url: %s", rawURL)
 	}
 
-	response := testutil.NewRequest().Post(u.RequestURI()).WithHost(u.Host).WithJsonBody(jsonBody).GoWithHTTPHandler(t, mux)
+	response := testutil.NewRequest().Post(u.RequestURI()).WithHost(u.Host).WithJSONBody(jsonBody).GoWithHTTPHandler(t, mux)
 	return response.Recorder
 }
 

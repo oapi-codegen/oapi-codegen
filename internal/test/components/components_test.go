@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
+func assertJSONEqual(t *testing.T, j1 []byte, j2 []byte) {
 	t.Helper()
 	assert.JSONEq(t, string(j1), string(j2))
 }
@@ -23,7 +23,7 @@ func TestRawJSON(t *testing.T) {
 	buf2, err := json.Marshal(dst)
 	assert.NoError(t, err)
 
-	assertJsonEqual(t, []byte(buf), buf2)
+	assertJSONEqual(t, []byte(buf), buf2)
 
 }
 
@@ -107,19 +107,19 @@ func TestOneOf(t *testing.T) {
 	assert.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant1), marshaled)
+	assertJSONEqual(t, []byte(variant1), marshaled)
 
 	err = dst.FromOneOfVariant2([]int{1, 2, 3})
 	assert.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant2), marshaled)
+	assertJSONEqual(t, []byte(variant2), marshaled)
 
 	err = dst.FromOneOfVariant3(true)
 	assert.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant3), marshaled)
+	assertJSONEqual(t, []byte(variant3), marshaled)
 }
 
 func TestOneOfWithDiscriminator(t *testing.T) {
@@ -150,13 +150,13 @@ func TestOneOfWithDiscriminator(t *testing.T) {
 	assert.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant4), marshaled)
+	assertJSONEqual(t, []byte(variant4), marshaled)
 
 	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 123})
 	assert.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant5), marshaled)
+	assertJSONEqual(t, []byte(variant5), marshaled)
 }
 
 func TestOneOfWithDiscriminator_PartialMapping(t *testing.T) {
@@ -187,13 +187,13 @@ func TestOneOfWithDiscriminator_PartialMapping(t *testing.T) {
 	require.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant4), marshaled)
+	assertJSONEqual(t, []byte(variant4), marshaled)
 
 	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 321})
 	require.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant5), marshaled)
+	assertJSONEqual(t, []byte(variant5), marshaled)
 }
 
 func TestOneOfWithDiscriminator_SchemaNameUsed(t *testing.T) {
@@ -224,13 +224,13 @@ func TestOneOfWithDiscriminator_SchemaNameUsed(t *testing.T) {
 	require.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant4), marshaled)
+	assertJSONEqual(t, []byte(variant4), marshaled)
 
 	err = dst.FromOneOfVariant51(OneOfVariant51{Id: 987})
 	require.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant51), marshaled)
+	assertJSONEqual(t, []byte(variant51), marshaled)
 }
 
 func TestOneOfWithDiscriminator_FullImplicitMapping(t *testing.T) {
@@ -261,13 +261,13 @@ func TestOneOfWithDiscriminator_FullImplicitMapping(t *testing.T) {
 	require.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant4), marshaled)
+	assertJSONEqual(t, []byte(variant4), marshaled)
 
 	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 654})
 	require.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	require.NoError(t, err)
-	assertJsonEqual(t, []byte(variant5), marshaled)
+	assertJSONEqual(t, []byte(variant5), marshaled)
 }
 
 func TestOneOfWithFixedProperties(t *testing.T) {
@@ -297,13 +297,13 @@ func TestOneOfWithFixedProperties(t *testing.T) {
 	assert.NoError(t, err)
 	marshaled, err := json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant1), marshaled)
+	assertJSONEqual(t, []byte(variant1), marshaled)
 
 	err = dst.FromOneOfVariant6(OneOfVariant6{[]int{1, 2, 3}})
 	assert.NoError(t, err)
 	marshaled, err = json.Marshal(dst)
 	assert.NoError(t, err)
-	assertJsonEqual(t, []byte(variant6), marshaled)
+	assertJSONEqual(t, []byte(variant6), marshaled)
 }
 
 func TestAnyOf(t *testing.T) {

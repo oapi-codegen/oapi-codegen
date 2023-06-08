@@ -40,15 +40,15 @@ func TestAPI(t *testing.T) {
 	// Using the writer JWT should allow us to insert a thing.
 	response = testutil.NewRequest().Post("/things").
 		WithJWSAuth(string(writerJWT)).
-		WithAcceptJson().
-		WithJsonBody(api.Thing{Name: "Thing 1"}).Go(t, e)
+		WithAcceptJSON().
+		WithJSONBody(api.Thing{Name: "Thing 1"}).Go(t, e)
 	require.Equal(t, http.StatusCreated, response.Code())
 
 	// Using the reader JWT should forbid inserting a thing.
 	response = testutil.NewRequest().Post("/things").
 		WithJWSAuth(string(readerJWT)).
-		WithAcceptJson().
-		WithJsonBody(api.Thing{Name: "Thing 2"}).Go(t, e)
+		WithAcceptJSON().
+		WithJSONBody(api.Thing{Name: "Thing 2"}).Go(t, e)
 	require.Equal(t, http.StatusForbidden, response.Code())
 
 	// Both JWT's should allow reading the list of things.
@@ -56,7 +56,7 @@ func TestAPI(t *testing.T) {
 	for _, jwt := range jwts {
 		response := testutil.NewRequest().Get("/things").
 			WithJWSAuth(jwt).
-			WithAcceptJson().Go(t, e)
+			WithAcceptJSON().Go(t, e)
 		assert.Equal(t, http.StatusOK, response.Code())
 	}
 }

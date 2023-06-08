@@ -64,7 +64,7 @@ func TestPetStore(t *testing.T) {
 		Name: "Spot",
 		Tag:  &tag,
 	}
-	result := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
+	result := testutil.NewRequest().Post("/pets").WithJSONBody(newPet).Go(t, e)
 	// We expect 201 code on successful pet insertion
 	assert.Equal(t, http.StatusCreated, result.Code())
 
@@ -80,14 +80,14 @@ func TestPetStore(t *testing.T) {
 	petId := resultPet.Id
 
 	// Test the getter function.
-	result = testutil.NewRequest().Get(fmt.Sprintf("/pets/%d", petId)).WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get(fmt.Sprintf("/pets/%d", petId)).WithAcceptJSON().Go(t, e)
 	var resultPet2 models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet2)
 	assert.NoError(t, err, "error getting pet")
 	assert.Equal(t, resultPet, resultPet2)
 
 	// We should get a 404 on invalid ID
-	result = testutil.NewRequest().Get("/pets/27179095781").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets/27179095781").WithAcceptJSON().Go(t, e)
 	assert.Equal(t, http.StatusNotFound, result.Code())
 	var petError models.Error
 	err = result.UnmarshalBodyToObject(&petError)
@@ -100,7 +100,7 @@ func TestPetStore(t *testing.T) {
 		Name: "Fido",
 		Tag:  &tag,
 	}
-	result = testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
+	result = testutil.NewRequest().Post("/pets").WithJSONBody(newPet).Go(t, e)
 	// We expect 201 code on successful pet insertion
 	assert.Equal(t, http.StatusCreated, result.Code())
 	// We should have gotten a response from the server with the new pet. Make
@@ -110,7 +110,7 @@ func TestPetStore(t *testing.T) {
 	petId2 := resultPet.Id
 
 	// Now, list all pets, we should have two
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJSON().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	var petList []models.Pet
 	err = result.UnmarshalBodyToObject(&petList)
@@ -119,7 +119,7 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by tag, we should have 1
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJSON().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
@@ -127,7 +127,7 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by non existent tag, we should have 0
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJSON().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
@@ -148,7 +148,7 @@ func TestPetStore(t *testing.T) {
 
 	// Should have no pets left.
 	petList = nil
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJSON().Go(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)

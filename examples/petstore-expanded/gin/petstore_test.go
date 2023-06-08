@@ -13,7 +13,7 @@ import (
 )
 
 func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRecorder {
-	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, handler)
+	response := testutil.NewRequest().Get(url).WithAcceptJSON().GoWithHTTPHandler(t, handler)
 	return response.Recorder
 }
 
@@ -30,7 +30,7 @@ func TestPetStore(t *testing.T) {
 			Tag:  &tag,
 		}
 
-		rr := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, r).Recorder
+		rr := testutil.NewRequest().Post("/pets").WithJSONBody(newPet).GoWithHTTPHandler(t, r).Recorder
 		assert.Equal(t, http.StatusCreated, rr.Code)
 
 		var resultPet api.Pet

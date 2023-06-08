@@ -64,7 +64,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("JSONExample", func(t *testing.T) {
 		value := "123"
 		requestBody := clientAPI.Example{Value: &value}
-		rr := testutil.NewRequest().Post("/json").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		rr := testutil.NewRequest().Post("/json").WithJSONBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody clientAPI.Example
@@ -128,7 +128,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("MultipleRequestAndResponseTypesJSON", func(t *testing.T) {
 		value := "123"
 		requestBody := clientAPI.Example{Value: &value}
-		rr := testutil.NewRequest().Post("/multiple").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		rr := testutil.NewRequest().Post("/multiple").WithJSONBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody clientAPI.Example
@@ -194,7 +194,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		header2 := "890"
 		value := "asdf"
 		requestBody := clientAPI.Example{Value: &value}
-		rr := testutil.NewRequest().Post("/with-headers").WithHeader("header1", header1).WithHeader("header2", header2).WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		rr := testutil.NewRequest().Post("/with-headers").WithHeader("header1", header1).WithHeader("header2", header2).WithJSONBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody clientAPI.Example
@@ -215,7 +215,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("ReusableResponses", func(t *testing.T) {
 		value := "jkl;"
 		requestBody := clientAPI.Example{Value: &value}
-		rr := testutil.NewRequest().Post("/reusable-responses").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		rr := testutil.NewRequest().Post("/reusable-responses").WithJSONBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody clientAPI.Example
@@ -226,7 +226,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("UnionResponses", func(t *testing.T) {
 		value := "union"
 		requestBody := clientAPI.Example{Value: &value}
-		rr := testutil.NewRequest().Post("/with-union").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		rr := testutil.NewRequest().Post("/with-union").WithJSONBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
 		var responseBody clientAPI.Example

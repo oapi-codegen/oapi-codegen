@@ -21,7 +21,7 @@ package testutil
 //   var response ResponseBody
 //   t is *testing.T, from a unit test
 //   e is *echo.Echo
-//   response := NewRequest().Post("/path").WithJsonBody(body).Go(t, e)
+//   response := NewRequest().Post("/path").WithJSONBody(body).Go(t, e)
 //   err := response.UnmarshalBodyToObject(&response)
 import (
 	"bytes"
@@ -98,7 +98,7 @@ func (r *RequestBuilder) WithContentType(value string) *RequestBuilder {
 	return r.WithHeader("Content-Type", value)
 }
 
-func (r *RequestBuilder) WithJsonContentType() *RequestBuilder {
+func (r *RequestBuilder) WithJSONContentType() *RequestBuilder {
 	return r.WithContentType("application/json")
 }
 
@@ -106,7 +106,7 @@ func (r *RequestBuilder) WithAccept(value string) *RequestBuilder {
 	return r.WithHeader("Accept", value)
 }
 
-func (r *RequestBuilder) WithAcceptJson() *RequestBuilder {
+func (r *RequestBuilder) WithAcceptJSON() *RequestBuilder {
 	return r.WithAccept("application/json")
 }
 
@@ -117,15 +117,15 @@ func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 	return r
 }
 
-// WithJsonBody takes an object as input, marshals it to JSON, and sends it
+// WithJSONBody takes an object as input, marshals it to JSON, and sends it
 // as the body with Content-Type: application/json
-func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
+func (r *RequestBuilder) WithJSONBody(obj interface{}) *RequestBuilder {
 	var err error
 	r.Body, err = json.Marshal(obj)
 	if err != nil {
 		r.Error = fmt.Errorf("failed to marshal json object: %s", err)
 	}
-	return r.WithJsonContentType()
+	return r.WithJSONContentType()
 }
 
 // WithCookie sets a cookie
@@ -206,9 +206,9 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 	return handler(ctype, c.Recorder.Body, obj, c.Strict)
 }
 
-// UnmarshalJsonToObject assumes that the response contains JSON and unmarshals it
+// UnmarshalJSONToObject assumes that the response contains JSON and unmarshals it
 // into the specified object.
-func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
+func (c *CompletedRequest) UnmarshalJSONToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
