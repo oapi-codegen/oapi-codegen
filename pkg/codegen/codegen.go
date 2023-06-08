@@ -18,11 +18,13 @@ import (
 	"bufio"
 	"bytes"
 	"embed"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
+	"path"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -129,18 +131,43 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
-	// load user-provided templates. Will Override built-in versions.
-	for name, template := range opts.OutputOptions.UserTemplates {
-		utpl := t.New(name)
-
-		txt, err := GetUserTemplateText(template)
-		if err != nil {
-			return "", fmt.Errorf("error loading user-provided template %q: %w", name, err)
+	// Override built-in templates with user-provided versions
+	for _, tpl := range t.Templates() {
+		// Check for template in provided template directory
+		if dir := opts.OutputOptions.UserTemplatesDir; dir != "" {
+			fp := path.Join(dir, tpl.Name())
+			_, err := os.Stat(fp)
+			if err != nil && !errors.Is(err, os.ErrNotExist) {
+				return "", fmt.Errorf("error accessing user-provided template %q: %w", fp, err)
+			}
+			if err == nil {
+				utpl := t.New(tpl.Name())
+				data, err := os.ReadFile(fp)
+				if err != nil {
+					return "", fmt.Errorf("error reading user-provided template %q: %w", fp, err)
+				}
+				if _, err := utpl.Parse(string(data)); err != nil {
+					return "", fmt.Errorf("error parsing user-provided template %q: %w", fp, err)
+				}
+			}
 		}
-
-		_, err = utpl.Parse(txt)
-		if err != nil {
-			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
+		// Check for template in a provided file path
+		if fp, ok := opts.OutputOptions.UserTemplateFiles[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			data, err := os.ReadFile(fp)
+			if err != nil {
+				return "", fmt.Errorf("error reading user-provided template %q: %w", fp, err)
+			}
+			if _, err := utpl.Parse(string(data)); err != nil {
+				return "", fmt.Errorf("error parsing user-provided template %q: %w", fp, err)
+			}
+		}
+		// Check for template provided inline in the configuration
+		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
+			utpl := t.New(tpl.Name())
+			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
+				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
+			}
 		}
 	}
 
@@ -491,6 +518,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 
 		types = append(types, goSchema.GetAdditionalTypeDefs()...)
 	}
+
 	return types, nil
 }
 
