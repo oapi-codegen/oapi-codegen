@@ -806,24 +806,28 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 
 	req.Header.Add("Content-Type", contentType)
 
-	var headerParam0 string
+	if params != nil {
 
-	headerParam0, err = runtime.StyleParamWithLocation("simple", false, "header1", runtime.ParamLocationHeader, params.Header1)
-	if err != nil {
-		return nil, err
-	}
+		var headerParam0 string
 
-	req.Header.Set("header1", headerParam0)
-
-	if params.Header2 != nil {
-		var headerParam1 string
-
-		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "header2", runtime.ParamLocationHeader, *params.Header2)
+		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "header1", runtime.ParamLocationHeader, params.Header1)
 		if err != nil {
 			return nil, err
 		}
 
-		req.Header.Set("header2", headerParam1)
+		req.Header.Set("header1", headerParam0)
+
+		if params.Header2 != nil {
+			var headerParam1 string
+
+			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "header2", runtime.ParamLocationHeader, *params.Header2)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("header2", headerParam1)
+		}
+
 	}
 
 	return req, nil

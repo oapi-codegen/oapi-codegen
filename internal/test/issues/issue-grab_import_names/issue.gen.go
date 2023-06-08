@@ -143,26 +143,30 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 		return nil, err
 	}
 
-	if params.Foo != nil {
-		var headerParam0 string
+	if params != nil {
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Foo", runtime.ParamLocationHeader, *params.Foo)
-		if err != nil {
-			return nil, err
+		if params.Foo != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Foo", runtime.ParamLocationHeader, *params.Foo)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("Foo", headerParam0)
 		}
 
-		req.Header.Set("Foo", headerParam0)
-	}
+		if params.Bar != nil {
+			var headerParam1 string
 
-	if params.Bar != nil {
-		var headerParam1 string
+			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "Bar", runtime.ParamLocationHeader, *params.Bar)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam1, err = runtime.StyleParamWithLocation("simple", false, "Bar", runtime.ParamLocationHeader, *params.Bar)
-		if err != nil {
-			return nil, err
+			req.Header.Set("Bar", headerParam1)
 		}
 
-		req.Header.Set("Bar", headerParam1)
 	}
 
 	return req, nil
