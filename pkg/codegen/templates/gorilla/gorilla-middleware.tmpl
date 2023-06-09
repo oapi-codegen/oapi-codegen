@@ -173,7 +173,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
   {{end}}
 
-  var handler = func(w http.ResponseWriter, r *http.Request) {
+  handler := func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 

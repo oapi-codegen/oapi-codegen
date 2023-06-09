@@ -279,7 +279,7 @@ func main() {
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
-	var templates = make(map[string]string)
+	templates := make(map[string]string)
 
 	if templatesDir == "" {
 		return templates, nil
