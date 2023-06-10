@@ -20,7 +20,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
         return
     }
 {{end}}
@@ -62,7 +62,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(paramValue), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
         return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -93,7 +93,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
-            ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+            ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
             return
         }
 {{end}}
@@ -131,7 +131,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(decoded), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
         return
     }
     params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -155,7 +155,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{end}}{{/* .CookieParams */}}
 
 {{end}}{{/* .RequiresParamObject */}}
-    // Invoke the callback with all the unmarshalled arguments
+    // Invoke the callback with all the unmarshaled arguments
     w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 {{end}}

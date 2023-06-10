@@ -32,7 +32,6 @@ func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRec
 }
 
 func TestPetStore(t *testing.T) {
-	var err error
 	store := api.NewPetStore()
 	irisPetServer := NewIrisPetServer(store, 8080)
 
@@ -47,7 +46,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, rr.Code)
 
 		var resultPet api.Pet
-		err = json.NewDecoder(rr.Body).Decode(&resultPet)
+		err := json.NewDecoder(rr.Body).Decode(&resultPet)
 		assert.NoError(t, err, "error unmarshaling response")
 		assert.Equal(t, newPet.Name, resultPet.Name)
 		assert.Equal(t, *newPet.Tag, *resultPet.Tag)
@@ -61,7 +60,7 @@ func TestPetStore(t *testing.T) {
 		rr := doGet(t, irisPetServer, fmt.Sprintf("/pets/%d", pet.Id))
 
 		var resultPet api.Pet
-		err = json.NewDecoder(rr.Body).Decode(&resultPet)
+		err := json.NewDecoder(rr.Body).Decode(&resultPet)
 		assert.NoError(t, err, "error getting pet")
 		assert.Equal(t, pet, resultPet)
 	})
@@ -71,7 +70,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
-		err = json.NewDecoder(rr.Body).Decode(&petError)
+		err := json.NewDecoder(rr.Body).Decode(&petError)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 	})
@@ -84,7 +83,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
-		err = json.NewDecoder(rr.Body).Decode(&petList)
+		err := json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 2, len(petList))
 	})
@@ -104,7 +103,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
-		err = json.NewDecoder(rr.Body).Decode(&petList)
+		err := json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 1, len(petList))
 	})
@@ -117,7 +116,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
-		err = json.NewDecoder(rr.Body).Decode(&petList)
+		err := json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 0, len(petList))
 	})
@@ -130,7 +129,7 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
-		err = json.NewDecoder(rr.Body).Decode(&petError)
+		err := json.NewDecoder(rr.Body).Decode(&petError)
 		assert.NoError(t, err, "error unmarshaling PetError")
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 

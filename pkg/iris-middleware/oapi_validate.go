@@ -24,12 +24,12 @@ const (
 func OapiValidatorFromYamlFile(path string) (iris.Handler, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w",
 			path, err)
 	}
 
@@ -96,7 +96,7 @@ func ValidateRequestFromContext(ctx iris.Context, router routers.Router, options
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating route: %s", err.Error())
+			return fmt.Errorf("error validating route: %w", err)
 		}
 	}
 
@@ -137,7 +137,7 @@ func ValidateRequestFromContext(ctx iris.Context, router routers.Router, options
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return fmt.Errorf("error validating request: %w", err)
 		}
 	}
 	return nil
