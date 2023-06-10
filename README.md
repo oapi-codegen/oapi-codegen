@@ -568,6 +568,20 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-type-skip-optional-pointer`: specifies if the go type should or should not be a pointer
+  when the property is optional. If set to true, the type will not be a pointer if the field is
+  optional or nullable. If set to false, the type will be a pointer.
+  
+  ```yaml
+  properties:
+    field:
+      type: string
+      x-go-type-skip-optional-pointer: true
+  ```
+  
+  In the example above, the `field` field will be of type `string` instead of `*string`. This is
+  useful when you want to handle the case of an empty string differently than a null value.
+  
 - `x-go-name`: specifies Go field name. It allows you to specify the field name for a schema, and
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
