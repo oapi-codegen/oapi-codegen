@@ -568,7 +568,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
-- `x-go-type-skip-optional-pointer`: specifies if the go type should or should not be a pointer
+- `x-go-type-skip-optional-pointer`: specifies if the Go type should or should not be a pointer
   when the property is optional. If set to true, the type will not be a pointer if the field is
   optional or nullable. If set to false, the type will be a pointer.
   
