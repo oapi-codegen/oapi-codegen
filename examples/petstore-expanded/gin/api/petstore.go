@@ -98,7 +98,7 @@ func (p *PetStore) AddPet(c *gin.Context) {
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet
