@@ -17,8 +17,7 @@ import (
 )
 
 func main() {
-
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.Int("port", 8080, "Port for test HTTP server")
 
 	flag.Parse()
 
@@ -32,7 +31,6 @@ func main() {
 }
 
 func NewFiberPetServer(petStore *api.PetStore) *fiber.App {
-
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)

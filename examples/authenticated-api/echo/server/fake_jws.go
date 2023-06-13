@@ -13,7 +13,8 @@ import (
 
 // PrivateKey is an ECDSA private key which was generated with the following
 // command:
-//     openssl ecparam -name prime256v1 -genkey -noout -out ecprivatekey.pem
+//
+//	openssl ecparam -name prime256v1 -genkey -noout -out ecprivatekey.pem
 //
 // We are using a hard coded key here in this example, but in real applications,
 // you would never do this. Your JWT signing key must never be in your application,
@@ -24,10 +25,12 @@ AwEHoUQDQgAE4pPyvrB9ghqkT1Llk0A42lixkugFd/TBdOp6wf69O9Nndnp4+HcR
 s9SlG/8hjB2Hz42v4p3haKWv3uS1C6ahCQ==
 -----END EC PRIVATE KEY-----`
 
-const KeyID = `fake-key-id`
-const FakeIssuer = "fake-issuer"
-const FakeAudience = "example-users"
-const PermissionsClaim = "perm"
+const (
+	KeyID            = `fake-key-id`
+	FakeIssuer       = "fake-issuer"
+	FakeAudience     = "example-users"
+	PermissionsClaim = "perm"
+)
 
 type FakeAuthenticator struct {
 	PrivateKey *ecdsa.PrivateKey

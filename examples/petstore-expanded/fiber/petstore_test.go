@@ -16,7 +16,6 @@ import (
 )
 
 func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) {
-
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		t.Fatalf("Invalid url: %s", rawURL)

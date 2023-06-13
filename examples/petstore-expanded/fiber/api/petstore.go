@@ -22,7 +22,6 @@ type PetStore struct {
 var _ ServerInterface = (*PetStore)(nil)
 
 func NewPetStore() *PetStore {
-
 	return &PetStore{
 		Pets:   make(map[int64]Pet),
 		NextId: 1000,
@@ -32,7 +31,6 @@ func NewPetStore() *PetStore {
 // This function wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetStoreError(c *fiber.Ctx, code int, message string) error {
-
 	petErr := Error{
 		Code:    int32(code),
 		Message: message,
@@ -43,7 +41,6 @@ func sendPetStoreError(c *fiber.Ctx, code int, message string) error {
 
 // FindPets implements all the handlers in the ServerInterface
 func (p *PetStore) FindPets(c *fiber.Ctx, params FindPetsParams) error {
-
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -75,7 +72,6 @@ func (p *PetStore) FindPets(c *fiber.Ctx, params FindPetsParams) error {
 }
 
 func (p *PetStore) AddPet(c *fiber.Ctx) error {
-
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
 
@@ -104,7 +100,6 @@ func (p *PetStore) AddPet(c *fiber.Ctx) error {
 }
 
 func (p *PetStore) FindPetByID(c *fiber.Ctx, id int64) error {
-
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -117,7 +112,6 @@ func (p *PetStore) FindPetByID(c *fiber.Ctx, id int64) error {
 }
 
 func (p *PetStore) DeletePet(c *fiber.Ctx, id int64) error {
-
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 

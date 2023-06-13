@@ -33,7 +33,6 @@ func checkLint(t *testing.T, filename string, code []byte) {
 }
 
 func TestExamplePetStoreCodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "api"
 	opts := Configuration{
@@ -78,7 +77,6 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
 	userTemplates := map[string]string{"typedef.tmpl": "//blah\n//blah"}
 
 	// Input vars for code generation:
@@ -114,7 +112,6 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
-
 	userTemplates := map[string]string{"typedef.tmpl": "./templates/typedef.tmpl"}
 
 	// Input vars for code generation:
@@ -150,7 +147,6 @@ func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
 }
 
 func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
-
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	assert.NoError(t, err)
 	defer ln.Close()
@@ -199,7 +195,6 @@ func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 }
 
 func TestExamplePetStoreParseFunction(t *testing.T) {
-
 	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
 
 	cannedResponse := &http.Response{
@@ -219,7 +214,6 @@ func TestExamplePetStoreParseFunction(t *testing.T) {
 }
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
-
 	// Input vars for code generation:
 	packageName := "testswagger"
 	opts := Configuration{
@@ -332,7 +326,6 @@ func TestGoTypeImport(t *testing.T) {
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
-
 }
 
 func TestRemoteExternalReference(t *testing.T) {
@@ -393,7 +386,6 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
-
 }
 
 //go:embed test_spec.yaml

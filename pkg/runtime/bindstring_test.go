@@ -207,5 +207,4 @@ func TestBindStringToObject(t *testing.T) {
 	var dstUUID types.UUID
 	assert.NoError(t, BindStringToObject(uuidString, &dstUUID))
 	assert.Equal(t, dstUUID.String(), uuidString)
-
 }

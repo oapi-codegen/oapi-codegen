@@ -356,7 +356,6 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.Error(t, err)
 		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
 		assert.Error(t, err)
-
 	})
 }
 

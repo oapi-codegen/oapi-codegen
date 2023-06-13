@@ -688,5 +688,4 @@ func TestStyleParam(t *testing.T) {
 	result, err = StyleParamWithLocation("simple", false, "id", ParamLocationQuery, uuidD)
 	assert.NoError(t, err)
 	assert.EqualValues(t, "972beb41-e5ea-4b31-a79a-96f4999d8769", result)
-
 }

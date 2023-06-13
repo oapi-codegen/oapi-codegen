@@ -7,9 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	withTrailingSlash = "https://my-api.com/some-base-url/v1/"
-)
+var withTrailingSlash = "https://my-api.com/some-base-url/v1/"
 
 func TestSecurityProviders(t *testing.T) {
 	bearer, err := NewSecurityProviderBearerToken("mytoken")

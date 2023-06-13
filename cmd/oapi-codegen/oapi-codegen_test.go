@@ -7,7 +7,6 @@ import (
 )
 
 func TestLoader(t *testing.T) {
-
 	paths := []string{
 		"../../examples/petstore-expanded/petstore-expanded.yaml",
 		"https://petstore3.swagger.io/api/v3/openapi.json",

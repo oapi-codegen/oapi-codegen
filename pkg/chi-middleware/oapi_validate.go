@@ -52,7 +52,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			// validate request
 			if statusCode, err := validateRequest(r, router, options); err != nil {
 				if options != nil && options.ErrorHandler != nil {
@@ -67,13 +66,11 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 			next.ServeHTTP(w, r)
 		})
 	}
-
 }
 
 // This function is called from the middleware above and actually does the work
 // of validating a request.
 func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
-
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {

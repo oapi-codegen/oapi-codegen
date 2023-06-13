@@ -269,7 +269,6 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 		},
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
-
 				for _, s := range input.Scopes {
 					if s == "someScope" {
 						return nil
@@ -325,11 +324,9 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
-
 }
 
 func testRequestValidatorBasicFunctions(t *testing.T, r *chi.Mux) {
-
 	called := false
 
 	// Install a request handler for /resource. We want to make sure it doesn't
@@ -401,5 +398,4 @@ func testRequestValidatorBasicFunctions(t *testing.T, r *chi.Mux) {
 		assert.False(t, called, "Handler should not have been called")
 		called = false
 	}
-
 }

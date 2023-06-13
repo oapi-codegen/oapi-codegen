@@ -106,7 +106,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *Options) error {
 	req := c.Request
 	route, pathParams, err := router.FindRoute(req)
-
 	// We failed to find a matching route for the request.
 	if err != nil {
 		switch e := err.(type) {

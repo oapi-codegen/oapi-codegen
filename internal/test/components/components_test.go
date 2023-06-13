@@ -24,7 +24,6 @@ func TestRawJSON(t *testing.T) {
 	assert.NoError(t, err)
 
 	assertJsonEqual(t, []byte(buf), buf2)
-
 }
 
 func TestAdditionalProperties(t *testing.T) {

@@ -8,8 +8,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var _ json.Marshaler = (*File)(nil)
-var _ json.Unmarshaler = (*File)(nil)
+var (
+	_ json.Marshaler   = (*File)(nil)
+	_ json.Unmarshaler = (*File)(nil)
+)
 
 func TestFileJSON(t *testing.T) {
 	type Object struct {
@@ -50,5 +52,4 @@ func TestFileJSON(t *testing.T) {
 	o4Bytes, err := o4.BinaryFieldPtr.Bytes()
 	require.NoError(t, err)
 	assert.Equal(t, []byte("hello"), o4Bytes)
-
 }

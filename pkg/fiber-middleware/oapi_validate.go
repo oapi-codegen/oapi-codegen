@@ -19,12 +19,13 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 )
 
-type ctxKeyFiberContext struct{}
-type ctxKeyUserData struct{}
+type (
+	ctxKeyFiberContext struct{}
+	ctxKeyUserData     struct{}
+)
 
 // OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (fiber.Handler, error) {
-
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error reading %s: %s", path, err)
@@ -64,14 +65,12 @@ type Options struct {
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fiber.Handler {
-
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
 	}
 
 	return func(c *fiber.Ctx) error {
-
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
 			if options != nil && options.ErrorHandler != nil {
@@ -90,14 +89,12 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fibe
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
 func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Options) error {
-
 	r, err := adaptor.ConvertRequest(c, false)
 	if err != nil {
 		return err
 	}
 
 	route, pathParams, err := router.FindRoute(r)
-
 	// We failed to find a matching route for the request.
 	if err != nil {
 		switch e := err.(type) {

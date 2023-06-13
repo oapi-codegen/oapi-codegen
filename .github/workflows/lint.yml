@@ -18,3 +18,4 @@ jobs:
         with:
           # Make sure this matches the version we've got in our `Makefile`
           version: v1.50.1
+          args: --enable=gofumpt
