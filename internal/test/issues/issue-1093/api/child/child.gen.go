@@ -15,10 +15,11 @@ import (
 	"path"
 	"strings"
 
-	externalRef0 "github.com/deepmap/oapi-codegen/examples/import-mapping/api/parent"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+
+	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1093/api/parent"
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 )
 
 // ServerInterface represents all server handlers.
