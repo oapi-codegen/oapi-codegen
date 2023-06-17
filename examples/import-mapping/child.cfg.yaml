@@ -1,0 +1,10 @@
+# child.yaml
+package: api
+generate:
+  gin-server: true
+  embedded-spec: true
+  strict-server: true
+  models: true
+import-mapping:
+  parent.api.yaml: github.com/deepmap/oapi-codegen/examples/import-mapping/api/parent
+output: ../../examples/import-mapping/api/child/child.gen.go
