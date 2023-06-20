@@ -380,6 +380,14 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 						return nil
 					}
 				}
+
+				// If the destination implements encoding.TextUnmarshaler we use it for binding
+				if tu, ok := dest.(encoding.TextUnmarshaler); ok {
+					if err := tu.UnmarshalText([]byte(values[0])); err != nil {
+						return fmt.Errorf("error unmarshaling '%s' text as %T: %s", values[0], dest, err)
+					}
+					return nil
+				}
 				err = BindStringToObject(values[0], output)
 			}
 			if err != nil {
