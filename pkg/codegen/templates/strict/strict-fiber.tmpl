@@ -73,7 +73,7 @@ type strictHandler struct {
                 return fiber.NewError(fiber.StatusBadRequest, err.Error())
             }
         } else if response != nil {
-            return fmt.Errorf("Unexpected response type: %T", response)
+            return fmt.Errorf("unexpected response type: %T", response)
         }
         return nil
     }

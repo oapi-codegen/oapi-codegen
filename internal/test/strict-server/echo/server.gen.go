@@ -817,7 +817,7 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
 		return validResponse.VisitJSONExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -846,7 +846,7 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		return validResponse.VisitMultipartExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -906,7 +906,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		return validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -931,7 +931,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx echo.Context, pType str
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
 		return validResponse.VisitReservedGoKeywordParametersResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -960,7 +960,7 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
 		return validResponse.VisitReusableResponsesResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -990,7 +990,7 @@ func (sh *strictHandler) TextExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
 		return validResponse.VisitTextExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1015,7 +1015,7 @@ func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
 		return validResponse.VisitUnknownExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1042,7 +1042,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
 		return validResponse.VisitUnspecifiedContentTypeResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1075,7 +1075,7 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
 		return validResponse.VisitURLEncodedExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1106,7 +1106,7 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
 		return validResponse.VisitHeadersExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1135,7 +1135,7 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
 		return validResponse.VisitUnionExampleResponse(ctx.Response())
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
