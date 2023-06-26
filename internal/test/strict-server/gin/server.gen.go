@@ -869,7 +869,7 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -901,7 +901,7 @@ func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -968,7 +968,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -995,7 +995,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *gin.Context, pType str
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1028,7 +1028,7 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1061,7 +1061,7 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1088,7 +1088,7 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1117,7 +1117,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1153,7 +1153,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1188,7 +1188,7 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1221,7 +1221,7 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 

@@ -780,7 +780,7 @@ func (sh *strictHandler) JSONExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -807,7 +807,7 @@ func (sh *strictHandler) MultipartExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -858,7 +858,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -885,7 +885,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *fiber.Ctx, pType strin
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -916,7 +916,7 @@ func (sh *strictHandler) ReusableResponses(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -945,7 +945,7 @@ func (sh *strictHandler) TextExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -972,7 +972,7 @@ func (sh *strictHandler) UnknownExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1001,7 +1001,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1032,7 +1032,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1065,7 +1065,7 @@ func (sh *strictHandler) HeadersExample(ctx *fiber.Ctx, params HeadersExamplePar
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
@@ -1096,7 +1096,7 @@ func (sh *strictHandler) UnionExample(ctx *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
-		return fmt.Errorf("Unexpected response type: %T", response)
+		return fmt.Errorf("unexpected response type: %T", response)
 	}
 	return nil
 }
