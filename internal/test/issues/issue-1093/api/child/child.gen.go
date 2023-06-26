@@ -136,7 +136,7 @@ func (sh *strictHandler) GetPets(ctx *gin.Context) {
 			ctx.Error(err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
