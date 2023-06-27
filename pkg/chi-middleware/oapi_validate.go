@@ -91,7 +91,7 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 		requestValidationInput.Options = &options.Options
 	}
 
-	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
+	if err := openapi3filter.ValidateRequest(r.Context(), requestValidationInput); err != nil {
 		me := openapi3.MultiError{}
 		if errors.As(err, &me) {
 			errFunc := getMultiErrorHandlerFromOptions(options)
