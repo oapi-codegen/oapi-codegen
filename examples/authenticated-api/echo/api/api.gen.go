@@ -123,7 +123,7 @@ type ClientInterface interface {
 	// ListThings request
 	ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddThing request with any body
+	// AddThingWithBody request with any body
 	AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -275,10 +275,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThings request
+	// ListThingsWithResponse request
 	ListThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 
-	// AddThing request with any body
+	// AddThingWithBodyWithResponse request with any body
 	AddThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddThingResponse, error)
 
 	AddThingWithResponse(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*AddThingResponse, error)

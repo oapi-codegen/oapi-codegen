@@ -121,7 +121,7 @@ type ClientInterface interface {
 	// GetPet request
 	GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ValidatePets request with any body
+	// ValidatePetsWithBody request with any body
 	ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -280,10 +280,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetPet request
+	// GetPetWithResponse request
 	GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error)
 
-	// ValidatePets request with any body
+	// ValidatePetsWithBodyWithResponse request with any body
 	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 
 	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
