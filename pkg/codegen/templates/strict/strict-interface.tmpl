@@ -64,9 +64,6 @@
             {{end}}
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
-                {{range $headers -}}
-                    w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                {{end -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(w)
                 {{end -}}
@@ -75,6 +72,9 @@
                     if response.ContentLength != 0 {
                         w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
                     }
+                {{end -}}
+                {{range $headers -}}
+                    w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
                 {{end -}}
                 w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
