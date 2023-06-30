@@ -7,4 +7,4 @@ generate:
   models: true
 import-mapping:
   parent.api.yaml: github.com/deepmap/oapi-codegen/internal/test/issues/issue-1093/api/parent
-output: ../../examples/import-mapping/api/child/child.gen.go
+output: api/child/child.gen.go

@@ -4,6 +4,6 @@ generate:
   embedded-spec: true
   strict-server: true
   models: true
-output: ../../examples/import-mapping/api/parent/parent.gen.go
+output: api/parent/parent.gen.go
 output-options:
   skip-prune: true

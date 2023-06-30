@@ -2,8 +2,8 @@
 openapi: 3.0.0
 info:
   description: >-
-    This child spec imports models from the base spec
-  title: base
+    This child spec imports models from the parent spec
+  title: child
   version: "1.0"
 servers:
   - url: /child
