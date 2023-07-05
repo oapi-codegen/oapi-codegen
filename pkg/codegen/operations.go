@@ -286,7 +286,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -320,8 +320,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							TypeName: typeName,
 							Schema:   responseSchema,
 						},
-						ResponseName:    responseName,
-						ContentTypeName: contentTypeName,
+						ResponseName:              responseName,
+						ContentTypeName:           contentTypeName,
+						AdditionalTypeDefinitions: responseSchema.GetAdditionalTypeDefs(),
 					}
 					if IsGoTypeReference(contentType.Schema.Ref) {
 						refType, err := RefPathToGoType(contentType.Schema.Ref)
