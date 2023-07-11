@@ -264,8 +264,8 @@ func TestOapiRequestValidatorWithOptions(t *testing.T) {
 	// Set up an authenticator to check authenticated function. It will allow
 	// access to "someScope", but disallow others.
 	options := Options{
-		ErrorHandler: func(w http.ResponseWriter, message string, statusCode int) {
-			http.Error(w, "test: "+message, statusCode)
+		ErrorHandler: func(w http.ResponseWriter, err error, statusCode int) {
+			http.Error(w, "test: "+err.Error(), statusCode)
 		},
 		Options: openapi3filter.Options{
 			AuthenticationFunc: func(c context.Context, input *openapi3filter.AuthenticationInput) error {
