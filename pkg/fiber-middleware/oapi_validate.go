@@ -47,7 +47,7 @@ func OapiRequestValidator(swagger *openapi3.T) fiber.Handler {
 }
 
 // ErrorHandler is called when there is an error in validation
-type ErrorHandler func(c *fiber.Ctx, message string, statusCode int)
+type ErrorHandler func(c *fiber.Ctx, message error, statusCode int) error
 
 // MultiErrorHandler is called when oapi returns a MultiError type
 type MultiErrorHandler func(openapi3.MultiError) error
@@ -75,9 +75,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fibe
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
 			if options != nil && options.ErrorHandler != nil {
-				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
-				// in case the handler didn't internally call Abort, stop the chain
-				return nil
+				return options.ErrorHandler(c, err, http.StatusBadRequest)
 			} else {
 				// note: I am not sure if this is the best way to handle this
 				return fiber.NewError(http.StatusBadRequest, err.Error())
