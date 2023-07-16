@@ -63,6 +63,12 @@
                 }
             {{end}}
 
+            {{if and $fixedStatusCode $isRef -}}
+            func (response {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                return json.Marshal(response.{{$ref}}{{.NameTagOrContentType}}Response)
+            }
+            {{end}}
+
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{range $headers -}}
                     w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
