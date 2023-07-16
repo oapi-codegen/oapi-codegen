@@ -63,7 +63,7 @@
                 }
             {{end}}
 
-            {{if and $fixedStatusCode $isRef -}}
+            {{if eq .NameTag "JSON" | and $fixedStatusCode $isRef -}}
             func (response {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
                 return json.Marshal(response.{{$ref}}{{.NameTagOrContentType}}Response)
             }
