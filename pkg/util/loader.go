@@ -11,6 +11,10 @@ func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 
+	if filePath == "-" {
+		return loader.LoadFromStdin()
+	}
+
 	u, err := url.Parse(filePath)
 	if err == nil && u.Scheme != "" && u.Host != "" {
 		return loader.LoadFromURI(u)
