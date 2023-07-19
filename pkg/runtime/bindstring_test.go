@@ -16,12 +16,29 @@ package runtime
 import (
 	"fmt"
 	"math"
+	"math/big"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 )
+
+type numberTextUnmarshaler int64
+
+func (p *numberTextUnmarshaler) UnmarshalText(text []byte) error {
+	n, err := strconv.ParseInt(string(text), 10, 64)
+	if err != nil {
+		return err
+	}
+	*p = numberTextUnmarshaler(n)
+	return nil
+}
+
+func (p *numberTextUnmarshaler) String() string {
+	return fmt.Sprint(int64(*p))
+}
 
 func TestBindStringToObject(t *testing.T) {
 	var i int
@@ -208,4 +225,15 @@ func TestBindStringToObject(t *testing.T) {
 	assert.NoError(t, BindStringToObject(uuidString, &dstUUID))
 	assert.Equal(t, dstUUID.String(), uuidString)
 
+	// struct with TextUnmarshaler
+	bigIntString := "12345678910"
+	var dstBigInt big.Int
+	assert.NoError(t, BindStringToObject(bigIntString, &dstBigInt))
+	assert.Equal(t, dstBigInt.String(), bigIntString)
+
+	// scalar with TextUnmarshaler
+	numberTextUnmarshalerString := "12345678910"
+	var dstNumberTextUnmarshaler numberTextUnmarshaler
+	assert.NoError(t, BindStringToObject(numberTextUnmarshalerString, &dstNumberTextUnmarshaler))
+	assert.Equal(t, dstNumberTextUnmarshaler.String(), numberTextUnmarshalerString)
 }

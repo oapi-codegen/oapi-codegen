@@ -522,5 +522,10 @@ func indirect(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
 	if t.ConvertibleTo(reflect.TypeOf(types.Date{})) {
 		return dest, reflect.Value{}, nil
 	}
+
+	// If the destination implements encoding.TextUnmarshaler we use it for binding
+	if _, ok := dest.(encoding.TextUnmarshaler); ok {
+		return dest, reflect.Value{}, nil
+	}
 	return nil, v, t
 }

@@ -335,6 +335,28 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.Equal(t, expected, birthday)
 	})
 
+	t.Run("form to struct with TextUnmarshaler", func(t *testing.T) {
+		expected := big.NewInt(12345678910)
+		n := &big.Int{}
+		queryParams := url.Values{
+			"number": {"12345678910"},
+		}
+		err := BindQueryParameter("form", true, false, "number", queryParams, &n)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, n)
+	})
+
+	t.Run("form to scalar with TextUnmarshaler", func(t *testing.T) {
+		expected := numberTextUnmarshaler(12345678910)
+		n := new(numberTextUnmarshaler)
+		queryParams := url.Values{
+			"number": {"12345678910"},
+		}
+		err := BindQueryParameter("form", true, false, "number", queryParams, &n)
+		assert.NoError(t, err)
+		assert.Equal(t, &expected, n)
+	})
+
 	t.Run("optional", func(t *testing.T) {
 		queryParams := url.Values{
 			"time":   {"2020-12-09T16:09:53+00:00"},
