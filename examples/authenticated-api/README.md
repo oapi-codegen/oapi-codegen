@@ -55,7 +55,7 @@ instead of implementing too much ourselves. We've chosen to use the excellent
 validation, and the [kin-openapi](https://github.com/getkin/kin-openapi/tree/master/openapi3filter)
 request filter to help us perform validation.
 
-First, we need to configure our [OapiRequestValidator](https://github.com/deepmap/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
+First, we need to configure our [OapiRequestValidator](https://github.com/nazirok/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
 to perform authentication:
 ```go
 validator := middleware.OapiRequestValidatorWithOptions(spec,

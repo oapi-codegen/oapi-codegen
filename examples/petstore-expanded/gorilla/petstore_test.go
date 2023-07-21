@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gorilla/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/gorilla/mux"
+	"github.com/nazirok/oapi-codegen/examples/petstore-expanded/gorilla/api"
+	middleware "github.com/nazirok/oapi-codegen/pkg/chi-middleware"
+	"github.com/nazirok/oapi-codegen/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

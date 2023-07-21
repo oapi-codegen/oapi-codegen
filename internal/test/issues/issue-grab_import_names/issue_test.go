@@ -3,8 +3,8 @@ package grabimportnames
 import (
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/nazirok/oapi-codegen/pkg/codegen"
 	"github.com/stretchr/testify/require"
 )
 

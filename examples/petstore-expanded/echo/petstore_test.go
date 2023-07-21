@@ -19,12 +19,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api/models"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	"github.com/nazirok/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/nazirok/oapi-codegen/examples/petstore-expanded/echo/api/models"
+	"github.com/nazirok/oapi-codegen/pkg/middleware"
+	"github.com/nazirok/oapi-codegen/pkg/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

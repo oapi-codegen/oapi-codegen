@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/nazirok/oapi-codegen/pkg/types"
 )
 
 // BindStringToObject takes a string, and attempts to assign it to the destination

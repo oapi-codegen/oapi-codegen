@@ -4,16 +4,17 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 
-	"github.com/deepmap/oapi-codegen/pkg/ecdsafile"
 	"github.com/lestrrat-go/jwx/jwa"
 	"github.com/lestrrat-go/jwx/jwk"
 	"github.com/lestrrat-go/jwx/jws"
 	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/nazirok/oapi-codegen/pkg/ecdsafile"
 )
 
 // PrivateKey is an ECDSA private key which was generated with the following
 // command:
-//     openssl ecparam -name prime256v1 -genkey -noout -out ecprivatekey.pem
+//
+//	openssl ecparam -name prime256v1 -genkey -noout -out ecprivatekey.pem
 //
 // We are using a hard coded key here in this example, but in real applications,
 // you would never do this. Your JWT signing key must never be in your application,

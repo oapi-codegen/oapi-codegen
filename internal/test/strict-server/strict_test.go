@@ -18,13 +18,13 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	chiAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
-	clientAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
-	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
-	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
-	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	chiAPI "github.com/nazirok/oapi-codegen/internal/test/strict-server/chi"
+	clientAPI "github.com/nazirok/oapi-codegen/internal/test/strict-server/client"
+	echoAPI "github.com/nazirok/oapi-codegen/internal/test/strict-server/echo"
+	fiberAPI "github.com/nazirok/oapi-codegen/internal/test/strict-server/fiber"
+	ginAPI "github.com/nazirok/oapi-codegen/internal/test/strict-server/gin"
+	"github.com/nazirok/oapi-codegen/pkg/runtime"
+	"github.com/nazirok/oapi-codegen/pkg/testutil"
 )
 
 func TestChiServer(t *testing.T) {
