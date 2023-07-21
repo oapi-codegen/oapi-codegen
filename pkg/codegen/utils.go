@@ -713,6 +713,10 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 	return stringToGoCommentWithPrefix(in, typeName)
 }
 
+func AuthMiddleWareName(scheme string) string {
+	return fmt.Sprintf("%sAuthMiddleWare", scheme)
+}
+
 func DeprecationComment(reason string) string {
 	var content = "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
