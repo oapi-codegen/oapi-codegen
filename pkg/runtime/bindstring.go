@@ -109,16 +109,7 @@ func BindStringToObject(src string, dst interface{}) error {
 		if err == nil {
 			v.SetBool(val)
 		}
-	case reflect.Array:
-		if tu, ok := dst.(encoding.TextUnmarshaler); ok {
-			if err := tu.UnmarshalText([]byte(src)); err != nil {
-				return fmt.Errorf("error unmarshaling '%s' text as %T: %s", src, dst, err)
-			}
-
-			return nil
-		}
-		fallthrough
-	case reflect.Struct:
+	case reflect.Array, reflect.Struct:
 		// if this is not of type Time or of type Date look to see if this is of type Binder.
 		if dstType, ok := dst.(Binder); ok {
 			return dstType.Bind(src)
