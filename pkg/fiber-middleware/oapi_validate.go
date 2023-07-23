@@ -106,7 +106,7 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating route: %s", err.Error())
+			return fmt.Errorf("error validating route: %w", err)
 		}
 	}
 
@@ -143,11 +143,11 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 			errorLines := strings.Split(e.Error(), "\n")
 			return fmt.Errorf("error in openapi3filter.RequestError: %s", errorLines[0])
 		case *openapi3filter.SecurityRequirementsError:
-			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %s", e.Error())
+			return fmt.Errorf("error in openapi3filter.SecurityRequirementsError: %w", e)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return fmt.Errorf("error validating request: %w", err)
 		}
 	}
 	return nil
@@ -190,5 +190,5 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // of all the errors. This method is called if there are no other
 // methods defined on the options.
 func defaultMultiErrorHandler(me openapi3.MultiError) error {
-	return fmt.Errorf("multiple errors encountered: %s", me)
+	return fmt.Errorf("multiple errors encountered: %w", me)
 }
