@@ -102,7 +102,7 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return errors.New(e.Reason)
+			return e
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
