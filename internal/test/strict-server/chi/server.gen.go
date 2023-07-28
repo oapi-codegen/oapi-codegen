@@ -959,9 +959,9 @@ type UnionExample200JSONResponse struct {
 }
 
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response.Body.union)
