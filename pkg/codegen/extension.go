@@ -7,6 +7,9 @@ import (
 const (
 	// extPropGoType overrides the generated type definition.
 	extPropGoType = "x-go-type"
+	// extPropGoTypeSkipOptionalPointer specifies that optional fields should
+	// be the type itself instead of a pointer to the type.
+	extPropGoTypeSkipOptionalPointer = "x-go-type-skip-optional-pointer"
 	// extPropGoImport specifies the module to import which provides above type
 	extPropGoImport = "x-go-type-import"
 	// extGoName is used to override a field name
@@ -28,8 +31,17 @@ func extString(extPropValue interface{}) (string, error) {
 	}
 	return str, nil
 }
+
 func extTypeName(extPropValue interface{}) (string, error) {
 	return extString(extPropValue)
+}
+
+func extParsePropGoTypeSkipOptionalPointer(extPropValue interface{}) (bool, error) {
+	goTypeSkipOptionalPointer, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return goTypeSkipOptionalPointer, nil
 }
 
 func extParseGoFieldName(extPropValue interface{}) (string, error) {
