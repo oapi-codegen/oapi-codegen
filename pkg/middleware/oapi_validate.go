@@ -119,7 +119,7 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+			return echo.NewHTTPError(http.StatusNotFound, e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
