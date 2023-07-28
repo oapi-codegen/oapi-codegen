@@ -43,13 +43,12 @@ const (
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
