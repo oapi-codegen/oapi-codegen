@@ -59,6 +59,65 @@ type ServerInterface interface {
 	UnionExample(w http.ResponseWriter, r *http.Request)
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// (POST /json)
+func (_ Unimplemented) JSONExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /multipart)
+func (_ Unimplemented) MultipartExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /multiple)
+func (_ Unimplemented) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /reserved-go-keyword-parameters/{type})
+func (_ Unimplemented) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request, pType string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /reusable-responses)
+func (_ Unimplemented) ReusableResponses(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /text)
+func (_ Unimplemented) TextExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /unknown)
+func (_ Unimplemented) UnknownExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /unspecified-content-type)
+func (_ Unimplemented) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /urlencoded)
+func (_ Unimplemented) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /with-headers)
+func (_ Unimplemented) HeadersExample(w http.ResponseWriter, r *http.Request, params HeadersExampleParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /with-union)
+func (_ Unimplemented) UnionExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface

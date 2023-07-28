@@ -192,7 +192,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetThings request
+	// GetThingsWithResponse request
 	GetThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetThingsResponse, error)
 }
 
@@ -298,6 +298,16 @@ type ServerInterface interface {
 	GetThings(w http.ResponseWriter, r *http.Request)
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// list things
+// (GET /api/my/path)
+func (_ Unimplemented) GetThings(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -311,9 +321,9 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetThings(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetThings(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)

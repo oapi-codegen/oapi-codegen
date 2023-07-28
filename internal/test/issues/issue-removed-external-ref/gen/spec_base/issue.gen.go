@@ -34,6 +34,20 @@ type ServerInterface interface {
 	PostNoTrouble(w http.ResponseWriter, r *http.Request)
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// (POST /invalidExtRefTrouble)
+func (_ Unimplemented) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /noTrouble)
+func (_ Unimplemented) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
