@@ -177,7 +177,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetClient request
+	// GetClientWithResponse request
 	GetClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClientResponse, error)
 }
 
