@@ -1,0 +1,21 @@
+# child.api.yaml
+openapi: 3.0.0
+info:
+  description: >-
+    This child spec imports models from the parent spec
+  title: child
+  version: "1.0"
+servers:
+  - url: /child
+paths:
+  /pets:
+    get:
+      description: |
+        Returns pet from the system that the user has access to
+      responses:
+        '200':
+          description: a successful response
+          content:
+            application/json:
+              schema:
+                $ref: "parent.api.yaml#/components/schemas/Pet"

@@ -19,7 +19,6 @@ import (
 
 func main() {
 	port := flag.String("port", "8080", "Port for test HTTP server")
-
 	flag.Parse()
 
 	// Create an instance of our handler which satisfies the generated interface
