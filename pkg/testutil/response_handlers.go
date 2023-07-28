@@ -33,7 +33,7 @@ func getHandler(mime string) ResponseHandler {
 	return knownHandlers[mime]
 }
 
-// This function assumes that the response contains JSON and unmarshals it
+// jsonHandler assumes that the response contains JSON and unmarshals it
 // into the specified object.
 func jsonHandler(_ string, r io.Reader, obj interface{}, strict bool) error {
 	d := json.NewDecoder(r)

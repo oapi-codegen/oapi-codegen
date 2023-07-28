@@ -463,7 +463,7 @@ func primitiveToString(value interface{}) (string, error) {
 	return output, nil
 }
 
-// This function escapes a parameter value bas on the location of that parameter.
+// escapeParameterString escapes a parameter value bas on the location of that parameter.
 // Query params and path params need different kinds of escaping, while header
 // and cookie params seem not to need escaping.
 func escapeParameterString(value string, paramLocation ParamLocation) string {

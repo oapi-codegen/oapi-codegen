@@ -39,7 +39,7 @@ func NewPetStore() *PetStore {
 	}
 }
 
-// This function wraps sending of an error in the Error format, and
+// sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetStoreError(ctx echo.Context, code int, message string) error {
 	petErr := models.Error{
