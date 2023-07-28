@@ -72,9 +72,9 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.JSONExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -87,9 +87,9 @@ func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Re
 func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -102,9 +102,9 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -128,9 +128,9 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 		return
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReservedGoKeywordParameters(w, r, pType)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -143,9 +143,9 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReusableResponses(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -158,9 +158,9 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TextExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -173,9 +173,9 @@ func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Re
 func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnknownExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -188,9 +188,9 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnspecifiedContentType(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -203,9 +203,9 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter,
 func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.URLEncodedExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -267,9 +267,9 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.HeadersExample(w, r, params)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -282,9 +282,9 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 func (siw *ServerInterfaceWrapper) UnionExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnionExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -1413,7 +1413,7 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
+	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
 		res[pathToFile] = rawSpec
 	}
@@ -1427,12 +1427,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
+	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
+		pathToFile := url.String()
 		pathToFile = path.Clean(pathToFile)
 		getSpec, ok := resolvePath[pathToFile]
 		if !ok {

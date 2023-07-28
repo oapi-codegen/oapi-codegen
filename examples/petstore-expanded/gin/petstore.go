@@ -46,7 +46,7 @@ func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 }
 
 func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.Int("port", 8080, "Port for test HTTP server")
 	flag.Parse()
 	// Create an instance of our handler which satisfies the generated interface
 	petStore := api.NewPetStore()
