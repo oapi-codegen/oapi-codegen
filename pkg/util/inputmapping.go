@@ -73,7 +73,7 @@ func splitString(s string, sep rune) []string {
 			part = ""
 			continue
 		}
-		part = part + string(c)
+		part += string(c)
 	}
 	return append(parts, part)
 }
