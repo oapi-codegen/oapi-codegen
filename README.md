@@ -28,6 +28,34 @@ something via utility code or reflection, it's probably a better approach than
 code generation, which is fragile due to the very dynamic nature of OpenAPI and
 the very static nature of Go.
 
+## Contributing
+
+I would like to pre-emptively extend my gratitude to anyone who takes the time
+to improve this project.
+
+Oapi-codegen is being actively maintained, however the two people who do so
+are very busy, and can only set aside time for this project every once in a while,
+so our release cadence is slow and conservative.
+
+Generating code which others depend on, which is based on something as complex
+as OpenAPI is fraught with many edge cases, and we prefer to leave things as
+they are if there is a reasonable workaround.
+
+If you do find a case where oapi-codegen is broken, and would like to submit a PR,
+we are very grateful, and will happily look at it.
+
+Since most commits affect generated code, before sending your PR, please
+ensure that all boilerplate has been regenerated. You can do this from the top level
+of the repository by running:
+
+  go generate ./...
+
+I realize that our code isn't entirely idiomatic with respect to comments, and
+variable naming and initialisms, especially the generated code, but I'm reluctant
+to merge PR's which change this, due to the breakage they will cause for others. If 
+you rename anything under `/pkg` or change the names of variables in generated
+code, you will break other people's code. It's safe to rename internal names.
+
 ## Overview
 
 We're going to use the OpenAPI example of the
