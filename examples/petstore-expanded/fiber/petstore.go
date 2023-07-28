@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -17,9 +18,7 @@ import (
 )
 
 func main() {
-
-	port := flag.Int("port", 8080, "Port for test HTTP server")
-
+	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
 	// Create an instance of our handler which satisfies the generated interface
@@ -28,7 +27,7 @@ func main() {
 	s := NewFiberPetServer(petStore)
 
 	// And we serve HTTP until the world ends.
-	log.Fatal(s.Listen(fmt.Sprintf("localhost:%d", *port)))
+	log.Fatal(s.Listen(net.JoinHostPort("0.0.0.0", *port)))
 }
 
 func NewFiberPetServer(petStore *api.PetStore) *fiber.App {
