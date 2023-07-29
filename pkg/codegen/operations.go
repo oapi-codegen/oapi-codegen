@@ -643,6 +643,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
+	var setRootBinaryBody bool
 
 	for _, contentType := range SortedContentKeys(body.Content) {
 		content := body.Content[contentType]
@@ -662,11 +663,14 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		case contentType == "text/plain":
 			tag = "Text"
 		default:
-			bd := RequestBodyDefinition{
-				Required:    body.Required,
-				ContentType: contentType,
+			if !setRootBinaryBody {
+				setRootBinaryBody = true
+				bd := RequestBodyDefinition{
+					Required:    body.Required,
+					ContentType: contentType,
+				}
+				bodyDefinitions = append(bodyDefinitions, bd)
 			}
-			bodyDefinitions = append(bodyDefinitions, bd)
 			continue
 		}
 
