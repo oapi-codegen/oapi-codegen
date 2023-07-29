@@ -212,7 +212,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 	for i, p := range parts {
 		err := BindStringToObject(p, newArray.Index(i).Addr().Interface())
 		if err != nil {
-			return fmt.Errorf("error setting array element: %s", err)
+			return fmt.Errorf("error setting array element: %w", err)
 		}
 	}
 	v.Set(newArray)

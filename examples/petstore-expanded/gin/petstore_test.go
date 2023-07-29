@@ -20,7 +20,7 @@ func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRec
 func TestPetStore(t *testing.T) {
 	var err error
 	store := api.NewPetStore()
-	ginPetServer := NewGinPetServer(store, 8080)
+	ginPetServer := NewGinPetServer(store, "8080")
 	r := ginPetServer.Handler
 
 	t.Run("Add pet", func(t *testing.T) {

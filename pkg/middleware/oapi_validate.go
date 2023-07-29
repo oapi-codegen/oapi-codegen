@@ -43,13 +43,12 @@ const (
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
@@ -120,7 +119,7 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+			return echo.NewHTTPError(http.StatusNotFound, e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.

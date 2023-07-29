@@ -173,9 +173,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
   {{end}}
 
-  var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+  handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-  })
+  }))
 
   {{if opts.Compatibility.ApplyChiMiddlewareFirstToLast}}
   for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
