@@ -9,7 +9,7 @@ require (
 	github.com/golangci/lint-1 v0.0.0-20181222135242-d2cdd8c08219
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
-	github.com/labstack/echo/v4 v4.10.2
+	github.com/labstack/echo/v4 v4.11.1
 	github.com/lestrrat-go/jwx v1.2.26
 	github.com/matryer/moq v0.3.2
 	github.com/stretchr/testify v1.8.4
