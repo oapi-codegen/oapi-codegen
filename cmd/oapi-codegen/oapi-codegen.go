@@ -78,6 +78,10 @@ type oldConfiguration struct {
 	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
+// noVcsVersionOverride is variable to be linked build-time with --ldflags=-X
+// if vcs context is unavailabe, e.g. Nix derivation
+var noVcsVersionOverride string
+
 func main() {
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default.")
 	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "Whether to use the older style config file format.")
@@ -115,7 +119,11 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")
-		fmt.Println(bi.Main.Version)
+		version := bi.Main.Version
+		if len(noVcsVersionOverride) > 0 {
+			version = noVcsVersionOverride
+		}
+		fmt.Println(version)
 		return
 	}
 
