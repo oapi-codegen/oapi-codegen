@@ -271,6 +271,10 @@ func main() {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
 	}
 
+	if len(noVcsVersionOverride) > 0 {
+		opts.Configuration.NoVCSVersionOverride = &noVcsVersionOverride
+	}
+
 	code, err := codegen.Generate(swagger, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)

@@ -18,6 +18,8 @@ type Configuration struct {
 	OutputOptions     OutputOptions        `yaml:"output-options,omitempty"`
 	ImportMapping     map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
 	AdditionalImports []AdditionalImport   `yaml:"additional-imports,omitempty"`
+	// NoVCSVersionOverride for overriding (devel) inside template
+	NoVCSVersionOverride *string `yaml:"-"`
 }
 
 // GenerateOptions specifies which supported output formats to generate.
