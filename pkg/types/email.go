@@ -22,13 +22,17 @@ func (e Email) MarshalJSON() ([]byte, error) {
 }
 
 func (e *Email) UnmarshalJSON(data []byte) error {
+	if e == nil {
+		return nil
+	}
+
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*e = Email(s)
-	if e != nil && !emailRegex.MatchString(s) {
+	if !emailRegex.MatchString(s) {
 		return ErrValidationEmail
 	}
 
