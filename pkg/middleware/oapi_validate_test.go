@@ -102,10 +102,10 @@ func TestOapiRequestValidator(t *testing.T) {
 		called = true
 		return nil
 	})
-	// Let's send the request to the wrong server, this should fail validation
+	// Let's send the request to the wrong server, this should return 404
 	{
 		rec := doGet(t, e, "http://not.deepmap.ai/resource")
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 	}
 

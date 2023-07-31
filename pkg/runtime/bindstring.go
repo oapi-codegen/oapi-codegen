@@ -168,7 +168,7 @@ func BindStringToObject(src string, dst interface{}) error {
 		err = fmt.Errorf("can not bind to destination of type: %s", t.Kind())
 	}
 	if err != nil {
-		return fmt.Errorf("error binding string parameter: %s", err)
+		return fmt.Errorf("error binding string parameter: %w", err)
 	}
 	return nil
 }

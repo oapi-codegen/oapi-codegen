@@ -123,7 +123,7 @@ func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
 	r.Body, err = json.Marshal(obj)
 	if err != nil {
-		r.Error = fmt.Errorf("failed to marshal json object: %s", err)
+		r.Error = fmt.Errorf("failed to marshal json object: %w", err)
 	}
 	return r.WithJsonContentType()
 }

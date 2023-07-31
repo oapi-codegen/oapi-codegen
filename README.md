@@ -28,6 +28,34 @@ something via utility code or reflection, it's probably a better approach than
 code generation, which is fragile due to the very dynamic nature of OpenAPI and
 the very static nature of Go.
 
+## Contributing
+
+I would like to pre-emptively extend my gratitude to anyone who takes the time
+to improve this project.
+
+Oapi-codegen is being actively maintained, however the two people who do so
+are very busy, and can only set aside time for this project every once in a while,
+so our release cadence is slow and conservative.
+
+Generating code which others depend on, which is based on something as complex
+as OpenAPI is fraught with many edge cases, and we prefer to leave things as
+they are if there is a reasonable workaround.
+
+If you do find a case where oapi-codegen is broken, and would like to submit a PR,
+we are very grateful, and will happily look at it.
+
+Since most commits affect generated code, before sending your PR, please
+ensure that all boilerplate has been regenerated. You can do this from the top level
+of the repository by running:
+
+    go generate ./...
+
+I realize that our code isn't entirely idiomatic with respect to comments, and
+variable naming and initialisms, especially the generated code, but I'm reluctant
+to merge PR's which change this, due to the breakage they will cause for others. If 
+you rename anything under `/pkg` or change the names of variables in generated
+code, you will break other people's code. It's safe to rename internal names.
+
 ## Overview
 
 We're going to use the OpenAPI example of the
@@ -568,6 +596,20 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-type-skip-optional-pointer`: specifies if the Go type should or should not be a pointer
+  when the property is optional. If set to true, the type will not be a pointer if the field is
+  optional or nullable. If set to false, the type will be a pointer.
+  
+  ```yaml
+  properties:
+    field:
+      type: string
+      x-go-type-skip-optional-pointer: true
+  ```
+  
+  In the example above, the `field` field will be of type `string` instead of `*string`. This is
+  useful when you want to handle the case of an empty string differently than a null value.
+  
 - `x-go-name`: specifies Go field name. It allows you to specify the field name for a schema, and
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will

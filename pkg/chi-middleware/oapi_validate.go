@@ -70,14 +70,14 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 }
 
-// This function is called from the middleware above and actually does the work
+// validateRequest is called from the middleware above and actually does the work
 // of validating a request.
 func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
 
 	// Find route
 	route, pathParams, err := router.FindRoute(r)
 	if err != nil {
-		return http.StatusBadRequest, err // We failed to find a matching route for the request.
+		return http.StatusNotFound, err // We failed to find a matching route for the request.
 	}
 
 	// Validate request
@@ -91,7 +91,7 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 		requestValidationInput.Options = &options.Options
 	}
 
-	if err := openapi3filter.ValidateRequest(context.Background(), requestValidationInput); err != nil {
+	if err := openapi3filter.ValidateRequest(r.Context(), requestValidationInput); err != nil {
 		me := openapi3.MultiError{}
 		if errors.As(err, &me) {
 			errFunc := getMultiErrorHandlerFromOptions(options)

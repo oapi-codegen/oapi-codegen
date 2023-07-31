@@ -47,7 +47,7 @@ func ParseCommandLineList(input string) []string {
 	return args
 }
 
-// This function splits a string along the specified separator, but it
+// splitString splits a string along the specified separator, but it
 // ignores anything between double quotes for splitting. We do simple
 // inside/outside quote counting. Quotes are not stripped from output.
 func splitString(s string, sep rune) []string {
@@ -73,7 +73,7 @@ func splitString(s string, sep rune) []string {
 			part = ""
 			continue
 		}
-		part = part + string(c)
+		part += string(c)
 	}
 	return append(parts, part)
 }

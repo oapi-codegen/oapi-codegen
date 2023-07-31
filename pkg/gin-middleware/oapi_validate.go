@@ -88,10 +88,18 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 	return func(c *gin.Context) {
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
-			if options != nil && options.ErrorHandler != nil {
-				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+			// using errors.Is did not work
+			if options != nil && options.ErrorHandler != nil && err.Error() == routers.ErrPathNotFound.Error() {
+				options.ErrorHandler(c, err.Error(), http.StatusNotFound)
 				// in case the handler didn't internally call Abort, stop the chain
 				c.Abort()
+			} else if options != nil && options.ErrorHandler != nil {
+					options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+					// in case the handler didn't internally call Abort, stop the chain
+					c.Abort()
+			} else if err.Error() == routers.ErrPathNotFound.Error() {
+				// note: i am not sure if this is the best way to handle this
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			} else {
 				// note: i am not sure if this is the best way to handle this
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -157,7 +165,7 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return fmt.Errorf("error validating request: %w", err)
 		}
 	}
 	return nil

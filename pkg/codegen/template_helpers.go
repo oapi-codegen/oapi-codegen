@@ -44,7 +44,7 @@ var (
 	titleCaser = cases.Title(language.English)
 )
 
-// This function takes an array of Parameter definition, and generates a valid
+// genParamArgs takes an array of Parameter definition, and generates a valid
 // Go parameter declaration from them, eg:
 // ", foo int, bar string, baz float32". The preceding comma is there to save
 // a lot of work in the template engine.
@@ -60,7 +60,7 @@ func genParamArgs(params []ParameterDefinition) string {
 	return ", " + strings.Join(parts, ", ")
 }
 
-// This function is much like the one above, except it only produces the
+// genParamTypes is much like the one above, except it only produces the
 // types of the parameters for a type declaration. It would produce this
 // from the same input as above:
 // ", int, string, float32".
