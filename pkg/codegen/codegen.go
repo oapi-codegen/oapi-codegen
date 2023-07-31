@@ -19,7 +19,10 @@ import (
 	"bytes"
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
+	"os"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -37,8 +40,9 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options Configuration
-	spec    *openapi3.T
+	options       Configuration
+	spec          *openapi3.T
+	importMapping importMap
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -66,8 +70,6 @@ func (im importMap) GoImports() []string {
 	}
 	return goImports
 }
-
-var importMapping importMap
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
@@ -101,8 +103,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
-
-	importMapping = constructImportMapping(opts.ImportMapping)
+	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
@@ -128,17 +129,22 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
-	// Override built-in templates with user-provided versions
-	for _, tpl := range t.Templates() {
-		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
-			utpl := t.New(tpl.Name())
-			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
-				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
-			}
+	// load user-provided templates. Will Override built-in versions.
+	for name, template := range opts.OutputOptions.UserTemplates {
+		utpl := t.New(name)
+
+		txt, err := GetUserTemplateText(template)
+		if err != nil {
+			return "", fmt.Errorf("error loading user-provided template %q: %w", name, err)
+		}
+
+		_, err = utpl.Parse(txt)
+		if err != nil {
+			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
 		}
 	}
 
-	ops, err := OperationDefinitions(spec)
+	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
@@ -178,6 +184,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var chiServerOut string
 	if opts.Generate.ChiServer {
 		chiServerOut, err = GenerateChiServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var fiberServerOut string
+	if opts.Generate.FiberServer {
+		fiberServerOut, err = GenerateFiberServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -237,7 +251,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, spec)
+		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -246,7 +260,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	externalImports := append(importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
+	externalImports := append(globalState.importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
 	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
@@ -287,6 +301,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.FiberServer {
+		_, err = w.WriteString(fiberServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -814,7 +835,45 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
-	return strings.Replace(goCode, "\uFEFF", "", -1)
+	return strings.ReplaceAll(goCode, "\uFEFF", "")
+}
+
+// GetUserTemplateText attempts to retrieve the template text from a passed in URL or file
+// path when inputData is more than one line.
+// This function will attempt to load a file first, and if it fails, will try to get the
+// data from the remote endpoint.
+func GetUserTemplateText(inputData string) (template string, err error) {
+	// if the input data is more than one line, assume its a template and return that data.
+	if strings.Contains(inputData, "\n") {
+		return inputData, nil
+	}
+
+	// load data from file
+	data, err := os.ReadFile(inputData)
+	// return data if found and loaded
+	if err == nil {
+		return string(data), nil
+	}
+
+	// check for non "not found" errors
+	if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
+	}
+
+	// attempt to get data from url
+	resp, err := http.Get(inputData)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
+	}
+	data, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body from GET %s: %w", inputData, err)
+	}
+
+	return string(data), nil
 }
 
 // LoadTemplates loads all of our template files into a text/template. The

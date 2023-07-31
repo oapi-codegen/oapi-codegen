@@ -131,7 +131,7 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 	}
 
 	for _, test := range suite {
-		got, err := generateDefaultOperationID(test.op, test.path)
+		got, err := generateDefaultOperationID(test.op, test.path, ToCamelCase)
 		if err != nil {
 			if !test.wantErr {
 				t.Fatalf("did not expected error but got %v", err)

@@ -4,10 +4,10 @@
 package spec_ext
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -35,6 +35,10 @@ type Pascal = PascalSchema
 type ServerInterface interface {
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -57,16 +61,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshallingParamError struct {
+type UnmarshalingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshallingParamError) Unwrap() error {
+func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 
@@ -161,9 +165,8 @@ type PascalJSONResponse PascalSchema
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

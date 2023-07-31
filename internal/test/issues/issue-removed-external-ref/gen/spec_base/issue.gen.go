@@ -10,6 +10,7 @@ import (
 	"net/http"
 
 	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
+	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -33,6 +34,20 @@ type ServerInterface interface {
 	PostNoTrouble(w http.ResponseWriter, r *http.Request)
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// (POST /invalidExtRefTrouble)
+func (_ Unimplemented) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /noTrouble)
+func (_ Unimplemented) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -46,9 +61,9 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostInvalidExtRefTrouble(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -61,9 +76,9 @@ func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWrite
 func (siw *ServerInterfaceWrapper) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostNoTrouble(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -85,16 +100,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshallingParamError struct {
+type UnmarshalingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshallingParamError) Unwrap() error {
+func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 
@@ -244,9 +259,8 @@ type StrictServerInterface interface {
 	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) (PostNoTroubleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

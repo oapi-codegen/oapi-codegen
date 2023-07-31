@@ -109,7 +109,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBoth request with any body
+	// PostBothWithBody request with any body
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -117,7 +117,7 @@ type ClientInterface interface {
 	// GetBoth request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostJson request with any body
+	// PostJsonWithBody request with any body
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -125,7 +125,7 @@ type ClientInterface interface {
 	// GetJson request
 	GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOther request with any body
+	// PostOtherWithBody request with any body
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOther request
@@ -134,7 +134,7 @@ type ClientInterface interface {
 	// GetJsonWithTrailingSlash request
 	GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostVendorJson request with any body
+	// PostVendorJsonWithBody request with any body
 	PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostVendorJson(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -572,32 +572,32 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostBoth request with any body
+	// PostBothWithBodyWithResponse request with any body
 	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
 	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
-	// GetBoth request
+	// GetBothWithResponse request
 	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
-	// PostJson request with any body
+	// PostJsonWithBodyWithResponse request with any body
 	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
 	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
-	// GetJson request
+	// GetJsonWithResponse request
 	GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error)
 
-	// PostOther request with any body
+	// PostOtherWithBodyWithResponse request with any body
 	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
-	// GetOther request
+	// GetOtherWithResponse request
 	GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error)
 
-	// GetJsonWithTrailingSlash request
+	// GetJsonWithTrailingSlashWithResponse request
 	GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error)
 
-	// PostVendorJson request with any body
+	// PostVendorJsonWithBodyWithResponse request with any body
 	PostVendorJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)
 
 	PostVendorJsonWithResponse(ctx context.Context, body PostVendorJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)

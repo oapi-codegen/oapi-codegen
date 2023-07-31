@@ -36,6 +36,34 @@ type ServerInterface interface {
 	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 }
 
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Returns all pets
+// (GET /pets)
+func (_ Unimplemented) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Creates a new pet
+// (POST /pets)
+func (_ Unimplemented) AddPet(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Deletes a pet by ID
+// (DELETE /pets/{id})
+func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Returns a pet by ID
+// (GET /pets/{id})
+func (_ Unimplemented) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
@@ -70,9 +98,9 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FindPets(w, r, params)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -85,9 +113,9 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AddPet(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -111,9 +139,9 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeletePet(w, r, id)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -137,9 +165,9 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.FindPetByID(w, r, id)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -161,16 +189,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshallingParamError struct {
+type UnmarshalingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshallingParamError) Unwrap() error {
+func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 
@@ -408,9 +436,8 @@ type StrictServerInterface interface {
 	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -585,16 +612,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -612,7 +639,7 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
+	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
 		res[pathToFile] = rawSpec
 	}
@@ -626,12 +653,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
+	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
+		pathToFile := url.String()
 		pathToFile = path.Clean(pathToFile)
 		getSpec, ok := resolvePath[pathToFile]
 		if !ok {

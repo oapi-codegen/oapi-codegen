@@ -131,6 +131,9 @@ type AdditionalPropertiesObject5 map[string]SchemaObject
 // AdditionalPropertiesObject6 Array of object with additional properties
 type AdditionalPropertiesObject6 = []map[string]SchemaObject
 
+// AdditionalPropertiesObject7 Has additional properties with schema for dictionaries
+type AdditionalPropertiesObject7 map[string]*SchemaObjectNullable
+
 // AnyOfObject1 simple anyOf case
 type AnyOfObject1 struct {
 	union json.RawMessage
@@ -250,7 +253,7 @@ type OneOfObject3_Union struct {
 	union json.RawMessage
 }
 
-// OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshalling
+// OneOfObject4 oneOf plus fixed type - custom marshaling/unmarshaling
 type OneOfObject4 struct {
 	FixedProperty *string `json:"fixedProperty,omitempty"`
 	union         json.RawMessage
@@ -338,6 +341,17 @@ type NewName struct {
 
 // SchemaObject defines model for SchemaObject.
 type SchemaObject struct {
+	FirstName string `json:"firstName"`
+
+	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
+	// as it will not be included when it is sent from client to server.
+	ReadOnlyRequiredProp  *string `json:"readOnlyRequiredProp,omitempty"`
+	Role                  string  `json:"role"`
+	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
+}
+
+// SchemaObjectNullable defines model for SchemaObjectNullable.
+type SchemaObjectNullable struct {
 	FirstName string `json:"firstName"`
 
 	// ReadOnlyRequiredProp This property is required and readOnly, so the go model should have it as a pointer,
@@ -458,7 +472,7 @@ func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -545,7 +559,7 @@ func (a *AdditionalPropertiesObject1) UnmarshalJSON(b []byte) error {
 			var fieldVal int
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -623,7 +637,7 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -697,7 +711,7 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -768,7 +782,7 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}

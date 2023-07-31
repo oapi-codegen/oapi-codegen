@@ -70,7 +70,7 @@ func (p *PetStore) AddPet(ctx context.Context, request AddPetRequestObject) (Add
 	pet.Name = request.Body.Name
 	pet.Tag = request.Body.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet

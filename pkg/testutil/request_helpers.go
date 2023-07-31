@@ -14,7 +14,7 @@
 package testutil
 
 // This is a set of fluent request builders for tests, which help us to
-// simplify constructing and unmarshalling test objects. For example, to post
+// simplify constructing and unmarshaling test objects. For example, to post
 // a body and return a response, you would do something like:
 //
 //   var body RequestBody
@@ -123,7 +123,7 @@ func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
 	r.Body, err = json.Marshal(obj)
 	if err != nil {
-		r.Error = fmt.Errorf("failed to marshal json object: %s", err)
+		r.Error = fmt.Errorf("failed to marshal json object: %w", err)
 	}
 	return r.WithJsonContentType()
 }

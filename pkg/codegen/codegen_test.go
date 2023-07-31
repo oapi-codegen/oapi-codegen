@@ -3,18 +3,21 @@ package codegen
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"go/format"
 	"io"
+	"net"
 	"net/http"
 	"testing"
 
-	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
+	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
 const (
@@ -77,7 +80,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 
 func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 
-	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
+	userTemplates := map[string]string{"typedef.tmpl": "//blah\n//blah"}
 
 	// Input vars for code generation:
 	packageName := "api"
@@ -107,7 +110,92 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
 
-	// Check that the built-in template has been overriden
+	// Check that the built-in template has been overridden
+	assert.Contains(t, code, "//blah")
+}
+
+func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
+
+	userTemplates := map[string]string{"typedef.tmpl": "./templates/typedef.tmpl"}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: userTemplates,
+		},
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overridden
+	assert.Contains(t, code, "// Package api provides primitives to interact with the openapi")
+}
+
+func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	assert.NoError(t, err)
+	defer ln.Close()
+
+	//nolint:errcheck
+	// Does not matter if the server returns an error on close etc.
+	go http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, writeErr := w.Write([]byte("//blah"))
+		assert.NoError(t, writeErr)
+	}))
+
+	t.Logf("Listening on %s", ln.Addr().String())
+
+	userTemplates := map[string]string{"typedef.tmpl": fmt.Sprintf("http://%s", ln.Addr().String())}
+
+	// Input vars for code generation:
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: userTemplates,
+		},
+	}
+
+	// Get a spec from the example PetStore definition:
+	swagger, err := examplePetstore.GetSwagger()
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check that the built-in template has been overridden
 	assert.Contains(t, code, "//blah")
 }
 
@@ -199,6 +287,44 @@ type GetTestByNameResponse struct {
 
 	// Make sure the generated code is valid:
 	checkLint(t, "test.gen.go", []byte(code))
+}
+
+func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+			Strict:       true,
+		},
+	}
+	spec := "test_specs/x-go-type-skip-optional-pointer.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that optional pointer fields are skipped if requested
+	assert.Contains(t, code, "NullableFieldSkipFalse *string `json:\"nullableFieldSkipFalse\"`")
+	assert.Contains(t, code, "NullableFieldSkipTrue  string  `json:\"nullableFieldSkipTrue\"`")
+	assert.Contains(t, code, "OptionalField          *string `json:\"optionalField,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipFalse *string `json:\"optionalFieldSkipFalse,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipTrue  string  `json:\"optionalFieldSkipTrue,omitempty\"`")
+
+	// Check that the extension applies on custom types as well
+	assert.Contains(t, code, "CustomTypeWithSkipTrue string  `json:\"customTypeWithSkipTrue,omitempty\"`")
+
+	// Check that the extension has no effect on required fields
+	assert.Contains(t, code, "RequiredField          string  `json:\"requiredField\"`")
 }
 
 func TestGoTypeImport(t *testing.T) {

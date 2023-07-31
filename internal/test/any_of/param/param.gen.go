@@ -281,41 +281,43 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 		return nil, err
 	}
 
-	queryValues := queryURL.Query()
+	if params != nil {
+		queryValues := queryURL.Query()
 
-	if params.Test != nil {
+		if params.Test != nil {
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test", runtime.ParamLocationQuery, *params.Test); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test", runtime.ParamLocationQuery, *params.Test); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
 				}
 			}
+
 		}
 
-	}
+		if params.Test2 != nil {
 
-	if params.Test2 != nil {
-
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
 				}
 			}
+
 		}
 
+		queryURL.RawQuery = queryValues.Encode()
 	}
-
-	queryURL.RawQuery = queryValues.Encode()
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
 	if err != nil {
@@ -368,7 +370,7 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetTest request
+	// GetTestWithResponse request
 	GetTestWithResponse(ctx context.Context, params *GetTestParams, reqEditors ...RequestEditorFn) (*GetTestResponse, error)
 }
 

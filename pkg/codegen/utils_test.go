@@ -134,12 +134,12 @@ func TestSortedRequestBodyKeys(t *testing.T) {
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	old := importMapping
-	importMapping = constructImportMapping(map[string]string{
+	old := globalState.importMapping
+	globalState.importMapping = constructImportMapping(map[string]string{
 		"doc.json":                    "externalref0",
 		"http://deepmap.com/doc.json": "externalref1",
 	})
-	defer func() { importMapping = old }()
+	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
 		name   string
@@ -278,6 +278,23 @@ func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToFiberUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToFiberUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToFiberUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToFiberUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToFiberUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
@@ -433,6 +450,18 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
+
+func TestTypeDefinitionsEquivalent(t *testing.T) {
+	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &openapi3.Schema{},
+	}}
+	def2 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &openapi3.Schema{},
+	}}
+	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
+}
+
+
 func TestRefPathToObjName(t *testing.T) {
 	t.Parallel()
 
@@ -444,5 +473,47 @@ func TestRefPathToObjName(t *testing.T) {
 		"http://deepmap.com/schemas/document.json#/objObj": "objObj",
 	} {
 		assert.Equal(t, want, RefPathToObjName(in))
+	}
+}
+
+func Test_replaceInitialisms(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "empty string",
+			args: args{s: ""},
+			want: "",
+		},
+		{
+			name: "no initialism",
+			args: args{s: "foo"},
+			want: "foo",
+		},
+		{
+			name: "one initialism",
+			args: args{s: "fooId"},
+			want: "fooID",
+		},
+		{
+			name: "two initialism",
+			args: args{s: "fooIdBarApi"},
+			want: "fooIDBarAPI",
+		},
+		{
+			name: "already initialism",
+			args: args{s: "fooIDBarAPI"},
+			want: "fooIDBarAPI",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
+		})
 	}
 }

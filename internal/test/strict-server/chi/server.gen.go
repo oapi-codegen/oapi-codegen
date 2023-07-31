@@ -54,6 +54,68 @@ type ServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(w http.ResponseWriter, r *http.Request, params HeadersExampleParams)
+
+	// (POST /with-union)
+	UnionExample(w http.ResponseWriter, r *http.Request)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// (POST /json)
+func (_ Unimplemented) JSONExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /multipart)
+func (_ Unimplemented) MultipartExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /multiple)
+func (_ Unimplemented) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /reserved-go-keyword-parameters/{type})
+func (_ Unimplemented) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request, pType string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /reusable-responses)
+func (_ Unimplemented) ReusableResponses(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /text)
+func (_ Unimplemented) TextExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /unknown)
+func (_ Unimplemented) UnknownExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /unspecified-content-type)
+func (_ Unimplemented) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /urlencoded)
+func (_ Unimplemented) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /with-headers)
+func (_ Unimplemented) HeadersExample(w http.ResponseWriter, r *http.Request, params HeadersExampleParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /with-union)
+func (_ Unimplemented) UnionExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -69,9 +131,9 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.JSONExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -84,9 +146,9 @@ func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Re
 func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -99,9 +161,9 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -125,9 +187,9 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 		return
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReservedGoKeywordParameters(w, r, pType)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -140,9 +202,9 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReusableResponses(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -155,9 +217,9 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TextExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -170,9 +232,9 @@ func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Re
 func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnknownExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -185,9 +247,9 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnspecifiedContentType(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -200,9 +262,9 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter,
 func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.URLEncodedExample(w, r)
-	})
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -264,9 +326,24 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 
 	}
 
-	var handler http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.HeadersExample(w, r, params)
-	})
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// UnionExample operation middleware
+func (siw *ServerInterfaceWrapper) UnionExample(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnionExample(w, r)
+	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
 		handler = middleware(handler)
@@ -288,16 +365,16 @@ func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
 
-type UnmarshallingParamError struct {
+type UnmarshalingParamError struct {
 	ParamName string
 	Err       error
 }
 
-func (e *UnmarshallingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshalling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
-func (e *UnmarshallingParamError) Unwrap() error {
+func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 
@@ -417,6 +494,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/with-union", wrapper.UnionExample)
 	})
 
 	return r
@@ -614,9 +694,9 @@ type ReusableResponsesResponseObject interface {
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response.Body)
@@ -834,9 +914,9 @@ type HeadersExample200JSONResponse struct {
 }
 
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
 	return json.NewEncoder(w).Encode(response.Body)
@@ -854,6 +934,51 @@ type HeadersExampledefaultResponse struct {
 }
 
 func (response HeadersExampledefaultResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
+type UnionExampleRequestObject struct {
+	Body *UnionExampleJSONRequestBody
+}
+
+type UnionExampleResponseObject interface {
+	VisitUnionExampleResponse(w http.ResponseWriter) error
+}
+
+type UnionExample200ResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type UnionExample200JSONResponse struct {
+	Body struct {
+		union json.RawMessage
+	}
+	Headers UnionExample200ResponseHeaders
+}
+
+func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body.union)
+}
+
+type UnionExample400Response = BadrequestResponse
+
+func (response UnionExample400Response) VisitUnionExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type UnionExampledefaultResponse struct {
+	StatusCode int
+}
+
+func (response UnionExampledefaultResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 	w.WriteHeader(response.StatusCode)
 	return nil
 }
@@ -890,11 +1015,13 @@ type StrictServerInterface interface {
 
 	// (POST /with-headers)
 	HeadersExample(ctx context.Context, request HeadersExampleRequestObject) (HeadersExampleResponseObject, error)
+
+	// (POST /with-union)
+	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, args interface{}) (interface{}, error)
-
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -1260,26 +1387,57 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 	}
 }
 
+// UnionExample operation middleware
+func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
+	var request UnionExampleRequestObject
+
+	var body UnionExampleJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnionExample")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
+		if err := validResponse.VisitUnionExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYX2/bNhD/KgS3p0KynDRPeluDotu6rYOTPg15oMWzzFYiuePJimHouw8UJf+pFS/O",
-	"7BgY+mbRd787/u4Pj1zxzJTWaNDkeLriCM4a7aD9mAqJ8HcFjvyXBJehsqSM5il/J+Sk+6+JOELlxLSA",
-	"Xt3LZ0YT6FZVWFuoTHjV5Ivz+ivusjmUwv/6EWHGU/5DsnElCf+6BB5FaQvgTdNE33jw6SOP+ByEBGy9",
-	"DT+vdrFpaYGn3BEqnXMPEsSuB8WUJsgBvTUv2jnhBXo/0hW3aCwgqcDRQhQVDFvqVsz0C2QUdqD0zOxz",
-	"eWs0CaUdk2o2AwRNrCOPeQzHXGWtQQLJpkvmLWTEHOACkEecFHnH+N32OuscdjziC0AXDF2NxqOxj5ex",
-	"oIVVPOVv26WIW0HzdkPrAFkzFPdf7z79wZRjoiJTClKZKIolKwW6uSgKkExpMt7HKiM34q0pbCP/i+zU",
-	"33dc+rRpM+idkctzZEybmFv5fD0ev1JiNhG/CcaGMNZOJVsV1sLMRFUMkP5Zf9Wm1gwQDXY7S8qqIGUF",
-	"0nawdtn+vRd5DuVrvGRmsIylIHEm1k9l6aLEd81gsEju5qZ2bG5qRoZJEAWrFc1Zr/hNdSvNBHNK5wWw",
-	"3qloMJIFdD33Jy0n3V7uPcbZaynaQXmM67qO2+BVWIDOjAT5MlhVihwSq/NddY8tiKd8uiSftvvd9URJ",
-	"FHGCR0psIZQ+fHS8Ujv5zvTJCjuUK0J7JMo4N/FXWNYGZWwFihII0CUrb73xwDkMlPKfa0mWCc2mwLQo",
-	"QTIxI0D2wbAO0u2V7KSz+8F8DCIbqPa8XX+kf624p6Q9g3nEvQGeBlZCXSv0QSesIDpA28O/5ud/CkDP",
-	"Zpj04h1Tw22wb1Fr6hBmzrfEocgN8BcsTbYkLjMwHM64vdn3Nc4gH8mnz/17eHzWkX/C1vfatX0sYVVY",
-	"fJqzTus5tL2wkz6DxYWSYJLS3hyJfDFSnYVMzRTIuNtFHHx7qiXcGp0h0O4I5O8T2hBbg/lrDs2BBQYi",
-	"5gyrgZWVI2aFc0xR20UKFa5KEvaax+eNZ7fB0v2mnR6K6pszxfTNpSJ6M746XuXtmfNmZ5R5oh4nv70P",
-	"MsfeF082Mx058Z3O7oXK2V9S4q0XleES/jkIbM70DNTCT0RaMgSqUINkCyX6R4C92uwANmEdmoWCG5tp",
-	"qH/dOWYgig5iXfPo0AvQw//4eeKc72bnztMm4uGJKyRLhYWPKJFNkyQ8jY1cLfIccKRMIqzizUPzTwAA",
-	"AP//O0NNuucUAAA=",
+	"H4sIAAAAAAAC/+xYS2/jNhD+KwO2p4VkOdmcdOsGi227bVM4yanIgRZHNnclkiVHVgzD/72gKL9ixbW3",
+	"fqDB3vSYF795cmYs06XRChU5ls6YRWe0cti8DLmw+HeFjvybQJdZaUhqxVL2gYtB+28eMYuV48MCF+ye",
+	"PtOKUDWs3JhCZtyzJl+c558xl42x5P7pR4s5S9kPycqUJPx1CT7z0hTI5vN59MKCu88sYmPkAm1jbXi8",
+	"2pRNU4MsZY6sVCPmhQSy604yqQhHaL02T9oa4QkWdqQzZqw2aEkGjCa8qLBbU/tFD79gRuEEUuV6G8tb",
+	"rYhL5UDIPEeLiqAFD7wMB64yRltCAcMpeA0ZgUM7QcsiRpK8Yex+/Tu0BjsWsQlaFxRd9fq9vveXNqi4",
+	"kSxl75tPETOcxs2Blg4yusvvv97f/QHSAa9Il5xkxotiCiW3bswLFCAVaW9ilZHrsUaTbRz/i2i5P7ZQ",
+	"+qhpAuiDFtNTBEwTl2vhfN3vnyku5xG7Ccq6ZCyNStYSrBGT86rowPxRfVW6VoDWatueLCmrgqThltZ9",
+	"tYn27wuSfSBfyktybctYcOInQv1Ymi4KfFsLOnPkfqxrB2NdA2kQyAuoJY1hwfgiuaUCDk6qUYGwMCrq",
+	"9GSBbcn9SYlBe5YHL+PkuRRtSHmO67qOG+dVtkCVaYHi28TKko8wMWq0ye5lc2IpG07Jh+12cT1SEEWM",
+	"8JkSU3CpdneOM5WT70gfLbFDulpsOqKIRzr+itNaWxEbbnmJhNYlM6997gWPsCOV/1xSQsYVDBEUL1EA",
+	"zwktfNLQinRbKTto9X7SnwPJSlTTbpcv6V8z5iFpWjCLmFfA0oBKyGtpvdPJVhjtgO3pX+PzPzlggWYY",
+	"9OINVd1lcFGiltBZzJ0viV2e68AvaBqsUVxmYNgdcVuj7zl6kPfk633/AZ/3avlHLH3nzu1DAavCx9cx",
+	"a7n2ge0bK+keKE6kQJ2U5uZAyRcD1RnMZC5RxO0p4mDbayXhVqvMIm2OQP46oTTBUpi/5dAYISAQgdNQ",
+	"I5SVIzDcOZDUVJFChpuSwK3i8biy7DZoeliV011efXcin767lEdv+leHs7w/cdxsjDKv5OPgt4+B5tD7",
+	"4tFmpgMnvuPpvVA6+0tKvLZQ6U7hnwPBqqdnKCd+IlICLFJlFQqYSL5YAmzlZitg5dauWSiYsZqGFsud",
+	"QwaiaKesaxbtWgA9veH1xCnXZueK00rJXWuqR/8b2hn6ZW+QWv1vllBa4V3e5MULn0R7mvD09mJgHrGw",
+	"5QwFo7KFz2oikyZJ2I72XM1HI7Q9qRNupEfhnwAAAP//4wU1quoWAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
@@ -1287,16 +1445,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -1314,7 +1472,7 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
+	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
 		res[pathToFile] = rawSpec
 	}
@@ -1328,12 +1486,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
+	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
+		pathToFile := url.String()
 		pathToFile = path.Clean(pathToFile)
 		getSpec, ok := resolvePath[pathToFile]
 		if !ok {

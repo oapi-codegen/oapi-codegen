@@ -293,8 +293,18 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					var typeName string
 					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
+
+					// HAL+JSON:
+					case StringInArray(contentTypeName, contentTypesHalJSON):
+						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
+					case "application/json" == contentTypeName:
+						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+					// Vendored JSON
+					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+						baseTypeName := fmt.Sprintf("%s%s", ToCamelCase(contentTypeName), ToCamelCase(responseName))
+
+						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
 						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
@@ -313,8 +323,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						ResponseName:    responseName,
 						ContentTypeName: contentTypeName,
 					}
-					if IsGoTypeReference(contentType.Schema.Ref) {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+					if IsGoTypeReference(responseRef.Ref) {
+						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
@@ -483,8 +493,15 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
+
+	var toCamelCaseFunc func(string) string
+	if initialismOverrides {
+		toCamelCaseFunc = ToCamelCaseWithInitialism
+	} else {
+		toCamelCaseFunc = ToCamelCase
+	}
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
@@ -505,13 +522,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
+				op.OperationID = toCamelCaseFunc(op.OperationID)
 			}
 			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
@@ -550,7 +567,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  ToCamelCase(op.OperationID),
+				OperationId:  toCamelCaseFunc(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -588,7 +605,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string) (string, error) {
+func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
 	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
@@ -605,7 +622,7 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 		}
 	}
 
-	return ToCamelCase(operationId), nil
+	return toCamelCaseFunc(operationId), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
@@ -650,7 +667,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if IsGoTypeReference(content.Schema.Ref) {
+		if content.Schema != nil && IsGoTypeReference(content.Schema.Ref) {
 			// Convert the reference path to Go type
 			refType, err := RefPathToGoType(content.Schema.Ref)
 			if err != nil {
@@ -896,13 +913,19 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
-// GenerateChiServer This function generates all the go code for the ServerInterface as well as
+// GenerateChiServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
-// GenerateEchoServer This function generates all the go code for the ServerInterface as well as
+// GenerateFiberServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+}
+
+// GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
@@ -921,16 +944,22 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
-	templates := []string{"strict/strict-interface.tmpl"}
+
+	var templates []string
+
 	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
-		templates = append(templates, "strict/strict-http.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
 	}
 	if opts.Generate.EchoServer {
-		templates = append(templates, "strict/strict-echo.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl")
 	}
 	if opts.Generate.GinServer {
-		templates = append(templates, "strict/strict-gin.tmpl")
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl")
 	}
+	if opts.Generate.FiberServer {
+		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+
 	return GenerateTemplates(templates, t, operations)
 }
 
@@ -945,7 +974,7 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 }
 
 // GenerateClientWithResponses generates a client which extends the basic client which does response
-// unmarshalling.
+// unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }

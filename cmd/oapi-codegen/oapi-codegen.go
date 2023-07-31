@@ -53,6 +53,7 @@ var (
 	flagExcludeSchemas     string
 	flagResponseTypeSuffix string
 	flagAliasTypes         bool
+	flagInitalismOverrides bool
 )
 
 type configuration struct {
@@ -78,26 +79,27 @@ type oldConfiguration struct {
 }
 
 func main() {
-	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default")
-	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "whether to use the older style config file format")
-	flag.BoolVar(&flagOutputConfig, "output-config", false, "when true, outputs a configuration file for oapi-codegen using current settings")
-	flag.StringVar(&flagConfigFile, "config", "", "a YAML config file that controls oapi-codegen behavior")
-	flag.BoolVar(&flagPrintVersion, "version", false, "when specified, print version and exit")
-	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code")
-	flag.BoolVar(&flagPrintUsage, "help", false, "show this help and exit")
-	flag.BoolVar(&flagPrintUsage, "h", false, "same as -help")
+	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default.")
+	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "Whether to use the older style config file format.")
+	flag.BoolVar(&flagOutputConfig, "output-config", false, "When true, outputs a configuration file for oapi-codegen using current settings.")
+	flag.StringVar(&flagConfigFile, "config", "", "A YAML config file that controls oapi-codegen behavior.")
+	flag.BoolVar(&flagPrintVersion, "version", false, "When specified, print version and exit.")
+	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code.")
+	flag.BoolVar(&flagPrintUsage, "help", false, "Show this help and exit.")
+	flag.BoolVar(&flagPrintUsage, "h", false, "Same as -help.")
 
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune"`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
-	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates")
-	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path")
-	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation")
-	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "the suffix used for responses types")
-	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible")
+	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates.")
+	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path.")
+	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
+	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
+	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
+	flag.BoolVar(&flagInitalismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -153,7 +155,7 @@ func main() {
 			t := true
 			oldConfigStyle = &t
 		} else if oldErr != nil && newErr != nil {
-			errExit("error parsing configuration style as old version or new version: %v\n", err)
+			errExit("error parsing configuration style as old version or new version\n\nerror when parsing using old config version:\n%v\n\nerror when parsing using new config version:\n%v\n", oldErr, newErr)
 		}
 		// Else we fall through, and we still don't know, so we need to infer it from flags.
 	}
@@ -267,7 +269,7 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
-		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)
 		}
@@ -277,7 +279,7 @@ func main() {
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
-	var templates = make(map[string]string)
+	templates := make(map[string]string)
 
 	if templatesDir == "" {
 		return templates, nil
@@ -291,7 +293,7 @@ func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
 	for _, f := range files {
 		// Recursively load subdirectory files, using the path relative to the templates
 		// directory as the key. This allows for overriding the files in the service-specific
-		// directories (e.g. echo, chi, etc.).
+		// directories (e.g. echo, chi, fiber, etc.).
 		if f.IsDir() {
 			subFiles, err := loadTemplateOverrides(path.Join(templatesDir, f.Name()))
 			if err != nil {
@@ -396,6 +398,8 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
+	cfg.OutputOptions.InitialismOverrides = flagInitalismOverrides
+
 	return nil
 }
 
@@ -441,6 +445,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 		switch opt {
 		case "chi-server", "chi":
 			opts.ChiServer = true
+		case "fiber-server", "fiber":
+			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
 		case "gin", "gin-server":
