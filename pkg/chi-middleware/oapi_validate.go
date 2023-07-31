@@ -4,7 +4,6 @@
 package middleware
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
