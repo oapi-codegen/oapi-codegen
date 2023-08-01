@@ -730,6 +730,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		if _, ok := p.Extensions[extXMLName]; ok {
 			xmlName := p.Extensions[extXMLName].(string)
 			fieldTags["xml"] = xmlName
+		} else {
+			fieldTags["xml"] = p.JsonFieldName
 		}
 
 		// Convert the fieldTags map into Go field annotations.
