@@ -693,6 +693,10 @@ type ReusableResponsesResponseObject interface {
 
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
+func (response ReusableResponses200JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(response.ReusableresponseJSONResponse)
+}
+
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))

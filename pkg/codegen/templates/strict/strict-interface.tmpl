@@ -65,6 +65,12 @@
                 }
             {{end}}
 
+            {{if eq .NameTag "JSON" | and $fixedStatusCode $isRef -}}
+                func (response {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return json.Marshal(response.{{$ref | removePackage}}{{.NameTagOrContentType}}Response)
+                }
+            {{end}}
+
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(w)
