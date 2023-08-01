@@ -290,7 +290,7 @@ type TestGetResponseObject interface {
 	VisitTestGetResponse(w http.ResponseWriter) error
 }
 
-type TestGet200Response = externalRef0.ResponseWithReferenceResponse
+type TestGet200Response externalRef0.ResponseWithReferenceResponse
 
 func (response TestGet200Response) VisitTestGetResponse(w http.ResponseWriter) error {
 	w.WriteHeader(200)

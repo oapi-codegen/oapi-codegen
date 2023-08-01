@@ -25,6 +25,7 @@
         {{$hasHeaders := ne 0 (len .Headers) -}}
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
+        {{$isExternalRef := .IsExternalRef -}}
         {{$ref := .Ref  | ucFirst -}}
         {{$headers := .Headers -}}
 
@@ -106,7 +107,7 @@
 
         {{if eq 0 (len .Contents) -}}
             {{if and $fixedStatusCode $isRef -}}
-                type {{$opid}}{{$statusCode}}Response = {{$ref}}Response
+                type {{$opid}}{{$statusCode}}Response {{if not $isExternalRef}}={{end}} {{$ref}}Response
             {{else -}}
                 type {{$opid}}{{$statusCode}}Response struct {
                     {{if $hasHeaders -}}
