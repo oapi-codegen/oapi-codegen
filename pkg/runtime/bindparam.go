@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/ascendsoftware/oapi-codegen/pkg/types"
 )
 
 // BindStyledParameter binds a parameter as described in the Path Parameters

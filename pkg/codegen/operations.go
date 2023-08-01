@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/ascendsoftware/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 

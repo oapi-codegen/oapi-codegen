@@ -67,7 +67,7 @@ write a lot of boilerplate code to perform all the marshaling and unmarshaling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    go install github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen@latest
     oapi-codegen -package petstore petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
@@ -259,8 +259,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 ```go
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/gin/api"
+	middleware "github.com/ascendsoftware/oapi-codegen/pkg/gin-middleware"
 )
 
 type PetStoreImpl struct {}
@@ -325,7 +325,7 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
 }
 ```
 
-For a complete example see [`examples/petstore-expanded/strict`](https://github.com/deepmap/oapi-codegen/tree/master/examples/petstore-expanded/strict).
+For a complete example see [`examples/petstore-expanded/strict`](https://github.com/ascendsoftware/oapi-codegen/tree/master/examples/petstore-expanded/strict).
 
 Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
@@ -401,7 +401,7 @@ func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 
 There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
-all of them are tested via the [`internal/test/components`](https://github.com/deepmap/oapi-codegen/tree/master/internal/test/components) schemas and tests. Please
+all of them are tested via the [`internal/test/components`](https://github.com/ascendsoftware/oapi-codegen/tree/master/internal/test/components) schemas and tests. Please
 look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
@@ -454,7 +454,7 @@ A Client object which implements the above interface is also generated:
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
     // The endpoint of the server conforming to this interface, with scheme,
-    // https://api.deepmap.com for example.
+    // https://api.ascendsoftware.com for example.
     Server string
 
     // HTTP client with any customized settings, such as certificate chains.
@@ -543,7 +543,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ```go
     import (
-        "github.com/deepmap/oapi-codegen/pkg/securityprovider"
+        "github.com/ascendsoftware/oapi-codegen/pkg/securityprovider"
     )
 
     func CreateSampleProviders() error {
@@ -582,7 +582,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         //
         // WithHTTPClient(httpClient *http.Client)
         //
-        client, clientErr := NewClient("https://api.deepmap.com", WithRequestEditorFn(apiKeyProvider.Intercept))
+        client, clientErr := NewClient("https://api.ascendsoftware.com", WithRequestEditorFn(apiKeyProvider.Intercept))
 
         return nil
     }
@@ -778,7 +778,7 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`/internal/test/externalref/`](https://github.com/ascendsoftware/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
 
 ```yaml
@@ -787,14 +787,14 @@ generate:
   models: true
   embedded-spec: true
 import-mapping:
-  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
-  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+  ./packageA/spec.yaml: github.com/ascendsoftware/oapi-codegen/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/ascendsoftware/oapi-codegen/internal/test/externalref/packageB
 output: externalref.gen.go
 output-options:
   skip-prune: true
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/ascendsoftware/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
 to see all the fields on the configuration structure.
 
 ### Import Mappings
@@ -809,14 +809,14 @@ An external reference looks like this:
 
 We assume that you have already generated the boilerplate code for `./some_spec.yaml`
 using `oapi-codegen`, and you have a package which contains the generated code,
-let's call it `github.com/deepmap/some-package`. You need to tell `oapi-codegen` that
+let's call it `github.com/ascendsoftware/some-package`. You need to tell `oapi-codegen` that
 `some_spec.yaml` corresponds to this package, and you would do it by specifying
 this command line argument:
 
-    -import-mapping=./some_spec.yaml:github.com/deepmap/some-package
+    -import-mapping=./some_spec.yaml:github.com/ascendsoftware/some-package
 
 This tells us that in order to resolve references generated from `some_spec.yaml` we
-need to import `github.com/deepmap/some-package`. You may specify multiple mappings
+need to import `github.com/ascendsoftware/some-package`. You may specify multiple mappings
 by comma separating them in the form `key1:value1,key2:value2`.
 
 ## What's missing or incomplete
@@ -888,11 +888,11 @@ output-options:
     # https://raw.githubusercontent.com/<username>/<project>/<hash|tag|branch>/path/to/template/template.tmpl
 
     # using raw.githubusercontent.com with a hash
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/7b010099dcf1192b3bfaa3898b5f375bb9590ddf/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/ascendsoftware/oapi-codegen/7b010099dcf1192b3bfaa3898b5f375bb9590ddf/pkg/codegen/templates/client-with-responses.tmpl
     # using raw.githubusercontent.com with a tag
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/v1.12.4/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/ascendsoftware/oapi-codegen/v1.12.4/pkg/codegen/templates/client-with-responses.tmpl
     # using raw.githubusercontent.com with a branch
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/ascendsoftware/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
 
     #This example is directly embedding the template into the config file.
     client-with-responses.tmpl: |

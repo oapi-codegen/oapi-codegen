@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/ascendsoftware/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
@@ -104,14 +104,14 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Let's send the request to the wrong server, this should return 404
 	{
-		rec := doGet(t, e, "http://not.deepmap.ai/resource")
+		rec := doGet(t, e, "http://not.ascendsoftware.ai/resource")
 		assert.Equal(t, http.StatusNotFound, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 	}
 
 	// Let's send a good request, it should pass
 	{
-		rec := doGet(t, e, "http://deepmap.ai/resource")
+		rec := doGet(t, e, "http://ascendsoftware.ai/resource")
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -119,7 +119,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Send an out-of-spec parameter
 	{
-		rec := doGet(t, e, "http://deepmap.ai/resource?id=500")
+		rec := doGet(t, e, "http://ascendsoftware.ai/resource?id=500")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -127,7 +127,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Send a bad parameter type
 	{
-		rec := doGet(t, e, "http://deepmap.ai/resource?id=foo")
+		rec := doGet(t, e, "http://ascendsoftware.ai/resource?id=foo")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -147,7 +147,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		}{
 			Name: "Marcin",
 		}
-		rec := doPost(t, e, "http://deepmap.ai/resource", body)
+		rec := doPost(t, e, "http://ascendsoftware.ai/resource", body)
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -160,7 +160,7 @@ func TestOapiRequestValidator(t *testing.T) {
 		}{
 			Name: 7,
 		}
-		rec := doPost(t, e, "http://deepmap.ai/resource", body)
+		rec := doPost(t, e, "http://ascendsoftware.ai/resource", body)
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -174,7 +174,7 @@ func TestOapiRequestValidator(t *testing.T) {
 
 	// Call a protected function to which we have access
 	{
-		rec := doGet(t, e, "http://deepmap.ai/protected_resource")
+		rec := doGet(t, e, "http://ascendsoftware.ai/protected_resource")
 		assert.Equal(t, http.StatusNoContent, rec.Code)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -186,7 +186,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Call a protected function to which we dont have access
 	{
-		rec := doGet(t, e, "http://deepmap.ai/protected_resource2")
+		rec := doGet(t, e, "http://ascendsoftware.ai/protected_resource2")
 		assert.Equal(t, http.StatusForbidden, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 		called = false
@@ -198,7 +198,7 @@ func TestOapiRequestValidator(t *testing.T) {
 	})
 	// Call a protected function without credentials
 	{
-		rec := doGet(t, e, "http://deepmap.ai/protected_resource_401")
+		rec := doGet(t, e, "http://ascendsoftware.ai/protected_resource_401")
 		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 		assert.Equal(t, "test: code=401, message=Unauthorized", rec.Body.String())
 		assert.False(t, called, "Handler should not have been called")
@@ -238,7 +238,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 
 	// Let's send a good request, it should pass
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50&id2=50")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=50&id2=50")
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -247,7 +247,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a missing parameter, it should return
 	// a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -261,7 +261,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a 2 missing parameters, it should return
 	// a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -277,7 +277,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a 1 missing parameter, and another outside
 	// or the parameters. It should return a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=500")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -293,7 +293,7 @@ func TestOapiRequestValidatorWithOptionsMultiError(t *testing.T) {
 	// Let's send a request with a parameters that do not meet spec. It should
 	// return a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusBadRequest, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -346,7 +346,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 
 	// Let's send a good request, it should pass
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50&id2=50")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=50&id2=50")
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.True(t, called, "Handler should have been called")
 		called = false
@@ -355,7 +355,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a missing parameter, it should return
 	// a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=50")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=50")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -369,7 +369,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a 2 missing parameters, it should return
 	// a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -385,7 +385,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a 1 missing parameter, and another outside
 	// or the parameters. It should return a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=500")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=500")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {
@@ -401,7 +401,7 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 	// Let's send a request with a parameters that do not meet spec. It should
 	// return a bad status
 	{
-		rec := doGet(t, e, "http://deepmap.ai/multiparamresource?id=abc&id2=1")
+		rec := doGet(t, e, "http://ascendsoftware.ai/multiparamresource?id=abc&id2=1")
 		assert.Equal(t, http.StatusTeapot, rec.Code)
 		body, err := io.ReadAll(rec.Body)
 		if assert.NoError(t, err) {

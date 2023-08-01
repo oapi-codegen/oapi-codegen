@@ -20,7 +20,7 @@ func TestParameters(t *testing.T) {
 
 	h := Handler(&m)
 
-	req := httptest.NewRequest("POST", "http://openapitest.deepmap.ai/resource2/1?inline_query_argument=99", nil)
+	req := httptest.NewRequest("POST", "http://openapitest.ascendsoftware.ai/resource2/1?inline_query_argument=99", nil)
 	rr := httptest.NewRecorder()
 	h.ServeHTTP(rr, req)
 

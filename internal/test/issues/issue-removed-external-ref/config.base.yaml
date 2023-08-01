@@ -5,8 +5,9 @@ generate:
   strict-server: true
   models: true
 import-mapping:
-  spec-ext.yaml: "github.com/deepmap/oapi-codegen/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
+  spec-ext.yaml: "github.com/ascendsoftware/oapi-codegen/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
 output: gen/spec_base/issue.gen.go
 output-options:
-  skip-prune: true
+  skip-prune:
+    true
     # skip-fmt: true

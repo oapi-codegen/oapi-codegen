@@ -3,7 +3,7 @@
 This little server is an example demonstrating how JWT's can be handled somewhat
 automatically with per-path validation of scopes.
 
-We use similar code in production at DeepMap, and this example shows how authenticated
+We use similar code in production at ascendsoftware, and this example shows how authenticated
 API's can be written, as well as unit tested.
 
 Some parts of this code can be generalized in the future, but for now, feel free
@@ -55,7 +55,7 @@ instead of implementing too much ourselves. We've chosen to use the excellent
 validation, and the [kin-openapi](https://github.com/getkin/kin-openapi/tree/master/openapi3filter)
 request filter to help us perform validation.
 
-First, we need to configure our [OapiRequestValidator](https://github.com/deepmap/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
+First, we need to configure our [OapiRequestValidator](https://github.com/ascendsoftware/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
 to perform authentication:
 ```go
 validator := middleware.OapiRequestValidatorWithOptions(spec,

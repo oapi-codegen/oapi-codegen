@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/server"
+	"github.com/ascendsoftware/oapi-codegen/examples/authenticated-api/echo/api"
+	"github.com/ascendsoftware/oapi-codegen/examples/authenticated-api/echo/server"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
