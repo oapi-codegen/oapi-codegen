@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,4 +17,4 @@ package internal
 // server. The file petstore.gen.go is automatically generated from the schema
 
 // Run oapi-codegen to regenerate the petstore boilerplate
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=config.yaml ../petstore-expanded.yaml

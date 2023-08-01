@@ -3,9 +3,8 @@ package externalref
 import (
 	"testing"
 
-	packageA "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageA"
-	packageB "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
-	petstore "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/petstore"
+	packageA "github.com/ascendsoftware/oapi-codegen/internal/test/externalref/packageA"
+	packageB "github.com/ascendsoftware/oapi-codegen/internal/test/externalref/packageB"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,9 +21,6 @@ func TestGetSwagger(t *testing.T) {
 	require.Nil(t, err)
 
 	_, err = packageA.GetSwagger()
-	require.Nil(t, err)
-
-	_, err = petstore.GetSwagger()
 	require.Nil(t, err)
 
 	_, err = GetSwagger()

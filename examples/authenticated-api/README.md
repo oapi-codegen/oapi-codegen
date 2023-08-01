@@ -3,7 +3,7 @@
 This little server is an example demonstrating how JWT's can be handled somewhat
 automatically with per-path validation of scopes.
 
-We use similar code in production at DeepMap, and this example shows how authenticated
+We use similar code in production at ascendsoftware, and this example shows how authenticated
 API's can be written, as well as unit tested.
 
 Some parts of this code can be generalized in the future, but for now, feel free
@@ -35,7 +35,7 @@ This means that all API endpoints require a JWT bearer token for access, and
 without any specific scopes, as denoted by `[]`.
 
 However, we want our `addThing` operation to require a special write permission,
-denoted by `things:w`. This is a convention that we use in naming scopes,
+denoted by `things:w`. This is a convention that we use in naming scopes, 
 noun followed by type of access, in this case, `:w` means write. Read permission
 is implicit from having a valid JWT.
 
@@ -55,7 +55,8 @@ instead of implementing too much ourselves. We've chosen to use the excellent
 validation, and the [kin-openapi](https://github.com/getkin/kin-openapi/tree/master/openapi3filter)
 request filter to help us perform validation.
 
-First, we need to configure our `OapiRequestValidator` to perform authentication:
+First, we need to configure our [OapiRequestValidator](https://github.com/ascendsoftware/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
+to perform authentication:
 ```go
 validator := middleware.OapiRequestValidatorWithOptions(spec,
     &middleware.Options{

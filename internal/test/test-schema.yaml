@@ -5,21 +5,21 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://openapitest.deepmap.ai
+  - url: http://openapitest.ascendsoftware.ai
 paths:
   /response-with-reference:
     get:
       summary: get response with reference
       operationId: getResponseWithReference
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/ResponseWithReference"
   /reserved-keyword:
     get:
       summary: get with reserved keyword
       operationId: getReservedKeyword
       responses:
-        '200':
+        "200":
           description: example of a response with a reserved keyword
           content:
             application/json:
@@ -30,7 +30,7 @@ paths:
       summary: get every type optional
       operationId: getEveryTypeOptional
       responses:
-        '200':
+        "200":
           description: a example of every type with an optional value
           content:
             application/json:
@@ -41,7 +41,7 @@ paths:
       summary: Get resource via simple path
       operationId: getSimple
       responses:
-        '200':
+        "200":
           description: A simple response for a simple path
           content:
             application/json:
@@ -62,7 +62,7 @@ paths:
               - text
               - json
       responses:
-        '200':
+        "200":
           description: A simple response for a simple path
           content:
             application/json:
@@ -87,7 +87,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/argument"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /get-with-args:
     summary: GetWithArgs
@@ -124,7 +124,7 @@ paths:
         #    type: integer
         #    format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /resource/{argument}:
     post:
@@ -138,9 +138,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EveryTypeRequired'
+              $ref: "#/components/schemas/EveryTypeRequired"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /resource2/{inline_argument}:
     post:
@@ -164,9 +164,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Resource'
+              $ref: "#/components/schemas/Resource"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /resource3/{fallthrough}:
     put:
@@ -193,7 +193,7 @@ paths:
                 name:
                   type: string
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
 components:
   parameters:
@@ -349,7 +349,7 @@ components:
       properties:
         channel:
           type: string
-      required: [ type ]
+      required: [type]
   responses:
     SimpleResponse:
       description: A simple response object

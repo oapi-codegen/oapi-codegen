@@ -3,14 +3,14 @@ package main
 import (
 	"testing"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/ascendsoftware/oapi-codegen/pkg/util"
 )
 
 func TestLoader(t *testing.T) {
 
 	paths := []string{
 		"../../examples/petstore-expanded/petstore-expanded.yaml",
-		"https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.4.1/examples/petstore-expanded/petstore-expanded.yaml",
+		"https://petstore3.swagger.io/api/v3/openapi.json",
 	}
 
 	for _, v := range paths {

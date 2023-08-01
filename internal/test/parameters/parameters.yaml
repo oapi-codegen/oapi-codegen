@@ -5,7 +5,7 @@ info:
   license:
     name: MIT
 servers:
-  - url: http://openapitest.deepmap.ai
+  - url: http://openapitest.ascendsoftware.ai
 paths:
   /simplePrimitive/{param}:
     get:
@@ -19,7 +19,7 @@ paths:
             type: integer
             format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeArray/{param}:
     get:
@@ -36,7 +36,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeArray/{param*}:
     get:
@@ -53,7 +53,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeObject/{param}:
     get:
@@ -67,7 +67,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeObject/{param*}:
     get:
@@ -81,7 +81,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeArray/{.param}:
     get:
@@ -98,7 +98,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeArray/{.param*}:
     get:
@@ -115,7 +115,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeObject/{.param}:
     get:
@@ -129,7 +129,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeObject/{.param*}:
     get:
@@ -143,7 +143,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeArray/{.id}:
     get:
@@ -160,7 +160,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeArray/{.id*}:
     get:
@@ -177,7 +177,7 @@ paths:
               type: integer
               format: int32
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeObject/{.id}:
     get:
@@ -191,7 +191,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeObject/{.id*}:
     get:
@@ -205,7 +205,7 @@ paths:
           schema:
             $ref: "#/components/schemas/Object"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /contentObject/{param}:
     get:
@@ -219,7 +219,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /passThrough/{param}:
     get:
@@ -233,7 +233,7 @@ paths:
               schema:
                 type: string
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /startingWithNumber/{1param}:
     get:
@@ -247,7 +247,7 @@ paths:
               schema:
                 type: string
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /queryForm:
     get:
@@ -326,7 +326,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           $ref: "#/components/responses/SimpleResponse"
   /queryDeepObject:
     get:
@@ -497,7 +497,7 @@ paths:
           schema:
             type: integer
             format: int32
-            enum: [ 100, 200 ]
+            enum: [100, 200]
       responses:
         204:
           description: no content

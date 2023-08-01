@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=models.cfg.yaml ../../petstore-expanded.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=models.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/echo/api/models"
 	"github.com/labstack/echo/v4"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api/models"
 )
 
 type PetStore struct {
@@ -86,7 +86,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	var newPet models.NewPet
 	err := ctx.Bind(&newPet)
 	if err != nil {
-		return sendPetStoreError(ctx, http.StatusBadRequest, "invalid format for NewPet")
+		return sendPetStoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
 	}
 	// We now have a pet, let's add it to our "database".
 

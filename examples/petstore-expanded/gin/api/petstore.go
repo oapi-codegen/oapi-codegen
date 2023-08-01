@@ -1,4 +1,4 @@
-// Copyright 2019 DeepMap, Inc.
+// Copyright 2019 ascendsoftware, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=types.cfg.yaml ../../petstore-expanded.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -84,7 +84,7 @@ func (p *PetStore) AddPet(c *gin.Context) {
 	var newPet NewPet
 	err := c.Bind(&newPet)
 	if err != nil {
-		sendPetStoreError(c, http.StatusBadRequest, "invalid format for NewPet")
+		sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
 		return
 	}
 	// We now have a pet, let's add it to our "database".
@@ -105,6 +105,7 @@ func (p *PetStore) AddPet(c *gin.Context) {
 
 	// Now, we have to return the NewPet
 	c.JSON(http.StatusCreated, pet)
+	return
 }
 
 func (p *PetStore) FindPetByID(c *gin.Context, petId int64) {

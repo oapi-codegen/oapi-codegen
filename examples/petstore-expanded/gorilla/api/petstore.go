@@ -1,4 +1,4 @@
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -34,7 +34,7 @@ func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 		Message: message,
 	}
 	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(petErr)
+	json.NewEncoder(w).Encode(petErr)
 }
 
 // FindPets implements all the handlers in the ServerInterface
@@ -67,14 +67,14 @@ func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindP
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result)
 }
 
 func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
 	if err := json.NewDecoder(r.Body).Decode(&newPet); err != nil {
-		sendPetStoreError(w, http.StatusBadRequest, "invalid format for NewPet")
+		sendPetStoreError(w, http.StatusBadRequest, "Invalid format for NewPet")
 		return
 	}
 
@@ -96,7 +96,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	// Now, we have to return the NewPet
 	w.WriteHeader(http.StatusCreated)
-	_ = json.NewEncoder(w).Encode(pet)
+	json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
@@ -110,7 +110,7 @@ func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(pet)
+	json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {

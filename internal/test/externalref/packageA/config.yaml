@@ -1,4 +1,3 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
 package: packagea
 generate:
   models: true
@@ -6,5 +5,5 @@ generate:
 output-options:
   skip-prune: true
 import-mapping:
-  ../packageB/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB
+  ../packageB/spec.yaml: github.com/ascendsoftware/oapi-codegen/internal/test/externalref/packageB
 output: externalref.gen.go

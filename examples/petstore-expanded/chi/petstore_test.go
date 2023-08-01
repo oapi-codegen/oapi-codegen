@@ -7,10 +7,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/chi/api"
+	middleware "github.com/ascendsoftware/oapi-codegen/pkg/chi-middleware"
+	"github.com/ascendsoftware/oapi-codegen/pkg/testutil"
 	"github.com/go-chi/chi/v5"
-	middleware "github.com/oapi-codegen/nethttp-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/chi/api"
-	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

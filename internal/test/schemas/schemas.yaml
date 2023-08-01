@@ -6,7 +6,7 @@ info:
     Test cases for various issues found over time. Please add a test case for
     any bug fixed.
 servers:
-  - url: http://openapitest.deepmap.ai
+  - url: http://openapitest.ascendsoftware.ai
 paths:
   /ensure-everything-is-referenced:
     get:
@@ -44,7 +44,7 @@ paths:
         required: false
         content:
           application/json:
-            schema: { }
+            schema: {}
   /issues/30/{fallthrough}:
     get:
       operationId: Issue30
@@ -106,7 +106,7 @@ paths:
               $ref: "#/components/schemas/NullableProperties"
   /issues/209/${str}:
     parameters:
-      - $ref: '#/components/parameters/StringInPath'
+      - $ref: "#/components/parameters/StringInPath"
     get:
       operationId: Issue209
       description: Checks if parameters are declared properly
@@ -139,7 +139,7 @@ paths:
       description: |
         Multiple media types contain JSON
       responses:
-        '200':
+        "200":
           content:
             application/vnd.something.v1+json:
               schema:
@@ -151,7 +151,7 @@ components:
   schemas:
     GenericObject:
       type: object
-    AnyType1: { }
+    AnyType1: {}
     AnyType2:
       description: |
         AnyType2 represents any type.
@@ -177,7 +177,7 @@ components:
         requiredAndNullable:
           type: string
           nullable: true
-      required: [ required, requiredAndNullable ]
+      required: [required, requiredAndNullable]
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
@@ -228,8 +228,8 @@ components:
           properties:
             id:
               type: integer
-          required: [ id ]
-      required: [ name, inner ]
+          required: [id]
+      required: [name, inner]
   parameters:
     StringInPath:
       name: str
@@ -247,4 +247,4 @@ components:
       bearerFormat: |
         JWT-format access token.
 security:
-  - access-token: [ ]
+  - access-token: []
