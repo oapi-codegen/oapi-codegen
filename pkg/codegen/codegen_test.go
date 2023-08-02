@@ -3,11 +3,10 @@ package codegen
 import (
 	"bytes"
 	_ "embed"
-	"fmt"
 	"go/format"
 	"io"
-	"net"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -152,20 +151,12 @@ func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
 
 func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 
-	ln, err := net.Listen("tcp", "127.0.0.1:0")
-	assert.NoError(t, err)
-	defer ln.Close()
-
-	//nolint:errcheck
-	// Does not matter if the server returns an error on close etc.
-	go http.Serve(ln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, writeErr := w.Write([]byte("//blah"))
 		assert.NoError(t, writeErr)
 	}))
 
-	t.Logf("Listening on %s", ln.Addr().String())
-
-	userTemplates := map[string]string{"typedef.tmpl": fmt.Sprintf("http://%s", ln.Addr().String())}
+	userTemplates := map[string]string{"typedef.tmpl": srv.URL}
 
 	// Input vars for code generation:
 	packageName := "api"
