@@ -1,0 +1,39 @@
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.reference.yml
+
+run:
+  concurrency: 4
+  timeout: 10m
+  issues-exit-code: 1
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - asciicheck
+    - asasalint
+    - dogsled
+    - bidichk
+    - errcheck
+    - gci
+    - gofumpt
+    - goimports
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - nilerr
+    - nolintlint
+    - staticcheck
+    - typecheck
+    - unused
+
+output:
+  print-issued-lines: false
+  sort-results: false
+
+linters-settings:
+  gci:
+    sections:
+      - standard
+      - default
+      - prefix(github.com/deepmap/oapi-codegen)

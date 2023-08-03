@@ -3,13 +3,12 @@ package securityprovider
 import (
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/internal/test/client"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/internal/test/client"
 )
 
-var (
-	withTrailingSlash = "https://my-api.com/some-base-url/v1/"
-)
+var withTrailingSlash = "https://my-api.com/some-base-url/v1/"
 
 func TestSecurityProviders(t *testing.T) {
 	bearer, err := NewSecurityProviderBearerToken("mytoken")

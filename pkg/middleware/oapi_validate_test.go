@@ -24,13 +24,14 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 //go:embed test_spec.yaml
@@ -169,7 +170,6 @@ func TestOapiRequestValidator(t *testing.T) {
 	e.GET("/protected_resource", func(c echo.Context) error {
 		called = true
 		return c.NoContent(http.StatusNoContent)
-
 	})
 
 	// Call a protected function to which we have access
@@ -416,7 +416,6 @@ func TestOapiRequestValidatorWithOptionsMultiErrorAndCustomHandler(t *testing.T)
 }
 
 func TestGetSkipperFromOptions(t *testing.T) {
-
 	options := new(Options)
 	assert.NotNil(t, getSkipperFromOptions(options))
 

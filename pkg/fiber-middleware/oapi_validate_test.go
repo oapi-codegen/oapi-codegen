@@ -70,7 +70,6 @@ func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) *
 }
 
 func TestOapiRequestValidator(t *testing.T) {
-
 	swagger, err := openapi3.NewLoader().LoadFromData(testSchema)
 	require.NoError(t, err, "Error initializing swagger")
 

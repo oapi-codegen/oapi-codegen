@@ -111,7 +111,6 @@ func (f *fieldOrValue) appendPathValue(path []string, value string) {
 }
 
 func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
-
 	f := fieldOrValue{
 		fields: make(map[string]fieldOrValue),
 	}
@@ -193,7 +192,6 @@ func fieldIndicesByJsonTag(i interface{}) (map[string]int, error) {
 }
 
 func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
-	//t := reflect.TypeOf(dst)
 	v := reflect.ValueOf(dst)
 
 	iv := reflect.Indirect(v)

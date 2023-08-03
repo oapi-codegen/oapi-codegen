@@ -112,7 +112,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) *echo.HTTPError {
 	req := ctx.Request()
 	route, pathParams, err := router.FindRoute(req)
-
 	// We failed to find a matching route for the request.
 	if err != nil {
 		switch e := err.(type) {

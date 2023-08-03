@@ -19,8 +19,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 func TestBindStringToObject(t *testing.T) {
@@ -207,5 +208,4 @@ func TestBindStringToObject(t *testing.T) {
 	var dstUUID types.UUID
 	assert.NoError(t, BindStringToObject(uuidString, &dstUUID))
 	assert.Equal(t, dstUUID.String(), uuidString)
-
 }

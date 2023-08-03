@@ -66,7 +66,6 @@ func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t
 }
 
 func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
-
 	e := echo.New()
 	m := &MockClient{}
 	RegisterHandlers(e, m)

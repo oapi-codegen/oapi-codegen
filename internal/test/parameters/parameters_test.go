@@ -7,11 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 type testServer struct {
@@ -261,9 +262,9 @@ func TestParameterBinding(t *testing.T) {
 
 	var expectedPrimitive int32 = 5
 
-	var expectedPrimitiveString = "123;456"
+	expectedPrimitiveString := "123;456"
 
-	var expectedN1Param = "foo"
+	expectedN1Param := "foo"
 
 	// Check the passthrough case
 	//  (GET /passThrough/{param})
@@ -675,9 +676,9 @@ func TestClientQueryParams(t *testing.T) {
 
 	var expectedPrimitive1 int32 = 5
 	var expectedPrimitive2 int32 = 100
-	var expectedPrimitiveString = "123;456"
+	expectedPrimitiveString := "123;456"
 
-	var expectedStartingWithNumber = "111"
+	expectedStartingWithNumber := "111"
 
 	// Check query params
 	qParams := GetQueryFormParams{

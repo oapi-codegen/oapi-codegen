@@ -1,5 +1,7 @@
 name: Lint project
 on: [push, pull_request]
+env:
+  GOLANGCI_LINT_VERSION: v1.53.3
 jobs:
   build:
     name: Build
@@ -16,5 +18,4 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
         with:
-          # Make sure this matches the version we've got in our `Makefile`
-          version: v1.50.1
+          version: ${{ env.GOLANGCI_LINT_VERSION }}

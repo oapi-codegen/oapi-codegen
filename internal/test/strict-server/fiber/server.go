@@ -10,8 +10,7 @@ import (
 	"mime/multipart"
 )
 
-type StrictServer struct {
-}
+type StrictServer struct{}
 
 func (s StrictServer) JSONExample(ctx context.Context, request JSONExampleRequestObject) (JSONExampleResponseObject, error) {
 	return JSONExample200JSONResponse(*request.Body), nil

@@ -105,11 +105,9 @@ func TestEmail_UnmarshalJSON_RequiredEmail_Validation(t *testing.T) {
 			assert.ErrorIs(t, err, tc.expectedError)
 		})
 	}
-
 }
 
 func TestEmail_UnmarshalJSON_NullableEmail_Validation(t *testing.T) {
-
 	type nullableEmail struct {
 		EmailField *Email `json:"email,omitempty"`
 	}

@@ -725,7 +725,7 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 }
 
 func DeprecationComment(reason string) string {
-	var content = "Deprecated:" // The colon is required at the end even without reason
+	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
 		content += fmt.Sprintf(" %s", reason)
 	}

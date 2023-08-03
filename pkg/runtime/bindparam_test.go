@@ -21,9 +21,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/pkg/types"
 )
 
 // MockBinder is just an independent version of Binder that has the Bind implemented
@@ -356,7 +357,6 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.Error(t, err)
 		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
 		assert.Error(t, err)
-
 	})
 }
 

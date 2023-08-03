@@ -1,6 +1,8 @@
 GOBASE=$(shell pwd)
 GOBIN=$(GOBASE)/bin
 
+GOLANGCI_LINT_VERSION=$(shell awk '/GOLANGCI_LINT_VERSION:/ { print $$2 }' .github/workflows/lint.yml)
+
 help:
 	@echo "This is a helper makefile for oapi-codegen"
 	@echo "Targets:"
@@ -10,7 +12,7 @@ help:
 	@echo "    tidy         tidy go mod"
 
 $(GOBIN)/golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v1.50.1
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) $(GOLANGCI_LINT_VERSION)
 
 .PHONY: tools
 tools: $(GOBIN)/golangci-lint

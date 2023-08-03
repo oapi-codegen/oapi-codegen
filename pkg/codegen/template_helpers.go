@@ -20,10 +20,11 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/deepmap/oapi-codegen/pkg/util"
 )
 
 const (
@@ -91,7 +92,7 @@ func genParamNames(params []ParameterDefinition) string {
 
 // genResponsePayload generates the payload returned at the end of each client request function
 func genResponsePayload(operationID string) string {
-	var buffer = bytes.NewBufferString("")
+	buffer := bytes.NewBufferString("")
 
 	// Here is where we build up a response:
 	fmt.Fprintf(buffer, "&%s{\n", genResponseTypeName(operationID))
@@ -104,8 +105,8 @@ func genResponsePayload(operationID string) string {
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
 func genResponseUnmarshal(op *OperationDefinition) string {
-	var handledCaseClauses = make(map[string]string)
-	var unhandledCaseClauses = make(map[string]string)
+	handledCaseClauses := make(map[string]string)
+	unhandledCaseClauses := make(map[string]string)
 
 	// Get the type definitions from the operation:
 	typeDefinitions, err := op.GetResponseTypeDefinitions()
@@ -217,11 +218,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
 	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
-
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
 	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
-
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
 	fmt.Fprintf(buffer, "}\n")

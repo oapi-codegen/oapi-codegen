@@ -94,9 +94,9 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 				// in case the handler didn't internally call Abort, stop the chain
 				c.Abort()
 			} else if options != nil && options.ErrorHandler != nil {
-					options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
-					// in case the handler didn't internally call Abort, stop the chain
-					c.Abort()
+				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+				// in case the handler didn't internally call Abort, stop the chain
+				c.Abort()
 			} else if err.Error() == routers.ErrPathNotFound.Error() {
 				// note: i am not sure if this is the best way to handle this
 				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -114,7 +114,6 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *Options) error {
 	req := c.Request
 	route, pathParams, err := router.FindRoute(req)
-
 	// We failed to find a matching route for the request.
 	if err != nil {
 		switch e := err.(type) {
