@@ -482,6 +482,14 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 	return SchemaNameToTypeName(r.ContentType)
 }
 
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r ResponseContentDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
+}
+
 type ResponseHeaderDefinition struct {
 	Name   string
 	GoName string
