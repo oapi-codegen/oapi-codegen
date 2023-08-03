@@ -80,7 +80,7 @@
                 {{end -}}
                 w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
-                {{if eq .NameTag "JSON" -}}
+                {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
                     return json.NewEncoder(w).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
