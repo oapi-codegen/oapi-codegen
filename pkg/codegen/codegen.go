@@ -1090,3 +1090,7 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 	}
 	return res, nil
 }
+
+func SetGlobalStateSpecs(spec *openapi3.T) {
+	globalState.spec = spec
+}
