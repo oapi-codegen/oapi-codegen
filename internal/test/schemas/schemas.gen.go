@@ -195,7 +195,7 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185 request with any body
+	// Issue185WithBody request with any body
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -212,7 +212,7 @@ type ClientInterface interface {
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9 request with any body
+	// Issue9WithBody request with any body
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -743,38 +743,38 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferenced request
+	// EnsureEverythingIsReferencedWithResponse request
 	EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
-	// Issue1051 request
+	// Issue1051WithResponse request
 	Issue1051WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue1051Response, error)
 
-	// Issue127 request
+	// Issue127WithResponse request
 	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
-	// Issue185 request with any body
+	// Issue185WithBodyWithResponse request with any body
 	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
-	// Issue209 request
+	// Issue209WithResponse request
 	Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error)
 
-	// Issue30 request
+	// Issue30WithResponse request
 	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error)
 
-	// GetIssues375 request
+	// GetIssues375WithResponse request
 	GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error)
 
-	// Issue41 request
+	// Issue41WithResponse request
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
-	// Issue9 request with any body
+	// Issue9WithBodyWithResponse request with any body
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
-	// Issue975 request
+	// Issue975WithResponse request
 	Issue975WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue975Response, error)
 }
 
@@ -1612,16 +1612,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -1639,7 +1639,7 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
+	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
 		res[pathToFile] = rawSpec
 	}
@@ -1653,12 +1653,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
+	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
+		pathToFile := url.String()
 		pathToFile = path.Clean(pathToFile)
 		getSpec, ok := resolvePath[pathToFile]
 		if !ok {

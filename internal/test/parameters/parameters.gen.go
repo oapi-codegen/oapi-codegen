@@ -588,128 +588,130 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		return nil, err
 	}
 
-	if params.P != nil {
-		var cookieParam0 string
+	if params != nil {
 
-		cookieParam0, err = runtime.StyleParamWithLocation("simple", false, "p", runtime.ParamLocationCookie, *params.P)
-		if err != nil {
-			return nil, err
+		if params.P != nil {
+			var cookieParam0 string
+
+			cookieParam0, err = runtime.StyleParamWithLocation("simple", false, "p", runtime.ParamLocationCookie, *params.P)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie0 := &http.Cookie{
+				Name:  "p",
+				Value: cookieParam0,
+			}
+			req.AddCookie(cookie0)
 		}
 
-		cookie0 := &http.Cookie{
-			Name:  "p",
-			Value: cookieParam0,
+		if params.Ep != nil {
+			var cookieParam1 string
+
+			cookieParam1, err = runtime.StyleParamWithLocation("simple", true, "ep", runtime.ParamLocationCookie, *params.Ep)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie1 := &http.Cookie{
+				Name:  "ep",
+				Value: cookieParam1,
+			}
+			req.AddCookie(cookie1)
 		}
-		req.AddCookie(cookie0)
+
+		if params.Ea != nil {
+			var cookieParam2 string
+
+			cookieParam2, err = runtime.StyleParamWithLocation("simple", true, "ea", runtime.ParamLocationCookie, *params.Ea)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie2 := &http.Cookie{
+				Name:  "ea",
+				Value: cookieParam2,
+			}
+			req.AddCookie(cookie2)
+		}
+
+		if params.A != nil {
+			var cookieParam3 string
+
+			cookieParam3, err = runtime.StyleParamWithLocation("simple", false, "a", runtime.ParamLocationCookie, *params.A)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie3 := &http.Cookie{
+				Name:  "a",
+				Value: cookieParam3,
+			}
+			req.AddCookie(cookie3)
+		}
+
+		if params.Eo != nil {
+			var cookieParam4 string
+
+			cookieParam4, err = runtime.StyleParamWithLocation("simple", true, "eo", runtime.ParamLocationCookie, *params.Eo)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie4 := &http.Cookie{
+				Name:  "eo",
+				Value: cookieParam4,
+			}
+			req.AddCookie(cookie4)
+		}
+
+		if params.O != nil {
+			var cookieParam5 string
+
+			cookieParam5, err = runtime.StyleParamWithLocation("simple", false, "o", runtime.ParamLocationCookie, *params.O)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie5 := &http.Cookie{
+				Name:  "o",
+				Value: cookieParam5,
+			}
+			req.AddCookie(cookie5)
+		}
+
+		if params.Co != nil {
+			var cookieParam6 string
+
+			var cookieParamBuf6 []byte
+			cookieParamBuf6, err = json.Marshal(*params.Co)
+			if err != nil {
+				return nil, err
+			}
+			cookieParam6 = url.QueryEscape(string(cookieParamBuf6))
+
+			cookie6 := &http.Cookie{
+				Name:  "co",
+				Value: cookieParam6,
+			}
+			req.AddCookie(cookie6)
+		}
+
+		if params.N1s != nil {
+			var cookieParam7 string
+
+			cookieParam7, err = runtime.StyleParamWithLocation("simple", true, "1s", runtime.ParamLocationCookie, *params.N1s)
+			if err != nil {
+				return nil, err
+			}
+
+			cookie7 := &http.Cookie{
+				Name:  "1s",
+				Value: cookieParam7,
+			}
+			req.AddCookie(cookie7)
+		}
 	}
-
-	if params.Ep != nil {
-		var cookieParam1 string
-
-		cookieParam1, err = runtime.StyleParamWithLocation("simple", true, "ep", runtime.ParamLocationCookie, *params.Ep)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie1 := &http.Cookie{
-			Name:  "ep",
-			Value: cookieParam1,
-		}
-		req.AddCookie(cookie1)
-	}
-
-	if params.Ea != nil {
-		var cookieParam2 string
-
-		cookieParam2, err = runtime.StyleParamWithLocation("simple", true, "ea", runtime.ParamLocationCookie, *params.Ea)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie2 := &http.Cookie{
-			Name:  "ea",
-			Value: cookieParam2,
-		}
-		req.AddCookie(cookie2)
-	}
-
-	if params.A != nil {
-		var cookieParam3 string
-
-		cookieParam3, err = runtime.StyleParamWithLocation("simple", false, "a", runtime.ParamLocationCookie, *params.A)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie3 := &http.Cookie{
-			Name:  "a",
-			Value: cookieParam3,
-		}
-		req.AddCookie(cookie3)
-	}
-
-	if params.Eo != nil {
-		var cookieParam4 string
-
-		cookieParam4, err = runtime.StyleParamWithLocation("simple", true, "eo", runtime.ParamLocationCookie, *params.Eo)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie4 := &http.Cookie{
-			Name:  "eo",
-			Value: cookieParam4,
-		}
-		req.AddCookie(cookie4)
-	}
-
-	if params.O != nil {
-		var cookieParam5 string
-
-		cookieParam5, err = runtime.StyleParamWithLocation("simple", false, "o", runtime.ParamLocationCookie, *params.O)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie5 := &http.Cookie{
-			Name:  "o",
-			Value: cookieParam5,
-		}
-		req.AddCookie(cookie5)
-	}
-
-	if params.Co != nil {
-		var cookieParam6 string
-
-		var cookieParamBuf6 []byte
-		cookieParamBuf6, err = json.Marshal(*params.Co)
-		if err != nil {
-			return nil, err
-		}
-		cookieParam6 = url.QueryEscape(string(cookieParamBuf6))
-
-		cookie6 := &http.Cookie{
-			Name:  "co",
-			Value: cookieParam6,
-		}
-		req.AddCookie(cookie6)
-	}
-
-	if params.N1s != nil {
-		var cookieParam7 string
-
-		cookieParam7, err = runtime.StyleParamWithLocation("simple", true, "1s", runtime.ParamLocationCookie, *params.N1s)
-		if err != nil {
-			return nil, err
-		}
-
-		cookie7 := &http.Cookie{
-			Name:  "1s",
-			Value: cookieParam7,
-		}
-		req.AddCookie(cookie7)
-	}
-
 	return req, nil
 }
 
@@ -786,94 +788,98 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		return nil, err
 	}
 
-	if params.XPrimitive != nil {
-		var headerParam0 string
+	if params != nil {
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "X-Primitive", runtime.ParamLocationHeader, *params.XPrimitive)
-		if err != nil {
-			return nil, err
+		if params.XPrimitive != nil {
+			var headerParam0 string
+
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "X-Primitive", runtime.ParamLocationHeader, *params.XPrimitive)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("X-Primitive", headerParam0)
 		}
 
-		req.Header.Set("X-Primitive", headerParam0)
-	}
+		if params.XPrimitiveExploded != nil {
+			var headerParam1 string
 
-	if params.XPrimitiveExploded != nil {
-		var headerParam1 string
+			headerParam1, err = runtime.StyleParamWithLocation("simple", true, "X-Primitive-Exploded", runtime.ParamLocationHeader, *params.XPrimitiveExploded)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam1, err = runtime.StyleParamWithLocation("simple", true, "X-Primitive-Exploded", runtime.ParamLocationHeader, *params.XPrimitiveExploded)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Primitive-Exploded", headerParam1)
 		}
 
-		req.Header.Set("X-Primitive-Exploded", headerParam1)
-	}
+		if params.XArrayExploded != nil {
+			var headerParam2 string
 
-	if params.XArrayExploded != nil {
-		var headerParam2 string
+			headerParam2, err = runtime.StyleParamWithLocation("simple", true, "X-Array-Exploded", runtime.ParamLocationHeader, *params.XArrayExploded)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam2, err = runtime.StyleParamWithLocation("simple", true, "X-Array-Exploded", runtime.ParamLocationHeader, *params.XArrayExploded)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Array-Exploded", headerParam2)
 		}
 
-		req.Header.Set("X-Array-Exploded", headerParam2)
-	}
+		if params.XArray != nil {
+			var headerParam3 string
 
-	if params.XArray != nil {
-		var headerParam3 string
+			headerParam3, err = runtime.StyleParamWithLocation("simple", false, "X-Array", runtime.ParamLocationHeader, *params.XArray)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam3, err = runtime.StyleParamWithLocation("simple", false, "X-Array", runtime.ParamLocationHeader, *params.XArray)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Array", headerParam3)
 		}
 
-		req.Header.Set("X-Array", headerParam3)
-	}
+		if params.XObjectExploded != nil {
+			var headerParam4 string
 
-	if params.XObjectExploded != nil {
-		var headerParam4 string
+			headerParam4, err = runtime.StyleParamWithLocation("simple", true, "X-Object-Exploded", runtime.ParamLocationHeader, *params.XObjectExploded)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam4, err = runtime.StyleParamWithLocation("simple", true, "X-Object-Exploded", runtime.ParamLocationHeader, *params.XObjectExploded)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Object-Exploded", headerParam4)
 		}
 
-		req.Header.Set("X-Object-Exploded", headerParam4)
-	}
+		if params.XObject != nil {
+			var headerParam5 string
 
-	if params.XObject != nil {
-		var headerParam5 string
+			headerParam5, err = runtime.StyleParamWithLocation("simple", false, "X-Object", runtime.ParamLocationHeader, *params.XObject)
+			if err != nil {
+				return nil, err
+			}
 
-		headerParam5, err = runtime.StyleParamWithLocation("simple", false, "X-Object", runtime.ParamLocationHeader, *params.XObject)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Object", headerParam5)
 		}
 
-		req.Header.Set("X-Object", headerParam5)
-	}
+		if params.XComplexObject != nil {
+			var headerParam6 string
 
-	if params.XComplexObject != nil {
-		var headerParam6 string
+			var headerParamBuf6 []byte
+			headerParamBuf6, err = json.Marshal(*params.XComplexObject)
+			if err != nil {
+				return nil, err
+			}
+			headerParam6 = string(headerParamBuf6)
 
-		var headerParamBuf6 []byte
-		headerParamBuf6, err = json.Marshal(*params.XComplexObject)
-		if err != nil {
-			return nil, err
-		}
-		headerParam6 = string(headerParamBuf6)
-
-		req.Header.Set("X-Complex-Object", headerParam6)
-	}
-
-	if params.N1StartingWithNumber != nil {
-		var headerParam7 string
-
-		headerParam7, err = runtime.StyleParamWithLocation("simple", false, "1-Starting-With-Number", runtime.ParamLocationHeader, *params.N1StartingWithNumber)
-		if err != nil {
-			return nil, err
+			req.Header.Set("X-Complex-Object", headerParam6)
 		}
 
-		req.Header.Set("1-Starting-With-Number", headerParam7)
+		if params.N1StartingWithNumber != nil {
+			var headerParam7 string
+
+			headerParam7, err = runtime.StyleParamWithLocation("simple", false, "1-Starting-With-Number", runtime.ParamLocationHeader, *params.N1StartingWithNumber)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("1-Starting-With-Number", headerParam7)
+		}
+
 	}
 
 	return req, nil
@@ -1642,67 +1648,67 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetContentObject request
+	// GetContentObjectWithResponse request
 	GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error)
 
-	// GetCookie request
+	// GetCookieWithResponse request
 	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error)
 
-	// EnumParams request
+	// EnumParamsWithResponse request
 	EnumParamsWithResponse(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*EnumParamsResponse, error)
 
-	// GetHeader request
+	// GetHeaderWithResponse request
 	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error)
 
-	// GetLabelExplodeArray request
+	// GetLabelExplodeArrayWithResponse request
 	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error)
 
-	// GetLabelExplodeObject request
+	// GetLabelExplodeObjectWithResponse request
 	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error)
 
-	// GetLabelNoExplodeArray request
+	// GetLabelNoExplodeArrayWithResponse request
 	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error)
 
-	// GetLabelNoExplodeObject request
+	// GetLabelNoExplodeObjectWithResponse request
 	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error)
 
-	// GetMatrixExplodeArray request
+	// GetMatrixExplodeArrayWithResponse request
 	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error)
 
-	// GetMatrixExplodeObject request
+	// GetMatrixExplodeObjectWithResponse request
 	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error)
 
-	// GetMatrixNoExplodeArray request
+	// GetMatrixNoExplodeArrayWithResponse request
 	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error)
 
-	// GetMatrixNoExplodeObject request
+	// GetMatrixNoExplodeObjectWithResponse request
 	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error)
 
-	// GetPassThrough request
+	// GetPassThroughWithResponse request
 	GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error)
 
-	// GetDeepObject request
+	// GetDeepObjectWithResponse request
 	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error)
 
-	// GetQueryForm request
+	// GetQueryFormWithResponse request
 	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error)
 
-	// GetSimpleExplodeArray request
+	// GetSimpleExplodeArrayWithResponse request
 	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error)
 
-	// GetSimpleExplodeObject request
+	// GetSimpleExplodeObjectWithResponse request
 	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error)
 
-	// GetSimpleNoExplodeArray request
+	// GetSimpleNoExplodeArrayWithResponse request
 	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error)
 
-	// GetSimpleNoExplodeObject request
+	// GetSimpleNoExplodeObjectWithResponse request
 	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error)
 
-	// GetSimplePrimitive request
+	// GetSimplePrimitiveWithResponse request
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
 
-	// GetStartingWithNumber request
+	// GetStartingWithNumberWithResponse request
 	GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error)
 }
 
@@ -3431,16 +3437,16 @@ var swaggerSpec = []string{
 func decodeSpec() ([]byte, error) {
 	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
 	if err != nil {
-		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
 	zr, err := gzip.NewReader(bytes.NewReader(zipped))
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 	var buf bytes.Buffer
 	_, err = buf.ReadFrom(zr)
 	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %s", err)
+		return nil, fmt.Errorf("error decompressing spec: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -3458,7 +3464,7 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-	var res = make(map[string]func() ([]byte, error))
+	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
 		res[pathToFile] = rawSpec
 	}
@@ -3472,12 +3478,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-	var resolvePath = PathToRawSpec("")
+	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-		var pathToFile = url.String()
+		pathToFile := url.String()
 		pathToFile = path.Clean(pathToFile)
 		getSpec, ok := resolvePath[pathToFile]
 		if !ok {

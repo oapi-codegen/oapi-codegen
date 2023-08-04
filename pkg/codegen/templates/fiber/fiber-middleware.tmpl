@@ -23,7 +23,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   {{if .IsJson}}
   err = json.Unmarshal([]byte(c.Query("{{.ParamName}}")), &{{$varName}})
   if err != nil {
-    return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+    return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
   }
   {{end}}
   {{if .IsStyled}}
@@ -66,7 +66,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           var value {{.TypeDef}}
           err = json.Unmarshal([]byte(paramValue), &value)
           if err != nil {
-            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
 
           params.{{.GoName}} = {{if not .Required}}&{{end}}value
@@ -99,7 +99,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         {{if .IsJson}}
           err = json.Unmarshal([]byte(value), &{{.GoName}})
           if err != nil {
-            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
         {{end}}
 
@@ -139,7 +139,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
         err = json.Unmarshal([]byte(decoded), &value)
         if err != nil {
-          return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshalling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+          return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
         }
 
         params.{{.GoName}} = {{if not .Required}}&{{end}}value

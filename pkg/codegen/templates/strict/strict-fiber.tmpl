@@ -33,7 +33,7 @@ type strictHandler struct {
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "{{.ContentType}}") { {{end}}
-                {{if eq .NameTag "JSON" -}}
+                {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.BodyParser(&body); err != nil {
                         return fiber.NewError(fiber.StatusBadRequest, err.Error())
