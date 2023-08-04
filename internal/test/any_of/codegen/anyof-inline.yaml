@@ -1,0 +1,81 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: Cats, Dogs and Rats API
+  description: This API allows the client to receive information about cats, dogs and rats.
+servers:
+  - url: https://example.com/api
+security:
+  - ApiKeyAuth: []
+paths:
+  /pets:
+    get:
+      summary: Get a list of pets
+      description: This endpoint returns a list of pets. Each pet can be either a cat, dog or a rat.
+      operationId: getPets
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/Cat'
+                        - $ref: '#/components/schemas/Dog'
+                        - $ref: '#/components/schemas/Rat'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Cat:
+      type: object
+      description: This is a cat
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        purrs:
+          type: boolean
+    Dog:
+      type: object
+      description: This is a dog
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        barks:
+          type: boolean
+    Rat:
+      type: object
+      description: This is a rat
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        squeaks:
+          type: boolean
