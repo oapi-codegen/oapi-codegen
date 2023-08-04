@@ -435,5 +435,36 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 
 }
 
+func TestAnyOfInline(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models:     true,
+			EchoServer: true,
+			Client:     true,
+		},
+	}
+	spec := "test_specs/anyof-inline.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+	println(code)
+
+	// Make sure the generated code is valid:
+	checkLint(t, "test.gen.go", []byte(code))
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
