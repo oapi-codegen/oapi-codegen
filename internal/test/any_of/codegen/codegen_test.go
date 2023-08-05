@@ -24,7 +24,6 @@ func TestAnyOfInlineSchema(t *testing.T) {
 
 	// Generate code
 	code, err := codegen.Generate(swagger, opts)
-	assert.NoError(t, err)
 
 	validateGeneratedCode(t, err, code)
 }
@@ -49,6 +48,7 @@ func TestAnyOfRefSchema(t *testing.T) {
 }
 
 func validateGeneratedCode(t *testing.T, err error, code string) {
+	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
 	// Check that we have valid (formattable) code:
