@@ -1,5 +1,7 @@
 module github.com/deepmap/oapi-codegen
 
+go 1.18
+
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
 	github.com/getkin/kin-openapi v0.118.0
@@ -76,5 +78,3 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-go 1.18
