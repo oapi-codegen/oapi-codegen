@@ -1,6 +1,6 @@
 module github.com/deepmap/oapi-codegen
 
-go 1.18
+go 1.20
 
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
