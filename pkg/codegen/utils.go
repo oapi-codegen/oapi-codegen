@@ -682,7 +682,7 @@ func typeNamePrefix(name string) (prefix string) {
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	return typeNamePrefix(name) + ToCamelCase(name)
+	return typeNamePrefix(name) + ConfiguredToCamelCase(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
@@ -706,7 +706,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 // type name.
 func PathToTypeName(path []string) string {
 	for i, p := range path {
-		path[i] = ToCamelCase(p)
+		path[i] = ConfiguredToCamelCase(p)
 	}
 	return strings.Join(path, "_")
 }

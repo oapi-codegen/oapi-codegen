@@ -40,9 +40,10 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options       Configuration
-	spec          *openapi3.T
-	importMapping importMap
+	options         Configuration
+	spec            *openapi3.T
+	importMapping   importMap
+	toCamelCaseFunc func(string) string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -104,6 +105,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.options = opts
 	globalState.spec = spec
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
+	globalState.toCamelCaseFunc = ToCamelCase
+
+	if opts.OutputOptions.InitialismOverrides {
+		globalState.toCamelCaseFunc = ToCamelCaseWithInitialism
+	}
 
 	filterOperationsByTag(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
@@ -144,7 +150,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
-	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
+	ops, err := OperationDefinitions(spec)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
@@ -1093,4 +1099,8 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 
 func SetGlobalStateSpec(spec *openapi3.T) {
 	globalState.spec = spec
+}
+
+func ConfiguredToCamelCase(s string) string {
+	return globalState.toCamelCaseFunc(s)
 }
