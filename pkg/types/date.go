@@ -5,7 +5,11 @@ import (
 	"time"
 )
 
-const DateFormat = "2006-01-02"
+var DateFormat = "2006-01-02"
+
+func SetDateFormat(format string) {
+	DateFormat = format
+}
 
 type Date struct {
 	time.Time
