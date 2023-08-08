@@ -309,6 +309,18 @@ func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
 	return keys
 }
 
+// SortedParameterKeys returns sorted keys for a SecuritySchemeRef dict
+func SortedSecuritySchemeKeys(dict map[string]*openapi3.SecuritySchemeRef) []string {
+	keys := make([]string, len(dict))
+	i := 0
+	for key := range dict {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // StringInArray checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {

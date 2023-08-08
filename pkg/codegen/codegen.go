@@ -388,6 +388,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
 		}
 		allTypes = append(allTypes, bodyTypes...)
+
+		securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
+		allTypes = append(allTypes, securitySchemeTypes...)
 	}
 
 	// Go through all operations, and add their types to allTypes, so that we can
@@ -623,6 +629,29 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 			types = append(types, typeDef)
 		}
 	}
+	return types, nil
+}
+
+// GenerateTypesForSecuritySchemes generates type definitions for any custom types defined in the
+// components/securitySchemes section of the Swagger spec.
+func GenerateTypesForSecuritySchemes(t *template.Template, schemes map[string]*openapi3.SecuritySchemeRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	for _, schemeName := range SortedSecuritySchemeKeys(schemes) {
+		// Generate a type to be used as a key in context.WithValue
+		goTypeName := LowercaseFirstCharacter(SchemaNameToTypeName(schemeName)) + "ContextKey"
+		goType := Schema{
+			GoType:      "string",
+			Description: fmt.Sprintf("is the context key for %s security scheme", schemeName),
+		}
+
+		types = append(types, TypeDefinition{
+			JsonName: schemeName,
+			TypeName: goTypeName,
+			Schema:   goType,
+		})
+	}
+
 	return types, nil
 }
 
