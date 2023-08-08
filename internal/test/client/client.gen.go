@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	OpenIdScopes = "OpenId.Scopes"
+	OpenIdScopes openIdContextKey = "OpenId.Scopes"
 )
 
 // SchemaObject defines model for SchemaObject.
@@ -23,6 +23,9 @@ type SchemaObject struct {
 	FirstName string `json:"firstName"`
 	Role      string `json:"role"`
 }
+
+// openIdContextKey is the context key for OpenId security scheme
+type openIdContextKey string
 
 // PostVendorJsonApplicationVndAPIPlusJSONBody defines parameters for PostVendorJson.
 type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]interface{}
