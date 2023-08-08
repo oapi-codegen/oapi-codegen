@@ -5,7 +5,7 @@ type ServerInterfaceWrapper struct {
     ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
+type MiddlewareFunc func(http.Handler) http.Handler
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -173,9 +173,9 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     {{end}}
   {{end}}
 
-  handler := func(w http.ResponseWriter, r *http.Request) {
+  handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
-}
+  }))
 
   {{if opts.Compatibility.ApplyGorillaMiddlewareFirstToLast}}
   for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
@@ -187,7 +187,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   }
   {{end}}
 
-  handler(w, r.WithContext(ctx))
+  handler.ServeHTTP(w, r.WithContext(ctx))
 }
 {{end}}
 
