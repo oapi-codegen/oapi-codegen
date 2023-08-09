@@ -4,13 +4,15 @@
     {{$properties := .Schema.Properties -}}
     {{range .Schema.UnionElements}}
         {{$element := . -}}
-        func (t {{$typeName}}) As{{.}}() ({{.}}, error) {
+        // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
+        func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
             err := json.Unmarshal(t.union, &body)
             return body, err
         }
 
-        func (t *{{$typeName}}) From{{.}} (v {{.}}) error {
+        // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
+        func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element -}}
@@ -27,6 +29,32 @@
             {{end -}}
             b, err := json.Marshal(v)
             t.union = b
+            return err
+        }
+
+        // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
+        func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
+            {{if $discriminator -}}
+                {{range $value, $type := $discriminator.Mapping -}}
+                    {{if eq $type $element -}}
+                        {{$hasProperty := false -}}
+                        {{range $properties -}}
+                            {{if eq .GoFieldName $discriminator.PropertyName -}}
+                                t.{{$discriminator.PropertyName}} = "{{$value}}"
+                                {{$hasProperty = true -}}
+                            {{end -}}
+                        {{end -}}
+                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                    {{end -}}
+                {{end -}}
+            {{end -}}
+            b, err := json.Marshal(v)
+            if err != nil {
+              return err
+            }
+
+            merged, err := runtime.JsonMerge(t.union, b)
+            t.union = merged
             return err
         }
     {{end}}
@@ -58,6 +86,8 @@
         {{end}}
     {{end}}
 
+    {{if not .Schema.HasAdditionalProperties}}
+
     func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
         b, err := t.union.MarshalJSON()
         {{if ne 0 (len .Schema.Properties) -}}
@@ -65,15 +95,19 @@
                 return nil, err
             }
             object := make(map[string]json.RawMessage)
-            err = json.Unmarshal(b, &object)
-            if err != nil {
+            if t.union != nil {
+              err = json.Unmarshal(b, &object)
+              if err != nil {
                 return nil, err
+              }
             }
             {{range .Schema.Properties}}
+            {{if not .Required}}if t.{{.GoFieldName}} != nil { {{end}}
                 object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
                 if err != nil {
                     return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
                 }
+            {{if not .Required}} }{{end}}
             {{end -}}
             b, err = json.Marshal(object)
         {{end -}}
@@ -102,4 +136,5 @@
         {{end -}}
         return err
     }
+    {{end}}
 {{end}}

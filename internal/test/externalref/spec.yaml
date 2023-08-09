@@ -1,6 +1,6 @@
 openapi: "3.0.0"
-info: {}
-paths: {}
+info: { }
+paths: { }
 components:
   schemas:
     Container:
@@ -9,3 +9,5 @@ components:
           $ref: ./packageA/spec.yaml#/components/schemas/ObjectA
         object_b:
           $ref: ./packageB/spec.yaml#/components/schemas/ObjectB
+        object_c:
+          $ref: ./object_c.json

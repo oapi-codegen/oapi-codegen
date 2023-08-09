@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -13,7 +14,7 @@ func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
-		return mergeSchemas_V1(allOf, path)
+		return mergeSchemasV1(allOf, path)
 	}
 	return mergeSchemas(allOf, path)
 }
@@ -25,11 +26,18 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return GenerateGoSchema(allOf[0], path)
 	}
 
-	schema := *allOf[0].Value
+	schema, err := valueWithPropagatedRef(allOf[0])
+	if err != nil {
+		return Schema{}, err
+	}
 
 	for i := 1; i < n; i++ {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *allOf[i].Value)
+		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
+		if err != nil {
+			return Schema{}, err
+		}
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -37,11 +45,36 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
+// valueWithPropagatedRef returns a copy of ref schema with its Properties refs
+// updated if ref itself is external. Otherwise, return ref.Value as-is.
+func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
+		return *ref.Value, nil
+	}
+
+	pathParts := strings.Split(ref.Ref, "#")
+	if len(pathParts) < 1 || len(pathParts) > 2 {
+		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
+	}
+	remoteComponent := pathParts[0]
+
+	// remote ref
+	schema := *ref.Value
+	for _, value := range schema.Properties {
+		if len(value.Ref) > 0 && value.Ref[0] == '#' {
+			// local reference, should propagate remote
+			value.Ref = remoteComponent + value.Ref
+		}
+	}
+
+	return schema, nil
+}
+
 func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value)
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -51,7 +84,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 	if s1.Extensions != nil || s2.Extensions != nil {
 		result.Extensions = make(map[string]interface{})
@@ -179,15 +212,15 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
 	if SchemaHasAdditionalProperties(&s1) && SchemaHasAdditionalProperties(&s2) {
 		return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
 	}
-	if s1.AdditionalProperties != nil {
-		result.AdditionalProperties = s1.AdditionalProperties
+	if s1.AdditionalProperties.Schema != nil {
+		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
 	}
-	if s2.AdditionalProperties != nil {
-		result.AdditionalProperties = s2.AdditionalProperties
+	if s2.AdditionalProperties.Schema != nil {
+		result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
 	}
 
-	// Unhandled for now
-	if s1.Discriminator != nil || s2.Discriminator != nil {
+	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
+	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
 	}
 

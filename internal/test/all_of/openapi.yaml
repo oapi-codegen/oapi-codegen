@@ -38,7 +38,7 @@ components:
         properties with another Schema which only provides required fields.
       allOf:
         - $ref: "#/components/schemas/PersonProperties"
-        - required: [FirstName, LastName]
+        - required: [ FirstName, LastName ]
     PersonWithID:
       type: object
       description: |

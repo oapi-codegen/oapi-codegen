@@ -1,0 +1,16 @@
+openapi: 3.0.2
+info:
+  version: "0.0.1"
+paths:
+  /foo:
+    get:
+      responses:
+        200:
+          $ref: "#/components/responses/200"
+components:
+  responses:
+    "200":
+      headers:
+        "000-foo":
+          schema:
+            type: string

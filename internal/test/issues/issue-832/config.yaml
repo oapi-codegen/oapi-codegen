@@ -1,0 +1,5 @@
+package: issue_832
+generate:
+  models: true
+  embedded-spec: true
+output: issue.gen.go

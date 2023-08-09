@@ -1,0 +1,10 @@
+---
+package: spec_ext
+generate:
+  chi-server: true
+  strict-server: true
+  models: true
+output: gen/spec_ext/issue.gen.go
+output-options:
+  skip-prune: true
+   # skip-fmt: true

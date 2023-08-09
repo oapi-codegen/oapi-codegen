@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	withTrailingSlash string = "https://my-api.com/some-base-url/v1/"
+	withTrailingSlash = "https://my-api.com/some-base-url/v1/"
 )
 
 func TestSecurityProviders(t *testing.T) {

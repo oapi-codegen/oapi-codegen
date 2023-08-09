@@ -18,8 +18,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -34,9 +35,9 @@ const (
 	UserDataKey   = "oapi-codegen/user-data"
 )
 
-// Create validator middleware from a YAML file path
+// OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
 func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("error reading %s: %s", path, err)
 	}
@@ -49,7 +50,7 @@ func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 	return OapiRequestValidator(swagger), nil
 }
 
-// This is an gin middleware function which validates incoming HTTP requests
+// OapiRequestValidator is an gin middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400 with error message
 func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
@@ -59,17 +60,27 @@ func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
 // ErrorHandler is called when there is an error in validation
 type ErrorHandler func(c *gin.Context, message string, statusCode int)
 
+// MultiErrorHandler is called when oapi returns a MultiError type
+type MultiErrorHandler func(openapi3.MultiError) error
+
 // Options to customize request validation. These are passed through to
 // openapi3filter.
 type Options struct {
-	ErrorHandler ErrorHandler
-	Options      openapi3filter.Options
-	ParamDecoder openapi3filter.ContentParameterDecoder
-	UserData     interface{}
+	ErrorHandler      ErrorHandler
+	Options           openapi3filter.Options
+	ParamDecoder      openapi3filter.ContentParameterDecoder
+	UserData          interface{}
+	MultiErrorHandler MultiErrorHandler
+	// SilenceServersWarning allows silencing a warning for https://github.com/deepmap/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
+	SilenceServersWarning bool
 }
 
-// Create a validator from a swagger object, with validation options
+// OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.HandlerFunc {
+	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
+		log.Println("WARN: OapiRequestValidatorWithOptions called with an OpenAPI spec that has `Servers` set. This may lead to an HTTP 400 with `no matching operation was found` when sending a valid request, as the validator performs `Host` header validation. If you're expecting `Host` header validation, you can silence this warning by setting `Options.SilenceServersWarning = true`. See https://github.com/deepmap/oapi-codegen/issues/882 for more information.")
+	}
+
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
@@ -77,10 +88,18 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 	return func(c *gin.Context) {
 		err := ValidateRequestFromContext(c, router, options)
 		if err != nil {
-			if options != nil && options.ErrorHandler != nil {
-				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+			// using errors.Is did not work
+			if options != nil && options.ErrorHandler != nil && err.Error() == routers.ErrPathNotFound.Error() {
+				options.ErrorHandler(c, err.Error(), http.StatusNotFound)
 				// in case the handler didn't internally call Abort, stop the chain
 				c.Abort()
+			} else if options != nil && options.ErrorHandler != nil {
+					options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+					// in case the handler didn't internally call Abort, stop the chain
+					c.Abort()
+			} else if err.Error() == routers.ErrPathNotFound.Error() {
+				// note: i am not sure if this is the best way to handle this
+				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			} else {
 				// note: i am not sure if this is the best way to handle this
 				c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -118,16 +137,22 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 	// Pass the gin context into the request validator, so that any callbacks
 	// which it invokes make it available.
-	requestContext := context.WithValue(context.Background(), GinContextKey, c)
+	requestContext := context.WithValue(context.Background(), GinContextKey, c) //nolint:staticcheck
 
 	if options != nil {
 		validationInput.Options = &options.Options
 		validationInput.ParamDecoder = options.ParamDecoder
-		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData)
+		requestContext = context.WithValue(requestContext, UserDataKey, options.UserData) //nolint:staticcheck
 	}
 
 	err = openapi3filter.ValidateRequest(requestContext, validationInput)
 	if err != nil {
+		me := openapi3.MultiError{}
+		if errors.As(err, &me) {
+			errFunc := getMultiErrorHandlerFromOptions(options)
+			return errFunc(me)
+		}
+
 		switch e := err.(type) {
 		case *openapi3filter.RequestError:
 			// We've got a bad request
@@ -140,13 +165,13 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return fmt.Errorf("error validating request: %w", err)
 		}
 	}
 	return nil
 }
 
-// Helper function to get the echo context from within requests. It returns
+// GetGinContext gets the echo context from within requests. It returns
 // nil if not found or wrong type.
 func GetGinContext(c context.Context) *gin.Context {
 	iface := c.Value(GinContextKey)
@@ -162,4 +187,25 @@ func GetGinContext(c context.Context) *gin.Context {
 
 func GetUserData(c context.Context) interface{} {
 	return c.Value(UserDataKey)
+}
+
+// attempt to get the MultiErrorHandler from the options. If it is not set,
+// return a default handler
+func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
+	if options == nil {
+		return defaultMultiErrorHandler
+	}
+
+	if options.MultiErrorHandler == nil {
+		return defaultMultiErrorHandler
+	}
+
+	return options.MultiErrorHandler
+}
+
+// defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
+// of all of the errors. This method is called if there are no other
+// methods defined on the options.
+func defaultMultiErrorHandler(me openapi3.MultiError) error {
+	return fmt.Errorf("multiple errors encountered: %s", me)
 }

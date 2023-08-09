@@ -1,12 +1,11 @@
-package grab_import_names
+package grabimportnames
 
 import (
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 )
 
 func TestLineComments(t *testing.T) {
@@ -14,7 +13,7 @@ func TestLineComments(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "grab_import_names",
+		PackageName: "grabimportnames",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,

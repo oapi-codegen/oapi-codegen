@@ -27,7 +27,7 @@ type Schema struct {
 
 	Description string // The description of the element
 
-	UnionElements []string       // Possible elements of oneOf/anyOf union
+	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -59,7 +59,7 @@ func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
 		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
-			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
+			return fmt.Errorf("property '%s' already exists with a different type", e.JsonFieldName)
 		}
 	}
 	s.Properties = append(s.Properties, p)
@@ -76,15 +76,16 @@ func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
 }
 
 type Property struct {
-	Description    string
-	JsonFieldName  string
-	Schema         Schema
-	Required       bool
-	Nullable       bool
-	ReadOnly       bool
-	WriteOnly      bool
-	NeedsFormTag   bool
-	ExtensionProps *openapi3.ExtensionProps
+	Description   string
+	JsonFieldName string
+	Schema        Schema
+	Required      bool
+	Nullable      bool
+	ReadOnly      bool
+	WriteOnly     bool
+	NeedsFormTag  bool
+	Extensions    map[string]interface{}
+	Deprecated    bool
 }
 
 func (p Property) GoFieldName() string {
@@ -94,7 +95,9 @@ func (p Property) GoFieldName() string {
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
 	if !p.Schema.SkipOptionalPointer &&
-		(!p.Required || p.Nullable || p.ReadOnly || p.WriteOnly) {
+		(!p.Required || p.Nullable ||
+			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
+			p.WriteOnly) {
 
 		typeDef = "*" + typeDef
 	}
@@ -111,15 +114,17 @@ type EnumDefinition struct {
 	// ValueWrapper wraps the value. It's used to conditionally apply quotes
 	// around strings.
 	ValueWrapper string
-	// Conflicts is set to true when this enum conflicts with another in
-	// terms of TypeNames
-	Conflicts bool
+	// PrefixTypeName determines if the enum value is prefixed with its TypeName.
+	// This is set to true when this enum conflicts with another in terms of
+	// TypeNames or when explicitly requested via the
+	// `compatibility.always-prefix-enum-values` option.
+	PrefixTypeName bool
 }
 
 // GetValues generates enum names in a way to minimize global conflicts
 func (e *EnumDefinition) GetValues() map[string]string {
 	// in case there are no conflicts, it's safe to use the values as-is
-	if !e.Conflicts {
+	if !e.PrefixTypeName {
 		return e.Schema.EnumValues
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.
@@ -142,12 +147,13 @@ type Constants struct {
 //
 // Let's use this example schema:
 // components:
-//  schemas:
-//    Person:
-//      type: object
-//      properties:
-//      name:
-//        type: string
+//
+//	schemas:
+//	  Person:
+//	    type: object
+//	    properties:
+//	    name:
+//	      type: string
 type TypeDefinition struct {
 	// The name of the type, eg, type <...> Person
 	TypeName string
@@ -191,6 +197,23 @@ func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
 }
 
+// UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
+type UnionElement string
+
+// String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
+func (u UnionElement) String() string {
+	return string(u)
+}
+
+// Method generate union method name for template functions `As/From/Merge`.
+func (u UnionElement) Method() string {
+	var method string
+	for _, part := range strings.Split(string(u), `.`) {
+		method += UppercaseFirstCharacter(part)
+	}
+	return method
+}
+
 func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
@@ -198,7 +221,7 @@ func PropertiesEqual(a, b Property) bool {
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
-	// no items defined. Therefore we have at least valid Go-Code.
+	// no items defined. Therefore, we have at least valid Go-Code.
 	if sref == nil {
 		return Schema{GoType: "interface{}"}, nil
 	}
@@ -216,13 +239,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:         refType,
-			Description:    StringToGoComment(schema.Description),
+			Description:    schema.Description,
 			DefineViaAlias: true,
+			OAPISchema:     schema,
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: StringToGoComment(schema.Description),
+		Description: schema.Description,
 		OAPISchema:  schema,
 	}
 
@@ -239,14 +263,27 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
-	// Check for custom Go type extension
+	// Check x-go-type, which will completely override the definition of this
+	// schema with the provided type.
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
 		}
 		outSchema.GoType = typeName
+		outSchema.DefineViaAlias = true
+
 		return outSchema, nil
+	}
+
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Schema type and format, eg. string / binary
@@ -286,8 +323,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			// If additional properties are defined, we will override the default
 			// above with the specific definition.
-			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
+			if schema.AdditionalProperties.Schema != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -357,14 +394,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					description = p.Value.Description
 				}
 				prop := Property{
-					JsonFieldName:  pName,
-					Schema:         pSchema,
-					Required:       required,
-					Description:    description,
-					Nullable:       p.Value.Nullable,
-					ReadOnly:       p.Value.ReadOnly,
-					WriteOnly:      p.Value.WriteOnly,
-					ExtensionProps: &p.Value.ExtensionProps,
+					JsonFieldName: pName,
+					Schema:        pSchema,
+					Required:      required,
+					Description:   description,
+					Nullable:      p.Value.Nullable,
+					ReadOnly:      p.Value.ReadOnly,
+					WriteOnly:     p.Value.WriteOnly,
+					Extensions:    p.Value.Extensions,
+					Deprecated:    p.Value.Deprecated,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
 			}
@@ -382,6 +420,28 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
 		}
+
+		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
+		// create a type definition for the named type, and use the named type in place
+		// of this schema.
+		if extension, ok := schema.Extensions[extGoTypeName]; ok {
+			typeName, err := extTypeName(extension)
+			if err != nil {
+				return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+			}
+
+			newTypeDef := TypeDefinition{
+				TypeName: typeName,
+				Schema:   outSchema,
+			}
+			outSchema = Schema{
+				Description:     newTypeDef.Schema.Description,
+				GoType:          typeName,
+				DefineViaAlias:  true,
+				AdditionalTypes: []TypeDefinition{newTypeDef},
+			}
+		}
+
 		return outSchema, nil
 	} else if len(schema.Enum) > 0 {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
@@ -398,7 +458,17 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			enumValues[i] = fmt.Sprintf("%v", enumValue)
 		}
 
-		sanitizedValues := SanitizeEnumNames(enumValues)
+		enumNames := enumValues
+		for _, key := range []string{extEnumVarNames, extEnumNames} {
+			if _, ok := schema.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(schema.Extensions[key]); err == nil {
+					enumNames = extEnumNames
+					break
+				}
+			}
+		}
+
+		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
 		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
 
 		for k, v := range sanitizedValues {
@@ -415,7 +485,18 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
-			typeName := SchemaNameToTypeName(PathToTypeName(path))
+			// Allow overriding autogenerated enum type names, since these may
+			// cause conflicts - see https://github.com/deepmap/oapi-codegen/issues/832
+			var typeName string
+			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+				typeName, err = extString(extension)
+				if err != nil {
+					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+				}
+			} else {
+				typeName = SchemaNameToTypeName(PathToTypeName(path))
+			}
+
 			typeDef := TypeDefinition{
 				TypeName: typeName,
 				JsonName: strings.Join(path, "."),
@@ -424,7 +505,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
 			outSchema.RefType = typeName
 		}
-		// outSchema.RefType = typeName
 	} else {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		if err != nil {
@@ -491,10 +571,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "uint8"
 		} else if f == "uint" {
 			outSchema.GoType = "uint"
-		} else if f == "" {
-			outSchema.GoType = "int"
 		} else {
-			return fmt.Errorf("invalid integer format: %s", f)
+			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	case "number":
@@ -529,6 +607,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.SkipOptionalPointer = true
 		case "uuid":
 			outSchema.GoType = "openapi_types.UUID"
+		case "binary":
+			outSchema.GoType = "openapi_types.File"
 		default:
 			// All unrecognized formats are simply a regular string.
 			outSchema.GoType = "string"
@@ -555,12 +635,20 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
-// Given a list of schema descriptors, produce corresponding field names with
-// JSON annotations
+// GenFieldsFromProperties produce corresponding field names with JSON annotations,
+// given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
 	for i, p := range props {
 		field := ""
+
+		goFieldName := p.GoFieldName()
+		if _, ok := p.Extensions[extGoName]; ok {
+			if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
+				goFieldName = extGoFieldName
+			}
+		}
+
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.
@@ -568,29 +656,45 @@ func GenFieldsFromProperties(props []Property) []string {
 			if i != 0 {
 				field += "\n"
 			}
-			field += fmt.Sprintf("%s\n", StringToGoComment(p.Description))
+			field += fmt.Sprintf("%s\n", StringWithTypeNameToGoComment(p.Description, p.GoFieldName()))
 		}
 
-		goFieldName := p.GoFieldName()
-		if _, ok := p.ExtensionProps.Extensions[extGoName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.ExtensionProps.Extensions[extGoName]); err == nil {
-				goFieldName = extGoFieldName
+		if p.Deprecated {
+			// This comment has to be on its own line for godoc & IDEs to pick up
+			var deprecationReason string
+			if _, ok := p.Extensions[extDeprecationReason]; ok {
+				if extOmitEmpty, err := extParseDeprecationReason(p.Extensions[extDeprecationReason]); err == nil {
+					deprecationReason = extOmitEmpty
+				}
+			}
+
+			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
+		}
+
+		// Check x-go-type-skip-optional-pointer, which will override if the type
+		// should be a pointer or not when the field is optional.
+		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				p.Schema.SkipOptionalPointer = skipOptionalPointer
 			}
 		}
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
+		omitEmpty := !p.Nullable &&
+			(!p.Required || p.ReadOnly || p.WriteOnly) &&
+			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
 		// Support x-omitempty
-		overrideOmitEmpty := true
-		if _, ok := p.ExtensionProps.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(p.ExtensionProps.Extensions[extPropOmitEmpty]); err == nil {
-				overrideOmitEmpty = extOmitEmpty
+		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
+			if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+				omitEmpty = extOmitEmpty
 			}
 		}
 
 		fieldTags := make(map[string]string)
 
-		if (p.Required && !p.ReadOnly && !p.WriteOnly) || p.Nullable || !overrideOmitEmpty {
+		if !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
@@ -602,7 +706,15 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
-		if extension, ok := p.ExtensionProps.Extensions[extPropExtraTags]; ok {
+		// Support x-go-json-ignore
+		if _, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(p.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+				fieldTags["json"] = "-"
+			}
+		}
+
+		// Support x-oapi-codegen-extra-tags
+		if extension, ok := p.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
 				keys := SortedStringKeys(tags)
 				for _, k := range keys {
@@ -626,6 +738,9 @@ func additionalPropertiesType(schema Schema) string {
 	addPropsType := schema.AdditionalPropertiesType.GoType
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
+	}
+	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+		addPropsType = "*" + addPropsType
 	}
 	return addPropsType
 }
@@ -708,14 +823,29 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		}
 
 		if discriminator != nil {
+			if len(discriminator.Mapping) != 0 && element.Ref == "" {
+				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
+			}
+
+			// Explicit mapping.
+			var mapped bool
 			for k, v := range discriminator.Mapping {
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
+					mapped = true
 					break
 				}
 			}
+			// Implicit mapping.
+			if !mapped {
+				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
+			}
 		}
-		outSchema.UnionElements = append(outSchema.UnionElements, elementSchema.GoType)
+		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+	}
+
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+		return errors.New("discriminator: not all schemas were mapped")
 	}
 
 	return nil

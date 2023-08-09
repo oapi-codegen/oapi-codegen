@@ -17,10 +17,13 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 	"unicode"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -32,7 +35,7 @@ type ParameterDefinition struct {
 	Schema    Schema
 }
 
-// This function is here as an adapter after a large refactoring so that I don't
+// TypeDef is here as an adapter after a large refactoring so that I don't
 // have to update all the templates. It returns the type definition for a parameter,
 // without the leading '*' for optional ones.
 func (pd ParameterDefinition) TypeDef() string {
@@ -40,7 +43,7 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
-// Generate the JSON annotation to map GoType to json type name. If Parameter
+// JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
@@ -54,8 +57,11 @@ func (pd *ParameterDefinition) JsonTag() string {
 func (pd *ParameterDefinition) IsJson() bool {
 	p := pd.Spec
 	if len(p.Content) == 1 {
-		_, found := p.Content["application/json"]
-		return found
+		for k := range p.Content {
+			if util.IsMediaTypeJson(k) {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -120,8 +126,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.ExtensionProps.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.ExtensionProps.Extensions[extGoName]); err == nil {
+	if _, ok := pd.Spec.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(pd.Spec.Extensions[extGoName]); err == nil {
 			goName = extGoFieldName
 		}
 	}
@@ -143,7 +149,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 	return nil
 }
 
-// This function walks the given parameters dictionary, and generates the above
+// DescribeParameters walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
@@ -199,7 +205,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
-// This structure describes an Operation
+// OperationDefinition describes an Operation
 type OperationDefinition struct {
 	OperationId string // The operation_id description from Swagger, used to generate function names
 
@@ -211,13 +217,14 @@ type OperationDefinition struct {
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Responses           []ResponseDefinition    // The list of responses that can be accepted by handlers.
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
 }
 
-// Returns the list of all parameters except Path parameters. Path parameters
+// Params returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
@@ -225,7 +232,7 @@ func (o *OperationDefinition) Params() []ParameterDefinition {
 	return result
 }
 
-// Returns all parameters
+// AllParams returns all parameters
 func (o *OperationDefinition) AllParams() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
 	result = append(result, o.CookieParams...)
@@ -240,14 +247,14 @@ func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
 }
 
-// This is called by the template engine to determine whether to generate body
-// marshaling code on the client. This is true for all body types, whether or
-// not we generate types for them.
+// HasBody is called by the template engine to determine whether to generate body
+// marshaling code on the client. This is true for all body types, whether
+// we generate types for them.
 func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// This returns the Operations summary as a multi line comment
+// SummaryAsComment returns the Operations summary as a multi line comment
 func (o *OperationDefinition) SummaryAsComment() string {
 	if o.Summary == "" {
 		return ""
@@ -260,7 +267,7 @@ func (o *OperationDefinition) SummaryAsComment() string {
 	return strings.Join(parts, "\n")
 }
 
-// Produces a list of type definitions for a given Operation for the response
+// GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
@@ -286,8 +293,18 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					var typeName string
 					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
+
+					// HAL+JSON:
+					case StringInArray(contentTypeName, contentTypesHalJSON):
+						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
+					case "application/json" == contentTypeName:
+						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+					// Vendored JSON
+					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+						baseTypeName := fmt.Sprintf("%s%s", ToCamelCase(contentTypeName), ToCamelCase(responseName))
+
+						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
 						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
@@ -306,8 +323,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						ResponseName:    responseName,
 						ContentTypeName: contentTypeName,
 					}
-					if IsGoTypeReference(contentType.Schema.Ref) {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+					if IsGoTypeReference(responseRef.Ref) {
+						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
@@ -321,7 +338,16 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	return tds, nil
 }
 
-// This describes a request body
+func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
+	for _, body := range o.Bodies {
+		if !body.IsFixedContentType() {
+			return true
+		}
+	}
+	return false
+}
+
+// RequestBodyDefinition describes a request body
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
 	Required bool
@@ -339,9 +365,12 @@ type RequestBodyDefinition struct {
 	// Whether this is the default body type. For an operation named OpFoo, we
 	// will not add suffixes like OpFooJSONBody for this one.
 	Default bool
+
+	// Contains encoding options for formdata
+	Encoding map[string]RequestBodyEncoding
 }
 
-// Returns the Go type definition for a request body
+// TypeDef returns the Go type definition for a request body
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
 		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
@@ -349,7 +378,7 @@ func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	}
 }
 
-// Returns whether the body is a custom inline type, or pre-defined. This is
+// CustomType returns whether the body is a custom inline type, or pre-defined. This is
 // poorly named, but it's here for compatibility reasons post-refactoring
 // TODO: clean up the templates code, it can be simpler.
 func (r RequestBodyDefinition) CustomType() bool {
@@ -367,7 +396,107 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
-// This function returns the subset of the specified parameters which are of the
+// IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
+func (r RequestBodyDefinition) IsSupportedByClient() bool {
+	return r.IsJSON() || r.NameTag == "Formdata" || r.NameTag == "Text"
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r RequestBodyDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
+}
+
+// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
+func (r RequestBodyDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r RequestBodyDefinition) IsFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
+}
+
+type RequestBodyEncoding struct {
+	ContentType string
+	Style       string
+	Explode     *bool
+}
+
+type ResponseDefinition struct {
+	StatusCode  string
+	Description string
+	Contents    []ResponseContentDefinition
+	Headers     []ResponseHeaderDefinition
+	Ref         string
+}
+
+func (r ResponseDefinition) HasFixedStatusCode() bool {
+	_, err := strconv.Atoi(r.StatusCode)
+	return err == nil
+}
+
+func (r ResponseDefinition) GoName() string {
+	return SchemaNameToTypeName(r.StatusCode)
+}
+
+func (r ResponseDefinition) IsRef() bool {
+	return r.Ref != ""
+}
+
+type ResponseContentDefinition struct {
+	// This is the schema describing this content
+	Schema Schema
+
+	// This is the content type corresponding to the body, eg, application/json
+	ContentType string
+
+	// When we generate type names, we need a Tag for it, such as JSON, in
+	// which case we will produce "Response200JSONContent".
+	NameTag string
+}
+
+// TypeDef returns the Go type definition for a request body
+func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTagOrContentType()),
+		Schema:   r.Schema,
+	}
+}
+
+func (r ResponseContentDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r ResponseContentDefinition) HasFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
+}
+
+func (r ResponseContentDefinition) NameTagOrContentType() string {
+	if r.NameTag != "" {
+		return r.NameTag
+	}
+	return SchemaNameToTypeName(r.ContentType)
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r ResponseContentDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
+}
+
+type ResponseHeaderDefinition struct {
+	Name   string
+	GoName string
+	Schema Schema
+}
+
+// FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {
 	var out []ParameterDefinition
@@ -380,8 +509,15 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
+
+	var toCamelCaseFunc func(string) string
+	if initialismOverrides {
+		toCamelCaseFunc = ToCamelCaseWithInitialism
+	} else {
+		toCamelCaseFunc = ToCamelCase
+	}
 
 	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
 		pathItem := swagger.Paths[requestPath]
@@ -402,15 +538,15 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			// We rely on OperationID to generate function names, it's required
 			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+				op.OperationID, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
 			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
+				op.OperationID = toCamelCaseFunc(op.OperationID)
 			}
+			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
@@ -437,18 +573,24 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
+			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			if err != nil {
+				return nil, fmt.Errorf("error generating response definitions: %w", err)
+			}
+
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  ToCamelCase(op.OperationID),
+				OperationId:  toCamelCaseFunc(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
 				Path:            requestPath,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
+				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
 			}
 
@@ -479,8 +621,8 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
+func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
+	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -496,10 +638,10 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 		}
 	}
 
-	return ToCamelCase(operationId), nil
+	return toCamelCaseFunc(operationId), nil
 }
 
-// This function turns the Swagger body definitions into a list of our body
+// GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
 func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
@@ -510,15 +652,29 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
 
-	for contentType, content := range body.Content {
+	for _, contentType := range SortedContentKeys(body.Content) {
+		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
 
-		switch contentType {
-		case "application/json":
+		switch {
+		case contentType == "application/json":
 			tag = "JSON"
 			defaultBody = true
+		case util.IsMediaTypeJson(contentType):
+			tag = mediaTypeToCamelCase(contentType)
+		case strings.HasPrefix(contentType, "multipart/"):
+			tag = "Multipart"
+		case contentType == "application/x-www-form-urlencoded":
+			tag = "Formdata"
+		case contentType == "text/plain":
+			tag = "Text"
 		default:
+			bd := RequestBodyDefinition{
+				Required:    body.Required,
+				ContentType: contentType,
+			}
+			bodyDefinitions = append(bodyDefinitions, bd)
 			continue
 		}
 
@@ -529,11 +685,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		// If the body is a pre-defined type
-		if IsGoTypeReference(bodyOrRef.Ref) {
+		if content.Schema != nil && IsGoTypeReference(content.Schema.Ref) {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(bodyOrRef.Ref)
+			refType, err := RefPathToGoType(content.Schema.Ref)
 			if err != nil {
-				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", bodyOrRef.Ref, err)
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.Ref, err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -542,6 +698,17 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
+			if contentType == "application/x-www-form-urlencoded" {
+				// Apply the appropriate structure tag if the request
+				// schema was defined under the operations' section.
+				for i := range bodySchema.Properties {
+					bodySchema.Properties[i].NeedsFormTag = true
+				}
+
+				// Regenerate the Golang struct adding the new form tag.
+				bodySchema.GoType = GenStructFromSchema(bodySchema)
+			}
+
 			td := TypeDefinition{
 				TypeName: bodyTypeName,
 				Schema:   bodySchema,
@@ -558,9 +725,110 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			ContentType: contentType,
 			Default:     defaultBody,
 		}
+
+		if len(content.Encoding) != 0 {
+			bd.Encoding = make(map[string]RequestBodyEncoding)
+			for k, v := range content.Encoding {
+				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
+				bd.Encoding[k] = encoding
+			}
+		}
+
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
+	sort.Slice(bodyDefinitions, func(i, j int) bool {
+		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	})
 	return bodyDefinitions, typeDefinitions, nil
+}
+
+func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
+	var responseDefinitions []ResponseDefinition
+	// do not let multiple status codes ref to same response, it will break the type switch
+	refSet := make(map[string]struct{})
+
+	for _, statusCode := range SortedResponsesKeys(responses) {
+		responseOrRef := responses[statusCode]
+		if responseOrRef == nil {
+			continue
+		}
+		response := responseOrRef.Value
+
+		var responseContentDefinitions []ResponseContentDefinition
+
+		for _, contentType := range SortedContentKeys(response.Content) {
+			content := response.Content[contentType]
+			var tag string
+			switch {
+			case contentType == "application/json":
+				tag = "JSON"
+			case util.IsMediaTypeJson(contentType):
+				tag = mediaTypeToCamelCase(contentType)
+			case contentType == "application/x-www-form-urlencoded":
+				tag = "Formdata"
+			case strings.HasPrefix(contentType, "multipart/"):
+				tag = "Multipart"
+			case contentType == "text/plain":
+				tag = "Text"
+			default:
+				rcd := ResponseContentDefinition{
+					ContentType: contentType,
+				}
+				responseContentDefinitions = append(responseContentDefinitions, rcd)
+				continue
+			}
+
+			responseTypeName := operationID + statusCode + tag + "Response"
+			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
+			if err != nil {
+				return nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			rcd := ResponseContentDefinition{
+				ContentType: contentType,
+				NameTag:     tag,
+				Schema:      contentSchema,
+			}
+			responseContentDefinitions = append(responseContentDefinitions, rcd)
+		}
+
+		var responseHeaderDefinitions []ResponseHeaderDefinition
+		for _, headerName := range SortedHeadersKeys(response.Headers) {
+			header := response.Headers[headerName]
+			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
+			if err != nil {
+				return nil, fmt.Errorf("error generating response header definition: %w", err)
+			}
+			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
+			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
+		}
+
+		rd := ResponseDefinition{
+			StatusCode: statusCode,
+			Contents:   responseContentDefinitions,
+			Headers:    responseHeaderDefinitions,
+		}
+		if response.Description != nil {
+			rd.Description = *response.Description
+		}
+		if IsGoTypeReference(responseOrRef.Ref) {
+			// Convert the reference path to Go type
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+			}
+			// Check if this ref is already used by another response definition. If not use the ref
+			// If we let multiple response definitions alias to same response it will break the type switch
+			// so only the first response will use the ref, other will generate new structs
+			if _, ok := refSet[refType]; !ok {
+				rd.Ref = refType
+				refSet[refType] = struct{}{}
+			}
+		}
+		responseDefinitions = append(responseDefinitions, rd)
+	}
+
+	return responseDefinitions, nil
 }
 
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
@@ -605,12 +873,12 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			})
 		}
 		prop := Property{
-			Description:    param.Spec.Description,
-			JsonFieldName:  param.ParamName,
-			Required:       param.Required,
-			Schema:         pSchema,
-			NeedsFormTag:   param.Style() == "form",
-			ExtensionProps: &param.Spec.ExtensionProps,
+			Description:   param.Spec.Description,
+			JsonFieldName: param.ParamName,
+			Required:      param.Required,
+			Schema:        pSchema,
+			NeedsFormTag:  param.Style() == "form",
+			Extensions:    param.Spec.Extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
@@ -665,37 +933,67 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
-// GenerateChiServer This function generates all the go code for the ServerInterface as well as
+// GenerateChiServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
-// GenerateEchoServer This function generates all the go code for the ServerInterface as well as
+// GenerateFiberServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+}
+
+// GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
-// GenerateGinServer This function generates all the go code for the ServerInterface as well as
+// GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
-// GenerateGinServer This function generates all the go code for the ServerInterface as well as
+// GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
 }
 
-// Uses the template engine to generate the function which registers our wrappers
+func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+
+	var templates []string
+
+	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
+	}
+	if opts.Generate.EchoServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl")
+	}
+	if opts.Generate.GinServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl")
+	}
+	if opts.Generate.FiberServer {
+		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+
+	return GenerateTemplates(templates, t, operations)
+}
+
+func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
+	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
+}
+
+// GenerateClient uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
-// This generates a client which extends the basic client which does response
+// GenerateClientWithResponses generates a client which extends the basic client which does response
 // unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)

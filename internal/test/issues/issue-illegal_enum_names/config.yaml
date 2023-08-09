@@ -1,4 +1,4 @@
-package: illegal_enum_names
+package: illegalenumnames
 generate:
   echo-server: true
   client: true

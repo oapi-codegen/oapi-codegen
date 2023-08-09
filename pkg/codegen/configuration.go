@@ -23,9 +23,11 @@ type Configuration struct {
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
 	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
+	FiberServer   bool `yaml:"fiber-server,omitempty"`   // FiberServer specifies whether to generate fiber server boilerplate
 	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
-	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate echo server boilerplate
+	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate gin server boilerplate
 	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
+	Strict        bool `yaml:"strict-server,omitempty"`  // Strict specifies whether to generate strict server wrapper
 	Client        bool `yaml:"client,omitempty"`         // Client specifies whether to generate client boilerplate
 	Models        bool `yaml:"models,omitempty"`         // Models specifies whether to generate type definitions
 	EmbeddedSpec  bool `yaml:"embedded-spec,omitempty"`  // Whether to embed the swagger spec in the generated code
@@ -56,6 +58,23 @@ type CompatibilityOptions struct {
 	// When an object contains no members, and only an additionalProperties specification,
 	// it is flattened to a map. Set
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
+	// When an object property is both required and readOnly the go model is generated
+	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/604
+	DisableRequiredReadOnlyAsPointer bool `yaml:"disable-required-readonly-as-pointer,omitempty"`
+	// When set to true, always prefix enum values with their type name instead of only
+	// when typenames would be conflicting.
+	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
+	// Our generated code for Chi has historically inverted the order in which Chi middleware is
+	// applied such that the last invoked middleware ends up executing first in the Chi chain
+	// This resolves the behavior such that middlewares are chained in the order they are invoked.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/786
+	ApplyChiMiddlewareFirstToLast bool `yaml:"apply-chi-middleware-first-to-last,omitempty"`
+	// Our generated code for gorilla/mux has historically inverted the order in which gorilla/mux middleware is
+	// applied such that the last invoked middleware ends up executing first in the middlewares chain
+	// This resolves the behavior such that middlewares are chained in the order they are invoked.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/841
+	ApplyGorillaMiddlewareFirstToLast bool `yaml:"apply-gorilla-middleware-first-to-last,omitempty"`
 }
 
 // OutputOptions are used to modify the output code in some way.
@@ -66,8 +85,10 @@ type OutputOptions struct {
 	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`   // Exclude operations that have one of these tags. Ignored when empty.
 	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
 
-	ExcludeSchemas     []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
-	ResponseTypeSuffix string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	ExcludeSchemas      []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
+	ResponseTypeSuffix  string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
+	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
+	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
@@ -91,6 +112,9 @@ func (o Configuration) Validate() error {
 	// Only one server type should be specified at a time.
 	nServers := 0
 	if o.Generate.ChiServer {
+		nServers++
+	}
+	if o.Generate.FiberServer {
 		nServers++
 	}
 	if o.Generate.EchoServer {

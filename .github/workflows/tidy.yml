@@ -1,0 +1,20 @@
+name: Ensure `go mod tidy` has been run
+on: [ push, pull_request ]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install `tidied`
+        run: go install gitlab.com/jamietanna/tidied@latest
+
+      - name: Check for no untracked files
+        run: tidied -verbose

@@ -1,13 +1,12 @@
-package issue_52
+package issue52
 
 import (
 	_ "embed"
 	"testing"
 
+	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 )
 
 //go:embed spec.yaml
@@ -18,7 +17,7 @@ func TestIssue(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "issue_52",
+		PackageName: "issue52",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
