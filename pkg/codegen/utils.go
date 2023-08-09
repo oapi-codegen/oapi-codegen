@@ -201,6 +201,10 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 
 	for key, v := range dict {
 		keys[i], orders[key] = key, int64(len(dict))
+	orders := make(map[string]int64, len(dict))
+
+	for key, v := range dict {
+		keys[i], orders[key] = key, int64(len(dict))
 		i++
 
 		if v == nil || v.Value == nil {
