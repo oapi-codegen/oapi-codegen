@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/lint"
 
 	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
 	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
