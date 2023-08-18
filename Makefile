@@ -19,7 +19,7 @@ lint: tools
 	$(GOBIN)/golangci-lint run ./...
 
 lint-ci: tools
-	$(GOBIN)/golangci-lint run ./... --out-format=github-actions
+	$(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m
 
 generate:
 	go generate ./...
