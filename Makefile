@@ -18,6 +18,9 @@ tools: $(GOBIN)/golangci-lint
 lint: tools
 	$(GOBIN)/golangci-lint run ./...
 
+lint-ci: tools
+	$(GOBIN)/golangci-lint run ./... --out-format=github-actions
+
 generate:
 	go generate ./...
 
