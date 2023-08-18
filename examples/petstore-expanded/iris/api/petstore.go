@@ -45,7 +45,7 @@ func sendPetStoreError(c iris.Context, code int, message string) {
 		Code:    int32(code),
 		Message: message,
 	}
-	c.StopWithJSON(code, petErr)
+	_ = c.StopWithJSON(code, petErr)
 }
 
 // FindPets implements all the handlers in the ServerInterface
@@ -76,7 +76,7 @@ func (p *PetStore) FindPets(c iris.Context, params FindPetsParams) {
 			}
 		}
 	}
-	c.StopWithJSON(http.StatusOK, result)
+	_ = c.StopWithJSON(http.StatusOK, result)
 }
 
 func (p *PetStore) AddPet(c iris.Context) {
@@ -104,7 +104,7 @@ func (p *PetStore) AddPet(c iris.Context) {
 	p.Pets[pet.Id] = pet
 
 	// Now, we have to return the NewPet
-	c.StopWithJSON(http.StatusCreated, pet)
+	_ = c.StopWithJSON(http.StatusCreated, pet)
 }
 
 func (p *PetStore) FindPetByID(c iris.Context, petId int64) {
@@ -116,7 +116,7 @@ func (p *PetStore) FindPetByID(c iris.Context, petId int64) {
 		sendPetStoreError(c, http.StatusNotFound, fmt.Sprintf("Could not find pet with ID %d", petId))
 		return
 	}
-	c.StopWithJSON(http.StatusOK, pet)
+	_ = c.StopWithJSON(http.StatusOK, pet)
 }
 
 func (p *PetStore) DeletePet(c iris.Context, id int64) {
