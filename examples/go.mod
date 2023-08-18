@@ -12,12 +12,15 @@ replace github.com/deepmap/oapi-codegen/pkg/fiber-middleware => ../pkg/fiber-mid
 
 replace github.com/deepmap/oapi-codegen/pkg/gin-middleware => ../pkg/gin-middleware
 
+replace github.com/deepmap/oapi-codegen/pkg/runtime => ../pkg/runtime
+
 require (
 	github.com/deepmap/oapi-codegen v0.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/pkg/chi-middleware v0.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/pkg/fiber-middleware v0.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/pkg/gin-middleware v0.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/pkg/middleware v0.0.0-00010101000000-000000000000
+	github.com/deepmap/oapi-codegen/pkg/runtime v0.0.0-00010101000000-000000000000
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi/v5 v5.0.10
