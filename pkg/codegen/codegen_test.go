@@ -375,6 +375,10 @@ func TestGoTypeImport(t *testing.T) {
 }
 
 func TestRemoteExternalReference(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping test that interacts with the network")
+	}
+
 	packageName := "api"
 	opts := Configuration{
 		PackageName: packageName,
