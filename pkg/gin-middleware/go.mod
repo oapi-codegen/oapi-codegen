@@ -4,8 +4,10 @@ go 1.20
 
 replace github.com/deepmap/oapi-codegen => ../../
 
+replace github.com/deepmap/oapi-codegen/pkg/testutil => ../../pkg/testutil
+
 require (
-	github.com/deepmap/oapi-codegen v0.0.0-00010101000000-000000000000
+	github.com/deepmap/oapi-codegen/pkg/testutil v0.0.0-00010101000000-000000000000
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/stretchr/testify v1.8.4
@@ -41,6 +43,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.9 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
