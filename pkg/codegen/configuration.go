@@ -75,6 +75,11 @@ type CompatibilityOptions struct {
 	// This resolves the behavior such that middlewares are chained in the order they are invoked.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/841
 	ApplyGorillaMiddlewareFirstToLast bool `yaml:"apply-gorilla-middleware-first-to-last,omitempty"`
+	// CircularReferenceLimit allows controlling the limit for circular reference checking.
+	// In some OpenAPI specifications, we have a higher number of circular
+	// references than is allowed out-of-the-box, but can be tuned to allow
+	// traversing them.
+	CircularReferenceLimit int `yaml:"circular-reference-limit"`
 }
 
 // OutputOptions are used to modify the output code in some way.
