@@ -24,6 +24,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"reflect"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -109,6 +110,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
+	fixExternalRefPropagation(spec)
 	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(spec)
 	}
@@ -1159,4 +1161,59 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 
 func SetGlobalStateSpec(spec *openapi3.T) {
 	globalState.spec = spec
+}
+
+func fixExternalRefPropagation(doc *openapi3.T) {
+	visited := make(map[interface{}]struct{})
+	fixExternalRefPropagationCore(reflect.ValueOf(doc), visited, "")
+}
+
+func fixExternalRefPropagationCore(vObj reflect.Value, visited map[interface{}]struct{}, curUri string) {
+	if !vObj.IsValid() {
+		return
+	}
+
+	switch vObj.Kind() {
+	case reflect.Pointer:
+		if !vObj.IsNil() && vObj.Elem().Kind() == reflect.Struct && vObj.CanInterface() {
+			iObj := vObj.Interface()
+			if _, exist := visited[iObj]; exist {
+				return
+			}
+			visited[iObj] = struct{}{}
+		}
+		fallthrough
+	case reflect.Interface:
+		fixExternalRefPropagationCore(vObj.Elem(), visited, curUri)
+	case reflect.Map:
+		iter := vObj.MapRange()
+		for iter.Next() {
+			fixExternalRefPropagationCore(iter.Value(), visited, curUri)
+		}
+	case reflect.Slice:
+		for i := 0; i < vObj.Len(); i++ {
+			fixExternalRefPropagationCore(vObj.Index(i), visited, curUri)
+		}
+	case reflect.Struct:
+		vRef := vObj.FieldByName("Ref")
+		vValue := vObj.FieldByName("Value")
+		if vRef.IsValid() && (vValue.IsValid() || vObj.Type() == reflect.TypeOf(openapi3.PathItem{})) {
+			ref := vRef.String()
+			if ref != "" {
+				split := strings.SplitN(ref, "#", 2)
+				if len(split) == 2 {
+					if split[0] != "" {
+						curUri = split[0]
+					} else {
+						vRef.SetString(curUri + "#" + split[1])
+					}
+				} else {
+					curUri = split[0]
+				}
+			}
+		}
+		for i := 0; i < vObj.NumField(); i++ {
+			fixExternalRefPropagationCore(vObj.Field(i), visited, curUri)
+		}
+	}
 }
