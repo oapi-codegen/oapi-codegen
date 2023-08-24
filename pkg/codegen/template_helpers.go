@@ -243,7 +243,6 @@ func genResponseTypeName(operationID string) string {
 }
 
 func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
-	fmt.Printf("op: %v\n", op)
 	td, err := op.GetResponseTypeDefinitions()
 	if err != nil {
 		panic(err)
