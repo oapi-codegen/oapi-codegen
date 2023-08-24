@@ -54,8 +54,10 @@ func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error 
 
 	_ = walkRequestBodyRef(op.RequestBody, doFn)
 
-	for _, response := range op.Responses.Codes {
-		_ = walkResponseRef(response, doFn)
+	if op.Responses != nil {
+		for _, response := range op.Responses.Codes {
+			_ = walkResponseRef(response, doFn)
+		}
 	}
 
 	for _, callback := range op.Callbacks {
@@ -110,6 +112,25 @@ func walkComponents(components *v3.Components, doFn func(RefWrapper) (bool, erro
 	return nil
 }
 
+func walkDynamicValue(ref *base.DynamicValue[*base.SchemaProxy, bool], doFn func(RefWrapper) (bool, error)) error {
+	// Not a valid ref, ignore it and continue
+	if ref == nil {
+		return nil
+	}
+
+	if ref.IsB() {
+		// TODO jvt
+		return nil
+	}
+
+	return walkSchemaRef(ref.A, doFn)
+}
+
+func walkAdditionalProperties(additionalProperties any, doFn func(RefWrapper) (bool, error)) error {
+	// TODO jvt
+	return nil
+}
+
 func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
@@ -148,12 +169,12 @@ func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) e
 	}
 
 	_ = walkSchemaRef(schema.Not, doFn)
-	// _ = walkSchemaRef(schema.Items, doFn) // TODO JVT
+	_ = walkDynamicValue(schema.Items, doFn)
 	for _, ref := range schema.Properties {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	// _ = walkSchemaRef(schema.AdditionalProperties.Schema, doFn) // TODO JVT
+	_ = walkAdditionalProperties(schema.AdditionalProperties, doFn)
 
 	return nil
 }

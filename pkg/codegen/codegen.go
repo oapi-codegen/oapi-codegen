@@ -894,10 +894,11 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 func OperationSchemaImports(s *Schema) (map[string]goImport, error) {
 	res := map[string]goImport{}
 
-	for _, p := range s.Properties {
+	for _, _ = range s.Properties {
 		// imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: p.Schema.OAPISchema}) // TODO
-		fmt.Printf("TODO p: %v\n", p)
-		imprts, err := GoSchemaImports(nil) // TODO
+		// fmt.Printf("TODO p: %v\n", p)       // TODO jvt
+		imprts, err := GoSchemaImports(nil) // TODO jvt
+		// imprts, err := GoSchemaImports(base.CreateSchemaProxy(&p.Schema))
 		if err != nil {
 			return nil, err
 		}
