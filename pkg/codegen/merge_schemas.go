@@ -42,8 +42,7 @@ func mergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-	// return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path) // TODO jvt
-	return GenerateGoSchema(nil, path) // TODO jvt
+	return GenerateGoSchema(base.CreateSchemaProxy(&schema), path) // TODO jvt
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
@@ -180,27 +179,33 @@ func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
 	}
 	result.UniqueItems = s1.UniqueItems
 
-	if s1.ExclusiveMinimum.IsB() {
-		return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-	}
-	if s2.ExclusiveMinimum.IsB() {
-		return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-	}
-	if s1.ExclusiveMinimum.A != s2.ExclusiveMinimum.A {
-		return base.Schema{}, errors.New("merging two schemas with different ExclusiveMinimum")
-	}
-	result.ExclusiveMinimum = s1.ExclusiveMinimum
+	fmt.Printf("s1: %v\n", s1)
 
-	if s1.ExclusiveMaximum.IsB() {
-		return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+	if s1.ExclusiveMinimum != nil {
+		if s1.ExclusiveMinimum.IsB() {
+			return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+		}
+		if s2.ExclusiveMinimum.IsB() {
+			return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+		}
+		if s1.ExclusiveMinimum.A != s2.ExclusiveMinimum.A {
+			return base.Schema{}, errors.New("merging two schemas with different ExclusiveMinimum")
+		}
+		result.ExclusiveMinimum = s1.ExclusiveMinimum
 	}
-	if s2.ExclusiveMaximum.IsB() {
-		return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+
+	if s1.ExclusiveMaximum != nil {
+		if s1.ExclusiveMaximum.IsB() {
+			return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+		}
+		if s2.ExclusiveMaximum.IsB() {
+			return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
+		}
+		if s1.ExclusiveMaximum.A != s2.ExclusiveMaximum.A {
+			return base.Schema{}, errors.New("merging two schemas with different ExclusiveMaximum")
+		}
+		result.ExclusiveMaximum = s1.ExclusiveMaximum
 	}
-	if s1.ExclusiveMaximum.A != s2.ExclusiveMaximum.A {
-		return base.Schema{}, errors.New("merging two schemas with different ExclusiveMaximum")
-	}
-	result.ExclusiveMaximum = s1.ExclusiveMaximum
 
 	if s1.Nullable != s2.Nullable {
 		return base.Schema{}, errors.New("merging two schemas with different Nullable")

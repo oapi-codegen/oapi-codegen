@@ -234,7 +234,7 @@ func GenerateGoSchema(sref *base.SchemaProxy, path []string) (Schema, error) {
 
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
-	if IsGoTypeReference(sref.GetReference()) {
+	if sref.IsReference() && IsGoTypeReference(sref.GetReference()) {
 		// Convert the reference path to Go type
 		refType, err := RefPathToGoType(sref.GetReference())
 		if err != nil {
