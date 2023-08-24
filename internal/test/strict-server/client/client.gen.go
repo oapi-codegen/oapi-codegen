@@ -142,15 +142,15 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// JSONExample request with any body
+	// JSONExampleWithBody request with any body
 	JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	JSONExample(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipartExample request with any body
+	// MultipartExampleWithBody request with any body
 	MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipleRequestAndResponseTypes request with any body
+	// MultipleRequestAndResponseTypesWithBody request with any body
 	MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	MultipleRequestAndResponseTypes(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -162,33 +162,33 @@ type ClientInterface interface {
 	// ReservedGoKeywordParameters request
 	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ReusableResponses request with any body
+	// ReusableResponsesWithBody request with any body
 	ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TextExample request with any body
+	// TextExampleWithBody request with any body
 	TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	TextExampleWithTextBody(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnknownExample request with any body
+	// UnknownExampleWithBody request with any body
 	UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnspecifiedContentType request with any body
+	// UnspecifiedContentTypeWithBody request with any body
 	UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// URLEncodedExample request with any body
+	// URLEncodedExampleWithBody request with any body
 	URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// HeadersExample request with any body
+	// HeadersExampleWithBody request with any body
 	HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnionExample request with any body
+	// UnionExampleWithBody request with any body
 	UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -916,15 +916,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// JSONExample request with any body
+	// JSONExampleWithBodyWithResponse request with any body
 	JSONExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error)
 
 	JSONExampleWithResponse(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error)
 
-	// MultipartExample request with any body
+	// MultipartExampleWithBodyWithResponse request with any body
 	MultipartExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartExampleResponse, error)
 
-	// MultipleRequestAndResponseTypes request with any body
+	// MultipleRequestAndResponseTypesWithBodyWithResponse request with any body
 	MultipleRequestAndResponseTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
 	MultipleRequestAndResponseTypesWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
@@ -933,36 +933,36 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
-	// ReservedGoKeywordParameters request
+	// ReservedGoKeywordParametersWithResponse request
 	ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error)
 
-	// ReusableResponses request with any body
+	// ReusableResponsesWithBodyWithResponse request with any body
 	ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
-	// TextExample request with any body
+	// TextExampleWithBodyWithResponse request with any body
 	TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
 	TextExampleWithTextBodyWithResponse(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
-	// UnknownExample request with any body
+	// UnknownExampleWithBodyWithResponse request with any body
 	UnknownExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnknownExampleResponse, error)
 
-	// UnspecifiedContentType request with any body
+	// UnspecifiedContentTypeWithBodyWithResponse request with any body
 	UnspecifiedContentTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnspecifiedContentTypeResponse, error)
 
-	// URLEncodedExample request with any body
+	// URLEncodedExampleWithBodyWithResponse request with any body
 	URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
 	URLEncodedExampleWithFormdataBodyWithResponse(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
-	// HeadersExample request with any body
+	// HeadersExampleWithBodyWithResponse request with any body
 	HeadersExampleWithBodyWithResponse(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
 
 	HeadersExampleWithResponse(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
 
-	// UnionExample request with any body
+	// UnionExampleWithBodyWithResponse request with any body
 	UnionExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
 
 	UnionExampleWithResponse(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
@@ -1057,7 +1057,7 @@ func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 type ReusableResponsesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	JSON200      *Reusableresponse
 }
 
 // Status returns HTTPResponse.Status
@@ -1183,9 +1183,10 @@ func (r HeadersExampleResponse) StatusCode() int {
 }
 
 type UnionExampleResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
+	Body                          []byte
+	HTTPResponse                  *http.Response
+	ApplicationalternativeJSON200 *Example
+	JSON200                       *struct {
 		union json.RawMessage
 	}
 }
@@ -1479,7 +1480,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Example
+		var dest Reusableresponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

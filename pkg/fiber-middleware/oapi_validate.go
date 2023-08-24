@@ -149,7 +149,7 @@ func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Op
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
-			return fmt.Errorf("error validating request: %s", err)
+			return fmt.Errorf("error validating request: %w", err)
 		}
 	}
 	return nil

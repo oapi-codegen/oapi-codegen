@@ -179,6 +179,17 @@ func replaceInitialism(s string) string {
 	})
 }
 
+// mediaTypeToCamelCase converts a media type to a PascalCase representation
+func mediaTypeToCamelCase(s string) string {
+	// ToCamelCase doesn't - and won't - add `/` to the characters it'll allow word boundary
+	s = strings.Replace(s, "/", "_", 1)
+	// including a _ to make sure that these are treated as word boundaries by `ToCamelCase`
+	s = strings.Replace(s, "*", "Wildcard_", 1)
+	s = strings.Replace(s, "+", "Plus_", 1)
+
+	return ToCamelCaseWithInitialism(s)
+}
+
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
@@ -841,6 +852,9 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
 func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+	if spec.Components == nil {
+		return "", nil
+	}
 	pathElements := strings.Split(refPath, "/")
 	// All local references will have 4 path elements.
 	if len(pathElements) != 4 {

@@ -26,7 +26,7 @@ func NewPetStore() *PetStore {
 	}
 }
 
-// This function wraps sending of an error in the Error format, and
+// sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 	petErr := Error{
@@ -89,7 +89,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet

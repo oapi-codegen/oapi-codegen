@@ -269,7 +269,7 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
-		err = os.WriteFile(opts.OutputFile, []byte(code), 0644)
+		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)
 		}
@@ -279,7 +279,7 @@ func main() {
 }
 
 func loadTemplateOverrides(templatesDir string) (map[string]string, error) {
-	var templates = make(map[string]string)
+	templates := make(map[string]string)
 
 	if templatesDir == "" {
 		return templates, nil
