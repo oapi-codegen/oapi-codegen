@@ -179,8 +179,6 @@ func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
 	}
 	result.UniqueItems = s1.UniqueItems
 
-	fmt.Printf("s1: %v\n", s1)
-
 	if s1.ExclusiveMinimum != nil {
 		if s1.ExclusiveMinimum.IsB() {
 			return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
