@@ -197,13 +197,12 @@ type SecurityDefinition struct {
 func DescribeSecurityDefinition(securityRequirements []*base.SecurityRequirement) []SecurityDefinition {
 	outDefs := make([]SecurityDefinition, 0)
 
-	// TODO jvt
-	// for _, sr := range securityRequirements {
-	// 	for _, k := range SortedSecurityRequirementKeys(sr) {
-	// 		v := sr[k]
-	// 		outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
-	// 	}
-	// }
+	for _, sr := range securityRequirements {
+		for _, k := range SortedSecurityRequirementKeys(sr.Requirements) {
+			v := sr.Requirements[k]
+			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
+		}
+	}
 
 	return outDefs
 }

@@ -289,7 +289,7 @@ func SortedRequestBodyKeys(dict map[string]*v3.RequestBody) []string {
 	return keys
 }
 
-func SortedSecurityRequirementKeys(sr map[string]*v3.SecurityScheme) []string {
+func SortedSecurityRequirementKeys(sr map[string][]string) []string {
 	keys := make([]string, len(sr))
 	i := 0
 	for key := range sr {

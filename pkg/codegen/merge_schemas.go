@@ -42,7 +42,7 @@ func mergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-	return GenerateGoSchema(base.CreateSchemaProxy(&schema), path) // TODO jvt
+	return GenerateGoSchema(base.CreateSchemaProxy(&schema), path)
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
