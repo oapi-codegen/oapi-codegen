@@ -1595,7 +1595,14 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/alternative+json" && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationalternativeJSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest struct {
 			union json.RawMessage
 		}

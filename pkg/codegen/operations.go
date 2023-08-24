@@ -281,6 +281,13 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
+			jsonCount := 0
+			for mediaType := range responseRef.Value.Content {
+				if util.IsMediaTypeJson(mediaType) {
+					jsonCount++
+				}
+			}
+
 			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
@@ -327,6 +334,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
+						}
+						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
+							refType += mediaTypeToCamelCase(contentTypeName)
 						}
 						td.Schema.RefType = refType
 					}

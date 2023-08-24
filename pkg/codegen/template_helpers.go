@@ -144,6 +144,13 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
 		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		jsonCount := 0
+		for _, contentTypeName := range sortedContentKeys {
+			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+				jsonCount++
+			}
+		}
+
 		for _, contentTypeName := range sortedContentKeys {
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
@@ -166,8 +173,13 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 						typeDefinition.Schema.TypeDecl(),
 						typeDefinition.TypeName)
 
-					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-					handledCaseClauses[caseKey] = caseClause
+					if jsonCount > 1 {
+						caseKey, caseClause := buildUnmarshalCaseStrict(typeDefinition, caseAction, contentTypeName)
+						handledCaseClauses[caseKey] = caseClause
+					} else {
+						caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+						handledCaseClauses[caseKey] = caseClause
+					}
 				}
 
 			// YAML:
@@ -234,6 +246,13 @@ func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", echo.HeaderContentType, contentType, caseClauseKey, caseAction)
+	return caseKey, caseClause
+}
+
+func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
+	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", echo.HeaderContentType, contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 

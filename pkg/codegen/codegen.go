@@ -544,6 +544,14 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
+
+		jsonCount := 0
+		for mediaType := range response.Content {
+			if util.IsMediaTypeJson(mediaType) {
+				jsonCount++
+			}
+		}
+
 		for mediaType, response := range response.Content {
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
@@ -572,6 +580,10 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
+			}
+
+			if jsonCount > 1 {
+				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
 			}
 
 			types = append(types, typeDef)
