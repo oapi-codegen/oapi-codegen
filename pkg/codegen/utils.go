@@ -793,7 +793,7 @@ func renameSchema(schemaName string, schemaRef *base.SchemaProxy) (string, error
 // renameParameter generates the name for a parameter, taking x-go-name into
 // account
 func renameParameter(parameterName string, parameterRef *v3.Parameter) (string, error) {
-	if parameterRef.Schema.GetReference() != "" {
+	if parameterRef.Schema != nil && parameterRef.Schema.IsReference() && parameterRef.Schema.GetReference() != "" { // TODO jvt is this the right logic?
 		return SchemaNameToTypeName(parameterName), nil
 	}
 

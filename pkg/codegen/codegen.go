@@ -504,14 +504,15 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*v3.Para
 			TypeName: goTypeName,
 		}
 
-		ref := paramOrRef.Schema.GetReference()
-		if ref != "" {
-			// Generate a reference type for referenced parameters
-			refType, err := RefPathToGoType(ref)
-			if err != nil {
-				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", ref, paramName, err)
+		if paramOrRef.Schema != nil {
+			if ref := paramOrRef.Schema.GetReference(); ref != "" {
+				// Generate a reference type for referenced parameters
+				refType, err := RefPathToGoType(ref)
+				if err != nil {
+					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", ref, paramName, err)
+				}
+				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
-			typeDef.TypeName = SchemaNameToTypeName(refType)
 		}
 
 		types = append(types, typeDef)

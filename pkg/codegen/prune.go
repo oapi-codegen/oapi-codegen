@@ -127,6 +127,7 @@ func walkDynamicValue(ref *base.DynamicValue[*base.SchemaProxy, bool], doFn func
 }
 
 func walkAdditionalProperties(additionalProperties any, doFn func(RefWrapper) (bool, error)) error {
+	fmt.Printf("additionalProperties: %v\n", additionalProperties)
 	// TODO jvt
 	return nil
 }

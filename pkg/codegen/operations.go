@@ -277,6 +277,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	var tds []ResponseTypeDefinition
 
 	responses := o.Spec.Responses
+	if responses == nil {
+		return nil, nil
+	}
+
 	sortedResponsesKeys := SortedResponsesKeys(responses.Codes)
 	for _, responseName := range sortedResponsesKeys {
 		responseRef := responses.Codes[responseName]
