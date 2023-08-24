@@ -35,8 +35,8 @@ type Test struct {
 // TestFieldA0 defines model for .
 type TestFieldA0 = string
 
-// TestFieldA1 defines model for .
-type TestFieldA1 TestFieldA
+// TestFieldA1 defines model for Test.FieldA.1.
+type TestFieldA1 string
 
 // Test_FieldA defines model for Test.FieldA.
 type Test_FieldA struct {
