@@ -552,7 +552,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 		}
 
-		for mediaType, response := range response.Content {
+		sortedContentKeys := SortedContentKeys(response.Content)
+		for _, mediaType := range sortedContentKeys {
+			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
 			}
