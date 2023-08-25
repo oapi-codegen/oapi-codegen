@@ -297,9 +297,7 @@ type TestResponseObject interface {
 	VisitTestResponse(w http.ResponseWriter) error
 }
 
-type Test200MultipartResponse struct {
-	externalRef0.TestMultipartResponse
-}
+type Test200MultipartResponse externalRef0.TestMultipartResponse
 
 func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
