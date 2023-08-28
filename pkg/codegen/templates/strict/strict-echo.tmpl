@@ -31,7 +31,7 @@ type strictHandler struct {
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
-                {{if eq .NameTag "JSON" -}}
+                {{if .IsJSON -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.Bind(&body); err != nil {
                         return err
@@ -80,7 +80,7 @@ type strictHandler struct {
         } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             return validResponse.Visit{{$opid}}Response(ctx.Response())
         } else if response != nil {
-            return fmt.Errorf("Unexpected response type: %T", response)
+            return fmt.Errorf("unexpected response type: %T", response)
         }
         return nil
     }

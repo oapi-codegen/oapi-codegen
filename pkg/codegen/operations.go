@@ -398,7 +398,15 @@ func (r RequestBodyDefinition) Suffix() string {
 
 // IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
-	return r.NameTag == "JSON" || r.NameTag == "Formdata" || r.NameTag == "Text"
+	return r.IsJSON() || r.NameTag == "Formdata" || r.NameTag == "Text"
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r RequestBodyDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
 }
 
 // IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
@@ -472,6 +480,14 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 		return r.NameTag
 	}
 	return SchemaNameToTypeName(r.ContentType)
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r ResponseContentDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
 }
 
 type ResponseHeaderDefinition struct {
@@ -641,9 +657,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var defaultBody bool
 
 		switch {
-		case util.IsMediaTypeJson(contentType):
+		case contentType == "application/json":
 			tag = "JSON"
 			defaultBody = true
+		case util.IsMediaTypeJson(contentType):
+			tag = mediaTypeToCamelCase(contentType)
 		case strings.HasPrefix(contentType, "multipart/"):
 			tag = "Multipart"
 		case contentType == "application/x-www-form-urlencoded":
@@ -741,8 +759,10 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			content := response.Content[contentType]
 			var tag string
 			switch {
-			case util.IsMediaTypeJson(contentType):
+			case contentType == "application/json":
 				tag = "JSON"
+			case util.IsMediaTypeJson(contentType):
+				tag = mediaTypeToCamelCase(contentType)
 			case contentType == "application/x-www-form-urlencoded":
 				tag = "Formdata"
 			case strings.HasPrefix(contentType, "multipart/"):

@@ -28,6 +28,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 )
@@ -556,12 +557,15 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
+		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+		for mediaType, response := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -585,6 +589,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
+
 			types = append(types, typeDef)
 		}
 	}
@@ -602,9 +607,12 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(body.Schema, []string{requestBodyName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
 			}
@@ -1064,9 +1072,12 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 	res := map[string]goImport{}
 	for _, r := range bodies {
 		response := r.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonBody.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -1080,9 +1091,12 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 	res := map[string]goImport{}
 	for _, r := range responses {
 		response := r.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonResponse.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -1105,4 +1119,8 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		MergeImports(res, imprts)
 	}
 	return res, nil
+}
+
+func SetGlobalStateSpec(spec *openapi3.T) {
+	globalState.spec = spec
 }

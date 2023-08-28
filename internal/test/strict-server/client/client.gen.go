@@ -1183,9 +1183,10 @@ func (r HeadersExampleResponse) StatusCode() int {
 }
 
 type UnionExampleResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *struct {
+	Body                          []byte
+	HTTPResponse                  *http.Response
+	ApplicationalternativeJSON200 *Example
+	JSON200                       *struct {
 		union json.RawMessage
 	}
 }
