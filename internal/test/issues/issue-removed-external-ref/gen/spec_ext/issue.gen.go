@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/go-chi/chi/v5"
+	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // CamelSchema defines model for CamelSchema.
@@ -165,8 +165,8 @@ type PascalJSONResponse PascalSchema
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
+type StrictHandlerFunc = strictnethttp.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

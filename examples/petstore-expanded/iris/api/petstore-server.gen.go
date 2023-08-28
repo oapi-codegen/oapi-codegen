@@ -13,9 +13,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/kataras/iris/v12"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.

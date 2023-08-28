@@ -4,7 +4,7 @@
 package issue579
 
 import (
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // AliasedDate defines model for AliasedDate.
