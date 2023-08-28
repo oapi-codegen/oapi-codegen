@@ -25,7 +25,7 @@
         {{$hasHeaders := ne 0 (len .Headers) -}}
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
-        {{$ref := .Ref  | ucFirst -}}
+        {{$ref := .Ref  | ucFirstWithPkgName -}}
         {{$headers := .Headers -}}
 
         {{if (and $hasHeaders (not $isRef)) -}}
@@ -38,7 +38,9 @@
 
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
-            {{if and $fixedStatusCode $isRef -}}
+            {{if eq .NameTag "Text" -}}
+                type {{$receiverTypeName}} string
+            {{else if and $fixedStatusCode $isRef -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -78,7 +80,7 @@
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
-                {{if eq .NameTag "JSON" -}}
+                {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
                     return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
