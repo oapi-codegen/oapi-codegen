@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
+type StrictHandlerFunc = strictnethttp.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
     RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

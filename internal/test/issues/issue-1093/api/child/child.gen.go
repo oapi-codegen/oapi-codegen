@@ -16,9 +16,9 @@ import (
 	"strings"
 
 	externalRef0 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1093/api/parent"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
 // ServerInterface represents all server handlers.
@@ -103,8 +103,8 @@ type StrictServerInterface interface {
 	GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error)
 }
 
-type StrictHandlerFunc = runtime.StrictGinHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictGinMiddlewareFunc
+type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
+type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}

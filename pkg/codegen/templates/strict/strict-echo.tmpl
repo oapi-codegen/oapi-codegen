@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictEchoMiddlewareFunc
+type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
+type StrictMiddlewareFunc = strictecho.StrictEchoMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}

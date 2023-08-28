@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Defines values for Enum1.

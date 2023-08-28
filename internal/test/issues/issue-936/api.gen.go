@@ -6,7 +6,7 @@ package issue936
 import (
 	"encoding/json"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
+	"github.com/oapi-codegen/runtime"
 )
 
 // FilterPredicate defines model for FilterPredicate.

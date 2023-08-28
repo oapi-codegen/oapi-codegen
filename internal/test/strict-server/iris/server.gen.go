@@ -17,9 +17,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/kataras/iris/v12"
+	"github.com/oapi-codegen/runtime"
+	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
 )
 
 // ServerInterface represents all server handlers.
@@ -769,8 +770,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = runtime.StrictIrisHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictIrisMiddlewareFunc
+type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
+type StrictMiddlewareFunc = strictiris.StrictIrisMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}

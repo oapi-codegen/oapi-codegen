@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictIrisHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictIrisMiddlewareFunc
+type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
+type StrictMiddlewareFunc = strictiris.StrictIrisMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}
