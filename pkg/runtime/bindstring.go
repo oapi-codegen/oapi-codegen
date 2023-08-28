@@ -30,6 +30,8 @@ import (
 // type aliases. This function was the easy way out, the better way, since we
 // know the destination type each place that we use this, is to generate code
 // to read each specific type.
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStringToObject
 func BindStringToObject(src string, dst interface{}) error {
 	var err error
 
