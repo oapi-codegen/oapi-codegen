@@ -5,8 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
 )
+
+type StrictIrisHandlerFunc func(ctx iris.Context, request interface{}) (response interface{}, err error)
+
+type StrictIrisMiddlewareFunc func(f StrictIrisHandlerFunc, operationID string) StrictIrisHandlerFunc
 
 type StrictEchoHandlerFunc func(ctx echo.Context, request interface{}) (response interface{}, err error)
 

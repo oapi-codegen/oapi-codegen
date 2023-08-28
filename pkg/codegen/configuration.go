@@ -22,6 +22,7 @@ type Configuration struct {
 
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
+	IrisServer    bool `yaml:"iris-server,omitempty"`    // IrisServer specifies whether to generate iris server boilerplate
 	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
 	FiberServer   bool `yaml:"fiber-server,omitempty"`   // FiberServer specifies whether to generate fiber server boilerplate
 	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
@@ -116,6 +117,9 @@ func (o Configuration) Validate() error {
 
 	// Only one server type should be specified at a time.
 	nServers := 0
+	if o.Generate.IrisServer {
+		nServers++
+	}
 	if o.Generate.ChiServer {
 		nServers++
 	}
