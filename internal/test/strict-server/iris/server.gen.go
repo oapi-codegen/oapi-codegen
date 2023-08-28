@@ -697,11 +697,7 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/alternative+json")
 	ctx.StatusCode(200)
 
-	if closer, ok := response.Body.(io.ReadCloser); ok {
-		defer closer.Close()
-	}
-	_, err := io.Copy(ctx.ResponseWriter(), response.Body)
-	return err
+	return ctx.JSON(&response.Body)
 }
 
 type UnionExample200JSONResponse struct {
@@ -858,6 +854,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx iris.Context) {
 	var request MultipleRequestAndResponseTypesRequestObject
 
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
+
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := ctx.ReadJSON(&body); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
