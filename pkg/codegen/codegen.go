@@ -274,7 +274,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		t,
 		externalImports,
 		opts.PackageName,
-		opts.NoVCSVersionOverride, //? #1046
+		opts.NoVCSVersionOverride,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
