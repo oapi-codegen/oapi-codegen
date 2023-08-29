@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictGinHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictGinMiddlewareFunc
+type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
+type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -88,7 +88,7 @@ type strictHandler struct {
                 ctx.Error(err)
             }
         } else if response != nil {
-            ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+            ctx.Error(fmt.Errorf("unexpected response type: %T", response))
         }
     }
 {{end}}
