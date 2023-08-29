@@ -209,14 +209,22 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		result.Properties[k] = v
 	}
 
-	if SchemaHasAdditionalProperties(&s1) && SchemaHasAdditionalProperties(&s2) {
-		return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
-	}
-	if s1.AdditionalProperties.Schema != nil {
-		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
-	}
-	if s2.AdditionalProperties.Schema != nil {
-		result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
+	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
+		result.WithoutAdditionalProperties()
+	} else if s1.AdditionalProperties.Schema != nil {
+		if s2.AdditionalProperties.Schema != nil {
+			return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
+		} else {
+			result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
+		}
+	} else {
+		if s2.AdditionalProperties.Schema != nil {
+			result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
+		} else {
+			if s1.AdditionalProperties.Has != nil || s2.AdditionalProperties.Has != nil {
+				result.WithAnyAdditionalProperties()
+			}
+		}
 	}
 
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.

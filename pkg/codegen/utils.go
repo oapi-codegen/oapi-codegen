@@ -954,3 +954,7 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	}
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
+
+func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
+	return s.AdditionalProperties.Has != nil && !(*s.AdditionalProperties.Has)
+}
