@@ -961,5 +961,5 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 		return false
 	}
 
-	return *s.AdditionalProperties.Has == false
+	return *s.AdditionalProperties.Has == false //nolint:gosimple
 }
