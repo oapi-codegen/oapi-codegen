@@ -48,7 +48,7 @@ Since most commits affect generated code, before sending your PR, please
 ensure that all boilerplate has been regenerated. You can do this from the top level
 of the repository by running:
 
-    go generate ./...
+    make generate
 
 I realize that our code isn't entirely idiomatic with respect to comments, and
 variable naming and initialisms, especially the generated code, but I'm reluctant
