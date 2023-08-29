@@ -446,6 +446,13 @@ func (r ResponseDefinition) IsRef() bool {
 	return r.Ref != ""
 }
 
+func (r ResponseDefinition) IsExternalRef() bool {
+	if !r.IsRef() {
+		return false
+	}
+	return strings.Contains(r.Ref, ".")
+}
+
 type ResponseContentDefinition struct {
 	// This is the schema describing this content
 	Schema Schema
