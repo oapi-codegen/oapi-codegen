@@ -1,17 +1,17 @@
-# Override boilerplate version example
+# Overriding the version of oapi-codegen
+
 ## Why?
-oapi-codegen uses default way to define bin's version.
 
-It doesn't work without VCS (git) context.
+oapi-codegen uses the standard Go means to determine what the version of the binary is.
 
-This example shows how to override version build-time.
+However, this doesn't work when there's no Version Control System (VCS), for instance when building from a source bundle.
+
+This example shows how to override the version at build-time.
 
 ## How?
-Just add `-ldflags "-X main.noVcsVersionOverride=(YOUR-VERSION)"` to your `go build` or `go run` command:
 
-```
-go run -ldflags "-X main.noVcsVersionOverride=overrided" ./cmd/oapi-codegen --config=config.yaml ../../api.yaml
-```
+By specifying `-ldflags` for the `noVcsVersionOverride` when running `go build` or `go run`:
 
-Now output DO-NOT-EDIT-guards will contain also non-(devel) version.
- 
+```sh
+go run -ldflags "-X main.noVcsVersionOverride=v123.456.789" ./cmd/oapi-codegen --config=config.yaml ../../api.yaml
+```

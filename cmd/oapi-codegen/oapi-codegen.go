@@ -78,8 +78,8 @@ type oldConfiguration struct {
 	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
-// noVcsVersionOverride is variable to be linked build-time with --ldflags=-X
-// if vcs context is unavailabe, e.g. Nix derivation
+// noVcsVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
+// See documentation for how to use it in examples/no-vcs-version-override/README.md
 var noVcsVersionOverride string
 
 func main() {
