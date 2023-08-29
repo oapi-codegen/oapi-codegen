@@ -105,7 +105,6 @@ func (p *PetStore) AddPet(c *gin.Context) {
 
 	// Now, we have to return the NewPet
 	c.JSON(http.StatusCreated, pet)
-	return
 }
 
 func (p *PetStore) FindPetByID(c *gin.Context, petId int64) {

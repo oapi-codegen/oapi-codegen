@@ -19,6 +19,8 @@ package runtime
 //
 // By convention, to approximate the behavior of Bind functions themselves,
 // Binder implements Bind("") as a no-op.
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#Binder
 type Binder interface {
 	Bind(src string) error
 }

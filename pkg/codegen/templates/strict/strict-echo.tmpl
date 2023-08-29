@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictEchoMiddlewareFunc
+type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
+type StrictMiddlewareFunc = strictecho.StrictEchoMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -80,7 +80,7 @@ type strictHandler struct {
         } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             return validResponse.Visit{{$opid}}Response(ctx.Response())
         } else if response != nil {
-            return fmt.Errorf("Unexpected response type: %T", response)
+            return fmt.Errorf("unexpected response type: %T", response)
         }
         return nil
     }

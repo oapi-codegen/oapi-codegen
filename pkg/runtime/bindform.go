@@ -16,12 +16,14 @@ import (
 const tagName = "json"
 const jsonContentType = "application/json"
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#RequestBodyEncoding
 type RequestBodyEncoding struct {
 	ContentType string
 	Style       string
 	Explode     *bool
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindMultipart
 func BindMultipart(ptr interface{}, reader multipart.Reader) error {
 	const defaultMemory = 32 << 20
 	form, err := reader.ReadForm(defaultMemory)
@@ -31,6 +33,7 @@ func BindMultipart(ptr interface{}, reader multipart.Reader) error {
 	return BindForm(ptr, form.Value, form.File, nil)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindForm
 func BindForm(ptr interface{}, form map[string][]string, files map[string][]*multipart.FileHeader, encodings map[string]RequestBodyEncoding) error {
 	ptrVal := reflect.Indirect(reflect.ValueOf(ptr))
 	if ptrVal.Kind() != reflect.Struct {
@@ -79,6 +82,7 @@ func BindForm(ptr interface{}, form map[string][]string, files map[string][]*mul
 	return nil
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#MarshalForm
 func MarshalForm(ptr interface{}, encodings map[string]RequestBodyEncoding) (url.Values, error) {
 	ptrVal := reflect.Indirect(reflect.ValueOf(ptr))
 	if ptrVal.Kind() != reflect.Struct {

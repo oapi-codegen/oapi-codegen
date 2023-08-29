@@ -61,6 +61,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 	return result, nil
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#MarshalDeepObject
 func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	// We're going to marshal to JSON and unmarshal into an interface{},
 	// which will use the json pkg to deal with all the field annotations. We
@@ -123,6 +124,7 @@ func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
 	return f
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#UnmarshalDeepObject
 func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) error {
 	// Params are all the query args, so we need those that look like
 	// "paramName["...
