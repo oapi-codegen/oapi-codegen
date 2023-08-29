@@ -23,13 +23,27 @@ import (
 
 // Defines values for TestFieldA1.
 const (
-	Bar TestFieldA1 = "bar"
-	Foo TestFieldA1 = "foo"
+	TestFieldA1Bar TestFieldA1 = "bar"
+	TestFieldA1Foo TestFieldA1 = "foo"
+)
+
+// Defines values for TestFieldB.
+const (
+	TestFieldBBar TestFieldB = "bar"
+	TestFieldBFoo TestFieldB = "foo"
+)
+
+// Defines values for TestFieldC1.
+const (
+	Bar TestFieldC1 = "bar"
+	Foo TestFieldC1 = "foo"
 )
 
 // Test defines model for test.
 type Test struct {
 	FieldA *Test_FieldA `json:"fieldA,omitempty"`
+	FieldB *TestFieldB  `json:"fieldB,omitempty"`
+	FieldC *Test_FieldC `json:"fieldC,omitempty"`
 }
 
 // TestFieldA0 defines model for .
@@ -40,6 +54,20 @@ type TestFieldA1 string
 
 // Test_FieldA defines model for Test.FieldA.
 type Test_FieldA struct {
+	union json.RawMessage
+}
+
+// TestFieldB defines model for Test.FieldB.
+type TestFieldB string
+
+// TestFieldC0 defines model for .
+type TestFieldC0 = string
+
+// TestFieldC1 defines model for Test.FieldC.1.
+type TestFieldC1 string
+
+// Test_FieldC defines model for Test.FieldC.
+type Test_FieldC struct {
 	union json.RawMessage
 }
 
@@ -101,6 +129,68 @@ func (t Test_FieldA) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Test_FieldA) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTestFieldC0 returns the union data inside the Test_FieldC as a TestFieldC0
+func (t Test_FieldC) AsTestFieldC0() (TestFieldC0, error) {
+	var body TestFieldC0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestFieldC0 overwrites any union data inside the Test_FieldC as the provided TestFieldC0
+func (t *Test_FieldC) FromTestFieldC0(v TestFieldC0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestFieldC0 performs a merge with any union data inside the Test_FieldC, using the provided TestFieldC0
+func (t *Test_FieldC) MergeTestFieldC0(v TestFieldC0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTestFieldC1 returns the union data inside the Test_FieldC as a TestFieldC1
+func (t Test_FieldC) AsTestFieldC1() (TestFieldC1, error) {
+	var body TestFieldC1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestFieldC1 overwrites any union data inside the Test_FieldC as the provided TestFieldC1
+func (t *Test_FieldC) FromTestFieldC1(v TestFieldC1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestFieldC1 performs a merge with any union data inside the Test_FieldC, using the provided TestFieldC1
+func (t *Test_FieldC) MergeTestFieldC1(v TestFieldC1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JsonMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Test_FieldC) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Test_FieldC) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -381,10 +471,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/1xQMW7DMBD7C9tRiI12u61jpy7dggyqc0pU2HcH6TIEhv9eSGkQIFxISCJIccWki6mw",
-	"eAWtqNOZl9ilc/XGVtS4eOZ+mjLPx4+moly/Emi/wq/GIFQvWU7YwgqWywLaI6ki4CcWHMLzs8PWEJAl",
-	"KUgu8xygxhItg/C+G3cjAiz6uQcP9z4n7tRKRc8qn0cQvttlQOFqKvVW9W0cG00qztI90WzOU3cNv1Xl",
-	"8eOmXgsnEF6GxyTD/x638O2OvwAAAP//UlAtIzYBAAA=",
+	"H4sIAAAAAAAC/6yRsU4zMRCE32X+v7RyJ+jcARUVDV2UwlzWiZFvd2Vviuh0747sI4pEC9vMyPZ+lmYW",
+	"TDKrMLFV+AV1OtMcujWq1lSLKBVL1E9jonx8ai7w9S3C7xfYVQke1UriE1a3gPgyw+8RReDwEQoO7uez",
+	"w+o22nOn5fw3tJdGE6Zf0to4JI4Cz5ecHUSJgyZ4PO7G3QgHDXbuoQy3rE7UpQUWLAm/HuHx3i4dClUV",
+	"rluMD+PYZBI24r4TVHOa+tbwWYXvbTT3v1CEx7/hXtfw3dX2+XqbrwAAAP//gr+fh9IBAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

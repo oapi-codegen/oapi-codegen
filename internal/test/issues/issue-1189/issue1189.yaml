@@ -20,3 +20,17 @@ components:
               enum:
                 - foo
                 - bar
+        fieldB:
+          allOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+        fieldC:
+          oneOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
