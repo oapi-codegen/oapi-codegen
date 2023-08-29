@@ -844,7 +844,7 @@ func SanitizeCode(goCode string) string {
 // path when inputData is more than one line.
 // This function will attempt to load a file first, and if it fails, will try to get the
 // data from the remote endpoint.
-// The timeout for remote download file is 5 seconds.
+// The timeout for remote download file is 30 seconds.
 func GetUserTemplateText(inputData string) (template string, err error) {
 	// if the input data is more than one line, assume its a template and return that data.
 	if strings.Contains(inputData, "\n") {
@@ -864,7 +864,7 @@ func GetUserTemplateText(inputData string) (template string, err error) {
 	}
 
 	// attempt to get data from url with timeout
-	const downloadTimeout = 5 * time.Second
+	const downloadTimeout = 30 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
 	defer cancel()
 
