@@ -557,30 +557,9 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
-			// Parameter duplication check and override local parameters to global parameters.
-			allParams := make([]ParameterDefinition, 0, len(globalParams)+len(localParams))
-			dupCheck := make(map[string]map[string]string)
-			for _, p := range localParams {
-				if dupCheck[p.In] == nil {
-					dupCheck[p.In] = make(map[string]string)
-				}
-				if _, exist := dupCheck[p.In][p.ParamName]; !exist {
-					dupCheck[p.In][p.ParamName] = "local"
-					allParams = append(allParams, p)
-				} else {
-					return nil, fmt.Errorf("duplicate local parameter %s/%s", p.In, p.ParamName)
-				}
-			}
-			for _, p := range globalParams {
-				if dupCheck[p.In] == nil {
-					dupCheck[p.In] = make(map[string]string)
-				}
-				if t, exist := dupCheck[p.In][p.ParamName]; !exist {
-					dupCheck[p.In][p.ParamName] = "global"
-					allParams = append(allParams, p)
-				} else if t == "global" {
-					return nil, fmt.Errorf("duplicate global parameter %s/%s", p.In, p.ParamName)
-				}
+			allParams, err := CombineOperationParameters(globalParams, localParams)
+			if err != nil {
+				return nil, err
 			}
 
 			// Order the path parameters to match the order as specified in
@@ -1040,4 +1019,34 @@ func GenerateTemplates(templates []string, t *template.Template, ops interface{}
 	}
 
 	return strings.Join(generatedTemplates, "\n"), nil
+}
+
+// CombineOperationParameters combines the Parameters defined at a global level (Parameters defined for all methods on a given path) with the Parameters defined at a local level (Parameters defined for a specific path), preferring the locally defined parameter over the global one
+func CombineOperationParameters(globalParams []ParameterDefinition, localParams []ParameterDefinition) ([]ParameterDefinition, error) {
+	allParams := make([]ParameterDefinition, 0, len(globalParams)+len(localParams))
+	dupCheck := make(map[string]map[string]string)
+	for _, p := range localParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if _, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "local"
+			allParams = append(allParams, p)
+		} else {
+			return nil, fmt.Errorf("duplicate local parameter %s/%s", p.In, p.ParamName)
+		}
+	}
+	for _, p := range globalParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if t, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "global"
+			allParams = append(allParams, p)
+		} else if t == "global" {
+			return nil, fmt.Errorf("duplicate global parameter %s/%s", p.In, p.ParamName)
+		}
+	}
+
+	return allParams, nil
 }

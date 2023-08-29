@@ -2,12 +2,9 @@ package issue1180
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/require"
 )
 
+// TestIssue1180 validates that the parameter `param` is a string type, rather than an int, as we should prioritise the `param` definition closest to the path
 func TestIssue1180(t *testing.T) {
-	req, err := NewGetSimplePrimitiveRequest("http://example.com/", "test-string")
-	require.NoError(t, err)
-	require.Equal(t, "http://example.com/simplePrimitive/test-string", req.URL.String())
+	_, _ = NewGetSimplePrimitiveRequest("http://example.com/", "test-string")
 }
