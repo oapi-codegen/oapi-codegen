@@ -21,13 +21,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
+	"github.com/oapi-codegen/runtime"
+	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
+	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
+	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
+	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/gofiber/fiber/v2"
+	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/core/router"
 	"github.com/gorilla/mux"
 	{{- range .ExternalImports}}
 	{{ . }}

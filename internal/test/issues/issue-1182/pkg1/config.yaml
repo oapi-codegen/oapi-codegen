@@ -1,0 +1,10 @@
+package: pkg1
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+  strict-server: true
+output: pkg1.gen.go
+import-mapping:
+  pkg2.yaml: github.com/deepmap/oapi-codegen/internal/test/issues/issue-1182/pkg2

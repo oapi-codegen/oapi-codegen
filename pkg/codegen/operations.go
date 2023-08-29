@@ -281,6 +281,13 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
+			jsonCount := 0
+			for mediaType := range responseRef.Value.Content {
+				if util.IsMediaTypeJson(mediaType) {
+					jsonCount++
+				}
+			}
+
 			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
@@ -327,6 +334,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
+						}
+						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
+							refType += mediaTypeToCamelCase(contentTypeName)
 						}
 						td.Schema.RefType = refType
 					}
@@ -398,7 +408,15 @@ func (r RequestBodyDefinition) Suffix() string {
 
 // IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
-	return r.NameTag == "JSON" || r.NameTag == "Formdata" || r.NameTag == "Text"
+	return r.IsJSON() || r.NameTag == "Formdata" || r.NameTag == "Text"
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r RequestBodyDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
 }
 
 // IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
@@ -438,6 +456,13 @@ func (r ResponseDefinition) IsRef() bool {
 	return r.Ref != ""
 }
 
+func (r ResponseDefinition) IsExternalRef() bool {
+	if !r.IsRef() {
+		return false
+	}
+	return strings.Contains(r.Ref, ".")
+}
+
 type ResponseContentDefinition struct {
 	// This is the schema describing this content
 	Schema Schema
@@ -472,6 +497,14 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 		return r.NameTag
 	}
 	return SchemaNameToTypeName(r.ContentType)
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r ResponseContentDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
 }
 
 type ResponseHeaderDefinition struct {
@@ -541,7 +574,10 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
-			allParams := append(globalParams, localParams...)
+			allParams, err := CombineOperationParameters(globalParams, localParams)
+			if err != nil {
+				return nil, err
+			}
 
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
@@ -642,9 +678,11 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		var defaultBody bool
 
 		switch {
-		case util.IsMediaTypeJson(contentType):
+		case contentType == "application/json":
 			tag = "JSON"
 			defaultBody = true
+		case util.IsMediaTypeJson(contentType):
+			tag = mediaTypeToCamelCase(contentType)
 		case strings.HasPrefix(contentType, "multipart/"):
 			tag = "Multipart"
 		case contentType == "application/x-www-form-urlencoded":
@@ -742,8 +780,10 @@ func GenerateResponseDefinitions(operationID string, responses openapi3.Response
 			content := response.Content[contentType]
 			var tag string
 			switch {
-			case util.IsMediaTypeJson(contentType):
+			case contentType == "application/json":
 				tag = "JSON"
+			case util.IsMediaTypeJson(contentType):
+				tag = mediaTypeToCamelCase(contentType)
 			case contentType == "application/x-www-form-urlencoded":
 				tag = "Formdata"
 			case strings.HasPrefix(contentType, "multipart/"):
@@ -884,7 +924,6 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
 		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-
 	}
 
 	// Generate boiler plate for all additional types.
@@ -911,6 +950,12 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 
 	return buf.String(), nil
+}
+
+// GenerateIrisServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl", "iris/iris-handler.tmpl"}, t, operations)
 }
 
 // GenerateChiServer generates all the go code for the ServerInterface as well as
@@ -959,6 +1004,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.FiberServer {
 		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
 	}
+	if opts.Generate.IrisServer {
+		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
+	}
 
 	return GenerateTemplates(templates, t, operations)
 }
@@ -996,4 +1044,34 @@ func GenerateTemplates(templates []string, t *template.Template, ops interface{}
 	}
 
 	return strings.Join(generatedTemplates, "\n"), nil
+}
+
+// CombineOperationParameters combines the Parameters defined at a global level (Parameters defined for all methods on a given path) with the Parameters defined at a local level (Parameters defined for a specific path), preferring the locally defined parameter over the global one
+func CombineOperationParameters(globalParams []ParameterDefinition, localParams []ParameterDefinition) ([]ParameterDefinition, error) {
+	allParams := make([]ParameterDefinition, 0, len(globalParams)+len(localParams))
+	dupCheck := make(map[string]map[string]string)
+	for _, p := range localParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if _, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "local"
+			allParams = append(allParams, p)
+		} else {
+			return nil, fmt.Errorf("duplicate local parameter %s/%s", p.In, p.ParamName)
+		}
+	}
+	for _, p := range globalParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if t, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "global"
+			allParams = append(allParams, p)
+		} else if t == "global" {
+			return nil, fmt.Errorf("duplicate global parameter %s/%s", p.In, p.ParamName)
+		}
+	}
+
+	return allParams, nil
 }

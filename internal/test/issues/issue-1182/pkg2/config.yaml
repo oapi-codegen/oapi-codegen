@@ -1,0 +1,10 @@
+package: pkg2
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+  strict-server: true
+output: pkg2.gen.go
+output-options:
+  skip-prune: true
