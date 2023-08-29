@@ -30,6 +30,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 )
@@ -175,6 +176,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		MergeImports(xGoTypeImports, imprts)
 	}
 
+	var irisServerOut string
+	if opts.Generate.IrisServer {
+		irisServerOut, err = GenerateIrisServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var echoServerOut string
 	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
@@ -292,6 +301,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
 		}
+	}
+
+	if opts.Generate.IrisServer {
+		_, err = w.WriteString(irisServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+
 	}
 
 	if opts.Generate.EchoServer {
@@ -542,12 +559,25 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
+		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+
+		jsonCount := 0
+		for mediaType := range response.Content {
+			if util.IsMediaTypeJson(mediaType) {
+				jsonCount++
+			}
+		}
+
+		sortedContentKeys := SortedContentKeys(response.Content)
+		for _, mediaType := range sortedContentKeys {
+			response := response.Content[mediaType]
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -571,6 +601,11 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
+
+			if jsonCount > 1 {
+				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
+			}
+
 			types = append(types, typeDef)
 		}
 	}
@@ -588,9 +623,12 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(body.Schema, []string{requestBodyName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
 			}
@@ -1062,9 +1100,12 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 	res := map[string]goImport{}
 	for _, r := range bodies {
 		response := r.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonBody.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -1078,9 +1119,12 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 	res := map[string]goImport{}
 	for _, r := range responses {
 		response := r.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonResponse.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -1103,4 +1147,8 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		MergeImports(res, imprts)
 	}
 	return res, nil
+}
+
+func SetGlobalStateSpec(spec *openapi3.T) {
+	globalState.spec = spec
 }

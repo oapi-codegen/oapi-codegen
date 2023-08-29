@@ -410,6 +410,21 @@ func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
 }
 
+// SwaggerUriToIrisUri converts a OpenAPI style path URI with parameters to an
+// Iris compatible path URI. We need to replace all of OpenAPI parameters with
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func SwaggerUriToIrisUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, ":$1")
+}
+
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
 // Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
@@ -725,7 +740,7 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 }
 
 func DeprecationComment(reason string) string {
-	var content = "Deprecated:" // The colon is required at the end even without reason
+	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
 		content += fmt.Sprintf(" %s", reason)
 	}
@@ -938,4 +953,13 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 		return false
 	}
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+}
+
+// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
+func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
+	if s.AdditionalProperties.Has == nil {
+		return false
+	}
+
+	return *s.AdditionalProperties.Has == false //nolint:gosimple
 }

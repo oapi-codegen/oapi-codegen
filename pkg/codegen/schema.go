@@ -809,15 +809,22 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 
 	refToGoTypeMap := make(map[string]string)
 	for i, element := range elements {
-		elementSchema, err := GenerateGoSchema(element, path)
+		elementPath := append(path, fmt.Sprint(i))
+		elementSchema, err := GenerateGoSchema(element, elementPath)
 		if err != nil {
 			return err
 		}
 
 		if element.Ref == "" {
-			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-			elementSchema.GoType = td.TypeName
+			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
+			if elementSchema.TypeDecl() == elementName {
+				elementSchema.GoType = elementName
+			} else {
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+				elementSchema.GoType = td.TypeName
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		} else {
 			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}

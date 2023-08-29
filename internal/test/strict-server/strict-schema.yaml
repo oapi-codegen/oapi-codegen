@@ -270,6 +270,9 @@ paths:
                 oneOf:
                 - type: string
                 - $ref: "#/components/schemas/example"
+            application/alternative+json:
+              schema:
+                $ref: "#/components/schemas/example"
         400:
           $ref: "#/components/responses/badrequest"
         default:
