@@ -10,8 +10,8 @@ This example shows how to override the version at build-time.
 
 ## How?
 
-By specifying `-ldflags` for the `noVcsVersionOverride` when running `go build` or `go run`:
+By specifying `-ldflags` for the `noVCSVersionOverride` when running `go build` or `go run`:
 
 ```sh
-go run -ldflags "-X main.noVcsVersionOverride=v123.456.789" ./cmd/oapi-codegen --config=config.yaml ../../api.yaml
+go run -ldflags "-X main.noVCSVersionOverride=v123.456.789" ./cmd/oapi-codegen --config=config.yaml ../../api.yaml
 ```
