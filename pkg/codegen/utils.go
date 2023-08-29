@@ -955,6 +955,11 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
 
+// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
 func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
-	return s.AdditionalProperties.Has != nil && !(*s.AdditionalProperties.Has)
+	if s.AdditionalProperties.Has == nil {
+		return false
+	}
+
+	return *s.AdditionalProperties.Has == false
 }
