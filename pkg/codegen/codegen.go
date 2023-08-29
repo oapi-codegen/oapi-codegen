@@ -272,7 +272,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	w := bufio.NewWriter(&buf)
 
 	externalImports := append(globalState.importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
-	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
+	importsOut, err := GenerateImports(
+		t,
+		externalImports,
+		opts.PackageName,
+		opts.NoVCSVersionOverride,
+	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -768,7 +773,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // GenerateImports generates our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the
 	// version if we can't read this.
@@ -781,6 +786,9 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		}
 		if bi.Main.Version != "" {
 			moduleVersion = bi.Main.Version
+		}
+		if versionOverride != nil {
+			moduleVersion = *versionOverride
 		}
 	}
 

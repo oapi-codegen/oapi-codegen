@@ -1,0 +1,6 @@
+package: api
+generate:
+  echo-server: true
+output: api.gen.go
+output-options:
+  skip-prune: true

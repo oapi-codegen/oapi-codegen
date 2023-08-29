@@ -78,6 +78,10 @@ type oldConfiguration struct {
 	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
+// noVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
+// See documentation for how to use it in examples/no-vcs-version-override/README.md
+var noVCSVersionOverride string
+
 func main() {
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default.")
 	flag.BoolVar(&flagOldConfigStyle, "old-config-style", false, "Whether to use the older style config file format.")
@@ -115,7 +119,11 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")
-		fmt.Println(bi.Main.Version)
+		version := bi.Main.Version
+		if len(noVCSVersionOverride) > 0 {
+			version = noVCSVersionOverride
+		}
+		fmt.Println(version)
 		return
 	}
 
@@ -261,6 +269,10 @@ func main() {
 	swagger, err := util.LoadSwaggerWithCircularReferenceCount(flag.Arg(0), opts.Compatibility.CircularReferenceLimit)
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+	}
+
+	if len(noVCSVersionOverride) > 0 {
+		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
