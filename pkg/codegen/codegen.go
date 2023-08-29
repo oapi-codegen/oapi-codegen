@@ -17,6 +17,7 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"io"
@@ -27,6 +28,7 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
@@ -880,6 +882,7 @@ func SanitizeCode(goCode string) string {
 // path when inputData is more than one line.
 // This function will attempt to load a file first, and if it fails, will try to get the
 // data from the remote endpoint.
+// The timeout for remote download file is 30 seconds.
 func GetUserTemplateText(inputData string) (template string, err error) {
 	// if the input data is more than one line, assume its a template and return that data.
 	if strings.Contains(inputData, "\n") {
@@ -898,10 +901,21 @@ func GetUserTemplateText(inputData string) (template string, err error) {
 		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
 	}
 
-	// attempt to get data from url
-	resp, err := http.Get(inputData)
+	// attempt to get data from url with timeout
+	const downloadTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, inputData, http.NoBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request GET %s: %w", inputData, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
+	}
+	if resp != nil {
+		defer resp.Body.Close()
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
