@@ -1,0 +1,6 @@
+package: issue936
+output: api.gen.go
+generate:
+  models: true
+compatibility:
+  circular-reference-limit: 4

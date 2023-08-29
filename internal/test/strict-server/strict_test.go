@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
@@ -23,9 +24,20 @@ import (
 	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
 	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
 	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
+	irisAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/iris"
+
+	// "github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
+
+func TestIrisServer(t *testing.T) {
+	server := irisAPI.StrictServer{}
+	strictHandler := irisAPI.NewStrictHandler(server, nil)
+	i := iris.New()
+	irisAPI.RegisterHandlers(i, strictHandler)
+	testImpl(t, i)
+}
 
 func TestChiServer(t *testing.T) {
 	server := chiAPI.StrictServer{}

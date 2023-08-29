@@ -31,7 +31,8 @@ import (
 )
 
 // Parameter escaping works differently based on where a header is found
-
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#ParamLocation
 type ParamLocation int
 
 const (
@@ -46,6 +47,8 @@ const (
 // with that code. It is not to be used in new templates. Please see the
 // function below, which can specialize its output based on the location of
 // the parameter.
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#StyleParam
 func StyleParam(style string, explode bool, paramName string, value interface{}) (string, error) {
 	return StyleParamWithLocation(style, explode, paramName, ParamLocationUndefined, value)
 }
@@ -53,6 +56,8 @@ func StyleParam(style string, explode bool, paramName string, value interface{})
 // Given an input value, such as a primitive type, array or object, turn it
 // into a parameter based on style/explode definition, performing whatever
 // escaping is necessary based on parameter location
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#StyleParam
 func StyleParamWithLocation(style string, explode bool, paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
