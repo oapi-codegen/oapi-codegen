@@ -17,7 +17,6 @@ components:
           anyOf:
             - type: string
             - type: string
-              enum: [
-                "foo",
-                "bar"
-              ]
+              enum:
+                - foo
+                - bar
