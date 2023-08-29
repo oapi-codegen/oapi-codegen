@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictHttpHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictHttpMiddlewareFunc
+type StrictHandlerFunc = strictnethttp.StrictHttpHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHttpMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
     RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -103,7 +103,7 @@ type strictHandler struct {
                 sh.options.ResponseErrorHandlerFunc(w, r, err)
             }
         } else if response != nil {
-            sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("Unexpected response type: %T", response))
+            sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
         }
     }
 {{end}}

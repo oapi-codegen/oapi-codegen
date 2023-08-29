@@ -229,6 +229,23 @@ func TestIsGoTypeReference(t *testing.T) {
 	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
 }
 
+func TestSwaggerUriToIrisUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToIrisUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToIrisUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToIrisUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToIrisUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg*}/foo"))
+}
+
 func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path", SwaggerUriToEchoUri("/path"))
 	assert.Equal(t, "/path/:arg", SwaggerUriToEchoUri("/path/{arg}"))
@@ -450,7 +467,6 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
-
 func TestTypeDefinitionsEquivalent(t *testing.T) {
 	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
 		OAPISchema: &openapi3.Schema{},
@@ -460,7 +476,6 @@ func TestTypeDefinitionsEquivalent(t *testing.T) {
 	}}
 	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
 }
-
 
 func TestRefPathToObjName(t *testing.T) {
 	t.Parallel()
