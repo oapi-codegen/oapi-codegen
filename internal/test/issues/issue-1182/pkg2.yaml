@@ -9,4 +9,4 @@ servers:
 components:
   responses:
     ResponseWithReference:
-      description: A response object with a type reference
+      description: A response object which is referred to from another package
