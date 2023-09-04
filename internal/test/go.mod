@@ -11,7 +11,7 @@ require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/gofiber/fiber/v2 v2.49.1
 	github.com/gorilla/mux v1.8.0
-	github.com/kataras/iris/v12 v12.2.5
+	github.com/kataras/iris/v12 v12.2.6-0.20230908161203-24ba4e8933b9
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/stretchr/testify v1.8.4
@@ -77,8 +77,8 @@ require (
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
-	github.com/tdewolff/minify/v2 v2.12.8 // indirect
-	github.com/tdewolff/parse/v2 v2.6.7 // indirect
+	github.com/tdewolff/minify/v2 v2.12.9 // indirect
+	github.com/tdewolff/parse/v2 v2.6.8 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -89,11 +89,11 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yosssi/ace v0.0.5 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/net v0.15.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
