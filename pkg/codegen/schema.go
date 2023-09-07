@@ -104,6 +104,21 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+func (p Property) OmitEmpty() bool {
+	omitEmpty := !p.Nullable &&
+		(!p.Required || p.ReadOnly || p.WriteOnly) &&
+		(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+	// Support x-omitempty
+	if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
+		if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+			omitEmpty = extOmitEmpty
+		}
+	}
+
+	return omitEmpty
+}
+
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
 	// Schema is the scheme of a type which has a list of enum values, eg, the
@@ -681,20 +696,9 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		omitEmpty := !p.Nullable &&
-			(!p.Required || p.ReadOnly || p.WriteOnly) &&
-			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
-
-		// Support x-omitempty
-		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
-				omitEmpty = extOmitEmpty
-			}
-		}
-
 		fieldTags := make(map[string]string)
 
-		if !omitEmpty {
+		if !p.OmitEmpty() {
 			fieldTags["json"] = p.JsonFieldName
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
