@@ -26,9 +26,8 @@ import (
 	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
 	irisAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/iris"
 
-	// "github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/runtime"
 )
 
 func TestIrisServer(t *testing.T) {
