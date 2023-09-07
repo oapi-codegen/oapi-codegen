@@ -455,6 +455,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.GorillaServer = true
 		case "strict-server":
 			opts.Strict = true
+		case "custom-strict-server":
+			opts.CustomStrictServer = true
 		case "client":
 			opts.Client = true
 		case "types", "models":

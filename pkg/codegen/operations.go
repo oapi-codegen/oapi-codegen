@@ -963,6 +963,17 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	return GenerateTemplates(templates, t, operations)
 }
 
+func GenerateCustomStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+
+	var templates []string
+
+	if opts.Generate.GinServer {
+		templates = append(templates, "strict/custom-strict-interface.tmpl", "strict/custom-strict-gin.tmpl")
+	}
+
+	return GenerateTemplates(templates, t, operations)
+}
+
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }
