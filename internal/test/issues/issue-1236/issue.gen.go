@@ -123,9 +123,11 @@ func (a WithAdditionalProperties) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["ReadOnly"], err = json.Marshal(a.ReadOnly)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'ReadOnly': %w", err)
+	if a.ReadOnly != nil {
+		object["ReadOnly"], err = json.Marshal(a.ReadOnly)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'ReadOnly': %w", err)
+		}
 	}
 
 	object["Required"], err = json.Marshal(a.Required)
@@ -133,9 +135,11 @@ func (a WithAdditionalProperties) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'Required': %w", err)
 	}
 
-	object["WriteOnly"], err = json.Marshal(a.WriteOnly)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'WriteOnly': %w", err)
+	if a.WriteOnly != nil {
+		object["WriteOnly"], err = json.Marshal(a.WriteOnly)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'WriteOnly': %w", err)
+		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
