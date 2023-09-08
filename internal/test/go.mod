@@ -102,4 +102,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/oapi-codegen/iris-runtime => github.com/ShouheiNishi/oapi-codegen-iris-runtime-test v0.0.0-20230908011729-68b13f80e39b
+replace (
+	github.com/oapi-codegen/iris-runtime => github.com/ShouheiNishi/oapi-codegen-iris-runtime-test v0.0.0-20230908011729-68b13f80e39b
+	github.com/oapi-codegen/runtime => github.com/ShouheiNishi/oapi-codegen-runtime v0.0.0-20230908012848-1369a2f40168
+)
