@@ -3,5 +3,10 @@ type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{if .SecurityDefinitions}}
+{{range $i, $v := .SecurityDefinitions -}}
+    {{$v.ProviderName | ginAuthMiddleWare}}
+{{end}}
+{{end}}
 {{end}}
 }

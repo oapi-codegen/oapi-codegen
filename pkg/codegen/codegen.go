@@ -199,7 +199,6 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var ginServerOut string
 	if opts.Generate.GinServer {
-		fmt.Println("GIN SERVER GENERATE")
 		ginServerOut, err = GenerateGinServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
@@ -207,10 +206,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	if opts.Generate.CustomGinServer {
-		fmt.Println("CUSTOM GIN SERVER GENERATE")
 		ginServerOut, err = GenerateCustomGinServer(t, ops)
 		if err != nil {
-			fmt.Println("GEN ERROR: ", err)
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
 	}
@@ -243,9 +240,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		strictServerOut = strictServerResponses + strictServerOut
 	}
 
-	// newwwwwwwwwwwwwwwwww
 	if opts.Generate.CustomStrictServer {
-		fmt.Println("CUSTOM SRTRICT GIN SERVER GENEREATE")
 		var responses []ResponseDefinition
 		if spec.Components != nil {
 			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
@@ -263,7 +258,6 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 		strictServerOut = strictServerResponses + strictServerOut
 	}
-	// newwwwwwwwwwwwwwwwww
 
 	var clientOut string
 	if opts.Generate.Client {

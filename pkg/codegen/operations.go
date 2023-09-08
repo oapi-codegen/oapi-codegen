@@ -971,7 +971,7 @@ func GenerateCustomStrictServer(t *template.Template, operations []OperationDefi
 
 	var templates []string
 
-	if opts.Generate.GinServer {
+	if opts.Generate.CustomGinServer {
 		templates = append(templates, "strict/custom-strict-interface.tmpl", "strict/custom-strict-gin.tmpl")
 	}
 

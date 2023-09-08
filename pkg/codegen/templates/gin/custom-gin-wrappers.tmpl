@@ -7,7 +7,16 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(c *gin.Context)
 
+{{"clear" | ginAuthMiddleWare}}
+
 {{range .}}{{$opid := .OperationId}}
+
+{{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
+{{if ne $secType ""}}
+func (siw *ServerInterfaceWrapper) {{$secType}} {
+}
+{{end}}
+{{end}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {

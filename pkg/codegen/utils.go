@@ -717,6 +717,24 @@ func AuthMiddleWareName(scheme string) string {
 	return fmt.Sprintf("%sAuthMiddleWare", scheme)
 }
 
+func GinAuthMiddleWareName() func(string) string {
+	buf := make(map[string]struct{}, 0)
+	return func(authType string) string {
+		if authType == "clear" {
+			buf = make(map[string]struct{}, 0)
+			return ""
+		}
+		if authType == "" {
+			return ""
+		}
+		if _, ok := buf[authType]; ok {
+			return ""
+		}
+		buf[authType] = struct{}{}
+		return fmt.Sprintf("%sAuthMiddleWare(c *gin.Context)", authType)
+	}
+}
+
 func DeprecationComment(reason string) string {
 	var content = "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {

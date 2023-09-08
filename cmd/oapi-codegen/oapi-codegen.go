@@ -452,14 +452,12 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "custom-gin", "custom-gin-server":
-			fmt.Println("GIN CUSTOM")
 			opts.CustomGinServer = true
 		case "gorilla", "gorilla-server":
 			opts.GorillaServer = true
 		case "strict-server":
 			opts.Strict = true
 		case "custom-strict-server":
-			fmt.Println("CUSTOM STRICT")
 			opts.CustomStrictServer = true
 		case "client":
 			opts.Client = true
