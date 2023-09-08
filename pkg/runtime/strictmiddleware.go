@@ -9,10 +9,10 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/strictmiddleware/iris#StrictIrisHandlerFunc
+// Deprecated: This has been replaced by github.com/oapi-codegen/iris-runtime/strictmiddleware/iris#StrictIrisHandlerFunc
 type StrictIrisHandlerFunc func(ctx iris.Context, request interface{}) (response interface{}, err error)
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/strictmiddleware/iris#StrictIrisMiddlewareFunc
+// Deprecated: This has been replaced by github.com/oapi-codegen/iris-runtime/strictmiddleware/iris#StrictIrisMiddlewareFunc
 type StrictIrisMiddlewareFunc func(f StrictIrisHandlerFunc, operationID string) StrictIrisHandlerFunc
 
 // Deprecated: This has been replaced by github.com/oapi-codegen/runtime/strictmiddleware/echo#StrictEchoHandlerFunc

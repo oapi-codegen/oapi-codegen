@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/kataras/iris/v12 v12.2.5
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/oapi-codegen/iris-runtime v0.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/stretchr/testify v1.8.4
 	gopkg.in/yaml.v2 v2.4.0
@@ -100,3 +101,5 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/oapi-codegen/iris-runtime => github.com/ShouheiNishi/oapi-codegen-iris-runtime-test v0.0.0-20230908011729-68b13f80e39b

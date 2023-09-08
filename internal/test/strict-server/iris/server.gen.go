@@ -19,8 +19,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/kataras/iris/v12"
+	strictiris "github.com/oapi-codegen/iris-runtime/strictmiddleware/iris"
 	"github.com/oapi-codegen/runtime"
-	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
 )
 
 // ServerInterface represents all server handlers.
