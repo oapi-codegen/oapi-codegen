@@ -1,13 +1,12 @@
 type StrictHandlerFunc = runtime.StrictGinHandlerFunc
 type StrictMiddlewareFunc = runtime.StrictGinMiddlewareFunc
 
-func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-    return &strictHandler{ssi: ssi, middlewares: middlewares}
+func NewStrictHandler(ssi StrictServerInterface) ServerInterface {
+    return &strictHandler{ssi: ssi}
 }
 
 type strictHandler struct {
     ssi StrictServerInterface
-    middlewares []StrictMiddlewareFunc
 }
 
 {{range .}}
@@ -73,9 +72,6 @@ type strictHandler struct {
 
         handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
             return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
-        }
-        for _, middleware := range sh.middlewares {
-            handler = middleware(handler, "{{.OperationId}}")
         }
 
         response, err := handler(ctx, request)

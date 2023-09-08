@@ -133,6 +133,6 @@ type StrictServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
-{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
+{{$opid}}(c *gin.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
 {{end}}{{/* range . */ -}}
 }

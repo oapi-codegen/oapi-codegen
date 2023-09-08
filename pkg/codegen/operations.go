@@ -937,6 +937,10 @@ func GenerateGinServer(t *template.Template, operations []OperationDefinition) (
 	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
+func GenerateCustomGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gin/custom-gin-interface.tmpl", "gin/custom-gin-wrappers.tmpl", "gin/custom-gin-register.tmpl"}, t, operations)
+}
+
 // GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {

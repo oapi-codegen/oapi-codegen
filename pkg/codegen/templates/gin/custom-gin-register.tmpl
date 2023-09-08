@@ -28,6 +28,11 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
     {{end}}
 
     {{range . -}}
-    router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}", wrapper.{{.OperationId}})
+    router.{{.Method }}(options.BaseURL+"{{.Path | swaggerUriToGinUri }}",
+        {{- if .SecurityDefinitions -}}
+            {{range $i, $v := .SecurityDefinitions -}}
+                wrapper.{{$v.ProviderName | authMiddleWare}},
+            {{- end}}
+        {{- end}}wrapper.{{.OperationId}})
     {{end -}}
 }
