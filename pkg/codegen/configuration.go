@@ -101,6 +101,11 @@ type OutputOptions struct {
 	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides
 	NullableType        bool     `yaml:"nullable-type,omitempty"`        // Whether to generate nullable type for nullable fields
+
+	// DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases
+	// Currently supports:
+	//   "array"
+	DisableTypeAliasesForType []string `yaml:"disable-type-aliases-for-type"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration

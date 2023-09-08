@@ -963,3 +963,12 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 
 	return *s.AdditionalProperties.Has == false //nolint:gosimple
 }
+
+func sliceContains[E comparable](s []E, v E) bool {
+	for _, ss := range s {
+		if ss == v {
+			return true
+		}
+	}
+	return false
+}
