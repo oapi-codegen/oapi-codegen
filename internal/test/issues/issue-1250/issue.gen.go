@@ -7,38 +7,91 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // Test defines model for test.
 type Test struct {
+	Field1 *string `json:"field1,omitempty"`
+	Field2 *string `json:"field2,omitempty"`
+}
+
+// TestAdditionalProperties defines model for testAdditionalProperties.
+type TestAdditionalProperties struct {
 	Field1               *string                `json:"field1,omitempty"`
 	Field2               *string                `json:"field2,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// Getter for additional properties for Test. Returns the specified
+// TestAdditionalPropertiesWithUnion defines model for testAdditionalPropertiesWithUnion.
+type TestAdditionalPropertiesWithUnion struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+	union                json.RawMessage
+}
+
+// TestAdditionalPropertiesWithUnion0 defines model for .
+type TestAdditionalPropertiesWithUnion0 struct {
+	Field1 *string `json:"field1,omitempty"`
+}
+
+// TestAdditionalPropertiesWithUnion1 defines model for .
+type TestAdditionalPropertiesWithUnion1 struct {
+	Field2 *string `json:"field2,omitempty"`
+}
+
+// TestUnion defines model for testUnion.
+type TestUnion struct {
+	union json.RawMessage
+}
+
+// TestUnion0 defines model for .
+type TestUnion0 struct {
+	Field1 *string `json:"field1,omitempty"`
+}
+
+// TestUnion1 defines model for .
+type TestUnion1 struct {
+	Field2 *string `json:"field2,omitempty"`
+}
+
+// TestAdditionalPropertiesResp defines model for testAdditionalPropertiesResp.
+type TestAdditionalPropertiesResp = TestAdditionalProperties
+
+// TestAdditionalPropertiesWithUnionResp defines model for testAdditionalPropertiesWithUnionResp.
+type TestAdditionalPropertiesWithUnionResp = TestAdditionalPropertiesWithUnion
+
+// TestResp defines model for testResp.
+type TestResp = Test
+
+// TestUnionResp defines model for testUnionResp.
+type TestUnionResp = TestUnion
+
+// Getter for additional properties for TestAdditionalProperties. Returns the specified
 // element and whether it was found
-func (a Test) Get(fieldName string) (value interface{}, found bool) {
+func (a TestAdditionalProperties) Get(fieldName string) (value interface{}, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for Test
-func (a *Test) Set(fieldName string, value interface{}) {
+// Setter for additional properties for TestAdditionalProperties
+func (a *TestAdditionalProperties) Set(fieldName string, value interface{}) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for Test to handle AdditionalProperties
-func (a *Test) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for TestAdditionalProperties to handle AdditionalProperties
+func (a *TestAdditionalProperties) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -75,8 +128,8 @@ func (a *Test) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for Test to handle AdditionalProperties
-func (a Test) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for TestAdditionalProperties to handle AdditionalProperties
+func (a TestAdditionalProperties) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -103,11 +156,1147 @@ func (a Test) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// Getter for additional properties for TestAdditionalPropertiesWithUnion. Returns the specified
+// element and whether it was found
+func (a TestAdditionalPropertiesWithUnion) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for TestAdditionalPropertiesWithUnion
+func (a *TestAdditionalPropertiesWithUnion) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// AsTestAdditionalPropertiesWithUnion0 returns the union data inside the TestAdditionalPropertiesWithUnion as a TestAdditionalPropertiesWithUnion0
+func (t TestAdditionalPropertiesWithUnion) AsTestAdditionalPropertiesWithUnion0() (TestAdditionalPropertiesWithUnion0, error) {
+	var body TestAdditionalPropertiesWithUnion0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestAdditionalPropertiesWithUnion0 overwrites any union data inside the TestAdditionalPropertiesWithUnion as the provided TestAdditionalPropertiesWithUnion0
+func (t *TestAdditionalPropertiesWithUnion) FromTestAdditionalPropertiesWithUnion0(v TestAdditionalPropertiesWithUnion0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestAdditionalPropertiesWithUnion0 performs a merge with any union data inside the TestAdditionalPropertiesWithUnion, using the provided TestAdditionalPropertiesWithUnion0
+func (t *TestAdditionalPropertiesWithUnion) MergeTestAdditionalPropertiesWithUnion0(v TestAdditionalPropertiesWithUnion0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTestAdditionalPropertiesWithUnion1 returns the union data inside the TestAdditionalPropertiesWithUnion as a TestAdditionalPropertiesWithUnion1
+func (t TestAdditionalPropertiesWithUnion) AsTestAdditionalPropertiesWithUnion1() (TestAdditionalPropertiesWithUnion1, error) {
+	var body TestAdditionalPropertiesWithUnion1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestAdditionalPropertiesWithUnion1 overwrites any union data inside the TestAdditionalPropertiesWithUnion as the provided TestAdditionalPropertiesWithUnion1
+func (t *TestAdditionalPropertiesWithUnion) FromTestAdditionalPropertiesWithUnion1(v TestAdditionalPropertiesWithUnion1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestAdditionalPropertiesWithUnion1 performs a merge with any union data inside the TestAdditionalPropertiesWithUnion, using the provided TestAdditionalPropertiesWithUnion1
+func (t *TestAdditionalPropertiesWithUnion) MergeTestAdditionalPropertiesWithUnion1(v TestAdditionalPropertiesWithUnion1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTestUnion0 returns the union data inside the TestUnion as a TestUnion0
+func (t TestUnion) AsTestUnion0() (TestUnion0, error) {
+	var body TestUnion0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestUnion0 overwrites any union data inside the TestUnion as the provided TestUnion0
+func (t *TestUnion) FromTestUnion0(v TestUnion0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestUnion0 performs a merge with any union data inside the TestUnion, using the provided TestUnion0
+func (t *TestUnion) MergeTestUnion0(v TestUnion0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTestUnion1 returns the union data inside the TestUnion as a TestUnion1
+func (t TestUnion) AsTestUnion1() (TestUnion1, error) {
+	var body TestUnion1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTestUnion1 overwrites any union data inside the TestUnion as the provided TestUnion1
+func (t *TestUnion) FromTestUnion1(v TestUnion1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTestUnion1 performs a merge with any union data inside the TestUnion, using the provided TestUnion1
+func (t *TestUnion) MergeTestUnion1(v TestUnion1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TestUnion) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TestUnion) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// Override default JSON handling for TestAdditionalPropertiesWithUnion to handle AdditionalProperties and union
+func (a *TestAdditionalPropertiesWithUnion) UnmarshalJSON(b []byte) error {
+	err := a.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for TestAdditionalPropertiesWithUnion to handle AdditionalProperties and union
+func (a TestAdditionalPropertiesWithUnion) MarshalJSON() ([]byte, error) {
+	var err error
+	b, err := a.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if a.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// RequestEditorFn  is the function signature for the RequestEditor callback function
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
+
+// Doer performs HTTP requests.
+//
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// Client which conforms to the OpenAPI3 specification for this service.
+type Client struct {
+	// The endpoint of the server conforming to this interface, with scheme,
+	// https://api.deepmap.com for example. This can contain a path relative
+	// to the server, such as https://api.deepmap.com/dev-test, and all the
+	// paths in the swagger spec will be appended to the server.
+	Server string
+
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// ClientOption allows setting custom parameters during construction
+type ClientOption func(*Client) error
+
+// Creates a new Client, with reasonable defaults
+func NewClient(server string, opts ...ClientOption) (*Client, error) {
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = &http.Client{}
+	}
+	return &client, nil
+}
+
+// WithHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithHTTPClient(doer HttpRequestDoer) ClientOption {
+	return func(c *Client) error {
+		c.Client = doer
+		return nil
+	}
+}
+
+// WithRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
+	return func(c *Client) error {
+		c.RequestEditors = append(c.RequestEditors, fn)
+		return nil
+	}
+}
+
+// The interface specification for the client above.
+type ClientInterface interface {
+	// Test request
+	Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestAdditionalProperties request
+	TestAdditionalProperties(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestAdditionalPropertiesRef request
+	TestAdditionalPropertiesRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestAdditionalPropertiesWithUnion request
+	TestAdditionalPropertiesWithUnion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestAdditionalPropertiesWithUnionRef request
+	TestAdditionalPropertiesWithUnionRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRef request
+	TestRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestUnion request
+	TestUnion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestUnionRef request
+	TestUnionRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestAdditionalProperties(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestAdditionalPropertiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestAdditionalPropertiesRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestAdditionalPropertiesRefRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestAdditionalPropertiesWithUnion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestAdditionalPropertiesWithUnionRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestAdditionalPropertiesWithUnionRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestAdditionalPropertiesWithUnionRefRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestUnion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestUnionRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestUnionRef(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestUnionRefRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// NewTestRequest generates requests for Test
+func NewTestRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestAdditionalPropertiesRequest generates requests for TestAdditionalProperties
+func NewTestAdditionalPropertiesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-additional-properties")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestAdditionalPropertiesRefRequest generates requests for TestAdditionalPropertiesRef
+func NewTestAdditionalPropertiesRefRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-additional-properties-ref")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestAdditionalPropertiesWithUnionRequest generates requests for TestAdditionalPropertiesWithUnion
+func NewTestAdditionalPropertiesWithUnionRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-additional-properties-with-union")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestAdditionalPropertiesWithUnionRefRequest generates requests for TestAdditionalPropertiesWithUnionRef
+func NewTestAdditionalPropertiesWithUnionRefRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-additional-properties-with-union-ref")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestRefRequest generates requests for TestRef
+func NewTestRefRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestUnionRequest generates requests for TestUnion
+func NewTestUnionRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-union")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestUnionRefRequest generates requests for TestUnionRef
+func NewTestUnionRefRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-union-ref")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ClientWithResponses builds on ClientInterface to offer response payloads
+type ClientWithResponses struct {
+	ClientInterface
+}
+
+// NewClientWithResponses creates a new ClientWithResponses, which wraps
+// Client with return type handling
+func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &ClientWithResponses{client}, nil
+}
+
+// WithBaseURL overrides the baseURL.
+func WithBaseURL(baseURL string) ClientOption {
+	return func(c *Client) error {
+		newBaseURL, err := url.Parse(baseURL)
+		if err != nil {
+			return err
+		}
+		c.Server = newBaseURL.String()
+		return nil
+	}
+}
+
+// ClientWithResponsesInterface is the interface specification for the client with responses above.
+type ClientWithResponsesInterface interface {
+	// TestWithResponse request
+	TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error)
+
+	// TestAdditionalPropertiesWithResponse request
+	TestAdditionalPropertiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesResponse, error)
+
+	// TestAdditionalPropertiesRefWithResponse request
+	TestAdditionalPropertiesRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesRefResponse, error)
+
+	// TestAdditionalPropertiesWithUnionWithResponse request
+	TestAdditionalPropertiesWithUnionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesWithUnionResponse, error)
+
+	// TestAdditionalPropertiesWithUnionRefWithResponse request
+	TestAdditionalPropertiesWithUnionRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesWithUnionRefResponse, error)
+
+	// TestRefWithResponse request
+	TestRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefResponse, error)
+
+	// TestUnionWithResponse request
+	TestUnionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestUnionResponse, error)
+
+	// TestUnionRefWithResponse request
+	TestUnionRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestUnionRefResponse, error)
+}
+
+type TestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Test
+}
+
+// Status returns HTTPResponse.Status
+func (r TestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestAdditionalPropertiesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestAdditionalProperties
+}
+
+// Status returns HTTPResponse.Status
+func (r TestAdditionalPropertiesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestAdditionalPropertiesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestAdditionalPropertiesRefResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestAdditionalPropertiesResp
+}
+
+// Status returns HTTPResponse.Status
+func (r TestAdditionalPropertiesRefResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestAdditionalPropertiesRefResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestAdditionalPropertiesWithUnionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestAdditionalPropertiesWithUnion
+}
+
+// Status returns HTTPResponse.Status
+func (r TestAdditionalPropertiesWithUnionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestAdditionalPropertiesWithUnionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestAdditionalPropertiesWithUnionRefResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestAdditionalPropertiesWithUnionResp
+}
+
+// Status returns HTTPResponse.Status
+func (r TestAdditionalPropertiesWithUnionRefResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestAdditionalPropertiesWithUnionRefResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestRefResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestResp
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestUnionResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestUnion
+}
+
+// Status returns HTTPResponse.Status
+func (r TestUnionResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestUnionResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestUnionRefResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *TestUnionResp
+}
+
+// Status returns HTTPResponse.Status
+func (r TestUnionRefResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestUnionRefResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// TestWithResponse request returning *TestResponse
+func (c *ClientWithResponses) TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error) {
+	rsp, err := c.Test(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestResponse(rsp)
+}
+
+// TestAdditionalPropertiesWithResponse request returning *TestAdditionalPropertiesResponse
+func (c *ClientWithResponses) TestAdditionalPropertiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesResponse, error) {
+	rsp, err := c.TestAdditionalProperties(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestAdditionalPropertiesResponse(rsp)
+}
+
+// TestAdditionalPropertiesRefWithResponse request returning *TestAdditionalPropertiesRefResponse
+func (c *ClientWithResponses) TestAdditionalPropertiesRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesRefResponse, error) {
+	rsp, err := c.TestAdditionalPropertiesRef(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestAdditionalPropertiesRefResponse(rsp)
+}
+
+// TestAdditionalPropertiesWithUnionWithResponse request returning *TestAdditionalPropertiesWithUnionResponse
+func (c *ClientWithResponses) TestAdditionalPropertiesWithUnionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesWithUnionResponse, error) {
+	rsp, err := c.TestAdditionalPropertiesWithUnion(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestAdditionalPropertiesWithUnionResponse(rsp)
+}
+
+// TestAdditionalPropertiesWithUnionRefWithResponse request returning *TestAdditionalPropertiesWithUnionRefResponse
+func (c *ClientWithResponses) TestAdditionalPropertiesWithUnionRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestAdditionalPropertiesWithUnionRefResponse, error) {
+	rsp, err := c.TestAdditionalPropertiesWithUnionRef(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestAdditionalPropertiesWithUnionRefResponse(rsp)
+}
+
+// TestRefWithResponse request returning *TestRefResponse
+func (c *ClientWithResponses) TestRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefResponse, error) {
+	rsp, err := c.TestRef(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefResponse(rsp)
+}
+
+// TestUnionWithResponse request returning *TestUnionResponse
+func (c *ClientWithResponses) TestUnionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestUnionResponse, error) {
+	rsp, err := c.TestUnion(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestUnionResponse(rsp)
+}
+
+// TestUnionRefWithResponse request returning *TestUnionRefResponse
+func (c *ClientWithResponses) TestUnionRefWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestUnionRefResponse, error) {
+	rsp, err := c.TestUnionRef(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestUnionRefResponse(rsp)
+}
+
+// ParseTestResponse parses an HTTP response from a TestWithResponse call
+func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Test
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestAdditionalPropertiesResponse parses an HTTP response from a TestAdditionalPropertiesWithResponse call
+func ParseTestAdditionalPropertiesResponse(rsp *http.Response) (*TestAdditionalPropertiesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestAdditionalPropertiesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestAdditionalProperties
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestAdditionalPropertiesRefResponse parses an HTTP response from a TestAdditionalPropertiesRefWithResponse call
+func ParseTestAdditionalPropertiesRefResponse(rsp *http.Response) (*TestAdditionalPropertiesRefResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestAdditionalPropertiesRefResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestAdditionalPropertiesResp
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestAdditionalPropertiesWithUnionResponse parses an HTTP response from a TestAdditionalPropertiesWithUnionWithResponse call
+func ParseTestAdditionalPropertiesWithUnionResponse(rsp *http.Response) (*TestAdditionalPropertiesWithUnionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestAdditionalPropertiesWithUnionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestAdditionalPropertiesWithUnion
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestAdditionalPropertiesWithUnionRefResponse parses an HTTP response from a TestAdditionalPropertiesWithUnionRefWithResponse call
+func ParseTestAdditionalPropertiesWithUnionRefResponse(rsp *http.Response) (*TestAdditionalPropertiesWithUnionRefResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestAdditionalPropertiesWithUnionRefResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestAdditionalPropertiesWithUnionResp
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestRefResponse parses an HTTP response from a TestRefWithResponse call
+func ParseTestRefResponse(rsp *http.Response) (*TestRefResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestResp
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestUnionResponse parses an HTTP response from a TestUnionWithResponse call
+func ParseTestUnionResponse(rsp *http.Response) (*TestUnionResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestUnionResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestUnion
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseTestUnionRefResponse parses an HTTP response from a TestUnionRefWithResponse call
+func ParseTestUnionRefResponse(rsp *http.Response) (*TestUnionRefResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestUnionRefResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestUnionResp
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
 	// (GET /test)
 	Test(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-additional-properties)
+	TestAdditionalProperties(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-additional-properties-ref)
+	TestAdditionalPropertiesRef(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-additional-properties-with-union)
+	TestAdditionalPropertiesWithUnion(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-additional-properties-with-union-ref)
+	TestAdditionalPropertiesWithUnionRef(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-ref)
+	TestRef(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-union)
+	TestUnion(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-union-ref)
+	TestUnionRef(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -116,6 +1305,41 @@ type Unimplemented struct{}
 
 // (GET /test)
 func (_ Unimplemented) Test(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-additional-properties)
+func (_ Unimplemented) TestAdditionalProperties(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-additional-properties-ref)
+func (_ Unimplemented) TestAdditionalPropertiesRef(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-additional-properties-with-union)
+func (_ Unimplemented) TestAdditionalPropertiesWithUnion(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-additional-properties-with-union-ref)
+func (_ Unimplemented) TestAdditionalPropertiesWithUnionRef(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-ref)
+func (_ Unimplemented) TestRef(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-union)
+func (_ Unimplemented) TestUnion(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-union-ref)
+func (_ Unimplemented) TestUnionRef(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -134,6 +1358,111 @@ func (siw *ServerInterfaceWrapper) Test(w http.ResponseWriter, r *http.Request) 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Test(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestAdditionalProperties operation middleware
+func (siw *ServerInterfaceWrapper) TestAdditionalProperties(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestAdditionalProperties(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestAdditionalPropertiesRef operation middleware
+func (siw *ServerInterfaceWrapper) TestAdditionalPropertiesRef(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestAdditionalPropertiesRef(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestAdditionalPropertiesWithUnion operation middleware
+func (siw *ServerInterfaceWrapper) TestAdditionalPropertiesWithUnion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestAdditionalPropertiesWithUnion(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestAdditionalPropertiesWithUnionRef operation middleware
+func (siw *ServerInterfaceWrapper) TestAdditionalPropertiesWithUnionRef(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestAdditionalPropertiesWithUnionRef(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestRef operation middleware
+func (siw *ServerInterfaceWrapper) TestRef(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRef(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestUnion operation middleware
+func (siw *ServerInterfaceWrapper) TestUnion(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestUnion(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestUnionRef operation middleware
+func (siw *ServerInterfaceWrapper) TestUnionRef(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestUnionRef(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -259,9 +1588,38 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test", wrapper.Test)
 	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-additional-properties", wrapper.TestAdditionalProperties)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-additional-properties-ref", wrapper.TestAdditionalPropertiesRef)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-additional-properties-with-union", wrapper.TestAdditionalPropertiesWithUnion)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-additional-properties-with-union-ref", wrapper.TestAdditionalPropertiesWithUnionRef)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ref", wrapper.TestRef)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-union", wrapper.TestUnion)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-union-ref", wrapper.TestUnionRef)
+	})
 
 	return r
 }
+
+type TestAdditionalPropertiesRespJSONResponse TestAdditionalProperties
+
+type TestAdditionalPropertiesWithUnionRespJSONResponse TestAdditionalPropertiesWithUnion
+
+type TestRespJSONResponse Test
+
+type TestUnionRespJSONResponse TestUnion
 
 type TestRequestObject struct {
 }
@@ -279,11 +1637,148 @@ func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) err
 	return json.NewEncoder(w).Encode(response)
 }
 
+type TestAdditionalPropertiesRequestObject struct {
+}
+
+type TestAdditionalPropertiesResponseObject interface {
+	VisitTestAdditionalPropertiesResponse(w http.ResponseWriter) error
+}
+
+type TestAdditionalProperties200JSONResponse TestAdditionalProperties
+
+func (response TestAdditionalProperties200JSONResponse) VisitTestAdditionalPropertiesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestAdditionalPropertiesRefRequestObject struct {
+}
+
+type TestAdditionalPropertiesRefResponseObject interface {
+	VisitTestAdditionalPropertiesRefResponse(w http.ResponseWriter) error
+}
+
+type TestAdditionalPropertiesRef200JSONResponse struct {
+	TestAdditionalPropertiesRespJSONResponse
+}
+
+func (response TestAdditionalPropertiesRef200JSONResponse) VisitTestAdditionalPropertiesRefResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestAdditionalPropertiesWithUnionRequestObject struct {
+}
+
+type TestAdditionalPropertiesWithUnionResponseObject interface {
+	VisitTestAdditionalPropertiesWithUnionResponse(w http.ResponseWriter) error
+}
+
+type TestAdditionalPropertiesWithUnion200JSONResponse TestAdditionalPropertiesWithUnion
+
+func (response TestAdditionalPropertiesWithUnion200JSONResponse) VisitTestAdditionalPropertiesWithUnionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestAdditionalPropertiesWithUnionRefRequestObject struct {
+}
+
+type TestAdditionalPropertiesWithUnionRefResponseObject interface {
+	VisitTestAdditionalPropertiesWithUnionRefResponse(w http.ResponseWriter) error
+}
+
+type TestAdditionalPropertiesWithUnionRef200JSONResponse struct {
+	TestAdditionalPropertiesWithUnionRespJSONResponse
+}
+
+func (response TestAdditionalPropertiesWithUnionRef200JSONResponse) VisitTestAdditionalPropertiesWithUnionRefResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestRefRequestObject struct {
+}
+
+type TestRefResponseObject interface {
+	VisitTestRefResponse(w http.ResponseWriter) error
+}
+
+type TestRef200JSONResponse struct{ TestRespJSONResponse }
+
+func (response TestRef200JSONResponse) VisitTestRefResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestUnionRequestObject struct {
+}
+
+type TestUnionResponseObject interface {
+	VisitTestUnionResponse(w http.ResponseWriter) error
+}
+
+type TestUnion200JSONResponse TestUnion
+
+func (response TestUnion200JSONResponse) VisitTestUnionResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type TestUnionRefRequestObject struct {
+}
+
+type TestUnionRefResponseObject interface {
+	VisitTestUnionRefResponse(w http.ResponseWriter) error
+}
+
+type TestUnionRef200JSONResponse struct{ TestUnionRespJSONResponse }
+
+func (response TestUnionRef200JSONResponse) VisitTestUnionRefResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /test)
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
+
+	// (GET /test-additional-properties)
+	TestAdditionalProperties(ctx context.Context, request TestAdditionalPropertiesRequestObject) (TestAdditionalPropertiesResponseObject, error)
+
+	// (GET /test-additional-properties-ref)
+	TestAdditionalPropertiesRef(ctx context.Context, request TestAdditionalPropertiesRefRequestObject) (TestAdditionalPropertiesRefResponseObject, error)
+
+	// (GET /test-additional-properties-with-union)
+	TestAdditionalPropertiesWithUnion(ctx context.Context, request TestAdditionalPropertiesWithUnionRequestObject) (TestAdditionalPropertiesWithUnionResponseObject, error)
+
+	// (GET /test-additional-properties-with-union-ref)
+	TestAdditionalPropertiesWithUnionRef(ctx context.Context, request TestAdditionalPropertiesWithUnionRefRequestObject) (TestAdditionalPropertiesWithUnionRefResponseObject, error)
+
+	// (GET /test-ref)
+	TestRef(ctx context.Context, request TestRefRequestObject) (TestRefResponseObject, error)
+
+	// (GET /test-union)
+	TestUnion(ctx context.Context, request TestUnionRequestObject) (TestUnionResponseObject, error)
+
+	// (GET /test-union-ref)
+	TestUnionRef(ctx context.Context, request TestUnionRefRequestObject) (TestUnionRefResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -332,6 +1827,174 @@ func (sh *strictHandler) Test(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestResponseObject); ok {
 		if err := validResponse.VisitTestResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestAdditionalProperties operation middleware
+func (sh *strictHandler) TestAdditionalProperties(w http.ResponseWriter, r *http.Request) {
+	var request TestAdditionalPropertiesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestAdditionalProperties(ctx, request.(TestAdditionalPropertiesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestAdditionalProperties")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestAdditionalPropertiesResponseObject); ok {
+		if err := validResponse.VisitTestAdditionalPropertiesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestAdditionalPropertiesRef operation middleware
+func (sh *strictHandler) TestAdditionalPropertiesRef(w http.ResponseWriter, r *http.Request) {
+	var request TestAdditionalPropertiesRefRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestAdditionalPropertiesRef(ctx, request.(TestAdditionalPropertiesRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestAdditionalPropertiesRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestAdditionalPropertiesRefResponseObject); ok {
+		if err := validResponse.VisitTestAdditionalPropertiesRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestAdditionalPropertiesWithUnion operation middleware
+func (sh *strictHandler) TestAdditionalPropertiesWithUnion(w http.ResponseWriter, r *http.Request) {
+	var request TestAdditionalPropertiesWithUnionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestAdditionalPropertiesWithUnion(ctx, request.(TestAdditionalPropertiesWithUnionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestAdditionalPropertiesWithUnion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestAdditionalPropertiesWithUnionResponseObject); ok {
+		if err := validResponse.VisitTestAdditionalPropertiesWithUnionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestAdditionalPropertiesWithUnionRef operation middleware
+func (sh *strictHandler) TestAdditionalPropertiesWithUnionRef(w http.ResponseWriter, r *http.Request) {
+	var request TestAdditionalPropertiesWithUnionRefRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestAdditionalPropertiesWithUnionRef(ctx, request.(TestAdditionalPropertiesWithUnionRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestAdditionalPropertiesWithUnionRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestAdditionalPropertiesWithUnionRefResponseObject); ok {
+		if err := validResponse.VisitTestAdditionalPropertiesWithUnionRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestRef operation middleware
+func (sh *strictHandler) TestRef(w http.ResponseWriter, r *http.Request) {
+	var request TestRefRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRef(ctx, request.(TestRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestRefResponseObject); ok {
+		if err := validResponse.VisitTestRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestUnion operation middleware
+func (sh *strictHandler) TestUnion(w http.ResponseWriter, r *http.Request) {
+	var request TestUnionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestUnion(ctx, request.(TestUnionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestUnion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestUnionResponseObject); ok {
+		if err := validResponse.VisitTestUnionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestUnionRef operation middleware
+func (sh *strictHandler) TestUnionRef(w http.ResponseWriter, r *http.Request) {
+	var request TestUnionRefRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestUnionRef(ctx, request.(TestUnionRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestUnionRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestUnionRefResponseObject); ok {
+		if err := validResponse.VisitTestUnionRefResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

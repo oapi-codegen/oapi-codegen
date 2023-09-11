@@ -7,14 +7,111 @@ components:
           type: string
         field2:
           type: string
+      additionalProperties: false
+    testUnion:
+      oneOf:
+        - properties:
+            field1:
+              type: string
+        - properties:
+            field2:
+              type: string
+      additionalProperties: false
+    testAdditionalProperties:
+      properties:
+        field1:
+          type: string
+        field2:
+          type: string
       additionalProperties: true
+    testAdditionalPropertiesWithUnion:
+      oneOf:
+        - properties:
+            field1:
+              type: string
+        - properties:
+            field2:
+              type: string
+      additionalProperties: true
+  responses:
+    testResp:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/test'
+    testUnionResp:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/testUnion'
+    testAdditionalPropertiesResp:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/testAdditionalProperties'
+    testAdditionalPropertiesWithUnionResp:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/testAdditionalPropertiesWithUnion'
 paths:
   /test:
     get:
-      operationId: Test
+      operationId: test
       responses:
         "200":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/test'
+  /test-union:
+    get:
+      operationId: testUnion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/testUnion'
+  /test-additional-properties:
+    get:
+      operationId: testAdditionalProperties
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/testAdditionalProperties'
+  /test-additional-properties-with-union:
+    get:
+      operationId: testAdditionalPropertiesWithUnion
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/testAdditionalPropertiesWithUnion'
+  /test-ref:
+    get:
+      operationId: testRef
+      responses:
+        "200":
+          $ref: '#/components/responses/testResp'
+  /test-union-ref:
+    get:
+      operationId: testUnionRef
+      responses:
+        "200":
+          $ref: '#/components/responses/testUnionResp'
+  /test-additional-properties-ref:
+    get:
+      operationId: testAdditionalPropertiesRef
+      responses:
+        "200":
+          $ref: '#/components/responses/testAdditionalPropertiesResp'
+  /test-additional-properties-with-union-ref:
+    get:
+      operationId: testAdditionalPropertiesWithUnionRef
+      responses:
+        "200":
+          $ref: '#/components/responses/testAdditionalPropertiesWithUnionResp'
