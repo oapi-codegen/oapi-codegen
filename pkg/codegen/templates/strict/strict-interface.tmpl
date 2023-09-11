@@ -27,6 +27,7 @@
         {{$isRef := .IsRef -}}
         {{$isExternalRef := .IsExternalRef -}}
         {{$ref := .Ref  | ucFirstWithPkgName -}}
+        {{$refWithoutPkgName := .Ref  | ucFirstWithoutPkgName -}}
         {{$headers := .Headers -}}
 
         {{if (and $hasHeaders (not $isRef)) -}}
@@ -85,9 +86,11 @@
                 {{end -}}
                 w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$needTypeConvert := and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (not .Schema.IsRef) (.Schema.TypeDecl | isTypeName)}}
+                {{$isEmbed := and $fixedStatusCode $isRef}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return json.NewEncoder(w).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return json.NewEncoder(w).Encode({{if $needTypeConvert}}{{.Schema.TypeDecl}}({{end}}response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}}{{if and $isEmbed (not $hasBodyVar) (not $hasUnionElements)}}.{{$refWithoutPkgName}}{{.NameTagOrContentType}}Response{{end}}{{if $needTypeConvert}}){{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := w.Write([]byte({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err

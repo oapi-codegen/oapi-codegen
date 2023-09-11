@@ -356,7 +356,7 @@ func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 	w.Header().Set("Content-Type", "application/bar+json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Bar(response))
 }
 
 type Test200ApplicationFooPlusJSONResponse Foo
@@ -365,7 +365,7 @@ func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 	w.Header().Set("Content-Type", "application/foo+json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Foo(response))
 }
 
 type Test201ApplicationBarPlusJSONResponse struct {
@@ -376,7 +376,7 @@ func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 	w.Header().Set("Content-Type", "application/bar+json")
 	w.WriteHeader(201)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Bar(response.BazApplicationBarPlusJSONResponse))
 }
 
 type Test201ApplicationFooPlusJSONResponse struct {
@@ -387,7 +387,7 @@ func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 	w.Header().Set("Content-Type", "application/foo+json")
 	w.WriteHeader(201)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Foo(response.BazApplicationFooPlusJSONResponse))
 }
 
 // StrictServerInterface represents all server handlers.

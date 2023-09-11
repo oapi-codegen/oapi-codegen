@@ -1634,7 +1634,7 @@ func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) err
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Test(response))
 }
 
 type TestAdditionalPropertiesRequestObject struct {
@@ -1650,7 +1650,7 @@ func (response TestAdditionalProperties200JSONResponse) VisitTestAdditionalPrope
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestAdditionalProperties(response))
 }
 
 type TestAdditionalPropertiesRefRequestObject struct {
@@ -1668,7 +1668,7 @@ func (response TestAdditionalPropertiesRef200JSONResponse) VisitTestAdditionalPr
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestAdditionalProperties(response.TestAdditionalPropertiesRespJSONResponse))
 }
 
 type TestAdditionalPropertiesWithUnionRequestObject struct {
@@ -1684,7 +1684,7 @@ func (response TestAdditionalPropertiesWithUnion200JSONResponse) VisitTestAdditi
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestAdditionalPropertiesWithUnion(response))
 }
 
 type TestAdditionalPropertiesWithUnionRefRequestObject struct {
@@ -1702,7 +1702,7 @@ func (response TestAdditionalPropertiesWithUnionRef200JSONResponse) VisitTestAdd
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestAdditionalPropertiesWithUnion(response.TestAdditionalPropertiesWithUnionRespJSONResponse))
 }
 
 type TestRefRequestObject struct {
@@ -1718,7 +1718,7 @@ func (response TestRef200JSONResponse) VisitTestRefResponse(w http.ResponseWrite
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Test(response.TestRespJSONResponse))
 }
 
 type TestUnionRequestObject struct {
@@ -1734,7 +1734,7 @@ func (response TestUnion200JSONResponse) VisitTestUnionResponse(w http.ResponseW
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestUnion(response))
 }
 
 type TestUnionRefRequestObject struct {
@@ -1750,7 +1750,7 @@ func (response TestUnionRef200JSONResponse) VisitTestUnionRefResponse(w http.Res
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(TestUnion(response.TestUnionRespJSONResponse))
 }
 
 // StrictServerInterface represents all server handlers.

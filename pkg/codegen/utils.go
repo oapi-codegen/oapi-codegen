@@ -122,6 +122,22 @@ func UppercaseFirstCharacterWithPkgName(str string) string {
 	return prefix + string(runes)
 }
 
+// Uppercase the first character in a identifier without pkg name. This assumes UTF-8, so we have
+// to be careful with unicode, don't treat it as a byte array.
+func UppercaseFirstCharacterWithoutPkgName(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	segs := strings.Split(str, ".")
+	if len(segs) == 2 {
+		str = segs[1]
+	}
+	runes := []rune(str)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
 // LowercaseFirstCharacter Lowercases the first character in a string. This assumes UTF-8, so we have
 // to be careful with unicode, don't treat it as a byte array.
 func LowercaseFirstCharacter(str string) string {
@@ -566,7 +582,7 @@ func IsGoIdentity(str string) bool {
 		}
 	}
 
-	return IsGoKeyword(str)
+	return !IsGoKeyword(str)
 }
 
 func isValidRuneForGoID(index int, char rune) bool {
@@ -580,11 +596,51 @@ func isValidRuneForGoID(index int, char rune) bool {
 // IsValidGoIdentity checks if the given string can be used as a
 // name of variable, constant, or type.
 func IsValidGoIdentity(str string) bool {
-	if IsGoIdentity(str) {
+	if !IsGoIdentity(str) {
 		return false
 	}
 
 	return !IsPredeclaredGoIdentifier(str)
+}
+
+// IsTypeName checks if the given string can be used type name
+func IsTypeName(str string) bool {
+	// Check if pre-defined types
+	switch str {
+	case "bool",
+		"byte",
+		"complex64",
+		"complex128",
+		"error",
+		"float32",
+		"float64",
+		"int",
+		"int8",
+		"int16",
+		"int32",
+		"int64",
+		"rune",
+		"string",
+		"uint",
+		"uint8",
+		"uint16",
+		"uint32",
+		"uint64",
+		"uintptr":
+		return true
+	}
+
+	splits := strings.Split(str, ".")
+	switch len(splits) {
+	case 1:
+		// identifier
+		return IsValidGoIdentity(splits[0])
+	case 2:
+		// QualifiedIdent
+		return IsValidGoIdentity(splits[0]) && IsValidGoIdentity(splits[1])
+	default:
+		return false
+	}
 }
 
 // SanitizeGoIdentity deletes and replaces the illegal runes in the given

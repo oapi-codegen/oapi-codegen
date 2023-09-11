@@ -349,7 +349,7 @@ func (response AddPet200JSONResponse) VisitAddPetResponse(w http.ResponseWriter)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Pet(response))
 }
 
 type AddPetdefaultJSONResponse struct {
@@ -406,7 +406,7 @@ func (response FindPetByID200JSONResponse) VisitFindPetByIDResponse(w http.Respo
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Pet(response))
 }
 
 type FindPetByIDdefaultJSONResponse struct {

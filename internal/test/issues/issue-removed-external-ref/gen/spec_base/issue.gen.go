@@ -225,7 +225,7 @@ func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTr
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(300)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(PascalSchema(response.PascalJSONResponse))
 }
 
 type PostNoTroubleRequestObject struct {

@@ -311,6 +311,7 @@ var TemplateFunctions = template.FuncMap{
 	"lcFirst":                    LowercaseFirstCharacter,
 	"ucFirst":                    UppercaseFirstCharacter,
 	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
+	"ucFirstWithoutPkgName":      UppercaseFirstCharacterWithoutPkgName,
 	"camelCase":                  ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
@@ -322,4 +323,5 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"isTypeName":                 IsTypeName,
 }

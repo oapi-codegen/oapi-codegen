@@ -27,6 +27,7 @@
         {{$isRef := .IsRef -}}
         {{$isExternalRef := .IsExternalRef -}}
         {{$ref := .Ref  | ucFirst -}}
+        {{$refWithoutPkgName := .Ref  | ucFirstWithoutPkgName -}}
         {{$headers := .Headers -}}
 
         {{if (and $hasHeaders (not $isRef)) -}}
@@ -83,9 +84,11 @@
                 {{end -}}
                 ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$needTypeConvert := and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (not .Schema.IsRef) (.Schema.TypeDecl | isTypeName)}}
+                {{$isEmbed := and $fixedStatusCode $isRef}}
                 {{if .IsJSON }}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return ctx.JSON({{if $needTypeConvert}}(*{{.Schema.TypeDecl}})({{end}}&{{if $hasBodyVar}}response.Body{{else}}response{{if and $isEmbed (not $hasUnionElements)}}.{{$refWithoutPkgName}}{{.NameTagOrContentType}}Response{{end}}{{end}}{{if $hasUnionElements}}.union{{end}}{{if $needTypeConvert}}){{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err
