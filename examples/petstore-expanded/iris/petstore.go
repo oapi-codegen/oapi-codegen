@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/iris-middleware"
+	middleware "github.com/oapi-codegen/iris-middleware"
 	"github.com/kataras/iris/v12"
 )
 

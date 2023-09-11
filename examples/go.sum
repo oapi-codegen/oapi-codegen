@@ -168,6 +168,16 @@ github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjY
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 h1:RWengNIwukTxcDr9M+97sNutRR1RKhG96O6jWumTTnw=
 github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826/go.mod h1:TaXosZuwdSHYgviHp1DAtfrULt5eUgsSMsZf+YrPgl8=
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
+github.com/oapi-codegen/echo-middleware v1.0.1 h1:edYGScq1phCcuDoz9AqA9eHX+tEI1LNL5PL1lkkQh1k=
+github.com/oapi-codegen/echo-middleware v1.0.1/go.mod h1:DBQKRn+D/vfXOFbaX5GRwFttoJY64JH6yu+pdt7wU3o=
+github.com/oapi-codegen/fiber-middleware v1.0.1 h1:DZQA+tEsqEMox4pPmc6SJXvDriiWSxc3QiA4UuMwGq4=
+github.com/oapi-codegen/fiber-middleware v1.0.1/go.mod h1:UUVrHLPT4Zv7S2U2TCGLXpTx6mfMb613UI+Z6F8S5Vk=
+github.com/oapi-codegen/gin-middleware v1.0.1 h1:903hkcyMcM/h6ooHS7t/2ad973BY0xvsRNP0EN1B65g=
+github.com/oapi-codegen/gin-middleware v1.0.1/go.mod h1:JDMxGX/rErQs2VV0XAVo1sD6sA0EVUMvFSPhgOLt9mE=
+github.com/oapi-codegen/iris-middleware v1.0.4 h1:+Eoqqbc90qCeBz3Zlzf1xb5xn+wfwQihndHlvU/4Meo=
+github.com/oapi-codegen/iris-middleware v1.0.4/go.mod h1:D1IAqYMgm5QKbD9R+y0j8m+xUtiPLMG92iY+oos/NXc=
+github.com/oapi-codegen/nethttp-middleware v1.0.1 h1:ZWvwfnMU0eloHX1VEJmQscQm3741t0vCm0eSIie1NIo=
+github.com/oapi-codegen/nethttp-middleware v1.0.1/go.mod h1:P7xtAvpoqNB+5obR9qRCeefH7YlXWSK3KgPs/9WB8tE=
 github.com/oapi-codegen/runtime v1.0.0 h1:P4rqFX5fMFWqRzY9M/3YF9+aPSPPB06IzP2P7oOxrWo=
 github.com/oapi-codegen/runtime v1.0.0/go.mod h1:LmCUMQuPB4M/nLXilQXhHw+BLZdDb18B34OO356yJ/A=
 github.com/pelletier/go-toml/v2 v2.0.9 h1:uH2qQXheeefCCkuBBSLi7jCiSmj3VRh2+Goq2N7Xxu0=

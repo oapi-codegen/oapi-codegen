@@ -13,7 +13,7 @@ import (
 	"os"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/strict/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/go-chi/chi/v5"
 )
 

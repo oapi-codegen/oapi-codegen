@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
