@@ -260,7 +260,7 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	middleware "github.com/oapi-codegen/gin-middleware"
 )
 
 type PetStoreImpl struct {}
@@ -329,7 +329,7 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 import (
 	"github.com/kataras/iris/v12"
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/iris-middleware"
+	middleware "github.com/oapi-codegen/iris-middleware"
 )
 ```
 

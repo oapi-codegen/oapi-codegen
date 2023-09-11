@@ -14,6 +14,11 @@ require (
 	github.com/kataras/iris/v12 v12.2.6-0.20230908161203-24ba4e8933b9
 	github.com/labstack/echo/v4 v4.11.1
 	github.com/lestrrat-go/jwx v1.2.26
+	github.com/oapi-codegen/echo-middleware v1.0.1
+	github.com/oapi-codegen/fiber-middleware v1.0.1
+	github.com/oapi-codegen/gin-middleware v1.0.1
+	github.com/oapi-codegen/iris-middleware v1.0.4
+	github.com/oapi-codegen/nethttp-middleware v1.0.1
 	github.com/oapi-codegen/runtime v1.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616

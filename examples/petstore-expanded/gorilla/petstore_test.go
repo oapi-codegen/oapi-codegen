@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gorilla/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
