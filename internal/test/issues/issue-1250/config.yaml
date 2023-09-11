@@ -1,0 +1,6 @@
+package: issue1250
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output: issue.gen.go
