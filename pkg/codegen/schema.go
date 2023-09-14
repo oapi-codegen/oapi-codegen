@@ -119,6 +119,8 @@ type EnumDefinition struct {
 	// TypeNames or when explicitly requested via the
 	// `compatibility.always-prefix-enum-values` option.
 	PrefixTypeName bool
+
+	TypeNameConverter func(string) string
 }
 
 // GetValues generates enum names in a way to minimize global conflicts
@@ -130,6 +132,9 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
 	for k, v := range e.Schema.EnumValues {
+		if e.TypeNameConverter != nil {
+			k = e.TypeNameConverter(k)
+		}
 		newName := e.TypeName + UppercaseFirstCharacter(k)
 		newValues[newName] = v
 	}
