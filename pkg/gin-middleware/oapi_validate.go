@@ -71,14 +71,14 @@ type Options struct {
 	ParamDecoder      openapi3filter.ContentParameterDecoder
 	UserData          interface{}
 	MultiErrorHandler MultiErrorHandler
-	// SilenceServersWarning allows silencing a warning for https://github.com/deepmap/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
+	// SilenceServersWarning allows silencing a warning for https://github.com/ula/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
 	SilenceServersWarning bool
 }
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.HandlerFunc {
 	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
-		log.Println("WARN: OapiRequestValidatorWithOptions called with an OpenAPI spec that has `Servers` set. This may lead to an HTTP 400 with `no matching operation was found` when sending a valid request, as the validator performs `Host` header validation. If you're expecting `Host` header validation, you can silence this warning by setting `Options.SilenceServersWarning = true`. See https://github.com/deepmap/oapi-codegen/issues/882 for more information.")
+		log.Println("WARN: OapiRequestValidatorWithOptions called with an OpenAPI spec that has `Servers` set. This may lead to an HTTP 400 with `no matching operation was found` when sending a valid request, as the validator performs `Host` header validation. If you're expecting `Host` header validation, you can silence this warning by setting `Options.SilenceServersWarning = true`. See https://github.com/ula/oapi-codegen/issues/882 for more information.")
 	}
 
 	router, err := gorillamux.NewRouter(swagger)
@@ -94,9 +94,9 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 				// in case the handler didn't internally call Abort, stop the chain
 				c.Abort()
 			} else if options != nil && options.ErrorHandler != nil {
-					options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
-					// in case the handler didn't internally call Abort, stop the chain
-					c.Abort()
+				options.ErrorHandler(c, err.Error(), http.StatusBadRequest)
+				// in case the handler didn't internally call Abort, stop the chain
+				c.Abort()
 			} else if err.Error() == routers.ErrPathNotFound.Error() {
 				// note: i am not sure if this is the best way to handle this
 				c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": err.Error()})

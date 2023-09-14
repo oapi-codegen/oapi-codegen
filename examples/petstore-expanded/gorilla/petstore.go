@@ -12,9 +12,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gorilla/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
 	"github.com/gorilla/mux"
+	"github.com/ula/oapi-codegen/examples/petstore-expanded/gorilla/api"
+	middleware "github.com/ula/oapi-codegen/pkg/chi-middleware"
 )
 
 func main() {

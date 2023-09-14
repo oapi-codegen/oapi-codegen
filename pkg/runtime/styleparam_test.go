@@ -17,9 +17,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/ula/oapi-codegen/pkg/types"
 )
 
 func TestStyleParam(t *testing.T) {

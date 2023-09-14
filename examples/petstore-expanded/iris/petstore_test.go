@@ -21,9 +21,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 	"github.com/stretchr/testify/assert"
+	"github.com/ula/oapi-codegen/examples/petstore-expanded/iris/api"
+	"github.com/ula/oapi-codegen/pkg/testutil"
 )
 
 func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRecorder {

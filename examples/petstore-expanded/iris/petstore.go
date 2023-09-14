@@ -11,9 +11,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/iris-middleware"
 	"github.com/kataras/iris/v12"
+	"github.com/ula/oapi-codegen/examples/petstore-expanded/iris/api"
+	middleware "github.com/ula/oapi-codegen/pkg/iris-middleware"
 )
 
 func NewIrisPetServer(petStore *api.PetStore, port int) *iris.Application {

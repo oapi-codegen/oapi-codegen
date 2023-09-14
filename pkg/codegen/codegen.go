@@ -30,8 +30,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/ula/oapi-codegen/pkg/util"
 	"golang.org/x/tools/imports"
 )
 

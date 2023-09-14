@@ -57,7 +57,7 @@ type Options struct {
 	ParamDecoder      openapi3filter.ContentParameterDecoder
 	UserData          interface{}
 	MultiErrorHandler MultiErrorHandler
-	// SilenceServersWarning allows silencing a warning for https://github.com/deepmap/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
+	// SilenceServersWarning allows silencing a warning for https://github.com/ula/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
 	SilenceServersWarning bool
 }
 

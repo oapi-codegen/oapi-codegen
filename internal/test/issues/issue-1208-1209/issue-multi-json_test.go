@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	multijson "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1208-1209"
 	"github.com/stretchr/testify/assert"
+	multijson "github.com/ula/oapi-codegen/internal/test/issues/issue-1208-1209"
 )
 
 func TestIssueMultiJson(t *testing.T) {

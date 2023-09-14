@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	issue1219 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1219"
 	"github.com/stretchr/testify/assert"
+	issue1219 "github.com/ula/oapi-codegen/internal/test/issues/issue-1219"
 )
 
 // Test treatment additionalProperties in mergeOpenapiSchemas()

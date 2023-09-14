@@ -67,7 +67,7 @@ write a lot of boilerplate code to perform all the marshaling and unmarshaling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    go install github.com/ula/oapi-codegen/cmd/oapi-codegen@latest
     oapi-codegen -package petstore petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
@@ -259,8 +259,8 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 ```go
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/ula/oapi-codegen/examples/petstore-expanded/gin/api"
+	middleware "github.com/ula/oapi-codegen/pkg/gin-middleware"
 )
 
 type PetStoreImpl struct {}
@@ -328,8 +328,8 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 ```go
 import (
 	"github.com/kataras/iris/v12"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/iris-middleware"
+	"github.com/ula/oapi-codegen/examples/petstore-expanded/iris/api"
+	middleware "github.com/ula/oapi-codegen/pkg/iris-middleware"
 )
 ```
 
@@ -375,7 +375,7 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
 }
 ```
 
-For a complete example see [`examples/petstore-expanded/strict`](https://github.com/deepmap/oapi-codegen/tree/master/examples/petstore-expanded/strict).
+For a complete example see [`examples/petstore-expanded/strict`](https://github.com/ula/oapi-codegen/tree/master/examples/petstore-expanded/strict).
 
 Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
@@ -451,7 +451,7 @@ func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 
 There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
-all of them are tested via the [`internal/test/components`](https://github.com/deepmap/oapi-codegen/tree/master/internal/test/components) schemas and tests. Please
+all of them are tested via the [`internal/test/components`](https://github.com/ula/oapi-codegen/tree/master/internal/test/components) schemas and tests. Please
 look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
@@ -593,7 +593,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 ```go
     import (
-        "github.com/deepmap/oapi-codegen/pkg/securityprovider"
+        "github.com/ula/oapi-codegen/pkg/securityprovider"
     )
 
     func CreateSampleProviders() error {
@@ -830,7 +830,7 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`/internal/test/externalref/`](https://github.com/ula/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
 
 ```yaml
@@ -839,14 +839,14 @@ generate:
   models: true
   embedded-spec: true
 import-mapping:
-  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageA
-  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/internal/test/externalref/packageB
+  ./packageA/spec.yaml: github.com/ula/oapi-codegen/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/ula/oapi-codegen/internal/test/externalref/packageB
 output: externalref.gen.go
 output-options:
   skip-prune: true
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/ula/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
 to see all the fields on the configuration structure.
 
 ### Import Mappings
