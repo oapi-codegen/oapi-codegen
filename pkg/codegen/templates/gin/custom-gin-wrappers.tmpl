@@ -1,5 +1,6 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
+    AuthMiddleWares AuthMiddleWares
     Handler ServerInterface
     HandlerMiddlewares []MiddlewareFunc
     ErrorHandler func(*gin.Context, error, int)
@@ -10,12 +11,14 @@ type MiddlewareFunc func(c *gin.Context)
 {{"clear" | ginAuthMiddleWare}}
 
 {{range .}}{{$opid := .OperationId}}
-
+{{if .SecurityDefinitions}}
+type AuthMiddleWares interface {
 {{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
 {{if ne $secType ""}}
-func (siw *ServerInterfaceWrapper) {{$secType}} {
-}
+    {{$secType}}(c *gin.Context)
 {{end}}
+{{end}}
+}
 {{end}}
 
 // {{$opid}} operation middleware

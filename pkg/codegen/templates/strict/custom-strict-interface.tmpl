@@ -1,3 +1,5 @@
+{{"clear" | ginAuthMiddleWare}}
+
 {{range .}}
     {{$opid := .OperationId -}}
     type {{$opid | ucFirst}}RequestObject struct {
@@ -15,6 +17,14 @@
             {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "Multipart"}}*multipart.Reader{{else if ne .NameTag ""}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
         {{end -}}
     }
+
+    {{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
+    {{if ne $secType ""}}
+    type {{$secType}}ResponseObject interface {
+        WriteResponse(w http.ResponseWriter) error
+    }
+    {{end}}
+    {{end}}
 
     type {{$opid | ucFirst}}ResponseObject interface {
         WriteResponse(w http.ResponseWriter) error
@@ -128,11 +138,18 @@
     {{end}}
 {{end}}
 
+{{"clear" | ginAuthMiddleWare}}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(c *gin.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
+{{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
+{{if ne $secType ""}}
+{{$secType}}(c *gin.Context) ({{$secType}}ResponseObject, error)
+{{end}}
+{{end}}
 {{end}}{{/* range . */ -}}
 }

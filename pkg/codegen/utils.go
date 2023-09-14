@@ -731,7 +731,7 @@ func GinAuthMiddleWareName() func(string) string {
 			return ""
 		}
 		buf[authType] = struct{}{}
-		return fmt.Sprintf("%sAuthMiddleWare(c *gin.Context)", authType)
+		return fmt.Sprintf("%sAuthMiddleWare", authType)
 	}
 }
 
