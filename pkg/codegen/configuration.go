@@ -84,6 +84,8 @@ type CompatibilityOptions struct {
 	// references than is allowed out-of-the-box, but can be tuned to allow
 	// traversing them.
 	CircularReferenceLimit int `yaml:"circular-reference-limit"`
+
+	EnumConverterCallback func(string) string `yaml:"enum-converter-callback"`
 }
 
 // OutputOptions are used to modify the output code in some way.

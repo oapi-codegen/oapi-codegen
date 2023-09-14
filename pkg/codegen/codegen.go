@@ -716,10 +716,11 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				wrapper = `"`
 			}
 			enums = append(enums, EnumDefinition{
-				Schema:         tp.Schema,
-				TypeName:       tp.TypeName,
-				ValueWrapper:   wrapper,
-				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
+				Schema:            tp.Schema,
+				TypeName:          tp.TypeName,
+				ValueWrapper:      wrapper,
+				PrefixTypeName:    globalState.options.Compatibility.AlwaysPrefixEnumValues,
+				TypeNameConverter: globalState.options.Compatibility.EnumConverterCallback,
 			})
 		}
 	}
