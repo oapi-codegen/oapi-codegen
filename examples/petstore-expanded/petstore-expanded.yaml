@@ -41,20 +41,20 @@ paths:
             type: integer
             format: int32
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Pet'
+                  $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       summary: Creates a new pet
       description: Creates a new pet in the store. Duplicates are allowed
@@ -65,20 +65,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewPet'
+              $ref: "#/components/schemas/NewPet"
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
+                $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /pets/{id}:
     get:
       summary: Returns a pet by ID
@@ -93,18 +93,18 @@ paths:
             type: integer
             format: int64
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pet'
+                $ref: "#/components/schemas/Pet"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       summary: Deletes a pet by ID
       description: deletes a single pet based on the ID supplied
@@ -118,19 +118,19 @@ paths:
             type: integer
             format: int64
       responses:
-        '204':
+        "204":
           description: pet deleted
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     Pet:
       allOf:
-        - $ref: '#/components/schemas/NewPet'
+        - $ref: "#/components/schemas/NewPet"
         - required:
             - id
           properties:
@@ -149,6 +149,11 @@ components:
         tag:
           type: string
           description: Type of the pet
+          enum:
+            - "_1"
+            - "test"
+            - "1"
+            - "another_option"
 
     Error:
       required:
