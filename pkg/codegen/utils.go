@@ -713,6 +713,43 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 	return stringToGoCommentWithPrefix(in, typeName)
 }
 
+func AuthMiddleWareName(scheme string) string {
+	return fmt.Sprintf("%sAuthMiddleWare", scheme)
+}
+
+func GinAuthMiddleWareName() func(string) string {
+	buf := make(map[string]struct{})
+	return func(authType string) string {
+		if authType == "clear" {
+			buf = make(map[string]struct{})
+			return ""
+		}
+		if strings.TrimSpace(authType) == "" {
+			return ""
+		}
+		if _, ok := buf[authType]; ok {
+			return ""
+		}
+		buf[authType] = struct{}{}
+		return fmt.Sprintf("%sAuthMiddleWare", authType)
+	}
+}
+
+func IsNeedAuthMiddlewares() func(sd []SecurityDefinition) bool {
+	var returned, ret bool
+	return func(sd []SecurityDefinition) bool {
+		if len(sd) == 0 {
+			ret = false
+		} else if !returned {
+			returned = true
+			ret = true
+		} else {
+			ret = false
+		}
+		return ret
+	}
+}
+
 func DeprecationComment(reason string) string {
 	var content = "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {

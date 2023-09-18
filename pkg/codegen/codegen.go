@@ -205,6 +205,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.CustomGinServer {
+		ginServerOut, err = GenerateCustomGinServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var gorillaServerOut string
 	if opts.Generate.GorillaServer {
 		gorillaServerOut, err = GenerateGorillaServer(t, ops)
@@ -227,6 +234,25 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 		}
 		strictServerOut, err = GenerateStrictServer(t, ops, opts)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+		strictServerOut = strictServerResponses + strictServerOut
+	}
+
+	if opts.Generate.CustomStrictServer {
+		var responses []ResponseDefinition
+		if spec.Components != nil {
+			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
+			if err != nil {
+				return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+			}
+		}
+		strictServerResponses, err := GenerateStrictResponses(t, responses)
+		if err != nil {
+			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+		}
+		strictServerOut, err = GenerateCustomStrictServer(t, ops, opts)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -320,6 +346,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.CustomGinServer {
+		_, err = w.WriteString(ginServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
 	if opts.Generate.GorillaServer {
 		_, err = w.WriteString(gorillaServerOut)
 		if err != nil {
@@ -328,6 +361,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	if opts.Generate.Strict {
+		_, err = w.WriteString(strictServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.CustomStrictServer {
 		_, err = w.WriteString(strictServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)

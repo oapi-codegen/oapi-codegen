@@ -302,4 +302,7 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"ginAuthMiddleWare":          GinAuthMiddleWareName(),
+	"authMiddleWare":             AuthMiddleWareName,
+	"isExistSecurityDefinitions": IsNeedAuthMiddlewares(),
 }
