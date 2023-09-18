@@ -43,7 +43,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 	paramLocation ParamLocation, value string, dest interface{}) error {
 
 	if value == "" {
-		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
+		return nil
 	}
 
 	// Based on the location of the parameter, we need to unescape it properly.

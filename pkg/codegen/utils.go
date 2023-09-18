@@ -718,13 +718,13 @@ func AuthMiddleWareName(scheme string) string {
 }
 
 func GinAuthMiddleWareName() func(string) string {
-	buf := make(map[string]struct{}, 0)
+	buf := make(map[string]struct{})
 	return func(authType string) string {
 		if authType == "clear" {
-			buf = make(map[string]struct{}, 0)
+			buf = make(map[string]struct{})
 			return ""
 		}
-		if authType == "" {
+		if strings.TrimSpace(authType) == "" {
 			return ""
 		}
 		if _, ok := buf[authType]; ok {
@@ -732,6 +732,21 @@ func GinAuthMiddleWareName() func(string) string {
 		}
 		buf[authType] = struct{}{}
 		return fmt.Sprintf("%sAuthMiddleWare", authType)
+	}
+}
+
+func IsNeedAuthMiddlewares() func(sd []SecurityDefinition) bool {
+	var returned, ret bool
+	return func(sd []SecurityDefinition) bool {
+		if len(sd) == 0 {
+			ret = false
+		} else if !returned {
+			returned = true
+			ret = true
+		} else {
+			ret = false
+		}
+		return ret
 	}
 }
 

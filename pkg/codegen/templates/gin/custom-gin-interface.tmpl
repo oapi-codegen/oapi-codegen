@@ -3,13 +3,5 @@ type ServerInterface interface {
 {{range .}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
-{{if .SecurityDefinitions}}
-{{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
-{{if ne $secType ""}}
-    // {{$secType}} auth middleware
-    {{$secType}}(c *gin.Context)
-{{end}}
-{{end}}
-{{end}}
 {{end}}
 }

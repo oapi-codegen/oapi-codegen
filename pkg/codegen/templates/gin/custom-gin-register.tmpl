@@ -7,7 +7,7 @@ type GinServerOptions struct {
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
 func RegisterHandlers(router gin.IRouter, si ServerInterface) {
-  RegisterHandlersWithOptions(router, si, GinServerOptions{})
+  RegisterHandlersWithOptions(router, nil, si, GinServerOptions{})
 }
 
 // RegisterHandlersWithOptions creates http.Handler with additional options

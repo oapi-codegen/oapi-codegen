@@ -9,28 +9,7 @@ type strictHandler struct {
     ssi StrictServerInterface
 }
 
-{{"clear" | ginAuthMiddleWare}}
-
 {{range .}}
-
-    {{range $i, $v := .SecurityDefinitions -}}{{$secType := $v.ProviderName | ginAuthMiddleWare}}
-    {{if ne $secType ""}}
-    func (sh *strictHandler) {{$secType}}(ctx *gin.Context) {
-        response, err := sh.ssi.{{$secType}}(ctx)
-        if err != nil {
-            ctx.Error(err)
-            ctx.Status(http.StatusInternalServerError)
-        } else if validResponse, ok := response.({{$secType}}ResponseObject); ok {
-            if err := validResponse.WriteResponse(ctx.Writer); err != nil {
-                ctx.Error(err)
-            }
-        } else if response != nil {
-            ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
-        }
-    }
-    {{end}}
-    {{end}}
-
     {{$opid := .OperationId}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {

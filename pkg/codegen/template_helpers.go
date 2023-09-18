@@ -304,4 +304,5 @@ var TemplateFunctions = template.FuncMap{
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"ginAuthMiddleWare":          GinAuthMiddleWareName(),
 	"authMiddleWare":             AuthMiddleWareName,
+	"isExistSecurityDefinitions": IsNeedAuthMiddlewares(),
 }
