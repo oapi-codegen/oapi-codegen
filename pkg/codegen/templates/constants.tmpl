@@ -1,7 +1,11 @@
 {{- if gt (len .SecuritySchemeProviderNames) 0 }}
+
+// contextKey provides a type for use with context.WithValue.
+type contextKey string
+
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
-    {{- $ProviderName | sanitizeGoIdentity | ucFirst}}Scopes = "{{$ProviderName}}.Scopes"
+    {{- $ProviderName | sanitizeGoIdentity | ucFirst}}Scopes contextKey = "{{$ProviderName}}.Scopes"
 {{end}}
 )
 {{end}}

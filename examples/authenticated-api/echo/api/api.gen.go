@@ -20,8 +20,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// contextKey provides a type for use with context.WithValue.
+type contextKey string
+
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	BearerAuthScopes contextKey = "BearerAuth.Scopes"
 )
 
 // Error defines model for Error.

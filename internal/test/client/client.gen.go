@@ -14,8 +14,11 @@ import (
 	"strings"
 )
 
+// contextKey provides a type for use with context.WithValue.
+type contextKey string
+
 const (
-	OpenIdScopes = "OpenId.Scopes"
+	OpenIdScopes contextKey = "OpenId.Scopes"
 )
 
 // SchemaObject defines model for SchemaObject.

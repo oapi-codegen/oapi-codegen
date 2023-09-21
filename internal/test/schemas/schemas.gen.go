@@ -24,8 +24,11 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// contextKey provides a type for use with context.WithValue.
+type contextKey string
+
 const (
-	Access_tokenScopes = "access_token.Scopes"
+	Access_tokenScopes contextKey = "access_token.Scopes"
 )
 
 // Defines values for EnumInObjInArrayVal.
