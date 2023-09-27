@@ -371,7 +371,7 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 	var request TestRequestObject
 
 	var body TestApplicationTestPlusJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
 		return
