@@ -577,7 +577,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.DefineViaAlias = true
 	case "number":
 		// We default to float for "number"
-		if f == "double" {
+		if f == "double" || f == "BigDecimal" {
 			outSchema.GoType = "float64"
 		} else if f == "float" || f == "" {
 			outSchema.GoType = "float32"
