@@ -418,7 +418,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 			}
 
-			outSchema.GoType = GenStructFromSchema(outSchema)
+			outSchema.GoType = GenStructFromSchema(outSchema, false)
 		}
 
 		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
@@ -637,7 +637,7 @@ type FieldDescriptor struct {
 
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
-func GenFieldsFromProperties(props []Property) []string {
+func GenFieldsFromProperties(props []Property, ignoreSkipOptionalPointer bool) []string {
 	var fields []string
 	for i, p := range props {
 		field := ""
@@ -671,11 +671,15 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
 
-		// Check x-go-type-skip-optional-pointer, which will override if the type
-		// should be a pointer or not when the field is optional.
-		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
-				p.Schema.SkipOptionalPointer = skipOptionalPointer
+		if ignoreSkipOptionalPointer {
+			p.Schema.SkipOptionalPointer = false
+		} else {
+			// Check x-go-type-skip-optional-pointer, which will override if the type
+			// should be a pointer or not when the field is optional.
+			if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+				if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+					p.Schema.SkipOptionalPointer = skipOptionalPointer
+				}
 			}
 		}
 
@@ -745,11 +749,11 @@ func additionalPropertiesType(schema Schema) string {
 	return addPropsType
 }
 
-func GenStructFromSchema(schema Schema) string {
+func GenStructFromSchema(schema Schema, ignoreSkipOptionalPointer bool) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	// Append all the field definitions
-	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
+	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties, ignoreSkipOptionalPointer)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
