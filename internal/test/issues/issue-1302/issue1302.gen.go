@@ -123,42 +123,40 @@ func (a Test) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	if a.Array != nil {
+	if len(a.Array) != 0 {
 		object["Array"], err = json.Marshal(a.Array)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'Array': %w", err)
 		}
 	}
 
-	if a.Boolean != nil {
+	if a.Boolean {
 		object["Boolean"], err = json.Marshal(a.Boolean)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'Boolean': %w", err)
 		}
 	}
 
-	if a.Integer != nil {
+	if a.Integer != 0 {
 		object["Integer"], err = json.Marshal(a.Integer)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'Integer': %w", err)
 		}
 	}
 
-	if a.Number != nil {
+	if a.Number != 0 {
 		object["Number"], err = json.Marshal(a.Number)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'Number': %w", err)
 		}
 	}
 
-	if a.Object != nil {
-		object["Object"], err = json.Marshal(a.Object)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'Object': %w", err)
-		}
+	object["Object"], err = json.Marshal(a.Object)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'Object': %w", err)
 	}
 
-	if a.String != nil {
+	if len(a.String) != 0 {
 		object["String"], err = json.Marshal(a.String)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'String': %w", err)

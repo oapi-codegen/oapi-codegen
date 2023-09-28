@@ -92,19 +92,26 @@ func (p Property) GoFieldName() string {
 	return SchemaNameToTypeName(p.JsonFieldName)
 }
 
-func (p Property) GoTypeDef() string {
-	typeDef := p.Schema.TypeDecl()
+func (p Property) withPointer() bool {
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
 			p.WriteOnly) {
+		return true
+	}
+	return false
+}
+
+func (p Property) GoTypeDef() string {
+	typeDef := p.Schema.TypeDecl()
+	if p.withPointer() {
 
 		typeDef = "*" + typeDef
 	}
 	return typeDef
 }
 
-func (p Property) OmitEmpty() bool {
+func (p Property) omitEmpty() bool {
 	omitEmpty := !p.Nullable &&
 		(!p.Required || p.ReadOnly || p.WriteOnly) &&
 		(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
@@ -117,6 +124,132 @@ func (p Property) OmitEmpty() bool {
 	}
 
 	return omitEmpty
+}
+
+type emptyValue string
+
+const (
+	emptyValueNever      emptyValue = "never"
+	emptyValueFalse      emptyValue = "false"
+	emptyValueZero       emptyValue = "0"
+	emptyValueNil        emptyValue = "nil"
+	emptyValueZeroLength emptyValue = "len0"
+)
+
+func (p Property) getEmptyType() emptyValue {
+	if p.withPointer() {
+		isSkipOptionalPointer := false
+		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				isSkipOptionalPointer = skipOptionalPointer
+			}
+		}
+		if !isSkipOptionalPointer {
+			return emptyValueNil
+		}
+	}
+
+	if extEmptyValueValue, ok := p.Extensions[extEmptyValue]; ok {
+		if extEmptyValue, err := extParseEmptyValue(extEmptyValueValue); err == nil {
+			return extEmptyValue
+		}
+	}
+
+	schema := p.Schema.OAPISchema
+
+	switch schema.Type {
+	case "", "object":
+		if len(schema.Properties) == 0 && len(schema.AllOf) == 0 && len(schema.AnyOf) == 0 && len(schema.OneOf) == 0 {
+			// empty object
+			if schema.Type == "" && !SchemaHasAdditionalProperties(schema) {
+				// interface{}
+				return emptyValueNil
+			} else {
+				// map
+				return emptyValueZeroLength
+			}
+		}
+		// struct
+		return emptyValueNever
+
+	case "array":
+		// slice
+		return emptyValueZeroLength
+
+	case "integer", "number":
+		// numerical types
+		return emptyValueZero
+
+	case "boolean":
+		// bool
+		return emptyValueFalse
+
+	case "string":
+		switch schema.Format {
+		case "byte":
+			// []byte
+			return emptyValueZeroLength
+		case "email":
+			// openapi_types.Email, typed string
+			return emptyValueZeroLength
+		case "date":
+			// openapi_types.Date, struct
+			return emptyValueNever
+		case "date-time":
+			// time.Time, struct
+			return emptyValueNever
+		case "json":
+			// json.RawMessage, typed slice
+			return emptyValueZeroLength
+		case "uuid":
+			// openapi_types.UUID, typed non zero length array
+			return emptyValueNever
+		case "binary":
+			// openapi_types.File, struct
+			return emptyValueNever
+		default:
+			// string
+			return emptyValueZeroLength
+		}
+	}
+
+	return emptyValueNever
+}
+
+func (p Property) NeedEmptyCheck() bool {
+	if !p.omitEmpty() {
+		return false
+	}
+
+	return p.getEmptyType() != emptyValueNever
+}
+
+func (p Property) EmptyCheckPre() (string, error) {
+	t := p.getEmptyType()
+	switch t {
+	case emptyValueFalse:
+		return "", nil
+	case emptyValueZeroLength:
+		return "len(", nil
+	case emptyValueNil, emptyValueZero:
+		return "", nil
+	default:
+		return "", fmt.Errorf("invalid empty value type: %s", t)
+	}
+}
+
+func (p Property) EmptyCheckPost() (string, error) {
+	t := p.getEmptyType()
+	switch t {
+	case emptyValueFalse:
+		return "", nil
+	case emptyValueZeroLength:
+		return ") != 0", nil
+	case emptyValueNil, emptyValueZero:
+		return " != " + string(t), nil
+	default:
+		return "", fmt.Errorf("invalid empty value type: %s", t)
+	}
 }
 
 // EnumDefinition holds type information for enum
@@ -698,7 +831,7 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
-		if !p.OmitEmpty() {
+		if !p.omitEmpty() {
 			fieldTags["json"] = p.JsonFieldName
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
