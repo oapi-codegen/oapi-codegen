@@ -22,6 +22,13 @@ type Person struct {
 	LastName           string `json:"LastName"`
 }
 
+// PersonAllOfSingle defines model for PersonAllOfSingle.
+type PersonAllOfSingle struct {
+	FirstName          string `json:"FirstName"`
+	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
+	LastName           string `json:"LastName"`
+}
+
 // PersonProperties These are fields that specify a person. They are all optional, and
 // would be used by an `Edit` style API endpoint, where each is optional.
 type PersonProperties struct {
@@ -41,17 +48,18 @@ type PersonWithID struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5SUT2/bOBDFv8qAu0dBTrCLPegWrNtAQJEaaNIc4gAZSyOLKTVkyVEMwfB3L0jJ/+AW",
-	"aX0awOTjvDe/0VZVtnOWiSWoYqtC1VKHqVyQD5ZjhcZ8blTxtFV/e2pUof6aHW/Npiuz8fzCW0deNAW1",
-	"y7bK0/dee6pV8aQ+ah/kDjtSmfqEU/m8e85UTaHy2omO76n7VgfQARBcksxgo6WFDrlGsX6AJgoBcg0G",
-	"gwBjRxmsegGbJNBAOV8y992KfA5JbmN7U8OKwJP0nqmG1QAIL7ckLxBkMAQ3izKHR4KO/JpAWpqeX7I7",
-	"eBo7QbbSkocvyTlsWl21YNkM4Lx90zUF2PuGRpOpQ75klSkZHKlC2dUrVaJ2mbqIrNheZEGBAD1NQiAt",
-	"CgRHlW6GQ0LRJA3pGBpziCGLGS354L0Pk2+Glw+1PnUOxLWzmiWDTUuegLBq4xD2WqMDd9bqcaDFdm8u",
-	"iNe8juZu7Rt57oilnN+lWcRjjfUdiiqUZvnv32MomoXW5OPFAxuXqrtfhviopS3nf0prYvTc1Cjybpu7",
-	"7Iztcv47JIOnyvoaMBw5bLztAOF/Tyh0GEMOpUBlWVBzWHKcaiRygsA2gLA4XQ5kwLrWE/6egu19RfDw",
-	"UM5/yl7sX3NjU8ZaTPzvnoIEuInxQUosJD2VqTfyYXR0nV/lVzF164jRaVWof/Kr/DqygdKmBGfOYEWt",
-	"NfU48jXJJdhf0ei0zgE2yAIoYChus2WCKJVBsCAxwA6/UQSfOmjRuWE0FGeGUaysVaEWJ0/GyQRnOewX",
-	"qsHepBZioMSpROeMrpLA7HX6zo1sxOp9cibeUpDnzk7d79LvRwAAAP//lzc18GUFAAA=",
+	"H4sIAAAAAAAC/8xUzW7bOBB+lQF3j4KcYBd70C1Yt4GAIjWQpDnEATKWRhZTasiSoxiC4XcvSMk/adCm",
+	"uZWnOZDfzPcz3KrKds4ysQRVbFWoWuowlQvywXKs0JjPjSrut+pvT40q1F+z46vZ9GQ23l9468iLpqB2",
+	"2VZ5+tZrT7Uq7tVH7YNcYUcqU59wKh92D5mqKVReO9Gxn7ppdQAdAMElyAw2WlrokGsU6wdoIhAg12Aw",
+	"CDB2lMGqF7AJAg2U8yVz363I55DgNrY3NawIPEnvmWpYDYDweEnyCEEGQ3CxKHO4I+jIrwmkpan9kt2B",
+	"0zgJspWWPFwn5rBpddWCZTOA8/ZZ1xRgzxsaTaYO+ZJVpmRwpAplV09Uidplk8QXUd5rzWtD71Vbva0e",
+	"eKqsrwHDkXvjbQcI/3tCISCundUsOZQClWVBzWHJaExSYWQAtgGExakhyIB1rSfJPQXb+4rg9rac/5Lv",
+	"SUSK7avpKRCgP7SVFgWCo0o3w4FTNJWGdC1Oubc9i5lY8sHrPkw+Mzx+qPWp0wfSGWxa8gSEVRtl22ON",
+	"DNyLUY8BLrZ7ckG85nUkd2mfyXNHLOX8KmUvXmus71BUoTTLf/8eRdEstCYfHx524TXq7qci3mlpy/n7",
+	"85JtfyA1grw55i57scvl/Hc298/JXpxfc2OTxlripqkbChIgbR8kxULCU5l6Jh9GRuf5WX4WVbeOGJ1W",
+	"hfonP8vPYzZQ2qTgzBmsqLWmHi1fk7wO9hc0On1fATbIAihgKP5elgkiVAbBgkQBO/xKMfjUQYvODSOh",
+	"6BlGsLJWhVqctIzOBGc57Beqwd6kEaKgxKlE54yuEsDsafrXx2zE6u3kTHlLQr5kdsp+l873AAAA//8T",
+	"U6rAVQYAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

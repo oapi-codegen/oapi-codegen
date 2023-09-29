@@ -15,7 +15,9 @@ const (
 	// extGoName is used to override a field name
 	extGoName = "x-go-name"
 	// extGoTypeName is used to override a generated typename for something.
-	extGoTypeName        = "x-go-type-name"
+	extGoTypeName = "x-go-type-name"
+	// extGoAllOfEmbedRefs is used to generate allOfs with refs that embedded structs (this generation can fail if it generates objects which have overlapping fields)
+	extGoAllOfEmbedRefs  = "x-go-allof-embed-refs"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
 	extPropOmitEmpty     = "x-omitempty"
 	extPropExtraTags     = "x-oapi-codegen-extra-tags"
@@ -30,6 +32,18 @@ func extString(extPropValue interface{}) (string, error) {
 		return "", fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
 	return str, nil
+}
+
+func ReadExtGoAllOfEmbedRefs(extensions map[string]interface{}) (bool, error) {
+	extPropValue, ok := extensions[extGoAllOfEmbedRefs]
+	if !ok {
+		return false, nil
+	}
+	v, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("for %s failed to read as boolean: %T", extGoAllOfEmbedRefs, extPropValue)
+	}
+	return v, nil
 }
 
 func extTypeName(extPropValue interface{}) (string, error) {

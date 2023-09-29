@@ -10,39 +10,42 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, embedRefs bool) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
 		return mergeSchemasV1(allOf, path)
 	}
-	return mergeSchemas(allOf, path)
+	// Get the flatten schema for generation in the regular case and for validation when using `embedRefs`
+	return mergeSchemas(allOf, path, embedRefs)
 }
 
-func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-	n := len(allOf)
+func mergeSchemas(allOf []*openapi3.SchemaRef, path []string, embedRefs bool) (Schema, error) {
+	schema := openapi3.Schema{}
 
-	if n == 1 {
-		return GenerateGoSchema(allOf[0], path)
-	}
-
-	schema, err := valueWithPropagatedRef(allOf[0])
-	if err != nil {
-		return Schema{}, err
-	}
-
-	for i := 1; i < n; i++ {
+	// Generate a flattened version of the schema
+	for i := range allOf {
 		var err error
 		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
 		if err != nil {
 			return Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true)
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, embedRefs)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+	if !embedRefs {
+		return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+	}
+	// If using x-go-allof-embed-refs generate a struct with references so use the original schema.
+	var outSchema Schema
+	var err error
+	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	if err != nil {
+		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
+	}
+	return outSchema, nil
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
@@ -70,11 +73,11 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	return schema, nil
 }
 
-func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
+func mergeAllOf(allOf []*openapi3.SchemaRef, embedRefs bool) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true, embedRefs)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -84,7 +87,10 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, embedRefs bool) (openapi3.Schema, error) {
+	if s1.IsEmpty() {
+		return s2, nil
+	}
 	var result openapi3.Schema
 	if s1.Extensions != nil || s2.Extensions != nil {
 		result.Extensions = make(map[string]interface{})
@@ -108,7 +114,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	var err error
 	if s1.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s1.AllOf)
+		merged, err = mergeAllOf(s1.AllOf, embedRefs)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
@@ -116,7 +122,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	}
 	if s2.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s2.AllOf)
+		merged, err = mergeAllOf(s2.AllOf, embedRefs)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
@@ -192,9 +198,16 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 
 	if s1.AllowEmptyValue != s2.AllowEmptyValue {
 		return openapi3.Schema{}, errors.New("merging two schemas with different AllowEmptyValue")
-
 	}
 	result.AllowEmptyValue = s1.AllowEmptyValue
+
+	if embedRefs {
+		for _, r := range s2.Required {
+			if _, exists := s2.Properties[r]; !exists {
+				return openapi3.Schema{}, fmt.Errorf("impossible to modify required fields outside of their own schema when using %s", extGoAllOfEmbedRefs)
+			}
+		}
+	}
 
 	// Required. We merge these.
 	result.Required = append(s1.Required, s2.Required...)
@@ -205,7 +218,11 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		result.Properties[k] = v
 	}
 	for k, v := range s2.Properties {
-		// TODO: detect conflicts
+		if embedRefs {
+			if _, exists := result.Properties[k]; exists {
+				return openapi3.Schema{}, fmt.Errorf("overlapping fields between sibling entities is not allowed when using %s", extGoAllOfEmbedRefs)
+			}
+		}
 		result.Properties[k] = v
 	}
 
