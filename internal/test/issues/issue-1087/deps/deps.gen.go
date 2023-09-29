@@ -31,7 +31,19 @@ type BaseError struct {
 }
 
 // Error defines model for Error.
-type Error = BaseError
+type Error struct {
+	// Code The underlying http status code
+	Code int32 `json:"code"`
+
+	// Domain The domain where the error is originating from as defined by the service
+	Domain string `json:"domain"`
+
+	// Message A simple message in english describing the error and can be returned to the consumer
+	Message string `json:"message"`
+
+	// Metadata Any additional details to be conveyed as determined by the service. If present, will return map of key value pairs
+	Metadata *map[string]string `json:"metadata,omitempty"`
+}
 
 // N401 defines model for 401.
 type N401 = Error
