@@ -304,7 +304,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// HAL+JSON:
 					case StringInArray(contentTypeName, contentTypesHalJSON):
 						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
-					case "application/json" == contentTypeName:
+					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
 					// Vendored JSON
@@ -503,6 +503,7 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 // - application/json
 // - application/vnd.api+json
 // - application/*+json
+// - application/json; charset=utf-8
 func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }

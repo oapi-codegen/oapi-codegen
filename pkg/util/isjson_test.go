@@ -41,6 +41,16 @@ func TestIsMediaTypeJson(t *testing.T) {
 			mediaType: "application/vnd.api+json",
 			want:      true,
 		},
+		{
+			name:      "When Mediatype is application/json; charset=UTF-8, return true",
+			mediaType: "application/json; charset=UTF-8",
+			want:      true,
+		},
+		{
+			name:      "When Mediatype is application/json; charset=utf-8, return true",
+			mediaType: "application/json; charset=utf-8",
+			want:      true,
+		},
 	}
 	for _, test := range suite {
 		t.Run(test.name, func(t *testing.T) {

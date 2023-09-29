@@ -1189,6 +1189,7 @@ type UnionExampleResponse struct {
 	JSON200                       *struct {
 		union json.RawMessage
 	}
+	ApplicationjsonCharsetUtf8200 *Example
 }
 
 // Status returns HTTPResponse.Status
@@ -1610,6 +1611,13 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json; charset=utf-8" && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationjsonCharsetUtf8200 = &dest
 
 	}
 

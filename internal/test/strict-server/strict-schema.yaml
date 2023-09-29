@@ -230,21 +230,21 @@ paths:
           description: Unknown error
   /reserved-go-keyword-parameters/{type}:
     get:
-        operationId: ReservedGoKeywordParameters
-        description: Parameters can be named after Go keywords
-        parameters:
-          - name: type
-            in: path
-            required: true
-            schema:
+      operationId: ReservedGoKeywordParameters
+      description: Parameters can be named after Go keywords
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
                 type: string
-        responses:
-          200:
-            description: OK
-            content:
-              text/plain:
-                schema:
-                  type: string
   /with-union:
     post:
       operationId: UnionExample
@@ -268,9 +268,12 @@ paths:
             application/json:
               schema:
                 oneOf:
-                - type: string
-                - $ref: "#/components/schemas/example"
+                  - type: string
+                    $ref: "#/components/schemas/example"
             application/alternative+json:
+              schema:
+                $ref: "#/components/schemas/example"
+            application/json; charset=utf-8:
               schema:
                 $ref: "#/components/schemas/example"
         400:
