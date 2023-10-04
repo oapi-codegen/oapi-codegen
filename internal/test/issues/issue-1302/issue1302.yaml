@@ -29,6 +29,13 @@ components:
             field2:
               type: string
           x-go-type-skip-optional-pointer: true
+        BigInteger:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+          x-go-type: big.Int
+          x-go-type-import:
+            path: math/big
+          x-empty-value: never
       additionalProperties: true
 paths:
   /test:

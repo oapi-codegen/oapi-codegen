@@ -11,5 +11,5 @@ import (
 func TestIssue1302(t *testing.T) {
 	buf, err := json.Marshal(issue1302.Test{})
 	assert.NoError(t, err)
-	assert.JSONEq(t, `{"Object":{}}`, string(buf))
+	assert.JSONEq(t, `{"Object":{},"BigInteger":{}}`, string(buf))
 }

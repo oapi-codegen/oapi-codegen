@@ -12,15 +12,18 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"math/big"
 )
 
 // Test defines model for Test.
 type Test struct {
-	Array   []int   `json:"Array,omitempty"`
-	Boolean bool    `json:"Boolean,omitempty"`
-	Integer int     `json:"Integer,omitempty"`
-	Number  float32 `json:"Number,omitempty"`
-	Object  struct {
+	Array      []int   `json:"Array,omitempty"`
+	BigInteger big.Int `json:"BigInteger,omitempty"`
+	Boolean    bool    `json:"Boolean,omitempty"`
+	Integer    int     `json:"Integer,omitempty"`
+	Number     float32 `json:"Number,omitempty"`
+	Object     struct {
 		Field1 *string `json:"field1,omitempty"`
 		Field2 *string `json:"field2,omitempty"`
 	} `json:"Object,omitempty"`
@@ -62,6 +65,14 @@ func (a *Test) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'Array': %w", err)
 		}
 		delete(object, "Array")
+	}
+
+	if raw, found := object["BigInteger"]; found {
+		err = json.Unmarshal(raw, &a.BigInteger)
+		if err != nil {
+			return fmt.Errorf("error reading 'BigInteger': %w", err)
+		}
+		delete(object, "BigInteger")
 	}
 
 	if raw, found := object["Boolean"]; found {
@@ -128,6 +139,11 @@ func (a Test) MarshalJSON() ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'Array': %w", err)
 		}
+	}
+
+	object["BigInteger"], err = json.Marshal(a.BigInteger)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'BigInteger': %w", err)
 	}
 
 	if a.Boolean {
