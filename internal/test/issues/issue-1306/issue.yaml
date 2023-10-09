@@ -1,0 +1,16 @@
+openapi: "3.0.1"
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: object
+                x-go-type-name: SomeObject
+                properties:
+                  name:
+                    type: string
