@@ -11,6 +11,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/kataras/iris/v12 v12.2.6-0.20230908161203-24ba4e8933b9
 	github.com/labstack/echo/v4 v4.11.1
+	github.com/oapi-codegen/testutil v1.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/text v0.13.0

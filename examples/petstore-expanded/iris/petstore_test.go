@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
