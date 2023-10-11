@@ -139,6 +139,9 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	// Whether to use non-pointer types by default.
+	PreferSkipOptionalPointer bool `yaml:"prefer-skip-optional-pointer,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
