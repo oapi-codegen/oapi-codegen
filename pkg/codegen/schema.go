@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -263,11 +264,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
+		skipOptionalPointer := globalState.options.OutputOptions.PreferSkipOptionalPointer
+		if schema.Type == nil || slices.Contains(*schema.Type, openapi3.TypeObject) {
+			// For object references pointers are the only way to denote optional, in contrast
+			// to other types where the zero-value can be used for that.
+			skipOptionalPointer = false
+		}
+
 		return Schema{
-			GoType:         refType,
-			Description:    schema.Description,
-			DefineViaAlias: true,
-			OAPISchema:     schema,
+			GoType:              refType,
+			Description:         schema.Description,
+			DefineViaAlias:      true,
+			OAPISchema:          schema,
+			SkipOptionalPointer: skipOptionalPointer,
 		}, nil
 	}
 
