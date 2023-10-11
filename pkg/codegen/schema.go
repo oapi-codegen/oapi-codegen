@@ -272,8 +272,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
-		OAPISchema:  schema,
+		Description:         schema.Description,
+		OAPISchema:          schema,
+		SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
