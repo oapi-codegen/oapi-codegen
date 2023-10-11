@@ -21,7 +21,7 @@ package testutil
 //   var response ResponseBody
 //   t is *testing.T, from a unit test
 //   e is *echo.Echo
-//   response := NewRequest().Post("/path").WithJsonBody(body).Go(t, e)
+//   response := NewRequest().Post("/path").WithJsonBody(body).GoWithHTTPHandler(t, e)
 //   err := response.UnmarshalBodyToObject(&response)
 import (
 	"bytes"
