@@ -28,7 +28,7 @@ import (
 
 	// "github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/testutil"
 )
 
 func TestIrisServer(t *testing.T) {

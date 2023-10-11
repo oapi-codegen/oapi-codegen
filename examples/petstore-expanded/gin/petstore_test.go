@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
 )
 
