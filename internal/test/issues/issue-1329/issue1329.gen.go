@@ -274,6 +274,9 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	}
 
 	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Bad
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
