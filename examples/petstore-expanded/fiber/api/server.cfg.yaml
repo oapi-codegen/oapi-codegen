@@ -1,0 +1,5 @@
+package: api
+generate:
+  fiber-server: true
+  embedded-spec: true
+output: petstore-server.gen.go

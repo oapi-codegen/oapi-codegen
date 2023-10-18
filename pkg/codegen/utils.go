@@ -14,10 +14,10 @@
 package codegen
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/token"
 	"net/url"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -161,6 +161,35 @@ func ToCamelCase(str string) string {
 	return n
 }
 
+func ToCamelCaseWithInitialism(str string) string {
+	return replaceInitialism(ToCamelCase(str))
+}
+
+func replaceInitialism(s string) string {
+	// These strings do not apply CamelCase
+	// Do not do CamelCase when these characters match when the preceding character is lowercase
+	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
+	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
+	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
+		// If the preceding character is lowercase, do not do CamelCase
+		if unicode.IsLower(rune(s[0])) {
+			return s
+		}
+		return strings.ToUpper(s)
+	})
+}
+
+// mediaTypeToCamelCase converts a media type to a PascalCase representation
+func mediaTypeToCamelCase(s string) string {
+	// ToCamelCase doesn't - and won't - add `/` to the characters it'll allow word boundary
+	s = strings.Replace(s, "/", "_", 1)
+	// including a _ to make sure that these are treated as word boundaries by `ToCamelCase`
+	s = strings.Replace(s, "*", "Wildcard_", 1)
+	s = strings.Replace(s, "+", "Plus_", 1)
+
+	return ToCamelCaseWithInitialism(s)
+}
+
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
@@ -291,6 +320,23 @@ func StringInArray(str string, array []string) bool {
 	return false
 }
 
+// RefPathToObjName returns the name of referenced object without changes.
+//
+//	#/components/schemas/Foo -> Foo
+//	#/components/parameters/Bar -> Bar
+//	#/components/responses/baz_baz -> baz_baz
+//	document.json#/Foo -> Foo
+//	http://deepmap.com/schemas/document.json#/objObj -> objObj
+//
+// Does not check refPath correctness.
+func RefPathToObjName(refPath string) string {
+	parts := strings.Split(refPath, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1]
+	}
+	return ""
+}
+
 // RefPathToGoType takes a $ref value and converts it to a Go typename.
 // #/components/schemas/Foo -> Foo
 // #/components/parameters/Bar -> Bar
@@ -334,7 +380,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	if goImport, ok := importMapping[remoteComponent]; !ok {
+	if goImport, ok := globalState.importMapping[remoteComponent]; !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
 		goType, err := refPathToGoType("#"+flatComponent, false)
@@ -362,6 +408,21 @@ func IsGoTypeReference(ref string) bool {
 // http://deepmap.com/schemas/document.json#/Foo        -> false
 func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
+}
+
+// SwaggerUriToIrisUri converts a OpenAPI style path URI with parameters to an
+// Iris compatible path URI. We need to replace all of OpenAPI parameters with
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func SwaggerUriToIrisUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
@@ -486,7 +547,7 @@ func IsGoKeyword(str string) bool {
 }
 
 // IsPredeclaredGoIdentifier returns whether the given string
-// is a predefined go indentifier.
+// is a predefined go identifier.
 //
 // See https://golang.org/ref/spec#Predeclared_identifiers
 func IsPredeclaredGoIdentifier(str string) bool {
@@ -554,13 +615,17 @@ func SanitizeGoIdentity(str string) string {
 
 // SanitizeEnumNames fixes illegal chars in the enum names
 // and removes duplicates
-func SanitizeEnumNames(enumNames []string) map[string]string {
-	dupCheck := make(map[string]int, len(enumNames))
-	deDup := make([]string, 0, len(enumNames))
+func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
+	dupCheck := make(map[string]int, len(enumValues))
+	deDup := make([][]string, 0, len(enumValues))
 
-	for _, n := range enumNames {
+	for i, v := range enumValues {
+		n := v
+		if i < len(enumNames) {
+			n = enumNames[i]
+		}
 		if _, dup := dupCheck[n]; !dup {
-			deDup = append(deDup, n)
+			deDup = append(deDup, []string{n, v})
 		}
 		dupCheck[n] = 0
 	}
@@ -568,13 +633,14 @@ func SanitizeEnumNames(enumNames []string) map[string]string {
 	dupCheck = make(map[string]int, len(deDup))
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
-	for _, n := range deDup {
+	for _, p := range deDup {
+		n, v := p[0], p[1]
 		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
 
 		if _, dup := dupCheck[sanitized]; !dup {
-			sanitizedDeDup[sanitized] = n
+			sanitizedDeDup[sanitized] = v
 		} else {
-			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = n
+			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = v
 		}
 		dupCheck[sanitized]++
 	}
@@ -641,11 +707,11 @@ func SchemaNameToTypeName(name string) string {
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
 func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
-	if schema.AdditionalPropertiesAllowed != nil && *schema.AdditionalPropertiesAllowed {
+	if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
 		return true
 	}
 
-	if schema.AdditionalProperties != nil {
+	if schema.AdditionalProperties.Schema != nil {
 		return true
 	}
 	return false
@@ -673,14 +739,23 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 	return stringToGoCommentWithPrefix(in, typeName)
 }
 
+func DeprecationComment(reason string) string {
+	content := "Deprecated:" // The colon is required at the end even without reason
+	if reason != "" {
+		content += fmt.Sprintf(" %s", reason)
+	}
+
+	return stringToGoCommentWithPrefix(content, "")
+}
+
 func stringToGoCommentWithPrefix(in, prefix string) string {
 	if len(in) == 0 || len(strings.TrimSpace(in)) == 0 { // ignore empty comment
 		return ""
 	}
 
 	// Normalize newlines from Windows/Mac to Linux
-	in = strings.Replace(in, "\r\n", "\n", -1)
-	in = strings.Replace(in, "\r", "\n", -1)
+	in = strings.ReplaceAll(in, "\r\n", "\n")
+	in = strings.ReplaceAll(in, "\r", "\n")
 
 	// Add comment to each line
 	var lines []string
@@ -792,6 +867,9 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
 func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+	if spec.Components == nil {
+		return "", nil
+	}
 	pathElements := strings.Split(refPath, "/")
 	// All local references will have 4 path elements.
 	if len(pathElements) != 4 {
@@ -835,15 +913,30 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	if raw, ok := goTypeImportExt.(json.RawMessage); ok {
-		gi := goImport{}
-		if err := json.Unmarshal(raw, &gi); err != nil {
-			return nil, err
-		}
-		return &gi, nil
+	importI, ok := goTypeImportExt.(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
 
-	return nil, nil
+	gi := goImport{}
+	// replicate the case-insensitive field mapping json.Unmarshal would do
+	for k, v := range importI {
+		if strings.EqualFold(k, "name") {
+			if vs, ok := v.(string); ok {
+				gi.Name = vs
+			} else {
+				return nil, fmt.Errorf("failed to convert type: %T", v)
+			}
+		} else if strings.EqualFold(k, "path") {
+			if vs, ok := v.(string); ok {
+				gi.Path = vs
+			} else {
+				return nil, fmt.Errorf("failed to convert type: %T", v)
+			}
+		}
+	}
+
+	return &gi, nil
 }
 
 func MergeImports(dst, src map[string]goImport) {
@@ -859,5 +952,14 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
-	return t1.Schema.OAPISchema == t2.Schema.OAPISchema
+	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+}
+
+// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
+func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
+	if s.AdditionalProperties.Has == nil {
+		return false
+	}
+
+	return *s.AdditionalProperties.Has == false //nolint:gosimple
 }

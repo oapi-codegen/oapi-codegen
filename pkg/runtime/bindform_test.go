@@ -159,9 +159,9 @@ func TestMarshalForm(t *testing.T) {
 	}
 
 	for k, v := range testCases {
-		marshalled, err := MarshalForm(v, nil)
+		marshaled, err := MarshalForm(v, nil)
 		assert.NoError(t, err)
-		encoded, err := url.QueryUnescape(marshalled.Encode())
+		encoded, err := url.QueryUnescape(marshaled.Encode())
 		assert.NoError(t, err)
 		assert.Equal(t, k, encoded)
 	}

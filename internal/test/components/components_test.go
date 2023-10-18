@@ -5,22 +5,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
-	var v1, v2 interface{}
-
-	err := json.Unmarshal(j1, &v1)
-	assert.NoError(t, err)
-
-	err = json.Unmarshal(j2, &v2)
-	assert.NoError(t, err)
-
-	assert.EqualValues(t, v1, v2)
+	t.Helper()
+	assert.JSONEq(t, string(j1), string(j2))
 }
 
 func TestRawJSON(t *testing.T) {
-	// Check raw json unmarshalling
+	// Check raw json unmarshaling
 	const buf = `{"name":"bob","value1":{"present":true}}`
 	var dst ObjectWithJsonField
 	err := json.Unmarshal([]byte(buf), &dst)
@@ -58,7 +52,7 @@ func TestAdditionalProperties(t *testing.T) {
 	assert.True(t, found)
 	assert.EqualValues(t, 7, foo)
 
-	// test that additionalProperties that reference a schema work when unmarshalling
+	// test that additionalProperties that reference a schema work when unmarshaling
 	bossSchema := SchemaObject{
 		FirstName: "bob",
 		Role:      "warehouse manager",
@@ -69,6 +63,20 @@ func TestAdditionalProperties(t *testing.T) {
 	err = json.Unmarshal([]byte(buf2), &obj5)
 	assert.NoError(t, err)
 	assert.Equal(t, bossSchema, obj5["boss"])
+
+	bossSchemaNullable := &SchemaObjectNullable{
+		FirstName: "bob",
+		Role:      "warehouse manager",
+	}
+
+	buf3 := `{"boss": { "firstName": "bob", "role": "warehouse manager" }, "employee": null}`
+	var obj7 AdditionalPropertiesObject7
+	err = json.Unmarshal([]byte(buf3), &obj7)
+	assert.NoError(t, err)
+	employee, ok := obj7["employee"]
+	assert.True(t, ok)
+	assert.Equal(t, bossSchemaNullable, obj7["boss"])
+	assert.Nil(t, employee)
 }
 
 func TestOneOf(t *testing.T) {
@@ -151,6 +159,117 @@ func TestOneOfWithDiscriminator(t *testing.T) {
 	assertJsonEqual(t, []byte(variant5), marshaled)
 }
 
+func TestOneOfWithDiscriminator_PartialMapping(t *testing.T) {
+	const variant4 = `{"discriminator": "v4", "name": "123"}`
+	const variant5 = `{"discriminator": "OneOfVariant5", "id": 321}`
+	var dst OneOfObject61
+
+	err := json.Unmarshal([]byte(variant4), &dst)
+	assert.NoError(t, err)
+	discriminator, err := dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "v4", discriminator)
+	v4, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant4{Discriminator: "v4", Name: "123"}, v4)
+
+	err = json.Unmarshal([]byte(variant5), &dst)
+	require.NoError(t, err)
+	discriminator, err = dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "OneOfVariant5", discriminator)
+	v5, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant5{Discriminator: "OneOfVariant5", Id: 321}, v5)
+
+	// discriminator value will be filled by the generated code
+	err = dst.FromOneOfVariant4(OneOfVariant4{Name: "123"})
+	require.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant4), marshaled)
+
+	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 321})
+	require.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant5), marshaled)
+}
+
+func TestOneOfWithDiscriminator_SchemaNameUsed(t *testing.T) {
+	const variant4 = `{"discriminator": "variant_four", "name": "789"}`
+	const variant51 = `{"discriminator": "one_of_variant51", "id": 987}`
+	var dst OneOfObject62
+
+	err := json.Unmarshal([]byte(variant4), &dst)
+	assert.NoError(t, err)
+	discriminator, err := dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "variant_four", discriminator)
+	v4, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant4{Discriminator: "variant_four", Name: "789"}, v4)
+
+	err = json.Unmarshal([]byte(variant51), &dst)
+	require.NoError(t, err)
+	discriminator, err = dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "one_of_variant51", discriminator)
+	v5, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant51{Discriminator: "one_of_variant51", Id: 987}, v5)
+
+	// discriminator value will be filled by the generated code
+	err = dst.FromOneOfVariant4(OneOfVariant4{Name: "789"})
+	require.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant4), marshaled)
+
+	err = dst.FromOneOfVariant51(OneOfVariant51{Id: 987})
+	require.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant51), marshaled)
+}
+
+func TestOneOfWithDiscriminator_FullImplicitMapping(t *testing.T) {
+	const variant4 = `{"discriminator": "OneOfVariant4", "name": "456"}`
+	const variant5 = `{"discriminator": "OneOfVariant5", "id": 654}`
+	var dst OneOfObject5
+
+	err := json.Unmarshal([]byte(variant4), &dst)
+	assert.NoError(t, err)
+	discriminator, err := dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "OneOfVariant4", discriminator)
+	v4, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant4{Discriminator: "OneOfVariant4", Name: "456"}, v4)
+
+	err = json.Unmarshal([]byte(variant5), &dst)
+	require.NoError(t, err)
+	discriminator, err = dst.Discriminator()
+	require.NoError(t, err)
+	assert.Equal(t, "OneOfVariant5", discriminator)
+	v5, err := dst.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, OneOfVariant5{Discriminator: "OneOfVariant5", Id: 654}, v5)
+
+	// discriminator value will be filled by the generated code
+	err = dst.FromOneOfVariant4(OneOfVariant4{Name: "456"})
+	require.NoError(t, err)
+	marshaled, err := json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant4), marshaled)
+
+	err = dst.FromOneOfVariant5(OneOfVariant5{Id: 654})
+	require.NoError(t, err)
+	marshaled, err = json.Marshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(variant5), marshaled)
+}
+
 func TestOneOfWithFixedProperties(t *testing.T) {
 	const variant1 = "{\"type\": \"v1\", \"name\": \"123\"}"
 	const variant6 = "{\"type\": \"v6\", \"values\": [1, 2, 3]}"
@@ -201,6 +320,34 @@ func TestAnyOf(t *testing.T) {
 	v5, err := dst.AsOneOfVariant5()
 	assert.NoError(t, err)
 	assert.Equal(t, OneOfVariant5{Discriminator: "all", Id: 456}, v5)
+}
+
+func TestOneOfWithAdditional(t *testing.T) {
+	x := OneOfObject13{
+		AdditionalProperties: map[string]interface{}{"x": "y"},
+	}
+	err := x.MergeOneOfVariant1(OneOfVariant1{Name: "test-name"})
+	require.NoError(t, err)
+	b, err := json.Marshal(x)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
+	var y OneOfObject13
+	err = json.Unmarshal(b, &y)
+	require.NoError(t, err)
+	assert.Equal(t, x.Type, y.Type)
+	xVariant, err := x.AsOneOfVariant1()
+	require.NoError(t, err)
+	yVariant, err := y.AsOneOfVariant1()
+	require.NoError(t, err)
+	assert.Equal(t, xVariant, yVariant)
+	xAdditional, ok := x.Get("x")
+	assert.True(t, ok)
+	yAdditional, ok := y.Get("x")
+	assert.True(t, ok)
+	assert.Equal(t, xAdditional, yAdditional)
+	b, err = json.Marshal(y)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
 }
 
 func TestMarshalWhenNoUnionValueSet(t *testing.T) {

@@ -14,14 +14,14 @@
 package testutil
 
 // This is a set of fluent request builders for tests, which help us to
-// simplify constructing and unmarshalling test objects. For example, to post
+// simplify constructing and unmarshaling test objects. For example, to post
 // a body and return a response, you would do something like:
 //
 //   var body RequestBody
 //   var response ResponseBody
 //   t is *testing.T, from a unit test
 //   e is *echo.Echo
-//   response := NewRequest().Post("/path").WithJsonBody(body).Go(t, e)
+//   response := NewRequest().Post("/path").WithJsonBody(body).GoWithHTTPHandler(t, e)
 //   err := response.UnmarshalBodyToObject(&response)
 import (
 	"bytes"
@@ -36,6 +36,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#NewRequest
 func NewRequest() *RequestBuilder {
 	return &RequestBuilder{
 		Headers: make(map[string]string),
@@ -43,6 +44,7 @@ func NewRequest() *RequestBuilder {
 }
 
 // RequestBuilder caches request settings as we build up the request.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder
 type RequestBuilder struct {
 	Method  string
 	Path    string
@@ -53,65 +55,79 @@ type RequestBuilder struct {
 }
 
 // WithMethod sets the method and path
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithMethod
 func (r *RequestBuilder) WithMethod(method string, path string) *RequestBuilder {
 	r.Method = method
 	r.Path = path
 	return r
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.Get
 func (r *RequestBuilder) Get(path string) *RequestBuilder {
 	return r.WithMethod("GET", path)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.Post
 func (r *RequestBuilder) Post(path string) *RequestBuilder {
 	return r.WithMethod("POST", path)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.Put
 func (r *RequestBuilder) Put(path string) *RequestBuilder {
 	return r.WithMethod("PUT", path)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.Patch
 func (r *RequestBuilder) Patch(path string) *RequestBuilder {
 	return r.WithMethod("PATCH", path)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.Delete
 func (r *RequestBuilder) Delete(path string) *RequestBuilder {
 	return r.WithMethod("DELETE", path)
 }
 
 // WithHeader sets a header
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithHeader
 func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	r.Headers[header] = value
 	return r
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithJWSAuth
 func (r *RequestBuilder) WithJWSAuth(jws string) *RequestBuilder {
 	r.Headers["Authorization"] = "Bearer " + jws
 	return r
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithHost
 func (r *RequestBuilder) WithHost(value string) *RequestBuilder {
 	return r.WithHeader("Host", value)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithContentType
 func (r *RequestBuilder) WithContentType(value string) *RequestBuilder {
 	return r.WithHeader("Content-Type", value)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithJsonContentType
 func (r *RequestBuilder) WithJsonContentType() *RequestBuilder {
 	return r.WithContentType("application/json")
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithAccept
 func (r *RequestBuilder) WithAccept(value string) *RequestBuilder {
 	return r.WithHeader("Accept", value)
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithAcceptJson
 func (r *RequestBuilder) WithAcceptJson() *RequestBuilder {
 	return r.WithAccept("application/json")
 }
 
 // Request body operations
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithBody
 func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 	r.Body = body
 	return r
@@ -119,27 +135,31 @@ func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 
 // WithJsonBody takes an object as input, marshals it to JSON, and sends it
 // as the body with Content-Type: application/json
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithJsonBody
 func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
 	r.Body, err = json.Marshal(obj)
 	if err != nil {
-		r.Error = fmt.Errorf("failed to marshal json object: %s", err)
+		r.Error = fmt.Errorf("failed to marshal json object: %w", err)
 	}
 	return r.WithJsonContentType()
 }
 
 // WithCookie sets a cookie
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithCookie
 func (r *RequestBuilder) WithCookie(c *http.Cookie) *RequestBuilder {
 	r.Cookies = append(r.Cookies, c)
 	return r
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithCookieNameValue
 func (r *RequestBuilder) WithCookieNameValue(name, value string) *RequestBuilder {
 	return r.WithCookie(&http.Cookie{Name: name, Value: value})
 }
 
 // GoWithHTTPHandler performs the request, it takes a pointer to a testing context
 // to print messages, and a http handler for request handling.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#GoWithHTTPHandler
 func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *CompletedRequest {
 	if r.Error != nil {
 		// Fail the test if we had an error
@@ -172,12 +192,14 @@ func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *
 
 // Go performs the request, it takes a pointer to a testing context
 // to print messages, and a pointer to an echo context for request handling.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.GoWithHTTPHandler
 func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 	return r.GoWithHTTPHandler(t, e)
 }
 
 // CompletedRequest is the result of calling Go() on the request builder. We're wrapping the
 // ResponseRecorder with some nice helper functions.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest
 type CompletedRequest struct {
 	Recorder *httptest.ResponseRecorder
 
@@ -186,12 +208,14 @@ type CompletedRequest struct {
 	Strict bool
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.DisallowUnknownFields
 func (c *CompletedRequest) DisallowUnknownFields() {
 	c.Strict = true
 }
 
 // UnmarshalBodyToObject takes a destination object as input, and unmarshals the object
 // in the response based on the Content-Type header.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.UnmarshalBodyToObject
 func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 	ctype := c.Recorder.Header().Get("Content-Type")
 
@@ -208,11 +232,13 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 
 // UnmarshalJsonToObject assumes that the response contains JSON and unmarshals it
 // into the specified object.
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.UnmarshalJsonToObject
 func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
 // Code is a shortcut for response code
+// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.Code
 func (c *CompletedRequest) Code() int {
 	return c.Recorder.Code
 }

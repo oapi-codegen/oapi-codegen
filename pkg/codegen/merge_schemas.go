@@ -37,7 +37,7 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemas(schema, oneOfSchema)
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -53,10 +53,10 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	}
 
 	pathParts := strings.Split(ref.Ref, "#")
-	if len(pathParts) != 2 {
+	if len(pathParts) < 1 || len(pathParts) > 2 {
 		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
 	}
-	remoteComponent, _ := pathParts[0], pathParts[1]
+	remoteComponent := pathParts[0]
 
 	// remote ref
 	schema := *ref.Value
@@ -74,7 +74,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value)
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -84,7 +84,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 	if s1.Extensions != nil || s2.Extensions != nil {
 		result.Extensions = make(map[string]interface{})
@@ -209,18 +209,26 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
 		result.Properties[k] = v
 	}
 
-	if SchemaHasAdditionalProperties(&s1) && SchemaHasAdditionalProperties(&s2) {
-		return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
-	}
-	if s1.AdditionalProperties != nil {
-		result.AdditionalProperties = s1.AdditionalProperties
-	}
-	if s2.AdditionalProperties != nil {
-		result.AdditionalProperties = s2.AdditionalProperties
+	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
+		result.WithoutAdditionalProperties()
+	} else if s1.AdditionalProperties.Schema != nil {
+		if s2.AdditionalProperties.Schema != nil {
+			return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
+		} else {
+			result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
+		}
+	} else {
+		if s2.AdditionalProperties.Schema != nil {
+			result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
+		} else {
+			if s1.AdditionalProperties.Has != nil || s2.AdditionalProperties.Has != nil {
+				result.WithAnyAdditionalProperties()
+			}
+		}
 	}
 
-	// Unhandled for now
-	if s1.Discriminator != nil || s2.Discriminator != nil {
+	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
+	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
 	}
 

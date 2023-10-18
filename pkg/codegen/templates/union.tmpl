@@ -53,7 +53,7 @@
               return err
             }
 
-            merged, err := runtime.JsonMerge(b, t.union)
+            merged, err := runtime.JsonMerge(t.union, b)
             t.union = merged
             return err
         }
@@ -85,6 +85,8 @@
             }
         {{end}}
     {{end}}
+
+    {{if not .Schema.HasAdditionalProperties}}
 
     func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
         b, err := t.union.MarshalJSON()
@@ -134,4 +136,5 @@
         {{end -}}
         return err
     }
+    {{end}}
 {{end}}

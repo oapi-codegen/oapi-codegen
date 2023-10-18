@@ -61,6 +61,7 @@ func marshalDeepObject(in interface{}, path []string) ([]string, error) {
 	return result, nil
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#MarshalDeepObject
 func MarshalDeepObject(i interface{}, paramName string) (string, error) {
 	// We're going to marshal to JSON and unmarshal into an interface{},
 	// which will use the json pkg to deal with all the field annotations. We
@@ -123,6 +124,7 @@ func makeFieldOrValue(paths [][]string, values []string) fieldOrValue {
 	return f
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#UnmarshalDeepObject
 func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) error {
 	// Params are all the query args, so we need those that look like
 	// "paramName["...
@@ -200,6 +202,19 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 	it := iv.Type()
 
 	switch it.Kind() {
+	case reflect.Map:
+		dstMap := reflect.MakeMap(iv.Type())
+		for key, value := range pathValues.fields {
+			dstKey := reflect.ValueOf(key)
+			dstVal := reflect.New(iv.Type().Elem())
+			err := assignPathValues(dstVal.Interface(), value)
+			if err != nil {
+				return fmt.Errorf("error binding map: %w", err)
+			}
+			dstMap.SetMapIndex(dstKey, dstVal.Elem())
+		}
+		iv.Set(dstMap)
+		return nil
 	case reflect.Slice:
 		sliceLength := len(pathValues.fields)
 		dstSlice := reflect.MakeSlice(it, sliceLength, sliceLength)
@@ -245,7 +260,7 @@ func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
 				// TODO: why is this marked as an ineffassign?
 				tm, err = time.Parse(types.DateFormat, pathValues.value) //nolint:ineffassign,staticcheck
 				if err != nil {
-					return fmt.Errorf("error parsing tim as RFC3339 or 2006-01-02 time: %s", err)
+					return fmt.Errorf("error parsing '%s' as RFC3339 or 2006-01-02 time: %s", pathValues.value, err)
 				}
 				return fmt.Errorf("invalid date format: %w", err)
 			}

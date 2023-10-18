@@ -17,14 +17,20 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
+	"io"
 	"io/fs"
+	"net/http"
+	"os"
 	"runtime/debug"
 	"sort"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 )
@@ -37,8 +43,9 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options Configuration
-	spec    *openapi3.T
+	options       Configuration
+	spec          *openapi3.T
+	importMapping importMap
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -66,8 +73,6 @@ func (im importMap) GoImports() []string {
 	}
 	return goImports
 }
-
-var importMapping importMap
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
@@ -101,8 +106,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
-
-	importMapping = constructImportMapping(opts.ImportMapping)
+	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
@@ -128,17 +132,22 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
 
-	// Override built-in templates with user-provided versions
-	for _, tpl := range t.Templates() {
-		if _, ok := opts.OutputOptions.UserTemplates[tpl.Name()]; ok {
-			utpl := t.New(tpl.Name())
-			if _, err := utpl.Parse(opts.OutputOptions.UserTemplates[tpl.Name()]); err != nil {
-				return "", fmt.Errorf("error parsing user-provided template %q: %w", tpl.Name(), err)
-			}
+	// load user-provided templates. Will Override built-in versions.
+	for name, template := range opts.OutputOptions.UserTemplates {
+		utpl := t.New(name)
+
+		txt, err := GetUserTemplateText(template)
+		if err != nil {
+			return "", fmt.Errorf("error loading user-provided template %q: %w", name, err)
+		}
+
+		_, err = utpl.Parse(txt)
+		if err != nil {
+			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
 		}
 	}
 
-	ops, err := OperationDefinitions(spec)
+	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
@@ -167,6 +176,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		MergeImports(xGoTypeImports, imprts)
 	}
 
+	var irisServerOut string
+	if opts.Generate.IrisServer {
+		irisServerOut, err = GenerateIrisServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var echoServerOut string
 	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
@@ -178,6 +195,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var chiServerOut string
 	if opts.Generate.ChiServer {
 		chiServerOut, err = GenerateChiServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var fiberServerOut string
+	if opts.Generate.FiberServer {
+		fiberServerOut, err = GenerateFiberServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -201,9 +226,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var strictServerOut string
 	if opts.Generate.Strict {
-		responses, err := GenerateResponseDefinitions("", spec.Components.Responses)
-		if err != nil {
-			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+		var responses []ResponseDefinition
+		if spec.Components != nil {
+			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
+			if err != nil {
+				return "", fmt.Errorf("error generation response definitions for schema: %w", err)
+			}
 		}
 		strictServerResponses, err := GenerateStrictResponses(t, responses)
 		if err != nil {
@@ -234,7 +262,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, importMapping, spec)
+		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -243,8 +271,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	externalImports := append(importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
-	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
+	externalImports := append(globalState.importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
+	importsOut, err := GenerateImports(
+		t,
+		externalImports,
+		opts.PackageName,
+		opts.NoVCSVersionOverride,
+	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -275,6 +308,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.IrisServer {
+		_, err = w.WriteString(irisServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+
+	}
+
 	if opts.Generate.EchoServer {
 		_, err = w.WriteString(echoServerOut)
 		if err != nil {
@@ -284,6 +325,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.FiberServer {
+		_, err = w.WriteString(fiberServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -339,28 +387,31 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
-	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
-	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
-	}
+	var allTypes []TypeDefinition
+	if swagger.Components != nil {
+		schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
+		}
 
-	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
-	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
-	}
-	allTypes := append(schemaTypes, paramTypes...)
+		paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
+		}
+		allTypes = append(schemaTypes, paramTypes...)
 
-	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
-	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component responses: %w", err)
-	}
-	allTypes = append(allTypes, responseTypes...)
+		responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component responses: %w", err)
+		}
+		allTypes = append(allTypes, responseTypes...)
 
-	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
-	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
+		bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
+		}
+		allTypes = append(allTypes, bodyTypes...)
 	}
-	allTypes = append(allTypes, bodyTypes...)
 
 	// Go through all operations, and add their types to allTypes, so that we can
 	// scan all of them for enums. Operation definitions are handled differently
@@ -396,7 +447,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate}, "")
+	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, allTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
+	}
+
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -508,12 +564,25 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
-		// handle application/json media types here. Other responses should
+		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonResponse.Schema, []string{responseName})
+
+		jsonCount := 0
+		for mediaType := range response.Content {
+			if util.IsMediaTypeJson(mediaType) {
+				jsonCount++
+			}
+		}
+
+		sortedContentKeys := SortedContentKeys(response.Content)
+		for _, mediaType := range sortedContentKeys {
+			response := response.Content[mediaType]
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -537,6 +606,11 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
+
+			if jsonCount > 1 {
+				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
+			}
+
 			types = append(types, typeDef)
 		}
 	}
@@ -554,9 +628,12 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			goType, err := GenerateGoSchema(jsonBody.Schema, []string{requestBodyName})
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			goType, err := GenerateGoSchema(body.Schema, []string{requestBodyName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
 			}
@@ -696,7 +773,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // GenerateImports generates our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the
 	// version if we can't read this.
@@ -709,6 +786,9 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		}
 		if bi.Main.Version != "" {
 			moduleVersion = bi.Main.Version
+		}
+		if versionOverride != nil {
+			moduleVersion = *versionOverride
 		}
 	}
 
@@ -778,12 +858,82 @@ func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (
 	return GenerateTemplates([]string{"union.tmpl"}, t, context)
 }
 
+func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var filteredTypes []TypeDefinition
+	for _, t := range typeDefs {
+		if len(t.Schema.UnionElements) != 0 && t.Schema.HasAdditionalProperties {
+			filteredTypes = append(filteredTypes, t)
+		}
+	}
+
+	if len(filteredTypes) == 0 {
+		return "", nil
+	}
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	return GenerateTemplates([]string{"union-and-additional-properties.tmpl"}, t, context)
+}
+
 // SanitizeCode runs sanitizers across the generated Go code to ensure the
 // generated code will be able to compile.
 func SanitizeCode(goCode string) string {
 	// remove any byte-order-marks which break Go-Code
 	// See: https://groups.google.com/forum/#!topic/golang-nuts/OToNIPdfkks
-	return strings.Replace(goCode, "\uFEFF", "", -1)
+	return strings.ReplaceAll(goCode, "\uFEFF", "")
+}
+
+// GetUserTemplateText attempts to retrieve the template text from a passed in URL or file
+// path when inputData is more than one line.
+// This function will attempt to load a file first, and if it fails, will try to get the
+// data from the remote endpoint.
+// The timeout for remote download file is 30 seconds.
+func GetUserTemplateText(inputData string) (template string, err error) {
+	// if the input data is more than one line, assume its a template and return that data.
+	if strings.Contains(inputData, "\n") {
+		return inputData, nil
+	}
+
+	// load data from file
+	data, err := os.ReadFile(inputData)
+	// return data if found and loaded
+	if err == nil {
+		return string(data), nil
+	}
+
+	// check for non "not found" errors
+	if !os.IsNotExist(err) {
+		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
+	}
+
+	// attempt to get data from url with timeout
+	const downloadTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, inputData, http.NoBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request GET %s: %w", inputData, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
+	}
+	if resp != nil {
+		defer resp.Body.Close()
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
+	}
+	data, err = io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body from GET %s: %w", inputData, err)
+	}
+
+	return string(data), nil
 }
 
 // LoadTemplates loads all of our template files into a text/template. The
@@ -868,6 +1018,10 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 
 func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]goImport, error) {
 	res := map[string]goImport{}
+	if swagger.Components == nil {
+		return res, nil
+	}
+
 	schemaImports, err := GetSchemaImports(swagger.Components.Schemas, excludeSchemas)
 	if err != nil {
 		return nil, err
@@ -954,9 +1108,12 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 	res := map[string]goImport{}
 	for _, r := range bodies {
 		response := r.Value
-		jsonBody, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonBody.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -970,9 +1127,12 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 	res := map[string]goImport{}
 	for _, r := range responses {
 		response := r.Value
-		jsonResponse, found := response.Content["application/json"]
-		if found {
-			imprts, err := GoSchemaImports(jsonResponse.Schema)
+		for mediaType, body := range response.Content {
+			if !util.IsMediaTypeJson(mediaType) {
+				continue
+			}
+
+			imprts, err := GoSchemaImports(body.Schema)
 			if err != nil {
 				return nil, err
 			}
@@ -995,4 +1155,8 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		MergeImports(res, imprts)
 	}
 	return res, nil
+}
+
+func SetGlobalStateSpec(spec *openapi3.T) {
+	globalState.spec = spec
 }

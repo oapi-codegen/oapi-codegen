@@ -1,0 +1,6 @@
+package: issue1219
+generate:
+  models: true
+output-options:
+  skip-prune: true
+output: issue.gen.go

@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -39,33 +40,37 @@ const (
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400.
 // Create validator middleware from a YAML file path
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiValidatorFromYamlFile
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("error reading %s: %s", path, err)
+		return nil, fmt.Errorf("error reading %s: %w", path, err)
 	}
 
 	swagger, err := openapi3.NewLoader().LoadFromData(data)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %s",
-			path, err)
+		return nil, fmt.Errorf("error parsing %s as Swagger YAML: %w", path, err)
 	}
 	return OapiRequestValidator(swagger), nil
 }
 
 // OapiRequestValidator creates a validator from a swagger object.
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiRequestValidator
 func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // ErrorHandler is called when there is an error in validation
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#ErrorHandler
 type ErrorHandler func(c echo.Context, err *echo.HTTPError) error
 
 // MultiErrorHandler is called when oapi returns a MultiError type
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#MultiErrorHandler
 type MultiErrorHandler func(openapi3.MultiError) *echo.HTTPError
 
 // Options to customize request validation. These are passed through to
 // openapi3filter.
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#Options
 type Options struct {
 	ErrorHandler      ErrorHandler
 	Options           openapi3filter.Options
@@ -73,10 +78,17 @@ type Options struct {
 	UserData          interface{}
 	Skipper           echomiddleware.Skipper
 	MultiErrorHandler MultiErrorHandler
+	// SilenceServersWarning allows silencing a warning for https://github.com/deepmap/oapi-codegen/issues/882 that reports when an OpenAPI spec has `spec.Servers != nil`
+	SilenceServersWarning bool
 }
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiRequestValidatorWithOptions
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
+	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
+		log.Println("WARN: OapiRequestValidatorWithOptions called with an OpenAPI spec that has `Servers` set. This may lead to an HTTP 400 with `no matching operation was found` when sending a valid request, as the validator performs `Host` header validation. If you're expecting `Host` header validation, you can silence this warning by setting `Options.SilenceServersWarning = true`. See https://github.com/deepmap/oapi-codegen/issues/882 for more information.")
+	}
+
 	router, err := gorillamux.NewRouter(swagger)
 	if err != nil {
 		panic(err)
@@ -103,6 +115,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#ValidateRequestFromContext
 func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) *echo.HTTPError {
 	req := ctx.Request()
 	route, pathParams, err := router.FindRoute(req)
@@ -113,7 +126,7 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 		case *routers.RouteError:
 			// We've got a bad request, the path requested doesn't match
 			// either server, or path, or something.
-			return echo.NewHTTPError(http.StatusBadRequest, e.Reason)
+			return echo.NewHTTPError(http.StatusNotFound, e.Reason)
 		default:
 			// This should never happen today, but if our upstream code changes,
 			// we don't want to crash the server, so handle the unexpected error.
@@ -184,6 +197,7 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 // GetEchoContext gets the echo context from within requests. It returns
 // nil if not found or wrong type.
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#GetEchoContext
 func GetEchoContext(c context.Context) echo.Context {
 	iface := c.Value(EchoContextKey)
 	if iface == nil {
@@ -196,11 +210,13 @@ func GetEchoContext(c context.Context) echo.Context {
 	return eCtx
 }
 
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#GetUserData
 func GetUserData(c context.Context) interface{} {
 	return c.Value(UserDataKey)
 }
 
 // attempt to get the skipper from the options whether it is set or not
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#getSkipperFromOptions
 func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 	if options == nil {
 		return echomiddleware.DefaultSkipper
@@ -215,6 +231,7 @@ func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 
 // attempt to get the MultiErrorHandler from the options. If it is not set,
 // return a default handler
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#getMultiErrorHandlerFromOptions
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
 		return defaultMultiErrorHandler
@@ -230,6 +247,7 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
 // of all of the errors. This method is called if there are no other
 // methods defined on the options.
+// Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#defaultMultiErrorHandler
 func defaultMultiErrorHandler(me openapi3.MultiError) *echo.HTTPError {
 	return &echo.HTTPError{
 		Code:     http.StatusBadRequest,

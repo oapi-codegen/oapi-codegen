@@ -25,7 +25,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/testutil"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/gin-gonic/gin"
@@ -101,10 +101,10 @@ func TestOapiRequestValidator(t *testing.T) {
 	g.GET("/resource", func(c *gin.Context) {
 		called = true
 	})
-	// Let's send the request to the wrong server, this should fail validation
+	// Let's send the request to the wrong server, this should return 404
 	{
 		rec := doGet(t, g, "http://not.deepmap.ai/resource")
-		assert.Equal(t, http.StatusBadRequest, rec.Code)
+		assert.Equal(t, http.StatusNotFound, rec.Code)
 		assert.False(t, called, "Handler should not have been called")
 	}
 

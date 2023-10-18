@@ -23,8 +23,11 @@ func TestFilterOperationsByTag(t *testing.T) {
 			},
 		}
 
+		loader := openapi3.NewLoader()
+		loader.IsExternalRefsAllowed = true
+
 		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+		swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:
@@ -49,8 +52,11 @@ func TestFilterOperationsByTag(t *testing.T) {
 			},
 		}
 
+		loader := openapi3.NewLoader()
+		loader.IsExternalRefsAllowed = true
+
 		// Get a spec from the test definition in this file:
-		swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+		swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:

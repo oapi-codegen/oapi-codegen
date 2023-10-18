@@ -31,6 +31,8 @@ import (
 // https://swagger.io/docs/specification/serialization/
 // It is a backward compatible function to clients generated with codegen
 // up to version v1.5.5. v1.5.6+ calls the function below.
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStyledParameter
 func BindStyledParameter(style string, explode bool, paramName string,
 	value string, dest interface{}) error {
 	return BindStyledParameterWithLocation(style, explode, paramName, ParamLocationUndefined, value, dest)
@@ -39,6 +41,8 @@ func BindStyledParameter(style string, explode bool, paramName string,
 // BindStyledParameterWithLocation binds a parameter as described in the Path Parameters
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStyledParameterWithLocation
 func BindStyledParameterWithLocation(style string, explode bool, paramName string,
 	paramLocation ParamLocation, value string, dest interface{}) error {
 
@@ -68,7 +72,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 	// If the destination implements encoding.TextUnmarshaler we use it for binding
 	if tu, ok := dest.(encoding.TextUnmarshaler); ok {
 		if err := tu.UnmarshalText([]byte(value)); err != nil {
-			return fmt.Errorf("error unmarshalling '%s' text as %T: %s", value, dest, err)
+			return fmt.Errorf("error unmarshaling '%s' text as %T: %s", value, dest, err)
 		}
 
 		return nil
@@ -82,7 +86,7 @@ func BindStyledParameterWithLocation(style string, explode bool, paramName strin
 
 	if t.Kind() == reflect.Struct {
 		// We've got a destination object, we'll create a JSON representation
-		// of the input value, and let the json library deal with the unmarshalling
+		// of the input value, and let the json library deal with the unmarshaling
 		parts, err := splitStyledParameter(style, explode, true, paramName, value)
 		if err != nil {
 			return err
@@ -212,7 +216,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 	for i, p := range parts {
 		err := BindStringToObject(p, newArray.Index(i).Addr().Interface())
 		if err != nil {
-			return fmt.Errorf("error setting array element: %s", err)
+			return fmt.Errorf("error setting array element: %w", err)
 		}
 	}
 	v.Set(newArray)
@@ -233,7 +237,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 // into the struct.
 func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest interface{}) error {
 	// We've got a destination object, we'll create a JSON representation
-	// of the input value, and let the json library deal with the unmarshalling
+	// of the input value, and let the json library deal with the unmarshaling
 	var fields []string
 	if explode {
 		fields = make([]string, len(parts))
@@ -277,6 +281,8 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // tell them apart. This code tries to fail, but the moral of the story is that
 // you shouldn't pass objects via form styled query arguments, just use
 // the Content parameter form.
+//
+// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindQueryParameter
 func BindQueryParameter(style string, explode bool, required bool, paramName string,
 	queryParams url.Values, dest interface{}) error {
 
@@ -462,7 +468,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 		return true, BindStringToObject(values.Get(paramName), dest)
 	}
 	if t.Kind() != reflect.Struct {
-		return false, fmt.Errorf("unmarshalling query arg '%s' into wrong type", paramName)
+		return false, fmt.Errorf("unmarshaling query arg '%s' into wrong type", paramName)
 	}
 
 	fieldsPresent := false
