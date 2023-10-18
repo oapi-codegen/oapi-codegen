@@ -1,5 +1,6 @@
-ARG GO_VERSION=1.18
-ARG ALPINE_VERSION=3.16
+ARG GO_VERSION=1.20
+ARG ALPINE_VERSION=3.17
+ARG BASE_IMAGE=scratch
 
 ### Build binary
 FROM golang:${GO_VERSION}-alpine${ALPINE_VERSION} as build-binary
@@ -15,7 +16,7 @@ FROM alpine:${ALPINE_VERSION} as user-passwd
 RUN addgroup -S oapi-codegen && adduser -S oapi-codegen -G oapi-codegen
 
 ### Image
-FROM scratch as image
+FROM ${BASE_IMAGE}
 COPY --from=user-passwd /etc/passwd /etc/passwd
 COPY --from=build-binary /go/src/github.com/deepmap/oapi-codegen/bin/oapi-codegen /usr/local/bin/oapi-codegen
 USER oapi-codegen
