@@ -88,7 +88,7 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok {
+			if _, ok := pathToName[packagePath]; !ok && packagePath != "*" {
 				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 			}
 		}

@@ -135,10 +135,13 @@ func TestSortedRequestBodyKeys(t *testing.T) {
 
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			"dj-star.yml":                 "*",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -160,6 +163,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-star",
+			path:   "dj-star.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
