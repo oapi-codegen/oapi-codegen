@@ -69,6 +69,9 @@ type importMap map[string]goImport
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
+		if v.Path == "*" {
+			continue
+		}
 		goImports = append(goImports, v.String())
 	}
 	return goImports
