@@ -17,14 +17,17 @@ import (
 )
 
 // ErrorHandler is called when there is an error in validation
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#ErrorHandler
 type ErrorHandler func(w http.ResponseWriter, message string, statusCode int)
 
 // MultiErrorHandler is called when oapi returns a MultiError type
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#
 type MultiErrorHandler func(openapi3.MultiError) (int, error)
 
 // Options to customize request validation, openapi3filter specified options will be passed through.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#Options
 type Options struct {
 	Options           openapi3filter.Options
@@ -36,6 +39,7 @@ type Options struct {
 
 // OapiRequestValidator Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#OapiRequestValidator
 func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Handler {
 	return OapiRequestValidatorWithOptions(swagger, nil)
@@ -43,6 +47,7 @@ func OapiRequestValidator(swagger *openapi3.T) func(next http.Handler) http.Hand
 
 // OapiRequestValidatorWithOptions Creates middleware to validate request by swagger spec.
 // This middleware is good for net/http either since go-chi is 100% compatible with net/http.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#OapiRequestValidatorWithOptions
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func(next http.Handler) http.Handler {
 	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
@@ -76,6 +81,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) func
 
 // validateRequest is called from the middleware above and actually does the work
 // of validating a request.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#validateRequest
 func validateRequest(r *http.Request, router routers.Router, options *Options) (int, error) {
 
@@ -124,6 +130,7 @@ func validateRequest(r *http.Request, router routers.Router, options *Options) (
 
 // attempt to get the MultiErrorHandler from the options. If it is not set,
 // return a default handler
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#getMultiErrorHandlerFromOptions
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
@@ -140,6 +147,7 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
 // of all the errors. This method is called if there are no other
 // methods defined on the options.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/nethttp-middleware#defaultMultiErrorHandler
 func defaultMultiErrorHandler(me openapi3.MultiError) (int, error) {
 	return http.StatusBadRequest, me
