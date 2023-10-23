@@ -44,6 +44,7 @@ func NewRequest() *RequestBuilder {
 }
 
 // RequestBuilder caches request settings as we build up the request.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder
 type RequestBuilder struct {
 	Method  string
@@ -55,6 +56,7 @@ type RequestBuilder struct {
 }
 
 // WithMethod sets the method and path
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithMethod
 func (r *RequestBuilder) WithMethod(method string, path string) *RequestBuilder {
 	r.Method = method
@@ -88,6 +90,7 @@ func (r *RequestBuilder) Delete(path string) *RequestBuilder {
 }
 
 // WithHeader sets a header
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithHeader
 func (r *RequestBuilder) WithHeader(header, value string) *RequestBuilder {
 	r.Headers[header] = value
@@ -135,6 +138,7 @@ func (r *RequestBuilder) WithBody(body []byte) *RequestBuilder {
 
 // WithJsonBody takes an object as input, marshals it to JSON, and sends it
 // as the body with Content-Type: application/json
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithJsonBody
 func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 	var err error
@@ -146,6 +150,7 @@ func (r *RequestBuilder) WithJsonBody(obj interface{}) *RequestBuilder {
 }
 
 // WithCookie sets a cookie
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.WithCookie
 func (r *RequestBuilder) WithCookie(c *http.Cookie) *RequestBuilder {
 	r.Cookies = append(r.Cookies, c)
@@ -159,6 +164,7 @@ func (r *RequestBuilder) WithCookieNameValue(name, value string) *RequestBuilder
 
 // GoWithHTTPHandler performs the request, it takes a pointer to a testing context
 // to print messages, and a http handler for request handling.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#GoWithHTTPHandler
 func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *CompletedRequest {
 	if r.Error != nil {
@@ -192,6 +198,7 @@ func (r *RequestBuilder) GoWithHTTPHandler(t *testing.T, handler http.Handler) *
 
 // Go performs the request, it takes a pointer to a testing context
 // to print messages, and a pointer to an echo context for request handling.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RequestBuilder.GoWithHTTPHandler
 func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 	return r.GoWithHTTPHandler(t, e)
@@ -199,6 +206,7 @@ func (r *RequestBuilder) Go(t *testing.T, e *echo.Echo) *CompletedRequest {
 
 // CompletedRequest is the result of calling Go() on the request builder. We're wrapping the
 // ResponseRecorder with some nice helper functions.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest
 type CompletedRequest struct {
 	Recorder *httptest.ResponseRecorder
@@ -215,6 +223,7 @@ func (c *CompletedRequest) DisallowUnknownFields() {
 
 // UnmarshalBodyToObject takes a destination object as input, and unmarshals the object
 // in the response based on the Content-Type header.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.UnmarshalBodyToObject
 func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 	ctype := c.Recorder.Header().Get("Content-Type")
@@ -232,12 +241,14 @@ func (c *CompletedRequest) UnmarshalBodyToObject(obj interface{}) error {
 
 // UnmarshalJsonToObject assumes that the response contains JSON and unmarshals it
 // into the specified object.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.UnmarshalJsonToObject
 func (c *CompletedRequest) UnmarshalJsonToObject(obj interface{}) error {
 	return json.Unmarshal(c.Recorder.Body.Bytes(), obj)
 }
 
 // Code is a shortcut for response code
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/testutil#CompletedRequest.Code
 func (c *CompletedRequest) Code() int {
 	return c.Recorder.Code

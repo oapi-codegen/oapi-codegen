@@ -36,6 +36,7 @@ const (
 )
 
 // OapiValidatorFromYamlFile creates a validator middleware from a YAML file path
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#OapiValidatorFromYamlFile
 func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 	data, err := os.ReadFile(path)
@@ -54,21 +55,25 @@ func OapiValidatorFromYamlFile(path string) (gin.HandlerFunc, error) {
 // OapiRequestValidator is an gin middleware function which validates incoming HTTP requests
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400 with error message
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#OapiRequestValidator
 func OapiRequestValidator(swagger *openapi3.T) gin.HandlerFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // ErrorHandler is called when there is an error in validation
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#ErrorHandler
 type ErrorHandler func(c *gin.Context, message string, statusCode int)
 
 // MultiErrorHandler is called when oapi returns a MultiError type
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#MultiErrorHandler
 type MultiErrorHandler func(openapi3.MultiError) error
 
 // Options to customize request validation. These are passed through to
 // openapi3filter.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#Options
 type Options struct {
 	ErrorHandler      ErrorHandler
@@ -81,6 +86,7 @@ type Options struct {
 }
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#OapiRequestValidatorWithOptions
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.HandlerFunc {
 	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
@@ -117,6 +123,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) gin.
 
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#ValidateRequestFromContext
 func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *Options) error {
 	req := c.Request
@@ -180,6 +187,7 @@ func ValidateRequestFromContext(c *gin.Context, router routers.Router, options *
 
 // GetGinContext gets the echo context from within requests. It returns
 // nil if not found or wrong type.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#GetGinContext
 func GetGinContext(c context.Context) *gin.Context {
 	iface := c.Value(GinContextKey)
@@ -199,6 +207,7 @@ func GetUserData(c context.Context) interface{} {
 
 // attempt to get the MultiErrorHandler from the options. If it is not set,
 // return a default handler
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#getMultiErrorHandlerFromOptions
 func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 	if options == nil {
@@ -215,6 +224,7 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
 // of all of the errors. This method is called if there are no other
 // methods defined on the options.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/gin-middleware#defaultMultiErrorHandler
 func defaultMultiErrorHandler(me openapi3.MultiError) error {
 	return fmt.Errorf("multiple errors encountered: %s", me)

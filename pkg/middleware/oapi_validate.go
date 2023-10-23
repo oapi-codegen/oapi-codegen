@@ -40,6 +40,7 @@ const (
 // to make sure that they conform to the given OAPI 3.0 specification. When
 // OAPI validation fails on the request, we return an HTTP/400.
 // Create validator middleware from a YAML file path
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiValidatorFromYamlFile
 func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 	data, err := os.ReadFile(path)
@@ -55,21 +56,25 @@ func OapiValidatorFromYamlFile(path string) (echo.MiddlewareFunc, error) {
 }
 
 // OapiRequestValidator creates a validator from a swagger object.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiRequestValidator
 func OapiRequestValidator(swagger *openapi3.T) echo.MiddlewareFunc {
 	return OapiRequestValidatorWithOptions(swagger, nil)
 }
 
 // ErrorHandler is called when there is an error in validation
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#ErrorHandler
 type ErrorHandler func(c echo.Context, err *echo.HTTPError) error
 
 // MultiErrorHandler is called when oapi returns a MultiError type
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#MultiErrorHandler
 type MultiErrorHandler func(openapi3.MultiError) *echo.HTTPError
 
 // Options to customize request validation. These are passed through to
 // openapi3filter.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#Options
 type Options struct {
 	ErrorHandler      ErrorHandler
@@ -83,6 +88,7 @@ type Options struct {
 }
 
 // OapiRequestValidatorWithOptions creates a validator from a swagger object, with validation options
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#OapiRequestValidatorWithOptions
 func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo.MiddlewareFunc {
 	if swagger.Servers != nil && (options == nil || !options.SilenceServersWarning) {
@@ -115,6 +121,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) echo
 
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#ValidateRequestFromContext
 func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options *Options) *echo.HTTPError {
 	req := ctx.Request()
@@ -197,6 +204,7 @@ func ValidateRequestFromContext(ctx echo.Context, router routers.Router, options
 
 // GetEchoContext gets the echo context from within requests. It returns
 // nil if not found or wrong type.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#GetEchoContext
 func GetEchoContext(c context.Context) echo.Context {
 	iface := c.Value(EchoContextKey)
@@ -216,6 +224,7 @@ func GetUserData(c context.Context) interface{} {
 }
 
 // attempt to get the skipper from the options whether it is set or not
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#getSkipperFromOptions
 func getSkipperFromOptions(options *Options) echomiddleware.Skipper {
 	if options == nil {
@@ -247,6 +256,7 @@ func getMultiErrorHandlerFromOptions(options *Options) MultiErrorHandler {
 // defaultMultiErrorHandler returns a StatusBadRequest (400) and a list
 // of all of the errors. This method is called if there are no other
 // methods defined on the options.
+//
 // Deprecated: This has been replaced by github.com/oapi-codegen/echo-middleware#defaultMultiErrorHandler
 func defaultMultiErrorHandler(me openapi3.MultiError) *echo.HTTPError {
 	return &echo.HTTPError{
