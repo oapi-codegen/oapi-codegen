@@ -102,7 +102,7 @@ func OapiRequestValidatorWithOptions(swagger *openapi3.T, options *Options) fibe
 // ValidateRequestFromContext is called from the middleware above and actually does the work
 // of validating a request.
 //
-// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/fiber-middleware#
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/fiber-middleware#ValidateRequestFromContext
 func ValidateRequestFromContext(c *fiber.Ctx, router routers.Router, options *Options) error {
 
 	r, err := adaptor.ConvertRequest(c, false)

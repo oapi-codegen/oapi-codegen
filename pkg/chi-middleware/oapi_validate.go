@@ -23,7 +23,7 @@ type ErrorHandler func(w http.ResponseWriter, message string, statusCode int)
 
 // MultiErrorHandler is called when oapi returns a MultiError type
 //
-// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/nethttp-middleware#
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/nethttp-middleware#MultiErrorHandler
 type MultiErrorHandler func(openapi3.MultiError) (int, error)
 
 // Options to customize request validation, openapi3filter specified options will be passed through.
