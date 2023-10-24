@@ -431,7 +431,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) Test(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Test(ctx)
 	return err
 }

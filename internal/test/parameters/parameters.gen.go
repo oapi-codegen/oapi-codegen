@@ -2761,7 +2761,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetContentObject(ctx, param)
 	return err
 }
@@ -2866,7 +2866,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetCookie(ctx, params)
 	return err
 }
@@ -2884,7 +2884,7 @@ func (w *ServerInterfaceWrapper) EnumParams(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter enumPathParam: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.EnumParams(ctx, params)
 	return err
 }
@@ -3018,7 +3018,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 		params.N1StartingWithNumber = &N1StartingWithNumber
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetHeader(ctx, params)
 	return err
 }
@@ -3034,7 +3034,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelExplodeArray(ctx, param)
 	return err
 }
@@ -3050,7 +3050,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelExplodeObject(ctx, param)
 	return err
 }
@@ -3066,7 +3066,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelNoExplodeArray(ctx, param)
 	return err
 }
@@ -3082,7 +3082,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetLabelNoExplodeObject(ctx, param)
 	return err
 }
@@ -3098,7 +3098,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixExplodeArray(ctx, id)
 	return err
 }
@@ -3114,7 +3114,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixExplodeObject(ctx, id)
 	return err
 }
@@ -3130,7 +3130,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixNoExplodeArray(ctx, id)
 	return err
 }
@@ -3146,7 +3146,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetMatrixNoExplodeObject(ctx, id)
 	return err
 }
@@ -3159,7 +3159,7 @@ func (w *ServerInterfaceWrapper) GetPassThrough(ctx echo.Context) error {
 
 	param = ctx.Param("param")
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetPassThrough(ctx, param)
 	return err
 }
@@ -3177,7 +3177,7 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetDeepObject(ctx, params)
 	return err
 }
@@ -3257,7 +3257,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetQueryForm(ctx, params)
 	return err
 }
@@ -3273,7 +3273,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleExplodeArray(ctx, param)
 	return err
 }
@@ -3289,7 +3289,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx echo.Context) error 
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleExplodeObject(ctx, param)
 	return err
 }
@@ -3305,7 +3305,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx echo.Context) error
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleNoExplodeArray(ctx, param)
 	return err
 }
@@ -3321,7 +3321,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx echo.Context) erro
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimpleNoExplodeObject(ctx, param)
 	return err
 }
@@ -3337,7 +3337,7 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetSimplePrimitive(ctx, param)
 	return err
 }
@@ -3350,7 +3350,7 @@ func (w *ServerInterfaceWrapper) GetStartingWithNumber(ctx echo.Context) error {
 
 	n1param = ctx.Param("1param")
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetStartingWithNumber(ctx, n1param)
 	return err
 }

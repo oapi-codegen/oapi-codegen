@@ -155,7 +155,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{end}}{{/* .CookieParams */}}
 
 {{end}}{{/* .RequiresParamObject */}}
-    // Invoke the callback with all the unmarshaled arguments
+    // Invoke the callback with all the unmarshalled arguments
     w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
 {{end}}

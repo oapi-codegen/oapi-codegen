@@ -69,7 +69,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.JSONExample(ctx)
 	return err
 }
@@ -78,7 +78,7 @@ func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.MultipartExample(ctx)
 	return err
 }
@@ -87,7 +87,7 @@ func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.MultipleRequestAndResponseTypes(ctx)
 	return err
 }
@@ -103,7 +103,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter type: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ReservedGoKeywordParameters(ctx, pType)
 	return err
 }
@@ -112,7 +112,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ReusableResponses(ctx)
 	return err
 }
@@ -121,7 +121,7 @@ func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.TextExample(ctx)
 	return err
 }
@@ -130,7 +130,7 @@ func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.UnknownExample(ctx)
 	return err
 }
@@ -139,7 +139,7 @@ func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.UnspecifiedContentType(ctx)
 	return err
 }
@@ -148,7 +148,7 @@ func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error 
 func (w *ServerInterfaceWrapper) URLEncodedExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.URLEncodedExample(ctx)
 	return err
 }
@@ -194,7 +194,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 		params.Header2 = &Header2
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.HeadersExample(ctx, params)
 	return err
 }
@@ -203,7 +203,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.UnionExample(ctx)
 	return err
 }

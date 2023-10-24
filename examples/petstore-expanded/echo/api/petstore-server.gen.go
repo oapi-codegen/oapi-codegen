@@ -60,7 +60,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.FindPets(ctx, params)
 	return err
 }
@@ -69,7 +69,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.AddPet(ctx)
 	return err
 }
@@ -85,7 +85,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.DeletePet(ctx, id)
 	return err
 }
@@ -101,7 +101,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.FindPetByID(ctx, id)
 	return err
 }

@@ -270,7 +270,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ExampleGet(ctx)
 	return err
 }

@@ -70,21 +70,21 @@ type MiddlewareFunc iris.Handler
 // JSONExample converts iris context to params.
 func (w *ServerInterfaceWrapper) JSONExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.JSONExample(ctx)
 }
 
 // MultipartExample converts iris context to params.
 func (w *ServerInterfaceWrapper) MultipartExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.MultipartExample(ctx)
 }
 
 // MultipleRequestAndResponseTypes converts iris context to params.
 func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.MultipleRequestAndResponseTypes(ctx)
 }
 
@@ -103,42 +103,42 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx iris.Context) {
 		return
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.ReservedGoKeywordParameters(ctx, pType)
 }
 
 // ReusableResponses converts iris context to params.
 func (w *ServerInterfaceWrapper) ReusableResponses(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.ReusableResponses(ctx)
 }
 
 // TextExample converts iris context to params.
 func (w *ServerInterfaceWrapper) TextExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.TextExample(ctx)
 }
 
 // UnknownExample converts iris context to params.
 func (w *ServerInterfaceWrapper) UnknownExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.UnknownExample(ctx)
 }
 
 // UnspecifiedContentType converts iris context to params.
 func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.UnspecifiedContentType(ctx)
 }
 
 // URLEncodedExample converts iris context to params.
 func (w *ServerInterfaceWrapper) URLEncodedExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.URLEncodedExample(ctx)
 }
 
@@ -194,14 +194,14 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 		params.Header2 = &Header2
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.HeadersExample(ctx, params)
 }
 
 // UnionExample converts iris context to params.
 func (w *ServerInterfaceWrapper) UnionExample(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.UnionExample(ctx)
 }
 

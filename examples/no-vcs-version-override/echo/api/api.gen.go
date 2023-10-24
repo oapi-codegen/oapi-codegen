@@ -23,7 +23,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetNothing(ctx echo.Context) error {
 	var err error
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetNothing(ctx)
 	return err
 }

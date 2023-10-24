@@ -391,7 +391,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			if err != nil {
 				return err
 			}
-			// If the parameter is required, and we've successfully unmarshaled
+			// If the parameter is required, and we've successfully unmarshalled
 			// it, this assigns the new object to the pointer pointer.
 			if !required {
 				dv.Set(reflect.ValueOf(output))

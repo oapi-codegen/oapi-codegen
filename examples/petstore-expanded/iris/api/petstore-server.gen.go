@@ -66,14 +66,14 @@ func (w *ServerInterfaceWrapper) FindPets(ctx iris.Context) {
 		return
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.FindPets(ctx, params)
 }
 
 // AddPet converts iris context to params.
 func (w *ServerInterfaceWrapper) AddPet(ctx iris.Context) {
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.AddPet(ctx)
 }
 
@@ -92,7 +92,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx iris.Context) {
 		return
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.DeletePet(ctx, id)
 }
 
@@ -111,7 +111,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx iris.Context) {
 		return
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	w.Handler.FindPetByID(ctx, id)
 }
 

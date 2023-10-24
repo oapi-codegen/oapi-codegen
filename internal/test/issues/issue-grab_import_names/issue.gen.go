@@ -327,7 +327,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 		params.Bar = &Bar
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetFoo(ctx, params)
 	return err
 }

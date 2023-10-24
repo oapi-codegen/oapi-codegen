@@ -427,7 +427,7 @@ func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.ListThings(ctx)
 	return err
 }
@@ -438,7 +438,7 @@ func (w *ServerInterfaceWrapper) AddThing(ctx echo.Context) error {
 
 	ctx.Set(BearerAuthScopes, []string{"things:w"})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.AddThing(ctx)
 	return err
 }

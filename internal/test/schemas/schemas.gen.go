@@ -1408,7 +1408,7 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
 	return err
 }
@@ -1419,7 +1419,7 @@ func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue1051(ctx)
 	return err
 }
@@ -1430,7 +1430,7 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue127(ctx)
 	return err
 }
@@ -1441,7 +1441,7 @@ func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue185(ctx)
 	return err
 }
@@ -1459,7 +1459,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue209(ctx, str)
 	return err
 }
@@ -1477,7 +1477,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
 	return err
 }
@@ -1488,7 +1488,7 @@ func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.GetIssues375(ctx)
 	return err
 }
@@ -1506,7 +1506,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue41(ctx, n1param)
 	return err
 }
@@ -1526,7 +1526,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue9(ctx, params)
 	return err
 }
@@ -1537,7 +1537,7 @@ func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
 
 	ctx.Set(Access_tokenScopes, []string{})
 
-	// Invoke the callback with all the unmarshaled arguments
+	// Invoke the callback with all the unmarshalled arguments
 	err = w.Handler.Issue975(ctx)
 	return err
 }
