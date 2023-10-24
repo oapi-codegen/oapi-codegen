@@ -31,7 +31,7 @@ import (
 // know the destination type each place that we use this, is to generate code
 // to read each specific type.
 //
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStringToObject
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime#BindStringToObject
 func BindStringToObject(src string, dst interface{}) error {
 	var err error
 

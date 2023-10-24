@@ -32,7 +32,7 @@ import (
 // It is a backward compatible function to clients generated with codegen
 // up to version v1.5.5. v1.5.6+ calls the function below.
 //
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStyledParameter
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime#BindStyledParameter
 func BindStyledParameter(style string, explode bool, paramName string,
 	value string, dest interface{}) error {
 	return BindStyledParameterWithLocation(style, explode, paramName, ParamLocationUndefined, value, dest)
@@ -42,7 +42,7 @@ func BindStyledParameter(style string, explode bool, paramName string,
 // section here to a Go object:
 // https://swagger.io/docs/specification/serialization/
 //
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindStyledParameterWithLocation
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime#BindStyledParameterWithLocation
 func BindStyledParameterWithLocation(style string, explode bool, paramName string,
 	paramLocation ParamLocation, value string, dest interface{}) error {
 
@@ -282,7 +282,7 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // you shouldn't pass objects via form styled query arguments, just use
 // the Content parameter form.
 //
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#BindQueryParameter
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime#BindQueryParameter
 func BindQueryParameter(style string, explode bool, required bool, paramName string,
 	queryParams url.Values, dest interface{}) error {
 

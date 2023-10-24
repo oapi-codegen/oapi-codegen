@@ -9,7 +9,7 @@ import (
 // JsonMerge merges two JSON representation into a single object. `data` is the
 // existing representation and `patch` is the new data to be merged in
 //
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime#JsonMerge
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime#JsonMerge
 func JsonMerge(data, patch json.RawMessage) (json.RawMessage, error) {
 	merger := jsonmerge.Merger{
 		CopyNonexistent: true,

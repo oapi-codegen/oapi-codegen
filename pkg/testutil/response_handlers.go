@@ -17,10 +17,10 @@ var (
 	knownHandlers   map[string]ResponseHandler
 )
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#ResponseHandler
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/testutil#ResponseHandler
 type ResponseHandler func(contentType string, raw io.Reader, obj interface{}, strict bool) error
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/testutil#RegisterResponseHandler
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/testutil#RegisterResponseHandler
 func RegisterResponseHandler(mime string, handler ResponseHandler) {
 	knownHandlersMu.Lock()
 	defer knownHandlersMu.Unlock()
