@@ -7,28 +7,28 @@ import (
 	"mime/multipart"
 )
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#File
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#File
 type File struct {
 	multipart *multipart.FileHeader
 	data      []byte
 	filename  string
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#InitFromMultipart
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#InitFromMultipart
 func (file *File) InitFromMultipart(header *multipart.FileHeader) {
 	file.multipart = header
 	file.data = nil
 	file.filename = ""
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#InitFromBytes
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#InitFromBytes
 func (file *File) InitFromBytes(data []byte, filename string) {
 	file.data = data
 	file.filename = filename
 	file.multipart = nil
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#MarshalJSON
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#MarshalJSON
 func (file File) MarshalJSON() ([]byte, error) {
 	b, err := file.Bytes()
 	if err != nil {
@@ -37,12 +37,12 @@ func (file File) MarshalJSON() ([]byte, error) {
 	return json.Marshal(b)
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#UnmarshalJSON
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#UnmarshalJSON
 func (file *File) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, &file.data)
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#Bytes
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#Bytes
 func (file File) Bytes() ([]byte, error) {
 	if file.multipart != nil {
 		f, err := file.multipart.Open()
@@ -55,7 +55,7 @@ func (file File) Bytes() ([]byte, error) {
 	return file.data, nil
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#Reader
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#Reader
 func (file File) Reader() (io.ReadCloser, error) {
 	if file.multipart != nil {
 		return file.multipart.Open()
@@ -63,7 +63,7 @@ func (file File) Reader() (io.ReadCloser, error) {
 	return io.NopCloser(bytes.NewReader(file.data)), nil
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#Filename
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#Filename
 func (file File) Filename() string {
 	if file.multipart != nil {
 		return file.multipart.Filename
@@ -71,7 +71,7 @@ func (file File) Filename() string {
 	return file.filename
 }
 
-// Deprecated: This has been replaced by github.com/oapi-codegen/runtime/types#FileSize
+// Deprecated: This has been replaced by https://pkg.go.dev/github.com/oapi-codegen/runtime/types#FileSize
 func (file File) FileSize() int64 {
 	if file.multipart != nil {
 		return file.multipart.Size
