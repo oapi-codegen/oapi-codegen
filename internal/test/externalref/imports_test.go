@@ -3,8 +3,8 @@ package externalref
 import (
 	"testing"
 
-	packageA "github.com/deepmap/oapi-codegen/internal/test/externalref/packageA"
-	packageB "github.com/deepmap/oapi-codegen/internal/test/externalref/packageB"
+	packageA "github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageA"
+	packageB "github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageB"
 	"github.com/stretchr/testify/require"
 )
 
