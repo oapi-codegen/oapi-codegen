@@ -11,7 +11,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
