@@ -933,7 +933,7 @@ output-options:
     # using a local file
     client-with-responses.tmpl: /home/username/workspace/templatesProject/my-client-with-responses.tmpl
 
-    # The following are referencing a versuion of the default
+    # The following are referencing a version of the default
     # client-with-responses.tmpl file, but loaded in through
     # github's raw.githubusercontent.com. The general form
     # to use raw.githubusercontent.com is as follows
