@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
 
 package api
 

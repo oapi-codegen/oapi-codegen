@@ -20,7 +20,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 )
