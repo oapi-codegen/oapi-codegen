@@ -165,8 +165,8 @@ type PascalJSONResponse PascalSchema
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHttpHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHttpMiddlewareFunc
+type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

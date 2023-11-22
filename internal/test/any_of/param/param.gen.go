@@ -70,7 +70,7 @@ func (t *Test) MergeTest0(v Test0) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -96,7 +96,7 @@ func (t *Test) MergeTest1(v Test1) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -132,7 +132,7 @@ func (t *Test2) MergeTest20(v Test20) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -158,7 +158,7 @@ func (t *Test2) MergeTest21(v Test21) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
