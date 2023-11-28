@@ -288,6 +288,44 @@ type GetTestByNameResponse struct {
 	checkLint(t, "test.gen.go", []byte(code))
 }
 
+func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+			Strict:       true,
+		},
+	}
+	spec := "test_specs/x-go-type-skip-optional-pointer.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that optional pointer fields are skipped if requested
+	assert.Contains(t, code, "NullableFieldSkipFalse *string `json:\"nullableFieldSkipFalse\"`")
+	assert.Contains(t, code, "NullableFieldSkipTrue  string  `json:\"nullableFieldSkipTrue\"`")
+	assert.Contains(t, code, "OptionalField          *string `json:\"optionalField,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipFalse *string `json:\"optionalFieldSkipFalse,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipTrue  string  `json:\"optionalFieldSkipTrue,omitempty\"`")
+
+	// Check that the extension applies on custom types as well
+	assert.Contains(t, code, "CustomTypeWithSkipTrue string  `json:\"customTypeWithSkipTrue,omitempty\"`")
+
+	// Check that the extension has no effect on required fields
+	assert.Contains(t, code, "RequiredField          string  `json:\"requiredField\"`")
+}
+
 func TestGoTypeImport(t *testing.T) {
 	packageName := "api"
 	opts := Configuration{
