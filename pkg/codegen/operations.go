@@ -275,10 +275,13 @@ func (o *OperationDefinition) SummaryAsComment() string {
 func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
 	var tds []ResponseTypeDefinition
 
-	responses := o.Spec.Responses
-	sortedResponsesKeys := SortedResponsesKeys(responses)
+	if o.Spec == nil || o.Spec.Responses == nil {
+		return tds, nil
+	}
+
+	sortedResponsesKeys := SortedResponsesKeys(o.Spec.Responses.Map())
 	for _, responseName := range sortedResponsesKeys {
-		responseRef := responses[responseName]
+		responseRef := o.Spec.Responses.Value(responseName)
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
@@ -537,8 +540,12 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 		toCamelCaseFunc = ToCamelCase
 	}
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[requestPath]
+	if swagger == nil || swagger.Paths == nil {
+		return operations, nil
+	}
+
+	for _, requestPath := range SortedPathsKeys(swagger.Paths.Map()) {
+		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
@@ -594,7 +601,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses.Map())
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
