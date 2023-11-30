@@ -229,7 +229,7 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 }
 
 // SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict openapi3.Responses) []string {
+func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
