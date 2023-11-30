@@ -205,7 +205,7 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 
 // SortedPathsKeys is the same as above, except it sorts the keys for a Paths
 // dictionary.
-func SortedPathsKeys(dict openapi3.Paths) []string {
+func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
