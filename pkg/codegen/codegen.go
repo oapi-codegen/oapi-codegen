@@ -30,9 +30,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
 // Embed the templates directory
@@ -557,7 +558,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 // GenerateTypesForResponses generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
+func GenerateTypesForResponses(t *template.Template, responses openapi3.ResponseBodies) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
 	for _, responseName := range SortedResponsesKeys(responses) {
