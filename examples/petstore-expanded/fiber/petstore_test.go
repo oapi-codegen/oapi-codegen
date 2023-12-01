@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
@@ -116,6 +118,29 @@ func TestPetStore(t *testing.T) {
 		err = json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 2, len(petList))
+	})
+
+	t.Run("List all pets returns empty array when no pet exists", func(t *testing.T) {
+		store.Pets = map[int64]api.Pet{}
+
+		// Now, list all pets, we should have two
+		rr, _ := doGet(t, fiberPetServer, "/pets")
+		assert.Equal(t, http.StatusOK, rr.StatusCode)
+
+		// Check that the response is an empty json array
+		buf, err := io.ReadAll(rr.Body)
+		assert.NoError(t, err, "error getting response", err)
+
+		body := bytes.NewBuffer(buf)
+		bodyText := string(body.Bytes())
+		bodyIsEmptyArray := strings.HasPrefix(bodyText, "[]")
+		assert.True(t, bodyIsEmptyArray, fmt.Sprintf("Body is not empty array. body=%v", bodyText))
+
+		var petList []api.Pet
+		err = json.NewDecoder(body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 0, len(petList))
+
 	})
 
 	t.Run("Filter pets by tag", func(t *testing.T) {

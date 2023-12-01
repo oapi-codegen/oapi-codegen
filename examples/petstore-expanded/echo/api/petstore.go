@@ -55,7 +55,8 @@ func (p *PetStore) FindPets(ctx echo.Context, params models.FindPetsParams) erro
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
-	var result []models.Pet
+	// Initialize result using make so it doesn't default to nil
+	var result []models.Pet = make([]models.Pet, 0)
 
 	for _, pet := range p.Pets {
 		if params.Tags != nil {

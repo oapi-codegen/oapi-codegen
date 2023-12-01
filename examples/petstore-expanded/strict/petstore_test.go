@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/strict/api"
+	"github.com/go-chi/chi/v5"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
 	"github.com/oapi-codegen/testutil"
-	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -96,6 +97,26 @@ func TestPetStore(t *testing.T) {
 		err = json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)
 		assert.Equal(t, 2, len(petList))
+	})
+
+	t.Run("List all pets returns empty array when no pet exists", func(t *testing.T) {
+		store.Pets = map[int64]api.Pet{}
+
+		// Now, list all pets, we should have two
+		rr := doGet(t, r, "/pets")
+		assert.Equal(t, http.StatusOK, rr.Code)
+
+		// Check that the response is an empty json array
+		bodyBytes := rr.Body.Bytes()
+		bodyText := string(bodyBytes)
+		bodyIsEmptyArray := strings.HasPrefix(bodyText, "[]")
+		assert.True(t, bodyIsEmptyArray, fmt.Sprintf("Body is not empty array. body=%v", bodyText))
+
+		var petList []api.Pet
+		err = json.NewDecoder(rr.Body).Decode(&petList)
+		assert.NoError(t, err, "error getting response", err)
+		assert.Equal(t, 0, len(petList))
+
 	})
 
 	t.Run("Filter pets by tag", func(t *testing.T) {

@@ -369,7 +369,7 @@ Short example:
 ```go
 type PetStoreImpl struct {}
 func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error) {
-    var result []Pet
+    var result []Pet = make([]Pet, 0)
 	// Implement me
     return GetPets200JSONResponse(result), nil
 }

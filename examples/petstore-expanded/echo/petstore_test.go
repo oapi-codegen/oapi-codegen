@@ -17,14 +17,15 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api/models"
-	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -150,6 +151,13 @@ func TestPetStore(t *testing.T) {
 	petList = nil
 	result = testutil.NewRequest().Get("/pets").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
+
+	// Assert that the body is an empty json array
+	bodyBytes := result.Recorder.Body.Bytes()
+	bodyText := string(bodyBytes)
+	bodyIsEmptyArray := strings.HasPrefix(bodyText, "[]")
+	assert.True(t, bodyIsEmptyArray, fmt.Sprintf("Body is not empty array. body=%v", bodyText))
+
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
 	assert.Equal(t, 0, len(petList))

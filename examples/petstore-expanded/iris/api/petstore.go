@@ -53,7 +53,8 @@ func (p *PetStore) FindPets(c iris.Context, params FindPetsParams) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
-	var result []Pet
+	// Initialize result using make so it doesn't default to nil
+	var result []Pet = make([]Pet, 0)
 
 	for _, pet := range p.Pets {
 		if params.Tags != nil {
