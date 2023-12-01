@@ -90,7 +90,7 @@ func (t *FilterPredicate) MergeFilterValue(v FilterValue) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -116,7 +116,7 @@ func (t *FilterPredicate) MergeFilterPredicate1(v FilterPredicate1) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -142,7 +142,7 @@ func (t *FilterPredicate) MergeFilterPredicateOp(v FilterPredicateOp) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -168,7 +168,7 @@ func (t *FilterPredicate) MergeFilterPredicateRangeOp(v FilterPredicateRangeOp) 
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -204,7 +204,7 @@ func (t *FilterPredicateOp_Any) MergeFilterPredicateOpAny0(v FilterPredicateOpAn
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -240,7 +240,7 @@ func (t *FilterPredicateOp_None) MergeFilterPredicate(v FilterPredicate) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -266,7 +266,7 @@ func (t *FilterPredicateOp_None) MergeFilterPredicateOpNone1(v FilterPredicateOp
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -302,7 +302,7 @@ func (t *FilterRangeValue) MergeFilterRangeValue0(v FilterRangeValue0) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -328,7 +328,7 @@ func (t *FilterRangeValue) MergeFilterRangeValue1(v FilterRangeValue1) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -364,7 +364,7 @@ func (t *FilterValue) MergeFilterValue0(v FilterValue0) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -390,7 +390,7 @@ func (t *FilterValue) MergeFilterValue1(v FilterValue1) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
@@ -416,7 +416,7 @@ func (t *FilterValue) MergeFilterValue2(v FilterValue2) error {
 		return err
 	}
 
-	merged, err := runtime.JsonMerge(t.union, b)
+	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
 }
