@@ -767,7 +767,12 @@ func GenStructFromSchema(schema Schema) string {
 // the content, whichever is available
 func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
-		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
+		// TODO: document
+		if param.In == "query" {
+			return Schema{GoType: "string"}, nil
+		} else {
+			return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
+		}
 	}
 
 	// We can process the schema through the generic schema processor
