@@ -32,6 +32,11 @@ func TestIsMediaTypeJson(t *testing.T) {
 			want:      true,
 		},
 		{
+			name:      "When MediaType is application/json;version=v1, returns true",
+			mediaType: "application/json;version=v1",
+			want:      true,
+		},
+		{
 			name:      "When MediaType is application/json-patch+json, returns true",
 			mediaType: "application/json-patch+json",
 			want:      true,
