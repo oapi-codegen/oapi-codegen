@@ -410,10 +410,10 @@ func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
 type ServerInterface interface {
 
 	// (GET /things)
-	ListThings(ctx echo.Context) error
+	ListThings(c echo.Context) error
 
 	// (POST /things)
-	AddThing(ctx echo.Context) error
+	AddThing(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -422,24 +422,24 @@ type ServerInterfaceWrapper struct {
 }
 
 // ListThings converts echo context to params.
-func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ListThings(c echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{})
+	c.Set(BearerAuthScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ListThings(ctx)
+	err = w.Handler.ListThings(c)
 	return err
 }
 
 // AddThing converts echo context to params.
-func (w *ServerInterfaceWrapper) AddThing(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) AddThing(c echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{"things:w"})
+	c.Set(BearerAuthScopes, []string{"things:w"})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.AddThing(ctx)
+	err = w.Handler.AddThing(c)
 	return err
 }
 

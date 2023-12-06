@@ -23,16 +23,16 @@ import (
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(ctx echo.Context, params FindPetsParams) error
+	FindPets(c echo.Context, params FindPetsParams) error
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(ctx echo.Context) error
+	AddPet(c echo.Context) error
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(ctx echo.Context, id int64) error
+	DeletePet(c echo.Context, id int64) error
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetByID(ctx echo.Context, id int64) error
+	FindPetByID(c echo.Context, id int64) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -41,68 +41,68 @@ type ServerInterfaceWrapper struct {
 }
 
 // FindPets converts echo context to params.
-func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) FindPets(c echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.QueryParams(), &params.Tags)
+	err = runtime.BindQueryParameter("form", true, false, "tags", c.QueryParams(), &params.Tags)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	err = runtime.BindQueryParameter("form", true, false, "limit", c.QueryParams(), &params.Limit)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.FindPets(ctx, params)
+	err = w.Handler.FindPets(c, params)
 	return err
 }
 
 // AddPet converts echo context to params.
-func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) AddPet(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.AddPet(ctx)
+	err = w.Handler.AddPet(c)
 	return err
 }
 
 // DeletePet converts echo context to params.
-func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) DeletePet(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.DeletePet(ctx, id)
+	err = w.Handler.DeletePet(c, id)
 	return err
 }
 
 // FindPetByID converts echo context to params.
-func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) FindPetByID(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.FindPetByID(ctx, id)
+	err = w.Handler.FindPetByID(c, id)
 	return err
 }
 

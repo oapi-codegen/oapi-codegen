@@ -1367,34 +1367,34 @@ func ParseIssue975Response(rsp *http.Response) (*Issue975Response, error) {
 type ServerInterface interface {
 
 	// (GET /ensure-everything-is-referenced)
-	EnsureEverythingIsReferenced(ctx echo.Context) error
+	EnsureEverythingIsReferenced(c echo.Context) error
 
 	// (GET /issues/1051)
-	Issue1051(ctx echo.Context) error
+	Issue1051(c echo.Context) error
 
 	// (GET /issues/127)
-	Issue127(ctx echo.Context) error
+	Issue127(c echo.Context) error
 
 	// (GET /issues/185)
-	Issue185(ctx echo.Context) error
+	Issue185(c echo.Context) error
 
 	// (GET /issues/209/${str})
-	Issue209(ctx echo.Context, str StringInPath) error
+	Issue209(c echo.Context, str StringInPath) error
 
 	// (GET /issues/30/{fallthrough})
-	Issue30(ctx echo.Context, pFallthrough string) error
+	Issue30(c echo.Context, pFallthrough string) error
 
 	// (GET /issues/375)
-	GetIssues375(ctx echo.Context) error
+	GetIssues375(c echo.Context) error
 
 	// (GET /issues/41/{1param})
-	Issue41(ctx echo.Context, n1param N5StartsWithNumber) error
+	Issue41(c echo.Context, n1param N5StartsWithNumber) error
 
 	// (GET /issues/9)
-	Issue9(ctx echo.Context, params Issue9Params) error
+	Issue9(c echo.Context, params Issue9Params) error
 
 	// (GET /issues/975)
-	Issue975(ctx echo.Context) error
+	Issue975(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -1403,142 +1403,142 @@ type ServerInterfaceWrapper struct {
 }
 
 // EnsureEverythingIsReferenced converts echo context to params.
-func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.EnsureEverythingIsReferenced(ctx)
+	err = w.Handler.EnsureEverythingIsReferenced(c)
 	return err
 }
 
 // Issue1051 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue1051(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue1051(ctx)
+	err = w.Handler.Issue1051(c)
 	return err
 }
 
 // Issue127 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue127(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue127(ctx)
+	err = w.Handler.Issue127(c)
 	return err
 }
 
 // Issue185 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue185(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue185(ctx)
+	err = w.Handler.Issue185(c)
 	return err
 }
 
 // Issue209 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue209(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "str", c.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue209(ctx, str)
+	err = w.Handler.Issue209(c, str)
 	return err
 }
 
 // Issue30 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue30(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", c.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue30(ctx, pFallthrough)
+	err = w.Handler.Issue30(c, pFallthrough)
 	return err
 }
 
 // GetIssues375 converts echo context to params.
-func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) GetIssues375(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetIssues375(ctx)
+	err = w.Handler.GetIssues375(c)
 	return err
 }
 
 // Issue41 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue41(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "1param", c.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue41(ctx, n1param)
+	err = w.Handler.Issue41(c, n1param)
 	return err
 }
 
 // Issue9 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue9(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
 
-	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	err = runtime.BindQueryParameter("form", true, true, "foo", c.QueryParams(), &params.Foo)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue9(ctx, params)
+	err = w.Handler.Issue9(c, params)
 	return err
 }
 
 // Issue975 converts echo context to params.
-func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Issue975(c echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	c.Set(Access_tokenScopes, []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Issue975(ctx)
+	err = w.Handler.Issue975(c)
 	return err
 }
 

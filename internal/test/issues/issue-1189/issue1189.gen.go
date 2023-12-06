@@ -419,7 +419,7 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 type ServerInterface interface {
 
 	// (GET /test)
-	Test(ctx echo.Context) error
+	Test(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -428,11 +428,11 @@ type ServerInterfaceWrapper struct {
 }
 
 // Test converts echo context to params.
-func (w *ServerInterfaceWrapper) Test(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) Test(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.Test(ctx)
+	err = w.Handler.Test(c)
 	return err
 }
 

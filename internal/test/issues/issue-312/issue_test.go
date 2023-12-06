@@ -77,9 +77,9 @@ func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
 	// We'll make a function in the mock client which records the value of
 	// the petId variable
 	receivedPetID := ""
-	m.getPet = func(ctx echo.Context, petId string) error {
+	m.getPet = func(c echo.Context, petId string) error {
 		receivedPetID = petId
-		return ctx.NoContent(http.StatusOK)
+		return c.NoContent(http.StatusOK)
 	}
 
 	client, err := NewClientWithResponses(svr.URL)
@@ -108,20 +108,20 @@ func (m *HTTPRequestDoerMock) Do(req *http.Request) (*http.Response, error) {
 // An implementation of the server interface which helps us check server
 // expectations for funky paths and parameters.
 type MockClient struct {
-	getPet       func(ctx echo.Context, petId string) error
-	validatePets func(ctx echo.Context) error
+	getPet       func(c echo.Context, petId string) error
+	validatePets func(c echo.Context) error
 }
 
-func (m *MockClient) GetPet(ctx echo.Context, petId string) error {
+func (m *MockClient) GetPet(c echo.Context, petId string) error {
 	if m.getPet != nil {
-		return m.getPet(ctx, petId)
+		return m.getPet(c, petId)
 	}
-	return ctx.NoContent(http.StatusNotImplemented)
+	return c.NoContent(http.StatusNotImplemented)
 }
 
-func (m *MockClient) ValidatePets(ctx echo.Context) error {
+func (m *MockClient) ValidatePets(c echo.Context) error {
 	if m.validatePets != nil {
-		return m.validatePets(ctx)
+		return m.validatePets(c)
 	}
-	return ctx.NoContent(http.StatusNotImplemented)
+	return c.NoContent(http.StatusNotImplemented)
 }

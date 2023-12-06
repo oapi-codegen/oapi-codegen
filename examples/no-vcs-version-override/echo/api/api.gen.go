@@ -11,7 +11,7 @@ import (
 type ServerInterface interface {
 
 	// (GET /nothing)
-	GetNothing(ctx echo.Context) error
+	GetNothing(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -20,11 +20,11 @@ type ServerInterfaceWrapper struct {
 }
 
 // GetNothing converts echo context to params.
-func (w *ServerInterfaceWrapper) GetNothing(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) GetNothing(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetNothing(ctx)
+	err = w.Handler.GetNothing(c)
 	return err
 }
 

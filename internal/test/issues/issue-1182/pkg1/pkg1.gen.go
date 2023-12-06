@@ -234,7 +234,7 @@ func ParseTestGetResponse(rsp *http.Response) (*TestGetResponse, error) {
 type ServerInterface interface {
 	// get test response
 	// (GET /test)
-	TestGet(ctx echo.Context) error
+	TestGet(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -243,11 +243,11 @@ type ServerInterfaceWrapper struct {
 }
 
 // TestGet converts echo context to params.
-func (w *ServerInterfaceWrapper) TestGet(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) TestGet(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.TestGet(ctx)
+	err = w.Handler.TestGet(c)
 	return err
 }
 
@@ -317,22 +317,22 @@ type strictHandler struct {
 }
 
 // TestGet operation middleware
-func (sh *strictHandler) TestGet(ctx echo.Context) error {
+func (sh *strictHandler) TestGet(c echo.Context) error {
 	var request TestGetRequestObject
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.TestGet(ctx.Request().Context(), request.(TestGetRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestGet(c.Request().Context(), request.(TestGetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "TestGet")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(TestGetResponseObject); ok {
-		return validResponse.VisitTestGetResponse(ctx.Response())
+		return validResponse.VisitTestGetResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

@@ -44,7 +44,7 @@ func CreateMiddleware(v JWSValidator) ([]echo.MiddlewareFunc, error) {
 // Ensure that we implement the server interface
 var _ api.ServerInterface = (*server)(nil)
 
-func (s *server) ListThings(ctx echo.Context) error {
+func (s *server) ListThings(c echo.Context) error {
 	// This handler will only be called when a valid JWT is presented for
 	// access.
 	s.RLock()
@@ -67,7 +67,7 @@ func (s *server) ListThings(ctx echo.Context) error {
 
 	s.RUnlock()
 
-	return ctx.JSON(http.StatusOK, things)
+	return c.JSON(http.StatusOK, things)
 }
 
 type int64s []int64
@@ -86,13 +86,13 @@ func (in int64s) Swap(i, j int) {
 
 var _ sort.Interface = (int64s)(nil)
 
-func (s *server) AddThing(ctx echo.Context) error {
+func (s *server) AddThing(c echo.Context) error {
 	// This handler will only be called when the JWT is valid and the JWT contains
 	// the scopes required.
 	var thing api.Thing
-	err := ctx.Bind(&thing)
+	err := c.Bind(&thing)
 	if err != nil {
-		return returnError(ctx, http.StatusBadRequest, "could not bind request body")
+		return returnError(c, http.StatusBadRequest, "could not bind request body")
 	}
 
 	s.Lock()
@@ -105,13 +105,13 @@ func (s *server) AddThing(ctx echo.Context) error {
 	}
 	s.lastID++
 
-	return ctx.JSON(http.StatusCreated, thingWithId)
+	return c.JSON(http.StatusCreated, thingWithId)
 }
 
-func returnError(ctx echo.Context, code int, message string) error {
+func returnError(c echo.Context, code int, message string) error {
 	errResponse := api.Error{
 		Code:    int32(code),
 		Message: message,
 	}
-	return ctx.JSON(code, errResponse)
+	return c.JSON(code, errResponse)
 }

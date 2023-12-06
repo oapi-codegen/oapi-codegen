@@ -240,7 +240,7 @@ func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveRes
 type ServerInterface interface {
 
 	// (GET /simplePrimitive/{param})
-	GetSimplePrimitive(ctx echo.Context, param string) error
+	GetSimplePrimitive(c echo.Context, param string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -249,18 +249,18 @@ type ServerInterfaceWrapper struct {
 }
 
 // GetSimplePrimitive converts echo context to params.
-func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) GetSimplePrimitive(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "param" -------------
 	var param string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetSimplePrimitive(ctx, param)
+	err = w.Handler.GetSimplePrimitive(c, param)
 	return err
 }
 

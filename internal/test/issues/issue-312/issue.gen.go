@@ -423,10 +423,10 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 type ServerInterface interface {
 	// Get pet given identifier.
 	// (GET /pets/{petId})
-	GetPet(ctx echo.Context, petId string) error
+	GetPet(c echo.Context, petId string) error
 	// Validate pets
 	// (POST /pets:validate)
-	ValidatePets(ctx echo.Context) error
+	ValidatePets(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -435,27 +435,27 @@ type ServerInterfaceWrapper struct {
 }
 
 // GetPet converts echo context to params.
-func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) GetPet(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", ctx.Param("petId"), &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", c.Param("petId"), &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetPet(ctx, petId)
+	err = w.Handler.GetPet(c, petId)
 	return err
 }
 
 // ValidatePets converts echo context to params.
-func (w *ServerInterfaceWrapper) ValidatePets(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ValidatePets(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ValidatePets(ctx)
+	err = w.Handler.ValidatePets(c)
 	return err
 }
 

@@ -258,7 +258,7 @@ func ParseExampleGetResponse(rsp *http.Response) (*ExampleGetResponse, error) {
 type ServerInterface interface {
 
 	// (GET /example)
-	ExampleGet(ctx echo.Context) error
+	ExampleGet(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -267,11 +267,11 @@ type ServerInterfaceWrapper struct {
 }
 
 // ExampleGet converts echo context to params.
-func (w *ServerInterfaceWrapper) ExampleGet(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ExampleGet(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ExampleGet(ctx)
+	err = w.Handler.ExampleGet(c)
 	return err
 }
 

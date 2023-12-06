@@ -41,17 +41,17 @@ func NewPetStore() *PetStore {
 
 // sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetStoreError(ctx echo.Context, code int, message string) error {
+func sendPetStoreError(c echo.Context, code int, message string) error {
 	petErr := models.Error{
 		Code:    int32(code),
 		Message: message,
 	}
-	err := ctx.JSON(code, petErr)
+	err := c.JSON(code, petErr)
 	return err
 }
 
 // FindPets implements all the handlers in the ServerInterface
-func (p *PetStore) FindPets(ctx echo.Context, params models.FindPetsParams) error {
+func (p *PetStore) FindPets(c echo.Context, params models.FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -78,15 +78,15 @@ func (p *PetStore) FindPets(ctx echo.Context, params models.FindPetsParams) erro
 			}
 		}
 	}
-	return ctx.JSON(http.StatusOK, result)
+	return c.JSON(http.StatusOK, result)
 }
 
-func (p *PetStore) AddPet(ctx echo.Context) error {
+func (p *PetStore) AddPet(c echo.Context) error {
 	// We expect a NewPet object in the request body.
 	var newPet models.NewPet
-	err := ctx.Bind(&newPet)
+	err := c.Bind(&newPet)
 	if err != nil {
-		return sendPetStoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
+		return sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
 	}
 	// We now have a pet, let's add it to our "database".
 
@@ -105,7 +105,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	p.Pets[pet.Id] = pet
 
 	// Now, we have to return the NewPet
-	err = ctx.JSON(http.StatusCreated, pet)
+	err = c.JSON(http.StatusCreated, pet)
 	if err != nil {
 		// Something really bad happened, tell Echo that our handler failed
 		return err
@@ -120,27 +120,27 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	return nil
 }
 
-func (p *PetStore) FindPetByID(ctx echo.Context, petId int64) error {
+func (p *PetStore) FindPetByID(c echo.Context, petId int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
 	pet, found := p.Pets[petId]
 	if !found {
-		return sendPetStoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(c, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", petId))
 	}
-	return ctx.JSON(http.StatusOK, pet)
+	return c.JSON(http.StatusOK, pet)
 }
 
-func (p *PetStore) DeletePet(ctx echo.Context, id int64) error {
+func (p *PetStore) DeletePet(c echo.Context, id int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
 	_, found := p.Pets[id]
 	if !found {
-		return sendPetStoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(c, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", id))
 	}
 	delete(p.Pets, id)
-	return ctx.NoContent(http.StatusNoContent)
+	return c.NoContent(http.StatusNoContent)
 }

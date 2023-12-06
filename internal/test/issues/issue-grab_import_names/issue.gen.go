@@ -280,7 +280,7 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 type ServerInterface interface {
 
 	// (GET /foo)
-	GetFoo(ctx echo.Context, params GetFooParams) error
+	GetFoo(c echo.Context, params GetFooParams) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -289,13 +289,13 @@ type ServerInterfaceWrapper struct {
 }
 
 // GetFoo converts echo context to params.
-func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) GetFoo(c echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetFooParams
 
-	headers := ctx.Request().Header
+	headers := c.Request().Header
 	// ------------- Optional header parameter "Foo" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("Foo")]; found {
 		var Foo string
@@ -328,7 +328,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetFoo(ctx, params)
+	err = w.Handler.GetFoo(c, params)
 	return err
 }
 

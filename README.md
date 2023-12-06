@@ -127,13 +127,13 @@ Echo server.
 ```go
 type ServerInterface interface {
     //  (GET /pets)
-    FindPets(ctx echo.Context, params FindPetsParams) error
+    FindPets(c echo.Context, params FindPetsParams) error
     //  (POST /pets)
-    AddPet(ctx echo.Context) error
+    AddPet(c echo.Context) error
     //  (DELETE /pets/{id})
-    DeletePet(ctx echo.Context, id int64) error
+    DeletePet(c echo.Context, id int64) error
     //  (GET /pets/{id})
-    FindPetById(ctx echo.Context, id int64) error
+    FindPetById(c echo.Context, id int64) error
 }
 ```
 

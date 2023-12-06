@@ -27,37 +27,37 @@ import (
 type ServerInterface interface {
 
 	// (POST /json)
-	JSONExample(ctx echo.Context) error
+	JSONExample(c echo.Context) error
 
 	// (POST /multipart)
-	MultipartExample(ctx echo.Context) error
+	MultipartExample(c echo.Context) error
 
 	// (POST /multiple)
-	MultipleRequestAndResponseTypes(ctx echo.Context) error
+	MultipleRequestAndResponseTypes(c echo.Context) error
 
 	// (GET /reserved-go-keyword-parameters/{type})
-	ReservedGoKeywordParameters(ctx echo.Context, pType string) error
+	ReservedGoKeywordParameters(c echo.Context, pType string) error
 
 	// (POST /reusable-responses)
-	ReusableResponses(ctx echo.Context) error
+	ReusableResponses(c echo.Context) error
 
 	// (POST /text)
-	TextExample(ctx echo.Context) error
+	TextExample(c echo.Context) error
 
 	// (POST /unknown)
-	UnknownExample(ctx echo.Context) error
+	UnknownExample(c echo.Context) error
 
 	// (POST /unspecified-content-type)
-	UnspecifiedContentType(ctx echo.Context) error
+	UnspecifiedContentType(c echo.Context) error
 
 	// (POST /urlencoded)
-	URLEncodedExample(ctx echo.Context) error
+	URLEncodedExample(c echo.Context) error
 
 	// (POST /with-headers)
-	HeadersExample(ctx echo.Context, params HeadersExampleParams) error
+	HeadersExample(c echo.Context, params HeadersExampleParams) error
 
 	// (POST /with-union)
-	UnionExample(ctx echo.Context) error
+	UnionExample(c echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -66,101 +66,101 @@ type ServerInterfaceWrapper struct {
 }
 
 // JSONExample converts echo context to params.
-func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) JSONExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.JSONExample(ctx)
+	err = w.Handler.JSONExample(c)
 	return err
 }
 
 // MultipartExample converts echo context to params.
-func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) MultipartExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.MultipartExample(ctx)
+	err = w.Handler.MultipartExample(c)
 	return err
 }
 
 // MultipleRequestAndResponseTypes converts echo context to params.
-func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.MultipleRequestAndResponseTypes(ctx)
+	err = w.Handler.MultipleRequestAndResponseTypes(c)
 	return err
 }
 
 // ReservedGoKeywordParameters converts echo context to params.
-func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(c echo.Context) error {
 	var err error
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter type: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ReservedGoKeywordParameters(ctx, pType)
+	err = w.Handler.ReservedGoKeywordParameters(c, pType)
 	return err
 }
 
 // ReusableResponses converts echo context to params.
-func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ReusableResponses(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.ReusableResponses(ctx)
+	err = w.Handler.ReusableResponses(c)
 	return err
 }
 
 // TextExample converts echo context to params.
-func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) TextExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.TextExample(ctx)
+	err = w.Handler.TextExample(c)
 	return err
 }
 
 // UnknownExample converts echo context to params.
-func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnknownExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UnknownExample(ctx)
+	err = w.Handler.UnknownExample(c)
 	return err
 }
 
 // UnspecifiedContentType converts echo context to params.
-func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnspecifiedContentType(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UnspecifiedContentType(ctx)
+	err = w.Handler.UnspecifiedContentType(c)
 	return err
 }
 
 // URLEncodedExample converts echo context to params.
-func (w *ServerInterfaceWrapper) URLEncodedExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) URLEncodedExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.URLEncodedExample(ctx)
+	err = w.Handler.URLEncodedExample(c)
 	return err
 }
 
 // HeadersExample converts echo context to params.
-func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) HeadersExample(c echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params HeadersExampleParams
 
-	headers := ctx.Request().Header
+	headers := c.Request().Header
 	// ------------- Required header parameter "header1" -------------
 	if valueList, found := headers[http.CanonicalHeaderKey("header1")]; found {
 		var Header1 string
@@ -195,16 +195,16 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.HeadersExample(ctx, params)
+	err = w.Handler.HeadersExample(c, params)
 	return err
 }
 
 // UnionExample converts echo context to params.
-func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnionExample(c echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.UnionExample(ctx)
+	err = w.Handler.UnionExample(c)
 	return err
 }
 
@@ -795,28 +795,28 @@ type strictHandler struct {
 }
 
 // JSONExample operation middleware
-func (sh *strictHandler) JSONExample(ctx echo.Context) error {
+func (sh *strictHandler) JSONExample(c echo.Context) error {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return err
 	}
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.JSONExample(ctx.Request().Context(), request.(JSONExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.JSONExample(c.Request().Context(), request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "JSONExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
-		return validResponse.VisitJSONExampleResponse(ctx.Response())
+		return validResponse.VisitJSONExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -824,28 +824,28 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 }
 
 // MultipartExample operation middleware
-func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
+func (sh *strictHandler) MultipartExample(c echo.Context) error {
 	var request MultipartExampleRequestObject
 
-	if reader, err := ctx.Request().MultipartReader(); err != nil {
+	if reader, err := c.Request().MultipartReader(); err != nil {
 		return err
 	} else {
 		request.Body = reader
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipartExample(ctx.Request().Context(), request.(MultipartExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.MultipartExample(c.Request().Context(), request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
-		return validResponse.VisitMultipartExampleResponse(ctx.Response())
+		return validResponse.VisitMultipartExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -853,18 +853,18 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 }
 
 // MultipleRequestAndResponseTypes operation middleware
-func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error {
+func (sh *strictHandler) MultipleRequestAndResponseTypes(c echo.Context) error {
 	var request MultipleRequestAndResponseTypesRequestObject
 
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/json") {
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "application/json") {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := ctx.Bind(&body); err != nil {
+		if err := c.Bind(&body); err != nil {
 			return err
 		}
 		request.JSONBody = &body
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
-		if form, err := ctx.FormParams(); err == nil {
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+		if form, err := c.FormParams(); err == nil {
 			var body MultipleRequestAndResponseTypesFormdataRequestBody
 			if err := runtime.BindForm(&body, form, nil, nil); err != nil {
 				return err
@@ -874,18 +874,18 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 			return err
 		}
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "image/png") {
-		request.Body = ctx.Request().Body
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "image/png") {
+		request.Body = c.Request().Body
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "multipart/form-data") {
-		if reader, err := ctx.Request().MultipartReader(); err != nil {
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "multipart/form-data") {
+		if reader, err := c.Request().MultipartReader(); err != nil {
 			return err
 		} else {
 			request.MultipartBody = reader
 		}
 	}
-	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "text/plain") {
-		data, err := io.ReadAll(ctx.Request().Body)
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "text/plain") {
+		data, err := io.ReadAll(c.Request().Body)
 		if err != nil {
 			return err
 		}
@@ -893,19 +893,19 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 		request.TextBody = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipleRequestAndResponseTypes(ctx.Request().Context(), request.(MultipleRequestAndResponseTypesRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.MultipleRequestAndResponseTypes(c.Request().Context(), request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipleRequestAndResponseTypes")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
-		return validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Response())
+		return validResponse.VisitMultipleRequestAndResponseTypesResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -913,24 +913,24 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 }
 
 // ReservedGoKeywordParameters operation middleware
-func (sh *strictHandler) ReservedGoKeywordParameters(ctx echo.Context, pType string) error {
+func (sh *strictHandler) ReservedGoKeywordParameters(c echo.Context, pType string) error {
 	var request ReservedGoKeywordParametersRequestObject
 
 	request.Type = pType
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ReservedGoKeywordParameters(ctx.Request().Context(), request.(ReservedGoKeywordParametersRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ReservedGoKeywordParameters(c.Request().Context(), request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReservedGoKeywordParameters")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
-		return validResponse.VisitReservedGoKeywordParametersResponse(ctx.Response())
+		return validResponse.VisitReservedGoKeywordParametersResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -938,28 +938,28 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx echo.Context, pType str
 }
 
 // ReusableResponses operation middleware
-func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
+func (sh *strictHandler) ReusableResponses(c echo.Context) error {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return err
 	}
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ReusableResponses(ctx.Request().Context(), request.(ReusableResponsesRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.ReusableResponses(c.Request().Context(), request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReusableResponses")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
-		return validResponse.VisitReusableResponsesResponse(ctx.Response())
+		return validResponse.VisitReusableResponsesResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -967,29 +967,29 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 }
 
 // TextExample operation middleware
-func (sh *strictHandler) TextExample(ctx echo.Context) error {
+func (sh *strictHandler) TextExample(c echo.Context) error {
 	var request TextExampleRequestObject
 
-	data, err := io.ReadAll(ctx.Request().Body)
+	data, err := io.ReadAll(c.Request().Body)
 	if err != nil {
 		return err
 	}
 	body := TextExampleTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.TextExample(ctx.Request().Context(), request.(TextExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TextExample(c.Request().Context(), request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "TextExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
-		return validResponse.VisitTextExampleResponse(ctx.Response())
+		return validResponse.VisitTextExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -997,24 +997,24 @@ func (sh *strictHandler) TextExample(ctx echo.Context) error {
 }
 
 // UnknownExample operation middleware
-func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
+func (sh *strictHandler) UnknownExample(c echo.Context) error {
 	var request UnknownExampleRequestObject
 
-	request.Body = ctx.Request().Body
+	request.Body = c.Request().Body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnknownExample(ctx.Request().Context(), request.(UnknownExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnknownExample(c.Request().Context(), request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnknownExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
-		return validResponse.VisitUnknownExampleResponse(ctx.Response())
+		return validResponse.VisitUnknownExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1022,26 +1022,26 @@ func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
 }
 
 // UnspecifiedContentType operation middleware
-func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
+func (sh *strictHandler) UnspecifiedContentType(c echo.Context) error {
 	var request UnspecifiedContentTypeRequestObject
 
-	request.ContentType = ctx.Request().Header.Get("Content-Type")
+	request.ContentType = c.Request().Header.Get("Content-Type")
 
-	request.Body = ctx.Request().Body
+	request.Body = c.Request().Body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnspecifiedContentType(ctx.Request().Context(), request.(UnspecifiedContentTypeRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnspecifiedContentType(c.Request().Context(), request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnspecifiedContentType")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
-		return validResponse.VisitUnspecifiedContentTypeResponse(ctx.Response())
+		return validResponse.VisitUnspecifiedContentTypeResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1049,10 +1049,10 @@ func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
 }
 
 // URLEncodedExample operation middleware
-func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
+func (sh *strictHandler) URLEncodedExample(c echo.Context) error {
 	var request URLEncodedExampleRequestObject
 
-	if form, err := ctx.FormParams(); err == nil {
+	if form, err := c.FormParams(); err == nil {
 		var body URLEncodedExampleFormdataRequestBody
 		if err := runtime.BindForm(&body, form, nil, nil); err != nil {
 			return err
@@ -1062,19 +1062,19 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 		return err
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.URLEncodedExample(ctx.Request().Context(), request.(URLEncodedExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.URLEncodedExample(c.Request().Context(), request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "URLEncodedExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
-		return validResponse.VisitURLEncodedExampleResponse(ctx.Response())
+		return validResponse.VisitURLEncodedExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1082,30 +1082,30 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 }
 
 // HeadersExample operation middleware
-func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleParams) error {
+func (sh *strictHandler) HeadersExample(c echo.Context, params HeadersExampleParams) error {
 	var request HeadersExampleRequestObject
 
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return err
 	}
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.HeadersExample(ctx.Request().Context(), request.(HeadersExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.HeadersExample(c.Request().Context(), request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "HeadersExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
-		return validResponse.VisitHeadersExampleResponse(ctx.Response())
+		return validResponse.VisitHeadersExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -1113,28 +1113,28 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 }
 
 // UnionExample operation middleware
-func (sh *strictHandler) UnionExample(ctx echo.Context) error {
+func (sh *strictHandler) UnionExample(c echo.Context) error {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := c.Bind(&body); err != nil {
 		return err
 	}
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnionExample(ctx.Request().Context(), request.(UnionExampleRequestObject))
+	handler := func(c echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnionExample(c.Request().Context(), request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnionExample")
 	}
 
-	response, err := handler(ctx, request)
+	response, err := handler(c, request)
 
 	if err != nil {
 		return err
 	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
-		return validResponse.VisitUnionExampleResponse(ctx.Response())
+		return validResponse.VisitUnionExampleResponse(c.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
