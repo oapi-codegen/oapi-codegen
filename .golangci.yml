@@ -1,3 +1,0 @@
-issues:
-  exclude:
-    - '.*This has been replaced by github.com/oapi-codegen/runtime.*'

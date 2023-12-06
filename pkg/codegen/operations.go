@@ -23,8 +23,9 @@ import (
 	"text/template"
 	"unicode"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
 type ParameterDefinition struct {
@@ -274,10 +275,13 @@ func (o *OperationDefinition) SummaryAsComment() string {
 func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
 	var tds []ResponseTypeDefinition
 
-	responses := o.Spec.Responses
-	sortedResponsesKeys := SortedResponsesKeys(responses)
+	if o.Spec == nil || o.Spec.Responses == nil {
+		return tds, nil
+	}
+
+	sortedResponsesKeys := SortedResponsesKeys(o.Spec.Responses.Map())
 	for _, responseName := range sortedResponsesKeys {
-		responseRef := responses[responseName]
+		responseRef := o.Spec.Responses.Value(responseName)
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
@@ -536,8 +540,12 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 		toCamelCaseFunc = ToCamelCase
 	}
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[requestPath]
+	if swagger == nil || swagger.Paths == nil {
+		return operations, nil
+	}
+
+	for _, requestPath := range SortedPathsKeys(swagger.Paths.Map()) {
+		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
@@ -593,7 +601,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses)
+			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses.Map())
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
@@ -762,7 +770,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateResponseDefinitions(operationID string, responses openapi3.Responses) ([]ResponseDefinition, error) {
+func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef) ([]ResponseDefinition, error) {
 	var responseDefinitions []ResponseDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})

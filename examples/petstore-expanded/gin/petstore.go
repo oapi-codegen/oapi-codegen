@@ -14,8 +14,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/gin/api"
+	middleware "github.com/oapi-codegen/gin-middleware"
 )
 
 func NewGinPetServer(petStore *api.PetStore, port string) *http.Server {
