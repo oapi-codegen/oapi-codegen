@@ -44,7 +44,7 @@ func TestSortedSchemaKeys(t *testing.T) {
 }
 
 func TestSortedPathsKeys(t *testing.T) {
-	dict := openapi3.Paths{
+	dict := map[string]*openapi3.PathItem{
 		"f": nil,
 		"c": nil,
 		"b": nil,
@@ -74,7 +74,7 @@ func TestSortedOperationsKeys(t *testing.T) {
 }
 
 func TestSortedResponsesKeys(t *testing.T) {
-	dict := openapi3.Responses{
+	dict := map[string]*openapi3.ResponseRef{
 		"f": nil,
 		"c": nil,
 		"b": nil,

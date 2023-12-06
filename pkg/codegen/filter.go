@@ -11,12 +11,16 @@ func filterOperationsByTag(swagger *openapi3.T, opts Configuration) {
 	}
 }
 
-func excludeOperationsWithTags(paths openapi3.Paths, tags []string) {
+func excludeOperationsWithTags(paths *openapi3.Paths, tags []string) {
 	includeOperationsWithTags(paths, tags, true)
 }
 
-func includeOperationsWithTags(paths openapi3.Paths, tags []string, exclude bool) {
-	for _, pathItem := range paths {
+func includeOperationsWithTags(paths *openapi3.Paths, tags []string, exclude bool) {
+	if paths == nil {
+		return
+	}
+
+	for _, pathItem := range paths.Map() {
 		ops := pathItem.Operations()
 		names := make([]string, 0, len(ops))
 		for name, op := range ops {

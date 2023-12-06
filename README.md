@@ -67,7 +67,7 @@ write a lot of boilerplate code to perform all the marshaling and unmarshaling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
     oapi-codegen -package petstore petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
@@ -933,7 +933,7 @@ output-options:
     # using a local file
     client-with-responses.tmpl: /home/username/workspace/templatesProject/my-client-with-responses.tmpl
 
-    # The following are referencing a versuion of the default
+    # The following are referencing a version of the default
     # client-with-responses.tmpl file, but loaded in through
     # github's raw.githubusercontent.com. The general form
     # to use raw.githubusercontent.com is as follows
