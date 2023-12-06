@@ -1213,8 +1213,18 @@ func fixExternalRefPropagationCore(vObj reflect.Value, visited map[interface{}]s
 				}
 			}
 		}
-		for i := 0; i < vObj.NumField(); i++ {
-			fixExternalRefPropagationCore(vObj.Field(i), visited, curUri)
+		if vObj.Type() == reflect.TypeOf(openapi3.Paths{}) {
+			for _, r := range vObj.Addr().Interface().(*openapi3.Paths).Map() {
+				fixExternalRefPropagationCore(reflect.ValueOf(r), visited, curUri)
+			}
+		} else if vObj.Type() == reflect.TypeOf(openapi3.Responses{}) {
+			for _, r := range vObj.Addr().Interface().(*openapi3.Responses).Map() {
+				fixExternalRefPropagationCore(reflect.ValueOf(r), visited, curUri)
+			}
+		} else {
+			for i := 0; i < vObj.NumField(); i++ {
+				fixExternalRefPropagationCore(vObj.Field(i), visited, curUri)
+			}
 		}
 	}
 }
