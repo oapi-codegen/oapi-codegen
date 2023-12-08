@@ -140,7 +140,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	result.Enum = append(s1.Enum, s2.Enum...)
 
 	// I don't know how to handle two different defaults.
-	if s1.Default != nil || s2.Default != nil {
+	if s1.Default != nil && s2.Default != nil {
 		return openapi3.Schema{}, errors.New("merging two sets of defaults is undefined")
 	}
 	if s1.Default != nil {
