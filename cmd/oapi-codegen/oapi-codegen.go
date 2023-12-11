@@ -30,7 +30,7 @@ import (
 )
 
 func errExit(format string, args ...interface{}) {
-	_, _ = fmt.Fprintf(os.Stderr, format, args...)
+	_, _ = fmt.Fprintf(os.Stdout, format, args...)
 	os.Exit(1)
 }
 
@@ -111,7 +111,7 @@ func main() {
 	if flagPrintVersion {
 		bi, ok := debug.ReadBuildInfo()
 		if !ok {
-			fmt.Fprintln(os.Stderr, "error reading build info")
+			fmt.Fprintln(os.Stdout, "error reading build info")
 			os.Exit(1)
 		}
 		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")

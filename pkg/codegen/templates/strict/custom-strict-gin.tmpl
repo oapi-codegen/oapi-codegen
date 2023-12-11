@@ -70,16 +70,13 @@ type strictHandler struct {
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
-        handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+        handler := func(ctx *gin.Context, request any) any {
             return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
         }
 
-        response, err := handler(ctx, request)
+        response := handler(ctx, request)
 
-        if err != nil {
-            ctx.Error(err)
-            ctx.Status(http.StatusInternalServerError)
-        } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
+        if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             if err := validResponse.WriteResponse(ctx.Writer); err != nil {
                 ctx.Error(err)
             }
