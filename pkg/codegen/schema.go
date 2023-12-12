@@ -237,6 +237,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
+
 		return Schema{
 			GoType:         refType,
 			Description:    schema.Description,
@@ -283,6 +284,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
 		}
+
 		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
@@ -544,8 +546,23 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 			arrayType.RefType = typeName
 		}
+
+		if extension, ok := schema.Items.Value.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			arrayType.SkipOptionalPointer, err = extParsePropGoTypeSkipOptionalPointer(extension)
+			if err != nil {
+				return fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+			}
+		} else {
+			arrayType.SkipOptionalPointer = true
+		}
+
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+
+		if arrayType.SkipOptionalPointer {
+			outSchema.GoType = "[]" + arrayType.TypeDecl()
+		} else {
+			outSchema.GoType = "[]" + "*" + arrayType.TypeDecl()
+		}
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
