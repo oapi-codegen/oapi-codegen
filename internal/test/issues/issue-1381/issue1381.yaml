@@ -1,0 +1,50 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        field1:
+          type: string
+        field2:
+          type: string
+      required:
+        - field1
+        - field2
+paths:
+  /test:
+    post:
+      operationId: test
+      requestBody:
+        content:
+          multipart/related:
+            schema:
+              type: object
+              properties:
+                jsonData:
+                  $ref: "#/components/schemas/Test"
+                binaryData:
+                  type: string
+                  format: binary
+            encoding:
+              jsonData:
+                contentType: application/json
+              binaryData:
+                contentType: application/octet-stream
+      responses:
+        200:
+          content:
+            multipart/related:
+              schema:
+                type: object
+                properties:
+                  jsonData:
+                    $ref: "#/components/schemas/Test"
+                  binaryData:
+                    type: string
+                    format: binary
+              encoding:
+                jsonData:
+                  contentType: application/json
+                binaryData:
+                  contentType: application/octet-stream
