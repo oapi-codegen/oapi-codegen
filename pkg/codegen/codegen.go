@@ -442,7 +442,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
 
-	unionBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	unionBoilerplate, err := GenerateUnionBoilerplate(t, enumTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
