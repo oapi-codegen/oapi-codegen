@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -314,7 +315,7 @@ type Test200MultipartResponse func(writer *multipart.Writer) error
 
 func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
 	defer writer.Close()
@@ -344,11 +345,14 @@ type strictHandler struct {
 func (sh *strictHandler) Test(ctx *gin.Context) {
 	var request TestRequestObject
 
-	if reader, err := ctx.Request.MultipartReader(); err == nil {
-		request.Body = reader
-	} else {
+	if _, params, err := mime.ParseMediaType(ctx.Request.Header.Get("Content-Type")); err != nil {
 		ctx.Error(err)
 		return
+	} else if boundary := params["boundary"]; boundary == "" {
+		ctx.Error(http.ErrMissingBoundary)
+		return
+	} else {
+		request.Body = multipart.NewReader(ctx.Request.Body, boundary)
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
