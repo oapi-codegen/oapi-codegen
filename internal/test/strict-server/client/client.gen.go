@@ -42,6 +42,9 @@ type JSONExampleJSONRequestBody = Example
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
 type MultipartExampleMultipartRequestBody = Example
 
+// MultipartRelatedExampleMultipartRequestBody defines body for MultipartRelatedExample for multipart/related ContentType.
+type MultipartRelatedExampleMultipartRequestBody = Example
+
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
 type MultipleRequestAndResponseTypesJSONRequestBody = Example
 
@@ -150,6 +153,9 @@ type ClientInterface interface {
 	// MultipartExampleWithBody request with any body
 	MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MultipartRelatedExampleWithBody request with any body
+	MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// MultipleRequestAndResponseTypesWithBody request with any body
 	MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -220,6 +226,18 @@ func (c *Client) JSONExample(ctx context.Context, body JSONExampleJSONRequestBod
 
 func (c *Client) MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipartExampleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMultipartRelatedExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -484,6 +502,35 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 	}
 
 	operationPath := fmt.Sprintf("/multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewMultipartRelatedExampleRequestWithBody generates requests for MultipartRelatedExample with any type of body
+func NewMultipartRelatedExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -924,6 +971,9 @@ type ClientWithResponsesInterface interface {
 	// MultipartExampleWithBodyWithResponse request with any body
 	MultipartExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartExampleResponse, error)
 
+	// MultipartRelatedExampleWithBodyWithResponse request with any body
+	MultipartRelatedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartRelatedExampleResponse, error)
+
 	// MultipleRequestAndResponseTypesWithBodyWithResponse request with any body
 	MultipleRequestAndResponseTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
@@ -1005,6 +1055,27 @@ func (r MultipartExampleResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r MultipartExampleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type MultipartRelatedExampleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r MultipartRelatedExampleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r MultipartRelatedExampleResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1233,6 +1304,15 @@ func (c *ClientWithResponses) MultipartExampleWithBodyWithResponse(ctx context.C
 	return ParseMultipartExampleResponse(rsp)
 }
 
+// MultipartRelatedExampleWithBodyWithResponse request with arbitrary body returning *MultipartRelatedExampleResponse
+func (c *ClientWithResponses) MultipartRelatedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartRelatedExampleResponse, error) {
+	rsp, err := c.MultipartRelatedExampleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMultipartRelatedExampleResponse(rsp)
+}
+
 // MultipleRequestAndResponseTypesWithBodyWithResponse request with arbitrary body returning *MultipleRequestAndResponseTypesResponse
 func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error) {
 	rsp, err := c.MultipleRequestAndResponseTypesWithBody(ctx, contentType, body, reqEditors...)
@@ -1413,6 +1493,22 @@ func ParseMultipartExampleResponse(rsp *http.Response) (*MultipartExampleRespons
 	}
 
 	response := &MultipartExampleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseMultipartRelatedExampleResponse parses an HTTP response from a MultipartRelatedExampleWithResponse call
+func ParseMultipartRelatedExampleResponse(rsp *http.Response) (*MultipartRelatedExampleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &MultipartRelatedExampleResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
