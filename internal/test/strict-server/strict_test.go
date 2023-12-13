@@ -122,6 +122,30 @@ func testImpl(t *testing.T, handler http.Handler) {
 		_, err = reader.NextPart()
 		assert.Equal(t, io.EOF, err)
 	})
+	t.Run("MultipartRelatedExample", func(t *testing.T) {
+		value := "789"
+		fieldName := "value"
+		var writer bytes.Buffer
+		mw := multipart.NewWriter(&writer)
+		field, err := mw.CreateFormField(fieldName)
+		assert.NoError(t, err)
+		_, _ = field.Write([]byte(value))
+		assert.NoError(t, mw.Close())
+		rr := testutil.NewRequest().Post("/multipart-related").WithContentType(mime.FormatMediaType("multipart/related", map[string]string{"boundary": mw.Boundary()})).WithBody(writer.Bytes()).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		contentType, params, err := mime.ParseMediaType(rr.Header().Get("Content-Type"))
+		assert.NoError(t, err)
+		assert.Equal(t, "multipart/related", contentType)
+		reader := multipart.NewReader(rr.Body, params["boundary"])
+		part, err := reader.NextPart()
+		assert.NoError(t, err)
+		assert.Equal(t, part.FormName(), fieldName)
+		readValue, err := io.ReadAll(part)
+		assert.NoError(t, err)
+		assert.Equal(t, value, string(readValue))
+		_, err = reader.NextPart()
+		assert.Equal(t, io.EOF, err)
+	})
 	t.Run("TextExample", func(t *testing.T) {
 		value := "text"
 		rr := testutil.NewRequest().Post("/text").WithContentType("text/plain").WithBody([]byte(value)).GoWithHTTPHandler(t, handler).Recorder

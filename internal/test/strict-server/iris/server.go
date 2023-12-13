@@ -40,6 +40,30 @@ func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExa
 	}), nil
 }
 
+func (s StrictServer) MultipartRelatedExample(ctx context.Context, request MultipartRelatedExampleRequestObject) (MultipartRelatedExampleResponseObject, error) {
+	return MultipartRelatedExample200MultipartResponse(func(writer *multipart.Writer) error {
+		for {
+			part, err := request.Body.NextPart()
+			if err == io.EOF {
+				return nil
+			} else if err != nil {
+				return err
+			}
+			w, err := writer.CreatePart(part.Header)
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(w, part)
+			if err != nil {
+				return err
+			}
+			if err = part.Close(); err != nil {
+				return err
+			}
+		}
+	}), nil
+}
+
 func (s StrictServer) MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error) {
 	switch {
 	case request.Body != nil:
