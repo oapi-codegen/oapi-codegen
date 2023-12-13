@@ -916,7 +916,7 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
 		return
@@ -1018,7 +1018,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := ctx.ShouldBind(&body); err != nil {
+		if err := ctx.ShouldBindJSON(&body); err != nil {
 			ctx.Status(http.StatusBadRequest)
 			ctx.Error(err)
 			return
@@ -1111,7 +1111,7 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
 		return
@@ -1271,7 +1271,7 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
 		return
@@ -1304,7 +1304,7 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := ctx.ShouldBind(&body); err != nil {
+	if err := ctx.ShouldBindJSON(&body); err != nil {
 		ctx.Status(http.StatusBadRequest)
 		ctx.Error(err)
 		return
