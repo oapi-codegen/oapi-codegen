@@ -352,14 +352,6 @@ func RefPathToGoType(refPath string) (string, error) {
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
-		depth := len(pathParts)
-		if local {
-			if depth != 4 {
-				return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-			}
-		} else if depth != 4 && depth != 2 {
-			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-		}
 
 		// Schemas may have been renamed locally, so look up the actual name in
 		// the spec.
