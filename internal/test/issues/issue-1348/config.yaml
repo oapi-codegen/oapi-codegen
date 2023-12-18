@@ -1,0 +1,7 @@
+package: issue1348
+generate:
+  models: true
+  client: true
+  gorilla-server: true
+  strict-server: true
+output: issue1348.gen.go

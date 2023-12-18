@@ -1,0 +1,38 @@
+openapi: 3.0.3
+info:
+  title: test-service
+  version: 1.0.0
+
+paths:
+  /samples:
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSample"
+      responses:
+        201:
+          description: ".."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Sample"
+
+components:
+  schemas:
+    Sample:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        field:
+          type: string
+          # more properties here
+
+    CreateSample:
+      type: object
+      properties:
+        field:
+          $ref: "#/components/schemas/Sample/properties/field"
