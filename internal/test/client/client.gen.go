@@ -307,6 +307,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "PostBoth")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -335,6 +336,8 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetBoth")
 
 	return req, nil
 }
@@ -374,6 +377,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "PostJson")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -403,6 +407,8 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetJson")
+
 	return req, nil
 }
 
@@ -430,6 +436,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "PostOther")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -459,6 +466,8 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetOther")
+
 	return req, nil
 }
 
@@ -485,6 +494,8 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetJsonWithTrailingSlash")
 
 	return req, nil
 }
@@ -524,6 +535,7 @@ func NewPostVendorJsonRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "PostVendorJson")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil

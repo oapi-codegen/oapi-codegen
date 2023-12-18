@@ -194,6 +194,8 @@ func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetPet")
+
 	return req, nil
 }
 
@@ -232,6 +234,7 @@ func NewValidatePetsRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "ValidatePets")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil

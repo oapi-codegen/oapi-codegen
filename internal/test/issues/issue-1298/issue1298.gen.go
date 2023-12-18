@@ -164,6 +164,7 @@ func NewTestRequestWithBody(server string, contentType string, body io.Reader) (
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Test")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil

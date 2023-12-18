@@ -143,6 +143,8 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetFoo")
+
 	if params != nil {
 
 		if params.Foo != nil {

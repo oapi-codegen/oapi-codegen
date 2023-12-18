@@ -232,6 +232,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
 
+    req.Header.Add("Operation-Id", "{{$opid}}")
     {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
 {{ if .HeaderParams }}
     if params != nil {

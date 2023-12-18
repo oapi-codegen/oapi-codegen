@@ -389,6 +389,8 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "EnsureEverythingIsReferenced")
+
 	return req, nil
 }
 
@@ -416,6 +418,8 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Issue1051")
+
 	return req, nil
 }
 
@@ -442,6 +446,8 @@ func NewIssue127Request(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "Issue127")
 
 	return req, nil
 }
@@ -481,6 +487,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Issue185")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -517,6 +524,8 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Issue209")
+
 	return req, nil
 }
 
@@ -551,6 +560,8 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Issue30")
+
 	return req, nil
 }
 
@@ -577,6 +588,8 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetIssues375")
 
 	return req, nil
 }
@@ -611,6 +624,8 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "Issue41")
 
 	return req, nil
 }
@@ -668,6 +683,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "Issue9")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -696,6 +712,8 @@ func NewIssue975Request(server string) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "Issue975")
 
 	return req, nil
 }

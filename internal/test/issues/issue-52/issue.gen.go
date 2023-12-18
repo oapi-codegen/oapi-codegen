@@ -147,6 +147,8 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "ExampleGet")
+
 	return req, nil
 }
 
