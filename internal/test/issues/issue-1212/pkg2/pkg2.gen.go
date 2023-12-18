@@ -201,10 +201,10 @@ type strictHandler struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4SPwU4EIQyG36V6JIurN44efA92trgYpm3a7sFM5t0NYGJMJlku/MD/5aMbLLwKE5Ib",
-	"pA0UTZgMx8HRvO8LkyONuN6bV8nqUbFlx2u/tOWGa+5JlAXV6+S/jOk9a4/PigUSPMU/XZyYxUtW2MNo",
-	"fzA/ahdm2OcKv+Yhu0zR/x+Uiu36Omb5FoQE5lrpEwZcpuyAOB8SnalUGBLdWwvAgpSlQoK308vpDAEk",
-	"+83m8/4TAAD//08ZxXtaAQAA",
+	"H4sIAAAAAAAC/3yPvW7DMAyE34XtKFh1u2ns0PdQbTpRYJMExQyBoXcPZCXwkB8tdxDuwPtWYEGKkiDA",
+	"T/fV9eBg4EWYkCxDWCEPR1ziZifmKqIsqJawfSacx746uwhCgGya6AClFAf/UV80vp82igPFLEy5RQ2z",
+	"VR2YDGmzy3m2JFHNK87RcNxHPp46Zaa/tvpTcYIAH37H8zc2X8GK29K/bfG7dIUq93cNAAD//yD2Q3RB",
+	"AQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

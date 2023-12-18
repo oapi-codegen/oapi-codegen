@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"context"
 	"fmt"
 	"go/token"
 	"net/url"
@@ -24,7 +25,10 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/pb33f/libopenapi/orderedmap"
 )
 
 var (
@@ -190,77 +194,30 @@ func mediaTypeToCamelCase(s string) string {
 	return ToCamelCaseWithInitialism(s)
 }
 
-// SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
-// order, since Golang scrambles dictionary keys
-func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
-	keys := make([]string, len(dict))
+func SortedKeys[V any](dict *orderedmap.Map[string, V]) []string {
+	keys := make([]string, orderedmap.Len(dict))
 	i := 0
-	for key := range dict {
-		keys[i] = key
+	for v := range orderedmap.Iterate(context.TODO(), dict) {
+		keys[i] = v.Key()
 		i++
 	}
 	sort.Strings(keys)
 	return keys
 }
 
-// SortedPathsKeys is the same as above, except it sorts the keys for a Paths
-// dictionary.
-func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
+func ToMap[K comparable, V any](dict *orderedmap.Map[K, V]) map[K]V {
+	m := make(map[K]V, orderedmap.Len(dict))
+	for v := range orderedmap.Iterate(context.TODO(), dict) {
+		m[v.Key()] = v.Value()
 	}
-	sort.Strings(keys)
-	return keys
+	return m
 }
 
-// SortedOperationsKeys returns Operation dictionary keys in sorted order
-func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
+func GetBool(b *bool) bool {
+	if b == nil {
+		return false
 	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedHeadersKeys(dict openapi3.Headers) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedContentKeys returns Content dictionary keys in sorted order
-func SortedContentKeys(dict openapi3.Content) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return *b
 }
 
 // SortedStringKeys returns string map keys in sorted order
@@ -268,40 +225,6 @@ func SortedStringKeys(dict map[string]string) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedParameterKeys returns sorted keys for a ParameterRef dict
-func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
-	keys := make([]string, len(sr))
-	i := 0
-	for key := range sr {
 		keys[i] = key
 		i++
 	}
@@ -700,21 +623,34 @@ func SchemaNameToTypeName(name string) string {
 	return typeNamePrefix(name) + ToCamelCase(name)
 }
 
-// According to the spec, additionalProperties may be true, false, or a
+// SchemaHasAdditionalProperties According to the spec, additionalProperties may be true, false, or a
 // schema. If not present, true is implied. If it's a schema, true is implied.
 // If it's false, no additional properties are allowed. We're going to act a little
 // differently, in that if you want additionalProperties code to be generated,
 // you must specify an additionalProperties type
 // If additionalProperties it true/false, this field will be non-nil.
-func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
-	if schema.AdditionalProperties.Has != nil && *schema.AdditionalProperties.Has {
+func SchemaHasAdditionalProperties(schema *base.Schema) bool {
+	if schema.AdditionalProperties == nil {
+		return false
+	}
+	if schema.AdditionalProperties.IsA() {
 		return true
 	}
-
-	if schema.AdditionalProperties.Schema != nil {
-		return true
+	if schema.AdditionalProperties.IsB() {
+		return schema.AdditionalProperties.B
 	}
 	return false
+}
+
+func SanitizeAdditionalProperties(a *base.DynamicValue[*base.SchemaProxy, bool]) base.DynamicValue[*base.SchemaProxy, bool] {
+	if a != nil {
+		return *a
+	}
+	return base.DynamicValue[*base.SchemaProxy, bool]{
+		N: 1,
+		A: nil,
+		B: true,
+	}
 }
 
 // PathToTypeName converts a path, like Object/field1/nestedField into a go
@@ -792,14 +728,17 @@ func EscapePathElements(path string) string {
 // and the definition of the schema. If the schema overrides the name via
 // x-go-name, the new name is returned, otherwise, the original name is
 // returned.
-func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
+func renameSchema(schemaName string, schemaRef *base.SchemaProxy) (string, error) {
 	// References will not change type names.
-	if schemaRef.Ref != "" {
+	if schemaRef.IsReference() {
 		return SchemaNameToTypeName(schemaName), nil
 	}
-	schema := schemaRef.Value
+	schema, err := schemaRef.BuildSchema()
+	if err != nil {
+		return "", err
+	}
 
-	if extension, ok := schema.Extensions[extGoName]; ok {
+	if extension, ok := schema.Extensions.Get(extGoName); ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -811,13 +750,13 @@ func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, err
 
 // renameParameter generates the name for a parameter, taking x-go-name into
 // account
-func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
-	if parameterRef.Ref != "" {
+func renameParameter(parameterName string, parameterRef *v3.Parameter) (string, error) {
+	if parameterRef.GoLow().IsReference() {
 		return SchemaNameToTypeName(parameterName), nil
 	}
-	parameter := parameterRef.Value
+	parameter := parameterRef
 
-	if extension, ok := parameter.Extensions[extGoName]; ok {
+	if extension, ok := parameter.Extensions.Get(extGoName); ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -829,13 +768,13 @@ func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) 
 
 // renameResponse generates the name for a parameter, taking x-go-name into
 // account
-func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
-	if responseRef.Ref != "" {
-		return SchemaNameToTypeName(responseName), nil
+func renameResponse(responseName string, responseRef *v3.Response) (string, error) {
+	if responseRef.GoLow().IsReference() {
+		return SchemaNameToTypeName(responseRef.GoLow().GetReference()), nil
 	}
-	response := responseRef.Value
+	response := responseRef
 
-	if extension, ok := response.Extensions[extGoName]; ok {
+	if extension, ok := response.Extensions.Get(extGoName); ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -847,13 +786,13 @@ func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (str
 
 // renameRequestBody generates the name for a parameter, taking x-go-name into
 // account
-func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
-	if requestBodyRef.Ref != "" {
+func renameRequestBody(requestBodyName string, requestBodyRef *v3.RequestBody) (string, error) {
+	if requestBodyRef.GoLow().IsReference() {
 		return SchemaNameToTypeName(requestBodyName), nil
 	}
-	requestBody := requestBodyRef.Value
+	requestBody := requestBodyRef
 
-	if extension, ok := requestBody.Extensions[extGoName]; ok {
+	if extension, ok := requestBody.Extensions.Get(extGoName); ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return "", fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -866,8 +805,8 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // findSchemaByRefPath turns a $ref path into a schema. This will return ""
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
-func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
-	if spec.Components == nil {
+func findSchemaNameByRefPath(refPath string, spec *libopenapi.DocumentModel[v3.Document]) (string, error) {
+	if spec.Model.Components == nil {
 		return "", nil
 	}
 	pathElements := strings.Split(refPath, "/")
@@ -887,35 +826,42 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	propertyName := pathElements[3]
 	switch pathElements[2] {
 	case "schemas":
-		if schema, found := spec.Components.Schemas[propertyName]; found {
+		if schema, found := spec.Model.Components.Schemas.Get(propertyName); found {
 			return renameSchema(propertyName, schema)
 		}
 	case "parameters":
-		if parameter, found := spec.Components.Parameters[propertyName]; found {
+		if parameter, found := spec.Model.Components.Parameters.Get(propertyName); found {
 			return renameParameter(propertyName, parameter)
 		}
 	case "responses":
-		if response, found := spec.Components.Responses[propertyName]; found {
+		if response, found := spec.Model.Components.Responses.Get(propertyName); found {
 			return renameResponse(propertyName, response)
 		}
 	case "requestBodies":
-		if requestBody, found := spec.Components.RequestBodies[propertyName]; found {
+		if requestBody, found := spec.Model.Components.RequestBodies.Get(propertyName); found {
 			return renameRequestBody(propertyName, requestBody)
 		}
 	}
 	return "", nil
 }
 
-func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+func ParseGoImportExtension(v *base.SchemaProxy) (*goImport, error) {
+	schema := v.Schema()
+	if schema == nil {
+		return nil, v.GetBuildError()
+	}
+	goTypeImportExt, ok := schema.Extensions.Get(extPropGoImport)
+	if !ok {
+		return nil, nil
+	}
+	if _, ok := schema.Extensions.Get(extPropGoType); !ok {
 		return nil, nil
 	}
 
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
-
-	importI, ok := goTypeImportExt.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
+	importI := map[string]interface{}{}
+	err := goTypeImportExt.Decode(importI)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert type: %T: %w", goTypeImportExt, err)
 	}
 
 	gi := goImport{}
@@ -955,11 +901,23 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
 
-// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
-func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
-	if s.AdditionalProperties.Has == nil {
-		return false
+// isAdditionalPropertiesExplicitFalse determines whether a base.Schema is explicitly defined as `additionalProperties: false`
+func isAdditionalPropertiesExplicitFalse(s *base.Schema) bool {
+	if s.AdditionalProperties != nil && s.AdditionalProperties.IsB() {
+		return s.AdditionalProperties.B == false
 	}
+	return false
+}
 
-	return *s.AdditionalProperties.Has == false //nolint:gosimple
+func GetResponsesWithDefault(responses *v3.Responses) *orderedmap.Map[string, *v3.Response] {
+	responsesAndDefault := orderedmap.New[string, *v3.Response]()
+	if responses == nil {
+		return responsesAndDefault
+	}
+	for _, statusCode := range SortedKeys(responses.Codes) {
+		responseOrRef := responses.Codes.Value(statusCode)
+		responsesAndDefault.Set(statusCode, responseOrRef)
+	}
+	responsesAndDefault.Set("default", responses.Default)
+	return responsesAndDefault
 }

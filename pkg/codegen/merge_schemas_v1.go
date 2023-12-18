@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi/datamodel/high/base"
 )
 
-func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemasV1(allOf []*base.SchemaProxy, path []string) (Schema, error) {
 	var outSchema Schema
 	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
+		ref := schemaOrRef.GetReference()
 
 		var refType string
 		var err error
@@ -63,11 +63,11 @@ func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) 
 // GenStructFromAllOf generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
+func GenStructFromAllOf(allOf []*base.SchemaProxy, path []string) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
+		ref := schemaOrRef.GetReference()
 		if IsGoTypeReference(ref) {
 			// We have a referenced type, we will generate an inlined struct
 			// member.

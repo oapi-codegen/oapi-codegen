@@ -471,10 +471,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6yRsU4zMRCE32X+v7RyJ+jcARUVDV2UwlzWiZFvd2Vviuh0747sI4pEC9vMyPZ+lmYW",
-	"TDKrMLFV+AV1OtMcujWq1lSLKBVL1E9jonx8ai7w9S3C7xfYVQke1UriE1a3gPgyw+8RReDwEQoO7uez",
-	"w+o22nOn5fw3tJdGE6Zf0to4JI4Cz5ecHUSJgyZ4PO7G3QgHDXbuoQy3rE7UpQUWLAm/HuHx3i4dClUV",
-	"rluMD+PYZBI24r4TVHOa+tbwWYXvbTT3v1CEx7/hXtfw3dX2+XqbrwAAAP//gr+fh9IBAAA=",
+	"H4sIAAAAAAAC/6yQMU/DQAyF/8uD8dREsN0GTEwsbFWHI3XaQ4lt3ZmhivLf0TmgSqzUi5/se989eYEo",
+	"cdKMiMddv+sRoMnOFXFBZ1StiRN5E6WSLAu/HhHx3pYBhaoKV3LHQ9+3NggbsXuS6pQHd3WfVbjN6nCm",
+	"OTV1X2hExF03yKzCxFa7bVu3z9efCri+uCJc/obU0vJZ3pKMmabjkyfgy9uIuF9gFyVEVCuZT1jD30kA",
+	"8deMuMcogoCPVHBYD2vYaM9Om6bb0F78okz/pHl9BwAA//8F7ld1xgEAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

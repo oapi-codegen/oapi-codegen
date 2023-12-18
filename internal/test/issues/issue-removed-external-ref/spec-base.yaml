@@ -1,5 +1,6 @@
-eopenapi: 3.0.2
+openapi: 3.0.2
 info:
+  title: "test"
   version: "0.0.1"
 paths:
   /noTrouble:

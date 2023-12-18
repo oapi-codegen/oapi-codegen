@@ -2,6 +2,8 @@ package codegen
 
 import (
 	"fmt"
+
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -24,78 +26,73 @@ const (
 	extDeprecationReason = "x-deprecated-reason"
 )
 
-func extString(extPropValue interface{}) (string, error) {
-	str, ok := extPropValue.(string)
-	if !ok {
-		return "", fmt.Errorf("failed to convert type: %T", extPropValue)
+func extString(extPropValue *yaml.Node) (string, error) {
+	if extPropValue.Kind != yaml.ScalarNode || extPropValue.Tag != "!!str" {
+		return "", fmt.Errorf("expected scalar node with tag !!str, got %T", extPropValue)
+	}
+	var str string
+	err := extPropValue.Decode(&str)
+	if err != nil {
+		return "", fmt.Errorf("failed to convert type: %T: %w", extPropValue, err)
 	}
 	return str, nil
 }
 
-func extTypeName(extPropValue interface{}) (string, error) {
+func extTypeName(extPropValue *yaml.Node) (string, error) {
 	return extString(extPropValue)
 }
 
-func extParsePropGoTypeSkipOptionalPointer(extPropValue interface{}) (bool, error) {
-	goTypeSkipOptionalPointer, ok := extPropValue.(bool)
-	if !ok {
-		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+func extParsePropGoTypeSkipOptionalPointer(extPropValue *yaml.Node) (bool, error) {
+	if extPropValue.Kind != yaml.ScalarNode || extPropValue.Tag != "!!bool" {
+		return false, fmt.Errorf("expected scalar node with tag !!str, got %T", extPropValue)
+	}
+	var goTypeSkipOptionalPointer bool
+	err := extPropValue.Decode(&goTypeSkipOptionalPointer)
+	if err != nil {
+		return false, fmt.Errorf("failed to convert type: %T: %w", extPropValue, err)
 	}
 	return goTypeSkipOptionalPointer, nil
 }
 
-func extParseGoFieldName(extPropValue interface{}) (string, error) {
+func extParseGoFieldName(extPropValue *yaml.Node) (string, error) {
 	return extString(extPropValue)
 }
 
-func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
-	omitEmpty, ok := extPropValue.(bool)
-	if !ok {
-		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+func extParseOmitEmpty(extPropValue *yaml.Node) (bool, error) {
+	var omitEmpty bool
+	err := extPropValue.Decode(&extPropValue)
+	if err != nil {
+		return false, fmt.Errorf("failed to convert type: %T: %w", extPropValue, err)
 	}
 	return omitEmpty, nil
 }
 
-func extExtraTags(extPropValue interface{}) (map[string]string, error) {
-	tagsI, ok := extPropValue.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
-	}
-	tags := make(map[string]string, len(tagsI))
-	for k, v := range tagsI {
-		vs, ok := v.(string)
-		if !ok {
-			return nil, fmt.Errorf("failed to convert type: %T", v)
-		}
-		tags[k] = vs
+func extExtraTags(extPropValue *yaml.Node) (map[string]string, error) {
+	var tags map[string]string
+	err := extPropValue.Decode(&tags)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert type: %T: %w", extPropValue, err)
 	}
 	return tags, nil
 }
 
-func extParseGoJsonIgnore(extPropValue interface{}) (bool, error) {
-	goJsonIgnore, ok := extPropValue.(bool)
-	if !ok {
-		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+func extParseGoJsonIgnore(extPropValue *yaml.Node) (bool, error) {
+	var goJsonIgnore bool
+	err := extPropValue.Decode(&goJsonIgnore)
+	if err != nil {
+		return false, fmt.Errorf("failed to convert type: %T: %w", extPropValue, err)
 	}
 	return goJsonIgnore, nil
 }
 
-func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
-	namesI, ok := extPropValue.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
-	}
-	names := make([]string, len(namesI))
-	for i, v := range namesI {
-		vs, ok := v.(string)
-		if !ok {
-			return nil, fmt.Errorf("failed to convert type: %T", v)
-		}
-		names[i] = vs
+func extParseEnumVarNames(extPropValue []*yaml.Node) ([]string, error) {
+	names := make([]string, len(extPropValue))
+	for i, v := range extPropValue {
+		names[i] = v.Value
 	}
 	return names, nil
 }
 
-func extParseDeprecationReason(extPropValue interface{}) (string, error) {
+func extParseDeprecationReason(extPropValue *yaml.Node) (string, error) {
 	return extString(extPropValue)
 }

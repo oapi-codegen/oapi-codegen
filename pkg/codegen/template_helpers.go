@@ -20,6 +20,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/pb33f/libopenapi/orderedmap"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
@@ -123,19 +124,19 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
 
-		responseRef := responses.Value(typeDefinition.ResponseName)
+		responseRef := GetResponsesWithDefault(responses).Value(typeDefinition.ResponseName)
 		if responseRef == nil {
 			continue
 		}
 
 		// We can't do much without a value:
-		if responseRef.Value == nil {
+		if responseRef == nil {
 			fmt.Fprintf(os.Stderr, "Response %s.%s has nil value\n", op.OperationId, typeDefinition.ResponseName)
 			continue
 		}
 
 		// If there is no content-type then we have no unmarshaling to do:
-		if len(responseRef.Value.Content) == 0 {
+		if orderedmap.Len(responseRef.Content) == 0 {
 			caseAction := "break // No content-type"
 			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
 			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
@@ -143,7 +144,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		sortedContentKeys := SortedKeys(responseRef.Content)
 		jsonCount := 0
 		for _, contentTypeName := range sortedContentKeys {
 			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {

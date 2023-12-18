@@ -16,26 +16,32 @@ package codegen
 import (
 	"bytes"
 	"compress/gzip"
-	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"text/template"
 
-	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/pb33f/libopenapi"
+	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
 // GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
-	// ensure that any external file references are embedded into the embedded spec
-	swagger.InternalizeRefs(context.Background(), nil)
-	// Marshal to json
-	encoded, err := swagger.MarshalJSON()
+func GenerateInlinedSpec(t *template.Template, importMapping importMap, openapi *libopenapi.DocumentModel[v3.Document]) (string, error) {
+
+	encoded := openapi.Model.RenderJSON("")
+
+	// We are doing all this madness because libopenapi doesn't provide JSON Marshalling without indention
+	v := json.RawMessage{}
+	err := json.Unmarshal(encoded, &v)
 	if err != nil {
-		return "", fmt.Errorf("error marshaling swagger: %w", err)
+		return "", fmt.Errorf("error marshaling openapi: %w", err)
+	}
+	encoded, err = json.Marshal(v)
+	if err != nil {
+		return "", fmt.Errorf("error marshaling openapi: %w", err)
 	}
 
-	// gzip
 	var buf bytes.Buffer
 	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	if err != nil {

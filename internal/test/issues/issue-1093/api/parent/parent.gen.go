@@ -148,12 +148,12 @@ func (sh *strictHandler) GetPets(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/2xRwa7TMBD8FWvhGDUBbv4BxO0JcXv04Dqb2lViL7sbUBXl39E6rVAlTru2xjPjmQ1i",
-	"XagWLCrgN5CYcAltfUO1QVwJWTO2yxIWtKl3QvAgyrlcYe9Aw/U/93sHjL/WzDiCfz9en7snql5uGBV2",
-	"g+UyVSMYUSJn0lwLePiRsjgKjEWdEEaXgriljjiL+5NyTC4wurxQZcXRXe5OE7qY8jw2PHSgWWcTO1ig",
-	"g9/IcrB/Og1mvRKWQBk8fDkNpwE6oKCpfbcnPHK5HmG8uvuOunIRR6hu4ro0cbmLoq1B23kV5GY7xIgi",
-	"TuvPAk2Ug/F8G8HDV9Q3U7K4hGqRI+3Pw2Aj1qLm3W8QiOYc28P+Jubi2ZltHxkn8PCh/1dq/2i0tzpb",
-	"0q9/CE7WZmxaZ/cUN6BBBdnSAv++wcozeOgfMe7n/W8AAAD///mNvoM7AgAA",
+	"H4sIAAAAAAAC/2xRwa7TMBD8FWvgaDUBbv4BxK1C3B4cXGdTu0pss7sBVVH/HdkB9VB8muzuTGZ2d5RK",
+	"2dcEh0+n8TTCIuW5wO2YSAKnqqlkOHyLSUz1TFmNVAomejFrmWgR8zumEI1nMmmthZUmc7kbjWRCTMvU",
+	"52GhSReCw6ECi1/Ecqh/OI14WAhxq8G97dh4gcPwd/jxw6J6jdKcDZW0gyvpq9OvpBtnMZXUzFzWbkTu",
+	"otSg1/69CXGP4EMgEaPle4YFk9SShbr6x3F8VfdGtk6Zt8X8G4dFKFmbUbfD17qk4BthuElj7ZAQafUN",
+	"vWea4fBuCGWtJVNWGY6uDGdSPNqz7S7cJb5McPhMem6Ze+tJfCp3eD7Woffa1lwuNwraQ/3cEtME94bs",
+	"V0LbJbcfaDqS9uqTKcopX9tB1F//U+/vTwAAAP//aqE/GzsCAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -196,10 +196,10 @@ type strictHandler struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/zSOMU/DMBSE/4p1c+S2YvPGyMBSKjEgBuNcsCGxLb/XMkT+7yihjJ/e++5uRShLLZlZ",
-	"BW5Fo9SShTuc7/CaNJ45sTEHboeRElqqmkqGw6P5t0z5+GJQ8xNTiCaJaZvVOBotZmplMT4XjWym+vDt",
-	"P4ne+4CUp7LFzikwy96Q/UI4PD9d0Ado0nnDC0XNC9uNDQNubPK34GSP9rg9lsrsa4LDgz3aEwZUr1Hg",
-	"8nWeB8iuCtzbimub4RBVqzsc7p5S1I5kXXy1PqG/998AAAD//4Nm84whAQAA",
+	"H4sIAAAAAAAC/zSOsU4rMRBFf8W6teUkep27V1LQhEgUiMI4d7Fh17Y8QyhW/ne0SyivZo7OWVEbS2gZ",
+	"Hv/c0Z1g0YImgV+HRS5ThV9xY5dcCzxO7uiOsNCsM+Fxoah5Yr+xw2LOkUW4ISUs2/3x4YIxLGR/EfiX",
+	"FV99hkdSbf5wuPuVou5KtiU0FzLGq0WsS6uFRbcadEqrRbiP8308Z01nTuwscddeKbHnpr+1/80fZerb",
+	"B6Oa75RjMllM36jOq9Fqpl4XE0rVxG5aiJ/hnRhjjJ8AAAD//+LHewcfAQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

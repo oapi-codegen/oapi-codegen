@@ -3,8 +3,9 @@ package codegen
 import (
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
 func TestFilterOperationsByTag(t *testing.T) {
@@ -23,11 +24,8 @@ func TestFilterOperationsByTag(t *testing.T) {
 			},
 		}
 
-		loader := openapi3.NewLoader()
-		loader.IsExternalRefsAllowed = true
-
 		// Get a spec from the test definition in this file:
-		swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
+		swagger, err := util.LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:
@@ -52,11 +50,8 @@ func TestFilterOperationsByTag(t *testing.T) {
 			},
 		}
 
-		loader := openapi3.NewLoader()
-		loader.IsExternalRefsAllowed = true
-
 		// Get a spec from the test definition in this file:
-		swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
+		swagger, err := util.LoadFromData([]byte(testOpenAPIDefinition))
 		assert.NoError(t, err)
 
 		// Run our code generation:

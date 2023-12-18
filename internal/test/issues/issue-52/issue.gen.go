@@ -310,12 +310,12 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5RSwU7rMBD8lWjfO0ZJXt/NNyQQQgjBiROXxd42Lo5t2ZuKqsq/o3XaQgQCcYo92Zmd",
-	"He8BdBhi8OQ5gzpA1j0NWI4XKeH+Ed1IcrNMQ4H/JlqDgj/tO7E9stq5eqqB95FAAYqE3C+DHgfyLAIx",
-	"hUiJLRW5tSVnygmNsWyDR/ewqPhNw/C8Jc0wfUZqOI+yNICLMb9r9iGQqYbMyfrNmXhsN6NfGRDI+nWQ",
-	"YkNZJxtlWlBwhy9U5TFRxT1ylUiPKdsdVaKQK0xU9eiNI1PN1t3+yUMNbNlJB3rFITqCGnaU8qzZNV3z",
-	"T2yGSB6jBQX/m65ZQQ0RuS+TtyeiOsCGytuIOoqtGwMKrub/18RQQ6Icg89zaKuuk48Ono+vijE6qwu3",
-	"3WbxcFqmn2I970aJaBnN/a2g0zS9BQAA//+hEzLlqAIAAA==",
+	"H4sIAAAAAAAC/5SST2vjMBDFv4p5u0dje7M33QItpZTSnnrqZSpNYqWyJCQ5NJh89yIrf0gpKdVlBs2b",
+	"N79BmuA8W/IaAv+brlmghrYrBzFhyyFqZyHQNV3zDzWSToYhwB80eMOooTjKoH0qukd65yqOgavUU6oC",
+	"yzFEveUq7TzHigJXPVllWFU+OM/B7F4t9jU8pT7mme3RWkxYc8oh6ygPuFcQuC31O06oETh6ZyPPrYuu",
+	"y+GS6OkBNaSzie1sRt4bLWe7dhOzZEKUPQ+Us7+BVxD400o3eGfZptiWamxvnByH7LI/nOx7VJ1t5vSk",
+	"FRPy6hBwbxuWmbksnnSBXmk2Kn6nI6V0xiTzfNFxjfGFzMgocCX/ESCmoO36q7jc5pehEGh3Kl8bvjwr",
+	"Z4DlRefBeLbLfyzx8It19p8BAAD//3QMDPeoAgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -356,10 +356,9 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4SQv24DIQyH3+XXjihc042xQ6XufQFyZxIqzkbgDFWUd6+A/lGkq3KLfeDPH/YFs6xZ",
-	"mFgr3AWFahau1H+UqrY4CytxT9dz0ph9UVsoeaWlHdb5RKtvWS6SqWgc/EcVfvGlpY+FAhwe7J/ODqza",
-	"gy+4ml79KnKvOojgOj7zbe6ywxDdviBESsu+z/KZCQ5VS+QjOhyGbIN42iQaEzkIHJ9TMpBM7HOEw/Nu",
-	"2k0wyF5PvYv9Wd2RemgGr1H4bYHDe7s0t7veT9N/k//Wja5j9q8AAAD//2k9V1a5AQAA",
+	"H4sIAAAAAAAC/zyMwQoCMQxE/2X0uLRlvfUPvPsDQeO66CahyUUW/11awbm8geHNDjUWshUVp1RSwQSj",
+	"eDjqjhzs0cvCA2rcKFaV8w0Vlz5OaOym4jyMuZSOY+M7Kuy5zOlN2+uQr7qZCkt4/gu/+8/INwAA///J",
+	"bZ74iAAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

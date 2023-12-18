@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v3"
 )
 
 func Test_extTypeName(t *testing.T) {
@@ -25,7 +26,7 @@ func Test_extTypeName(t *testing.T) {
 		},
 		{
 			name:    "nil conversion error",
-			args:    args{nil},
+			args:    args{json.RawMessage(`null`)},
 			want:    "",
 			wantErr: true,
 		},
@@ -39,12 +40,12 @@ func Test_extTypeName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// kin-openapi no longer returns these as RawMessage
-			var extPropValue interface{}
+			extPropValueContainer := new(yaml.Node)
 			if tt.args.extPropValue != nil {
-				err := json.Unmarshal(tt.args.extPropValue, &extPropValue)
+				err := yaml.Unmarshal(tt.args.extPropValue, extPropValueContainer)
 				assert.NoError(t, err)
 			}
-			got, err := extTypeName(extPropValue)
+			got, err := extTypeName(extPropValueContainer.Content[0])
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
@@ -79,7 +80,7 @@ func Test_extParsePropGoTypeSkipOptionalPointer(t *testing.T) {
 		},
 		{
 			name:    "nil conversion error",
-			args:    args{nil},
+			args:    args{json.RawMessage(`null`)},
 			want:    false,
 			wantErr: true,
 		},
@@ -93,12 +94,12 @@ func Test_extParsePropGoTypeSkipOptionalPointer(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// kin-openapi no longer returns these as RawMessage
-			var extPropValue interface{}
+			extPropValueContainer := new(yaml.Node)
 			if tt.args.extPropValue != nil {
-				err := json.Unmarshal(tt.args.extPropValue, &extPropValue)
+				err := yaml.Unmarshal(tt.args.extPropValue, extPropValueContainer)
 				assert.NoError(t, err)
 			}
-			got, err := extParsePropGoTypeSkipOptionalPointer(extPropValue)
+			got, err := extParsePropGoTypeSkipOptionalPointer(extPropValueContainer.Content[0])
 			if tt.wantErr {
 				assert.Error(t, err)
 				return

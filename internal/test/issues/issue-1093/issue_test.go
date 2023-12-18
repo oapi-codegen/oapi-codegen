@@ -17,7 +17,7 @@ func TestIssue(t *testing.T) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 
-	swagger, err := loader.LoadFromData(spec)
+	swagger, err := util.LoadFromData(spec)
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{

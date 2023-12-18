@@ -265,17 +265,16 @@ func main() {
 		fmt.Print(string(buf))
 		return
 	}
-
-	swagger, err := util.LoadSwaggerWithCircularReferenceCount(flag.Arg(0), opts.Compatibility.CircularReferenceLimit)
-	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
-	}
-
 	if len(noVCSVersionOverride) > 0 {
 		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
-	code, err := codegen.Generate(swagger, opts.Configuration)
+	modelv3, err := util.LoadOpenAPI(flag.Arg(0))
+	if err != nil {
+		errExit(err.Error())
+	}
+
+	code, err := codegen.Generate(modelv3, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}

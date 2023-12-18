@@ -41,17 +41,17 @@ type PersonWithID struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5SUT2/bOBDFv8qAu0dBTrCLPegWrNtAQJEaaNIc4gAZSyOLKTVkyVEMwfB3L0jJ/+AW",
-	"aX0awOTjvDe/0VZVtnOWiSWoYqtC1VKHqVyQD5ZjhcZ8blTxtFV/e2pUof6aHW/Npiuz8fzCW0deNAW1",
-	"y7bK0/dee6pV8aQ+ah/kDjtSmfqEU/m8e85UTaHy2omO76n7VgfQARBcksxgo6WFDrlGsX6AJgoBcg0G",
-	"gwBjRxmsegGbJNBAOV8y992KfA5JbmN7U8OKwJP0nqmG1QAIL7ckLxBkMAQ3izKHR4KO/JpAWpqeX7I7",
-	"eBo7QbbSkocvyTlsWl21YNkM4Lx90zUF2PuGRpOpQ75klSkZHKlC2dUrVaJ2mbqIrNheZEGBAD1NQiAt",
-	"CgRHlW6GQ0LRJA3pGBpziCGLGS354L0Pk2+Glw+1PnUOxLWzmiWDTUuegLBq4xD2WqMDd9bqcaDFdm8u",
-	"iNe8juZu7Rt57oilnN+lWcRjjfUdiiqUZvnv32MomoXW5OPFAxuXqrtfhviopS3nf0prYvTc1Cjybpu7",
-	"7Iztcv47JIOnyvoaMBw5bLztAOF/Tyh0GEMOpUBlWVBzWHKcaiRygsA2gLA4XQ5kwLrWE/6egu19RfDw",
-	"UM5/yl7sX3NjU8ZaTPzvnoIEuInxQUosJD2VqTfyYXR0nV/lVzF164jRaVWof/Kr/DqygdKmBGfOYEWt",
-	"NfU48jXJJdhf0ei0zgE2yAIoYChus2WCKJVBsCAxwA6/UQSfOmjRuWE0FGeGUaysVaEWJ0/GyQRnOewX",
-	"qsHepBZioMSpROeMrpLA7HX6zo1sxOp9cibeUpDnzk7d79LvRwAAAP//lzc18GUFAAA=",
+	"H4sIAAAAAAAC/5ST0WvbMBDG/5VD26NxWjb24LeybMUwusDa9aEp9GKdY3XySZPODSbkfx+y3dRhUNq8",
+	"RIk/3333u0975TwxeqMK9Sk/y89VpgzXThV79UQhGseqUOf5WX6mMiVGLKlCXVOUCBfW/qyhcq130UhS",
+	"HjLlUZqY3l54ixU1zmoK6feWJH05TwGTuNSqUKuZJlOaYhWMl7Hpb7RGo7gQYYcsgAKWMAo4JkhtMogO",
+	"pDERWvxDEaShFhr0vs/XrDIVKHrHkQY7mmrsrIzHeRt/YqFyLMSDDL23phq8Lh5j0u5VrBpqMZ0+BqpV",
+	"oT4shvmZWOJifBoXKwrR8a2Rplyqw/RJtZ+VL6WG46hfhcRGzOhXep9Iu80jVfIfm+uGIgEGgtqQ1Wl2",
+	"FIieKlP3gOCHijlcN9QPMrQW3PA22gyQ9Zp3rrMaNgRdJA2bHpDh4Zs28gBRektwsSqBWHtnWDLYNRQI",
+	"CKsGTDzWGkn7E+vfTYhyhS3N5ogSDG9TQH7gKw8v3RMFbomlXF517WaMziQzLLQdtlS70KKMf335rAa6",
+	"I8S3oDMxTfAMKYOdkQZa5CFsPdTJfkIENqWNsaUMNp0cZ4ZyuWYe3CXCJsIRZSDpAk844eGS5jBzuCVo",
+	"KWwpRXVqv+YXeKMTZCcNBfg1BAR2jakacGx78ME9GU0RAv3tTCA9bX9cAqbrqIq7t2RzlrVDtlfP9VRx",
+	"N9vebFf3h/sj4inX7wYNgSoXNGB8wVQH1wLC10AodAxbDqVAuoloOK45ZTcBm6LuakBYzXeHDKi1mbYT",
+	"KLouVAQ3N+Xy/WgGIKeBPpn2lRRmJyDL5YDtcDj8CwAA///4hDAGZQUAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

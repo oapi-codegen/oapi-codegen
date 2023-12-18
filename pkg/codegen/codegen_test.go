@@ -5,7 +5,6 @@ import (
 	"go/format"
 	"testing"
 
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/lint"
@@ -40,11 +39,8 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 		},
 	}
 
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-
 	// Get a spec from the test definition in this file:
-	swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
+	swagger, err := util.LoadFromData([]byte(testOpenAPIDefinition))
 	assert.NoError(t, err)
 
 	// Run our code generation:
@@ -108,7 +104,7 @@ func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 		},
 	}
 	spec := "test_specs/x-go-type-skip-optional-pointer.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
@@ -145,7 +141,7 @@ func TestGoTypeImport(t *testing.T) {
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
@@ -197,7 +193,7 @@ func TestRemoteExternalReference(t *testing.T) {
 		},
 	}
 	spec := "test_specs/remote-external-reference.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
