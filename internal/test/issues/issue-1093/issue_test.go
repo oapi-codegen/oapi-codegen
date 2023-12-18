@@ -7,7 +7,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/openapi"
+	"github.com/deepmap/oapi-codegen/v2/pkg/codegen/openapi"
 )
 
 //go:embed child.api.yaml

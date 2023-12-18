@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/openapi"
+	"github.com/deepmap/oapi-codegen/v2/pkg/codegen/openapi"
 )
 
 func TestIllegalEnumNames(t *testing.T) {
