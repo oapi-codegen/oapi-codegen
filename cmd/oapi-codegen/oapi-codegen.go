@@ -25,7 +25,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
+	"github.com/deepmap/oapi-codegen/v2/pkg/openapi"
 	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
@@ -57,7 +57,7 @@ var (
 )
 
 type configuration struct {
-	codegen.Configuration `yaml:",inline"`
+	openapi.Configuration `yaml:",inline"`
 
 	// OutputFile is the filename to output.
 	OutputFile string `yaml:"output,omitempty"`
@@ -75,7 +75,7 @@ type oldConfiguration struct {
 	ImportMapping      map[string]string            `yaml:"import-mapping"`
 	ExcludeSchemas     []string                     `yaml:"exclude-schemas"`
 	ResponseTypeSuffix string                       `yaml:"response-type-suffix"`
-	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
+	Compatibility      openapi.CompatibilityOptions `yaml:"compatibility"`
 }
 
 // noVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
@@ -213,8 +213,8 @@ func main() {
 			// defaults, so that when this is invoked very simply, it's similar
 			// to old behavior.
 			opts = configuration{
-				Configuration: codegen.Configuration{
-					Generate: codegen.GenerateOptions{
+				Configuration: openapi.Configuration{
+					Generate: openapi.GenerateOptions{
 						EchoServer:   true,
 						Client:       true,
 						Models:       true,
@@ -269,12 +269,12 @@ func main() {
 		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
-	modelv3, err := util.LoadOpenAPI(flag.Arg(0))
+	modelv3, err := openapi.LoadOpenAPI(flag.Arg(0))
 	if err != nil {
 		errExit(err.Error())
 	}
 
-	code, err := codegen.Generate(modelv3, opts.Configuration)
+	code, err := openapi.Generate(modelv3, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}
@@ -356,7 +356,7 @@ func detectPackageName(cfg *configuration) error {
 
 	// Fallback to determining from the spec file name.
 	parts := strings.Split(filepath.Base(flag.Arg(0)), ".")
-	cfg.PackageName = codegen.LowercaseFirstCharacter(codegen.ToCamelCase(parts[0]))
+	cfg.PackageName = openapi.LowercaseFirstCharacter(openapi.ToCamelCase(parts[0]))
 
 	return nil
 }
@@ -450,8 +450,8 @@ func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 }
 
 // generationTargets sets cfg options based on the generation targets.
-func generationTargets(cfg *codegen.Configuration, targets []string) error {
-	opts := codegen.GenerateOptions{} // Blank to start with.
+func generationTargets(cfg *openapi.Configuration, targets []string) error {
+	opts := openapi.GenerateOptions{} // Blank to start with.
 	for _, opt := range targets {
 		switch opt {
 		case "iris", "iris-server":
@@ -493,7 +493,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 
 	// Now, copy over field by field, translating flags and old values as
 	// necessary.
-	opts := codegen.Configuration{
+	opts := openapi.Configuration{
 		PackageName: cfg.PackageName,
 	}
 	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix

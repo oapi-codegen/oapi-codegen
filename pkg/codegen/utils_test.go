@@ -16,8 +16,7 @@ package codegen
 import (
 	"testing"
 
-	"github.com/pb33f/libopenapi/datamodel/high/base"
-	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,8 +28,8 @@ func TestStringOps(t *testing.T) {
 	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
 }
 
-func TestSortedKeys(t *testing.T) {
-	dict := map[string]interface{}{
+func TestSortedSchemaKeys(t *testing.T) {
+	dict := map[string]*openapi3.SchemaRef{
 		"f": nil,
 		"c": nil,
 		"b": nil,
@@ -41,7 +40,97 @@ func TestSortedKeys(t *testing.T) {
 
 	expected := []string{"a", "b", "c", "d", "e", "f"}
 
-	assert.EqualValues(t, expected, SortedKeys(orderedmap.ToOrderedMap(dict)), "Keys are not sorted properly")
+	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedPathsKeys(t *testing.T) {
+	dict := map[string]*openapi3.PathItem{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedPathsKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedOperationsKeys(t *testing.T) {
+	dict := map[string]*openapi3.Operation{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedOperationsKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedResponsesKeys(t *testing.T) {
+	dict := map[string]*openapi3.ResponseRef{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedResponsesKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedContentKeys(t *testing.T) {
+	dict := openapi3.Content{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedContentKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedParameterKeys(t *testing.T) {
+	dict := map[string]*openapi3.ParameterRef{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedParameterKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedRequestBodyKeys(t *testing.T) {
+	dict := map[string]*openapi3.RequestBodyRef{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedRequestBodyKeys(dict), "Keys are not sorted properly")
 }
 
 func TestRefPathToGoType(t *testing.T) {
@@ -380,10 +469,10 @@ func TestSchemaNameToTypeName(t *testing.T) {
 
 func TestTypeDefinitionsEquivalent(t *testing.T) {
 	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
-		OAPISchema: &base.Schema{},
+		OAPISchema: &openapi3.Schema{},
 	}}
 	def2 := TypeDefinition{TypeName: "name", Schema: Schema{
-		OAPISchema: &base.Schema{},
+		OAPISchema: &openapi3.Schema{},
 	}}
 	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
 }

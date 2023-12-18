@@ -9,11 +9,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/lint"
+
 	examplePetstoreClient "github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded"
 	examplePetstore "github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
-	"github.com/stretchr/testify/assert"
-	"golang.org/x/lint"
 )
 
 func checkLint(t *testing.T, filename string, code []byte) {

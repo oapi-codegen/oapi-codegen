@@ -1,0 +1,445 @@
+// Copyright 2019 DeepMap, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+package openapi
+
+import (
+	"testing"
+
+	"github.com/pb33f/libopenapi/datamodel/high/base"
+	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/stretchr/testify/assert"
+)
+
+func TestStringOps(t *testing.T) {
+	// Test that each substitution works
+	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
+
+	// Make sure numbers don't interact in a funny way.
+	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
+}
+
+func TestSortedKeys(t *testing.T) {
+	dict := map[string]interface{}{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedKeys(orderedmap.ToOrderedMap(dict)), "Keys are not sorted properly")
+}
+
+func TestRefPathToGoType(t *testing.T) {
+	old := globalState.importMapping
+	globalState.importMapping = constructImportMapping(map[string]string{
+		"doc.json":                    "externalref0",
+		"http://deepmap.com/doc.json": "externalref1",
+	})
+	defer func() { globalState.importMapping = old }()
+
+	tests := []struct {
+		name   string
+		path   string
+		goType string
+	}{
+		{
+			name:   "local-schemas",
+			path:   "#/components/schemas/Foo",
+			goType: "Foo",
+		},
+		{
+			name:   "local-parameters",
+			path:   "#/components/parameters/foo_bar",
+			goType: "FooBar",
+		},
+		{
+			name:   "local-responses",
+			path:   "#/components/responses/wibble",
+			goType: "Wibble",
+		},
+		{
+			name:   "remote-root",
+			path:   "doc.json#/foo",
+			goType: "externalRef0.Foo",
+		},
+		{
+			name:   "remote-pathed",
+			path:   "doc.json#/components/parameters/foo",
+			goType: "externalRef0.Foo",
+		},
+		{
+			name:   "url-root",
+			path:   "http://deepmap.com/doc.json#/foo_bar",
+			goType: "externalRef1.FooBar",
+		},
+		{
+			name:   "url-pathed",
+			path:   "http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			goType: "externalRef1.FooBar",
+		},
+		{
+			name: "local-too-deep",
+			path: "#/components/parameters/foo/components/bar",
+		},
+		{
+			name: "remote-too-deep",
+			path: "doc.json#/components/parameters/foo/foo_bar",
+		},
+		{
+			name: "url-too-deep",
+			path: "http://deepmap.com/doc.json#/components/parameters/foo/foo_bar",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			goType, err := RefPathToGoType(tc.path)
+			if tc.goType == "" {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.goType, goType)
+		})
+	}
+}
+
+func TestIsWholeDocumentReference(t *testing.T) {
+	assert.Equal(t, false, IsWholeDocumentReference(""))
+	assert.Equal(t, false, IsWholeDocumentReference("#/components/schemas/Foo"))
+	assert.Equal(t, false, IsWholeDocumentReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, true, IsWholeDocumentReference("doc.json"))
+	assert.Equal(t, true, IsWholeDocumentReference("../doc.json"))
+	assert.Equal(t, false, IsWholeDocumentReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, true, IsWholeDocumentReference("http://deepmap.com/doc.json"))
+}
+
+func TestIsGoTypeReference(t *testing.T) {
+	assert.Equal(t, false, IsGoTypeReference(""))
+	assert.Equal(t, true, IsGoTypeReference("#/components/schemas/Foo"))
+	assert.Equal(t, true, IsGoTypeReference("doc.json#/components/schemas/Foo"))
+	assert.Equal(t, false, IsGoTypeReference("doc.json"))
+	assert.Equal(t, false, IsGoTypeReference("../doc.json"))
+	assert.Equal(t, true, IsGoTypeReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
+	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
+}
+
+func TestSwaggerUriToIrisUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToIrisUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToIrisUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToIrisUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToIrisUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToEchoUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToEchoUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToEchoUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToEchoUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToEchoUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToGinUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToGinUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToGinUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToGinUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToGinUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
+	assert.Equal(t, "/path", SwaggerUriToGorillaUri("/path"))
+	assert.Equal(t, "/path/{arg}", SwaggerUriToGorillaUri("/path/{arg}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToGorillaUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}/foo", SwaggerUriToGorillaUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToFiberUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToFiberUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToFiberUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToFiberUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToFiberUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
+}
+
+func TestOrderedParamsFromUri(t *testing.T) {
+	result := OrderedParamsFromUri("/path/{param1}/{.param2}/{;param3*}/foo")
+	assert.EqualValues(t, []string{"param1", "param2", "param3"}, result)
+
+	result = OrderedParamsFromUri("/path/foo")
+	assert.EqualValues(t, []string{}, result)
+}
+
+func TestReplacePathParamsWithStr(t *testing.T) {
+	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
+	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+}
+
+func TestStringToGoComment(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		message  string
+	}{
+		{
+			input:    "",
+			expected: "",
+			message:  "blank string should be ignored due to human unreadable",
+		},
+		{
+			input:    " ",
+			expected: "",
+			message:  "whitespace should be ignored due to human unreadable",
+		},
+		{
+			input:    "Single Line",
+			expected: "// Single Line",
+			message:  "single line comment",
+		},
+		{
+			input:    "    Single Line",
+			expected: "//     Single Line",
+			message:  "single line comment preserving whitespace",
+		},
+		{
+			input: `Multi
+Line
+  With
+    Spaces
+	And
+		Tabs
+`,
+			expected: `// Multi
+// Line
+//   With
+//     Spaces
+// 	And
+// 		Tabs`,
+			message: "multi line preserving whitespaces using tabs or spaces",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringToGoComment(testCase.input)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
+}
+
+func TestStringWithTypeNameToGoComment(t *testing.T) {
+	testCases := []struct {
+		input     string
+		inputName string
+		expected  string
+		message   string
+	}{
+		{
+			input:     "",
+			inputName: "",
+			expected:  "",
+			message:   "blank string should be ignored due to human unreadable",
+		},
+		{
+			input:    " ",
+			expected: "",
+			message:  "whitespace should be ignored due to human unreadable",
+		},
+		{
+			input:     "Single Line",
+			inputName: "SingleLine",
+			expected:  "// SingleLine Single Line",
+			message:   "single line comment",
+		},
+		{
+			input:     "    Single Line",
+			inputName: "SingleLine",
+			expected:  "// SingleLine     Single Line",
+			message:   "single line comment preserving whitespace",
+		},
+		{
+			input: `Multi
+Line
+  With
+    Spaces
+	And
+		Tabs
+`,
+			inputName: "MultiLine",
+			expected: `// MultiLine Multi
+// Line
+//   With
+//     Spaces
+// 	And
+// 		Tabs`,
+			message: "multi line preserving whitespaces using tabs or spaces",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringWithTypeNameToGoComment(testCase.input, testCase.inputName)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
+}
+
+func TestEscapePathElements(t *testing.T) {
+	p := "/foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "foo/bar/baz"
+	assert.Equal(t, p, EscapePathElements(p))
+
+	p = "/foo/bar:baz"
+	assert.Equal(t, "/foo/bar%3Abaz", EscapePathElements(p))
+}
+
+func TestSchemaNameToTypeName(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"$":            "DollarSign",
+		"$ref":         "Ref",
+		"no_prefix~+-": "NoPrefix",
+		"123":          "N123",
+		"-1":           "Minus1",
+		"+1":           "Plus1",
+		"@timestamp,":  "Timestamp",
+		"&now":         "AndNow",
+		"~":            "Tilde",
+		"_foo":         "Foo",
+		"=3":           "Equal3",
+		"#Tag":         "HashTag",
+		".com":         "DotCom",
+	} {
+		assert.Equal(t, want, SchemaNameToTypeName(in))
+	}
+}
+
+func TestTypeDefinitionsEquivalent(t *testing.T) {
+	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &base.Schema{},
+	}}
+	def2 := TypeDefinition{TypeName: "name", Schema: Schema{
+		OAPISchema: &base.Schema{},
+	}}
+	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
+}
+
+func TestRefPathToObjName(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"#/components/schemas/Foo":                         "Foo",
+		"#/components/parameters/Bar":                      "Bar",
+		"#/components/responses/baz_baz":                   "baz_baz",
+		"document.json#/Foo":                               "Foo",
+		"http://deepmap.com/schemas/document.json#/objObj": "objObj",
+	} {
+		assert.Equal(t, want, RefPathToObjName(in))
+	}
+}
+
+func Test_replaceInitialisms(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "empty string",
+			args: args{s: ""},
+			want: "",
+		},
+		{
+			name: "no initialism",
+			args: args{s: "foo"},
+			want: "foo",
+		},
+		{
+			name: "one initialism",
+			args: args{s: "fooId"},
+			want: "fooID",
+		},
+		{
+			name: "two initialism",
+			args: args{s: "fooIdBarApi"},
+			want: "fooIDBarAPI",
+		},
+		{
+			name: "already initialism",
+			args: args{s: "fooIDBarAPI"},
+			want: "fooIDBarAPI",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
+		})
+	}
+}

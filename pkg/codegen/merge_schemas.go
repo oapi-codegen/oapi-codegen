@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pb33f/libopenapi/datamodel/high/base"
-	"github.com/pb33f/libopenapi/orderedmap"
-	"gopkg.in/yaml.v3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
@@ -21,7 +19,7 @@ func MergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
 	return mergeSchemas(allOf, path)
 }
 
-func mergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
+func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	n := len(allOf)
 
 	if n == 1 {
@@ -44,48 +42,41 @@ func mergeSchemas(allOf []*base.SchemaProxy, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
-	return GenerateGoSchema(base.CreateSchemaProxy(&schema), path)
+	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
 // updated if ref itself is external. Otherwise, return ref.Value as-is.
-func valueWithPropagatedRef(ref *base.SchemaProxy) (base.Schema, error) {
-	schema := ref.Schema()
-	if !ref.IsReference() || ref.GetReference()[0] == '#' {
-		if schema == nil {
-			return base.Schema{}, fmt.Errorf("TODO JVT")
-		}
-		return *schema, nil
+func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
+		return *ref.Value, nil
 	}
 
-	pathParts := strings.Split(ref.GetReference(), "#")
+	pathParts := strings.Split(ref.Ref, "#")
 	if len(pathParts) < 1 || len(pathParts) > 2 {
-		return base.Schema{}, fmt.Errorf("unsupported reference: %s", ref.GetReference())
+		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
 	}
 	remoteComponent := pathParts[0]
 
-	for _, value := range ToMap(schema.Properties) {
-		if value.IsReference() && value.GetReference()[0] == '#' {
+	// remote ref
+	schema := *ref.Value
+	for _, value := range schema.Properties {
+		if len(value.Ref) > 0 && value.Ref[0] == '#' {
 			// local reference, should propagate remote
-			// value.Ref = remoteComponent + value.Ref // TODO confirm
-			value.GoLow().SetReference(remoteComponent+value.GetReference(), nil)
+			value.Ref = remoteComponent + value.Ref
 		}
 	}
 
-	return *schema, nil
+	return schema, nil
 }
 
-func mergeAllOf(allOf []*base.SchemaProxy) (base.Schema, error) {
-	var schema base.Schema
+func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
+	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
-		// var err error
-		s2, err := schemaRef.BuildSchema()
+		var err error
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
 		if err != nil {
-			return base.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
-		}
-		schema, err = mergeOpenapiSchemas(schema, *s2, true)
-		if err != nil {
-			return base.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
+			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
 	return schema, nil
@@ -93,18 +84,19 @@ func mergeAllOf(allOf []*base.SchemaProxy) (base.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
-	var result base.Schema
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
+	var result openapi3.Schema
 	if s1.Extensions != nil || s2.Extensions != nil {
-		result.Extensions = orderedmap.New[string, *yaml.Node]()
+		result.Extensions = make(map[string]interface{})
 		if s1.Extensions != nil {
-			for k, v := range ToMap(s1.Extensions) {
-				result.Extensions.Set(k, v)
+			for k, v := range s1.Extensions {
+				result.Extensions[k] = v
 			}
 		}
 		if s2.Extensions != nil {
-			for k, v := range ToMap(s2.Extensions) {
-				result.Extensions.Set(k, v)
+			for k, v := range s2.Extensions {
+				// TODO: Check for collisions
+				result.Extensions[k] = v
 			}
 		}
 	}
@@ -115,40 +107,31 @@ func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
 	// contains AllOf's will result in a flat object.
 	var err error
 	if s1.AllOf != nil {
-		var merged base.Schema
+		var merged openapi3.Schema
 		merged, err = mergeAllOf(s1.AllOf)
 		if err != nil {
-			return base.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
+			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
 		s1 = merged
 	}
 	if s2.AllOf != nil {
-		var merged base.Schema
+		var merged openapi3.Schema
 		merged, err = mergeAllOf(s2.AllOf)
 		if err != nil {
-			return base.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
+			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
 		s2 = merged
 	}
 
 	result.AllOf = append(s1.AllOf, s2.AllOf...)
 
-	s1Type := ""
-	if len(s1.Type) > 0 {
-		s1Type = s1.Type[0]
-	}
-	s2Type := ""
-	if len(s2.Type) > 0 {
-		s2Type = s2.Type[0]
-	}
-
-	if s1Type != "" && s2Type != "" && s1Type != s2Type {
-		return base.Schema{}, errors.New("can not merge incompatible types")
+	if s1.Type != "" && s2.Type != "" && s1.Type != s2.Type {
+		return openapi3.Schema{}, errors.New("can not merge incompatible types")
 	}
 	result.Type = s1.Type
 
 	if s1.Format != s2.Format {
-		return base.Schema{}, errors.New("can not merge incompatible formats")
+		return openapi3.Schema{}, errors.New("can not merge incompatible formats")
 	}
 	result.Format = s1.Format
 
@@ -158,7 +141,7 @@ func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
 
 	// I don't know how to handle two different defaults.
 	if s1.Default != nil || s2.Default != nil {
-		return base.Schema{}, errors.New("merging two sets of defaults is undefined")
+		return openapi3.Schema{}, errors.New("merging two sets of defaults is undefined")
 	}
 	if s1.Default != nil {
 		result.Default = s1.Default
@@ -172,84 +155,81 @@ func mergeOpenapiSchemas(s1, s2 base.Schema, allOf bool) (base.Schema, error) {
 
 	// If two schemas disagree on any of these flags, we error out.
 	if s1.UniqueItems != s2.UniqueItems {
-		return base.Schema{}, errors.New("merging two schemas with different UniqueItems")
+		return openapi3.Schema{}, errors.New("merging two schemas with different UniqueItems")
 
 	}
 	result.UniqueItems = s1.UniqueItems
 
-	if s1.ExclusiveMinimum != nil {
-		if s1.ExclusiveMinimum.IsB() {
-			return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-		}
-		if s2.ExclusiveMinimum.IsB() {
-			return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMinimum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-		}
-		if s1.ExclusiveMinimum.A != s2.ExclusiveMinimum.A {
-			return base.Schema{}, errors.New("merging two schemas with different ExclusiveMinimum")
-		}
-		result.ExclusiveMinimum = s1.ExclusiveMinimum
-	}
+	if s1.ExclusiveMin != s2.ExclusiveMin {
+		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMin")
 
-	if s1.ExclusiveMaximum != nil {
-		if s1.ExclusiveMaximum.IsB() {
-			return base.Schema{}, errors.New("merging two schemas with left-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-		}
-		if s2.ExclusiveMaximum.IsB() {
-			return base.Schema{}, errors.New("merging two schemas with right-hand-side ExclusiveMaximum defined as OpenAPI 3.1 type, not OpenAPI 3.0")
-		}
-		if s1.ExclusiveMaximum.A != s2.ExclusiveMaximum.A {
-			return base.Schema{}, errors.New("merging two schemas with different ExclusiveMaximum")
-		}
-		result.ExclusiveMaximum = s1.ExclusiveMaximum
 	}
+	result.ExclusiveMin = s1.ExclusiveMin
+
+	if s1.ExclusiveMax != s2.ExclusiveMax {
+		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMax")
+
+	}
+	result.ExclusiveMax = s1.ExclusiveMax
 
 	if s1.Nullable != s2.Nullable {
-		return base.Schema{}, errors.New("merging two schemas with different Nullable")
+		return openapi3.Schema{}, errors.New("merging two schemas with different Nullable")
 
 	}
 	result.Nullable = s1.Nullable
 
 	if s1.ReadOnly != s2.ReadOnly {
-		return base.Schema{}, errors.New("merging two schemas with different ReadOnly")
+		return openapi3.Schema{}, errors.New("merging two schemas with different ReadOnly")
 
 	}
 	result.ReadOnly = s1.ReadOnly
 
 	if s1.WriteOnly != s2.WriteOnly {
-		return base.Schema{}, errors.New("merging two schemas with different WriteOnly")
+		return openapi3.Schema{}, errors.New("merging two schemas with different WriteOnly")
 
 	}
 	result.WriteOnly = s1.WriteOnly
+
+	if s1.AllowEmptyValue != s2.AllowEmptyValue {
+		return openapi3.Schema{}, errors.New("merging two schemas with different AllowEmptyValue")
+
+	}
+	result.AllowEmptyValue = s1.AllowEmptyValue
 
 	// Required. We merge these.
 	result.Required = append(s1.Required, s2.Required...)
 
 	// We merge all properties
-	result.Properties = orderedmap.New[string, *base.SchemaProxy]()
-	for k, v := range ToMap(s1.Properties) {
-		result.Properties.Set(k, v)
+	result.Properties = make(map[string]*openapi3.SchemaRef)
+	for k, v := range s1.Properties {
+		result.Properties[k] = v
 	}
-	for k, v := range ToMap(s2.Properties) {
+	for k, v := range s2.Properties {
 		// TODO: detect conflicts
-		result.Properties.Set(k, v)
+		result.Properties[k] = v
 	}
 
 	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
-		result.AdditionalProperties = &base.DynamicValue[*base.SchemaProxy, bool]{N: 1, B: false}
-	} else if s1.AdditionalProperties != nil && s1.AdditionalProperties.IsA() {
-		if s2.AdditionalProperties != nil && s2.AdditionalProperties.IsA() {
-			return base.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
+		result.WithoutAdditionalProperties()
+	} else if s1.AdditionalProperties.Schema != nil {
+		if s2.AdditionalProperties.Schema != nil {
+			return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
 		} else {
-			result.AdditionalProperties = s1.AdditionalProperties
+			result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
 		}
 	} else {
-		if s2.AdditionalProperties != nil {
-			result.AdditionalProperties = s2.AdditionalProperties
+		if s2.AdditionalProperties.Schema != nil {
+			result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
 		} else {
-			if (s1.AdditionalProperties != nil && s1.AdditionalProperties.IsB() && s1.AdditionalProperties.B) || (s2.AdditionalProperties != nil && s2.AdditionalProperties.IsB() && s2.AdditionalProperties.B) {
-				result.AdditionalProperties = &base.DynamicValue[*base.SchemaProxy, bool]{N: 1, B: true}
+			if s1.AdditionalProperties.Has != nil || s2.AdditionalProperties.Has != nil {
+				result.WithAnyAdditionalProperties()
 			}
 		}
+	}
+
+	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
+	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
+		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
 	}
 
 	return result, nil

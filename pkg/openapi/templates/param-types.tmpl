@@ -1,0 +1,6 @@
+{{range .}}{{$opid := .OperationId}}
+{{range .TypeDefinitions}}
+// {{.TypeName}} defines parameters for {{$opid}}.
+type {{.TypeName}} {{if .IsAlias}}={{end}} {{.Schema.TypeDecl}}
+{{end}}
+{{end}}

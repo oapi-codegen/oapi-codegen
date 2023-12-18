@@ -1,0 +1,26 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example with oneOf and external remote ref
+paths:
+  /check:
+    get:
+      summary: Return broken example
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/exampleSchema'
+components:
+  schemas:
+    exampleSchema:
+      properties:
+        item:
+          type: object
+          oneOf:
+            - $ref: 'https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded/petstore-expanded.yaml#/components/schemas/NewPet'
+      required:
+        - item

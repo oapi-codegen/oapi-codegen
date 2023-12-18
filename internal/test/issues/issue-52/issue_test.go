@@ -4,21 +4,21 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/openapi"
 )
 
 //go:embed spec.yaml
 var spec []byte
 
 func TestIssue(t *testing.T) {
-	swagger, err := openapi3.NewLoader().LoadFromData(spec)
+	swagger, err := openapi.LoadFromData(spec)
 	require.NoError(t, err)
 
-	opts := codegen.Configuration{
+	opts := openapi.Configuration{
 		PackageName: "issue52",
-		Generate: codegen.GenerateOptions{
+		Generate: openapi.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
 			Models:       true,
@@ -26,6 +26,6 @@ func TestIssue(t *testing.T) {
 		},
 	}
 
-	_, err = codegen.Generate(swagger, opts)
+	_, err = openapi.Generate(swagger, opts)
 	require.NoError(t, err)
 }

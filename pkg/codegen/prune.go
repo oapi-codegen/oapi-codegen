@@ -3,9 +3,7 @@ package codegen
 import (
 	"fmt"
 
-	"github.com/pb33f/libopenapi"
-	"github.com/pb33f/libopenapi/datamodel/high/base"
-	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func stringInSlice(a string, list []string) bool {
@@ -19,29 +17,30 @@ func stringInSlice(a string, list []string) bool {
 
 type RefWrapper struct {
 	Ref       string
+	HasValue  bool
 	SourceRef interface{}
 }
 
-func walkSwagger(swagger *libopenapi.DocumentModel[v3.Document], doFn func(RefWrapper) (bool, error)) error {
-	if swagger == nil || swagger.Model.Paths == nil {
+func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
+	if swagger == nil || swagger.Paths == nil {
 		return nil
 	}
 
-	for _, p := range ToMap(swagger.Model.Paths.PathItems) {
+	for _, p := range swagger.Paths.Map() {
 		for _, param := range p.Parameters {
 			_ = walkParameterRef(param, doFn)
 		}
-		for _, op := range ToMap(p.GetOperations()) {
+		for _, op := range p.Operations() {
 			_ = walkOperation(op, doFn)
 		}
 	}
 
-	_ = walkComponents(swagger.Model.Components, doFn)
+	_ = walkComponents(swagger.Components, doFn)
 
 	return nil
 }
 
-func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error {
+func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if op == nil {
 		return nil
@@ -54,69 +53,69 @@ func walkOperation(op *v3.Operation, doFn func(RefWrapper) (bool, error)) error 
 	_ = walkRequestBodyRef(op.RequestBody, doFn)
 
 	if op.Responses != nil {
-		for _, response := range ToMap(GetResponsesWithDefault(op.Responses)) {
+		for _, response := range op.Responses.Map() {
 			_ = walkResponseRef(response, doFn)
 		}
 	}
 
-	for _, callback := range ToMap(op.Callbacks) {
+	for _, callback := range op.Callbacks {
 		_ = walkCallbackRef(callback, doFn)
 	}
 
 	return nil
 }
 
-func walkComponents(components *v3.Components, doFn func(RefWrapper) (bool, error)) error {
+func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if components == nil {
 		return nil
 	}
 
-	for _, schema := range ToMap(components.Schemas) {
+	for _, schema := range components.Schemas {
 		_ = walkSchemaRef(schema, doFn)
 	}
 
-	for _, param := range ToMap(components.Parameters) {
+	for _, param := range components.Parameters {
 		_ = walkParameterRef(param, doFn)
 	}
 
-	for _, header := range ToMap(components.Headers) {
+	for _, header := range components.Headers {
 		_ = walkHeaderRef(header, doFn)
 	}
 
-	for _, requestBody := range ToMap(components.RequestBodies) {
+	for _, requestBody := range components.RequestBodies {
 		_ = walkRequestBodyRef(requestBody, doFn)
 	}
 
-	for _, response := range ToMap(components.Responses) {
+	for _, response := range components.Responses {
 		_ = walkResponseRef(response, doFn)
 	}
 
-	for _, securityScheme := range ToMap(components.SecuritySchemes) {
+	for _, securityScheme := range components.SecuritySchemes {
 		_ = walkSecuritySchemeRef(securityScheme, doFn)
 	}
 
-	for _, example := range ToMap(components.Examples) {
+	for _, example := range components.Examples {
 		_ = walkExampleRef(example, doFn)
 	}
 
-	for _, link := range ToMap(components.Links) {
+	for _, link := range components.Links {
 		_ = walkLinkRef(link, doFn)
 	}
 
-	for _, callback := range ToMap(components.Callbacks) {
+	for _, callback := range components.Callbacks {
 		_ = walkCallbackRef(callback, doFn)
 	}
 
 	return nil
 }
 
-func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) error {
+func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -124,42 +123,40 @@ func walkSchemaRef(ref *base.SchemaProxy, doFn func(RefWrapper) (bool, error)) e
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	for _, ref := range ref.Schema().OneOf {
+	for _, ref := range ref.Value.OneOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	for _, ref := range ref.Schema().AnyOf {
+	for _, ref := range ref.Value.AnyOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	for _, ref := range ref.Schema().AllOf {
+	for _, ref := range ref.Value.AllOf {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	_ = walkSchemaRef(ref.Schema().Not, doFn)
+	_ = walkSchemaRef(ref.Value.Not, doFn)
+	_ = walkSchemaRef(ref.Value.Items, doFn)
 
-	// With OpenAPI 3.1 Items can be a boolean, in that case there is no schema to walk
-	if ref.Schema().Items != nil && ref.Schema().Items.IsA() {
-		_ = walkSchemaRef(ref.Schema().Items.A, doFn)
-	}
-
-	for _, ref := range ToMap(ref.Schema().Properties) {
+	for _, ref := range ref.Value.Properties {
 		_ = walkSchemaRef(ref, doFn)
 	}
 
-	if ref.Schema().AdditionalProperties != nil && ref.Schema().AdditionalProperties.IsA() {
-		_ = walkSchemaRef(ref.Schema().AdditionalProperties.A, doFn)
-	}
+	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
+
 	return nil
 }
 
-func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) error {
+func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -167,20 +164,23 @@ func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) er
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	_ = walkSchemaRef(ref.Schema, doFn)
+	_ = walkSchemaRef(ref.Value.Schema, doFn)
 
-	for _, example := range ToMap(ref.Examples) {
+	for _, example := range ref.Value.Examples {
 		_ = walkExampleRef(example, doFn)
 	}
 
-	for _, mediaType := range ToMap(ref.Content) {
+	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
 
-		for _, example := range ToMap(mediaType.Examples) {
+		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
 		}
 	}
@@ -188,12 +188,12 @@ func walkParameterRef(ref *v3.Parameter, doFn func(RefWrapper) (bool, error)) er
 	return nil
 }
 
-func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)) error {
+func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -201,14 +201,17 @@ func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	for _, mediaType := range ToMap(ref.Content) {
+	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
 
-		for _, example := range ToMap(mediaType.Examples) {
+		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
 		}
 	}
@@ -216,12 +219,12 @@ func walkRequestBodyRef(ref *v3.RequestBody, doFn func(RefWrapper) (bool, error)
 	return nil
 }
 
-func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) error {
+func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -229,35 +232,38 @@ func walkResponseRef(ref *v3.Response, doFn func(RefWrapper) (bool, error)) erro
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	for _, header := range ToMap(ref.Headers) {
+	for _, header := range ref.Value.Headers {
 		_ = walkHeaderRef(header, doFn)
 	}
 
-	for _, mediaType := range ToMap(ref.Content) {
+	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
 
-		for _, example := range ToMap(mediaType.Examples) {
+		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
 		}
 	}
 
-	for _, link := range ToMap(ref.Links) {
+	for _, link := range ref.Value.Links {
 		_ = walkLinkRef(link, doFn)
 	}
 
 	return nil
 }
 
-func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) error {
+func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -265,12 +271,15 @@ func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) erro
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	for _, pathItem := range ToMap(ref.Expression) {
+	for _, pathItem := range ref.Value.Map() {
 		for _, parameter := range pathItem.Parameters {
 			_ = walkParameterRef(parameter, doFn)
 		}
-		// _ = walkOperation(pathItem.Connect, doFn)
+		_ = walkOperation(pathItem.Connect, doFn)
 		_ = walkOperation(pathItem.Delete, doFn)
 		_ = walkOperation(pathItem.Get, doFn)
 		_ = walkOperation(pathItem.Head, doFn)
@@ -284,12 +293,12 @@ func walkCallbackRef(ref *v3.Callback, doFn func(RefWrapper) (bool, error)) erro
 	return nil
 }
 
-func walkHeaderRef(ref *v3.Header, doFn func(RefWrapper) (bool, error)) error {
+func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
@@ -297,23 +306,29 @@ func walkHeaderRef(ref *v3.Header, doFn func(RefWrapper) (bool, error)) error {
 	if !shouldContinue {
 		return nil
 	}
+	if ref.Value == nil {
+		return nil
+	}
 
-	_ = walkSchemaRef(ref.Schema, doFn)
+	_ = walkSchemaRef(ref.Value.Schema, doFn)
 
 	return nil
 }
 
-func walkSecuritySchemeRef(ref *v3.SecurityScheme, doFn func(RefWrapper) (bool, error)) error {
+func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
 	}
 	if !shouldContinue {
+		return nil
+	}
+	if ref.Value == nil {
 		return nil
 	}
 
@@ -322,34 +337,40 @@ func walkSecuritySchemeRef(ref *v3.SecurityScheme, doFn func(RefWrapper) (bool, 
 	return nil
 }
 
-func walkLinkRef(ref *v3.Link, doFn func(RefWrapper) (bool, error)) error {
+func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
 	}
 	if !shouldContinue {
+		return nil
+	}
+	if ref.Value == nil {
 		return nil
 	}
 
 	return nil
 }
 
-func walkExampleRef(ref *base.Example, doFn func(RefWrapper) (bool, error)) error {
+func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error)) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	refWrapper := RefWrapper{Ref: ref.GoLow().GetReference(), SourceRef: ref}
+	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
 	}
 	if !shouldContinue {
+		return nil
+	}
+	if ref.Value == nil {
 		return nil
 	}
 
@@ -358,7 +379,7 @@ func walkExampleRef(ref *base.Example, doFn func(RefWrapper) (bool, error)) erro
 	return nil
 }
 
-func findComponentRefs(swagger *libopenapi.DocumentModel[v3.Document]) []string {
+func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
 
 	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
@@ -372,92 +393,92 @@ func findComponentRefs(swagger *libopenapi.DocumentModel[v3.Document]) []string 
 	return refs
 }
 
-func removeOrphanedComponents(swagger *libopenapi.DocumentModel[v3.Document], refs []string) int {
-	if swagger.Model.Components == nil {
+func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
+	if swagger.Components == nil {
 		return 0
 	}
 
 	countRemoved := 0
 
-	for key := range ToMap(swagger.Model.Components.Schemas) {
+	for key := range swagger.Components.Schemas {
 		ref := fmt.Sprintf("#/components/schemas/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Schemas.Delete(key)
+			delete(swagger.Components.Schemas, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Parameters) {
+	for key := range swagger.Components.Parameters {
 		ref := fmt.Sprintf("#/components/parameters/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Parameters.Delete(key)
+			delete(swagger.Components.Parameters, key)
 		}
 	}
 
 	// securitySchemes are an exception. definitions in securitySchemes
 	// are referenced directly by name. and not by $ref
 
-	// for key, _ := range swagger.Model.Components.SecuritySchemes {
+	// for key, _ := range swagger.Components.SecuritySchemes {
 	// 	ref := fmt.Sprintf("#/components/securitySchemes/%s", key)
 	// 	if !stringInSlice(ref, refs) {
 	// 		countRemoved++
-	// 		delete(swagger.Model.Components.SecuritySchemes, key)
+	// 		delete(swagger.Components.SecuritySchemes, key)
 	// 	}
 	// }
 
-	for key := range ToMap(swagger.Model.Components.RequestBodies) {
+	for key := range swagger.Components.RequestBodies {
 		ref := fmt.Sprintf("#/components/requestBodies/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.RequestBodies.Delete(key)
+			delete(swagger.Components.RequestBodies, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Responses) {
+	for key := range swagger.Components.Responses {
 		ref := fmt.Sprintf("#/components/responses/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Responses.Delete(key)
+			delete(swagger.Components.Responses, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Headers) {
+	for key := range swagger.Components.Headers {
 		ref := fmt.Sprintf("#/components/headers/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Headers.Delete(key)
+			delete(swagger.Components.Headers, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Examples) {
+	for key := range swagger.Components.Examples {
 		ref := fmt.Sprintf("#/components/examples/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Examples.Delete(key)
+			delete(swagger.Components.Examples, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Links) {
+	for key := range swagger.Components.Links {
 		ref := fmt.Sprintf("#/components/links/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Links.Delete(key)
+			delete(swagger.Components.Links, key)
 		}
 	}
 
-	for key := range ToMap(swagger.Model.Components.Callbacks) {
+	for key := range swagger.Components.Callbacks {
 		ref := fmt.Sprintf("#/components/callbacks/%s", key)
 		if !stringInSlice(ref, refs) {
 			countRemoved++
-			swagger.Model.Components.Callbacks.Delete(key)
+			delete(swagger.Components.Callbacks, key)
 		}
 	}
 
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *libopenapi.DocumentModel[v3.Document]) {
+func pruneUnusedComponents(swagger *openapi3.T) {
 	for {
 		refs := findComponentRefs(swagger)
 		countRemoved := removeOrphanedComponents(swagger, refs)

@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/deepmap/oapi-codegen/v2/pkg/openapi"
 )
 
 func TestLoader(t *testing.T) {
@@ -15,7 +15,7 @@ func TestLoader(t *testing.T) {
 
 	for _, v := range paths {
 
-		swagger, err := util.LoadOpenAPI(v)
+		swagger, err := openapi.LoadOpenAPI(v)
 		if err != nil {
 			t.Error(err)
 		}

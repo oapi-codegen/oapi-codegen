@@ -17,8 +17,7 @@ import (
 	"net/http"
 	"testing"
 
-	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
-	"github.com/pb33f/libopenapi/orderedmap"
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func TestIsJson(t *testing.T) {
@@ -68,12 +67,12 @@ func TestIsJson(t *testing.T) {
 	for _, test := range suite {
 		t.Run(test.name, func(t *testing.T) {
 			pd := ParameterDefinition{
-				Spec: &v3.Parameter{
-					Content: orderedmap.New[string, *v3.MediaType](),
+				Spec: &openapi3.Parameter{
+					Content: make(map[string]*openapi3.MediaType),
 				},
 			}
 			for _, mediaType := range test.mediaTypes {
-				pd.Spec.Content.Set(mediaType, nil)
+				pd.Spec.Content[mediaType] = nil
 			}
 
 			got := pd.IsJson()

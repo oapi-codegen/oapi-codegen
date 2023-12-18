@@ -1,0 +1,193 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger Petstore
+  description: A sample API that uses a petstore as an example to demonstrate features in the OpenAPI 3.0 specification
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: Swagger API Team
+    email: apiteam@swagger.io
+    url: http://swagger.io
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://petstore.swagger.io/api
+paths:
+  /schemas/pet-object:
+    get:
+      description: return pet object
+      responses:
+        "200":
+          description: person response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetObject"
+  /schemas/age-simple:
+    get:
+      description: return pet object
+      responses:
+        "200":
+          description: person response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgeSimple"
+
+  /schemas/schema-with-array:
+    get:
+      description: return schema object with array
+      responses:
+        "200":
+          description: person response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PetArray"
+
+  /responses/type:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/StringResponse'
+
+  /responses/complex-response:
+    get:
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /requests/:
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /parameters/query:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/Version"
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /parameters/{versionPath}:
+    post:
+      parameters:
+        - $ref: "#/components/parameters/VersionPath"
+      requestBody:
+        $ref: "#/components/requestBodies/RegisterBody"
+      responses:
+        '200':
+          $ref: '#/components/responses/ComplexResponse'
+
+  /requests/{path}:
+    post:
+      parameters:
+        - name: version
+          in: query
+          schema:
+            x-go-type: easyjson.Json
+            x-go-type-import:
+              path: github.com/mailru/easyjson
+        - name: path
+          in: path
+          schema:
+            x-go-type: pgtype.Color
+            x-go-type-import:
+              path: github.com/jackc/pgtype
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  x-go-type: gotenv.Env
+                  x-go-type-import:
+                    path: github.com/subosito/gotenv
+      responses:
+        '200':
+            $ref: '#/components/responses/ComplexResponse'
+
+components:
+  schemas:
+    PetObject:
+      properties:
+        age:
+          x-go-type: myuuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+            name: myuuid
+      required:
+        - age
+    AgeSimple:
+      x-go-type: pgext.Puint
+      x-go-type-import:
+        path: github.com/CavernaTechnologies/pgext
+    PetArray:
+      type: array
+      items:
+        x-go-type: pq.Int
+        x-go-type-import:
+          path: github.com/lib/pq
+
+  responses:
+    StringResponse:
+      description: An image.
+      content:
+        application/json:
+          schema:
+            type: string
+            x-go-type: viper.ID
+            x-go-type-import:
+              path: github.com/spf13/viper
+    ComplexResponse:
+      description: Complex response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              keys:
+                type: array
+                items:
+                  x-go-type: text.Text
+                  x-go-type-import:
+                    path: golang.org/x/text
+
+  requestBodies:
+    RegisterBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              email:
+                x-go-type: email.Email
+                x-go-type-import:
+                  path: golang.org/x/email
+
+  parameters:
+    Version:
+      name: version
+      in: query
+      schema:
+        x-go-type: color.Color
+        x-go-type-import:
+          path: github.com/fatih/color
+
+    VersionPath:
+      name: versionPath
+      in: path
+      schema:
+        x-go-type: swag.Swag
+        x-go-type-import:
+          path: github.com/go-openapi/swag

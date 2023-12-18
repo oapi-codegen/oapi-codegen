@@ -1,0 +1,72 @@
+{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+
+// Getter for additional properties for {{.TypeName}}. Returns the specified
+// element and whether it was found
+func (a {{.TypeName}}) Get(fieldName string) (value {{$addType}}, found bool) {
+    if a.AdditionalProperties != nil {
+        value, found = a.AdditionalProperties[fieldName]
+    }
+    return
+}
+
+// Setter for additional properties for {{.TypeName}}
+func (a *{{.TypeName}}) Set(fieldName string, value {{$addType}}) {
+    if a.AdditionalProperties == nil {
+        a.AdditionalProperties = make(map[string]{{$addType}})
+    }
+    a.AdditionalProperties[fieldName] = value
+}
+
+{{if eq 0 (len .Schema.UnionElements) -}}
+// Override default JSON handling for {{.TypeName}} to handle AdditionalProperties
+func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
+    object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+{{range .Schema.Properties}}
+    if raw, found := object["{{.JsonFieldName}}"]; found {
+        err = json.Unmarshal(raw, &a.{{.GoFieldName}})
+        if err != nil {
+            return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
+        }
+        delete(object, "{{.JsonFieldName}}")
+    }
+{{end}}
+    if len(object) != 0 {
+        a.AdditionalProperties = make(map[string]{{$addType}})
+        for fieldName, fieldBuf := range object {
+            var fieldVal {{$addType}}
+            err := json.Unmarshal(fieldBuf, &fieldVal)
+            if err != nil {
+                return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+            }
+            a.AdditionalProperties[fieldName] = fieldVal
+        }
+    }
+	return nil
+}
+
+// Override default JSON handling for {{.TypeName}} to handle AdditionalProperties
+func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
+    var err error
+    object := make(map[string]json.RawMessage)
+{{range .Schema.Properties}}
+{{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
+    object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
+    if err != nil {
+        return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
+    }
+{{if not .Required}} }{{end}}
+{{end}}
+    for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+{{end}}
+{{end}}
