@@ -25,6 +25,7 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/jsonpointer"
 )
 
 var (
@@ -954,4 +955,32 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 	}
 
 	return *s.AdditionalProperties.Has == false //nolint:gosimple
+}
+
+// jsonLookup allows taking a JSON pointer and looking up the value present at the given OpenAPI specification at that path.
+func jsonLookup(spec *openapi3.T, ref string) (any, error) {
+	parts := strings.Split(ref, "/")
+
+	var pointed any // TODO doc
+	pointed = spec
+
+	// fmt.Println(jsonpointer.GetForToken(spec, parts[1]))
+	for i, v := range parts {
+		if i == 0 {
+			if v != "#" {
+				return nil, fmt.Errorf("TODO: %v", v)
+			}
+
+			continue
+		}
+
+		t, _, err := jsonpointer.GetForToken(pointed, v)
+		if err != nil {
+			return nil, err // TODO
+		}
+
+		pointed = t
+	}
+
+	return pointed, nil
 }
