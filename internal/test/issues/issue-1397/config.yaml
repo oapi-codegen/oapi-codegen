@@ -1,7 +1,7 @@
-package: issue
+package: issue1397
 generate:
   echo-server: true
   client: true
   models: true
   embedded-spec: true
-output: issue.gen.go
+output: issue1397.gen.go
