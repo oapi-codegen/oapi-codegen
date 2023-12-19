@@ -354,6 +354,20 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
 		pathParts := strings.Split(refPath, "/")
 
+		t, err := jsonLookup(globalState.spec, refPath)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		fmt.Printf("t: %v\n", t)
+		fmt.Printf("t: %#v\n", t)
+
+		schema, ok := t.(*openapi3.Schema)
+		if ok {
+			if schema.Type == "string" {
+				return "string", nil
+			}
+		}
+
 		// Schemas may have been renamed locally, so look up the actual name in
 		// the spec.
 		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
