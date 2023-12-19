@@ -358,13 +358,24 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		if err != nil {
 			fmt.Printf("err: %v\n", err)
 		}
-		fmt.Printf("t: %v\n", t)
-		fmt.Printf("t: %#v\n", t)
+		// fmt.Printf("t: %v\n", t)
+		// fmt.Printf("t: %#v\n", t)
 
 		schema, ok := t.(*openapi3.Schema)
 		if ok {
-			if schema.Type == "string" {
-				return "string", nil
+			var s Schema
+			// if schema.Type == "string" {
+			// 	return "string", nil
+			// }
+			fmt.Printf("s: %#v\n", s)
+			fmt.Printf("oapiSchemaToGoType(schema, nil, &s): %v\n", oapiSchemaToGoType(schema, nil, &s))
+			fmt.Printf("s: %v\n", s)
+			if schema.Type != "object" {
+				err = oapiSchemaToGoType(schema, nil, &s)
+				if err != nil {
+					return "", err // TODO
+				}
+				return s.GoType, nil
 			}
 		}
 
