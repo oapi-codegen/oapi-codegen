@@ -66,15 +66,6 @@ func (s *Schema) AddProperty(p Property) error {
 	return nil
 }
 
-func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
-	var result []TypeDefinition
-	for _, p := range s.Properties {
-		result = append(result, p.Schema.GetAdditionalTypeDefs()...)
-	}
-	result = append(result, s.AdditionalTypes...)
-	return result
-}
-
 type Property struct {
 	Description   string
 	JsonFieldName string
@@ -405,6 +396,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Deprecated:    p.Value.Deprecated,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
+				if len(pSchema.AdditionalTypes) > 0 {
+					outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, pSchema.AdditionalTypes...)
+				}
 			}
 
 			if schema.AnyOf != nil {
@@ -438,7 +432,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				Description:     newTypeDef.Schema.Description,
 				GoType:          typeName,
 				DefineViaAlias:  true,
-				AdditionalTypes: []TypeDefinition{newTypeDef},
+				AdditionalTypes: append(outSchema.AdditionalTypes, newTypeDef),
 			}
 		}
 

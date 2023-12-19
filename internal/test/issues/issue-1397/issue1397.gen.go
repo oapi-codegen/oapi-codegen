@@ -20,8 +20,23 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// Defines values for TestField1.
+const (
+	Option1 TestField1 = "option1"
+	Option2 TestField1 = "option2"
+)
+
 // Test defines model for Test.
 type Test = MyTestRequest
+
+// TestField1 defines model for Test.Field1.
+type TestField1 string
+
+// MyTestRequestNestedField A nested object with allocated name
+type MyTestRequestNestedField struct {
+	Field1 bool   `json:"field1"`
+	Field2 string `json:"field2"`
+}
 
 // MyTestRequest defines model for .
 type MyTestRequest struct {

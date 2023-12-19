@@ -868,11 +868,11 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 
 	// Now, go through all the additional types we need to declare.
 	for _, param := range op.AllParams() {
-		typeDefs = append(typeDefs, param.Schema.GetAdditionalTypeDefs()...)
+		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
 	for _, body := range op.Bodies {
-		typeDefs = append(typeDefs, body.Schema.GetAdditionalTypeDefs()...)
+		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
 	}
 	return typeDefs
 }
