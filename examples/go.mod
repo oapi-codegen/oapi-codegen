@@ -1,20 +1,26 @@
-module github.com/deepmap/oapi-codegen/examples
+module github.com/deepmap/oapi-codegen/v2/examples
 
 go 1.20
 
-replace github.com/deepmap/oapi-codegen => ../
+replace github.com/deepmap/oapi-codegen/v2 => ../
 
 require (
-	github.com/deepmap/oapi-codegen v0.0.0-00010101000000-000000000000
-	github.com/getkin/kin-openapi v0.118.0
+	github.com/deepmap/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
+	github.com/getkin/kin-openapi v0.122.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/gofiber/fiber/v2 v2.49.1
 	github.com/gorilla/mux v1.8.0
-	github.com/kataras/iris/v12 v12.2.5
-	github.com/labstack/echo/v4 v4.11.1
+	github.com/kataras/iris/v12 v12.2.6-0.20230908161203-24ba4e8933b9
+	github.com/labstack/echo/v4 v4.11.3
 	github.com/lestrrat-go/jwx v1.2.26
-	github.com/oapi-codegen/runtime v1.0.0
+	github.com/oapi-codegen/echo-middleware v1.0.1
+	github.com/oapi-codegen/fiber-middleware v1.0.1
+	github.com/oapi-codegen/gin-middleware v1.0.1
+	github.com/oapi-codegen/iris-middleware v1.0.4
+	github.com/oapi-codegen/nethttp-middleware v1.0.1
+	github.com/oapi-codegen/runtime v1.1.0
+	github.com/oapi-codegen/testutil v1.0.0
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 )
@@ -46,7 +52,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12 // indirect
-	github.com/google/uuid v1.3.1 // indirect
+	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
@@ -84,8 +90,8 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/tdewolff/minify/v2 v2.12.8 // indirect
-	github.com/tdewolff/parse/v2 v2.6.7 // indirect
+	github.com/tdewolff/minify/v2 v2.12.9 // indirect
+	github.com/tdewolff/parse/v2 v2.6.8 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -96,11 +102,11 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yosssi/ace v0.0.5 // indirect
 	golang.org/x/arch v0.4.0 // indirect
-	golang.org/x/crypto v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/net v0.14.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect

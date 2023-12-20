@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	multijson "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1208-1209"
+	multijson "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1208-1209"
 	"github.com/stretchr/testify/assert"
 )
 

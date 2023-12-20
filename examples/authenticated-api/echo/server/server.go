@@ -6,10 +6,10 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
+	"github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/echo/api"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
+	middleware "github.com/oapi-codegen/echo-middleware"
 )
 
 type server struct {

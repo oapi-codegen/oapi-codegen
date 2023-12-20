@@ -1,0 +1,7 @@
+package: issue1298
+generate:
+  models: true
+  client: true
+  gin-server: true
+  strict-server: true
+output: issue1298.gen.go
