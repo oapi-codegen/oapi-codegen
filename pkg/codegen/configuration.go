@@ -98,6 +98,7 @@ type OutputOptions struct {
 	ResponseTypeSuffix  string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
 	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
 	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides
+	NullableType        bool     `yaml:"nullable-type,omitempty"`        // Whether to generate nullable type for nullable fields
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
