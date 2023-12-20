@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	issue1250 "github.com/deepmap/oapi-codegen/internal/test/issues/issue-1250"
+	issue1250 "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1250"
 	"github.com/stretchr/testify/assert"
 )
 
