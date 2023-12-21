@@ -8,7 +8,12 @@ components:
                         $ref: '#/components/schemas/TestSchema'
         testRespRefFixedMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+        testRespRefFixedMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
         testRespRefFixedNoContent: {}
@@ -41,7 +46,19 @@ components:
                         type: integer
         testRespRefHeaderFixedMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
+        testRespRefHeaderFixedMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -109,7 +126,19 @@ components:
                         type: integer
         testRespRefHeaderMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
+        testRespRefHeaderMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -170,7 +199,12 @@ components:
                         $ref: '#/components/schemas/TestSchema'
         testRespRefMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+        testRespRefMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
         testRespRefNoContent: {}
@@ -214,6 +248,12 @@ paths:
             responses:
                 "200":
                     $ref: pkg2.yaml#/components/responses/testRespExtFixedMultipart
+    /test-ext-fixed-multipart-related:
+        get:
+            operationId: testExtFixedMultipartRelated
+            responses:
+                "200":
+                    $ref: pkg2.yaml#/components/responses/testRespExtFixedMultipartRelated
     /test-ext-fixed-nocontent:
         get:
             operationId: testExtFixedNoContent
@@ -250,6 +290,12 @@ paths:
             responses:
                 "200":
                     $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedMultipart
+    /test-ext-header-fixed-multipart-related:
+        get:
+            operationId: testExtHeaderFixedMultipartRelated
+            responses:
+                "200":
+                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedMultipartRelated
     /test-ext-header-fixed-nocontent:
         get:
             operationId: testExtHeaderFixedNoContent
@@ -280,6 +326,12 @@ paths:
             responses:
                 default:
                     $ref: pkg2.yaml#/components/responses/testRespExtHeaderMultipart
+    /test-ext-header-multipart-related:
+        get:
+            operationId: testExtHeaderMultipartRelated
+            responses:
+                default:
+                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderMultipartRelated
     /test-ext-header-nocontent:
         get:
             operationId: testExtHeaderNoContent
@@ -304,6 +356,12 @@ paths:
             responses:
                 default:
                     $ref: pkg2.yaml#/components/responses/testRespExtMultipart
+    /test-ext-multipart-related:
+        get:
+            operationId: testExtMultipartRelated
+            responses:
+                default:
+                    $ref: pkg2.yaml#/components/responses/testRespExtMultipartRelated
     /test-ext-nocontent:
         get:
             operationId: testExtNoContent
@@ -346,7 +404,16 @@ paths:
             responses:
                 "200":
                     content:
-                        multipart/test:
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+    /test-fixed-multipart-related:
+        get:
+            operationId: testFixedMultipartRelated
+            responses:
+                "200":
+                    content:
+                        multipart/related:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
     /test-fixed-nocontent:
@@ -437,7 +504,23 @@ paths:
             responses:
                 "200":
                     content:
-                        multipart/test:
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+                    headers:
+                        header1:
+                            schema:
+                                type: string
+                        header2:
+                            schema:
+                                type: integer
+    /test-header-fixed-multipart-related:
+        get:
+            operationId: testHeaderFixedMultipartRelated
+            responses:
+                "200":
+                    content:
+                        multipart/related:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
                     headers:
@@ -545,7 +628,23 @@ paths:
             responses:
                 default:
                     content:
-                        multipart/test:
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+                    headers:
+                        header1:
+                            schema:
+                                type: string
+                        header2:
+                            schema:
+                                type: integer
+    /test-header-multipart-related:
+        get:
+            operationId: testHeaderMultipartRelated
+            responses:
+                default:
+                    content:
+                        multipart/related:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
                     headers:
@@ -630,7 +729,16 @@ paths:
             responses:
                 default:
                     content:
-                        multipart/test:
+                        multipart/form-data:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+    /test-multipart-related:
+        get:
+            operationId: testMultipartRelated
+            responses:
+                default:
+                    content:
+                        multipart/related:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
     /test-nocontent:
@@ -659,6 +767,12 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefFixedMultipart'
+    /test-ref-fixed-multipart-related:
+        get:
+            operationId: testRefFixedMultipartRelated
+            responses:
+                "200":
+                    $ref: '#/components/responses/testRespRefFixedMultipartRelated'
     /test-ref-fixed-nocontent:
         get:
             operationId: testRefFixedNoContent
@@ -695,6 +809,12 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefHeaderFixedMultipart'
+    /test-ref-header-fixed-multipart-related:
+        get:
+            operationId: testRefHeaderFixedMultipartRelated
+            responses:
+                "200":
+                    $ref: '#/components/responses/testRespRefHeaderFixedMultipartRelated'
     /test-ref-header-fixed-nocontent:
         get:
             operationId: testRefHeaderFixedNoContent
@@ -731,6 +851,12 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefHeaderMultipart'
+    /test-ref-header-multipart-related:
+        get:
+            operationId: testRefHeaderMultipartRelated
+            responses:
+                default:
+                    $ref: '#/components/responses/testRespRefHeaderMultipartRelated'
     /test-ref-header-nocontent:
         get:
             operationId: testRefHeaderNoContent
@@ -767,6 +893,12 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefMultipart'
+    /test-ref-multipart-related:
+        get:
+            operationId: testRefMultipartRelated
+            responses:
+                default:
+                    $ref: '#/components/responses/testRespRefMultipartRelated'
     /test-ref-nocontent:
         get:
             operationId: testRefNoContent

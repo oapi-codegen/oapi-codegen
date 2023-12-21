@@ -286,6 +286,8 @@ type TestRespExtFixedJSONJSONResponse TestSchema
 
 type TestRespExtFixedMultipartMultipartResponse func(writer *multipart.Writer) error
 
+type TestRespExtFixedMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
+
 type TestRespExtFixedNoContentResponse struct {
 }
 
@@ -322,6 +324,16 @@ type TestRespExtHeaderFixedMultipartMultipartResponse struct {
 	Body func(writer *multipart.Writer) error
 
 	Headers TestRespExtHeaderFixedMultipartResponseHeaders
+}
+
+type TestRespExtHeaderFixedMultipartRelatedResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespExtHeaderFixedMultipartRelatedMultipartResponse struct {
+	Body func(writer *multipart.Writer) error
+
+	Headers TestRespExtHeaderFixedMultipartRelatedResponseHeaders
 }
 
 type TestRespExtHeaderFixedNoContentResponseHeaders struct {
@@ -375,6 +387,16 @@ type TestRespExtHeaderMultipartMultipartResponse struct {
 	Headers TestRespExtHeaderMultipartResponseHeaders
 }
 
+type TestRespExtHeaderMultipartRelatedResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespExtHeaderMultipartRelatedMultipartResponse struct {
+	Body func(writer *multipart.Writer) error
+
+	Headers TestRespExtHeaderMultipartRelatedResponseHeaders
+}
+
 type TestRespExtHeaderNoContentResponseHeaders struct {
 	Header1 string
 	Header2 int
@@ -407,6 +429,8 @@ type TestRespExtHeaderWildcardApplicationResponse struct {
 }
 
 type TestRespExtMultipartMultipartResponse func(writer *multipart.Writer) error
+
+type TestRespExtMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
 
 type TestRespExtNoContentResponse struct {
 }

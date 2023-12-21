@@ -71,7 +71,8 @@ type strictServerInterface struct{}
 						{name: []string{"JSON"}, content: "application/json", tag: "JSON"},
 						{name: []string{"Special", "JSON"}, content: "application/test+json", tag: "ApplicationTestPlusJSON"},
 						{name: []string{"Formdata"}, content: "application/x-www-form-urlencoded", tag: "Formdata"},
-						{name: []string{"Multipart"}, content: "multipart/test", tag: "Multipart"},
+						{name: []string{"Multipart"}, content: "multipart/form-data", tag: "Multipart"},
+						{name: []string{"Multipart", "Related"}, content: "multipart/related", tag: "Multipart"},
 						// issue #1403
 						// {name: []string{"Wildcard", "Multipart"}, content: "multipart/*", tag: "Multipart"},
 						{name: []string{"Text"}, content: "text/plain", tag: "Text"},
@@ -173,11 +174,11 @@ type strictServerInterface struct{}
 						} else {
 							statusCodeRes = 200
 						}
-						switch content.content {
-						case "":
-						case "text/plain":
+						switch {
+						case content.content == "":
+						case content.content == "text/plain":
 							body = "\"bar\""
-						case "multipart/test", "multipart/*":
+						case strings.HasPrefix(content.content, "multipart/"):
 							body = fmt.Sprintf(`func(writer *multipart.Writer) error {
 						if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
 							return err
@@ -188,7 +189,7 @@ type strictServerInterface struct{}
 							})
 						}
 					}`, pkgId)
-						case "application/test", "application/*":
+						case content.content == "application/test" || content.content == "application/*":
 							body = "bytes.NewReader(buf)"
 						default:
 							body = fmt.Sprintf(`pkg%d.TestSchema{
@@ -282,10 +283,10 @@ type strictServerInterface struct{}
 						if !strings.HasPrefix(contentRes, "multipart/") {
 							fmt.Fprintf(fTestGo, "assert.Equal(t, \"%s\", res.HTTPResponse.Header.Get(\"Content-Type\"))\n", contentRes)
 						}
-						switch content.content {
-						case "":
+						switch {
+						case content.content == "":
 							fmt.Fprintf(fTestGo, "assert.Equal(t, []byte{}, res.Body)\n")
-						case "multipart/test", "multipart/*":
+						case strings.HasPrefix(content.content, "multipart/"):
 							fmt.Fprintf(fTestGo, `mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 					if assert.NoError(t, err) {
 						assert.Equal(t, "%s", mediaType)
@@ -315,7 +316,7 @@ type strictServerInterface struct{}
 						assert.True(t, jsonExist)
 					}
 					`, contentRes, pkgId, pkgId)
-						case "application/x-www-form-urlencoded":
+						case content.content == "application/x-www-form-urlencoded":
 							fmt.Fprintf(fTestGo, `form, err := url.ParseQuery(string(res.Body))
 					assert.NoError(t, err)
 					assert.Equal(t, url.Values{
@@ -323,12 +324,12 @@ type strictServerInterface struct{}
 						"field2": []string{"456"},
 					}, form)
 					`)
-						case "application/json":
+						case content.content == "application/json":
 							fmt.Fprintf(fTestGo, "assert.Equal(t, &pkg%d.TestSchema{\n", pkgId)
 							fmt.Fprintf(fTestGo, "Field1: \"bar\",\n")
 							fmt.Fprintf(fTestGo, "Field2: 456,\n")
 							fmt.Fprintf(fTestGo, "}, res.JSON%s%s)\n", strings.ToUpper(statusCode[:1]), statusCode[1:])
-						case "application/test+json":
+						case content.content == "application/test+json":
 							fmt.Fprintf(fTestGo, "assert.Equal(t, &pkg%d.TestSchema{\n", pkgId)
 							fmt.Fprintf(fTestGo, "Field1: \"bar\",\n")
 							fmt.Fprintf(fTestGo, "Field2: 456,\n")

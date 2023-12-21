@@ -129,6 +129,9 @@ type ClientInterface interface {
 	// TestExtFixedMultipart request
 	TestExtFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestExtFixedMultipartRelated request
+	TestExtFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestExtFixedNoContent request
 	TestExtFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -147,6 +150,9 @@ type ClientInterface interface {
 	// TestExtHeaderFixedMultipart request
 	TestExtHeaderFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestExtHeaderFixedMultipartRelated request
+	TestExtHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestExtHeaderFixedNoContent request
 	TestExtHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -162,6 +168,9 @@ type ClientInterface interface {
 	// TestExtHeaderMultipart request
 	TestExtHeaderMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestExtHeaderMultipartRelated request
+	TestExtHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestExtHeaderNoContent request
 	TestExtHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -173,6 +182,9 @@ type ClientInterface interface {
 
 	// TestExtMultipart request
 	TestExtMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestExtMultipartRelated request
+	TestExtMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestExtNoContent request
 	TestExtNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -191,6 +203,9 @@ type ClientInterface interface {
 
 	// TestFixedMultipart request
 	TestFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestFixedMultipartRelated request
+	TestFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestFixedNoContent request
 	TestFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -219,6 +234,9 @@ type ClientInterface interface {
 	// TestHeaderFixedMultipart request
 	TestHeaderFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestHeaderFixedMultipartRelated request
+	TestHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestHeaderFixedNoContent request
 	TestHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -240,6 +258,9 @@ type ClientInterface interface {
 	// TestHeaderMultipart request
 	TestHeaderMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestHeaderMultipartRelated request
+	TestHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestHeaderNoContent request
 	TestHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -258,6 +279,9 @@ type ClientInterface interface {
 	// TestMultipart request
 	TestMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestMultipartRelated request
+	TestMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestNoContent request
 	TestNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -269,6 +293,9 @@ type ClientInterface interface {
 
 	// TestRefFixedMultipart request
 	TestRefFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRefFixedMultipartRelated request
+	TestRefFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestRefFixedNoContent request
 	TestRefFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -288,6 +315,9 @@ type ClientInterface interface {
 	// TestRefHeaderFixedMultipart request
 	TestRefHeaderFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestRefHeaderFixedMultipartRelated request
+	TestRefHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestRefHeaderFixedNoContent request
 	TestRefHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -306,6 +336,9 @@ type ClientInterface interface {
 	// TestRefHeaderMultipart request
 	TestRefHeaderMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestRefHeaderMultipartRelated request
+	TestRefHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestRefHeaderNoContent request
 	TestRefHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -323,6 +356,9 @@ type ClientInterface interface {
 
 	// TestRefMultipart request
 	TestRefMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRefMultipartRelated request
+	TestRefMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestRefNoContent request
 	TestRefNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -357,6 +393,18 @@ func (c *Client) TestExtFixedJSON(ctx context.Context, reqEditors ...RequestEdit
 
 func (c *Client) TestExtFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestExtFixedMultipartRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestExtFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestExtFixedMultipartRelatedRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -439,6 +487,18 @@ func (c *Client) TestExtHeaderFixedMultipart(ctx context.Context, reqEditors ...
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestExtHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestExtHeaderFixedMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestExtHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestExtHeaderFixedNoContentRequest(c.Server)
 	if err != nil {
@@ -499,6 +559,18 @@ func (c *Client) TestExtHeaderMultipart(ctx context.Context, reqEditors ...Reque
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestExtHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestExtHeaderMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestExtHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestExtHeaderNoContentRequest(c.Server)
 	if err != nil {
@@ -537,6 +609,18 @@ func (c *Client) TestExtHeaderWildcard(ctx context.Context, reqEditors ...Reques
 
 func (c *Client) TestExtMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestExtMultipartRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestExtMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestExtMultipartRelatedRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -609,6 +693,18 @@ func (c *Client) TestFixedJSON(ctx context.Context, reqEditors ...RequestEditorF
 
 func (c *Client) TestFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestFixedMultipartRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestFixedMultipartRelatedRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -727,6 +823,18 @@ func (c *Client) TestHeaderFixedMultipart(ctx context.Context, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestHeaderFixedMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestHeaderFixedNoContentRequest(c.Server)
 	if err != nil {
@@ -811,6 +919,18 @@ func (c *Client) TestHeaderMultipart(ctx context.Context, reqEditors ...RequestE
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestHeaderMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestHeaderNoContentRequest(c.Server)
 	if err != nil {
@@ -883,6 +1003,18 @@ func (c *Client) TestMultipart(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestNoContentRequest(c.Server)
 	if err != nil {
@@ -921,6 +1053,18 @@ func (c *Client) TestRefFixedJSON(ctx context.Context, reqEditors ...RequestEdit
 
 func (c *Client) TestRefFixedMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefFixedMultipartRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestRefFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefFixedMultipartRelatedRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1003,6 +1147,18 @@ func (c *Client) TestRefHeaderFixedMultipart(ctx context.Context, reqEditors ...
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestRefHeaderFixedMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefHeaderFixedMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestRefHeaderFixedNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefHeaderFixedNoContentRequest(c.Server)
 	if err != nil {
@@ -1075,6 +1231,18 @@ func (c *Client) TestRefHeaderMultipart(ctx context.Context, reqEditors ...Reque
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestRefHeaderMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefHeaderMultipartRelatedRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestRefHeaderNoContent(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefHeaderNoContentRequest(c.Server)
 	if err != nil {
@@ -1137,6 +1305,18 @@ func (c *Client) TestRefJSON(ctx context.Context, reqEditors ...RequestEditorFn)
 
 func (c *Client) TestRefMultipart(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefMultipartRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestRefMultipartRelated(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefMultipartRelatedRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1256,6 +1436,33 @@ func NewTestExtFixedMultipartRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ext-fixed-multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestExtFixedMultipartRelatedRequest generates requests for TestExtFixedMultipartRelated
+func NewTestExtFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ext-fixed-multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1435,6 +1642,33 @@ func NewTestExtHeaderFixedMultipartRequest(server string) (*http.Request, error)
 	return req, nil
 }
 
+// NewTestExtHeaderFixedMultipartRelatedRequest generates requests for TestExtHeaderFixedMultipartRelated
+func NewTestExtHeaderFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ext-header-fixed-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestExtHeaderFixedNoContentRequest generates requests for TestExtHeaderFixedNoContent
 func NewTestExtHeaderFixedNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -1570,6 +1804,33 @@ func NewTestExtHeaderMultipartRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestExtHeaderMultipartRelatedRequest generates requests for TestExtHeaderMultipartRelated
+func NewTestExtHeaderMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ext-header-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestExtHeaderNoContentRequest generates requests for TestExtHeaderNoContent
 func NewTestExtHeaderNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -1661,6 +1922,33 @@ func NewTestExtMultipartRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ext-multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestExtMultipartRelatedRequest generates requests for TestExtMultipartRelated
+func NewTestExtMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ext-multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1823,6 +2111,33 @@ func NewTestFixedMultipartRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-fixed-multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestFixedMultipartRelatedRequest generates requests for TestFixedMultipartRelated
+func NewTestFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-fixed-multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2083,6 +2398,33 @@ func NewTestHeaderFixedMultipartRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestHeaderFixedMultipartRelatedRequest generates requests for TestHeaderFixedMultipartRelated
+func NewTestHeaderFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-header-fixed-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestHeaderFixedNoContentRequest generates requests for TestHeaderFixedNoContent
 func NewTestHeaderFixedNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -2272,6 +2614,33 @@ func NewTestHeaderMultipartRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestHeaderMultipartRelatedRequest generates requests for TestHeaderMultipartRelated
+func NewTestHeaderMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-header-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestHeaderNoContentRequest generates requests for TestHeaderNoContent
 func NewTestHeaderNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -2434,6 +2803,33 @@ func NewTestMultipartRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestMultipartRelatedRequest generates requests for TestMultipartRelated
+func NewTestMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestNoContentRequest generates requests for TestNoContent
 func NewTestNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -2525,6 +2921,33 @@ func NewTestRefFixedMultipartRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ref-fixed-multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestRefFixedMultipartRelatedRequest generates requests for TestRefFixedMultipartRelated
+func NewTestRefFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-fixed-multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2704,6 +3127,33 @@ func NewTestRefHeaderFixedMultipartRequest(server string) (*http.Request, error)
 	return req, nil
 }
 
+// NewTestRefHeaderFixedMultipartRelatedRequest generates requests for TestRefHeaderFixedMultipartRelated
+func NewTestRefHeaderFixedMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-header-fixed-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestRefHeaderFixedNoContentRequest generates requests for TestRefHeaderFixedNoContent
 func NewTestRefHeaderFixedNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -2866,6 +3316,33 @@ func NewTestRefHeaderMultipartRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestRefHeaderMultipartRelatedRequest generates requests for TestRefHeaderMultipartRelated
+func NewTestRefHeaderMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-header-multipart-related")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestRefHeaderNoContentRequest generates requests for TestRefHeaderNoContent
 func NewTestRefHeaderNoContentRequest(server string) (*http.Request, error) {
 	var err error
@@ -3011,6 +3488,33 @@ func NewTestRefMultipartRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ref-multipart")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestRefMultipartRelatedRequest generates requests for TestRefMultipartRelated
+func NewTestRefMultipartRelatedRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-multipart-related")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -3239,6 +3743,9 @@ type ClientWithResponsesInterface interface {
 	// TestExtFixedMultipartWithResponse request
 	TestExtFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtFixedMultipartResponse, error)
 
+	// TestExtFixedMultipartRelatedWithResponse request
+	TestExtFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtFixedMultipartRelatedResponse, error)
+
 	// TestExtFixedNoContentWithResponse request
 	TestExtFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtFixedNoContentResponse, error)
 
@@ -3257,6 +3764,9 @@ type ClientWithResponsesInterface interface {
 	// TestExtHeaderFixedMultipartWithResponse request
 	TestExtHeaderFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderFixedMultipartResponse, error)
 
+	// TestExtHeaderFixedMultipartRelatedWithResponse request
+	TestExtHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderFixedMultipartRelatedResponse, error)
+
 	// TestExtHeaderFixedNoContentWithResponse request
 	TestExtHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderFixedNoContentResponse, error)
 
@@ -3272,6 +3782,9 @@ type ClientWithResponsesInterface interface {
 	// TestExtHeaderMultipartWithResponse request
 	TestExtHeaderMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderMultipartResponse, error)
 
+	// TestExtHeaderMultipartRelatedWithResponse request
+	TestExtHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderMultipartRelatedResponse, error)
+
 	// TestExtHeaderNoContentWithResponse request
 	TestExtHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderNoContentResponse, error)
 
@@ -3283,6 +3796,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestExtMultipartWithResponse request
 	TestExtMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtMultipartResponse, error)
+
+	// TestExtMultipartRelatedWithResponse request
+	TestExtMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtMultipartRelatedResponse, error)
 
 	// TestExtNoContentWithResponse request
 	TestExtNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtNoContentResponse, error)
@@ -3301,6 +3817,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestFixedMultipartWithResponse request
 	TestFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedMultipartResponse, error)
+
+	// TestFixedMultipartRelatedWithResponse request
+	TestFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedMultipartRelatedResponse, error)
 
 	// TestFixedNoContentWithResponse request
 	TestFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedNoContentResponse, error)
@@ -3329,6 +3848,9 @@ type ClientWithResponsesInterface interface {
 	// TestHeaderFixedMultipartWithResponse request
 	TestHeaderFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedMultipartResponse, error)
 
+	// TestHeaderFixedMultipartRelatedWithResponse request
+	TestHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedMultipartRelatedResponse, error)
+
 	// TestHeaderFixedNoContentWithResponse request
 	TestHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedNoContentResponse, error)
 
@@ -3350,6 +3872,9 @@ type ClientWithResponsesInterface interface {
 	// TestHeaderMultipartWithResponse request
 	TestHeaderMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderMultipartResponse, error)
 
+	// TestHeaderMultipartRelatedWithResponse request
+	TestHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderMultipartRelatedResponse, error)
+
 	// TestHeaderNoContentWithResponse request
 	TestHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderNoContentResponse, error)
 
@@ -3368,6 +3893,9 @@ type ClientWithResponsesInterface interface {
 	// TestMultipartWithResponse request
 	TestMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestMultipartResponse, error)
 
+	// TestMultipartRelatedWithResponse request
+	TestMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestMultipartRelatedResponse, error)
+
 	// TestNoContentWithResponse request
 	TestNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestNoContentResponse, error)
 
@@ -3379,6 +3907,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestRefFixedMultipartWithResponse request
 	TestRefFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedMultipartResponse, error)
+
+	// TestRefFixedMultipartRelatedWithResponse request
+	TestRefFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedMultipartRelatedResponse, error)
 
 	// TestRefFixedNoContentWithResponse request
 	TestRefFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedNoContentResponse, error)
@@ -3398,6 +3929,9 @@ type ClientWithResponsesInterface interface {
 	// TestRefHeaderFixedMultipartWithResponse request
 	TestRefHeaderFixedMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedMultipartResponse, error)
 
+	// TestRefHeaderFixedMultipartRelatedWithResponse request
+	TestRefHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedMultipartRelatedResponse, error)
+
 	// TestRefHeaderFixedNoContentWithResponse request
 	TestRefHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedNoContentResponse, error)
 
@@ -3416,6 +3950,9 @@ type ClientWithResponsesInterface interface {
 	// TestRefHeaderMultipartWithResponse request
 	TestRefHeaderMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderMultipartResponse, error)
 
+	// TestRefHeaderMultipartRelatedWithResponse request
+	TestRefHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderMultipartRelatedResponse, error)
+
 	// TestRefHeaderNoContentWithResponse request
 	TestRefHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderNoContentResponse, error)
 
@@ -3433,6 +3970,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestRefMultipartWithResponse request
 	TestRefMultipartWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefMultipartResponse, error)
+
+	// TestRefMultipartRelatedWithResponse request
+	TestRefMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefMultipartRelatedResponse, error)
 
 	// TestRefNoContentWithResponse request
 	TestRefNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefNoContentResponse, error)
@@ -3490,6 +4030,27 @@ func (r TestExtFixedMultipartResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestExtFixedMultipartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestExtFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestExtFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestExtFixedMultipartRelatedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3624,6 +4185,27 @@ func (r TestExtHeaderFixedMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestExtHeaderFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestExtHeaderFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestExtHeaderFixedMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestExtHeaderFixedNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3730,6 +4312,27 @@ func (r TestExtHeaderMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestExtHeaderMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestExtHeaderMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestExtHeaderMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestExtHeaderNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3808,6 +4411,27 @@ func (r TestExtMultipartResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestExtMultipartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestExtMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestExtMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestExtMultipartRelatedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3935,6 +4559,27 @@ func (r TestFixedMultipartResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestFixedMultipartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestFixedMultipartRelatedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4132,6 +4777,27 @@ func (r TestHeaderFixedMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestHeaderFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestHeaderFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestHeaderFixedMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestHeaderFixedNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4281,6 +4947,27 @@ func (r TestHeaderMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestHeaderMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestHeaderMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestHeaderMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestHeaderNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4409,6 +5096,27 @@ func (r TestMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4488,6 +5196,27 @@ func (r TestRefFixedMultipartResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestRefFixedMultipartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestRefFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefFixedMultipartRelatedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -4622,6 +5351,27 @@ func (r TestRefHeaderFixedMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestRefHeaderFixedMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefHeaderFixedMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefHeaderFixedMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestRefHeaderFixedNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4750,6 +5500,27 @@ func (r TestRefHeaderMultipartResponse) StatusCode() int {
 	return 0
 }
 
+type TestRefHeaderMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefHeaderMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefHeaderMultipartRelatedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestRefHeaderNoContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -4872,6 +5643,27 @@ func (r TestRefMultipartResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestRefMultipartResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestRefMultipartRelatedResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefMultipartRelatedResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefMultipartRelatedResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -5024,6 +5816,15 @@ func (c *ClientWithResponses) TestExtFixedMultipartWithResponse(ctx context.Cont
 	return ParseTestExtFixedMultipartResponse(rsp)
 }
 
+// TestExtFixedMultipartRelatedWithResponse request returning *TestExtFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestExtFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestExtFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestExtFixedMultipartRelatedResponse(rsp)
+}
+
 // TestExtFixedNoContentWithResponse request returning *TestExtFixedNoContentResponse
 func (c *ClientWithResponses) TestExtFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtFixedNoContentResponse, error) {
 	rsp, err := c.TestExtFixedNoContent(ctx, reqEditors...)
@@ -5078,6 +5879,15 @@ func (c *ClientWithResponses) TestExtHeaderFixedMultipartWithResponse(ctx contex
 	return ParseTestExtHeaderFixedMultipartResponse(rsp)
 }
 
+// TestExtHeaderFixedMultipartRelatedWithResponse request returning *TestExtHeaderFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestExtHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestExtHeaderFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestExtHeaderFixedMultipartRelatedResponse(rsp)
+}
+
 // TestExtHeaderFixedNoContentWithResponse request returning *TestExtHeaderFixedNoContentResponse
 func (c *ClientWithResponses) TestExtHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderFixedNoContentResponse, error) {
 	rsp, err := c.TestExtHeaderFixedNoContent(ctx, reqEditors...)
@@ -5123,6 +5933,15 @@ func (c *ClientWithResponses) TestExtHeaderMultipartWithResponse(ctx context.Con
 	return ParseTestExtHeaderMultipartResponse(rsp)
 }
 
+// TestExtHeaderMultipartRelatedWithResponse request returning *TestExtHeaderMultipartRelatedResponse
+func (c *ClientWithResponses) TestExtHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderMultipartRelatedResponse, error) {
+	rsp, err := c.TestExtHeaderMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestExtHeaderMultipartRelatedResponse(rsp)
+}
+
 // TestExtHeaderNoContentWithResponse request returning *TestExtHeaderNoContentResponse
 func (c *ClientWithResponses) TestExtHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtHeaderNoContentResponse, error) {
 	rsp, err := c.TestExtHeaderNoContent(ctx, reqEditors...)
@@ -5157,6 +5976,15 @@ func (c *ClientWithResponses) TestExtMultipartWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseTestExtMultipartResponse(rsp)
+}
+
+// TestExtMultipartRelatedWithResponse request returning *TestExtMultipartRelatedResponse
+func (c *ClientWithResponses) TestExtMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestExtMultipartRelatedResponse, error) {
+	rsp, err := c.TestExtMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestExtMultipartRelatedResponse(rsp)
 }
 
 // TestExtNoContentWithResponse request returning *TestExtNoContentResponse
@@ -5211,6 +6039,15 @@ func (c *ClientWithResponses) TestFixedMultipartWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseTestFixedMultipartResponse(rsp)
+}
+
+// TestFixedMultipartRelatedWithResponse request returning *TestFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestFixedMultipartRelatedResponse(rsp)
 }
 
 // TestFixedNoContentWithResponse request returning *TestFixedNoContentResponse
@@ -5294,6 +6131,15 @@ func (c *ClientWithResponses) TestHeaderFixedMultipartWithResponse(ctx context.C
 	return ParseTestHeaderFixedMultipartResponse(rsp)
 }
 
+// TestHeaderFixedMultipartRelatedWithResponse request returning *TestHeaderFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestHeaderFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestHeaderFixedMultipartRelatedResponse(rsp)
+}
+
 // TestHeaderFixedNoContentWithResponse request returning *TestHeaderFixedNoContentResponse
 func (c *ClientWithResponses) TestHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedNoContentResponse, error) {
 	rsp, err := c.TestHeaderFixedNoContent(ctx, reqEditors...)
@@ -5357,6 +6203,15 @@ func (c *ClientWithResponses) TestHeaderMultipartWithResponse(ctx context.Contex
 	return ParseTestHeaderMultipartResponse(rsp)
 }
 
+// TestHeaderMultipartRelatedWithResponse request returning *TestHeaderMultipartRelatedResponse
+func (c *ClientWithResponses) TestHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderMultipartRelatedResponse, error) {
+	rsp, err := c.TestHeaderMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestHeaderMultipartRelatedResponse(rsp)
+}
+
 // TestHeaderNoContentWithResponse request returning *TestHeaderNoContentResponse
 func (c *ClientWithResponses) TestHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderNoContentResponse, error) {
 	rsp, err := c.TestHeaderNoContent(ctx, reqEditors...)
@@ -5411,6 +6266,15 @@ func (c *ClientWithResponses) TestMultipartWithResponse(ctx context.Context, req
 	return ParseTestMultipartResponse(rsp)
 }
 
+// TestMultipartRelatedWithResponse request returning *TestMultipartRelatedResponse
+func (c *ClientWithResponses) TestMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestMultipartRelatedResponse, error) {
+	rsp, err := c.TestMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestMultipartRelatedResponse(rsp)
+}
+
 // TestNoContentWithResponse request returning *TestNoContentResponse
 func (c *ClientWithResponses) TestNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestNoContentResponse, error) {
 	rsp, err := c.TestNoContent(ctx, reqEditors...)
@@ -5445,6 +6309,15 @@ func (c *ClientWithResponses) TestRefFixedMultipartWithResponse(ctx context.Cont
 		return nil, err
 	}
 	return ParseTestRefFixedMultipartResponse(rsp)
+}
+
+// TestRefFixedMultipartRelatedWithResponse request returning *TestRefFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestRefFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestRefFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefFixedMultipartRelatedResponse(rsp)
 }
 
 // TestRefFixedNoContentWithResponse request returning *TestRefFixedNoContentResponse
@@ -5501,6 +6374,15 @@ func (c *ClientWithResponses) TestRefHeaderFixedMultipartWithResponse(ctx contex
 	return ParseTestRefHeaderFixedMultipartResponse(rsp)
 }
 
+// TestRefHeaderFixedMultipartRelatedWithResponse request returning *TestRefHeaderFixedMultipartRelatedResponse
+func (c *ClientWithResponses) TestRefHeaderFixedMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedMultipartRelatedResponse, error) {
+	rsp, err := c.TestRefHeaderFixedMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefHeaderFixedMultipartRelatedResponse(rsp)
+}
+
 // TestRefHeaderFixedNoContentWithResponse request returning *TestRefHeaderFixedNoContentResponse
 func (c *ClientWithResponses) TestRefHeaderFixedNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedNoContentResponse, error) {
 	rsp, err := c.TestRefHeaderFixedNoContent(ctx, reqEditors...)
@@ -5555,6 +6437,15 @@ func (c *ClientWithResponses) TestRefHeaderMultipartWithResponse(ctx context.Con
 	return ParseTestRefHeaderMultipartResponse(rsp)
 }
 
+// TestRefHeaderMultipartRelatedWithResponse request returning *TestRefHeaderMultipartRelatedResponse
+func (c *ClientWithResponses) TestRefHeaderMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderMultipartRelatedResponse, error) {
+	rsp, err := c.TestRefHeaderMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefHeaderMultipartRelatedResponse(rsp)
+}
+
 // TestRefHeaderNoContentWithResponse request returning *TestRefHeaderNoContentResponse
 func (c *ClientWithResponses) TestRefHeaderNoContentWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderNoContentResponse, error) {
 	rsp, err := c.TestRefHeaderNoContent(ctx, reqEditors...)
@@ -5607,6 +6498,15 @@ func (c *ClientWithResponses) TestRefMultipartWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParseTestRefMultipartResponse(rsp)
+}
+
+// TestRefMultipartRelatedWithResponse request returning *TestRefMultipartRelatedResponse
+func (c *ClientWithResponses) TestRefMultipartRelatedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefMultipartRelatedResponse, error) {
+	rsp, err := c.TestRefMultipartRelated(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefMultipartRelatedResponse(rsp)
 }
 
 // TestRefNoContentWithResponse request returning *TestRefNoContentResponse
@@ -5698,6 +6598,22 @@ func ParseTestExtFixedMultipartResponse(rsp *http.Response) (*TestExtFixedMultip
 	}
 
 	response := &TestExtFixedMultipartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestExtFixedMultipartRelatedResponse parses an HTTP response from a TestExtFixedMultipartRelatedWithResponse call
+func ParseTestExtFixedMultipartRelatedResponse(rsp *http.Response) (*TestExtFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestExtFixedMultipartRelatedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -5821,6 +6737,22 @@ func ParseTestExtHeaderFixedMultipartResponse(rsp *http.Response) (*TestExtHeade
 	return response, nil
 }
 
+// ParseTestExtHeaderFixedMultipartRelatedResponse parses an HTTP response from a TestExtHeaderFixedMultipartRelatedWithResponse call
+func ParseTestExtHeaderFixedMultipartRelatedResponse(rsp *http.Response) (*TestExtHeaderFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestExtHeaderFixedMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestExtHeaderFixedNoContentResponse parses an HTTP response from a TestExtHeaderFixedNoContentWithResponse call
 func ParseTestExtHeaderFixedNoContentResponse(rsp *http.Response) (*TestExtHeaderFixedNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -5911,6 +6843,22 @@ func ParseTestExtHeaderMultipartResponse(rsp *http.Response) (*TestExtHeaderMult
 	return response, nil
 }
 
+// ParseTestExtHeaderMultipartRelatedResponse parses an HTTP response from a TestExtHeaderMultipartRelatedWithResponse call
+func ParseTestExtHeaderMultipartRelatedResponse(rsp *http.Response) (*TestExtHeaderMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestExtHeaderMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestExtHeaderNoContentResponse parses an HTTP response from a TestExtHeaderNoContentWithResponse call
 func ParseTestExtHeaderNoContentResponse(rsp *http.Response) (*TestExtHeaderNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -5968,6 +6916,22 @@ func ParseTestExtMultipartResponse(rsp *http.Response) (*TestExtMultipartRespons
 	}
 
 	response := &TestExtMultipartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestExtMultipartRelatedResponse parses an HTTP response from a TestExtMultipartRelatedWithResponse call
+func ParseTestExtMultipartRelatedResponse(rsp *http.Response) (*TestExtMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestExtMultipartRelatedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -6074,6 +7038,22 @@ func ParseTestFixedMultipartResponse(rsp *http.Response) (*TestFixedMultipartRes
 	}
 
 	response := &TestFixedMultipartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestFixedMultipartRelatedResponse parses an HTTP response from a TestFixedMultipartRelatedWithResponse call
+func ParseTestFixedMultipartRelatedResponse(rsp *http.Response) (*TestFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestFixedMultipartRelatedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -6245,6 +7225,22 @@ func ParseTestHeaderFixedMultipartResponse(rsp *http.Response) (*TestHeaderFixed
 	return response, nil
 }
 
+// ParseTestHeaderFixedMultipartRelatedResponse parses an HTTP response from a TestHeaderFixedMultipartRelatedWithResponse call
+func ParseTestHeaderFixedMultipartRelatedResponse(rsp *http.Response) (*TestHeaderFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestHeaderFixedMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestHeaderFixedNoContentResponse parses an HTTP response from a TestHeaderFixedNoContentWithResponse call
 func ParseTestHeaderFixedNoContentResponse(rsp *http.Response) (*TestHeaderFixedNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6377,6 +7373,22 @@ func ParseTestHeaderMultipartResponse(rsp *http.Response) (*TestHeaderMultipartR
 	return response, nil
 }
 
+// ParseTestHeaderMultipartRelatedResponse parses an HTTP response from a TestHeaderMultipartRelatedWithResponse call
+func ParseTestHeaderMultipartRelatedResponse(rsp *http.Response) (*TestHeaderMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestHeaderMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestHeaderNoContentResponse parses an HTTP response from a TestHeaderNoContentWithResponse call
 func ParseTestHeaderNoContentResponse(rsp *http.Response) (*TestHeaderNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6493,6 +7505,22 @@ func ParseTestMultipartResponse(rsp *http.Response) (*TestMultipartResponse, err
 	return response, nil
 }
 
+// ParseTestMultipartRelatedResponse parses an HTTP response from a TestMultipartRelatedWithResponse call
+func ParseTestMultipartRelatedResponse(rsp *http.Response) (*TestMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestNoContentResponse parses an HTTP response from a TestNoContentWithResponse call
 func ParseTestNoContentResponse(rsp *http.Response) (*TestNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6560,6 +7588,22 @@ func ParseTestRefFixedMultipartResponse(rsp *http.Response) (*TestRefFixedMultip
 	}
 
 	response := &TestRefFixedMultipartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestRefFixedMultipartRelatedResponse parses an HTTP response from a TestRefFixedMultipartRelatedWithResponse call
+func ParseTestRefFixedMultipartRelatedResponse(rsp *http.Response) (*TestRefFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefFixedMultipartRelatedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -6683,6 +7727,22 @@ func ParseTestRefHeaderFixedMultipartResponse(rsp *http.Response) (*TestRefHeade
 	return response, nil
 }
 
+// ParseTestRefHeaderFixedMultipartRelatedResponse parses an HTTP response from a TestRefHeaderFixedMultipartRelatedWithResponse call
+func ParseTestRefHeaderFixedMultipartRelatedResponse(rsp *http.Response) (*TestRefHeaderFixedMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefHeaderFixedMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestRefHeaderFixedNoContentResponse parses an HTTP response from a TestRefHeaderFixedNoContentWithResponse call
 func ParseTestRefHeaderFixedNoContentResponse(rsp *http.Response) (*TestRefHeaderFixedNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6799,6 +7859,22 @@ func ParseTestRefHeaderMultipartResponse(rsp *http.Response) (*TestRefHeaderMult
 	return response, nil
 }
 
+// ParseTestRefHeaderMultipartRelatedResponse parses an HTTP response from a TestRefHeaderMultipartRelatedWithResponse call
+func ParseTestRefHeaderMultipartRelatedResponse(rsp *http.Response) (*TestRefHeaderMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefHeaderMultipartRelatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseTestRefHeaderNoContentResponse parses an HTTP response from a TestRefHeaderNoContentWithResponse call
 func ParseTestRefHeaderNoContentResponse(rsp *http.Response) (*TestRefHeaderNoContentResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -6908,6 +7984,22 @@ func ParseTestRefMultipartResponse(rsp *http.Response) (*TestRefMultipartRespons
 	}
 
 	response := &TestRefMultipartResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestRefMultipartRelatedResponse parses an HTTP response from a TestRefMultipartRelatedWithResponse call
+func ParseTestRefMultipartRelatedResponse(rsp *http.Response) (*TestRefMultipartRelatedResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefMultipartRelatedResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -7040,6 +8132,9 @@ type ServerInterface interface {
 	// (GET /test-ext-fixed-multipart)
 	TestExtFixedMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-ext-fixed-multipart-related)
+	TestExtFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-ext-fixed-nocontent)
 	TestExtFixedNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7058,6 +8153,9 @@ type ServerInterface interface {
 	// (GET /test-ext-header-fixed-multipart)
 	TestExtHeaderFixedMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-ext-header-fixed-multipart-related)
+	TestExtHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-ext-header-fixed-nocontent)
 	TestExtHeaderFixedNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7073,6 +8171,9 @@ type ServerInterface interface {
 	// (GET /test-ext-header-multipart)
 	TestExtHeaderMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-ext-header-multipart-related)
+	TestExtHeaderMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-ext-header-nocontent)
 	TestExtHeaderNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7084,6 +8185,9 @@ type ServerInterface interface {
 
 	// (GET /test-ext-multipart)
 	TestExtMultipart(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-ext-multipart-related)
+	TestExtMultipartRelated(w http.ResponseWriter, r *http.Request)
 
 	// (GET /test-ext-nocontent)
 	TestExtNoContent(w http.ResponseWriter, r *http.Request)
@@ -7102,6 +8206,9 @@ type ServerInterface interface {
 
 	// (GET /test-fixed-multipart)
 	TestFixedMultipart(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-fixed-multipart-related)
+	TestFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
 
 	// (GET /test-fixed-nocontent)
 	TestFixedNoContent(w http.ResponseWriter, r *http.Request)
@@ -7130,6 +8237,9 @@ type ServerInterface interface {
 	// (GET /test-header-fixed-multipart)
 	TestHeaderFixedMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-header-fixed-multipart-related)
+	TestHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-header-fixed-nocontent)
 	TestHeaderFixedNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7151,6 +8261,9 @@ type ServerInterface interface {
 	// (GET /test-header-multipart)
 	TestHeaderMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-header-multipart-related)
+	TestHeaderMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-header-nocontent)
 	TestHeaderNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7169,6 +8282,9 @@ type ServerInterface interface {
 	// (GET /test-multipart)
 	TestMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-multipart-related)
+	TestMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-nocontent)
 	TestNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7180,6 +8296,9 @@ type ServerInterface interface {
 
 	// (GET /test-ref-fixed-multipart)
 	TestRefFixedMultipart(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-ref-fixed-multipart-related)
+	TestRefFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
 
 	// (GET /test-ref-fixed-nocontent)
 	TestRefFixedNoContent(w http.ResponseWriter, r *http.Request)
@@ -7199,6 +8318,9 @@ type ServerInterface interface {
 	// (GET /test-ref-header-fixed-multipart)
 	TestRefHeaderFixedMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-ref-header-fixed-multipart-related)
+	TestRefHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-ref-header-fixed-nocontent)
 	TestRefHeaderFixedNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7217,6 +8339,9 @@ type ServerInterface interface {
 	// (GET /test-ref-header-multipart)
 	TestRefHeaderMultipart(w http.ResponseWriter, r *http.Request)
 
+	// (GET /test-ref-header-multipart-related)
+	TestRefHeaderMultipartRelated(w http.ResponseWriter, r *http.Request)
+
 	// (GET /test-ref-header-nocontent)
 	TestRefHeaderNoContent(w http.ResponseWriter, r *http.Request)
 
@@ -7234,6 +8359,9 @@ type ServerInterface interface {
 
 	// (GET /test-ref-multipart)
 	TestRefMultipart(w http.ResponseWriter, r *http.Request)
+
+	// (GET /test-ref-multipart-related)
+	TestRefMultipartRelated(w http.ResponseWriter, r *http.Request)
 
 	// (GET /test-ref-nocontent)
 	TestRefNoContent(w http.ResponseWriter, r *http.Request)
@@ -7268,6 +8396,11 @@ func (_ Unimplemented) TestExtFixedMultipart(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-ext-fixed-multipart-related)
+func (_ Unimplemented) TestExtFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-ext-fixed-nocontent)
 func (_ Unimplemented) TestExtFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7298,6 +8431,11 @@ func (_ Unimplemented) TestExtHeaderFixedMultipart(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-ext-header-fixed-multipart-related)
+func (_ Unimplemented) TestExtHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-ext-header-fixed-nocontent)
 func (_ Unimplemented) TestExtHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7323,6 +8461,11 @@ func (_ Unimplemented) TestExtHeaderMultipart(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-ext-header-multipart-related)
+func (_ Unimplemented) TestExtHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-ext-header-nocontent)
 func (_ Unimplemented) TestExtHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7340,6 +8483,11 @@ func (_ Unimplemented) TestExtHeaderWildcard(w http.ResponseWriter, r *http.Requ
 
 // (GET /test-ext-multipart)
 func (_ Unimplemented) TestExtMultipart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-ext-multipart-related)
+func (_ Unimplemented) TestExtMultipartRelated(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7370,6 +8518,11 @@ func (_ Unimplemented) TestFixedJSON(w http.ResponseWriter, r *http.Request) {
 
 // (GET /test-fixed-multipart)
 func (_ Unimplemented) TestFixedMultipart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-fixed-multipart-related)
+func (_ Unimplemented) TestFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7418,6 +8571,11 @@ func (_ Unimplemented) TestHeaderFixedMultipart(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-header-fixed-multipart-related)
+func (_ Unimplemented) TestHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-header-fixed-nocontent)
 func (_ Unimplemented) TestHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7453,6 +8611,11 @@ func (_ Unimplemented) TestHeaderMultipart(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-header-multipart-related)
+func (_ Unimplemented) TestHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-header-nocontent)
 func (_ Unimplemented) TestHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7483,6 +8646,11 @@ func (_ Unimplemented) TestMultipart(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-multipart-related)
+func (_ Unimplemented) TestMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-nocontent)
 func (_ Unimplemented) TestNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7500,6 +8668,11 @@ func (_ Unimplemented) TestRefFixedJSON(w http.ResponseWriter, r *http.Request) 
 
 // (GET /test-ref-fixed-multipart)
 func (_ Unimplemented) TestRefFixedMultipart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-ref-fixed-multipart-related)
+func (_ Unimplemented) TestRefFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7533,6 +8706,11 @@ func (_ Unimplemented) TestRefHeaderFixedMultipart(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-ref-header-fixed-multipart-related)
+func (_ Unimplemented) TestRefHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-ref-header-fixed-nocontent)
 func (_ Unimplemented) TestRefHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7563,6 +8741,11 @@ func (_ Unimplemented) TestRefHeaderMultipart(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// (GET /test-ref-header-multipart-related)
+func (_ Unimplemented) TestRefHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // (GET /test-ref-header-nocontent)
 func (_ Unimplemented) TestRefHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -7590,6 +8773,11 @@ func (_ Unimplemented) TestRefJSON(w http.ResponseWriter, r *http.Request) {
 
 // (GET /test-ref-multipart)
 func (_ Unimplemented) TestRefMultipart(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /test-ref-multipart-related)
+func (_ Unimplemented) TestRefMultipartRelated(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -7653,6 +8841,21 @@ func (siw *ServerInterfaceWrapper) TestExtFixedMultipart(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestExtFixedMultipart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestExtFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestExtFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestExtFixedMultipartRelated(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7752,6 +8955,21 @@ func (siw *ServerInterfaceWrapper) TestExtHeaderFixedMultipart(w http.ResponseWr
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestExtHeaderFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestExtHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestExtHeaderFixedMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestExtHeaderFixedNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestExtHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -7827,6 +9045,21 @@ func (siw *ServerInterfaceWrapper) TestExtHeaderMultipart(w http.ResponseWriter,
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestExtHeaderMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestExtHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestExtHeaderMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestExtHeaderNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestExtHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -7878,6 +9111,21 @@ func (siw *ServerInterfaceWrapper) TestExtMultipart(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestExtMultipart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestExtMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestExtMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestExtMultipartRelated(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7968,6 +9216,21 @@ func (siw *ServerInterfaceWrapper) TestFixedMultipart(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedMultipart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestFixedMultipartRelated(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8112,6 +9375,21 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipart(w http.ResponseWrite
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestHeaderFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestHeaderFixedMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestHeaderFixedNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -8217,6 +9495,21 @@ func (siw *ServerInterfaceWrapper) TestHeaderMultipart(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestHeaderMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestHeaderMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestHeaderNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -8307,6 +9600,21 @@ func (siw *ServerInterfaceWrapper) TestMultipart(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -8358,6 +9666,21 @@ func (siw *ServerInterfaceWrapper) TestRefFixedMultipart(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedMultipart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestRefFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestRefFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRefFixedMultipartRelated(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8457,6 +9780,21 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipart(w http.ResponseWr
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestRefHeaderFixedMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRefHeaderFixedMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestRefHeaderFixedNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -8547,6 +9885,21 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderMultipart(w http.ResponseWriter,
 	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
+// TestRefHeaderMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestRefHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRefHeaderMultipartRelated(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
 // TestRefHeaderNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
@@ -8628,6 +9981,21 @@ func (siw *ServerInterfaceWrapper) TestRefMultipart(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefMultipart(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// TestRefMultipartRelated operation middleware
+func (siw *ServerInterfaceWrapper) TestRefMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TestRefMultipartRelated(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8847,6 +10215,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-ext-fixed-multipart", wrapper.TestExtFixedMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ext-fixed-multipart-related", wrapper.TestExtFixedMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ext-fixed-nocontent", wrapper.TestExtFixedNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8865,6 +10236,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-ext-header-fixed-multipart", wrapper.TestExtHeaderFixedMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ext-header-fixed-multipart-related", wrapper.TestExtHeaderFixedMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ext-header-fixed-nocontent", wrapper.TestExtHeaderFixedNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8880,6 +10254,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-ext-header-multipart", wrapper.TestExtHeaderMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ext-header-multipart-related", wrapper.TestExtHeaderMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ext-header-nocontent", wrapper.TestExtHeaderNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8890,6 +10267,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ext-multipart", wrapper.TestExtMultipart)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ext-multipart-related", wrapper.TestExtMultipartRelated)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ext-nocontent", wrapper.TestExtNoContent)
@@ -8908,6 +10288,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-fixed-multipart", wrapper.TestFixedMultipart)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-fixed-multipart-related", wrapper.TestFixedMultipartRelated)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-fixed-nocontent", wrapper.TestFixedNoContent)
@@ -8937,6 +10320,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-header-fixed-multipart", wrapper.TestHeaderFixedMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-header-fixed-multipart-related", wrapper.TestHeaderFixedMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-header-fixed-nocontent", wrapper.TestHeaderFixedNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8958,6 +10344,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-header-multipart", wrapper.TestHeaderMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-header-multipart-related", wrapper.TestHeaderMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-header-nocontent", wrapper.TestHeaderNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8976,6 +10365,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-multipart", wrapper.TestMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-multipart-related", wrapper.TestMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-nocontent", wrapper.TestNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -8986,6 +10378,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-fixed-multipart", wrapper.TestRefFixedMultipart)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ref-fixed-multipart-related", wrapper.TestRefFixedMultipartRelated)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-fixed-nocontent", wrapper.TestRefFixedNoContent)
@@ -9006,6 +10401,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-ref-header-fixed-multipart", wrapper.TestRefHeaderFixedMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ref-header-fixed-multipart-related", wrapper.TestRefHeaderFixedMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-header-fixed-nocontent", wrapper.TestRefHeaderFixedNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -9024,6 +10422,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/test-ref-header-multipart", wrapper.TestRefHeaderMultipart)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ref-header-multipart-related", wrapper.TestRefHeaderMultipartRelated)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-header-nocontent", wrapper.TestRefHeaderNoContent)
 	})
 	r.Group(func(r chi.Router) {
@@ -9040,6 +10441,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-multipart", wrapper.TestRefMultipart)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/test-ref-multipart-related", wrapper.TestRefMultipartRelated)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/test-ref-nocontent", wrapper.TestRefNoContent)
@@ -9066,6 +10470,8 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 type TestRespRefFixedJSONJSONResponse TestSchema
 
 type TestRespRefFixedMultipartMultipartResponse func(writer *multipart.Writer) error
+
+type TestRespRefFixedMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
 
 type TestRespRefFixedNoContentResponse struct {
 }
@@ -9103,6 +10509,16 @@ type TestRespRefHeaderFixedMultipartMultipartResponse struct {
 	Body func(writer *multipart.Writer) error
 
 	Headers TestRespRefHeaderFixedMultipartResponseHeaders
+}
+
+type TestRespRefHeaderFixedMultipartRelatedResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespRefHeaderFixedMultipartRelatedMultipartResponse struct {
+	Body func(writer *multipart.Writer) error
+
+	Headers TestRespRefHeaderFixedMultipartRelatedResponseHeaders
 }
 
 type TestRespRefHeaderFixedNoContentResponseHeaders struct {
@@ -9166,6 +10582,16 @@ type TestRespRefHeaderMultipartMultipartResponse struct {
 	Headers TestRespRefHeaderMultipartResponseHeaders
 }
 
+type TestRespRefHeaderMultipartRelatedResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespRefHeaderMultipartRelatedMultipartResponse struct {
+	Body func(writer *multipart.Writer) error
+
+	Headers TestRespRefHeaderMultipartRelatedResponseHeaders
+}
+
 type TestRespRefHeaderNoContentResponseHeaders struct {
 	Header1 string
 	Header2 int
@@ -9210,6 +10636,8 @@ type TestRespRefHeaderWildcardApplicationResponse struct {
 type TestRespRefJSONJSONResponse TestSchema
 
 type TestRespRefMultipartMultipartResponse func(writer *multipart.Writer) error
+
+type TestRespRefMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
 
 type TestRespRefNoContentResponse struct {
 }
@@ -9258,7 +10686,25 @@ type TestExtFixedMultipart200MultipartResponse externalRef0.TestRespExtFixedMult
 
 func (response TestExtFixedMultipart200MultipartResponse) VisitTestExtFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
+
+type TestExtFixedMultipartRelatedRequestObject struct {
+}
+
+type TestExtFixedMultipartRelatedResponseObject interface {
+	VisitTestExtFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestExtFixedMultipartRelated200MultipartResponse externalRef0.TestRespExtFixedMultipartRelatedMultipartResponse
+
+func (response TestExtFixedMultipartRelated200MultipartResponse) VisitTestExtFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
 	defer writer.Close()
@@ -9380,7 +10826,29 @@ type TestExtHeaderFixedMultipart200MultipartResponse struct {
 
 func (response TestExtHeaderFixedMultipart200MultipartResponse) VisitTestExtHeaderFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestExtHeaderFixedMultipartRelatedRequestObject struct {
+}
+
+type TestExtHeaderFixedMultipartRelatedResponseObject interface {
+	VisitTestExtHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestExtHeaderFixedMultipartRelated200MultipartResponse struct {
+	externalRef0.TestRespExtHeaderFixedMultipartRelatedMultipartResponse
+}
+
+func (response TestExtHeaderFixedMultipartRelated200MultipartResponse) VisitTestExtHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
@@ -9494,7 +10962,31 @@ type TestExtHeaderMultipartdefaultMultipartResponse struct {
 
 func (response TestExtHeaderMultipartdefaultMultipartResponse) VisitTestExtHeaderMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestExtHeaderMultipartRelatedRequestObject struct {
+}
+
+type TestExtHeaderMultipartRelatedResponseObject interface {
+	VisitTestExtHeaderMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestExtHeaderMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	Headers    externalRef0.TestRespExtHeaderMultipartRelatedResponseHeaders
+	StatusCode int
+}
+
+func (response TestExtHeaderMultipartRelateddefaultMultipartResponse) VisitTestExtHeaderMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(response.StatusCode)
@@ -9598,7 +11090,28 @@ type TestExtMultipartdefaultMultipartResponse struct {
 
 func (response TestExtMultipartdefaultMultipartResponse) VisitTestExtMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestExtMultipartRelatedRequestObject struct {
+}
+
+type TestExtMultipartRelatedResponseObject interface {
+	VisitTestExtMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestExtMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	StatusCode int
+}
+
+func (response TestExtMultipartRelateddefaultMultipartResponse) VisitTestExtMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(response.StatusCode)
 
 	defer writer.Close()
@@ -9724,7 +11237,25 @@ type TestFixedMultipart200MultipartResponse func(writer *multipart.Writer) error
 
 func (response TestFixedMultipart200MultipartResponse) VisitTestFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
+
+type TestFixedMultipartRelatedRequestObject struct {
+}
+
+type TestFixedMultipartRelatedResponseObject interface {
+	VisitTestFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestFixedMultipartRelated200MultipartResponse func(writer *multipart.Writer) error
+
+func (response TestFixedMultipartRelated200MultipartResponse) VisitTestFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
 	defer writer.Close()
@@ -9932,7 +11463,35 @@ type TestHeaderFixedMultipart200MultipartResponse struct {
 
 func (response TestHeaderFixedMultipart200MultipartResponse) VisitTestHeaderFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestHeaderFixedMultipartRelatedRequestObject struct {
+}
+
+type TestHeaderFixedMultipartRelatedResponseObject interface {
+	VisitTestHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestHeaderFixedMultipartRelated200ResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type TestHeaderFixedMultipartRelated200MultipartResponse struct {
+	Body    func(writer *multipart.Writer) error
+	Headers TestHeaderFixedMultipartRelated200ResponseHeaders
+}
+
+func (response TestHeaderFixedMultipartRelated200MultipartResponse) VisitTestHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
@@ -10138,7 +11697,36 @@ type TestHeaderMultipartdefaultMultipartResponse struct {
 
 func (response TestHeaderMultipartdefaultMultipartResponse) VisitTestHeaderMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestHeaderMultipartRelatedRequestObject struct {
+}
+
+type TestHeaderMultipartRelatedResponseObject interface {
+	VisitTestHeaderMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestHeaderMultipartRelateddefaultResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type TestHeaderMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	Headers    TestHeaderMultipartRelateddefaultResponseHeaders
+	StatusCode int
+}
+
+func (response TestHeaderMultipartRelateddefaultMultipartResponse) VisitTestHeaderMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(response.StatusCode)
@@ -10303,7 +11891,28 @@ type TestMultipartdefaultMultipartResponse struct {
 
 func (response TestMultipartdefaultMultipartResponse) VisitTestMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestMultipartRelatedRequestObject struct {
+}
+
+type TestMultipartRelatedResponseObject interface {
+	VisitTestMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	StatusCode int
+}
+
+func (response TestMultipartRelateddefaultMultipartResponse) VisitTestMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(response.StatusCode)
 
 	defer writer.Close()
@@ -10382,7 +11991,25 @@ type TestRefFixedMultipart200MultipartResponse TestRespRefFixedMultipartMultipar
 
 func (response TestRefFixedMultipart200MultipartResponse) VisitTestRefFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
+
+type TestRefFixedMultipartRelatedRequestObject struct {
+}
+
+type TestRefFixedMultipartRelatedResponseObject interface {
+	VisitTestRefFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestRefFixedMultipartRelated200MultipartResponse TestRespRefFixedMultipartRelatedMultipartResponse
+
+func (response TestRefFixedMultipartRelated200MultipartResponse) VisitTestRefFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
 	defer writer.Close()
@@ -10504,7 +12131,29 @@ type TestRefHeaderFixedMultipart200MultipartResponse struct {
 
 func (response TestRefHeaderFixedMultipart200MultipartResponse) VisitTestRefHeaderFixedMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestRefHeaderFixedMultipartRelatedRequestObject struct {
+}
+
+type TestRefHeaderFixedMultipartRelatedResponseObject interface {
+	VisitTestRefHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestRefHeaderFixedMultipartRelated200MultipartResponse struct {
+	TestRespRefHeaderFixedMultipartRelatedMultipartResponse
+}
+
+func (response TestRefHeaderFixedMultipartRelated200MultipartResponse) VisitTestRefHeaderFixedMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
@@ -10640,7 +12289,31 @@ type TestRefHeaderMultipartdefaultMultipartResponse struct {
 
 func (response TestRefHeaderMultipartdefaultMultipartResponse) VisitTestRefHeaderMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestRefHeaderMultipartRelatedRequestObject struct {
+}
+
+type TestRefHeaderMultipartRelatedResponseObject interface {
+	VisitTestRefHeaderMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestRefHeaderMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	Headers    TestRespRefHeaderMultipartRelatedResponseHeaders
+	StatusCode int
+}
+
+func (response TestRefHeaderMultipartRelateddefaultMultipartResponse) VisitTestRefHeaderMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(response.StatusCode)
@@ -10785,7 +12458,28 @@ type TestRefMultipartdefaultMultipartResponse struct {
 
 func (response TestRefMultipartdefaultMultipartResponse) VisitTestRefMultipartResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/test", map[string]string{"boundary": writer.Boundary()}))
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(response.StatusCode)
+
+	defer writer.Close()
+	return response.Body(writer)
+}
+
+type TestRefMultipartRelatedRequestObject struct {
+}
+
+type TestRefMultipartRelatedResponseObject interface {
+	VisitTestRefMultipartRelatedResponse(w http.ResponseWriter) error
+}
+
+type TestRefMultipartRelateddefaultMultipartResponse struct {
+	Body       func(writer *multipart.Writer) error
+	StatusCode int
+}
+
+func (response TestRefMultipartRelateddefaultMultipartResponse) VisitTestRefMultipartRelatedResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(response.StatusCode)
 
 	defer writer.Close()
@@ -10938,6 +12632,9 @@ type StrictServerInterface interface {
 	// (GET /test-ext-fixed-multipart)
 	TestExtFixedMultipart(ctx context.Context, request TestExtFixedMultipartRequestObject) (TestExtFixedMultipartResponseObject, error)
 
+	// (GET /test-ext-fixed-multipart-related)
+	TestExtFixedMultipartRelated(ctx context.Context, request TestExtFixedMultipartRelatedRequestObject) (TestExtFixedMultipartRelatedResponseObject, error)
+
 	// (GET /test-ext-fixed-nocontent)
 	TestExtFixedNoContent(ctx context.Context, request TestExtFixedNoContentRequestObject) (TestExtFixedNoContentResponseObject, error)
 
@@ -10956,6 +12653,9 @@ type StrictServerInterface interface {
 	// (GET /test-ext-header-fixed-multipart)
 	TestExtHeaderFixedMultipart(ctx context.Context, request TestExtHeaderFixedMultipartRequestObject) (TestExtHeaderFixedMultipartResponseObject, error)
 
+	// (GET /test-ext-header-fixed-multipart-related)
+	TestExtHeaderFixedMultipartRelated(ctx context.Context, request TestExtHeaderFixedMultipartRelatedRequestObject) (TestExtHeaderFixedMultipartRelatedResponseObject, error)
+
 	// (GET /test-ext-header-fixed-nocontent)
 	TestExtHeaderFixedNoContent(ctx context.Context, request TestExtHeaderFixedNoContentRequestObject) (TestExtHeaderFixedNoContentResponseObject, error)
 
@@ -10971,6 +12671,9 @@ type StrictServerInterface interface {
 	// (GET /test-ext-header-multipart)
 	TestExtHeaderMultipart(ctx context.Context, request TestExtHeaderMultipartRequestObject) (TestExtHeaderMultipartResponseObject, error)
 
+	// (GET /test-ext-header-multipart-related)
+	TestExtHeaderMultipartRelated(ctx context.Context, request TestExtHeaderMultipartRelatedRequestObject) (TestExtHeaderMultipartRelatedResponseObject, error)
+
 	// (GET /test-ext-header-nocontent)
 	TestExtHeaderNoContent(ctx context.Context, request TestExtHeaderNoContentRequestObject) (TestExtHeaderNoContentResponseObject, error)
 
@@ -10982,6 +12685,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-ext-multipart)
 	TestExtMultipart(ctx context.Context, request TestExtMultipartRequestObject) (TestExtMultipartResponseObject, error)
+
+	// (GET /test-ext-multipart-related)
+	TestExtMultipartRelated(ctx context.Context, request TestExtMultipartRelatedRequestObject) (TestExtMultipartRelatedResponseObject, error)
 
 	// (GET /test-ext-nocontent)
 	TestExtNoContent(ctx context.Context, request TestExtNoContentRequestObject) (TestExtNoContentResponseObject, error)
@@ -11000,6 +12706,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-fixed-multipart)
 	TestFixedMultipart(ctx context.Context, request TestFixedMultipartRequestObject) (TestFixedMultipartResponseObject, error)
+
+	// (GET /test-fixed-multipart-related)
+	TestFixedMultipartRelated(ctx context.Context, request TestFixedMultipartRelatedRequestObject) (TestFixedMultipartRelatedResponseObject, error)
 
 	// (GET /test-fixed-nocontent)
 	TestFixedNoContent(ctx context.Context, request TestFixedNoContentRequestObject) (TestFixedNoContentResponseObject, error)
@@ -11028,6 +12737,9 @@ type StrictServerInterface interface {
 	// (GET /test-header-fixed-multipart)
 	TestHeaderFixedMultipart(ctx context.Context, request TestHeaderFixedMultipartRequestObject) (TestHeaderFixedMultipartResponseObject, error)
 
+	// (GET /test-header-fixed-multipart-related)
+	TestHeaderFixedMultipartRelated(ctx context.Context, request TestHeaderFixedMultipartRelatedRequestObject) (TestHeaderFixedMultipartRelatedResponseObject, error)
+
 	// (GET /test-header-fixed-nocontent)
 	TestHeaderFixedNoContent(ctx context.Context, request TestHeaderFixedNoContentRequestObject) (TestHeaderFixedNoContentResponseObject, error)
 
@@ -11049,6 +12761,9 @@ type StrictServerInterface interface {
 	// (GET /test-header-multipart)
 	TestHeaderMultipart(ctx context.Context, request TestHeaderMultipartRequestObject) (TestHeaderMultipartResponseObject, error)
 
+	// (GET /test-header-multipart-related)
+	TestHeaderMultipartRelated(ctx context.Context, request TestHeaderMultipartRelatedRequestObject) (TestHeaderMultipartRelatedResponseObject, error)
+
 	// (GET /test-header-nocontent)
 	TestHeaderNoContent(ctx context.Context, request TestHeaderNoContentRequestObject) (TestHeaderNoContentResponseObject, error)
 
@@ -11067,6 +12782,9 @@ type StrictServerInterface interface {
 	// (GET /test-multipart)
 	TestMultipart(ctx context.Context, request TestMultipartRequestObject) (TestMultipartResponseObject, error)
 
+	// (GET /test-multipart-related)
+	TestMultipartRelated(ctx context.Context, request TestMultipartRelatedRequestObject) (TestMultipartRelatedResponseObject, error)
+
 	// (GET /test-nocontent)
 	TestNoContent(ctx context.Context, request TestNoContentRequestObject) (TestNoContentResponseObject, error)
 
@@ -11078,6 +12796,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-ref-fixed-multipart)
 	TestRefFixedMultipart(ctx context.Context, request TestRefFixedMultipartRequestObject) (TestRefFixedMultipartResponseObject, error)
+
+	// (GET /test-ref-fixed-multipart-related)
+	TestRefFixedMultipartRelated(ctx context.Context, request TestRefFixedMultipartRelatedRequestObject) (TestRefFixedMultipartRelatedResponseObject, error)
 
 	// (GET /test-ref-fixed-nocontent)
 	TestRefFixedNoContent(ctx context.Context, request TestRefFixedNoContentRequestObject) (TestRefFixedNoContentResponseObject, error)
@@ -11097,6 +12818,9 @@ type StrictServerInterface interface {
 	// (GET /test-ref-header-fixed-multipart)
 	TestRefHeaderFixedMultipart(ctx context.Context, request TestRefHeaderFixedMultipartRequestObject) (TestRefHeaderFixedMultipartResponseObject, error)
 
+	// (GET /test-ref-header-fixed-multipart-related)
+	TestRefHeaderFixedMultipartRelated(ctx context.Context, request TestRefHeaderFixedMultipartRelatedRequestObject) (TestRefHeaderFixedMultipartRelatedResponseObject, error)
+
 	// (GET /test-ref-header-fixed-nocontent)
 	TestRefHeaderFixedNoContent(ctx context.Context, request TestRefHeaderFixedNoContentRequestObject) (TestRefHeaderFixedNoContentResponseObject, error)
 
@@ -11115,6 +12839,9 @@ type StrictServerInterface interface {
 	// (GET /test-ref-header-multipart)
 	TestRefHeaderMultipart(ctx context.Context, request TestRefHeaderMultipartRequestObject) (TestRefHeaderMultipartResponseObject, error)
 
+	// (GET /test-ref-header-multipart-related)
+	TestRefHeaderMultipartRelated(ctx context.Context, request TestRefHeaderMultipartRelatedRequestObject) (TestRefHeaderMultipartRelatedResponseObject, error)
+
 	// (GET /test-ref-header-nocontent)
 	TestRefHeaderNoContent(ctx context.Context, request TestRefHeaderNoContentRequestObject) (TestRefHeaderNoContentResponseObject, error)
 
@@ -11132,6 +12859,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-ref-multipart)
 	TestRefMultipart(ctx context.Context, request TestRefMultipartRequestObject) (TestRefMultipartResponseObject, error)
+
+	// (GET /test-ref-multipart-related)
+	TestRefMultipartRelated(ctx context.Context, request TestRefMultipartRelatedRequestObject) (TestRefMultipartRelatedResponseObject, error)
 
 	// (GET /test-ref-nocontent)
 	TestRefNoContent(ctx context.Context, request TestRefNoContentRequestObject) (TestRefNoContentResponseObject, error)
@@ -11222,6 +12952,30 @@ func (sh *strictHandler) TestExtFixedMultipart(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestExtFixedMultipartResponseObject); ok {
 		if err := validResponse.VisitTestExtFixedMultipartResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestExtFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestExtFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestExtFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestExtFixedMultipartRelated(ctx, request.(TestExtFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestExtFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestExtFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestExtFixedMultipartRelatedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -11373,6 +13127,30 @@ func (sh *strictHandler) TestExtHeaderFixedMultipart(w http.ResponseWriter, r *h
 	}
 }
 
+// TestExtHeaderFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestExtHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestExtHeaderFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestExtHeaderFixedMultipartRelated(ctx, request.(TestExtHeaderFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestExtHeaderFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestExtHeaderFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestExtHeaderFixedMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestExtHeaderFixedNoContent operation middleware
 func (sh *strictHandler) TestExtHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestExtHeaderFixedNoContentRequestObject
@@ -11493,6 +13271,30 @@ func (sh *strictHandler) TestExtHeaderMultipart(w http.ResponseWriter, r *http.R
 	}
 }
 
+// TestExtHeaderMultipartRelated operation middleware
+func (sh *strictHandler) TestExtHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestExtHeaderMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestExtHeaderMultipartRelated(ctx, request.(TestExtHeaderMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestExtHeaderMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestExtHeaderMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestExtHeaderMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestExtHeaderNoContent operation middleware
 func (sh *strictHandler) TestExtHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestExtHeaderNoContentRequestObject
@@ -11582,6 +13384,30 @@ func (sh *strictHandler) TestExtMultipart(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestExtMultipartResponseObject); ok {
 		if err := validResponse.VisitTestExtMultipartResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestExtMultipartRelated operation middleware
+func (sh *strictHandler) TestExtMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestExtMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestExtMultipartRelated(ctx, request.(TestExtMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestExtMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestExtMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestExtMultipartRelatedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -11726,6 +13552,30 @@ func (sh *strictHandler) TestFixedMultipart(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestFixedMultipartResponseObject); ok {
 		if err := validResponse.VisitTestFixedMultipartResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestFixedMultipartRelated(ctx, request.(TestFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestFixedMultipartRelatedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -11949,6 +13799,30 @@ func (sh *strictHandler) TestHeaderFixedMultipart(w http.ResponseWriter, r *http
 	}
 }
 
+// TestHeaderFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestHeaderFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestHeaderFixedMultipartRelated(ctx, request.(TestHeaderFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestHeaderFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestHeaderFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestHeaderFixedMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestHeaderFixedNoContent operation middleware
 func (sh *strictHandler) TestHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestHeaderFixedNoContentRequestObject
@@ -12117,6 +13991,30 @@ func (sh *strictHandler) TestHeaderMultipart(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// TestHeaderMultipartRelated operation middleware
+func (sh *strictHandler) TestHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestHeaderMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestHeaderMultipartRelated(ctx, request.(TestHeaderMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestHeaderMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestHeaderMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestHeaderMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestHeaderNoContent operation middleware
 func (sh *strictHandler) TestHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestHeaderNoContentRequestObject
@@ -12261,6 +14159,30 @@ func (sh *strictHandler) TestMultipart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TestMultipartRelated operation middleware
+func (sh *strictHandler) TestMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestMultipartRelated(ctx, request.(TestMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestNoContent operation middleware
 func (sh *strictHandler) TestNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestNoContentRequestObject
@@ -12350,6 +14272,30 @@ func (sh *strictHandler) TestRefFixedMultipart(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestRefFixedMultipartResponseObject); ok {
 		if err := validResponse.VisitTestRefFixedMultipartResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestRefFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestRefFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestRefFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefFixedMultipartRelated(ctx, request.(TestRefFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestRefFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestRefFixedMultipartRelatedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -12501,6 +14447,30 @@ func (sh *strictHandler) TestRefHeaderFixedMultipart(w http.ResponseWriter, r *h
 	}
 }
 
+// TestRefHeaderFixedMultipartRelated operation middleware
+func (sh *strictHandler) TestRefHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestRefHeaderFixedMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefHeaderFixedMultipartRelated(ctx, request.(TestRefHeaderFixedMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefHeaderFixedMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestRefHeaderFixedMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestRefHeaderFixedMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestRefHeaderFixedNoContent operation middleware
 func (sh *strictHandler) TestRefHeaderFixedNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestRefHeaderFixedNoContentRequestObject
@@ -12645,6 +14615,30 @@ func (sh *strictHandler) TestRefHeaderMultipart(w http.ResponseWriter, r *http.R
 	}
 }
 
+// TestRefHeaderMultipartRelated operation middleware
+func (sh *strictHandler) TestRefHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestRefHeaderMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefHeaderMultipartRelated(ctx, request.(TestRefHeaderMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefHeaderMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestRefHeaderMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestRefHeaderMultipartRelatedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TestRefHeaderNoContent operation middleware
 func (sh *strictHandler) TestRefHeaderNoContent(w http.ResponseWriter, r *http.Request) {
 	var request TestRefHeaderNoContentRequestObject
@@ -12782,6 +14776,30 @@ func (sh *strictHandler) TestRefMultipart(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TestRefMultipartResponseObject); ok {
 		if err := validResponse.VisitTestRefMultipartResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TestRefMultipartRelated operation middleware
+func (sh *strictHandler) TestRefMultipartRelated(w http.ResponseWriter, r *http.Request) {
+	var request TestRefMultipartRelatedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefMultipartRelated(ctx, request.(TestRefMultipartRelatedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefMultipartRelated")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TestRefMultipartRelatedResponseObject); ok {
+		if err := validResponse.VisitTestRefMultipartRelatedResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -162,7 +162,70 @@ func TestMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestMultipartRelated(ctx context.Context, request pkg1.TestMultipartRelatedRequestObject) (pkg1.TestMultipartRelatedResponseObject, error) {
+	return pkg1.TestMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -405,7 +468,67 @@ func TestFixedMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestFixedMultipartRelated(ctx context.Context, request pkg1.TestFixedMultipartRelatedRequestObject) (pkg1.TestFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestFixedMultipartRelated200MultipartResponse(func(writer *multipart.Writer) error {
+		if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+			return err
+		} else {
+			return json.NewEncoder(p).Encode(pkg1.TestSchema{
+				Field1: "bar",
+				Field2: 456,
+			})
+		}
+	}), nil
+}
+
+func TestFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -705,7 +828,76 @@ func TestHeaderMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestHeaderMultipartRelated(ctx context.Context, request pkg1.TestHeaderMultipartRelatedRequestObject) (pkg1.TestHeaderMultipartRelatedResponseObject, error) {
+	return pkg1.TestHeaderMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg1.TestHeaderMultipartRelateddefaultResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestHeaderMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-header-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestHeaderMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -998,7 +1190,75 @@ func TestHeaderFixedMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestHeaderFixedMultipartRelated(ctx context.Context, request pkg1.TestHeaderFixedMultipartRelatedRequestObject) (pkg1.TestHeaderFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestHeaderFixedMultipartRelated200MultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg1.TestHeaderFixedMultipartRelated200ResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+	}, nil
+}
+
+func TestHeaderFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-header-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestHeaderFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -1232,7 +1492,70 @@ func TestRefMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestRefMultipartRelated(ctx context.Context, request pkg1.TestRefMultipartRelatedRequestObject) (pkg1.TestRefMultipartRelatedResponseObject, error) {
+	return pkg1.TestRefMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestRefMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -1442,7 +1765,67 @@ func TestRefFixedMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestRefFixedMultipartRelated(ctx context.Context, request pkg1.TestRefFixedMultipartRelatedRequestObject) (pkg1.TestRefFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestRefFixedMultipartRelated200MultipartResponse(pkg1.TestRespRefFixedMultipartRelatedMultipartResponse(func(writer *multipart.Writer) error {
+		if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+			return err
+		} else {
+			return json.NewEncoder(p).Encode(pkg1.TestSchema{
+				Field1: "bar",
+				Field2: 456,
+			})
+		}
+	})), nil
+}
+
+func TestRefFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -1675,7 +2058,76 @@ func TestRefHeaderMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestRefHeaderMultipartRelated(ctx context.Context, request pkg1.TestRefHeaderMultipartRelatedRequestObject) (pkg1.TestRefHeaderMultipartRelatedResponseObject, error) {
+	return pkg1.TestRefHeaderMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg1.TestRespRefHeaderMultipartRelatedResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestRefHeaderMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-header-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefHeaderMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -1927,7 +2379,75 @@ func TestRefHeaderFixedMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg1.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg1.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestRefHeaderFixedMultipartRelated(ctx context.Context, request pkg1.TestRefHeaderFixedMultipartRelatedRequestObject) (pkg1.TestRefHeaderFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestRefHeaderFixedMultipartRelated200MultipartResponse{pkg1.TestRespRefHeaderFixedMultipartRelatedMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg1.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg1.TestRespRefHeaderFixedMultipartRelatedResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+	}}, nil
+}
+
+func TestRefHeaderFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-header-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefHeaderFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -2093,7 +2613,70 @@ func TestExtMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg2.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg2.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestExtMultipartRelated(ctx context.Context, request pkg1.TestExtMultipartRelatedRequestObject) (pkg1.TestExtMultipartRelatedResponseObject, error) {
+	return pkg1.TestExtMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg2.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestExtMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ext-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestExtMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -2303,7 +2886,67 @@ func TestExtFixedMultipart(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg2.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg2.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestExtFixedMultipartRelated(ctx context.Context, request pkg1.TestExtFixedMultipartRelatedRequestObject) (pkg1.TestExtFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestExtFixedMultipartRelated200MultipartResponse(pkg2.TestRespExtFixedMultipartRelatedMultipartResponse(func(writer *multipart.Writer) error {
+		if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+			return err
+		} else {
+			return json.NewEncoder(p).Encode(pkg2.TestSchema{
+				Field1: "bar",
+				Field2: 456,
+			})
+		}
+	})), nil
+}
+
+func TestExtFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ext-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestExtFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -2456,7 +3099,76 @@ func TestExtHeaderMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg2.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg2.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestExtHeaderMultipartRelated(ctx context.Context, request pkg1.TestExtHeaderMultipartRelatedRequestObject) (pkg1.TestExtHeaderMultipartRelatedResponseObject, error) {
+	return pkg1.TestExtHeaderMultipartRelateddefaultMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg2.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg2.TestRespExtHeaderMultipartRelatedResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestExtHeaderMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ext-header-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestExtHeaderMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false
@@ -2708,7 +3420,75 @@ func TestExtHeaderFixedMultipart(t *testing.T) {
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
-		assert.Equal(t, "multipart/test", mediaType)
+		assert.Equal(t, "multipart/form-data", mediaType)
+		assert.NotEmpty(t, params["boundary"])
+		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+		jsonExist := false
+		for {
+			if p, err := reader.NextPart(); err == io.EOF {
+				break
+			} else {
+				assert.NoError(t, err)
+				switch p.Header.Get("Content-Type") {
+				case "application/json":
+					var j pkg2.TestSchema
+					err := json.NewDecoder(p).Decode(&j)
+					assert.NoError(t, err)
+					assert.Equal(t, pkg2.TestSchema{
+						Field1: "bar",
+						Field2: 456,
+					}, j)
+					jsonExist = true
+				default:
+					assert.Fail(t, "Bad Content-Type: %s", p.Header.Get("Content-Type"))
+				}
+			}
+		}
+		assert.True(t, jsonExist)
+	}
+}
+
+func (s strictServerInterface) TestExtHeaderFixedMultipartRelated(ctx context.Context, request pkg1.TestExtHeaderFixedMultipartRelatedRequestObject) (pkg1.TestExtHeaderFixedMultipartRelatedResponseObject, error) {
+	return pkg1.TestExtHeaderFixedMultipartRelated200MultipartResponse{pkg2.TestRespExtHeaderFixedMultipartRelatedMultipartResponse{
+		Body: func(writer *multipart.Writer) error {
+			if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+				return err
+			} else {
+				return json.NewEncoder(p).Encode(pkg2.TestSchema{
+					Field1: "bar",
+					Field2: 456,
+				})
+			}
+		},
+		Headers: pkg2.TestRespExtHeaderFixedMultipartRelatedResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+	}}, nil
+}
+
+func TestExtHeaderFixedMultipartRelated(t *testing.T) {
+	hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ext-header-fixed-multipart-related", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hh.ServeHTTP(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestExtHeaderFixedMultipartRelatedWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
+	if assert.NoError(t, err) {
+		assert.Equal(t, "multipart/related", mediaType)
 		assert.NotEmpty(t, params["boundary"])
 		reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
 		jsonExist := false

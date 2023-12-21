@@ -8,7 +8,12 @@ components:
                         $ref: '#/components/schemas/TestSchema'
         testRespExtFixedMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+        testRespExtFixedMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
         testRespExtFixedNoContent: {}
@@ -41,7 +46,19 @@ components:
                         type: integer
         testRespExtHeaderFixedMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
+        testRespExtHeaderFixedMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -97,7 +114,19 @@ components:
                         type: integer
         testRespExtHeaderMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
+        testRespExtHeaderMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -141,7 +170,12 @@ components:
                         type: integer
         testRespExtMultipart:
             content:
-                multipart/test:
+                multipart/form-data:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+        testRespExtMultipartRelated:
+            content:
+                multipart/related:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
         testRespExtNoContent: {}
