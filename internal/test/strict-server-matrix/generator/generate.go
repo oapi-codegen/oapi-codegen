@@ -72,7 +72,7 @@ type strictServerInterface struct{}
 						{name: []string{"Special", "JSON"}, content: "application/test+json", tag: "ApplicationTestPlusJSON"},
 						{name: []string{"Formdata"}, content: "application/x-www-form-urlencoded", tag: "Formdata"},
 						{name: []string{"Multipart"}, content: "multipart/test", tag: "Multipart"},
-						// issue B
+						// issue #1403
 						// {name: []string{"Wildcard", "Multipart"}, content: "multipart/*", tag: "Multipart"},
 						{name: []string{"Text"}, content: "text/plain", tag: "Text"},
 						{name: []string{"Other"}, content: "application/test", tag: "Applicationtest"},
@@ -80,12 +80,12 @@ type strictServerInterface struct{}
 						{name: []string{"NoContent"}},
 					} {
 						if content.content == "text/plain" && (header || !fixedStatusCode || ref) {
-							// issue A
+							// issue #1401
 							continue
 						}
 
 						if content.content == "application/x-www-form-urlencoded" && ref {
-							// issue C
+							// issue #1402
 							continue
 						}
 
