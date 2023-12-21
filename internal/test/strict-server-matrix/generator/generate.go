@@ -180,21 +180,21 @@ type strictServerInterface struct{}
 							body = "\"bar\""
 						case strings.HasPrefix(content.content, "multipart/"):
 							body = fmt.Sprintf(`func(writer *multipart.Writer) error {
-						if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
-							return err
-						} else {
-							return json.NewEncoder(p).Encode(pkg%d.TestSchema{
-								Field1: "bar",
-								Field2: 456,
-							})
-						}
+								if p, err := writer.CreatePart(textproto.MIMEHeader{"Content-Type": []string{"application/json"}}); err != nil {
+									return err
+								} else {
+									return json.NewEncoder(p).Encode(pkg%d.TestSchema{
+										Field1: "bar",
+										Field2: 456,
+									})
+								}
 					}`, pkgId)
 						case content.content == "application/test" || content.content == "application/*":
 							body = "bytes.NewReader(buf)"
 						default:
 							body = fmt.Sprintf(`pkg%d.TestSchema{
-						Field1: "bar",
-						Field2: 456,
+								Field1: "bar",
+								Field2: 456,
 					}`, pkgId)
 						}
 						contentRes := content.content
@@ -259,23 +259,24 @@ type strictServerInterface struct{}
 						fmt.Fprintf(fTestGo, "}\n")
 						fmt.Fprintf(fTestGo, "\n")
 
-						fmt.Fprintf(fTestGo, "func %s(t *testing.T) {\n", method)
-						fmt.Fprintf(fTestGo, "hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))\n")
-						fmt.Fprintf(fTestGo, "\n")
-						fmt.Fprintf(fTestGo, "ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {\n")
-						fmt.Fprintf(fTestGo, "if !assert.Equal(t, \"%s\", r.URL.Path) {\n", path)
-						fmt.Fprintf(fTestGo, "w.WriteHeader(http.StatusInternalServerError)\n")
-						fmt.Fprintf(fTestGo, "return\n")
-						fmt.Fprintf(fTestGo, "}\n")
-						fmt.Fprintf(fTestGo, "hh.ServeHTTP(w, r)\n")
-						fmt.Fprintf(fTestGo, "}))\n")
-						fmt.Fprintf(fTestGo, "defer ts.Close()\n")
-						fmt.Fprintf(fTestGo, "\n")
-						fmt.Fprintf(fTestGo, "c, err := pkg1.NewClientWithResponses(ts.URL)\n")
-						fmt.Fprintf(fTestGo, "assert.NoError(t, err)\n")
-						fmt.Fprintf(fTestGo, "res, err := c.%sWithResponse(context.TODO())\n", method)
-						fmt.Fprintf(fTestGo, "assert.NoError(t, err)\n")
-						fmt.Fprintf(fTestGo, "assert.Equal(t, %d, res.StatusCode())\n", statusCodeRes)
+						fmt.Fprintf(fTestGo, `func %s(t *testing.T) {
+							hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))
+
+							ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+								if !assert.Equal(t, "%s", r.URL.Path) {
+									w.WriteHeader(http.StatusInternalServerError)
+									return
+								}
+								hh.ServeHTTP(w, r)
+							}))
+							defer ts.Close()
+
+							c, err := pkg1.NewClientWithResponses(ts.URL)
+							assert.NoError(t, err)
+							res, err := c.%sWithResponse(context.TODO())
+							assert.NoError(t, err)
+							assert.Equal(t, %d, res.StatusCode())
+						`, method, path, method, statusCodeRes)
 						if header {
 							fmt.Fprintf(fTestGo, "assert.Equal(t, \"foo\", res.HTTPResponse.Header.Get(\"header1\"))\n")
 							fmt.Fprintf(fTestGo, "assert.Equal(t, \"123\", res.HTTPResponse.Header.Get(\"header2\"))\n")
@@ -288,41 +289,41 @@ type strictServerInterface struct{}
 							fmt.Fprintf(fTestGo, "assert.Equal(t, []byte{}, res.Body)\n")
 						case strings.HasPrefix(content.content, "multipart/"):
 							fmt.Fprintf(fTestGo, `mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
-					if assert.NoError(t, err) {
-						assert.Equal(t, "%s", mediaType)
-						assert.NotEmpty(t, params["boundary"])
-						reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
-						jsonExist := false
-						for {
-							if p, err := reader.NextPart(); err == io.EOF {
-								break
-							} else {
-								assert.NoError(t, err)
-								switch p.Header.Get("Content-Type") {
-								case "application/json":
-									var j pkg%d.TestSchema
-									err := json.NewDecoder(p).Decode(&j)
-									assert.NoError(t, err)
-									assert.Equal(t, pkg%d.TestSchema{
-										Field1: "bar",
-										Field2: 456,
-									}, j)
-									jsonExist = true
-								default:
-									assert.Fail(t, "Bad Content-Type: %%s", p.Header.Get("Content-Type"))
+								if assert.NoError(t, err) {
+									assert.Equal(t, "%s", mediaType)
+									assert.NotEmpty(t, params["boundary"])
+									reader := multipart.NewReader(bytes.NewReader(res.Body), params["boundary"])
+									jsonExist := false
+									for {
+										if p, err := reader.NextPart(); err == io.EOF {
+											break
+										} else {
+											assert.NoError(t, err)
+											switch p.Header.Get("Content-Type") {
+											case "application/json":
+												var j pkg%d.TestSchema
+												err := json.NewDecoder(p).Decode(&j)
+												assert.NoError(t, err)
+												assert.Equal(t, pkg%d.TestSchema{
+													Field1: "bar",
+													Field2: 456,
+												}, j)
+												jsonExist = true
+											default:
+												assert.Fail(t, "Bad Content-Type: %%s", p.Header.Get("Content-Type"))
+											}
+										}
+									}
+									assert.True(t, jsonExist)
 								}
-							}
-						}
-						assert.True(t, jsonExist)
-					}
 					`, contentRes, pkgId, pkgId)
 						case content.content == "application/x-www-form-urlencoded":
 							fmt.Fprintf(fTestGo, `form, err := url.ParseQuery(string(res.Body))
-					assert.NoError(t, err)
-					assert.Equal(t, url.Values{
-						"field1": []string{"bar"},
-						"field2": []string{"456"},
-					}, form)
+								assert.NoError(t, err)
+								assert.Equal(t, url.Values{
+									"field1": []string{"bar"},
+									"field2": []string{"456"},
+								}, form)
 					`)
 						case content.content == "application/json":
 							fmt.Fprintf(fTestGo, "assert.Equal(t, &pkg%d.TestSchema{\n", pkgId)
