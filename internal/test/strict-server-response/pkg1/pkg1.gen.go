@@ -14,7 +14,7 @@ import (
 	"net/url"
 	"strings"
 
-	externalRef0 "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-matrix/pkg2"
+	externalRef0 "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/pkg2"
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"

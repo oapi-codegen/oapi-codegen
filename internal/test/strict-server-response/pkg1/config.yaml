@@ -6,4 +6,4 @@ generate:
   strict-server: true
 output: pkg1/pkg1.gen.go
 import-mapping:
-  pkg2.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-matrix/pkg2
+  pkg2.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/pkg2
