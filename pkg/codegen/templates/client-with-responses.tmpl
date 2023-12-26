@@ -67,8 +67,12 @@ func (r {{genResponseTypeName $opid | ucFirst}}) StatusCode() int {
     }
     return 0
 }
-{{end}}
 
+// GetBody returns body bytes
+func (r {{genResponseTypeName $opid | ucFirst}}) GetBody() []byte {
+    return r.Body
+}
+{{end}}
 
 {{range .}}
 {{$opid := .OperationId -}}
