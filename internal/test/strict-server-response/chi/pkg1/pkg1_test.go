@@ -17,8 +17,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/pkg1"
-	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/pkg2"
+	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/chi/pkg1"
+	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/chi/pkg2"
 )
 
 type strictServerInterface struct{}
