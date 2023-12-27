@@ -22,6 +22,11 @@ components:
                 application/test:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
+        testRespRefFixedSpecialJSON:
+            content:
+                application/test+json:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
         testRespRefFixedWildcard:
             content:
                 application/*:
@@ -66,6 +71,18 @@ components:
         testRespRefHeaderFixedOther:
             content:
                 application/test:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
+        testRespRefHeaderFixedSpecialJSON:
+            content:
+                application/test+json:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -135,6 +152,18 @@ components:
                 header2:
                     schema:
                         type: integer
+        testRespRefHeaderSpecialJSON:
+            content:
+                application/test+json:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+            headers:
+                header1:
+                    schema:
+                        type: string
+                header2:
+                    schema:
+                        type: integer
         testRespRefHeaderWildcard:
             content:
                 application/*:
@@ -166,6 +195,11 @@ components:
         testRespRefOther:
             content:
                 application/test:
+                    schema:
+                        $ref: '#/components/schemas/TestSchema'
+        testRespRefSpecialJSON:
+            content:
+                application/test+json:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
         testRespRefWildcard:
@@ -234,6 +268,15 @@ paths:
                 "200":
                     content:
                         application/test:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+    /test-fixed-special-json:
+        get:
+            operationId: testFixedSpecialJSON
+            responses:
+                "200":
+                    content:
+                        application/test+json:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
     /test-fixed-wildcard:
@@ -325,6 +368,22 @@ paths:
                 "200":
                     content:
                         application/test:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+                    headers:
+                        header1:
+                            schema:
+                                type: string
+                        header2:
+                            schema:
+                                type: integer
+    /test-header-fixed-special-json:
+        get:
+            operationId: testHeaderFixedSpecialJSON
+            responses:
+                "200":
+                    content:
+                        application/test+json:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
                     headers:
@@ -430,6 +489,22 @@ paths:
                         header2:
                             schema:
                                 type: integer
+    /test-header-special-json:
+        get:
+            operationId: testHeaderSpecialJSON
+            responses:
+                default:
+                    content:
+                        application/test+json:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
+                    headers:
+                        header1:
+                            schema:
+                                type: string
+                        header2:
+                            schema:
+                                type: integer
     /test-header-wildcard:
         get:
             operationId: testHeaderWildcard
@@ -517,6 +592,12 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefFixedOther'
+    /test-ref-fixed-special-json:
+        get:
+            operationId: testRefFixedSpecialJSON
+            responses:
+                "200":
+                    $ref: '#/components/responses/testRespRefFixedSpecialJSON'
     /test-ref-fixed-wildcard:
         get:
             operationId: testRefFixedWildcard
@@ -547,6 +628,12 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefHeaderFixedOther'
+    /test-ref-header-fixed-special-json:
+        get:
+            operationId: testRefHeaderFixedSpecialJSON
+            responses:
+                "200":
+                    $ref: '#/components/responses/testRespRefHeaderFixedSpecialJSON'
     /test-ref-header-fixed-wildcard:
         get:
             operationId: testRefHeaderFixedWildcard
@@ -577,6 +664,12 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefHeaderOther'
+    /test-ref-header-special-json:
+        get:
+            operationId: testRefHeaderSpecialJSON
+            responses:
+                default:
+                    $ref: '#/components/responses/testRespRefHeaderSpecialJSON'
     /test-ref-header-wildcard:
         get:
             operationId: testRefHeaderWildcard
@@ -613,12 +706,27 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefOther'
+    /test-ref-special-json:
+        get:
+            operationId: testRefSpecialJSON
+            responses:
+                default:
+                    $ref: '#/components/responses/testRespRefSpecialJSON'
     /test-ref-wildcard:
         get:
             operationId: testRefWildcard
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefWildcard'
+    /test-special-json:
+        get:
+            operationId: testSpecialJSON
+            responses:
+                default:
+                    content:
+                        application/test+json:
+                            schema:
+                                $ref: '#/components/schemas/TestSchema'
     /test-wildcard:
         get:
             operationId: testWildcard

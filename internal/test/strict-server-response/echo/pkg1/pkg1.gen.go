@@ -28,14 +28,26 @@ type TestSchema struct {
 // TestRespRefFixedJSON defines model for testRespRefFixedJSON.
 type TestRespRefFixedJSON = TestSchema
 
+// TestRespRefFixedSpecialJSON defines model for testRespRefFixedSpecialJSON.
+type TestRespRefFixedSpecialJSON = TestSchema
+
 // TestRespRefHeaderFixedJSON defines model for testRespRefHeaderFixedJSON.
 type TestRespRefHeaderFixedJSON = TestSchema
+
+// TestRespRefHeaderFixedSpecialJSON defines model for testRespRefHeaderFixedSpecialJSON.
+type TestRespRefHeaderFixedSpecialJSON = TestSchema
 
 // TestRespRefHeaderJSON defines model for testRespRefHeaderJSON.
 type TestRespRefHeaderJSON = TestSchema
 
+// TestRespRefHeaderSpecialJSON defines model for testRespRefHeaderSpecialJSON.
+type TestRespRefHeaderSpecialJSON = TestSchema
+
 // TestRespRefJSON defines model for testRespRefJSON.
 type TestRespRefJSON = TestSchema
+
+// TestRespRefSpecialJSON defines model for testRespRefSpecialJSON.
+type TestRespRefSpecialJSON = TestSchema
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -128,6 +140,9 @@ type ClientInterface interface {
 	// TestFixedOther request
 	TestFixedOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestFixedSpecialJSON request
+	TestFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestFixedWildcard request
 	TestFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -149,6 +164,9 @@ type ClientInterface interface {
 	// TestHeaderFixedOther request
 	TestHeaderFixedOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestHeaderFixedSpecialJSON request
+	TestHeaderFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestHeaderFixedWildcard request
 	TestHeaderFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -166,6 +184,9 @@ type ClientInterface interface {
 
 	// TestHeaderOther request
 	TestHeaderOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestHeaderSpecialJSON request
+	TestHeaderSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestHeaderWildcard request
 	TestHeaderWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -200,6 +221,9 @@ type ClientInterface interface {
 	// TestRefFixedOther request
 	TestRefFixedOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestRefFixedSpecialJSON request
+	TestRefFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestRefFixedWildcard request
 	TestRefFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -215,6 +239,9 @@ type ClientInterface interface {
 	// TestRefHeaderFixedOther request
 	TestRefHeaderFixedOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestRefHeaderFixedSpecialJSON request
+	TestRefHeaderFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestRefHeaderFixedWildcard request
 	TestRefHeaderFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -229,6 +256,9 @@ type ClientInterface interface {
 
 	// TestRefHeaderOther request
 	TestRefHeaderOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestRefHeaderSpecialJSON request
+	TestRefHeaderSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestRefHeaderWildcard request
 	TestRefHeaderWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -248,8 +278,14 @@ type ClientInterface interface {
 	// TestRefOther request
 	TestRefOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestRefSpecialJSON request
+	TestRefSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TestRefWildcard request
 	TestRefWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// TestSpecialJSON request
+	TestSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TestWildcard request
 	TestWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -317,6 +353,18 @@ func (c *Client) TestFixedNoContent(ctx context.Context, reqEditors ...RequestEd
 
 func (c *Client) TestFixedOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestFixedOtherRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestFixedSpecialJSONRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -411,6 +459,18 @@ func (c *Client) TestHeaderFixedOther(ctx context.Context, reqEditors ...Request
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestHeaderFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestHeaderFixedSpecialJSONRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestHeaderFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestHeaderFixedWildcardRequest(c.Server)
 	if err != nil {
@@ -473,6 +533,18 @@ func (c *Client) TestHeaderMultipartRelated(ctx context.Context, reqEditors ...R
 
 func (c *Client) TestHeaderOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestHeaderOtherRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestHeaderSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestHeaderSpecialJSONRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -615,6 +687,18 @@ func (c *Client) TestRefFixedOther(ctx context.Context, reqEditors ...RequestEdi
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestRefFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefFixedSpecialJSONRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestRefFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefFixedWildcardRequest(c.Server)
 	if err != nil {
@@ -675,6 +759,18 @@ func (c *Client) TestRefHeaderFixedOther(ctx context.Context, reqEditors ...Requ
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestRefHeaderFixedSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefHeaderFixedSpecialJSONRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestRefHeaderFixedWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefHeaderFixedWildcardRequest(c.Server)
 	if err != nil {
@@ -725,6 +821,18 @@ func (c *Client) TestRefHeaderMultipartRelated(ctx context.Context, reqEditors .
 
 func (c *Client) TestRefHeaderOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefHeaderOtherRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestRefHeaderSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefHeaderSpecialJSONRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -807,8 +915,32 @@ func (c *Client) TestRefOther(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
+func (c *Client) TestRefSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestRefSpecialJSONRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) TestRefWildcard(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRefWildcardRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TestSpecialJSON(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTestSpecialJSONRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -976,6 +1108,33 @@ func NewTestFixedOtherRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-fixed-other")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestFixedSpecialJSONRequest generates requests for TestFixedSpecialJSON
+func NewTestFixedSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-fixed-special-json")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1182,6 +1341,33 @@ func NewTestHeaderFixedOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestHeaderFixedSpecialJSONRequest generates requests for TestHeaderFixedSpecialJSON
+func NewTestHeaderFixedSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-header-fixed-special-json")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestHeaderFixedWildcardRequest generates requests for TestHeaderFixedWildcard
 func NewTestHeaderFixedWildcardRequest(server string) (*http.Request, error) {
 	var err error
@@ -1327,6 +1513,33 @@ func NewTestHeaderOtherRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-header-other")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestHeaderSpecialJSONRequest generates requests for TestHeaderSpecialJSON
+func NewTestHeaderSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-header-special-json")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1641,6 +1854,33 @@ func NewTestRefFixedOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestRefFixedSpecialJSONRequest generates requests for TestRefFixedSpecialJSON
+func NewTestRefFixedSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-fixed-special-json")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestRefFixedWildcardRequest generates requests for TestRefFixedWildcard
 func NewTestRefFixedWildcardRequest(server string) (*http.Request, error) {
 	var err error
@@ -1776,6 +2016,33 @@ func NewTestRefHeaderFixedOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestRefHeaderFixedSpecialJSONRequest generates requests for TestRefHeaderFixedSpecialJSON
+func NewTestRefHeaderFixedSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-header-fixed-special-json")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestRefHeaderFixedWildcardRequest generates requests for TestRefHeaderFixedWildcard
 func NewTestRefHeaderFixedWildcardRequest(server string) (*http.Request, error) {
 	var err error
@@ -1894,6 +2161,33 @@ func NewTestRefHeaderOtherRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ref-header-other")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestRefHeaderSpecialJSONRequest generates requests for TestRefHeaderSpecialJSON
+func NewTestRefHeaderSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-header-special-json")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2073,6 +2367,33 @@ func NewTestRefOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewTestRefSpecialJSONRequest generates requests for TestRefSpecialJSON
+func NewTestRefSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-ref-special-json")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTestRefWildcardRequest generates requests for TestRefWildcard
 func NewTestRefWildcardRequest(server string) (*http.Request, error) {
 	var err error
@@ -2083,6 +2404,33 @@ func NewTestRefWildcardRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := fmt.Sprintf("/test-ref-wildcard")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewTestSpecialJSONRequest generates requests for TestSpecialJSON
+func NewTestSpecialJSONRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/test-special-json")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2188,6 +2536,9 @@ type ClientWithResponsesInterface interface {
 	// TestFixedOtherWithResponse request
 	TestFixedOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedOtherResponse, error)
 
+	// TestFixedSpecialJSONWithResponse request
+	TestFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedSpecialJSONResponse, error)
+
 	// TestFixedWildcardWithResponse request
 	TestFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedWildcardResponse, error)
 
@@ -2209,6 +2560,9 @@ type ClientWithResponsesInterface interface {
 	// TestHeaderFixedOtherWithResponse request
 	TestHeaderFixedOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedOtherResponse, error)
 
+	// TestHeaderFixedSpecialJSONWithResponse request
+	TestHeaderFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedSpecialJSONResponse, error)
+
 	// TestHeaderFixedWildcardWithResponse request
 	TestHeaderFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedWildcardResponse, error)
 
@@ -2226,6 +2580,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestHeaderOtherWithResponse request
 	TestHeaderOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderOtherResponse, error)
+
+	// TestHeaderSpecialJSONWithResponse request
+	TestHeaderSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderSpecialJSONResponse, error)
 
 	// TestHeaderWildcardWithResponse request
 	TestHeaderWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderWildcardResponse, error)
@@ -2260,6 +2617,9 @@ type ClientWithResponsesInterface interface {
 	// TestRefFixedOtherWithResponse request
 	TestRefFixedOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedOtherResponse, error)
 
+	// TestRefFixedSpecialJSONWithResponse request
+	TestRefFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedSpecialJSONResponse, error)
+
 	// TestRefFixedWildcardWithResponse request
 	TestRefFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedWildcardResponse, error)
 
@@ -2275,6 +2635,9 @@ type ClientWithResponsesInterface interface {
 	// TestRefHeaderFixedOtherWithResponse request
 	TestRefHeaderFixedOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedOtherResponse, error)
 
+	// TestRefHeaderFixedSpecialJSONWithResponse request
+	TestRefHeaderFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedSpecialJSONResponse, error)
+
 	// TestRefHeaderFixedWildcardWithResponse request
 	TestRefHeaderFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedWildcardResponse, error)
 
@@ -2289,6 +2652,9 @@ type ClientWithResponsesInterface interface {
 
 	// TestRefHeaderOtherWithResponse request
 	TestRefHeaderOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderOtherResponse, error)
+
+	// TestRefHeaderSpecialJSONWithResponse request
+	TestRefHeaderSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderSpecialJSONResponse, error)
 
 	// TestRefHeaderWildcardWithResponse request
 	TestRefHeaderWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderWildcardResponse, error)
@@ -2308,8 +2674,14 @@ type ClientWithResponsesInterface interface {
 	// TestRefOtherWithResponse request
 	TestRefOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefOtherResponse, error)
 
+	// TestRefSpecialJSONWithResponse request
+	TestRefSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefSpecialJSONResponse, error)
+
 	// TestRefWildcardWithResponse request
 	TestRefWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefWildcardResponse, error)
+
+	// TestSpecialJSONWithResponse request
+	TestSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestSpecialJSONResponse, error)
 
 	// TestWildcardWithResponse request
 	TestWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestWildcardResponse, error)
@@ -2436,6 +2808,28 @@ func (r TestFixedOtherResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestFixedOtherResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestFixedSpecialJSONResponse struct {
+	Body                   []byte
+	HTTPResponse           *http.Response
+	ApplicationtestJSON200 *TestSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r TestFixedSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestFixedSpecialJSONResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2590,6 +2984,28 @@ func (r TestHeaderFixedOtherResponse) StatusCode() int {
 	return 0
 }
 
+type TestHeaderFixedSpecialJSONResponse struct {
+	Body                   []byte
+	HTTPResponse           *http.Response
+	ApplicationtestJSON200 *TestSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r TestHeaderFixedSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestHeaderFixedSpecialJSONResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestHeaderFixedWildcardResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2711,6 +3127,28 @@ func (r TestHeaderOtherResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestHeaderOtherResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestHeaderSpecialJSONResponse struct {
+	Body                       []byte
+	HTTPResponse               *http.Response
+	ApplicationtestJSONDefault *TestSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r TestHeaderSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestHeaderSpecialJSONResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -2950,6 +3388,28 @@ func (r TestRefFixedOtherResponse) StatusCode() int {
 	return 0
 }
 
+type TestRefFixedSpecialJSONResponse struct {
+	Body                   []byte
+	HTTPResponse           *http.Response
+	ApplicationtestJSON200 *TestRespRefFixedSpecialJSON
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefFixedSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefFixedSpecialJSONResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestRefFixedWildcardResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3056,6 +3516,28 @@ func (r TestRefHeaderFixedOtherResponse) StatusCode() int {
 	return 0
 }
 
+type TestRefHeaderFixedSpecialJSONResponse struct {
+	Body                   []byte
+	HTTPResponse           *http.Response
+	ApplicationtestJSON200 *TestRespRefHeaderFixedSpecialJSON
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefHeaderFixedSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefHeaderFixedSpecialJSONResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestRefHeaderFixedWildcardResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3156,6 +3638,28 @@ func (r TestRefHeaderOtherResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestRefHeaderOtherResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestRefHeaderSpecialJSONResponse struct {
+	Body                       []byte
+	HTTPResponse               *http.Response
+	ApplicationtestJSONDefault *TestRespRefHeaderSpecialJSON
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefHeaderSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefHeaderSpecialJSONResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3289,6 +3793,28 @@ func (r TestRefOtherResponse) StatusCode() int {
 	return 0
 }
 
+type TestRefSpecialJSONResponse struct {
+	Body                       []byte
+	HTTPResponse               *http.Response
+	ApplicationtestJSONDefault *TestRespRefSpecialJSON
+}
+
+// Status returns HTTPResponse.Status
+func (r TestRefSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestRefSpecialJSONResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type TestRefWildcardResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3304,6 +3830,28 @@ func (r TestRefWildcardResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r TestRefWildcardResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type TestSpecialJSONResponse struct {
+	Body                       []byte
+	HTTPResponse               *http.Response
+	ApplicationtestJSONDefault *TestSchema
+}
+
+// Status returns HTTPResponse.Status
+func (r TestSpecialJSONResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TestSpecialJSONResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -3385,6 +3933,15 @@ func (c *ClientWithResponses) TestFixedOtherWithResponse(ctx context.Context, re
 	return ParseTestFixedOtherResponse(rsp)
 }
 
+// TestFixedSpecialJSONWithResponse request returning *TestFixedSpecialJSONResponse
+func (c *ClientWithResponses) TestFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedSpecialJSONResponse, error) {
+	rsp, err := c.TestFixedSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestFixedSpecialJSONResponse(rsp)
+}
+
 // TestFixedWildcardWithResponse request returning *TestFixedWildcardResponse
 func (c *ClientWithResponses) TestFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestFixedWildcardResponse, error) {
 	rsp, err := c.TestFixedWildcard(ctx, reqEditors...)
@@ -3448,6 +4005,15 @@ func (c *ClientWithResponses) TestHeaderFixedOtherWithResponse(ctx context.Conte
 	return ParseTestHeaderFixedOtherResponse(rsp)
 }
 
+// TestHeaderFixedSpecialJSONWithResponse request returning *TestHeaderFixedSpecialJSONResponse
+func (c *ClientWithResponses) TestHeaderFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedSpecialJSONResponse, error) {
+	rsp, err := c.TestHeaderFixedSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestHeaderFixedSpecialJSONResponse(rsp)
+}
+
 // TestHeaderFixedWildcardWithResponse request returning *TestHeaderFixedWildcardResponse
 func (c *ClientWithResponses) TestHeaderFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderFixedWildcardResponse, error) {
 	rsp, err := c.TestHeaderFixedWildcard(ctx, reqEditors...)
@@ -3500,6 +4066,15 @@ func (c *ClientWithResponses) TestHeaderOtherWithResponse(ctx context.Context, r
 		return nil, err
 	}
 	return ParseTestHeaderOtherResponse(rsp)
+}
+
+// TestHeaderSpecialJSONWithResponse request returning *TestHeaderSpecialJSONResponse
+func (c *ClientWithResponses) TestHeaderSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestHeaderSpecialJSONResponse, error) {
+	rsp, err := c.TestHeaderSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestHeaderSpecialJSONResponse(rsp)
 }
 
 // TestHeaderWildcardWithResponse request returning *TestHeaderWildcardResponse
@@ -3601,6 +4176,15 @@ func (c *ClientWithResponses) TestRefFixedOtherWithResponse(ctx context.Context,
 	return ParseTestRefFixedOtherResponse(rsp)
 }
 
+// TestRefFixedSpecialJSONWithResponse request returning *TestRefFixedSpecialJSONResponse
+func (c *ClientWithResponses) TestRefFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedSpecialJSONResponse, error) {
+	rsp, err := c.TestRefFixedSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefFixedSpecialJSONResponse(rsp)
+}
+
 // TestRefFixedWildcardWithResponse request returning *TestRefFixedWildcardResponse
 func (c *ClientWithResponses) TestRefFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefFixedWildcardResponse, error) {
 	rsp, err := c.TestRefFixedWildcard(ctx, reqEditors...)
@@ -3646,6 +4230,15 @@ func (c *ClientWithResponses) TestRefHeaderFixedOtherWithResponse(ctx context.Co
 	return ParseTestRefHeaderFixedOtherResponse(rsp)
 }
 
+// TestRefHeaderFixedSpecialJSONWithResponse request returning *TestRefHeaderFixedSpecialJSONResponse
+func (c *ClientWithResponses) TestRefHeaderFixedSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedSpecialJSONResponse, error) {
+	rsp, err := c.TestRefHeaderFixedSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefHeaderFixedSpecialJSONResponse(rsp)
+}
+
 // TestRefHeaderFixedWildcardWithResponse request returning *TestRefHeaderFixedWildcardResponse
 func (c *ClientWithResponses) TestRefHeaderFixedWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderFixedWildcardResponse, error) {
 	rsp, err := c.TestRefHeaderFixedWildcard(ctx, reqEditors...)
@@ -3689,6 +4282,15 @@ func (c *ClientWithResponses) TestRefHeaderOtherWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseTestRefHeaderOtherResponse(rsp)
+}
+
+// TestRefHeaderSpecialJSONWithResponse request returning *TestRefHeaderSpecialJSONResponse
+func (c *ClientWithResponses) TestRefHeaderSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefHeaderSpecialJSONResponse, error) {
+	rsp, err := c.TestRefHeaderSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefHeaderSpecialJSONResponse(rsp)
 }
 
 // TestRefHeaderWildcardWithResponse request returning *TestRefHeaderWildcardResponse
@@ -3745,6 +4347,15 @@ func (c *ClientWithResponses) TestRefOtherWithResponse(ctx context.Context, reqE
 	return ParseTestRefOtherResponse(rsp)
 }
 
+// TestRefSpecialJSONWithResponse request returning *TestRefSpecialJSONResponse
+func (c *ClientWithResponses) TestRefSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefSpecialJSONResponse, error) {
+	rsp, err := c.TestRefSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestRefSpecialJSONResponse(rsp)
+}
+
 // TestRefWildcardWithResponse request returning *TestRefWildcardResponse
 func (c *ClientWithResponses) TestRefWildcardWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestRefWildcardResponse, error) {
 	rsp, err := c.TestRefWildcard(ctx, reqEditors...)
@@ -3752,6 +4363,15 @@ func (c *ClientWithResponses) TestRefWildcardWithResponse(ctx context.Context, r
 		return nil, err
 	}
 	return ParseTestRefWildcardResponse(rsp)
+}
+
+// TestSpecialJSONWithResponse request returning *TestSpecialJSONResponse
+func (c *ClientWithResponses) TestSpecialJSONWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestSpecialJSONResponse, error) {
+	rsp, err := c.TestSpecialJSON(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTestSpecialJSONResponse(rsp)
 }
 
 // TestWildcardWithResponse request returning *TestWildcardResponse
@@ -3864,6 +4484,32 @@ func ParseTestFixedOtherResponse(rsp *http.Response) (*TestFixedOtherResponse, e
 	response := &TestFixedOtherResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestFixedSpecialJSONResponse parses an HTTP response from a TestFixedSpecialJSONWithResponse call
+func ParseTestFixedSpecialJSONResponse(rsp *http.Response) (*TestFixedSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestFixedSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSON200 = &dest
+
 	}
 
 	return response, nil
@@ -3991,6 +4637,32 @@ func ParseTestHeaderFixedOtherResponse(rsp *http.Response) (*TestHeaderFixedOthe
 	return response, nil
 }
 
+// ParseTestHeaderFixedSpecialJSONResponse parses an HTTP response from a TestHeaderFixedSpecialJSONWithResponse call
+func ParseTestHeaderFixedSpecialJSONResponse(rsp *http.Response) (*TestHeaderFixedSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestHeaderFixedSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestHeaderFixedWildcardResponse parses an HTTP response from a TestHeaderFixedWildcardWithResponse call
 func ParseTestHeaderFixedWildcardResponse(rsp *http.Response) (*TestHeaderFixedWildcardResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4092,6 +4764,32 @@ func ParseTestHeaderOtherResponse(rsp *http.Response) (*TestHeaderOtherResponse,
 	response := &TestHeaderOtherResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestHeaderSpecialJSONResponse parses an HTTP response from a TestHeaderSpecialJSONWithResponse call
+func ParseTestHeaderSpecialJSONResponse(rsp *http.Response) (*TestHeaderSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestHeaderSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest TestSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -4293,6 +4991,32 @@ func ParseTestRefFixedOtherResponse(rsp *http.Response) (*TestRefFixedOtherRespo
 	return response, nil
 }
 
+// ParseTestRefFixedSpecialJSONResponse parses an HTTP response from a TestRefFixedSpecialJSONWithResponse call
+func ParseTestRefFixedSpecialJSONResponse(rsp *http.Response) (*TestRefFixedSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefFixedSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestRespRefFixedSpecialJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestRefFixedWildcardResponse parses an HTTP response from a TestRefFixedWildcardWithResponse call
 func ParseTestRefFixedWildcardResponse(rsp *http.Response) (*TestRefFixedWildcardResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4383,6 +5107,32 @@ func ParseTestRefHeaderFixedOtherResponse(rsp *http.Response) (*TestRefHeaderFix
 	return response, nil
 }
 
+// ParseTestRefHeaderFixedSpecialJSONResponse parses an HTTP response from a TestRefHeaderFixedSpecialJSONWithResponse call
+func ParseTestRefHeaderFixedSpecialJSONResponse(rsp *http.Response) (*TestRefHeaderFixedSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefHeaderFixedSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest TestRespRefHeaderFixedSpecialJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestRefHeaderFixedWildcardResponse parses an HTTP response from a TestRefHeaderFixedWildcardWithResponse call
 func ParseTestRefHeaderFixedWildcardResponse(rsp *http.Response) (*TestRefHeaderFixedWildcardResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4468,6 +5218,32 @@ func ParseTestRefHeaderOtherResponse(rsp *http.Response) (*TestRefHeaderOtherRes
 	response := &TestRefHeaderOtherResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestRefHeaderSpecialJSONResponse parses an HTTP response from a TestRefHeaderSpecialJSONWithResponse call
+func ParseTestRefHeaderSpecialJSONResponse(rsp *http.Response) (*TestRefHeaderSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefHeaderSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest TestRespRefHeaderSpecialJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -4579,6 +5355,32 @@ func ParseTestRefOtherResponse(rsp *http.Response) (*TestRefOtherResponse, error
 	return response, nil
 }
 
+// ParseTestRefSpecialJSONResponse parses an HTTP response from a TestRefSpecialJSONWithResponse call
+func ParseTestRefSpecialJSONResponse(rsp *http.Response) (*TestRefSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestRefSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest TestRespRefSpecialJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSONDefault = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseTestRefWildcardResponse parses an HTTP response from a TestRefWildcardWithResponse call
 func ParseTestRefWildcardResponse(rsp *http.Response) (*TestRefWildcardResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -4590,6 +5392,32 @@ func ParseTestRefWildcardResponse(rsp *http.Response) (*TestRefWildcardResponse,
 	response := &TestRefWildcardResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTestSpecialJSONResponse parses an HTTP response from a TestSpecialJSONWithResponse call
+func ParseTestSpecialJSONResponse(rsp *http.Response) (*TestSpecialJSONResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TestSpecialJSONResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest TestSchema
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationtestJSONDefault = &dest
+
 	}
 
 	return response, nil
@@ -4632,6 +5460,9 @@ type ServerInterface interface {
 	// (GET /test-fixed-other)
 	TestFixedOther(ctx echo.Context) error
 
+	// (GET /test-fixed-special-json)
+	TestFixedSpecialJSON(ctx echo.Context) error
+
 	// (GET /test-fixed-wildcard)
 	TestFixedWildcard(ctx echo.Context) error
 
@@ -4653,6 +5484,9 @@ type ServerInterface interface {
 	// (GET /test-header-fixed-other)
 	TestHeaderFixedOther(ctx echo.Context) error
 
+	// (GET /test-header-fixed-special-json)
+	TestHeaderFixedSpecialJSON(ctx echo.Context) error
+
 	// (GET /test-header-fixed-wildcard)
 	TestHeaderFixedWildcard(ctx echo.Context) error
 
@@ -4670,6 +5504,9 @@ type ServerInterface interface {
 
 	// (GET /test-header-other)
 	TestHeaderOther(ctx echo.Context) error
+
+	// (GET /test-header-special-json)
+	TestHeaderSpecialJSON(ctx echo.Context) error
 
 	// (GET /test-header-wildcard)
 	TestHeaderWildcard(ctx echo.Context) error
@@ -4704,6 +5541,9 @@ type ServerInterface interface {
 	// (GET /test-ref-fixed-other)
 	TestRefFixedOther(ctx echo.Context) error
 
+	// (GET /test-ref-fixed-special-json)
+	TestRefFixedSpecialJSON(ctx echo.Context) error
+
 	// (GET /test-ref-fixed-wildcard)
 	TestRefFixedWildcard(ctx echo.Context) error
 
@@ -4719,6 +5559,9 @@ type ServerInterface interface {
 	// (GET /test-ref-header-fixed-other)
 	TestRefHeaderFixedOther(ctx echo.Context) error
 
+	// (GET /test-ref-header-fixed-special-json)
+	TestRefHeaderFixedSpecialJSON(ctx echo.Context) error
+
 	// (GET /test-ref-header-fixed-wildcard)
 	TestRefHeaderFixedWildcard(ctx echo.Context) error
 
@@ -4733,6 +5576,9 @@ type ServerInterface interface {
 
 	// (GET /test-ref-header-other)
 	TestRefHeaderOther(ctx echo.Context) error
+
+	// (GET /test-ref-header-special-json)
+	TestRefHeaderSpecialJSON(ctx echo.Context) error
 
 	// (GET /test-ref-header-wildcard)
 	TestRefHeaderWildcard(ctx echo.Context) error
@@ -4752,8 +5598,14 @@ type ServerInterface interface {
 	// (GET /test-ref-other)
 	TestRefOther(ctx echo.Context) error
 
+	// (GET /test-ref-special-json)
+	TestRefSpecialJSON(ctx echo.Context) error
+
 	// (GET /test-ref-wildcard)
 	TestRefWildcard(ctx echo.Context) error
+
+	// (GET /test-special-json)
+	TestSpecialJSON(ctx echo.Context) error
 
 	// (GET /test-wildcard)
 	TestWildcard(ctx echo.Context) error
@@ -4815,6 +5667,15 @@ func (w *ServerInterfaceWrapper) TestFixedOther(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.TestFixedOther(ctx)
+	return err
+}
+
+// TestFixedSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestFixedSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestFixedSpecialJSON(ctx)
 	return err
 }
 
@@ -4881,6 +5742,15 @@ func (w *ServerInterfaceWrapper) TestHeaderFixedOther(ctx echo.Context) error {
 	return err
 }
 
+// TestHeaderFixedSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestHeaderFixedSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestHeaderFixedSpecialJSON(ctx)
+	return err
+}
+
 // TestHeaderFixedWildcard converts echo context to params.
 func (w *ServerInterfaceWrapper) TestHeaderFixedWildcard(ctx echo.Context) error {
 	var err error
@@ -4932,6 +5802,15 @@ func (w *ServerInterfaceWrapper) TestHeaderOther(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.TestHeaderOther(ctx)
+	return err
+}
+
+// TestHeaderSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestHeaderSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestHeaderSpecialJSON(ctx)
 	return err
 }
 
@@ -5034,6 +5913,15 @@ func (w *ServerInterfaceWrapper) TestRefFixedOther(ctx echo.Context) error {
 	return err
 }
 
+// TestRefFixedSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestRefFixedSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestRefFixedSpecialJSON(ctx)
+	return err
+}
+
 // TestRefFixedWildcard converts echo context to params.
 func (w *ServerInterfaceWrapper) TestRefFixedWildcard(ctx echo.Context) error {
 	var err error
@@ -5079,6 +5967,15 @@ func (w *ServerInterfaceWrapper) TestRefHeaderFixedOther(ctx echo.Context) error
 	return err
 }
 
+// TestRefHeaderFixedSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestRefHeaderFixedSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestRefHeaderFixedSpecialJSON(ctx)
+	return err
+}
+
 // TestRefHeaderFixedWildcard converts echo context to params.
 func (w *ServerInterfaceWrapper) TestRefHeaderFixedWildcard(ctx echo.Context) error {
 	var err error
@@ -5121,6 +6018,15 @@ func (w *ServerInterfaceWrapper) TestRefHeaderOther(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.TestRefHeaderOther(ctx)
+	return err
+}
+
+// TestRefHeaderSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestRefHeaderSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestRefHeaderSpecialJSON(ctx)
 	return err
 }
 
@@ -5178,12 +6084,30 @@ func (w *ServerInterfaceWrapper) TestRefOther(ctx echo.Context) error {
 	return err
 }
 
+// TestRefSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestRefSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestRefSpecialJSON(ctx)
+	return err
+}
+
 // TestRefWildcard converts echo context to params.
 func (w *ServerInterfaceWrapper) TestRefWildcard(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.TestRefWildcard(ctx)
+	return err
+}
+
+// TestSpecialJSON converts echo context to params.
+func (w *ServerInterfaceWrapper) TestSpecialJSON(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.TestSpecialJSON(ctx)
 	return err
 }
 
@@ -5230,6 +6154,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/test-fixed-multipart-related", wrapper.TestFixedMultipartRelated)
 	router.GET(baseURL+"/test-fixed-nocontent", wrapper.TestFixedNoContent)
 	router.GET(baseURL+"/test-fixed-other", wrapper.TestFixedOther)
+	router.GET(baseURL+"/test-fixed-special-json", wrapper.TestFixedSpecialJSON)
 	router.GET(baseURL+"/test-fixed-wildcard", wrapper.TestFixedWildcard)
 	router.GET(baseURL+"/test-formdata", wrapper.TestFormdata)
 	router.GET(baseURL+"/test-header-fixed-formdata", wrapper.TestHeaderFixedFormdata)
@@ -5237,12 +6162,14 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/test-header-fixed-multipart", wrapper.TestHeaderFixedMultipart)
 	router.GET(baseURL+"/test-header-fixed-multipart-related", wrapper.TestHeaderFixedMultipartRelated)
 	router.GET(baseURL+"/test-header-fixed-other", wrapper.TestHeaderFixedOther)
+	router.GET(baseURL+"/test-header-fixed-special-json", wrapper.TestHeaderFixedSpecialJSON)
 	router.GET(baseURL+"/test-header-fixed-wildcard", wrapper.TestHeaderFixedWildcard)
 	router.GET(baseURL+"/test-header-formdata", wrapper.TestHeaderFormdata)
 	router.GET(baseURL+"/test-header-json", wrapper.TestHeaderJSON)
 	router.GET(baseURL+"/test-header-multipart", wrapper.TestHeaderMultipart)
 	router.GET(baseURL+"/test-header-multipart-related", wrapper.TestHeaderMultipartRelated)
 	router.GET(baseURL+"/test-header-other", wrapper.TestHeaderOther)
+	router.GET(baseURL+"/test-header-special-json", wrapper.TestHeaderSpecialJSON)
 	router.GET(baseURL+"/test-header-wildcard", wrapper.TestHeaderWildcard)
 	router.GET(baseURL+"/test-json", wrapper.TestJSON)
 	router.GET(baseURL+"/test-multipart", wrapper.TestMultipart)
@@ -5254,23 +6181,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/test-ref-fixed-multipart-related", wrapper.TestRefFixedMultipartRelated)
 	router.GET(baseURL+"/test-ref-fixed-nocontent", wrapper.TestRefFixedNoContent)
 	router.GET(baseURL+"/test-ref-fixed-other", wrapper.TestRefFixedOther)
+	router.GET(baseURL+"/test-ref-fixed-special-json", wrapper.TestRefFixedSpecialJSON)
 	router.GET(baseURL+"/test-ref-fixed-wildcard", wrapper.TestRefFixedWildcard)
 	router.GET(baseURL+"/test-ref-header-fixed-json", wrapper.TestRefHeaderFixedJSON)
 	router.GET(baseURL+"/test-ref-header-fixed-multipart", wrapper.TestRefHeaderFixedMultipart)
 	router.GET(baseURL+"/test-ref-header-fixed-multipart-related", wrapper.TestRefHeaderFixedMultipartRelated)
 	router.GET(baseURL+"/test-ref-header-fixed-other", wrapper.TestRefHeaderFixedOther)
+	router.GET(baseURL+"/test-ref-header-fixed-special-json", wrapper.TestRefHeaderFixedSpecialJSON)
 	router.GET(baseURL+"/test-ref-header-fixed-wildcard", wrapper.TestRefHeaderFixedWildcard)
 	router.GET(baseURL+"/test-ref-header-json", wrapper.TestRefHeaderJSON)
 	router.GET(baseURL+"/test-ref-header-multipart", wrapper.TestRefHeaderMultipart)
 	router.GET(baseURL+"/test-ref-header-multipart-related", wrapper.TestRefHeaderMultipartRelated)
 	router.GET(baseURL+"/test-ref-header-other", wrapper.TestRefHeaderOther)
+	router.GET(baseURL+"/test-ref-header-special-json", wrapper.TestRefHeaderSpecialJSON)
 	router.GET(baseURL+"/test-ref-header-wildcard", wrapper.TestRefHeaderWildcard)
 	router.GET(baseURL+"/test-ref-json", wrapper.TestRefJSON)
 	router.GET(baseURL+"/test-ref-multipart", wrapper.TestRefMultipart)
 	router.GET(baseURL+"/test-ref-multipart-related", wrapper.TestRefMultipartRelated)
 	router.GET(baseURL+"/test-ref-nocontent", wrapper.TestRefNoContent)
 	router.GET(baseURL+"/test-ref-other", wrapper.TestRefOther)
+	router.GET(baseURL+"/test-ref-special-json", wrapper.TestRefSpecialJSON)
 	router.GET(baseURL+"/test-ref-wildcard", wrapper.TestRefWildcard)
+	router.GET(baseURL+"/test-special-json", wrapper.TestSpecialJSON)
 	router.GET(baseURL+"/test-wildcard", wrapper.TestWildcard)
 
 }
@@ -5289,6 +6221,8 @@ type TestRespRefFixedOtherApplicationtestResponse struct {
 
 	ContentLength int64
 }
+
+type TestRespRefFixedSpecialJSONApplicationTestPlusJSONResponse TestSchema
 
 type TestRespRefFixedWildcardApplicationResponse struct {
 	Body io.Reader
@@ -5336,6 +6270,16 @@ type TestRespRefHeaderFixedOtherApplicationtestResponse struct {
 
 	Headers       TestRespRefHeaderFixedOtherResponseHeaders
 	ContentLength int64
+}
+
+type TestRespRefHeaderFixedSpecialJSONResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespRefHeaderFixedSpecialJSONApplicationTestPlusJSONResponse struct {
+	Body TestSchema
+
+	Headers TestRespRefHeaderFixedSpecialJSONResponseHeaders
 }
 
 type TestRespRefHeaderFixedWildcardResponseHeaders struct {
@@ -5391,6 +6335,16 @@ type TestRespRefHeaderOtherApplicationtestResponse struct {
 	ContentLength int64
 }
 
+type TestRespRefHeaderSpecialJSONResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+type TestRespRefHeaderSpecialJSONApplicationTestPlusJSONResponse struct {
+	Body TestSchema
+
+	Headers TestRespRefHeaderSpecialJSONResponseHeaders
+}
+
 type TestRespRefHeaderWildcardResponseHeaders struct {
 	Header1 string
 	Header2 int
@@ -5417,6 +6371,8 @@ type TestRespRefOtherApplicationtestResponse struct {
 
 	ContentLength int64
 }
+
+type TestRespRefSpecialJSONApplicationTestPlusJSONResponse TestSchema
 
 type TestRespRefWildcardApplicationResponse struct {
 	Body io.Reader
@@ -5537,6 +6493,22 @@ func (response TestFixedOther200ApplicationtestResponse) VisitTestFixedOtherResp
 	}
 	_, err := io.Copy(w, response.Body)
 	return err
+}
+
+type TestFixedSpecialJSONRequestObject struct {
+}
+
+type TestFixedSpecialJSONResponseObject interface {
+	VisitTestFixedSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestFixedSpecialJSON200ApplicationTestPlusJSONResponse TestSchema
+
+func (response TestFixedSpecialJSON200ApplicationTestPlusJSONResponse) VisitTestFixedSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type TestFixedWildcardRequestObject struct {
@@ -5737,6 +6709,32 @@ func (response TestHeaderFixedOther200ApplicationtestResponse) VisitTestHeaderFi
 	return err
 }
 
+type TestHeaderFixedSpecialJSONRequestObject struct {
+}
+
+type TestHeaderFixedSpecialJSONResponseObject interface {
+	VisitTestHeaderFixedSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestHeaderFixedSpecialJSON200ResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type TestHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse struct {
+	Body    TestSchema
+	Headers TestHeaderFixedSpecialJSON200ResponseHeaders
+}
+
+func (response TestHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse) VisitTestHeaderFixedSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type TestHeaderFixedWildcardRequestObject struct {
 }
 
@@ -5922,6 +6920,33 @@ func (response TestHeaderOtherdefaultApplicationtestResponse) VisitTestHeaderOth
 	}
 	_, err := io.Copy(w, response.Body)
 	return err
+}
+
+type TestHeaderSpecialJSONRequestObject struct {
+}
+
+type TestHeaderSpecialJSONResponseObject interface {
+	VisitTestHeaderSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestHeaderSpecialJSONdefaultResponseHeaders struct {
+	Header1 string
+	Header2 int
+}
+
+type TestHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse struct {
+	Body       TestSchema
+	Headers    TestHeaderSpecialJSONdefaultResponseHeaders
+	StatusCode int
+}
+
+func (response TestHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse) VisitTestHeaderSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type TestHeaderWildcardRequestObject struct {
@@ -6157,6 +7182,24 @@ func (response TestRefFixedOther200ApplicationtestResponse) VisitTestRefFixedOth
 	return err
 }
 
+type TestRefFixedSpecialJSONRequestObject struct {
+}
+
+type TestRefFixedSpecialJSONResponseObject interface {
+	VisitTestRefFixedSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestRefFixedSpecialJSON200ApplicationTestPlusJSONResponse struct {
+	TestRespRefFixedSpecialJSONApplicationTestPlusJSONResponse
+}
+
+func (response TestRefFixedSpecialJSON200ApplicationTestPlusJSONResponse) VisitTestRefFixedSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 type TestRefFixedWildcardRequestObject struct {
 }
 
@@ -6271,6 +7314,26 @@ func (response TestRefHeaderFixedOther200ApplicationtestResponse) VisitTestRefHe
 	}
 	_, err := io.Copy(w, response.Body)
 	return err
+}
+
+type TestRefHeaderFixedSpecialJSONRequestObject struct {
+}
+
+type TestRefHeaderFixedSpecialJSONResponseObject interface {
+	VisitTestRefHeaderFixedSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestRefHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse struct {
+	TestRespRefHeaderFixedSpecialJSONApplicationTestPlusJSONResponse
+}
+
+func (response TestRefHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse) VisitTestRefHeaderFixedSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type TestRefHeaderFixedWildcardRequestObject struct {
@@ -6398,6 +7461,28 @@ func (response TestRefHeaderOtherdefaultApplicationtestResponse) VisitTestRefHea
 	}
 	_, err := io.Copy(w, response.Body)
 	return err
+}
+
+type TestRefHeaderSpecialJSONRequestObject struct {
+}
+
+type TestRefHeaderSpecialJSONResponseObject interface {
+	VisitTestRefHeaderSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestRefHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse struct {
+	Body       TestSchema
+	Headers    TestRespRefHeaderSpecialJSONResponseHeaders
+	StatusCode int
+}
+
+func (response TestRefHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse) VisitTestRefHeaderSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
+	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type TestRefHeaderWildcardRequestObject struct {
@@ -6535,6 +7620,25 @@ func (response TestRefOtherdefaultApplicationtestResponse) VisitTestRefOtherResp
 	return err
 }
 
+type TestRefSpecialJSONRequestObject struct {
+}
+
+type TestRefSpecialJSONResponseObject interface {
+	VisitTestRefSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestRefSpecialJSONdefaultApplicationTestPlusJSONResponse struct {
+	Body       TestSchema
+	StatusCode int
+}
+
+func (response TestRefSpecialJSONdefaultApplicationTestPlusJSONResponse) VisitTestRefSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
+}
+
 type TestRefWildcardRequestObject struct {
 }
 
@@ -6561,6 +7665,25 @@ func (response TestRefWildcarddefaultApplicationResponse) VisitTestRefWildcardRe
 	}
 	_, err := io.Copy(w, response.Body)
 	return err
+}
+
+type TestSpecialJSONRequestObject struct {
+}
+
+type TestSpecialJSONResponseObject interface {
+	VisitTestSpecialJSONResponse(w http.ResponseWriter) error
+}
+
+type TestSpecialJSONdefaultApplicationTestPlusJSONResponse struct {
+	Body       TestSchema
+	StatusCode int
+}
+
+func (response TestSpecialJSONdefaultApplicationTestPlusJSONResponse) VisitTestSpecialJSONResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/test+json")
+	w.WriteHeader(response.StatusCode)
+
+	return json.NewEncoder(w).Encode(response.Body)
 }
 
 type TestWildcardRequestObject struct {
@@ -6612,6 +7735,9 @@ type StrictServerInterface interface {
 	// (GET /test-fixed-other)
 	TestFixedOther(ctx context.Context, request TestFixedOtherRequestObject) (TestFixedOtherResponseObject, error)
 
+	// (GET /test-fixed-special-json)
+	TestFixedSpecialJSON(ctx context.Context, request TestFixedSpecialJSONRequestObject) (TestFixedSpecialJSONResponseObject, error)
+
 	// (GET /test-fixed-wildcard)
 	TestFixedWildcard(ctx context.Context, request TestFixedWildcardRequestObject) (TestFixedWildcardResponseObject, error)
 
@@ -6633,6 +7759,9 @@ type StrictServerInterface interface {
 	// (GET /test-header-fixed-other)
 	TestHeaderFixedOther(ctx context.Context, request TestHeaderFixedOtherRequestObject) (TestHeaderFixedOtherResponseObject, error)
 
+	// (GET /test-header-fixed-special-json)
+	TestHeaderFixedSpecialJSON(ctx context.Context, request TestHeaderFixedSpecialJSONRequestObject) (TestHeaderFixedSpecialJSONResponseObject, error)
+
 	// (GET /test-header-fixed-wildcard)
 	TestHeaderFixedWildcard(ctx context.Context, request TestHeaderFixedWildcardRequestObject) (TestHeaderFixedWildcardResponseObject, error)
 
@@ -6650,6 +7779,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-header-other)
 	TestHeaderOther(ctx context.Context, request TestHeaderOtherRequestObject) (TestHeaderOtherResponseObject, error)
+
+	// (GET /test-header-special-json)
+	TestHeaderSpecialJSON(ctx context.Context, request TestHeaderSpecialJSONRequestObject) (TestHeaderSpecialJSONResponseObject, error)
 
 	// (GET /test-header-wildcard)
 	TestHeaderWildcard(ctx context.Context, request TestHeaderWildcardRequestObject) (TestHeaderWildcardResponseObject, error)
@@ -6684,6 +7816,9 @@ type StrictServerInterface interface {
 	// (GET /test-ref-fixed-other)
 	TestRefFixedOther(ctx context.Context, request TestRefFixedOtherRequestObject) (TestRefFixedOtherResponseObject, error)
 
+	// (GET /test-ref-fixed-special-json)
+	TestRefFixedSpecialJSON(ctx context.Context, request TestRefFixedSpecialJSONRequestObject) (TestRefFixedSpecialJSONResponseObject, error)
+
 	// (GET /test-ref-fixed-wildcard)
 	TestRefFixedWildcard(ctx context.Context, request TestRefFixedWildcardRequestObject) (TestRefFixedWildcardResponseObject, error)
 
@@ -6699,6 +7834,9 @@ type StrictServerInterface interface {
 	// (GET /test-ref-header-fixed-other)
 	TestRefHeaderFixedOther(ctx context.Context, request TestRefHeaderFixedOtherRequestObject) (TestRefHeaderFixedOtherResponseObject, error)
 
+	// (GET /test-ref-header-fixed-special-json)
+	TestRefHeaderFixedSpecialJSON(ctx context.Context, request TestRefHeaderFixedSpecialJSONRequestObject) (TestRefHeaderFixedSpecialJSONResponseObject, error)
+
 	// (GET /test-ref-header-fixed-wildcard)
 	TestRefHeaderFixedWildcard(ctx context.Context, request TestRefHeaderFixedWildcardRequestObject) (TestRefHeaderFixedWildcardResponseObject, error)
 
@@ -6713,6 +7851,9 @@ type StrictServerInterface interface {
 
 	// (GET /test-ref-header-other)
 	TestRefHeaderOther(ctx context.Context, request TestRefHeaderOtherRequestObject) (TestRefHeaderOtherResponseObject, error)
+
+	// (GET /test-ref-header-special-json)
+	TestRefHeaderSpecialJSON(ctx context.Context, request TestRefHeaderSpecialJSONRequestObject) (TestRefHeaderSpecialJSONResponseObject, error)
 
 	// (GET /test-ref-header-wildcard)
 	TestRefHeaderWildcard(ctx context.Context, request TestRefHeaderWildcardRequestObject) (TestRefHeaderWildcardResponseObject, error)
@@ -6732,8 +7873,14 @@ type StrictServerInterface interface {
 	// (GET /test-ref-other)
 	TestRefOther(ctx context.Context, request TestRefOtherRequestObject) (TestRefOtherResponseObject, error)
 
+	// (GET /test-ref-special-json)
+	TestRefSpecialJSON(ctx context.Context, request TestRefSpecialJSONRequestObject) (TestRefSpecialJSONResponseObject, error)
+
 	// (GET /test-ref-wildcard)
 	TestRefWildcard(ctx context.Context, request TestRefWildcardRequestObject) (TestRefWildcardResponseObject, error)
+
+	// (GET /test-special-json)
+	TestSpecialJSON(ctx context.Context, request TestSpecialJSONRequestObject) (TestSpecialJSONResponseObject, error)
 
 	// (GET /test-wildcard)
 	TestWildcard(ctx context.Context, request TestWildcardRequestObject) (TestWildcardResponseObject, error)
@@ -6883,6 +8030,29 @@ func (sh *strictHandler) TestFixedOther(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(TestFixedOtherResponseObject); ok {
 		return validResponse.VisitTestFixedOtherResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// TestFixedSpecialJSON operation middleware
+func (sh *strictHandler) TestFixedSpecialJSON(ctx echo.Context) error {
+	var request TestFixedSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestFixedSpecialJSON(ctx.Request().Context(), request.(TestFixedSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestFixedSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestFixedSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestFixedSpecialJSONResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -7050,6 +8220,29 @@ func (sh *strictHandler) TestHeaderFixedOther(ctx echo.Context) error {
 	return nil
 }
 
+// TestHeaderFixedSpecialJSON operation middleware
+func (sh *strictHandler) TestHeaderFixedSpecialJSON(ctx echo.Context) error {
+	var request TestHeaderFixedSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestHeaderFixedSpecialJSON(ctx.Request().Context(), request.(TestHeaderFixedSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestHeaderFixedSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestHeaderFixedSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestHeaderFixedSpecialJSONResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // TestHeaderFixedWildcard operation middleware
 func (sh *strictHandler) TestHeaderFixedWildcard(ctx echo.Context) error {
 	var request TestHeaderFixedWildcardRequestObject
@@ -7182,6 +8375,29 @@ func (sh *strictHandler) TestHeaderOther(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(TestHeaderOtherResponseObject); ok {
 		return validResponse.VisitTestHeaderOtherResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// TestHeaderSpecialJSON operation middleware
+func (sh *strictHandler) TestHeaderSpecialJSON(ctx echo.Context) error {
+	var request TestHeaderSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestHeaderSpecialJSON(ctx.Request().Context(), request.(TestHeaderSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestHeaderSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestHeaderSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestHeaderSpecialJSONResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -7441,6 +8657,29 @@ func (sh *strictHandler) TestRefFixedOther(ctx echo.Context) error {
 	return nil
 }
 
+// TestRefFixedSpecialJSON operation middleware
+func (sh *strictHandler) TestRefFixedSpecialJSON(ctx echo.Context) error {
+	var request TestRefFixedSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefFixedSpecialJSON(ctx.Request().Context(), request.(TestRefFixedSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefFixedSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestRefFixedSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestRefFixedSpecialJSONResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // TestRefFixedWildcard operation middleware
 func (sh *strictHandler) TestRefFixedWildcard(ctx echo.Context) error {
 	var request TestRefFixedWildcardRequestObject
@@ -7556,6 +8795,29 @@ func (sh *strictHandler) TestRefHeaderFixedOther(ctx echo.Context) error {
 	return nil
 }
 
+// TestRefHeaderFixedSpecialJSON operation middleware
+func (sh *strictHandler) TestRefHeaderFixedSpecialJSON(ctx echo.Context) error {
+	var request TestRefHeaderFixedSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefHeaderFixedSpecialJSON(ctx.Request().Context(), request.(TestRefHeaderFixedSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefHeaderFixedSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestRefHeaderFixedSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestRefHeaderFixedSpecialJSONResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // TestRefHeaderFixedWildcard operation middleware
 func (sh *strictHandler) TestRefHeaderFixedWildcard(ctx echo.Context) error {
 	var request TestRefHeaderFixedWildcardRequestObject
@@ -7665,6 +8927,29 @@ func (sh *strictHandler) TestRefHeaderOther(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(TestRefHeaderOtherResponseObject); ok {
 		return validResponse.VisitTestRefHeaderOtherResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// TestRefHeaderSpecialJSON operation middleware
+func (sh *strictHandler) TestRefHeaderSpecialJSON(ctx echo.Context) error {
+	var request TestRefHeaderSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefHeaderSpecialJSON(ctx.Request().Context(), request.(TestRefHeaderSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefHeaderSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestRefHeaderSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestRefHeaderSpecialJSONResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
@@ -7809,6 +9094,29 @@ func (sh *strictHandler) TestRefOther(ctx echo.Context) error {
 	return nil
 }
 
+// TestRefSpecialJSON operation middleware
+func (sh *strictHandler) TestRefSpecialJSON(ctx echo.Context) error {
+	var request TestRefSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestRefSpecialJSON(ctx.Request().Context(), request.(TestRefSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestRefSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestRefSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestRefSpecialJSONResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // TestRefWildcard operation middleware
 func (sh *strictHandler) TestRefWildcard(ctx echo.Context) error {
 	var request TestRefWildcardRequestObject
@@ -7826,6 +9134,29 @@ func (sh *strictHandler) TestRefWildcard(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(TestRefWildcardResponseObject); ok {
 		return validResponse.VisitTestRefWildcardResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// TestSpecialJSON operation middleware
+func (sh *strictHandler) TestSpecialJSON(ctx echo.Context) error {
+	var request TestSpecialJSONRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.TestSpecialJSON(ctx.Request().Context(), request.(TestSpecialJSONRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TestSpecialJSON")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(TestSpecialJSONResponseObject); ok {
+		return validResponse.VisitTestSpecialJSONResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

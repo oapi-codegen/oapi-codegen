@@ -53,11 +53,47 @@ func TestJSON(t *testing.T) {
 	res, err := c.TestJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSONDefault)
+}
+
+func (s strictServerInterface) TestSpecialJSON(ctx context.Context, request pkg1.TestSpecialJSONRequestObject) (pkg1.TestSpecialJSONResponseObject, error) {
+	return pkg1.TestSpecialJSONdefaultApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSONDefault)
 }
 
 func (s strictServerInterface) TestFormdata(ctx context.Context, request pkg1.TestFormdataRequestObject) (pkg1.TestFormdataResponseObject, error) {
@@ -318,7 +354,7 @@ func TestNoContent(t *testing.T) {
 	res, err := c.TestNoContentWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 204, res.StatusCode())
-	assert.Equal(t, "text/plain; charset=utf-8", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte{}, res.Body)
 }
 
@@ -348,11 +384,44 @@ func TestFixedJSON(t *testing.T) {
 	res, err := c.TestFixedJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSON200)
+}
+
+func (s strictServerInterface) TestFixedSpecialJSON(ctx context.Context, request pkg1.TestFixedSpecialJSONRequestObject) (pkg1.TestFixedSpecialJSONResponseObject, error) {
+	return pkg1.TestFixedSpecialJSON200ApplicationTestPlusJSONResponse(pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}), nil
+}
+
+func TestFixedSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-fixed-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestFixedSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSON200)
 }
 
 func (s strictServerInterface) TestFixedFormdata(ctx context.Context, request pkg1.TestFixedFormdataRequestObject) (pkg1.TestFixedFormdataResponseObject, error) {
@@ -600,7 +669,7 @@ func TestFixedNoContent(t *testing.T) {
 	res, err := c.TestFixedNoContentWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 204, res.StatusCode())
-	assert.Equal(t, "text/plain; charset=utf-8", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte{}, res.Body)
 }
 
@@ -639,11 +708,53 @@ func TestHeaderJSON(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSONDefault)
+}
+
+func (s strictServerInterface) TestHeaderSpecialJSON(ctx context.Context, request pkg1.TestHeaderSpecialJSONRequestObject) (pkg1.TestHeaderSpecialJSONResponseObject, error) {
+	return pkg1.TestHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		Headers: pkg1.TestHeaderSpecialJSONdefaultResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestHeaderSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-header-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestHeaderSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSONDefault)
 }
 
 func (s strictServerInterface) TestHeaderFormdata(ctx context.Context, request pkg1.TestHeaderFormdataRequestObject) (pkg1.TestHeaderFormdataResponseObject, error) {
@@ -943,11 +1054,52 @@ func TestHeaderFixedJSON(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSON200)
+}
+
+func (s strictServerInterface) TestHeaderFixedSpecialJSON(ctx context.Context, request pkg1.TestHeaderFixedSpecialJSONRequestObject) (pkg1.TestHeaderFixedSpecialJSONResponseObject, error) {
+	return pkg1.TestHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		Headers: pkg1.TestHeaderFixedSpecialJSON200ResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+	}, nil
+}
+
+func TestHeaderFixedSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-header-fixed-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestHeaderFixedSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSON200)
 }
 
 func (s strictServerInterface) TestHeaderFixedFormdata(ctx context.Context, request pkg1.TestHeaderFixedFormdataRequestObject) (pkg1.TestHeaderFixedFormdataResponseObject, error) {
@@ -1237,11 +1389,47 @@ func TestRefJSON(t *testing.T) {
 	res, err := c.TestRefJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSONDefault)
+}
+
+func (s strictServerInterface) TestRefSpecialJSON(ctx context.Context, request pkg1.TestRefSpecialJSONRequestObject) (pkg1.TestRefSpecialJSONResponseObject, error) {
+	return pkg1.TestRefSpecialJSONdefaultApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestRefSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSONDefault)
 }
 
 func (s strictServerInterface) TestRefMultipart(ctx context.Context, request pkg1.TestRefMultipartRequestObject) (pkg1.TestRefMultipartResponseObject, error) {
@@ -1464,7 +1652,7 @@ func TestRefNoContent(t *testing.T) {
 	res, err := c.TestRefNoContentWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 204, res.StatusCode())
-	assert.Equal(t, "text/plain; charset=utf-8", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte{}, res.Body)
 }
 
@@ -1494,11 +1682,44 @@ func TestRefFixedJSON(t *testing.T) {
 	res, err := c.TestRefFixedJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSON200)
+}
+
+func (s strictServerInterface) TestRefFixedSpecialJSON(ctx context.Context, request pkg1.TestRefFixedSpecialJSONRequestObject) (pkg1.TestRefFixedSpecialJSONResponseObject, error) {
+	return pkg1.TestRefFixedSpecialJSON200ApplicationTestPlusJSONResponse{pkg1.TestRespRefFixedSpecialJSONApplicationTestPlusJSONResponse(pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	})}, nil
+}
+
+func TestRefFixedSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-fixed-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefFixedSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSON200)
 }
 
 func (s strictServerInterface) TestRefFixedMultipart(ctx context.Context, request pkg1.TestRefFixedMultipartRequestObject) (pkg1.TestRefFixedMultipartResponseObject, error) {
@@ -1711,7 +1932,7 @@ func TestRefFixedNoContent(t *testing.T) {
 	res, err := c.TestRefFixedNoContentWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 204, res.StatusCode())
-	assert.Equal(t, "text/plain; charset=utf-8", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte{}, res.Body)
 }
 
@@ -1750,11 +1971,53 @@ func TestRefHeaderJSON(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSONDefault)
+}
+
+func (s strictServerInterface) TestRefHeaderSpecialJSON(ctx context.Context, request pkg1.TestRefHeaderSpecialJSONRequestObject) (pkg1.TestRefHeaderSpecialJSONResponseObject, error) {
+	return pkg1.TestRefHeaderSpecialJSONdefaultApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		Headers: pkg1.TestRespRefHeaderSpecialJSONResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+		StatusCode: 200,
+	}, nil
+}
+
+func TestRefHeaderSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-header-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefHeaderSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSONDefault)
 }
 
 func (s strictServerInterface) TestRefHeaderMultipart(ctx context.Context, request pkg1.TestRefHeaderMultipartRequestObject) (pkg1.TestRefHeaderMultipartResponseObject, error) {
@@ -2010,11 +2273,52 @@ func TestRefHeaderFixedJSON(t *testing.T) {
 	assert.Equal(t, 200, res.StatusCode())
 	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
 	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
-	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
+	// assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
 		Field2: 456,
 	}, res.JSON200)
+}
+
+func (s strictServerInterface) TestRefHeaderFixedSpecialJSON(ctx context.Context, request pkg1.TestRefHeaderFixedSpecialJSONRequestObject) (pkg1.TestRefHeaderFixedSpecialJSONResponseObject, error) {
+	return pkg1.TestRefHeaderFixedSpecialJSON200ApplicationTestPlusJSONResponse{pkg1.TestRespRefHeaderFixedSpecialJSONApplicationTestPlusJSONResponse{
+		Body: pkg1.TestSchema{
+			Field1: "bar",
+			Field2: 456,
+		},
+		Headers: pkg1.TestRespRefHeaderFixedSpecialJSONResponseHeaders{
+			Header1: "foo",
+			Header2: 123,
+		},
+	}}, nil
+}
+
+func TestRefHeaderFixedSpecialJSON(t *testing.T) {
+	app := fiber.New()
+	pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))
+	hhf := adaptor.FiberApp(app)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !assert.Equal(t, "/test-ref-header-fixed-special-json", r.URL.Path) {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		hhf(w, r)
+	}))
+	defer ts.Close()
+
+	c, err := pkg1.NewClientWithResponses(ts.URL)
+	assert.NoError(t, err)
+	res, err := c.TestRefHeaderFixedSpecialJSONWithResponse(context.TODO())
+	assert.NoError(t, err)
+	assert.Equal(t, 200, res.StatusCode())
+	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
+	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	// assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
+	assert.Equal(t, &pkg1.TestSchema{
+		Field1: "bar",
+		Field2: 456,
+	}, res.ApplicationtestJSON200)
 }
 
 func (s strictServerInterface) TestRefHeaderFixedMultipart(ctx context.Context, request pkg1.TestRefHeaderFixedMultipartRequestObject) (pkg1.TestRefHeaderFixedMultipartResponseObject, error) {

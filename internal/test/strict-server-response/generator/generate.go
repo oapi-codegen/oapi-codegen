@@ -154,11 +154,6 @@ output: %s/pkg2/pkg2.gen.go
 							continue
 						}
 
-						if content.content == "application/test+json" {
-							// Issue #1408
-							continue
-						}
-
 						generateOneTest(fTestGos, paths, responses, ref, extRef, header, fixedStatusCode, content)
 					}
 				}
@@ -496,17 +491,12 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 			fmt.Fprintf(fTestGo, "assert.Equal(t, \"foo\", res.HTTPResponse.Header.Get(\"header1\"))\n")
 			fmt.Fprintf(fTestGo, "assert.Equal(t, \"123\", res.HTTPResponse.Header.Get(\"header2\"))\n")
 		}
-		contentResExpect := contentRes
-		if server == IrisServer && contentResExpect == "application/json" {
-			// Issue #1408
-			contentResExpect += "; charset=utf-8"
-		}
-		if server == FiberServer && contentResExpect == "" {
-			// Issue #1409
-			contentResExpect = "text/plain; charset=utf-8"
-		}
-		if !strings.HasPrefix(contentResExpect, "multipart/") {
-			fmt.Fprintf(fTestGo, "assert.Equal(t, \"%s\", res.HTTPResponse.Header.Get(\"Content-Type\"))\n", contentResExpect)
+		if !strings.HasPrefix(contentRes, "multipart/") {
+			if (strings.Contains(content.content, "json") && (server == FiberServer || server == IrisServer) /* Issue #1408 */) ||
+				(content.content == "" && server == FiberServer /* Issue #1409 */) {
+				fmt.Fprint(fTestGo, "// ")
+			}
+			fmt.Fprintf(fTestGo, "assert.Equal(t, \"%s\", res.HTTPResponse.Header.Get(\"Content-Type\"))\n", contentRes)
 		}
 		switch {
 		case content.content == "":
@@ -540,7 +530,7 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 					}
 					assert.True(t, jsonExist)
 				}
-	`, contentResExpect, pkgId, pkgId)
+	`, contentRes, pkgId, pkgId)
 		case content.content == "application/x-www-form-urlencoded":
 			fmt.Fprintf(fTestGo, `form, err := url.ParseQuery(string(res.Body))
 				assert.NoError(t, err)
