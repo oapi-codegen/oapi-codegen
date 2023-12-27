@@ -126,7 +126,7 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
