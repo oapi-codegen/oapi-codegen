@@ -107,7 +107,7 @@ output: %s/pkg2/pkg2.gen.go
 	for _, ref := range []bool{false, true} {
 		for _, extRef := range []bool{false, true} {
 			if extRef {
-				// issue Fiber
+				// Issue #1405
 				continue
 			}
 			for _, header := range []bool{false, true} {
@@ -122,7 +122,7 @@ output: %s/pkg2/pkg2.gen.go
 						{name: []string{"Formdata"}, content: "application/x-www-form-urlencoded", tag: "Formdata"},
 						{name: []string{"Multipart"}, content: "multipart/form-data", tag: "Multipart"},
 						{name: []string{"Multipart", "Related"}, content: "multipart/related", tag: "Multipart"},
-						// issue #1403
+						// Issue #1403
 						// {name: []string{"Wildcard", "Multipart"}, content: "multipart/*", tag: "Multipart"},
 						{name: []string{"Text"}, content: "text/plain", tag: "Text"},
 						{name: []string{"Other"}, content: "application/test", tag: "Applicationtest"},
@@ -130,32 +130,32 @@ output: %s/pkg2/pkg2.gen.go
 						{name: []string{"NoContent"}},
 					} {
 						if content.content == "text/plain" && (header || !fixedStatusCode || ref) {
-							// issue #1401
+							// Issue #1401
 							continue
 						}
 
 						if content.content == "text/plain" {
-							// issue Fiber (2)
+							// Issue #1406
 							continue
 						}
 
 						if content.content == "application/x-www-form-urlencoded" && ref {
-							// issue #1402
+							// Issue #1402
 							continue
 						}
 
 						if strings.Contains(content.content, "json") && extRef && !fixedStatusCode {
-							// issue #1202
+							// Issue #1202
 							continue
 						}
 
 						if header && content.content == "" {
-							// issue Iris
+							// Issue #1407
 							continue
 						}
 
 						if content.content == "application/test+json" {
-							// issue Iris + Fiber
+							// Issue #1408
 							continue
 						}
 
@@ -498,9 +498,11 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 		}
 		contentResExpect := contentRes
 		if server == IrisServer && contentResExpect == "application/json" {
+			// Issue #1408
 			contentResExpect += "; charset=utf-8"
 		}
 		if server == FiberServer && contentResExpect == "" {
+			// Issue #1409
 			contentResExpect = "text/plain; charset=utf-8"
 		}
 		if !strings.HasPrefix(contentResExpect, "multipart/") {
