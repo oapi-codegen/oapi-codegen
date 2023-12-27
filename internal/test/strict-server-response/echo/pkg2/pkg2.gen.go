@@ -5,8 +5,6 @@ package pkg2
 
 import (
 	"context"
-	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,18 +18,6 @@ type TestSchema struct {
 	Field1 string `json:"field1"`
 	Field2 int    `json:"field2"`
 }
-
-// TestRespExtFixedJSON defines model for testRespExtFixedJSON.
-type TestRespExtFixedJSON = TestSchema
-
-// TestRespExtFixedSpecialJSON defines model for testRespExtFixedSpecialJSON.
-type TestRespExtFixedSpecialJSON = TestSchema
-
-// TestRespExtHeaderFixedJSON defines model for testRespExtHeaderFixedJSON.
-type TestRespExtHeaderFixedJSON = TestSchema
-
-// TestRespExtHeaderFixedSpecialJSON defines model for testRespExtHeaderFixedSpecialJSON.
-type TestRespExtHeaderFixedSpecialJSON = TestSchema
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -186,172 +172,6 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 // can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
-}
-
-type TestRespExtFixedJSONJSONResponse TestSchema
-
-type TestRespExtFixedMultipartMultipartResponse func(writer *multipart.Writer) error
-
-type TestRespExtFixedMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
-
-type TestRespExtFixedNoContentResponse struct {
-}
-
-type TestRespExtFixedOtherApplicationtestResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
-
-type TestRespExtFixedSpecialJSONApplicationTestPlusJSONResponse TestSchema
-
-type TestRespExtFixedWildcardApplicationResponse struct {
-	Body io.Reader
-
-	ContentType   string
-	ContentLength int64
-}
-
-type TestRespExtHeaderFixedJSONResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedJSONJSONResponse struct {
-	Body TestSchema
-
-	Headers TestRespExtHeaderFixedJSONResponseHeaders
-}
-
-type TestRespExtHeaderFixedMultipartResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedMultipartMultipartResponse struct {
-	Body func(writer *multipart.Writer) error
-
-	Headers TestRespExtHeaderFixedMultipartResponseHeaders
-}
-
-type TestRespExtHeaderFixedMultipartRelatedResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedMultipartRelatedMultipartResponse struct {
-	Body func(writer *multipart.Writer) error
-
-	Headers TestRespExtHeaderFixedMultipartRelatedResponseHeaders
-}
-
-type TestRespExtHeaderFixedNoContentResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedNoContentResponse struct {
-	Headers TestRespExtHeaderFixedNoContentResponseHeaders
-}
-
-type TestRespExtHeaderFixedOtherResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedOtherApplicationtestResponse struct {
-	Body io.Reader
-
-	Headers       TestRespExtHeaderFixedOtherResponseHeaders
-	ContentLength int64
-}
-
-type TestRespExtHeaderFixedSpecialJSONResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedSpecialJSONApplicationTestPlusJSONResponse struct {
-	Body TestSchema
-
-	Headers TestRespExtHeaderFixedSpecialJSONResponseHeaders
-}
-
-type TestRespExtHeaderFixedWildcardResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderFixedWildcardApplicationResponse struct {
-	Body io.Reader
-
-	Headers       TestRespExtHeaderFixedWildcardResponseHeaders
-	ContentType   string
-	ContentLength int64
-}
-
-type TestRespExtHeaderMultipartResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderMultipartMultipartResponse struct {
-	Body func(writer *multipart.Writer) error
-
-	Headers TestRespExtHeaderMultipartResponseHeaders
-}
-
-type TestRespExtHeaderMultipartRelatedResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderMultipartRelatedMultipartResponse struct {
-	Body func(writer *multipart.Writer) error
-
-	Headers TestRespExtHeaderMultipartRelatedResponseHeaders
-}
-
-type TestRespExtHeaderNoContentResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderNoContentResponse struct {
-	Headers TestRespExtHeaderNoContentResponseHeaders
-}
-
-type TestRespExtHeaderOtherResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderOtherApplicationtestResponse struct {
-	Body io.Reader
-
-	Headers       TestRespExtHeaderOtherResponseHeaders
-	ContentLength int64
-}
-
-type TestRespExtHeaderWildcardResponseHeaders struct {
-	Header1 string
-	Header2 int
-}
-type TestRespExtHeaderWildcardApplicationResponse struct {
-	Body io.Reader
-
-	Headers       TestRespExtHeaderWildcardResponseHeaders
-	ContentType   string
-	ContentLength int64
-}
-
-type TestRespExtMultipartMultipartResponse func(writer *multipart.Writer) error
-
-type TestRespExtMultipartRelatedMultipartResponse func(writer *multipart.Writer) error
-
-type TestRespExtNoContentResponse struct {
-}
-
-type TestRespExtOtherApplicationtestResponse struct {
-	Body io.Reader
-
-	ContentLength int64
-}
-
-type TestRespExtWildcardApplicationResponse struct {
-	Body io.Reader
-
-	ContentType   string
-	ContentLength int64
 }
 
 // StrictServerInterface represents all server handlers.

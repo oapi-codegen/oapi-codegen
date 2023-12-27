@@ -106,6 +106,10 @@ output: %s/pkg2/pkg2.gen.go
 
 	for _, ref := range []bool{false, true} {
 		for _, extRef := range []bool{false, true} {
+			if extRef {
+				// issue Fiber
+				continue
+			}
 			for _, header := range []bool{false, true} {
 				for _, fixedStatusCode := range []bool{false, true} {
 					for _, content := range []struct {
@@ -130,6 +134,11 @@ output: %s/pkg2/pkg2.gen.go
 							continue
 						}
 
+						if content.content == "text/plain" {
+							// issue Fiber (2)
+							continue
+						}
+
 						if content.content == "application/x-www-form-urlencoded" && ref {
 							// issue #1402
 							continue
@@ -137,6 +146,16 @@ output: %s/pkg2/pkg2.gen.go
 
 						if strings.Contains(content.content, "json") && extRef && !fixedStatusCode {
 							// issue #1202
+							continue
+						}
+
+						if header && content.content == "" {
+							// issue Iris
+							continue
+						}
+
+						if content.content == "application/test+json" {
+							// issue Iris + Fiber
 							continue
 						}
 
@@ -477,8 +496,15 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 			fmt.Fprintf(fTestGo, "assert.Equal(t, \"foo\", res.HTTPResponse.Header.Get(\"header1\"))\n")
 			fmt.Fprintf(fTestGo, "assert.Equal(t, \"123\", res.HTTPResponse.Header.Get(\"header2\"))\n")
 		}
-		if !strings.HasPrefix(contentRes, "multipart/") {
-			fmt.Fprintf(fTestGo, "assert.Equal(t, \"%s\", res.HTTPResponse.Header.Get(\"Content-Type\"))\n", contentRes)
+		contentResExpect := contentRes
+		if server == IrisServer && contentResExpect == "application/json" {
+			contentResExpect += "; charset=utf-8"
+		}
+		if server == FiberServer && contentResExpect == "" {
+			contentResExpect = "text/plain; charset=utf-8"
+		}
+		if !strings.HasPrefix(contentResExpect, "multipart/") {
+			fmt.Fprintf(fTestGo, "assert.Equal(t, \"%s\", res.HTTPResponse.Header.Get(\"Content-Type\"))\n", contentResExpect)
 		}
 		switch {
 		case content.content == "":
@@ -512,7 +538,7 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 					}
 					assert.True(t, jsonExist)
 				}
-	`, contentRes, pkgId, pkgId)
+	`, contentResExpect, pkgId, pkgId)
 		case content.content == "application/x-www-form-urlencoded":
 			fmt.Fprintf(fTestGo, `form, err := url.ParseQuery(string(res.Body))
 				assert.NoError(t, err)

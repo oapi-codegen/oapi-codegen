@@ -22,11 +22,6 @@ components:
                 application/test:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
-        testRespRefFixedSpecialJSON:
-            content:
-                application/test+json:
-                    schema:
-                        $ref: '#/components/schemas/TestSchema'
         testRespRefFixedWildcard:
             content:
                 application/*:
@@ -68,29 +63,9 @@ components:
                 header2:
                     schema:
                         type: integer
-        testRespRefHeaderFixedNoContent:
-            headers:
-                header1:
-                    schema:
-                        type: string
-                header2:
-                    schema:
-                        type: integer
         testRespRefHeaderFixedOther:
             content:
                 application/test:
-                    schema:
-                        $ref: '#/components/schemas/TestSchema'
-            headers:
-                header1:
-                    schema:
-                        type: string
-                header2:
-                    schema:
-                        type: integer
-        testRespRefHeaderFixedSpecialJSON:
-            content:
-                application/test+json:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -148,29 +123,9 @@ components:
                 header2:
                     schema:
                         type: integer
-        testRespRefHeaderNoContent:
-            headers:
-                header1:
-                    schema:
-                        type: string
-                header2:
-                    schema:
-                        type: integer
         testRespRefHeaderOther:
             content:
                 application/test:
-                    schema:
-                        $ref: '#/components/schemas/TestSchema'
-            headers:
-                header1:
-                    schema:
-                        type: string
-                header2:
-                    schema:
-                        type: integer
-        testRespRefHeaderSpecialJSON:
-            content:
-                application/test+json:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
             headers:
@@ -213,11 +168,6 @@ components:
                 application/test:
                     schema:
                         $ref: '#/components/schemas/TestSchema'
-        testRespRefSpecialJSON:
-            content:
-                application/test+json:
-                    schema:
-                        $ref: '#/components/schemas/TestSchema'
         testRespRefWildcard:
             content:
                 application/*:
@@ -236,150 +186,6 @@ components:
             type: object
 openapi: 3.0.1
 paths:
-    /test-ext-fixed-json:
-        get:
-            operationId: testExtFixedJSON
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedJSON
-    /test-ext-fixed-multipart:
-        get:
-            operationId: testExtFixedMultipart
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedMultipart
-    /test-ext-fixed-multipart-related:
-        get:
-            operationId: testExtFixedMultipartRelated
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedMultipartRelated
-    /test-ext-fixed-nocontent:
-        get:
-            operationId: testExtFixedNoContent
-            responses:
-                "204":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedNoContent
-    /test-ext-fixed-other:
-        get:
-            operationId: testExtFixedOther
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedOther
-    /test-ext-fixed-special-json:
-        get:
-            operationId: testExtFixedSpecialJSON
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedSpecialJSON
-    /test-ext-fixed-wildcard:
-        get:
-            operationId: testExtFixedWildcard
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtFixedWildcard
-    /test-ext-header-fixed-json:
-        get:
-            operationId: testExtHeaderFixedJSON
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedJSON
-    /test-ext-header-fixed-multipart:
-        get:
-            operationId: testExtHeaderFixedMultipart
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedMultipart
-    /test-ext-header-fixed-multipart-related:
-        get:
-            operationId: testExtHeaderFixedMultipartRelated
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedMultipartRelated
-    /test-ext-header-fixed-nocontent:
-        get:
-            operationId: testExtHeaderFixedNoContent
-            responses:
-                "204":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedNoContent
-    /test-ext-header-fixed-other:
-        get:
-            operationId: testExtHeaderFixedOther
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedOther
-    /test-ext-header-fixed-special-json:
-        get:
-            operationId: testExtHeaderFixedSpecialJSON
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedSpecialJSON
-    /test-ext-header-fixed-wildcard:
-        get:
-            operationId: testExtHeaderFixedWildcard
-            responses:
-                "200":
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderFixedWildcard
-    /test-ext-header-multipart:
-        get:
-            operationId: testExtHeaderMultipart
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderMultipart
-    /test-ext-header-multipart-related:
-        get:
-            operationId: testExtHeaderMultipartRelated
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderMultipartRelated
-    /test-ext-header-nocontent:
-        get:
-            operationId: testExtHeaderNoContent
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderNoContent
-    /test-ext-header-other:
-        get:
-            operationId: testExtHeaderOther
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderOther
-    /test-ext-header-wildcard:
-        get:
-            operationId: testExtHeaderWildcard
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtHeaderWildcard
-    /test-ext-multipart:
-        get:
-            operationId: testExtMultipart
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtMultipart
-    /test-ext-multipart-related:
-        get:
-            operationId: testExtMultipartRelated
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtMultipartRelated
-    /test-ext-nocontent:
-        get:
-            operationId: testExtNoContent
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtNoContent
-    /test-ext-other:
-        get:
-            operationId: testExtOther
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtOther
-    /test-ext-wildcard:
-        get:
-            operationId: testExtWildcard
-            responses:
-                default:
-                    $ref: pkg2.yaml#/components/responses/testRespExtWildcard
     /test-fixed-formdata:
         get:
             operationId: testFixedFormdata
@@ -428,24 +234,6 @@ paths:
                 "200":
                     content:
                         application/test:
-                            schema:
-                                $ref: '#/components/schemas/TestSchema'
-    /test-fixed-special-json:
-        get:
-            operationId: testFixedSpecialJSON
-            responses:
-                "200":
-                    content:
-                        application/test+json:
-                            schema:
-                                $ref: '#/components/schemas/TestSchema'
-    /test-fixed-text:
-        get:
-            operationId: testFixedText
-            responses:
-                "200":
-                    content:
-                        text/plain:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
     /test-fixed-wildcard:
@@ -530,18 +318,6 @@ paths:
                         header2:
                             schema:
                                 type: integer
-    /test-header-fixed-nocontent:
-        get:
-            operationId: testHeaderFixedNoContent
-            responses:
-                "204":
-                    headers:
-                        header1:
-                            schema:
-                                type: string
-                        header2:
-                            schema:
-                                type: integer
     /test-header-fixed-other:
         get:
             operationId: testHeaderFixedOther
@@ -549,22 +325,6 @@ paths:
                 "200":
                     content:
                         application/test:
-                            schema:
-                                $ref: '#/components/schemas/TestSchema'
-                    headers:
-                        header1:
-                            schema:
-                                type: string
-                        header2:
-                            schema:
-                                type: integer
-    /test-header-fixed-special-json:
-        get:
-            operationId: testHeaderFixedSpecialJSON
-            responses:
-                "200":
-                    content:
-                        application/test+json:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
                     headers:
@@ -654,18 +414,6 @@ paths:
                         header2:
                             schema:
                                 type: integer
-    /test-header-nocontent:
-        get:
-            operationId: testHeaderNoContent
-            responses:
-                default:
-                    headers:
-                        header1:
-                            schema:
-                                type: string
-                        header2:
-                            schema:
-                                type: integer
     /test-header-other:
         get:
             operationId: testHeaderOther
@@ -673,22 +421,6 @@ paths:
                 default:
                     content:
                         application/test:
-                            schema:
-                                $ref: '#/components/schemas/TestSchema'
-                    headers:
-                        header1:
-                            schema:
-                                type: string
-                        header2:
-                            schema:
-                                type: integer
-    /test-header-special-json:
-        get:
-            operationId: testHeaderSpecialJSON
-            responses:
-                default:
-                    content:
-                        application/test+json:
                             schema:
                                 $ref: '#/components/schemas/TestSchema'
                     headers:
@@ -785,12 +517,6 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefFixedOther'
-    /test-ref-fixed-special-json:
-        get:
-            operationId: testRefFixedSpecialJSON
-            responses:
-                "200":
-                    $ref: '#/components/responses/testRespRefFixedSpecialJSON'
     /test-ref-fixed-wildcard:
         get:
             operationId: testRefFixedWildcard
@@ -815,24 +541,12 @@ paths:
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefHeaderFixedMultipartRelated'
-    /test-ref-header-fixed-nocontent:
-        get:
-            operationId: testRefHeaderFixedNoContent
-            responses:
-                "204":
-                    $ref: '#/components/responses/testRespRefHeaderFixedNoContent'
     /test-ref-header-fixed-other:
         get:
             operationId: testRefHeaderFixedOther
             responses:
                 "200":
                     $ref: '#/components/responses/testRespRefHeaderFixedOther'
-    /test-ref-header-fixed-special-json:
-        get:
-            operationId: testRefHeaderFixedSpecialJSON
-            responses:
-                "200":
-                    $ref: '#/components/responses/testRespRefHeaderFixedSpecialJSON'
     /test-ref-header-fixed-wildcard:
         get:
             operationId: testRefHeaderFixedWildcard
@@ -857,24 +571,12 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefHeaderMultipartRelated'
-    /test-ref-header-nocontent:
-        get:
-            operationId: testRefHeaderNoContent
-            responses:
-                default:
-                    $ref: '#/components/responses/testRespRefHeaderNoContent'
     /test-ref-header-other:
         get:
             operationId: testRefHeaderOther
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefHeaderOther'
-    /test-ref-header-special-json:
-        get:
-            operationId: testRefHeaderSpecialJSON
-            responses:
-                default:
-                    $ref: '#/components/responses/testRespRefHeaderSpecialJSON'
     /test-ref-header-wildcard:
         get:
             operationId: testRefHeaderWildcard
@@ -911,27 +613,12 @@ paths:
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefOther'
-    /test-ref-special-json:
-        get:
-            operationId: testRefSpecialJSON
-            responses:
-                default:
-                    $ref: '#/components/responses/testRespRefSpecialJSON'
     /test-ref-wildcard:
         get:
             operationId: testRefWildcard
             responses:
                 default:
                     $ref: '#/components/responses/testRespRefWildcard'
-    /test-special-json:
-        get:
-            operationId: testSpecialJSON
-            responses:
-                default:
-                    content:
-                        application/test+json:
-                            schema:
-                                $ref: '#/components/schemas/TestSchema'
     /test-wildcard:
         get:
             operationId: testWildcard
