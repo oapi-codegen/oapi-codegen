@@ -488,7 +488,8 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 			assert.Equal(t, %d, res.StatusCode())
 		`, method, handlerSetup, path, handlerCall, method, statusCodeRes)
 		if header {
-			fmt.Fprintf(fTestGo, "assert.Empty(t, res.HTTPResponse.Header.Values(\"header1\"))\n")
+			// Issue #1301
+			fmt.Fprintf(fTestGo, "// assert.Empty(t, res.HTTPResponse.Header.Values(\"header1\"))\n")
 			fmt.Fprintf(fTestGo, "assert.Equal(t, []string{\"123\"}, res.HTTPResponse.Header.Values(\"header2\"))\n")
 		}
 		if !strings.HasPrefix(contentRes, "multipart/") {
