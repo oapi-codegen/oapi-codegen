@@ -66,6 +66,10 @@ type CompatibilityOptions struct {
 	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
 	// Please see https://github.com/deepmap/oapi-codegen/issues/604
 	DisableRequiredReadOnlyAsPointer bool `yaml:"disable-required-readonly-as-pointer,omitempty"`
+	// When a header in response is optional, the go model is generated as a pointer.
+	// Set DisableOptionalResponseHeaderAsPointer to true to mark them as non pointer.
+	// Please see https://github.com/deepmap/oapi-codegen/issues/1301
+	DisableOptionalResponseHeaderAsPointer bool `yaml:"disable-optional-response-header-as-pointer,omitempty"`
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`

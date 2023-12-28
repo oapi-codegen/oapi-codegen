@@ -1,0 +1,9 @@
+package: compatibility
+generate:
+  models: true
+  client: true
+  gin-server: true
+  strict-server: true
+output: compatibility.gen.go
+compatibility:
+  disable-optional-response-header-as-pointer: true
