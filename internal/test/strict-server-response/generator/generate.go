@@ -299,6 +299,7 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 				"schema": map[string]any{
 					"type": "integer",
 				},
+				"required": true,
 			},
 		}
 	}
@@ -410,7 +411,6 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 					headerType = fmt.Sprintf("pkg1.%s%sResponseHeaders", method, statusCode)
 				}
 				resRet += fmt.Sprintf(`Headers: %s {
-					Header1: "foo",
 					Header2: 123,
 				},
 				`, headerType)
@@ -488,8 +488,8 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 			assert.Equal(t, %d, res.StatusCode())
 		`, method, handlerSetup, path, handlerCall, method, statusCodeRes)
 		if header {
-			fmt.Fprintf(fTestGo, "assert.Equal(t, \"foo\", res.HTTPResponse.Header.Get(\"header1\"))\n")
-			fmt.Fprintf(fTestGo, "assert.Equal(t, \"123\", res.HTTPResponse.Header.Get(\"header2\"))\n")
+			fmt.Fprintf(fTestGo, "assert.Empty(t, res.HTTPResponse.Header.Values(\"header1\"))\n")
+			fmt.Fprintf(fTestGo, "assert.Equal(t, []string{\"123\"}, res.HTTPResponse.Header.Values(\"header2\"))\n")
 		}
 		if !strings.HasPrefix(contentRes, "multipart/") {
 			if (strings.Contains(content.content, "json") && (server == FiberServer || server == IrisServer) /* Issue #1408 */) ||

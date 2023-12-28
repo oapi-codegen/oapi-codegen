@@ -663,7 +663,6 @@ func (s strictServerInterface) TestHeaderJSON(ctx context.Context, request pkg1.
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderJSONdefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -688,8 +687,8 @@ func TestHeaderJSON(t *testing.T) {
 	res, err := c.TestHeaderJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -704,7 +703,6 @@ func (s strictServerInterface) TestHeaderSpecialJSON(ctx context.Context, reques
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderSpecialJSONdefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -729,8 +727,8 @@ func TestHeaderSpecialJSON(t *testing.T) {
 	res, err := c.TestHeaderSpecialJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -745,7 +743,6 @@ func (s strictServerInterface) TestHeaderFormdata(ctx context.Context, request p
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderFormdatadefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -770,8 +767,8 @@ func TestHeaderFormdata(t *testing.T) {
 	res, err := c.TestHeaderFormdataWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/x-www-form-urlencoded", res.HTTPResponse.Header.Get("Content-Type"))
 	form, err := url.ParseQuery(string(res.Body))
 	assert.NoError(t, err)
@@ -794,7 +791,6 @@ func (s strictServerInterface) TestHeaderMultipart(ctx context.Context, request 
 			}
 		},
 		Headers: pkg1.TestHeaderMultipartdefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -819,8 +815,8 @@ func TestHeaderMultipart(t *testing.T) {
 	res, err := c.TestHeaderMultipartWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/form-data", mediaType)
@@ -864,7 +860,6 @@ func (s strictServerInterface) TestHeaderMultipartRelated(ctx context.Context, r
 			}
 		},
 		Headers: pkg1.TestHeaderMultipartRelateddefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -889,8 +884,8 @@ func TestHeaderMultipartRelated(t *testing.T) {
 	res, err := c.TestHeaderMultipartRelatedWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/related", mediaType)
@@ -926,7 +921,6 @@ func (s strictServerInterface) TestHeaderOther(ctx context.Context, request pkg1
 	return pkg1.TestHeaderOtherdefaultApplicationtestResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestHeaderOtherdefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode:    200,
@@ -952,8 +946,8 @@ func TestHeaderOther(t *testing.T) {
 	res, err := c.TestHeaderOtherWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -963,7 +957,6 @@ func (s strictServerInterface) TestHeaderWildcard(ctx context.Context, request p
 	return pkg1.TestHeaderWildcarddefaultApplicationResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestHeaderWildcarddefaultResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode:    200,
@@ -990,8 +983,8 @@ func TestHeaderWildcard(t *testing.T) {
 	res, err := c.TestHeaderWildcardWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/baz", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -1003,7 +996,6 @@ func (s strictServerInterface) TestHeaderFixedJSON(ctx context.Context, request 
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderFixedJSON200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}, nil
@@ -1027,8 +1019,8 @@ func TestHeaderFixedJSON(t *testing.T) {
 	res, err := c.TestHeaderFixedJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -1043,7 +1035,6 @@ func (s strictServerInterface) TestHeaderFixedSpecialJSON(ctx context.Context, r
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderFixedSpecialJSON200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}, nil
@@ -1067,8 +1058,8 @@ func TestHeaderFixedSpecialJSON(t *testing.T) {
 	res, err := c.TestHeaderFixedSpecialJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -1083,7 +1074,6 @@ func (s strictServerInterface) TestHeaderFixedFormdata(ctx context.Context, requ
 			Field2: 456,
 		},
 		Headers: pkg1.TestHeaderFixedFormdata200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}, nil
@@ -1107,8 +1097,8 @@ func TestHeaderFixedFormdata(t *testing.T) {
 	res, err := c.TestHeaderFixedFormdataWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/x-www-form-urlencoded", res.HTTPResponse.Header.Get("Content-Type"))
 	form, err := url.ParseQuery(string(res.Body))
 	assert.NoError(t, err)
@@ -1131,7 +1121,6 @@ func (s strictServerInterface) TestHeaderFixedMultipart(ctx context.Context, req
 			}
 		},
 		Headers: pkg1.TestHeaderFixedMultipart200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}, nil
@@ -1155,8 +1144,8 @@ func TestHeaderFixedMultipart(t *testing.T) {
 	res, err := c.TestHeaderFixedMultipartWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/form-data", mediaType)
@@ -1200,7 +1189,6 @@ func (s strictServerInterface) TestHeaderFixedMultipartRelated(ctx context.Conte
 			}
 		},
 		Headers: pkg1.TestHeaderFixedMultipartRelated200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}, nil
@@ -1224,8 +1212,8 @@ func TestHeaderFixedMultipartRelated(t *testing.T) {
 	res, err := c.TestHeaderFixedMultipartRelatedWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/related", mediaType)
@@ -1261,7 +1249,6 @@ func (s strictServerInterface) TestHeaderFixedOther(ctx context.Context, request
 	return pkg1.TestHeaderFixedOther200ApplicationtestResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestHeaderFixedOther200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		ContentLength: int64(len(buf)),
@@ -1286,8 +1273,8 @@ func TestHeaderFixedOther(t *testing.T) {
 	res, err := c.TestHeaderFixedOtherWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -1297,7 +1284,6 @@ func (s strictServerInterface) TestHeaderFixedWildcard(ctx context.Context, requ
 	return pkg1.TestHeaderFixedWildcard200ApplicationResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestHeaderFixedWildcard200ResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		ContentType:   "application/baz",
@@ -1323,8 +1309,8 @@ func TestHeaderFixedWildcard(t *testing.T) {
 	res, err := c.TestHeaderFixedWildcardWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/baz", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -1898,7 +1884,6 @@ func (s strictServerInterface) TestRefHeaderJSON(ctx context.Context, request pk
 			Field2: 456,
 		},
 		Headers: pkg1.TestRespRefHeaderJSONResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -1923,8 +1908,8 @@ func TestRefHeaderJSON(t *testing.T) {
 	res, err := c.TestRefHeaderJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -1939,7 +1924,6 @@ func (s strictServerInterface) TestRefHeaderSpecialJSON(ctx context.Context, req
 			Field2: 456,
 		},
 		Headers: pkg1.TestRespRefHeaderSpecialJSONResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -1964,8 +1948,8 @@ func TestRefHeaderSpecialJSON(t *testing.T) {
 	res, err := c.TestRefHeaderSpecialJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -1986,7 +1970,6 @@ func (s strictServerInterface) TestRefHeaderMultipart(ctx context.Context, reque
 			}
 		},
 		Headers: pkg1.TestRespRefHeaderMultipartResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -2011,8 +1994,8 @@ func TestRefHeaderMultipart(t *testing.T) {
 	res, err := c.TestRefHeaderMultipartWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/form-data", mediaType)
@@ -2056,7 +2039,6 @@ func (s strictServerInterface) TestRefHeaderMultipartRelated(ctx context.Context
 			}
 		},
 		Headers: pkg1.TestRespRefHeaderMultipartRelatedResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode: 200,
@@ -2081,8 +2063,8 @@ func TestRefHeaderMultipartRelated(t *testing.T) {
 	res, err := c.TestRefHeaderMultipartRelatedWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/related", mediaType)
@@ -2118,7 +2100,6 @@ func (s strictServerInterface) TestRefHeaderOther(ctx context.Context, request p
 	return pkg1.TestRefHeaderOtherdefaultApplicationtestResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestRespRefHeaderOtherResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode:    200,
@@ -2144,8 +2125,8 @@ func TestRefHeaderOther(t *testing.T) {
 	res, err := c.TestRefHeaderOtherWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -2155,7 +2136,6 @@ func (s strictServerInterface) TestRefHeaderWildcard(ctx context.Context, reques
 	return pkg1.TestRefHeaderWildcarddefaultApplicationResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestRespRefHeaderWildcardResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		StatusCode:    200,
@@ -2182,8 +2162,8 @@ func TestRefHeaderWildcard(t *testing.T) {
 	res, err := c.TestRefHeaderWildcardWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/baz", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -2195,7 +2175,6 @@ func (s strictServerInterface) TestRefHeaderFixedJSON(ctx context.Context, reque
 			Field2: 456,
 		},
 		Headers: pkg1.TestRespRefHeaderFixedJSONResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}}, nil
@@ -2219,8 +2198,8 @@ func TestRefHeaderFixedJSON(t *testing.T) {
 	res, err := c.TestRefHeaderFixedJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -2235,7 +2214,6 @@ func (s strictServerInterface) TestRefHeaderFixedSpecialJSON(ctx context.Context
 			Field2: 456,
 		},
 		Headers: pkg1.TestRespRefHeaderFixedSpecialJSONResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}}, nil
@@ -2259,8 +2237,8 @@ func TestRefHeaderFixedSpecialJSON(t *testing.T) {
 	res, err := c.TestRefHeaderFixedSpecialJSONWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test+json", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, &pkg1.TestSchema{
 		Field1: "bar",
@@ -2281,7 +2259,6 @@ func (s strictServerInterface) TestRefHeaderFixedMultipart(ctx context.Context, 
 			}
 		},
 		Headers: pkg1.TestRespRefHeaderFixedMultipartResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}}, nil
@@ -2305,8 +2282,8 @@ func TestRefHeaderFixedMultipart(t *testing.T) {
 	res, err := c.TestRefHeaderFixedMultipartWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/form-data", mediaType)
@@ -2350,7 +2327,6 @@ func (s strictServerInterface) TestRefHeaderFixedMultipartRelated(ctx context.Co
 			}
 		},
 		Headers: pkg1.TestRespRefHeaderFixedMultipartRelatedResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 	}}, nil
@@ -2374,8 +2350,8 @@ func TestRefHeaderFixedMultipartRelated(t *testing.T) {
 	res, err := c.TestRefHeaderFixedMultipartRelatedWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	mediaType, params, err := mime.ParseMediaType(res.HTTPResponse.Header.Get("Content-Type"))
 	if assert.NoError(t, err) {
 		assert.Equal(t, "multipart/related", mediaType)
@@ -2411,7 +2387,6 @@ func (s strictServerInterface) TestRefHeaderFixedOther(ctx context.Context, requ
 	return pkg1.TestRefHeaderFixedOther200ApplicationtestResponse{pkg1.TestRespRefHeaderFixedOtherApplicationtestResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestRespRefHeaderFixedOtherResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		ContentLength: int64(len(buf)),
@@ -2436,8 +2411,8 @@ func TestRefHeaderFixedOther(t *testing.T) {
 	res, err := c.TestRefHeaderFixedOtherWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/test", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }
@@ -2447,7 +2422,6 @@ func (s strictServerInterface) TestRefHeaderFixedWildcard(ctx context.Context, r
 	return pkg1.TestRefHeaderFixedWildcard200ApplicationResponse{pkg1.TestRespRefHeaderFixedWildcardApplicationResponse{
 		Body: bytes.NewReader(buf),
 		Headers: pkg1.TestRespRefHeaderFixedWildcardResponseHeaders{
-			Header1: "foo",
 			Header2: 123,
 		},
 		ContentType:   "application/baz",
@@ -2473,8 +2447,8 @@ func TestRefHeaderFixedWildcard(t *testing.T) {
 	res, err := c.TestRefHeaderFixedWildcardWithResponse(context.TODO())
 	assert.NoError(t, err)
 	assert.Equal(t, 200, res.StatusCode())
-	assert.Equal(t, "foo", res.HTTPResponse.Header.Get("header1"))
-	assert.Equal(t, "123", res.HTTPResponse.Header.Get("header2"))
+	assert.Empty(t, res.HTTPResponse.Header.Values("header1"))
+	assert.Equal(t, []string{"123"}, res.HTTPResponse.Header.Values("header2"))
 	assert.Equal(t, "application/baz", res.HTTPResponse.Header.Get("Content-Type"))
 	assert.Equal(t, []byte("bar"), res.Body)
 }

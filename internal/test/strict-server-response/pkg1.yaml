@@ -42,6 +42,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderFixedMultipart:
@@ -54,6 +55,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderFixedMultipartRelated:
@@ -66,6 +68,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderFixedOther:
@@ -78,6 +81,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderFixedSpecialJSON:
@@ -90,6 +94,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderFixedWildcard:
@@ -102,6 +107,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderJSON:
@@ -114,6 +120,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderMultipart:
@@ -126,6 +133,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderMultipartRelated:
@@ -138,6 +146,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderOther:
@@ -150,6 +159,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderSpecialJSON:
@@ -162,6 +172,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefHeaderWildcard:
@@ -174,6 +185,7 @@ components:
                     schema:
                         type: string
                 header2:
+                    required: true
                     schema:
                         type: integer
         testRespRefJSON:
@@ -311,6 +323,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-json:
@@ -327,6 +340,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-multipart:
@@ -343,6 +357,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-multipart-related:
@@ -359,6 +374,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-other:
@@ -375,6 +391,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-special-json:
@@ -391,6 +408,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-fixed-wildcard:
@@ -407,6 +425,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-formdata:
@@ -423,6 +442,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-json:
@@ -439,6 +459,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-multipart:
@@ -455,6 +476,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-multipart-related:
@@ -471,6 +493,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-other:
@@ -487,6 +510,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-special-json:
@@ -503,6 +527,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-header-wildcard:
@@ -519,6 +544,7 @@ paths:
                             schema:
                                 type: string
                         header2:
+                            required: true
                             schema:
                                 type: integer
     /test-json:
