@@ -194,9 +194,11 @@ paths:
             header1:
               schema:
                 type: string
+              required: true
             header2:
               schema:
                 type: integer
+              required: true
           content:
             application/json:
               schema:
@@ -280,9 +282,11 @@ paths:
             header1:
               schema:
                 type: string
+              required: true
             header2:
               schema:
                 type: integer
+              required: true
           content:
             application/json:
               schema:
@@ -306,9 +310,11 @@ components:
         header1:
           schema:
             type: string
+          required: true
         header2:
           schema:
             type: integer
+          required: true
       content:
         application/json:
           schema:
