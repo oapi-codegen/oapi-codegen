@@ -293,6 +293,7 @@ type TestResponseObject interface {
 type Test204ResponseHeaders struct {
 	Header1 *string
 	Header2 string
+	Header3 *string
 }
 
 type Test204Response struct {
@@ -304,6 +305,9 @@ func (response Test204Response) VisitTestResponse(w http.ResponseWriter) error {
 		w.Header().Set("header1", fmt.Sprint(*response.Headers.Header1))
 	}
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	if response.Headers.Header3 != nil {
+		w.Header().Set("header3", fmt.Sprint(*response.Headers.Header3))
+	}
 	w.WriteHeader(204)
 	return nil
 }

@@ -13,3 +13,6 @@ paths:
               schema:
                 type: string
               required: true
+            header3:
+              schema:
+                type: string
