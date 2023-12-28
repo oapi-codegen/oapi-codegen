@@ -32,7 +32,7 @@
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.Schema.TypeDecl}}
+                    {{.GoName}} {{if not .Required}}*{{end}}{{.Schema.TypeDecl}}
                 {{end -}}
             }
         {{end}}
@@ -72,7 +72,9 @@
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if not .Required}}if response.Headers.{{.GoName}} != nil { {{end -}}
+                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint({{if not .Required}}*{{end}}response.Headers.{{.GoName}}))
+                    {{- if not .Required}} } {{end}}
                 {{end -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.ResponseWriter())
@@ -126,7 +128,9 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if not .Required}}if response.Headers.{{.GoName}} != nil { {{end -}}
+                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint({{if not .Required}}*{{end}}response.Headers.{{.GoName}}))
+                    {{- if not .Required}} } {{end}}
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
