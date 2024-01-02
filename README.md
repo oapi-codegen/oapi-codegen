@@ -272,7 +272,7 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     r := gin.Default()
-	  r.Use(middleware.OapiRequestValidator(swagger))
+    r.Use(middleware.OapiRequestValidator(swagger))
     r = api.RegisterHandlers(r, petStore)
 }
 ```
