@@ -158,7 +158,7 @@ func TestProperty_GoTypeDef(t *testing.T) {
 			want: "*int",
 		},
 		{
-			name: "When field is readOnly and optional and and read only pointer disabled",
+			name: "When field is readOnly and optional and read only pointer disabled",
 			fields: fields{
 				GlobalStateDisableRequiredReadOnlyAsPointer: true,
 				Schema: Schema{
@@ -174,9 +174,22 @@ func TestProperty_GoTypeDef(t *testing.T) {
 		// When field is write only, it will always be pointer unless pointer is
 		// skipped by setting SkipOptionalPointer flag
 		{
-			name: "When field is write only",
+			name: "When field is write only and read only pointer disabled",
 			fields: fields{
 				GlobalStateDisableRequiredReadOnlyAsPointer: true,
+				Schema: Schema{
+					SkipOptionalPointer: false,
+					GoType:              "int",
+				},
+				WriteOnly: true,
+			},
+			want: "*int",
+		},
+
+		{
+			name: "When field is write only and read only pointer enabled",
+			fields: fields{
+				GlobalStateDisableRequiredReadOnlyAsPointer: false,
 				Schema: Schema{
 					SkipOptionalPointer: false,
 					GoType:              "int",
@@ -196,7 +209,7 @@ func TestProperty_GoTypeDef(t *testing.T) {
 				ReadOnly:  tt.fields.ReadOnly,
 				WriteOnly: tt.fields.WriteOnly,
 			}
-			assert.Equalf(t, tt.want, p.GoTypeDef(), "GoTypeDef()")
+			assert.Equal(t, tt.want, p.GoTypeDef())
 		})
 	}
 }
