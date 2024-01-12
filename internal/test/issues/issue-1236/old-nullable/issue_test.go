@@ -1,16 +1,16 @@
-package issue1236_test
+package oldnullable_test
 
 import (
 	"encoding/json"
 	"testing"
 
-	issue1236 "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1236"
+	test_target "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1236/old-nullable"
 	"github.com/stretchr/testify/assert"
 )
 
 // Test treatment additionalProperties in mergeOpenapiSchemas()
 func TestIssue1236(t *testing.T) {
-	var without issue1236.WithoutAdditionalProperties
+	var without test_target.WithoutAdditionalProperties
 	var i int
 	assert.IsType(t, i, without.Required)
 	assert.IsType(t, &i, without.Optional)
@@ -21,7 +21,7 @@ func TestIssue1236(t *testing.T) {
 	assert.NoError(t, err)
 	assert.JSONEq(t, `{"Required": 0, "Nullable": null}`, string(buf))
 
-	var with issue1236.WithAdditionalProperties
+	var with test_target.WithAdditionalProperties
 	assert.IsType(t, i, with.Required)
 	assert.IsType(t, &i, with.Optional)
 	assert.IsType(t, &i, with.ReadOnly)
