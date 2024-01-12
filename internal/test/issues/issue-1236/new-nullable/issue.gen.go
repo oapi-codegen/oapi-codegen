@@ -128,7 +128,7 @@ func (a WithAdditionalProperties) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'Nullable': %w", err)
 	}
 
-	if a.NullableOptional != nil {
+	if a.NullableOptional.IsSpecified() {
 		object["NullableOptional"], err = json.Marshal(a.NullableOptional)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'NullableOptional': %w", err)

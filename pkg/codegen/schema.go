@@ -137,14 +137,19 @@ func (p Property) omitEmpty() bool {
 type emptyValue string
 
 const (
-	emptyValueNever      emptyValue = "never"
-	emptyValueFalse      emptyValue = "false"
-	emptyValueZero       emptyValue = "0"
-	emptyValueNil        emptyValue = "nil"
-	emptyValueZeroLength emptyValue = "len0"
+	emptyValueNever        emptyValue = "never"
+	emptyValueFalse        emptyValue = "false"
+	emptyValueZero         emptyValue = "0"
+	emptyValueNil          emptyValue = "nil"
+	emptyValueZeroLength   emptyValue = "len0"
+	emptyValueNullableType emptyValue = "nullable"
 )
 
 func (p Property) getEmptyType() emptyValue {
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return emptyValueNullableType
+	}
+
 	if p.withPointer() {
 		isSkipOptionalPointer := false
 		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
@@ -241,6 +246,8 @@ func (p Property) EmptyCheckPre() (string, error) {
 		return "len(", nil
 	case emptyValueNil, emptyValueZero:
 		return "", nil
+	case emptyValueNullableType:
+		return "", nil
 	default:
 		return "", fmt.Errorf("invalid empty value type: %s", t)
 	}
@@ -255,6 +262,8 @@ func (p Property) EmptyCheckPost() (string, error) {
 		return ") != 0", nil
 	case emptyValueNil, emptyValueZero:
 		return " != " + string(t), nil
+	case emptyValueNullableType:
+		return ".IsSpecified()", nil
 	default:
 		return "", fmt.Errorf("invalid empty value type: %s", t)
 	}
