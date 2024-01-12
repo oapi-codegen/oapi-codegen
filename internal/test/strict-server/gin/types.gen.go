@@ -29,6 +29,9 @@ type JSONExampleJSONRequestBody = Example
 // MultipartExampleMultipartRequestBody defines body for MultipartExample for multipart/form-data ContentType.
 type MultipartExampleMultipartRequestBody = Example
 
+// MultipartRelatedExampleMultipartRequestBody defines body for MultipartRelatedExample for multipart/related ContentType.
+type MultipartRelatedExampleMultipartRequestBody = Example
+
 // MultipleRequestAndResponseTypesJSONRequestBody defines body for MultipleRequestAndResponseTypes for application/json ContentType.
 type MultipleRequestAndResponseTypesJSONRequestBody = Example
 

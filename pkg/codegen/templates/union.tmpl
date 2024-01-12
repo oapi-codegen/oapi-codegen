@@ -53,7 +53,7 @@
               return err
             }
 
-            merged, err := runtime.JsonMerge(t.union, b)
+            merged, err := runtime.JSONMerge(t.union, b)
             t.union = merged
             return err
         }

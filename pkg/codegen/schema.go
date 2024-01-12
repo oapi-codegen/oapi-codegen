@@ -104,6 +104,9 @@ func (p Property) withPointer() bool {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
 	if p.withPointer() {
 
 		typeDef = "*" + typeDef
@@ -112,9 +115,14 @@ func (p Property) GoTypeDef() string {
 }
 
 func (p Property) omitEmpty() bool {
-	omitEmpty := !p.Nullable &&
-		(!p.Required || p.ReadOnly || p.WriteOnly) &&
+	shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 		(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+	omitEmpty := !p.Nullable && shouldOmitEmpty
+
+	if p.Nullable && globalState.options.OutputOptions.NullableType {
+		omitEmpty = shouldOmitEmpty
+	}
 
 	// Support x-omitempty
 	if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
