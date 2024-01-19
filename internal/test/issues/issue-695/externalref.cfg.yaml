@@ -1,0 +1,10 @@
+package: externalref
+generate:
+  models: true
+  embedded-spec: true
+import-mapping:
+  ./packageA/spec.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-695/packageA
+  ./packageB/spec.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-695/packageB
+output: externalref.gen.go
+output-options:
+  skip-prune: true
