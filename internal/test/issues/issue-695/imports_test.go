@@ -27,3 +27,11 @@ func TestGetSwagger(t *testing.T) {
 	_, err = GetSwagger()
 	require.Nil(t, err)
 }
+
+func TestExternalRefIsResolvedCorrectly(t *testing.T) {
+	resp := packageA.TestApiResponse{}
+
+	expected := packageB.ResponseC{}
+
+	resp.JSON400 = &expected
+}
