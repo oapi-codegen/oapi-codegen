@@ -462,6 +462,7 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		"_1":           "Underscore1",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
