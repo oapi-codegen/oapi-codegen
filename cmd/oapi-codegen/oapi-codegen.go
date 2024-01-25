@@ -55,7 +55,7 @@ var (
 	flagExcludeSchemas      string
 	flagResponseTypeSuffix  string
 	flagAliasTypes          bool
-	flagInitalismOverrides  bool
+	flagInitialismOverrides bool
 )
 
 type configuration struct {
@@ -109,7 +109,7 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
-	flag.BoolVar(&flagInitalismOverrides, "initialism-overrides", false, "Use initialism overrides.")
+	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -429,7 +429,7 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	cfg.OutputOptions.InitialismOverrides = flagInitalismOverrides
+	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides
 
 	return nil
 }

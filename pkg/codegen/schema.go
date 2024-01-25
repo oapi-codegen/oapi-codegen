@@ -60,7 +60,7 @@ func (s Schema) TypeDecl() string {
 // AddProperty adds a new property to the current Schema, and returns an error
 // if it collides. Two identical fields will not collide, but two properties by
 // the same name, but different definition, will collide. It's safe to merge the
-// fields of two schemas with overalapping properties if those properties are
+// fields of two schemas with overlapping properties if those properties are
 // identical.
 func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict

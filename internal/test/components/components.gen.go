@@ -293,7 +293,7 @@ type OneOfObject8 struct {
 	union json.RawMessage
 }
 
-// OneOfObject9 oneOf with fixed descriminator
+// OneOfObject9 oneOf with fixed discriminator
 type OneOfObject9 struct {
 	Type  string `json:"type"`
 	union json.RawMessage

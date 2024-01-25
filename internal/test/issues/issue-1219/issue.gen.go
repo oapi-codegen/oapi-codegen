@@ -8,14 +8,14 @@ import (
 	"fmt"
 )
 
-// DefaultAddtional1 defines model for DefaultAddtional1.
-type DefaultAddtional1 struct {
+// DefaultAdditional1 defines model for DefaultAdditional1.
+type DefaultAdditional1 struct {
 	Field1 *int    `json:"field1,omitempty"`
 	Field2 *string `json:"field2,omitempty"`
 }
 
-// DefaultAddtional2 defines model for DefaultAddtional2.
-type DefaultAddtional2 struct {
+// DefaultAdditional2 defines model for DefaultAdditional2.
+type DefaultAdditional2 struct {
 	FieldA *int    `json:"fieldA,omitempty"`
 	FieldB *string `json:"fieldB,omitempty"`
 }
@@ -147,42 +147,42 @@ type MergeWithoutWithout struct {
 	FieldB *string `json:"fieldB,omitempty"`
 }
 
-// WithAnyAddtional1 defines model for WithAnyAddtional1.
-type WithAnyAddtional1 struct {
+// WithAnyAdditional1 defines model for WithAnyAdditional1.
+type WithAnyAdditional1 struct {
 	Field1               *int                   `json:"field1,omitempty"`
 	Field2               *string                `json:"field2,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WithAnyAddtional2 defines model for WithAnyAddtional2.
-type WithAnyAddtional2 struct {
+// WithAnyAdditional2 defines model for WithAnyAdditional2.
+type WithAnyAdditional2 struct {
 	FieldA               *int                   `json:"fieldA,omitempty"`
 	FieldB               *string                `json:"fieldB,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// WithStringAddtional1 defines model for WithStringAddtional1.
-type WithStringAddtional1 struct {
+// WithStringAdditional1 defines model for WithStringAdditional1.
+type WithStringAdditional1 struct {
 	Field1               *int              `json:"field1,omitempty"`
 	Field2               *string           `json:"field2,omitempty"`
 	AdditionalProperties map[string]string `json:"-"`
 }
 
-// WithStringAddtional2 defines model for WithStringAddtional2.
-type WithStringAddtional2 struct {
+// WithStringAdditional2 defines model for WithStringAdditional2.
+type WithStringAdditional2 struct {
 	FieldA               *int              `json:"fieldA,omitempty"`
 	FieldB               *string           `json:"fieldB,omitempty"`
 	AdditionalProperties map[string]string `json:"-"`
 }
 
-// WithoutAddtional1 defines model for WithoutAddtional1.
-type WithoutAddtional1 struct {
+// WithoutAdditional1 defines model for WithoutAdditional1.
+type WithoutAdditional1 struct {
 	Field1 *int    `json:"field1,omitempty"`
 	Field2 *string `json:"field2,omitempty"`
 }
 
-// WithoutAddtional2 defines model for WithoutAddtional2.
-type WithoutAddtional2 struct {
+// WithoutAdditional2 defines model for WithoutAdditional2.
+type WithoutAdditional2 struct {
 	FieldA *int    `json:"fieldA,omitempty"`
 	FieldB *string `json:"fieldB,omitempty"`
 }
@@ -978,25 +978,25 @@ func (a MergeWithStringWithAny) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// Getter for additional properties for WithAnyAddtional1. Returns the specified
+// Getter for additional properties for WithAnyAdditional1. Returns the specified
 // element and whether it was found
-func (a WithAnyAddtional1) Get(fieldName string) (value interface{}, found bool) {
+func (a WithAnyAdditional1) Get(fieldName string) (value interface{}, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for WithAnyAddtional1
-func (a *WithAnyAddtional1) Set(fieldName string, value interface{}) {
+// Setter for additional properties for WithAnyAdditional1
+func (a *WithAnyAdditional1) Set(fieldName string, value interface{}) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for WithAnyAddtional1 to handle AdditionalProperties
-func (a *WithAnyAddtional1) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for WithAnyAdditional1 to handle AdditionalProperties
+func (a *WithAnyAdditional1) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -1033,8 +1033,8 @@ func (a *WithAnyAddtional1) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for WithAnyAddtional1 to handle AdditionalProperties
-func (a WithAnyAddtional1) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for WithAnyAdditional1 to handle AdditionalProperties
+func (a WithAnyAdditional1) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -1061,25 +1061,25 @@ func (a WithAnyAddtional1) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// Getter for additional properties for WithAnyAddtional2. Returns the specified
+// Getter for additional properties for WithAnyAdditional2. Returns the specified
 // element and whether it was found
-func (a WithAnyAddtional2) Get(fieldName string) (value interface{}, found bool) {
+func (a WithAnyAdditional2) Get(fieldName string) (value interface{}, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for WithAnyAddtional2
-func (a *WithAnyAddtional2) Set(fieldName string, value interface{}) {
+// Setter for additional properties for WithAnyAdditional2
+func (a *WithAnyAdditional2) Set(fieldName string, value interface{}) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for WithAnyAddtional2 to handle AdditionalProperties
-func (a *WithAnyAddtional2) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for WithAnyAdditional2 to handle AdditionalProperties
+func (a *WithAnyAdditional2) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -1116,8 +1116,8 @@ func (a *WithAnyAddtional2) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for WithAnyAddtional2 to handle AdditionalProperties
-func (a WithAnyAddtional2) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for WithAnyAdditional2 to handle AdditionalProperties
+func (a WithAnyAdditional2) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -1144,25 +1144,25 @@ func (a WithAnyAddtional2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// Getter for additional properties for WithStringAddtional1. Returns the specified
+// Getter for additional properties for WithStringAdditional1. Returns the specified
 // element and whether it was found
-func (a WithStringAddtional1) Get(fieldName string) (value string, found bool) {
+func (a WithStringAdditional1) Get(fieldName string) (value string, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for WithStringAddtional1
-func (a *WithStringAddtional1) Set(fieldName string, value string) {
+// Setter for additional properties for WithStringAdditional1
+func (a *WithStringAdditional1) Set(fieldName string, value string) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]string)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for WithStringAddtional1 to handle AdditionalProperties
-func (a *WithStringAddtional1) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for WithStringAdditional1 to handle AdditionalProperties
+func (a *WithStringAdditional1) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -1199,8 +1199,8 @@ func (a *WithStringAddtional1) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for WithStringAddtional1 to handle AdditionalProperties
-func (a WithStringAddtional1) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for WithStringAdditional1 to handle AdditionalProperties
+func (a WithStringAdditional1) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -1227,25 +1227,25 @@ func (a WithStringAddtional1) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// Getter for additional properties for WithStringAddtional2. Returns the specified
+// Getter for additional properties for WithStringAdditional2. Returns the specified
 // element and whether it was found
-func (a WithStringAddtional2) Get(fieldName string) (value string, found bool) {
+func (a WithStringAdditional2) Get(fieldName string) (value string, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for WithStringAddtional2
-func (a *WithStringAddtional2) Set(fieldName string, value string) {
+// Setter for additional properties for WithStringAdditional2
+func (a *WithStringAdditional2) Set(fieldName string, value string) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]string)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for WithStringAddtional2 to handle AdditionalProperties
-func (a *WithStringAddtional2) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for WithStringAdditional2 to handle AdditionalProperties
+func (a *WithStringAdditional2) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -1282,8 +1282,8 @@ func (a *WithStringAddtional2) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for WithStringAddtional2 to handle AdditionalProperties
-func (a WithStringAddtional2) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for WithStringAdditional2 to handle AdditionalProperties
+func (a WithStringAdditional2) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
