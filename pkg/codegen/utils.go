@@ -14,7 +14,6 @@
 package codegen
 
 import (
-	"encoding/json"
 	"fmt"
 	"go/token"
 	"net/url"
@@ -211,12 +210,9 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 			continue
 		}
 
-		if msg, ok := ext.(json.RawMessage); ok {
-			var order int64
-			err := json.Unmarshal(msg, &order)
-			if err == nil {
-				orders[key] = order
-			}
+		// YAML parsing picks up the x-order as a float64
+		if order, ok := ext.(float64); ok {
+			orders[key] = int64(order)
 		}
 	}
 
