@@ -194,12 +194,34 @@ func mediaTypeToCamelCase(s string) string {
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
+	orders := make(map[string]int64, len(dict))
 	i := 0
-	for key := range dict {
-		keys[i] = key
+
+	for key, v := range dict {
+		keys[i], orders[key] = key, int64(len(dict))
 		i++
+
+		if v == nil || v.Value == nil {
+			continue
+		}
+
+		ext := v.Value.Extensions["x-order"]
+		if ext == nil {
+			continue
+		}
+
+		// YAML parsing picks up the x-order as a float64
+		if order, ok := ext.(float64); ok {
+			orders[key] = int64(order)
+		}
 	}
-	sort.Strings(keys)
+
+	sort.Slice(keys, func(i, j int) bool {
+		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
+			return i < j
+		}
+		return keys[i] < keys[j]
+	})
 	return keys
 }
 

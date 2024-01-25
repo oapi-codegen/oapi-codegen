@@ -779,6 +779,35 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   type ObjectCategory int
   ```
 
+- `x-order`: specifies the order of the fields in the structure. It allows you to specify the order
+  of the fields in the generated structure and will override any default value. This extended
+  property is not supported in all parts of OpenAPI, so check the specification to see where it is
+  allowed.
+
+    ```yaml
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+    ```
+  In the example above, struct will be declared as:
+
+    ```go
+    type DateInterval struct {
+      Start *openapi_types.Date `json:"start,omitempty"`
+      End   *openapi_types.Date `json:"end,omitempty"`
+    }
+    ```
+  
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,

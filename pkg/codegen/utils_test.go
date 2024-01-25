@@ -18,6 +18,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStringOps(t *testing.T) {
@@ -41,6 +42,81 @@ func TestSortedSchemaKeys(t *testing.T) {
 	expected := []string{"a", "b", "c", "d", "e", "f"}
 
 	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedSchemaKeysWithXOrder(t *testing.T) {
+	withOrder := func(i float64) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				Extensions: map[string]interface{}{"x-order": i},
+			},
+		}
+	}
+	dict := map[string]*openapi3.SchemaRef{
+		"first":            withOrder(1),
+		"minusTenth":       withOrder(-10),
+		"zero":             withOrder(0),
+		"minusHundredth_2": withOrder(-100),
+		"minusHundredth_1": withOrder(-100),
+		"afterFirst":       withOrder(2),
+		"last":             withOrder(100),
+		"middleA":          nil,
+		"middleB":          nil,
+		"middleC":          nil,
+	}
+
+	expected := []string{"minusHundredth_1", "minusHundredth_2", "minusTenth", "zero", "first", "afterFirst", "middleA", "middleB", "middleC", "last"}
+
+	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
+}
+
+func TestSortedSchemaKeysWithXOrderFromParsed(t *testing.T) {
+	rawSpec := `---
+components:
+  schemas:
+    AlwaysLast:
+      type: string
+      x-order: 100000
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+  `
+
+	loader := openapi3.NewLoader()
+	spec, err := loader.LoadFromData([]byte(rawSpec))
+	require.NoError(t, err)
+	require.NotNil(t, spec.Components)
+	require.NotNil(t, spec.Components.Schemas)
+
+	t.Run("for the top-level schemas", func(t *testing.T) {
+		expected := []string{"DateInterval", "AlwaysLast"}
+
+		actual := SortedSchemaKeys(spec.Components.Schemas)
+
+		assert.EqualValues(t, expected, actual)
+	})
+
+	t.Run("for DateInterval's keys", func(t *testing.T) {
+		schemas, found := spec.Components.Schemas["DateInterval"]
+		require.True(t, found, "did not find `#/components/schemas/DateInterval`")
+
+		expected := []string{"start", "end"}
+
+		actual := SortedSchemaKeys(schemas.Value.Properties)
+
+		assert.EqualValues(t, expected, actual, "Keys are not sorted properly")
+	})
+
 }
 
 func TestSortedPathsKeys(t *testing.T) {
