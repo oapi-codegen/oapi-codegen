@@ -272,7 +272,7 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     r := gin.Default()
-	  r.Use(middleware.OapiRequestValidator(swagger))
+    r.Use(middleware.OapiRequestValidator(swagger))
     r = api.RegisterHandlers(r, petStore)
 }
 ```
@@ -343,7 +343,7 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     i := iris.Default()
-	  i.Use(middleware.OapiRequestValidator(swagger))
+    i.Use(middleware.OapiRequestValidator(swagger))
     api.RegisterHandlers(r, &myApi)
 }
 ```
@@ -383,7 +383,7 @@ The generated strict wrapper can then be used as an implementation for `ServerIn
 ```go
 func SetupHandler() {
     var myApi PetStoreImpl
-	myStrictApiHandler := api.NewStrictHandler(myApi, nil)
+    myStrictApiHandler := api.NewStrictHandler(myApi, nil)
     e := echo.New()
     petstore.RegisterHandlers(e, &myStrictApiHandler)
 }
