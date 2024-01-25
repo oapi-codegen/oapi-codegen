@@ -694,7 +694,6 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
 - `x-go-type-import`: adds extra Go imports to your generated code. It can help you, when you want to
   choose your own import package for `x-go-type`.
-  
 
   ```yaml
   schemas:
