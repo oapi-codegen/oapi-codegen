@@ -33,6 +33,8 @@ type Schema struct {
 	// If this is set, the schema will declare a type via alias, eg,
 	// `type Foo = bool`. If this is not set, we will define this type via
 	// type definition `type Foo bool`
+	//
+	// Can be overriden by the OutputOptions#DisableTypeAliasesForType field
 	DefineViaAlias bool
 
 	// The original OpenAPIv3 Schema.
@@ -559,6 +561,10 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
+		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+			outSchema.DefineViaAlias = false
+		}
+
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
