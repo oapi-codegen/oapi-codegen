@@ -1,0 +1,9 @@
+package: common
+generate:
+  gorilla-server: true
+  embedded-spec: true
+  strict-server: true
+  models: true
+output-options:
+  skip-prune: true
+output: common.gen.go

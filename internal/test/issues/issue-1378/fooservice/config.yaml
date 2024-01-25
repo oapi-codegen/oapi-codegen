@@ -1,0 +1,10 @@
+package: fooservice
+generate:
+  gorilla-server: true
+  embedded-spec: true
+  strict-server: true
+  models: true
+import-mapping:
+  common.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1378/common
+  bionicle.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1378/bionicle
+output: fooservice.gen.go
