@@ -24,7 +24,6 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
-	"unsafe"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -212,16 +211,12 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 			continue
 		}
 
-		var xOrder string
-		if b, ok := ext.(json.RawMessage); ok {
-			xOrder = *(*string)(unsafe.Pointer(&b))
-		} else { // not sure if this is possible.
-			xOrder = fmt.Sprint(ext)
-		}
-
-		order, err := strconv.ParseInt(xOrder, 10, 0)
-		if err == nil {
-			orders[key] = order
+		if msg, ok := ext.(json.RawMessage); ok {
+			var order int64
+			err := json.Unmarshal(msg, &order)
+			if err == nil {
+				orders[key] = order
+			}
 		}
 	}
 
