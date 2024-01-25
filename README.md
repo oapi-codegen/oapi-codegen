@@ -782,7 +782,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 - `x-order`: specifies the order of the fields in the structure. It allows you to specify the order
   of the fields in the generated structure and will override any default value. This extended
   property is not supported in all parts of OpenAPI, so check the specification to see where it is
-  allowed. Swagger validation tools will flag misuse of this property.
+  allowed.
 
     ```yaml
     DateInterval:
@@ -790,14 +790,14 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
       required:
         - name
       properties:
-        start:
-          type: string
-          format: date
-          x-order: 1
         end:
           type: string
           format: date
           x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
     ```
   In the example above, struct will be declared as:
 
