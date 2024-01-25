@@ -43,6 +43,13 @@ func (s Schema) IsRef() bool {
 	return s.RefType != ""
 }
 
+func (s Schema) IsExternalRef() bool {
+	if !s.IsRef() {
+		return false
+	}
+	return strings.Contains(s.RefType, ".")
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
@@ -53,7 +60,7 @@ func (s Schema) TypeDecl() string {
 // AddProperty adds a new property to the current Schema, and returns an error
 // if it collides. Two identical fields will not collide, but two properties by
 // the same name, but different definition, will collide. It's safe to merge the
-// fields of two schemas with overalapping properties if those properties are
+// fields of two schemas with overlapping properties if those properties are
 // identical.
 func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
@@ -94,6 +101,9 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
@@ -681,9 +691,14 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		omitEmpty := !p.Nullable &&
-			(!p.Required || p.ReadOnly || p.WriteOnly) &&
+		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
 
 		// Support x-omitempty
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
@@ -809,15 +824,22 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 
 	refToGoTypeMap := make(map[string]string)
 	for i, element := range elements {
-		elementSchema, err := GenerateGoSchema(element, path)
+		elementPath := append(path, fmt.Sprint(i))
+		elementSchema, err := GenerateGoSchema(element, elementPath)
 		if err != nil {
 			return err
 		}
 
 		if element.Ref == "" {
-			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-			elementSchema.GoType = td.TypeName
+			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
+			if elementSchema.TypeDecl() == elementName {
+				elementSchema.GoType = elementName
+			} else {
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+				elementSchema.GoType = td.TypeName
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		} else {
 			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}

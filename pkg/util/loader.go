@@ -18,3 +18,20 @@ func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 		return loader.LoadFromFile(filePath)
 	}
 }
+
+func LoadSwaggerWithCircularReferenceCount(filePath string, circularReferenceCount int) (swagger *openapi3.T, err error) {
+	// get a copy of the existing count
+	existingCircularReferenceCount := openapi3.CircularReferenceCounter
+	if circularReferenceCount > 0 {
+		openapi3.CircularReferenceCounter = circularReferenceCount
+	}
+
+	swagger, err = LoadSwagger(filePath)
+
+	if circularReferenceCount > 0 {
+		// and make sure to reset it
+		openapi3.CircularReferenceCounter = existingCircularReferenceCount
+	}
+
+	return swagger, err
+}

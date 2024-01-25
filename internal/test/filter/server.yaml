@@ -1,0 +1,48 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+  description: |
+    This tests whether filtering works correctly
+paths:
+  /included1:
+    get:
+      operationId: included-operation1
+      tags:
+        - included-tag1
+      responses:
+        200:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaObject'
+  /filtered:
+    get:
+      operationId: filtered-operation
+      tags:
+        - filtered-tag
+      responses:
+        200:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaObject'
+  /included2:
+    get:
+      operationId: included-operation2
+      tags:
+        - included-tag2
+      responses:
+        200:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchemaObject'
+
+components:
+  schemas:
+    SchemaObject:
+      properties:
+        firstName:
+          type: string
+      required:
+        - firstName

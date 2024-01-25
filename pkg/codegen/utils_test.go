@@ -72,7 +72,7 @@ func TestSortedSchemaKeysWithXOrder(t *testing.T) {
 }
 
 func TestSortedPathsKeys(t *testing.T) {
-	dict := openapi3.Paths{
+	dict := map[string]*openapi3.PathItem{
 		"f": nil,
 		"c": nil,
 		"b": nil,
@@ -102,7 +102,7 @@ func TestSortedOperationsKeys(t *testing.T) {
 }
 
 func TestSortedResponsesKeys(t *testing.T) {
-	dict := openapi3.Responses{
+	dict := map[string]*openapi3.ResponseRef{
 		"f": nil,
 		"c": nil,
 		"b": nil,
@@ -255,6 +255,23 @@ func TestIsGoTypeReference(t *testing.T) {
 	assert.Equal(t, false, IsGoTypeReference("../doc.json"))
 	assert.Equal(t, true, IsGoTypeReference("http://deepmap.com/doc.json#/components/parameters/foo_bar"))
 	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
+}
+
+func TestSwaggerUriToIrisUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToIrisUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToIrisUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToIrisUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToIrisUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg*}/foo"))
 }
 
 func TestSwaggerUriToEchoUri(t *testing.T) {

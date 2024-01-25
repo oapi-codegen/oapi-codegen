@@ -17,6 +17,7 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"embed"
 	"fmt"
 	"io"
@@ -27,10 +28,12 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
+
+	"github.com/deepmap/oapi-codegen/v2/pkg/util"
 )
 
 // Embed the templates directory
@@ -107,6 +110,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
+	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(spec)
 	}
@@ -172,6 +176,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
 		MergeImports(xGoTypeImports, imprts)
+	}
+
+	var irisServerOut string
+	if opts.Generate.IrisServer {
+		irisServerOut, err = GenerateIrisServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
 	}
 
 	var echoServerOut string
@@ -262,7 +274,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	w := bufio.NewWriter(&buf)
 
 	externalImports := append(globalState.importMapping.GoImports(), importMap(xGoTypeImports).GoImports()...)
-	importsOut, err := GenerateImports(t, externalImports, opts.PackageName)
+	importsOut, err := GenerateImports(
+		t,
+		externalImports,
+		opts.PackageName,
+		opts.NoVCSVersionOverride,
+	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
 	}
@@ -291,6 +308,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
 		}
+	}
+
+	if opts.Generate.IrisServer {
+		_, err = w.WriteString(irisServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+
 	}
 
 	if opts.Generate.EchoServer {
@@ -534,7 +559,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 // GenerateTypesForResponses generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
+func GenerateTypesForResponses(t *template.Template, responses openapi3.ResponseBodies) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
 	for _, responseName := range SortedResponsesKeys(responses) {
@@ -544,7 +569,17 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
-		for mediaType, response := range response.Content {
+
+		jsonCount := 0
+		for mediaType := range response.Content {
+			if util.IsMediaTypeJson(mediaType) {
+				jsonCount++
+			}
+		}
+
+		sortedContentKeys := SortedContentKeys(response.Content)
+		for _, mediaType := range sortedContentKeys {
+			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
 			}
@@ -572,6 +607,10 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
 				}
 				typeDef.TypeName = SchemaNameToTypeName(refType)
+			}
+
+			if jsonCount > 1 {
+				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
 			}
 
 			types = append(types, typeDef)
@@ -736,7 +775,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // GenerateImports generates our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the
 	// version if we can't read this.
@@ -749,6 +788,9 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		}
 		if bi.Main.Version != "" {
 			moduleVersion = bi.Main.Version
+		}
+		if versionOverride != nil {
+			moduleVersion = *versionOverride
 		}
 	}
 
@@ -850,6 +892,7 @@ func SanitizeCode(goCode string) string {
 // path when inputData is more than one line.
 // This function will attempt to load a file first, and if it fails, will try to get the
 // data from the remote endpoint.
+// The timeout for remote download file is 30 seconds.
 func GetUserTemplateText(inputData string) (template string, err error) {
 	// if the input data is more than one line, assume its a template and return that data.
 	if strings.Contains(inputData, "\n") {
@@ -868,10 +911,21 @@ func GetUserTemplateText(inputData string) (template string, err error) {
 		return "", fmt.Errorf("failed to open file %s: %w", inputData, err)
 	}
 
-	// attempt to get data from url
-	resp, err := http.Get(inputData)
+	// attempt to get data from url with timeout
+	const downloadTimeout = 30 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), downloadTimeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, inputData, http.NoBody)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request GET %s: %w", inputData, err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
+	}
+	if resp != nil {
+		defer resp.Body.Close()
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
@@ -1103,4 +1157,8 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		MergeImports(res, imprts)
 	}
 	return res, nil
+}
+
+func SetGlobalStateSpec(spec *openapi3.T) {
+	globalState.spec = spec
 }
