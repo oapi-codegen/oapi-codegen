@@ -110,6 +110,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
+	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(spec)
 	}

@@ -49,6 +49,8 @@ var (
 	// release. Please use the new config file format.
 	flagIncludeTags         string
 	flagExcludeTags         string
+	flagIncludeOperationIDs string
+	flagExcludeOperationIDs string
 	flagImportMapping       string
 	flagExcludeSchemas      string
 	flagResponseTypeSuffix  string
@@ -66,16 +68,18 @@ type configuration struct {
 // oldConfiguration is deprecated. Please add no more flags here. It is here
 // for backwards compatibility, and it will be removed in the future.
 type oldConfiguration struct {
-	PackageName        string                       `yaml:"package"`
-	GenerateTargets    []string                     `yaml:"generate"`
-	OutputFile         string                       `yaml:"output"`
-	IncludeTags        []string                     `yaml:"include-tags"`
-	ExcludeTags        []string                     `yaml:"exclude-tags"`
-	TemplatesDir       string                       `yaml:"templates"`
-	ImportMapping      map[string]string            `yaml:"import-mapping"`
-	ExcludeSchemas     []string                     `yaml:"exclude-schemas"`
-	ResponseTypeSuffix string                       `yaml:"response-type-suffix"`
-	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
+	PackageName         string                       `yaml:"package"`
+	GenerateTargets     []string                     `yaml:"generate"`
+	OutputFile          string                       `yaml:"output"`
+	IncludeTags         []string                     `yaml:"include-tags"`
+	ExcludeTags         []string                     `yaml:"exclude-tags"`
+	IncludeOperationIDs []string                     `yaml:"include-operation-ids"`
+	ExcludeOperationIDs []string                     `yaml:"exclude-operation-ids"`
+	TemplatesDir        string                       `yaml:"templates"`
+	ImportMapping       map[string]string            `yaml:"import-mapping"`
+	ExcludeSchemas      []string                     `yaml:"exclude-schemas"`
+	ResponseTypeSuffix  string                       `yaml:"response-type-suffix"`
+	Compatibility       codegen.CompatibilityOptions `yaml:"compatibility"`
 }
 
 // noVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
@@ -98,6 +102,8 @@ func main() {
 		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "iris".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
+	flag.StringVar(&flagIncludeOperationIDs, "include-operation-ids", "", "Only include operations with the given operation-ids. Comma-separated list of operation-ids.")
+	flag.StringVar(&flagExcludeOperationIDs, "exclude-operation-ids", "", "Exclude operations with the given operation-ids. Comma-separated list of operation-ids.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates.")
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path.")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
@@ -388,6 +394,13 @@ func updateConfigFromFlags(cfg *configuration) error {
 	if flagExcludeTags != "" {
 		cfg.OutputOptions.ExcludeTags = util.ParseCommandLineList(flagExcludeTags)
 	}
+	if flagIncludeOperationIDs != "" {
+		cfg.OutputOptions.IncludeOperationIDs = util.ParseCommandLineList(flagIncludeOperationIDs)
+	}
+	if flagExcludeOperationIDs != "" {
+		cfg.OutputOptions.ExcludeOperationIDs = util.ParseCommandLineList(flagExcludeOperationIDs)
+	}
+
 	if flagTemplatesDir != "" {
 		templates, err := loadTemplateOverrides(flagTemplatesDir)
 		if err != nil {
