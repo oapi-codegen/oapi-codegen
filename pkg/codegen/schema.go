@@ -66,6 +66,10 @@ func (s *Schema) AddProperty(p Property) error {
 	return nil
 }
 
+func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
+	return s.AdditionalTypes
+}
+
 type Property struct {
 	Description   string
 	JsonFieldName string
