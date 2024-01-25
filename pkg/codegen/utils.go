@@ -193,9 +193,9 @@ func mediaTypeToCamelCase(s string) string {
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
-	i := 0
 	keys := make([]string, len(dict))
 	orders := make(map[string]int64, len(dict))
+	i := 0
 
 	for key, v := range dict {
 		keys[i], orders[key] = key, int64(len(dict))
