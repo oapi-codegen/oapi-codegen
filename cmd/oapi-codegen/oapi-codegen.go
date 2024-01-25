@@ -240,7 +240,13 @@ func main() {
 				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		}
-		opts = newConfigFromOldConfig(oldConfig)
+		var err error
+		opts, err = newConfigFromOldConfig(oldConfig)
+		if err != nil {
+			flag.PrintDefaults()
+			errExit("error creating new config from old config: %v\n", err)
+		}
+
 	}
 
 	// Ensure default values are set if user hasn't specified some needed
@@ -488,7 +494,7 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 	return nil
 }
 
-func newConfigFromOldConfig(c oldConfiguration) configuration {
+func newConfigFromOldConfig(c oldConfiguration) (configuration, error) {
 	// Take flags into account.
 	cfg := updateOldConfigFromFlags(c)
 
@@ -500,9 +506,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
 
 	if err := generationTargets(&opts, cfg.GenerateTargets); err != nil {
-		fmt.Println(err)
-		flag.PrintDefaults()
-		os.Exit(1)
+		return configuration{}, fmt.Errorf("generation targets: %w", err)
 	}
 
 	opts.OutputOptions.IncludeTags = cfg.IncludeTags
@@ -511,7 +515,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
+		return configuration{}, fmt.Errorf("loading template overrides: %w", err)
 	}
 	opts.OutputOptions.UserTemplates = templates
 
@@ -522,5 +526,5 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 	return configuration{
 		Configuration: opts,
 		OutputFile:    cfg.OutputFile,
-	}
+	}, nil
 }

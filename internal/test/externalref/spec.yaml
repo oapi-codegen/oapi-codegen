@@ -11,3 +11,5 @@ components:
           $ref: ./packageB/spec.yaml#/components/schemas/ObjectB
         object_c:
           $ref: ./object_c.json
+        pet:
+          $ref: https://petstore3.swagger.io/api/v3/openapi.json#/components/schemas/Pet

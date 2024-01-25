@@ -43,6 +43,13 @@ func (s Schema) IsRef() bool {
 	return s.RefType != ""
 }
 
+func (s Schema) IsExternalRef() bool {
+	if !s.IsRef() {
+		return false
+	}
+	return strings.Contains(s.RefType, ".")
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
@@ -94,6 +101,9 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
@@ -681,9 +691,14 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		omitEmpty := !p.Nullable &&
-			(!p.Required || p.ReadOnly || p.WriteOnly) &&
+		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
 
 		// Support x-omitempty
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
