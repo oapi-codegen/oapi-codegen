@@ -401,13 +401,8 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 
 // StringInArray checks whether the specified string is present in an array
 // of strings
-func StringInArray(str string, array []string) bool {
-	for _, elt := range array {
-		if elt == str {
-			return true
-		}
-	}
-	return false
+func StringInArray(array []string, str string) bool {
+	return sliceContains(array, str)
 }
 
 // RefPathToObjName returns the name of referenced object without changes.

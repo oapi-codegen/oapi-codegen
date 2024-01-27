@@ -6,15 +6,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
-}
-
 type RefWrapper struct {
 	Ref       string
 	HasValue  bool
@@ -402,7 +393,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Schemas {
 		ref := fmt.Sprintf("#/components/schemas/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Schemas, key)
 		}
@@ -410,7 +401,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Parameters {
 		ref := fmt.Sprintf("#/components/parameters/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Parameters, key)
 		}
@@ -421,7 +412,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	// for key, _ := range swagger.Components.SecuritySchemes {
 	// 	ref := fmt.Sprintf("#/components/securitySchemes/%s", key)
-	// 	if !stringInSlice(ref, refs) {
+	// 	if !sliceContains(refs, ref) {
 	// 		countRemoved++
 	// 		delete(swagger.Components.SecuritySchemes, key)
 	// 	}
@@ -429,7 +420,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.RequestBodies {
 		ref := fmt.Sprintf("#/components/requestBodies/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.RequestBodies, key)
 		}
@@ -437,7 +428,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Responses {
 		ref := fmt.Sprintf("#/components/responses/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Responses, key)
 		}
@@ -445,7 +436,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Headers {
 		ref := fmt.Sprintf("#/components/headers/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Headers, key)
 		}
@@ -453,7 +444,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Examples {
 		ref := fmt.Sprintf("#/components/examples/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Examples, key)
 		}
@@ -461,7 +452,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Links {
 		ref := fmt.Sprintf("#/components/links/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Links, key)
 		}
@@ -469,7 +460,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Callbacks {
 		ref := fmt.Sprintf("#/components/callbacks/%s", key)
-		if !stringInSlice(ref, refs) {
+		if !sliceContains(refs, ref) {
 			countRemoved++
 			delete(swagger.Components.Callbacks, key)
 		}

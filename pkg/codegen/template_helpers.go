@@ -146,7 +146,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
 		for _, contentTypeName := range SortedMapKeys {
-			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+			if sliceContains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
@@ -163,7 +163,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+			case sliceContains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -183,7 +183,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// YAML:
-			case StringInArray(contentTypeName, contentTypesYAML):
+			case sliceContains(contentTypesYAML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -197,7 +197,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// XML:
-			case StringInArray(contentTypeName, contentTypesXML):
+			case sliceContains(contentTypesXML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
