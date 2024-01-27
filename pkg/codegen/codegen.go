@@ -524,7 +524,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 // components/parameters section of the Swagger spec.
 func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
-	for _, paramName := range SortedParameterKeys(params) {
+	for _, paramName := range SortedKeys(params) {
 		paramOrRef := params[paramName]
 
 		goType, err := paramToGoType(paramOrRef.Value, nil)
@@ -562,7 +562,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 func GenerateTypesForResponses(t *template.Template, responses openapi3.ResponseBodies) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, responseName := range SortedResponsesKeys(responses) {
+	for _, responseName := range SortedKeys(responses) {
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
@@ -577,7 +577,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 		}
 
-		sortedContentKeys := SortedContentKeys(response.Content)
+		sortedContentKeys := SortedKeys(response.Content)
 		for _, mediaType := range sortedContentKeys {
 			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
@@ -624,7 +624,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+	for _, requestBodyName := range SortedKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
 
 		// As for responses, we will only generate Go code for JSON bodies,

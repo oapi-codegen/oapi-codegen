@@ -225,110 +225,79 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	return keys
 }
 
-// SortedPathsKeys is the same as above, except it sorts the keys for a Paths
-// dictionary.
+// SortedKeys returns the keys of the dictionary in sorted order.
+func SortedKeys[M ~map[string]V, V any](dict M) []string {
+	keys := make([]string, len(dict))
+	i := 0
+	for key := range dict {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// SortedPathsKeys returns PathItem dictionary keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
-// SortedOperationsKeys returns Operation dictionary keys in sorted order
+// SortedOperationsKeys returns Operation dictionary keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
-// SortedResponsesKeys returns Responses dictionary keys in sorted order
+// SortedResponsesKeys returns Responses dictionary keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
+// SortedResponsesKeys returns Headers dictionary keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedHeadersKeys(dict openapi3.Headers) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
-// SortedContentKeys returns Content dictionary keys in sorted order
+// SortedContentKeys returns Content dictionary keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedContentKeys(dict openapi3.Content) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
-// SortedStringKeys returns string map keys in sorted order
+// SortedStringKeys returns string map keys in sorted order.
+//
+// Deprecated: use SortedKeys instead.
 func SortedStringKeys(dict map[string]string) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
-// SortedParameterKeys returns sorted keys for a ParameterRef dict
+// SortedParameterKeys returns sorted keys for a ParameterRef dict.
+//
+// Deprecated: use SortedKeys instead.
 func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
+// SortedParameterKeys returns sorted keys for a RequestBodyRef dict.
+//
+// Deprecated: use SortedKeys instead.
 func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(dict)
 }
 
+// SortedParameterKeys returns sorted keys for a SecurityRequirement dict.
+//
+// Deprecated: use SortedKeys instead.
 func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
-	keys := make([]string, len(sr))
-	i := 0
-	for key := range sr {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
+	return SortedKeys(sr)
 }
 
 // StringInArray checks whether the specified string is present in an array

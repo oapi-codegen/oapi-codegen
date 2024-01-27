@@ -29,6 +29,21 @@ func TestStringOps(t *testing.T) {
 	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
 }
 
+func TestSortedKeys(t *testing.T) {
+	dict := map[string]*openapi3.SchemaRef{
+		"f": nil,
+		"c": nil,
+		"b": nil,
+		"e": nil,
+		"d": nil,
+		"a": nil,
+	}
+
+	expected := []string{"a", "b", "c", "d", "e", "f"}
+
+	assert.EqualValues(t, expected, SortedKeys(dict), "Keys are not sorted properly")
+}
+
 func TestSortedSchemaKeys(t *testing.T) {
 	dict := map[string]*openapi3.SchemaRef{
 		"f": nil,
