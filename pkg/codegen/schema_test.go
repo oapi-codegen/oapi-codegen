@@ -202,7 +202,11 @@ func TestProperty_GoTypeDef(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			oldDisableRequiredReadOnlyAsPointer := globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer
 			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
+			t.Cleanup(func() {
+				globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = oldDisableRequiredReadOnlyAsPointer
+			})
 			p := Property{
 				Schema:    tt.fields.Schema,
 				Required:  tt.fields.Required,
