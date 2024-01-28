@@ -99,8 +99,8 @@ type Property struct {
 
 func (p Property) GoFieldName() string {
 	goFieldName := p.JsonFieldName
-	if _, ok := p.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
+	if extension, ok := p.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
 			goFieldName = extGoFieldName
 		}
 	}
@@ -479,8 +479,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		enumNames := enumValues
 		for _, key := range []string{extEnumVarNames, extEnumNames} {
-			if _, ok := schema.Extensions[key]; ok {
-				if extEnumNames, err := extParseEnumVarNames(schema.Extensions[key]); err == nil {
+			if extension, ok := schema.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(extension); err == nil {
 					enumNames = extEnumNames
 					break
 				}
@@ -680,8 +680,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		if p.Deprecated {
 			// This comment has to be on its own line for godoc & IDEs to pick up
 			var deprecationReason string
-			if _, ok := p.Extensions[extDeprecationReason]; ok {
-				if extOmitEmpty, err := extParseDeprecationReason(p.Extensions[extDeprecationReason]); err == nil {
+			if extension, ok := p.Extensions[extDeprecationReason]; ok {
+				if extOmitEmpty, err := extParseDeprecationReason(extension); err == nil {
 					deprecationReason = extOmitEmpty
 				}
 			}
@@ -730,8 +730,8 @@ func GenFieldsFromProperties(props []Property) []string {
 		}
 
 		// Support x-go-json-ignore
-		if _, ok := p.Extensions[extPropGoJsonIgnore]; ok {
-			if goJsonIgnore, err := extParseGoJsonIgnore(p.Extensions[extPropGoJsonIgnore]); err == nil && goJsonIgnore {
+		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
 				fieldTags["json"] = "-"
 			}
 		}
