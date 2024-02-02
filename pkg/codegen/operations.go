@@ -858,7 +858,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			Required:      param.Required,
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
-			Extensions:    param.Spec.Extensions,
+			Extensions:    param.Schema.OAPISchema.Extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
