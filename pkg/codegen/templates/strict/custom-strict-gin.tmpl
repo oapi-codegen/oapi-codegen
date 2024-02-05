@@ -33,19 +33,27 @@ type strictHandler struct {
                 {{if eq .NameTag "JSON" -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.ShouldBind(&body); err != nil {
-                        ctx.Status(http.StatusBadRequest)
-                        ctx.Error(err)
+                        ctx.JSON(http.StatusBadRequest, gin.H{
+                            "key": "error.bad.request",
+                            "description": fmt.Sprintf("failed decode body: %s", err.Error()),
+                        })
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
                     if err := ctx.Request.ParseForm(); err != nil {
-                        ctx.Error(err)
+                        ctx.JSON(http.StatusInternalServerError, gin.H{
+                            "key": "error.internal.server.error",
+                            "description": err.Error(),
+                        })
                         return
                     }
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := runtime.BindForm(&body, ctx.Request.Form, nil, nil); err != nil {
-                        ctx.Error(err)
+                        ctx.JSON(http.StatusInternalServerError, gin.H{
+                            "key": "error.internal.server.error",
+                            "description": err.Error(),
+                        })
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
@@ -53,7 +61,10 @@ type strictHandler struct {
                     if reader, err := ctx.Request.MultipartReader(); err == nil {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     } else {
-                        ctx.Error(err)
+                        ctx.JSON(http.StatusInternalServerError, gin.H{
+                            "key": "error.internal.server.error",
+                            "description": err.Error(),
+                        })
                         return
                     }
                 {{else if eq .NameTag "Text" -}}
@@ -78,10 +89,16 @@ type strictHandler struct {
 
         if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             if err := validResponse.WriteResponse(ctx.Writer); err != nil {
-                ctx.Error(err)
+                ctx.JSON(http.StatusInternalServerError, gin.H{
+                    "key": "error.internal.server.error",
+                    "description": err.Error(),
+                })
             }
         } else if response != nil {
-            ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+            ctx.JSON(http.StatusInternalServerError, gin.H{
+                "key": "error.internal.server.error",
+                "description": fmt.Errorf("Unexpected response type: %T", response),
+            })
         }
     }
 {{end}}
