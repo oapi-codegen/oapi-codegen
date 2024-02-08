@@ -329,7 +329,7 @@ type OneOfVariant6 struct {
 
 // ReferenceToRenameMe When a Schema is renamed, $ref should refer to the new name
 type ReferenceToRenameMe struct {
-	// ToNewName This schema should be renamed via x-go-name when generating
+	// NewName This schema should be renamed via x-go-name when generating
 	NewName NewName `json:"ToNewName"`
 }
 
