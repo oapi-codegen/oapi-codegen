@@ -47,11 +47,23 @@ func (pd ParameterDefinition) TypeDef() string {
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
+	var fields []string
 	if pd.Required {
-		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
+		fields = append(fields, fmt.Sprintf("json:\"%s\"", pd.ParamName))
 	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
+		fields = append(fields, fmt.Sprintf("json:\"%s,omitempty\"", pd.ParamName))
 	}
+
+	// add extra-tags too
+	if extension, ok := pd.Schema.OAPISchema.Extensions[extPropExtraTags]; ok {
+		if tags, err := extExtraTags(extension); err == nil {
+			for k, v := range tags {
+				fields = append(fields, fmt.Sprintf(`%s:"%s"`, k, v))
+			}
+		}
+	}
+
+	return "`" + strings.Join(fields, " ") + "`"
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
