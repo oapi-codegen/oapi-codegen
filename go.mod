@@ -1,5 +1,7 @@
 module github.com/nazirok/oapi-codegen
 
+go 1.22
+
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0
 	github.com/getkin/kin-openapi v0.117.0
@@ -78,5 +80,3 @@ require (
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-go 1.18

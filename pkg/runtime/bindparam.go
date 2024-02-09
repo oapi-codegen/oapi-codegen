@@ -289,7 +289,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 	// inner code will bind the string's value to this interface.
 	var output interface{}
 
-	if required {
+	if v.Type().Kind() != reflect.Ptr {
 		// If the parameter is required, then the generated code will pass us
 		// a pointer to it: &int, &object, and so forth. We can directly set
 		// them.
@@ -332,18 +332,16 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			values, found := queryParams[paramName]
 			var err error
 
+			if (!found || len(values) == 0) && required {
+				return fmt.Errorf("query parameter '%s' is required", paramName)
+			}
+
 			switch k {
 			case reflect.Slice:
 				// In the slice case, we simply use the arguments provided by
 				// http library.
-
 				if !found {
-					if required {
-						return fmt.Errorf("query parameter '%s' is required", paramName)
-					} else {
-						// If an optional parameter is not found, we do nothing,
-						return nil
-					}
+					return nil
 				}
 				err = bindSplitPartsToDestinationArray(values, output)
 			case reflect.Struct:
@@ -361,33 +359,22 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 			default:
 				// Primitive object case. We expect to have 1 value to
 				// unmarshal.
-				if len(values) == 0 {
-					if required {
-						return fmt.Errorf("query parameter '%s' is required", paramName)
-					} else {
-						return nil
-					}
+				if !found || len(values) == 0 {
+					return nil
 				}
+
 				if len(values) != 1 {
 					return fmt.Errorf("multiple values for single value parameter '%s'", paramName)
 				}
 
-				if !found {
-					if required {
-						return fmt.Errorf("query parameter '%s' is required", paramName)
-					} else {
-						// If an optional parameter is not found, we do nothing,
-						return nil
-					}
-				}
 				err = BindStringToObject(values[0], output)
 			}
 			if err != nil {
 				return err
 			}
-			// If the parameter is required, and we've successfully unmarshaled
+			// If the parameter is pointer pointer, and we've successfully unmarshaled
 			// it, this assigns the new object to the pointer pointer.
-			if !required {
+			if dv.Type().Kind() == reflect.Ptr {
 				dv.Set(reflect.ValueOf(output))
 			}
 			return nil
@@ -427,7 +414,7 @@ func BindQueryParameter(style string, explode bool, required bool, paramName str
 		if err != nil {
 			return err
 		}
-		if !required {
+		if dv.Type().Kind() == reflect.Ptr {
 			dv.Set(reflect.ValueOf(output))
 		}
 		return nil

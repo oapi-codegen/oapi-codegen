@@ -291,6 +291,84 @@ func TestSplitParameter(t *testing.T) {
 	assert.EqualValues(t, expectedExplodedObject, result)
 }
 
+func TestBindQueryParameter_Pointer_And_Pointer_To_Pointer(t *testing.T) {
+	type ID struct {
+		FirstName *string     `json:"firstName"`
+		LastName  *string     `json:"lastName"`
+		Role      string      `json:"role"`
+		Birthday  *types.Date `json:"birthday"`
+		Married   *MockBinder `json:"married"`
+	}
+
+	expectedName := "Alex"
+	expectedDeepObject := &ID{
+		FirstName: &expectedName,
+		Role:      "admin",
+		Birthday:  &types.Date{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)},
+		Married:   &MockBinder{time.Date(2020, 2, 2, 0, 0, 0, 0, time.UTC)},
+	}
+
+	paramName := "id"
+	queryParams := url.Values{
+		"id[firstName]": {"Alex"},
+		"id[role]":      {"admin"},
+		"foo":           {"bar"},
+		"id[birthday]":  {"2020-01-01"},
+		"id[married]":   {"2020-02-02"},
+	}
+
+	actual := new(ID)
+	err := BindQueryParameter("deepObject", true, false, paramName, queryParams, &actual)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actual)
+
+	actual = new(ID)
+	err = BindQueryParameter("deepObject", true, true, paramName, queryParams, &actual)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actual)
+
+	actual = new(ID)
+	err = BindQueryParameter("deepObject", true, false, paramName, queryParams, actual)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actual)
+
+	actual = new(ID)
+	err = BindQueryParameter("deepObject", true, true, paramName, queryParams, actual)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedDeepObject, actual)
+
+	queryParams = url.Values{
+		"date":   {"2020-01-01"},
+		"number": {"100"},
+	}
+
+	expectedDate := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	expectedNumber := 100
+
+	// An optional time will be a pointer to a time in a parameter object
+	var tp *time.Time
+	var np *int
+
+	err = BindQueryParameter("form", true, false, "date", queryParams, &tp)
+	require.NoError(t, err)
+	require.Equal(t, expectedDate, *tp)
+
+	err = BindQueryParameter("form", true, false, "number", queryParams, &np)
+	require.NoError(t, err)
+	require.Equal(t, expectedNumber, *np)
+
+	var tp2 time.Time
+	var np2 int
+
+	err = BindQueryParameter("form", true, false, "date", queryParams, &tp2)
+	require.NoError(t, err)
+	require.Equal(t, expectedDate, tp2)
+
+	err = BindQueryParameter("form", true, false, "number", queryParams, &np2)
+	require.NoError(t, err)
+	require.Equal(t, expectedNumber, np2)
+}
+
 func TestBindQueryParameter(t *testing.T) {
 	t.Run("deepObject", func(t *testing.T) {
 		type ID struct {
@@ -323,7 +401,7 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expectedDeepObject, actual)
 	})
-
+	//
 	t.Run("form", func(t *testing.T) {
 		expected := &MockBinder{Time: time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)}
 		birthday := &MockBinder{}
@@ -334,7 +412,7 @@ func TestBindQueryParameter(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expected, birthday)
 	})
-
+	//
 	t.Run("optional", func(t *testing.T) {
 		queryParams := url.Values{
 			"time":   {"2020-12-09T16:09:53+00:00"},
@@ -342,11 +420,12 @@ func TestBindQueryParameter(t *testing.T) {
 		}
 		// An optional time will be a pointer to a time in a parameter object
 		var optionalTime *time.Time
+		var optionalNumber *int
+
 		err := BindQueryParameter("form", true, false, "notfound", queryParams, &optionalTime)
 		require.NoError(t, err)
 		assert.Nil(t, optionalTime)
 
-		var optionalNumber *int
 		err = BindQueryParameter("form", true, false, "notfound", queryParams, &optionalNumber)
 		require.NoError(t, err)
 		assert.Nil(t, optionalNumber)
@@ -357,6 +436,22 @@ func TestBindQueryParameter(t *testing.T) {
 		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber)
 		assert.Error(t, err)
 
+		var optionalTime2 time.Time
+		var optionalNumber2 int
+
+		err = BindQueryParameter("form", true, false, "notfound", queryParams, &optionalTime2)
+		require.NoError(t, err)
+		assert.Empty(t, optionalTime)
+
+		err = BindQueryParameter("form", true, false, "notfound", queryParams, &optionalNumber2)
+		require.NoError(t, err)
+		assert.Empty(t, optionalNumber)
+
+		// If we require values, we require errors when they're not present.
+		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalTime2)
+		assert.Error(t, err)
+		err = BindQueryParameter("form", true, true, "notfound", queryParams, &optionalNumber2)
+		assert.Error(t, err)
 	})
 }
 
