@@ -11,6 +11,7 @@ jobs:
         version:
         - "1.20"
         - "1.21"
+        - "1.22"
     steps:
       - name: Check out source code
         uses: actions/checkout@v3
