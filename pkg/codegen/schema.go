@@ -98,7 +98,14 @@ type Property struct {
 }
 
 func (p Property) GoFieldName() string {
-	return SchemaNameToTypeName(p.JsonFieldName)
+	goFieldName := p.JsonFieldName
+	if _, ok := p.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
+			goFieldName = extGoFieldName
+		}
+	}
+
+	return SchemaNameToTypeName(goFieldName)
 }
 
 func (p Property) GoTypeDef() string {
@@ -659,11 +666,6 @@ func GenFieldsFromProperties(props []Property) []string {
 		field := ""
 
 		goFieldName := p.GoFieldName()
-		if _, ok := p.Extensions[extGoName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
-				goFieldName = extGoFieldName
-			}
-		}
 
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
