@@ -8,13 +8,9 @@ jobs:
       fail-fast: false
       # perform matrix testing to give us an earlier insight into issues with different versions of supported major versions of Go
       matrix:
-        # strategy is used to allow us to pin to a specific Go version, or use the version available in our `go.mod`
-        strategy: ['go-version']
-        version: [1.21]
-        include:
-          # pick up the Go version from the `go.mod`
-          - strategy: 'go-version-file'
-            version: 'go.mod'
+        version:
+        - "1.20"
+        - "1.21"
     steps:
       - name: Check out source code
         uses: actions/checkout@v3
@@ -22,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          ${{ matrix.strategy }}: ${{ matrix.version }}
+          go-version: ${{ matrix.version }}
 
       - name: Run `make lint-ci`
         run: make lint-ci
