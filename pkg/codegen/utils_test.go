@@ -373,6 +373,27 @@ func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToGorillaUri("/path/{?arg*}/foo"))
 }
 
+func TestOpenAPIURIToStdURI(t *testing.T) {
+	assert.Equal(t, "/path", OpenAPIURIToStdURI("/path"))
+	assert.Equal(t, "/path/{arg}", OpenAPIURIToStdURI("/path/{arg}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}", OpenAPIURIToStdURI("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}/foo", OpenAPIURIToStdURI("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", OpenAPIURIToStdURI("/path/{?arg*}/foo"))
+
+	// any paths that end in a `/`
+	//   A pattern that ends in "/" matches all paths that have it as a prefix, as always. To match the exact pattern including the trailing slash, end it with {$}, as in /exact/match/{$}.
+	assert.Equal(t, "/path/{$}", OpenAPIURIToStdURI("/path/"))
+}
+
 func TestSwaggerUriToFiberUri(t *testing.T) {
 	assert.Equal(t, "/path", SwaggerUriToFiberUri("/path"))
 	assert.Equal(t, "/path/:arg", SwaggerUriToFiberUri("/path/{arg}"))

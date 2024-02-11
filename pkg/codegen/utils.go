@@ -527,6 +527,22 @@ func SwaggerUriToGorillaUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
+// OpenAPIURIToStdURI converts an OpenAPI-style path URI that contains parameters to a URI that is compatible with the standard library's net/http path parameter semantics.
+//
+// Valid input parameters are:
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func OpenAPIURIToStdURI(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, "{$1}")
+}
+
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
 // /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
 func OrderedParamsFromUri(uri string) []string {
