@@ -407,6 +407,23 @@ func TestSwaggerUriToChiUri(t *testing.T) {
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{?arg*}/foo"))
 }
 
+func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToStdHttpUri("/path"))
+	assert.Equal(t, "/path/{arg}", SwaggerUriToStdHttpUri("/path/{arg}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}/foo", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg*}/foo"))
+}
+
 func TestOrderedParamsFromUri(t *testing.T) {
 	result := OrderedParamsFromUri("/path/{param1}/{.param2}/{;param3*}/foo")
 	assert.EqualValues(t, []string{"param1", "param2", "param3"}, result)
