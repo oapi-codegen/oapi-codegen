@@ -16,8 +16,9 @@ you can focus on implementing the business logic for your service.
 We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
 stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin),
-[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber), and
-[Iris](https://github.com/kataras/iris) have also been added by contributors as additional routers.
+[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber),
+[Iris](https://github.com/kataras/iris), and [1.22+ net/http](https://pkg.go.dev/net/http)
+have also been added by contributors as additional routers.
 We chose Echo because the `Context` object is a mockable interface, and it allows for some advanced
 testing.
 
@@ -297,6 +298,69 @@ func SetupHandler() {
 ```
 
 Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
+
+</details>
+
+<details><summary><code>1.22+ net/http</code></summary>
+
+As of Go 1.22, enhancements have been made to the routing of the `net/http` package in the standard library.
+You can use `-generate std-http` to generate functions to help you associate your handlers with the auto-generated code.
+For the pet store, it looks like this:
+
+```go
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
+	m := options.BaseRouter
+
+	if m == nil {
+		m = http.NewServeMux()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	wrapper := ServerInterfaceWrapper{
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+	}
+
+	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
+	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
+	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+
+	return m
+}
+```
+
+The wrapper functions referenced above contain generated code which pulls parameters off the request and unmarshals them into Go objects.
+
+You would register the generated handlers as follows:
+
+```go
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
+    // Implement me
+}
+
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    options := petstore.StdHTTPServerOptions{
+        BaseRouter: http.DefaultServeMux, // Or use a new ServeMux
+    }
+	petstore.HandlerWithOptions(&myApi, options)
+}
+```
+
+**Note** that if you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` updated to:
+
+```go.mod
+go 1.22
+```
 
 </details>
 
@@ -826,6 +890,8 @@ you can specify any combination of those.
   on that produced by the `types` target.
 - `iris`: generate the Iris server boilerplate. This code is dependent
   on that produced by the `types` target.
+- `std-http`: generate the Go stdlib net/http server boilerplate. This code is
+  dependent on that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
   present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
