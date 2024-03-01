@@ -12,7 +12,7 @@ require (
 	github.com/getkin/kin-openapi v0.122.0
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/oapi-codegen/testutil v1.1.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 )
 
 require (

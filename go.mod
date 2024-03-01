@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/getkin/kin-openapi v0.122.0
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/text v0.14.0
 	golang.org/x/tools v0.12.0
