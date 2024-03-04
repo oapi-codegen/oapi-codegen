@@ -70,16 +70,17 @@ func (s *SecurityProviderBearerToken) Intercept(ctx context.Context, req *http.R
 // NewSecurityProviderApiKey will attach a generic apiKey for a given name
 // either to a cookie, header or as a query parameter.
 func NewSecurityProviderApiKey(in, name, apiKey string) (*SecurityProviderApiKey, error) {
+	//nolint:unparam // result 0 (error) is always nil
 	interceptors := map[string]func(ctx context.Context, req *http.Request) error{
-		"cookie": func(ctx context.Context, req *http.Request) error {
+		"cookie": func(_ context.Context, req *http.Request) error {
 			req.AddCookie(&http.Cookie{Name: name, Value: apiKey})
 			return nil
 		},
-		"header": func(ctx context.Context, req *http.Request) error {
+		"header": func(_ context.Context, req *http.Request) error {
 			req.Header.Add(name, apiKey)
 			return nil
 		},
-		"query": func(ctx context.Context, req *http.Request) error {
+		"query": func(_ context.Context, req *http.Request) error {
 			query := req.URL.Query()
 			query.Add(name, apiKey)
 			req.URL.RawQuery = query.Encode()

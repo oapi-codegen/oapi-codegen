@@ -15,15 +15,17 @@ $(GOBIN)/golangci-lint:
 .PHONY: tools
 tools: $(GOBIN)/golangci-lint
 
+LINT_RUN_CMD=$(GOBIN)/golangci-lint run ./... --enable=unparam
+
 lint: tools
 	# run the root module explicitly, to prevent recursive calls by re-invoking `make ...` top-level
-	$(GOBIN)/golangci-lint run ./...
+	$(LINT_RUN_CMD)
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint'
 
 lint-ci: tools
 	# for the root module, explicitly run the step, to prevent recursive calls
-	$(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m
+	$(LINT_RUN_CMD) --out-format=github-actions --timeout=5m
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint-ci'
 

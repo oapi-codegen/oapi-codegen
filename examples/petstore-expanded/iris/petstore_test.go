@@ -33,7 +33,7 @@ func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRec
 
 func TestPetStore(t *testing.T) {
 	store := api.NewPetStore()
-	irisPetServer := NewIrisPetServer(store, 8080)
+	irisPetServer := NewIrisPetServer(store)
 
 	t.Run("Add pet", func(t *testing.T) {
 		tag := "TagOfSpot"

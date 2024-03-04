@@ -21,368 +21,344 @@ type RefWrapper struct {
 	SourceRef interface{}
 }
 
-func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
+func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) {
 	if swagger == nil || swagger.Paths == nil {
-		return nil
+		return
 	}
 
 	for _, p := range swagger.Paths.Map() {
 		for _, param := range p.Parameters {
-			_ = walkParameterRef(param, doFn)
+			walkParameterRef(param, doFn)
 		}
 		for _, op := range p.Operations() {
-			_ = walkOperation(op, doFn)
+			walkOperation(op, doFn)
 		}
 	}
 
-	_ = walkComponents(swagger.Components, doFn)
-
-	return nil
+	walkComponents(swagger.Components, doFn)
 }
 
-func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) error {
+func walkOperation(op *openapi3.Operation, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if op == nil {
-		return nil
+		return
 	}
 
 	for _, param := range op.Parameters {
-		_ = walkParameterRef(param, doFn)
+		walkParameterRef(param, doFn)
 	}
 
-	_ = walkRequestBodyRef(op.RequestBody, doFn)
+	walkRequestBodyRef(op.RequestBody, doFn)
 
 	if op.Responses != nil {
 		for _, response := range op.Responses.Map() {
-			_ = walkResponseRef(response, doFn)
+			walkResponseRef(response, doFn)
 		}
 	}
 
 	for _, callback := range op.Callbacks {
-		_ = walkCallbackRef(callback, doFn)
+		walkCallbackRef(callback, doFn)
 	}
-
-	return nil
 }
 
-func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool, error)) error {
+func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if components == nil {
-		return nil
+		return
 	}
 
 	for _, schema := range components.Schemas {
-		_ = walkSchemaRef(schema, doFn)
+		walkSchemaRef(schema, doFn)
 	}
 
 	for _, param := range components.Parameters {
-		_ = walkParameterRef(param, doFn)
+		walkParameterRef(param, doFn)
 	}
 
 	for _, header := range components.Headers {
-		_ = walkHeaderRef(header, doFn)
+		walkHeaderRef(header, doFn)
 	}
 
 	for _, requestBody := range components.RequestBodies {
-		_ = walkRequestBodyRef(requestBody, doFn)
+		walkRequestBodyRef(requestBody, doFn)
 	}
 
 	for _, response := range components.Responses {
-		_ = walkResponseRef(response, doFn)
+		walkResponseRef(response, doFn)
 	}
 
 	for _, securityScheme := range components.SecuritySchemes {
-		_ = walkSecuritySchemeRef(securityScheme, doFn)
+		walkSecuritySchemeRef(securityScheme, doFn)
 	}
 
 	for _, example := range components.Examples {
-		_ = walkExampleRef(example, doFn)
+		walkExampleRef(example, doFn)
 	}
 
 	for _, link := range components.Links {
-		_ = walkLinkRef(link, doFn)
+		walkLinkRef(link, doFn)
 	}
 
 	for _, callback := range components.Callbacks {
-		_ = walkCallbackRef(callback, doFn)
+		walkCallbackRef(callback, doFn)
 	}
-
-	return nil
 }
 
-func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) error {
+func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	for _, ref := range ref.Value.OneOf {
-		_ = walkSchemaRef(ref, doFn)
+		walkSchemaRef(ref, doFn)
 	}
 
 	for _, ref := range ref.Value.AnyOf {
-		_ = walkSchemaRef(ref, doFn)
+		walkSchemaRef(ref, doFn)
 	}
 
 	for _, ref := range ref.Value.AllOf {
-		_ = walkSchemaRef(ref, doFn)
+		walkSchemaRef(ref, doFn)
 	}
 
-	_ = walkSchemaRef(ref.Value.Not, doFn)
-	_ = walkSchemaRef(ref.Value.Items, doFn)
+	walkSchemaRef(ref.Value.Not, doFn)
+	walkSchemaRef(ref.Value.Items, doFn)
 
 	for _, ref := range ref.Value.Properties {
-		_ = walkSchemaRef(ref, doFn)
+		walkSchemaRef(ref, doFn)
 	}
 
-	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
-
-	return nil
+	walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
 }
 
-func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
+func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
+	walkSchemaRef(ref.Value.Schema, doFn)
 
 	for _, example := range ref.Value.Examples {
-		_ = walkExampleRef(example, doFn)
+		walkExampleRef(example, doFn)
 	}
 
 	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+		walkSchemaRef(mediaType.Schema, doFn)
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			walkExampleRef(example, doFn)
 		}
 	}
-
-	return nil
 }
 
-func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (bool, error)) error {
+func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+		walkSchemaRef(mediaType.Schema, doFn)
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			walkExampleRef(example, doFn)
 		}
 	}
-
-	return nil
 }
 
-func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, error)) error {
+func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	for _, header := range ref.Value.Headers {
-		_ = walkHeaderRef(header, doFn)
+		walkHeaderRef(header, doFn)
 	}
 
 	for _, mediaType := range ref.Value.Content {
 		if mediaType == nil {
 			continue
 		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
+		walkSchemaRef(mediaType.Schema, doFn)
 
 		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
+			walkExampleRef(example, doFn)
 		}
 	}
 
 	for _, link := range ref.Value.Links {
-		_ = walkLinkRef(link, doFn)
+		walkLinkRef(link, doFn)
 	}
-
-	return nil
 }
 
-func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, error)) error {
+func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	for _, pathItem := range ref.Value.Map() {
 		for _, parameter := range pathItem.Parameters {
-			_ = walkParameterRef(parameter, doFn)
+			walkParameterRef(parameter, doFn)
 		}
-		_ = walkOperation(pathItem.Connect, doFn)
-		_ = walkOperation(pathItem.Delete, doFn)
-		_ = walkOperation(pathItem.Get, doFn)
-		_ = walkOperation(pathItem.Head, doFn)
-		_ = walkOperation(pathItem.Options, doFn)
-		_ = walkOperation(pathItem.Patch, doFn)
-		_ = walkOperation(pathItem.Post, doFn)
-		_ = walkOperation(pathItem.Put, doFn)
-		_ = walkOperation(pathItem.Trace, doFn)
+		walkOperation(pathItem.Connect, doFn)
+		walkOperation(pathItem.Delete, doFn)
+		walkOperation(pathItem.Get, doFn)
+		walkOperation(pathItem.Head, doFn)
+		walkOperation(pathItem.Options, doFn)
+		walkOperation(pathItem.Patch, doFn)
+		walkOperation(pathItem.Post, doFn)
+		walkOperation(pathItem.Put, doFn)
+		walkOperation(pathItem.Trace, doFn)
 	}
-
-	return nil
 }
 
-func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error)) error {
+func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
-	_ = walkSchemaRef(ref.Value.Schema, doFn)
-
-	return nil
+	walkSchemaRef(ref.Value.Schema, doFn)
 }
 
-func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper) (bool, error)) error {
+func walkSecuritySchemeRef(ref *openapi3.SecuritySchemeRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	// NOTE: `SecuritySchemeRef`s don't contain any children that can contain refs
-
-	return nil
 }
 
-func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) error {
+func walkLinkRef(ref *openapi3.LinkRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
-
-	return nil
 }
 
-func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error)) error {
+func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error)) {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
-		return nil
+		return
 	}
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
-		return err
+		return
 	}
 	if !shouldContinue {
-		return nil
+		return
 	}
 	if ref.Value == nil {
-		return nil
+		return
 	}
 
 	// NOTE: `ExampleRef`s don't contain any children that can contain refs
-
-	return nil
 }
 
 func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
 
-	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
+	walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
 		if ref.Ref != "" {
 			refs = append(refs, ref.Ref)
 			return false, nil

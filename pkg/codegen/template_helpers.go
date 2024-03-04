@@ -137,7 +137,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
-			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+			caseClauseKey := "case " + getConditionOfResponseName(typeDefinition.ResponseName) + ":"
 			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			continue
 		}
@@ -213,7 +213,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// Everything else:
 			default:
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
-				caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+				caseClauseKey := "case " + getConditionOfResponseName(typeDefinition.ResponseName) + ":"
 				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
 			}
 		}
@@ -244,14 +244,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 // buildUnmarshalCase builds an unmarshaling case clause for different content-types:
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
-	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
+	caseClauseKey := getConditionOfResponseName(typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
 func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
-	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
+	caseClauseKey := getConditionOfResponseName(typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
@@ -270,14 +270,14 @@ func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinitio
 }
 
 // Return the statusCode comparison clause from the response name.
-func getConditionOfResponseName(statusCodeVar, responseName string) string {
+func getConditionOfResponseName(responseName string) string {
 	switch responseName {
 	case "default":
 		return "true"
 	case "1XX", "2XX", "3XX", "4XX", "5XX":
-		return fmt.Sprintf("%s / 100 == %s", statusCodeVar, responseName[:1])
+		return fmt.Sprintf("rsp.StatusCode / 100 == %s", responseName[:1])
 	default:
-		return fmt.Sprintf("%s == %s", statusCodeVar, responseName)
+		return fmt.Sprintf("rsp.StatusCode == %s", responseName)
 	}
 }
 

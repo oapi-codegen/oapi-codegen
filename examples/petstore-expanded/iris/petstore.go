@@ -16,7 +16,7 @@ import (
 	"github.com/kataras/iris/v12"
 )
 
-func NewIrisPetServer(petStore *api.PetStore, port int) *iris.Application {
+func NewIrisPetServer(petStore *api.PetStore) *iris.Application {
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
@@ -43,7 +43,7 @@ func main() {
 	flag.Parse()
 	// Create an instance of our handler which satisfies the generated interface
 	petStore := api.NewPetStore()
-	s := NewIrisPetServer(petStore, *port)
+	s := NewIrisPetServer(petStore)
 
 	// And we serve HTTP until the world ends.
 	log.Fatal(s.Listen(fmt.Sprintf("localhost:%d", *port)))

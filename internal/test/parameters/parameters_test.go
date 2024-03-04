@@ -517,11 +517,10 @@ func TestParameterBinding(t *testing.T) {
 	ts.reset()
 }
 
-func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder {
+func doOKRequest(t *testing.T, e *echo.Echo, req *http.Request) {
 	rec := httptest.NewRecorder()
 	e.ServeHTTP(rec, req)
-	assert.Equal(t, code, rec.Code)
-	return rec
+	assert.Equal(t, http.StatusOK, rec.Code)
 }
 
 func TestClientPathParams(t *testing.T) {
@@ -548,102 +547,102 @@ func TestClientPathParams(t *testing.T) {
 
 	req, err := NewGetPassThroughRequest(server, "some string")
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	require.NotNil(t, ts.passThrough)
 	assert.Equal(t, "some string", *ts.passThrough)
 	ts.reset()
 
 	req, err = NewGetStartingWithNumberRequest(server, "some string")
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	require.NotNil(t, ts.n1param)
 	assert.Equal(t, "some string", *ts.n1param)
 	ts.reset()
 
 	req, err = NewGetContentObjectRequest(server, expectedComplexObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
 	ts.reset()
 
 	// Label style
 	req, err = NewGetLabelExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetLabelNoExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetLabelExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	req, err = NewGetLabelNoExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	// Matrix style
 	req, err = NewGetMatrixExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetMatrixNoExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetMatrixExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	req, err = NewGetMatrixNoExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	// Simple style
 	req, err = NewGetSimpleExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetSimpleNoExplodeArrayRequest(server, expectedArray)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, expectedArray, ts.array)
 	ts.reset()
 
 	req, err = NewGetSimpleExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	req, err = NewGetSimpleNoExplodeObjectRequest(server, expectedObject)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedObject, ts.object)
 	ts.reset()
 
 	req, err = NewGetSimplePrimitiveRequest(server, expectedPrimitive)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
 	ts.reset()
 }
@@ -694,7 +693,7 @@ func TestClientQueryParams(t *testing.T) {
 
 	req, err := NewGetQueryFormRequest(server, &qParams)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	require.NotNil(t, ts.queryParams)
 	assert.EqualValues(t, qParams, *ts.queryParams)
 	ts.reset()
@@ -712,7 +711,7 @@ func TestClientQueryParams(t *testing.T) {
 	}
 	req, err = NewGetCookieRequest(server, &cParams)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	require.NotNil(t, ts.cookieParams)
 	assert.EqualValues(t, cParams, *ts.cookieParams)
 	ts.reset()
@@ -730,7 +729,7 @@ func TestClientQueryParams(t *testing.T) {
 	}
 	req, err = NewGetHeaderRequest(server, &hParams)
 	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
+	doOKRequest(t, e, req)
 	require.NotNil(t, ts.headerParams)
 	assert.EqualValues(t, hParams, *ts.headerParams)
 	ts.reset()
