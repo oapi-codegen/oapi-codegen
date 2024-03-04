@@ -12,3 +12,6 @@ test:
 
 tidy:
 	go mod tidy
+
+tidy-ci:
+	tidied -verbose

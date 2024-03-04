@@ -44,3 +44,9 @@ tidy:
 	go mod tidy
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy'
+
+tidy-ci:
+	# for the root module, explicitly run the step, to prevent recursive calls
+	tidied -verbose
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy-ci'
