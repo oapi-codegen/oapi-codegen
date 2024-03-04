@@ -210,7 +210,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>Chi</code></summary>
 
@@ -230,7 +230,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>Gin</code></summary>
 
@@ -277,7 +277,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>net/http</code></summary>
 
@@ -298,7 +298,7 @@ func SetupHandler() {
 
 Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
 
-</summary></details>
+</details>
 
 <details><summary><code>Iris</code></summary>
 
@@ -348,7 +348,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 #### Strict server generation
 
