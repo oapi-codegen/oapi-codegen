@@ -3,7 +3,8 @@ SHELL:=/bin/bash
 YELLOW := \e[0;33m
 RESET := \e[0;0m
 
-GOMINOR := $(shell bash -c 'cut -f2 -d. <<< $$(go env GOVERSION)')
+GOVER := $(shell go env GOVERSION)
+GOMINOR := $(shell bash -c "cut -f2 -d. <<< $(GOVER)")
 
 define execute-if-go-122
 @{ \
