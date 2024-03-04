@@ -7,6 +7,7 @@ help:
 	@echo "    generate:    regenerate all generated files"
 	@echo "    test:        run all tests"
 	@echo "    tidy         tidy go mod"
+	@echo "    lint         lint the project"
 
 $(GOBIN)/golangci-lint:
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v1.56.1
