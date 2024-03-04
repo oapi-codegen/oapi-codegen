@@ -140,6 +140,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.EchoServer {
 		nServers++
 	}
+	if o.Generate.GorillaServer {
+		nServers++
+	}
 	if o.Generate.GinServer {
 		nServers++
 	}
