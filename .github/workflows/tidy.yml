@@ -25,4 +25,4 @@ jobs:
         run: go install gitlab.com/jamietanna/tidied@latest
 
       - name: Check for no untracked files
-        run: git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $(dirname {}) && tidied -verbose'
+        run: make tidy-ci
