@@ -26,3 +26,6 @@ jobs:
 
       - name: Check for no untracked files
         run: make tidy-ci
+        env:
+          # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
+          GOTOOLCHAIN: local
