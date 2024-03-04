@@ -16,16 +16,31 @@ $(GOBIN)/golangci-lint:
 tools: $(GOBIN)/golangci-lint
 
 lint: tools
-	git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && $(GOBIN)/golangci-lint run ./...'
+	# run the root module explicitly, to prevent recursive calls by re-invoking `make ...` top-level
+	$(GOBIN)/golangci-lint run ./...
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint'
 
 lint-ci: tools
-	git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && $(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m'
+	# for the root module, explicitly run the step, to prevent recursive calls
+	$(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint-ci'
 
 generate:
-	git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && go generate ./...'
+	# for the root module, explicitly run the step, to prevent recursive calls
+	go generate ./...
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make generate'
 
 test:
-	git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && go test -cover ./...'
+	# for the root module, explicitly run the step, to prevent recursive calls
+	go test -cover ./...
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make test'
 
 tidy:
-	git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && go mod tidy'
+	# for the root module, explicitly run the step, to prevent recursive calls
+	go mod tidy
+	# then, for all child modules, use a module-managed `Makefile`
+	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy'
