@@ -14,4 +14,5 @@ tidy:
 	go mod tidy
 
 tidy-ci:
+	go env GOVERSION
 	tidied -verbose

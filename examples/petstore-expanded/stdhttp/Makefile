@@ -33,4 +33,5 @@ tidy:
 	$(call execute-if-go-122,go mod tidy)
 
 tidy-ci:
+	go env GOVERSION
 	$(call execute-if-go-122,tidied -verbose)
