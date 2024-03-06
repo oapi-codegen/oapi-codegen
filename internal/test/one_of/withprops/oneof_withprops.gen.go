@@ -66,7 +66,10 @@ func (t *Test) FromTestOne(v TestOne) error {
 
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTestOne performs a merge with any union data inside the Test, using the provided TestOne
@@ -96,7 +99,10 @@ func (t *Test) FromTestTwo(v TestTwo) error {
 
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTestTwo performs a merge with any union data inside the Test, using the provided TestTwo

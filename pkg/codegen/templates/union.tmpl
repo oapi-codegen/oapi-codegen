@@ -29,7 +29,10 @@
             {{end -}}
             b, err := json.Marshal(v)
             t.union = b
-            return err
+            if err != nil {
+                return err
+            }
+            return json.Unmarshal(b, t)
         }
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
