@@ -50,7 +50,7 @@
             {{end -}}
             b, err := json.Marshal(v)
             if err != nil {
-              return err
+                return err
             }
 
             merged, err := runtime.JSONMerge(t.union, b)
@@ -96,10 +96,10 @@
             }
             object := make(map[string]json.RawMessage)
             if t.union != nil {
-              err = json.Unmarshal(b, &object)
-              if err != nil {
-                return nil, err
-              }
+                err = json.Unmarshal(b, &object)
+                if err != nil {
+                    return nil, err
+                }
             }
             {{range .Schema.Properties}}
             {{if not .Required}}if t.{{.GoFieldName}} != nil { {{end}}

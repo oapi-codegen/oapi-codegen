@@ -1,0 +1,67 @@
+openapi: 3.0.1
+info:
+  version: 1.0.0
+  title: oneOf schema with common properties
+  description: should generate a struct with the discriminator, common properties, and symmetric marshalling / unmarshalling
+paths:
+  /test:
+    get:
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test'
+components:
+  schemas:
+    test:
+      type: object
+      required:
+        - id
+        - kind
+      properties:
+        id:
+          type: integer
+        kind:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/test_one'
+        - $ref: '#/components/schemas/test_two'
+      discriminator:
+        propertyName: kind
+        mapping:
+          one: '#/components/schemas/test_one'
+          two: '#/components/schemas/test_two'
+    test_common:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+    test_one:
+      allOf:
+        - $ref: '#/components/schemas/test_common'
+        - type: object
+          required:
+            - kind
+            - name
+          properties:
+            kind:
+              type: string
+              enum:
+                - one
+            name:
+              type: string
+            age:
+              type: integer
+    test_two:
+      allOf:
+        - $ref: '#/components/schemas/test_common'
+        - type: object
+          properties:
+            kind:
+              type: string
+              enum:
+                - two
