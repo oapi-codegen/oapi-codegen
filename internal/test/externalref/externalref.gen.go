@@ -14,6 +14,7 @@ import (
 
 	externalRef0 "github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageA"
 	externalRef1 "github.com/deepmap/oapi-codegen/v2/internal/test/externalref/packageB"
+	externalRef2 "github.com/deepmap/oapi-codegen/v2/internal/test/externalref/petstore"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -22,15 +23,20 @@ type Container struct {
 	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
 	ObjectB *externalRef1.ObjectB   `json:"object_b,omitempty"`
 	ObjectC *map[string]interface{} `json:"object_c,omitempty"`
+	Pet     *externalRef2.Pet       `json:"pet,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5yPQU7EMAxF72JYRtOR2GXHcAC4AfJkPNSotaPEIKEqd0dJKa1gQcUqtvzf/z8TBB2j",
-	"Coll8BPk0NOIbXxQMWShVJeYNFIypnbS8ysFe8Y63ya6goebbjXqvly6x6a7h+IW5LwPOW2Q8BfyrSul",
-	"OFgyf5UWHKm+9hEJPGRLLC//qrbGnHbHlB8fwsuFjVVweNrglt7ILegsn1GWqzZXtqHewME7pcwqdane",
-	"kQQjg4e7w/FwBAcRra+NSvkMAAD//3vXjDblAQAA",
+	"H4sIAAAAAAAC/5xUwW7bMAz9lYDbUWgybNjBt7W7L4ftVBQDYzOOBlvSKKZrUOjfB0pN7MRbk+YSKPJ7",
+	"5HvUk56h9n3wjpxEqJ4h1hvqMS/vUKj1vNN1YB+IxVL+Yhv9pSfsQ0dQfTCw9tyjQAXWyedPYEB2gcpf",
+	"aokhGXDY0xENvvo2DtAobF0LKR12/OoX1QIGnvpOmaUC1HtdCr3zTtA64qnKQv+Jun7PtIYK3s0Ht/MX",
+	"q/NvGfdFNb5QVpdRbkeU+hzlgEsGAsk5+JIEkhrcq5vY28/zZHxXmBja3F7cRjnLYuMYX49S81r3Q7qS",
+	"meRpcWWgGt+2lqaRMhA2XvwP7kp8hfo49XSasz1nHElkxt2A/MMYAjVQCW9JYVFQtrl2Q7FmG8R6p7VI",
+	"ZuXbzLqZbGgWxbNKJbftoboHfETb4arTvUCuKYqi7xp4+IchwfbYy2uz/o6Fc4mHZIDp99aybt2XWYzn",
+	"93DueoacXAPa9D8vxxsO962Pg2BBja8lNo3Vc8BuORKjdk+rZfvWrX1ubSWnCgw8EsdykPmCBXIYLFTw",
+	"8WZxs9DxoGzUX0p/AwAA//++YR/sUAUAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
@@ -79,6 +85,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[rawPath] = rawFunc
 	}
 	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(pathPrefix, "./packageB/spec.yaml")) {
+		if _, ok := res[rawPath]; ok {
+			// it is not possible to compare functions in golang, so always overwrite the old value
+		}
+		res[rawPath] = rawFunc
+	}
+	for rawPath, rawFunc := range externalRef2.PathToRawSpec(path.Join(pathPrefix, "https://petstore3.swagger.io/api/v3/openapi.json")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

@@ -47,7 +47,7 @@ func (s *SecurityProviderBasicAuth) Intercept(ctx context.Context, req *http.Req
 }
 
 // NewSecurityProviderBearerToken provides a SecurityProvider, which can solve
-// the Bearer Auth challende for api-calls.
+// the Bearer Auth challenge for api-calls.
 func NewSecurityProviderBearerToken(token string) (*SecurityProviderBearerToken, error) {
 	return &SecurityProviderBearerToken{
 		token: token,

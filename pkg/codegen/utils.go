@@ -194,12 +194,34 @@ func mediaTypeToCamelCase(s string) string {
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
+	orders := make(map[string]int64, len(dict))
 	i := 0
-	for key := range dict {
-		keys[i] = key
+
+	for key, v := range dict {
+		keys[i], orders[key] = key, int64(len(dict))
 		i++
+
+		if v == nil || v.Value == nil {
+			continue
+		}
+
+		ext := v.Value.Extensions["x-order"]
+		if ext == nil {
+			continue
+		}
+
+		// YAML parsing picks up the x-order as a float64
+		if order, ok := ext.(float64); ok {
+			orders[key] = int64(order)
+		}
 	}
-	sort.Strings(keys)
+
+	sort.Slice(keys, func(i, j int) bool {
+		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
+			return i < j
+		}
+		return keys[i] < keys[j]
+	})
 	return keys
 }
 
@@ -502,6 +524,22 @@ func SwaggerUriToGinUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToGorillaUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, "{$1}")
+}
+
+// SwaggerUriToStdHttpUri converts a swagger style path URI with parameters to a
+// Chi compatible path URI. We need to replace all Swagger parameters with
+// "{param}". Valid input parameters are:
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func SwaggerUriToStdHttpUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
@@ -962,4 +1000,13 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 	}
 
 	return *s.AdditionalProperties.Has == false //nolint:gosimple
+}
+
+func sliceContains[E comparable](s []E, v E) bool {
+	for _, ss := range s {
+		if ss == v {
+			return true
+		}
+	}
+	return false
 }
