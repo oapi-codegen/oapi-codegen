@@ -23,6 +23,7 @@ const (
 	GinServer     ServerType = "gin"
 	GorillaServer ServerType = "gorilla"
 	IrisServer    ServerType = "iris"
+	StdHttpServer ServerType = "std-http"
 )
 
 var AllServers []ServerType = []ServerType{
@@ -32,6 +33,7 @@ var AllServers []ServerType = []ServerType{
 	GinServer,
 	GorillaServer,
 	IrisServer,
+	StdHttpServer,
 }
 
 func main() {
@@ -467,6 +469,9 @@ func generateOneTest(fTestGos map[ServerType]*bytes.Buffer, paths map[string]any
 			handlerSetup = `app := iris.New()
 				pkg1.RegisterHandlers(app, pkg1.NewStrictHandler(strictServerInterface{}, nil))`
 			handlerCall = `app.ServeHTTP(w, r)`
+		case StdHttpServer:
+			handlerSetup = `hh := pkg1.Handler(pkg1.NewStrictHandler(strictServerInterface{}, nil))`
+			handlerCall = `hh.ServeHTTP(w, r)`
 		}
 
 		fmt.Fprintf(fTestGo, `func %s(t *testing.T) {
