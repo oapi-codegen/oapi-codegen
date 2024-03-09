@@ -6,7 +6,7 @@ release version.
 
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
-[OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
+[OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md)
 API definitions. When working with services, it's important to have an API
 contract which servers and clients both implement to minimize the chances of
 incompatibilities. It's tedious to generate Go models which precisely correspond to
@@ -60,7 +60,7 @@ code, you will break other people's code. It's safe to rename internal names.
 ## Overview
 
 We're going to use the OpenAPI example of the
-[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/master/examples/v3.0/petstore-expanded.yaml)
+[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore-expanded.yaml)
 in the descriptions below, please have a look at it.
 
 In order to create a Go server to serve this exact schema, you would have to
