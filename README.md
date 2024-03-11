@@ -457,7 +457,7 @@ func SetupHandler() {
 
     f := fiber.New()
     f.Use(middleware.OapiRequestValidator(swagger))
-    api.RegisterHandlers(f, petStore)
+    api.RegisterHandlers(f, myApi)
 }
 ```
 
