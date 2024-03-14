@@ -149,7 +149,7 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
 	for k, v := range e.Schema.EnumValues {
-		newName := e.TypeName + UppercaseFirstCharacter(k)
+		newName := e.TypeName + globalState.options.Compatibility.EnumPrefixSeparator + UppercaseFirstCharacter(k)
 		newValues[newName] = v
 	}
 	return newValues
