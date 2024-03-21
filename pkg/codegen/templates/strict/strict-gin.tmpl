@@ -1,5 +1,5 @@
-type StrictHandlerFunc = runtime.StrictGinHandlerFunc
-type StrictMiddlewareFunc = runtime.StrictGinMiddlewareFunc
+type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
+type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -31,9 +31,9 @@ type strictHandler struct {
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
             {{if $multipleBodies}}if strings.HasPrefix(ctx.GetHeader("Content-Type"), "{{.ContentType}}") { {{end}}
-                {{if eq .NameTag "JSON" -}}
+                {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.ShouldBind(&body); err != nil {
+                    if err := ctx.ShouldBindJSON(&body); err != nil {
                         ctx.Status(http.StatusBadRequest)
                         ctx.Error(err)
                         return
@@ -51,12 +51,24 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Multipart" -}}
+                    {{if eq .ContentType "multipart/form-data" -}}
                     if reader, err := ctx.Request.MultipartReader(); err == nil {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     } else {
                         ctx.Error(err)
                         return
                     }
+                    {{else -}}
+                    if _, params, err := mime.ParseMediaType(ctx.Request.Header.Get("Content-Type")); err != nil {
+                        ctx.Error(err)
+                        return
+                    } else if boundary := params["boundary"]; boundary == "" {
+                        ctx.Error(http.ErrMissingBoundary)
+                        return
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(ctx.Request.Body, boundary)
+                    }
+                    {{end -}}
                 {{else if eq .NameTag "Text" -}}
                     data, err := io.ReadAll(ctx.Request.Body)
                     if err != nil {
@@ -88,7 +100,7 @@ type strictHandler struct {
                 ctx.Error(err)
             }
         } else if response != nil {
-            ctx.Error(fmt.Errorf("Unexpected response type: %T", response))
+            ctx.Error(fmt.Errorf("unexpected response type: %T", response))
         }
     }
 {{end}}

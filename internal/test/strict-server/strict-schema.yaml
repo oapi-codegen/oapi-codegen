@@ -9,7 +9,7 @@ paths:
   /json:
     post:
       operationId: JSONExample
-      description: JSON is automatically marshalled into structs.
+      description: JSON is automatically marshaled into structs.
       requestBody:
         content:
           application/json:
@@ -58,6 +58,25 @@ paths:
           description: OK
           content:
             multipart/form-data:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /multipart-related:
+    post:
+      operationId: MultipartRelatedExample
+      requestBody:
+        content:
+          multipart/related:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            multipart/related:
               schema:
                 $ref: "#/components/schemas/example"
         400:
@@ -245,6 +264,38 @@ paths:
               text/plain:
                 schema:
                   type: string
+  /with-union:
+    post:
+      operationId: UnionExample
+      description: Union type
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          headers:
+            header1:
+              schema:
+                type: string
+            header2:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: string
+                - $ref: "#/components/schemas/example"
+            application/alternative+json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
 components:
   responses:
     badrequest:

@@ -137,7 +137,7 @@ components:
           type: string
         readOnlyRequiredProp:
           description: |
-            This property is required and readOnly, so the go model should have it as a pointer, 
+            This property is required and readOnly, so the go model should have it as a pointer,
             as it will not be included when it is sent from client to server.
           type: string
           readOnly: true
@@ -149,6 +149,27 @@ components:
         - firstName
         - readOnlyRequiredProp
         - writeOnlyRequiredProp
+    SchemaObjectNullable:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+      nullable: true
     AdditionalPropertiesObject1:
       description: Has additional properties of type int
       type: object
@@ -207,6 +228,11 @@ components:
         type: object
         additionalProperties:
           $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject7:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObjectNullable'
     OneOfObject1:
       description: oneOf with references and no discriminator
       oneOf:
@@ -234,7 +260,7 @@ components:
             - $ref: '#/components/schemas/OneOfVariant2'
             - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject4:
-      description: oneOf plus fixed type - custom marshaling/unmarshalling
+      description: oneOf plus fixed type - custom marshaling/unmarshaling
       type: object
       properties:
         fixedProperty:
@@ -295,7 +321,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
     OneOfObject9:
-      description: oneOf with fixed descriminator
+      description: oneOf with fixed discriminator
       type: object
       properties:
         type:

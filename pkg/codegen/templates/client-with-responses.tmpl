@@ -33,7 +33,7 @@ type ClientWithResponsesInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request{{if .HasBody}} with any body{{end}}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}

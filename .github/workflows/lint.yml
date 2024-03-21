@@ -4,6 +4,14 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      # perform matrix testing to give us an earlier insight into issues with different versions of supported major versions of Go
+      matrix:
+        version:
+        - "1.20"
+        - "1.21"
+        - "1.22"
     steps:
       - name: Check out source code
         uses: actions/checkout@v3
@@ -11,10 +19,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version-file: 'go.mod'
+          go-version: ${{ matrix.version }}
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
-        with:
-          # Make sure this matches the version we've got in our `Makefile`
-          version: v1.50.1
+      - name: Run `make lint-ci`
+        run: make lint-ci
+        env:
+          # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
+          GOTOOLCHAIN: local

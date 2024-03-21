@@ -3,7 +3,7 @@ package param_test
 import (
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/internal/test/any_of/param"
+	"github.com/deepmap/oapi-codegen/v2/internal/test/any_of/param"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

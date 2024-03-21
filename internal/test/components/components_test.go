@@ -14,7 +14,7 @@ func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
 }
 
 func TestRawJSON(t *testing.T) {
-	// Check raw json unmarshalling
+	// Check raw json unmarshaling
 	const buf = `{"name":"bob","value1":{"present":true}}`
 	var dst ObjectWithJsonField
 	err := json.Unmarshal([]byte(buf), &dst)
@@ -52,7 +52,7 @@ func TestAdditionalProperties(t *testing.T) {
 	assert.True(t, found)
 	assert.EqualValues(t, 7, foo)
 
-	// test that additionalProperties that reference a schema work when unmarshalling
+	// test that additionalProperties that reference a schema work when unmarshaling
 	bossSchema := SchemaObject{
 		FirstName: "bob",
 		Role:      "warehouse manager",
@@ -63,6 +63,20 @@ func TestAdditionalProperties(t *testing.T) {
 	err = json.Unmarshal([]byte(buf2), &obj5)
 	assert.NoError(t, err)
 	assert.Equal(t, bossSchema, obj5["boss"])
+
+	bossSchemaNullable := &SchemaObjectNullable{
+		FirstName: "bob",
+		Role:      "warehouse manager",
+	}
+
+	buf3 := `{"boss": { "firstName": "bob", "role": "warehouse manager" }, "employee": null}`
+	var obj7 AdditionalPropertiesObject7
+	err = json.Unmarshal([]byte(buf3), &obj7)
+	assert.NoError(t, err)
+	employee, ok := obj7["employee"]
+	assert.True(t, ok)
+	assert.Equal(t, bossSchemaNullable, obj7["boss"])
+	assert.Nil(t, employee)
 }
 
 func TestOneOf(t *testing.T) {

@@ -8,16 +8,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
+	middleware "github.com/oapi-codegen/echo-middleware"
 )
 
 func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
 	swagger, err := api.GetSwagger()
@@ -45,5 +46,5 @@ func main() {
 	api.RegisterHandlers(e, petStore)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))
+	e.Logger.Fatal(e.Start(net.JoinHostPort("0.0.0.0", *port)))
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=models.cfg.yaml ../../petstore-expanded.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=models.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api/models"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api/models"
 	"github.com/labstack/echo/v4"
 )
 
@@ -39,7 +39,7 @@ func NewPetStore() *PetStore {
 	}
 }
 
-// This function wraps sending of an error in the Error format, and
+// sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetStoreError(ctx echo.Context, code int, message string) error {
 	petErr := models.Error{
@@ -99,7 +99,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet

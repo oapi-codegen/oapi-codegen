@@ -1,0 +1,15 @@
+components:
+  schemas:
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1

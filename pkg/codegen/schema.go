@@ -33,6 +33,8 @@ type Schema struct {
 	// If this is set, the schema will declare a type via alias, eg,
 	// `type Foo = bool`. If this is not set, we will define this type via
 	// type definition `type Foo bool`
+	//
+	// Can be overriden by the OutputOptions#DisableTypeAliasesForType field
 	DefineViaAlias bool
 
 	// The original OpenAPIv3 Schema.
@@ -41,6 +43,13 @@ type Schema struct {
 
 func (s Schema) IsRef() bool {
 	return s.RefType != ""
+}
+
+func (s Schema) IsExternalRef() bool {
+	if !s.IsRef() {
+		return false
+	}
+	return strings.Contains(s.RefType, ".")
 }
 
 func (s Schema) TypeDecl() string {
@@ -53,7 +62,7 @@ func (s Schema) TypeDecl() string {
 // AddProperty adds a new property to the current Schema, and returns an error
 // if it collides. Two identical fields will not collide, but two properties by
 // the same name, but different definition, will collide. It's safe to merge the
-// fields of two schemas with overalapping properties if those properties are
+// fields of two schemas with overlapping properties if those properties are
 // identical.
 func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
@@ -89,11 +98,21 @@ type Property struct {
 }
 
 func (p Property) GoFieldName() string {
-	return SchemaNameToTypeName(p.JsonFieldName)
+	goFieldName := p.JsonFieldName
+	if _, ok := p.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
+			goFieldName = extGoFieldName
+		}
+	}
+
+	return SchemaNameToTypeName(goFieldName)
 }
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
@@ -167,7 +186,7 @@ type TypeDefinition struct {
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for
-// response unmarshalling in ClientWithResponses.
+// response unmarshaling in ClientWithResponses.
 type ResponseTypeDefinition struct {
 	TypeDefinition
 	// The content type name where this is used, eg, application/json
@@ -241,6 +260,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			GoType:         refType,
 			Description:    schema.Description,
 			DefineViaAlias: true,
+			OAPISchema:     schema,
 		}, nil
 	}
 
@@ -273,6 +293,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		outSchema.DefineViaAlias = true
 
 		return outSchema, nil
+	}
+
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Schema type and format, eg. string / binary
@@ -543,6 +573,10 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
+		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+			outSchema.DefineViaAlias = false
+		}
+
 	case "integer":
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
@@ -637,11 +671,6 @@ func GenFieldsFromProperties(props []Property) []string {
 		field := ""
 
 		goFieldName := p.GoFieldName()
-		if _, ok := p.Extensions[extGoName]; ok {
-			if extGoFieldName, err := extParseGoFieldName(p.Extensions[extGoName]); err == nil {
-				goFieldName = extGoFieldName
-			}
-		}
 
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
@@ -665,11 +694,24 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
 
+		// Check x-go-type-skip-optional-pointer, which will override if the type
+		// should be a pointer or not when the field is optional.
+		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				p.Schema.SkipOptionalPointer = skipOptionalPointer
+			}
+		}
+
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		omitEmpty := !p.Nullable &&
-			(!p.Required || p.ReadOnly || p.WriteOnly) &&
+		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
 
 		// Support x-omitempty
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
@@ -724,6 +766,9 @@ func additionalPropertiesType(schema Schema) string {
 	addPropsType := schema.AdditionalPropertiesType.GoType
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
+	}
+	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+		addPropsType = "*" + addPropsType
 	}
 	return addPropsType
 }
@@ -792,15 +837,22 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 
 	refToGoTypeMap := make(map[string]string)
 	for i, element := range elements {
-		elementSchema, err := GenerateGoSchema(element, path)
+		elementPath := append(path, fmt.Sprint(i))
+		elementSchema, err := GenerateGoSchema(element, elementPath)
 		if err != nil {
 			return err
 		}
 
 		if element.Ref == "" {
-			td := TypeDefinition{Schema: elementSchema, TypeName: SchemaNameToTypeName(PathToTypeName(append(path, fmt.Sprint(i))))}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-			elementSchema.GoType = td.TypeName
+			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
+			if elementSchema.TypeDecl() == elementName {
+				elementSchema.GoType = elementName
+			} else {
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+				elementSchema.GoType = td.TypeName
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		} else {
 			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}

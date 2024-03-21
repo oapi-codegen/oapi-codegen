@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/echo/api"
+	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -34,21 +34,21 @@ func TestAPI(t *testing.T) {
 	t.Logf("writer jwt: %s", string(writerJWT))
 
 	// ListPets should return 403 forbidden without credentials
-	response := testutil.NewRequest().Get("/things").Go(t, e)
+	response := testutil.NewRequest().Get("/things").GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusForbidden, response.Code())
 
 	// Using the writer JWT should allow us to insert a thing.
 	response = testutil.NewRequest().Post("/things").
 		WithJWSAuth(string(writerJWT)).
 		WithAcceptJson().
-		WithJsonBody(api.Thing{Name: "Thing 1"}).Go(t, e)
+		WithJsonBody(api.Thing{Name: "Thing 1"}).GoWithHTTPHandler(t, e)
 	require.Equal(t, http.StatusCreated, response.Code())
 
 	// Using the reader JWT should forbid inserting a thing.
 	response = testutil.NewRequest().Post("/things").
 		WithJWSAuth(string(readerJWT)).
 		WithAcceptJson().
-		WithJsonBody(api.Thing{Name: "Thing 2"}).Go(t, e)
+		WithJsonBody(api.Thing{Name: "Thing 2"}).GoWithHTTPHandler(t, e)
 	require.Equal(t, http.StatusForbidden, response.Code())
 
 	// Both JWT's should allow reading the list of things.
@@ -56,7 +56,7 @@ func TestAPI(t *testing.T) {
 	for _, jwt := range jwts {
 		response := testutil.NewRequest().Get("/things").
 			WithJWSAuth(jwt).
-			WithAcceptJson().Go(t, e)
+			WithAcceptJson().GoWithHTTPHandler(t, e)
 		assert.Equal(t, http.StatusOK, response.Code())
 	}
 }

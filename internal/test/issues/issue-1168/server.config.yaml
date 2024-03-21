@@ -1,0 +1,5 @@
+package: issue1168
+output:
+  api.gen.go
+generate:
+  models: true

@@ -1,5 +1,4 @@
-OpenAPI Client and Server Code Generator
-----------------------------------------
+## OpenAPI Client and Server Code Generator
 
 ⚠️ This README may be for the latest development version, which may contain
 unreleased changes. Please ensure you're looking at the README for the latest
@@ -16,9 +15,11 @@ you can focus on implementing the business logic for your service.
 
 We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
-stubs, and [Chi](https://github.com/go-chi/chi), and [Gin](https://github.com/gin-gonic/gin)
-have also been added by contributors as additional routers. We chose Echo because
-the `Context` object is a mockable interface, and it allows for some advanced
+stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin),
+[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber),
+[Iris](https://github.com/kataras/iris), and [1.22+ net/http](https://pkg.go.dev/net/http)
+have also been added by contributors as additional routers.
+We chose Echo because the `Context` object is a mockable interface, and it allows for some advanced
 testing.
 
 This package tries to be too simple rather than too generic, so we've made some
@@ -28,6 +29,34 @@ something via utility code or reflection, it's probably a better approach than
 code generation, which is fragile due to the very dynamic nature of OpenAPI and
 the very static nature of Go.
 
+## Contributing
+
+I would like to pre-emptively extend my gratitude to anyone who takes the time
+to improve this project.
+
+Oapi-codegen is being actively maintained, however the two people who do so
+are very busy, and can only set aside time for this project every once in a while,
+so our release cadence is slow and conservative.
+
+Generating code which others depend on, which is based on something as complex
+as OpenAPI is fraught with many edge cases, and we prefer to leave things as
+they are if there is a reasonable workaround.
+
+If you do find a case where oapi-codegen is broken, and would like to submit a PR,
+we are very grateful, and will happily look at it.
+
+Since most commits affect generated code, before sending your PR, please
+ensure that all boilerplate has been regenerated. You can do this from the top level
+of the repository by running:
+
+    make generate
+
+I realize that our code isn't entirely idiomatic with respect to comments, and
+variable naming and initialisms, especially the generated code, but I'm reluctant
+to merge PR's which change this, due to the breakage they will cause for others. If 
+you rename anything under `/pkg` or change the names of variables in generated
+code, you will break other people's code. It's safe to rename internal names.
+
 ## Overview
 
 We're going to use the OpenAPI example of the
@@ -35,22 +64,22 @@ We're going to use the OpenAPI example of the
 in the descriptions below, please have a look at it.
 
 In order to create a Go server to serve this exact schema, you would have to
-write a lot of boilerplate code to perform all the marshalling and unmarshalling
+write a lot of boilerplate code to perform all the marshaling and unmarshaling
 into objects which match the OpenAPI 3.0 definition. The code generator in this
 directory does a lot of that for you. You would run it like so:
 
-    go install github.com/deepmap/oapi-codegen/cmd/oapi-codegen@latest
+    go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
     oapi-codegen -package petstore petstore-expanded.yaml > petstore.gen.go
 
 Let's go through that `petstore.gen.go` file to show you everything which was
 generated.
-
 
 ## Generated Server Boilerplate
 
 The `/components/schemas` section in OpenAPI defines reusable objects, so Go
 types are generated for these. The Pet Store example defines `Error`, `Pet`,
 `Pets` and `NewPet`, so we do the same in Go:
+
 ```go
 // Error defines model for Error.
 type Error struct {
@@ -112,7 +141,7 @@ type ServerInterface interface {
 These are the functions which you will implement yourself in order to create
 a server conforming to the API specification. Normally, all the arguments and
 parameters are stored on the `echo.Context` in handlers, so we do the tedious
-work of unmarshalling the JSON automatically, simply passing values into
+work of unmarshaling the JSON automatically, simply passing values into
 your handlers.
 
 Notice that `FindPetById` takes a parameter `id int64`. All path arguments
@@ -121,11 +150,12 @@ will be passed as arguments to your function, since they are mandatory.
 Remaining arguments can be passed in headers, query arguments or cookies. Those
 will be written to a `params` object. Look at the `FindPets` function above, it
 takes as input `FindPetsParams`, which is defined as follows:
- ```go
+
+```go
 // Parameters object for FindPets
 type FindPetsParams struct {
-    Tags  *[]string `json:"tags,omitempty"`
-    Limit *int32   `json:"limit,omitempty"`
+   Tags  *[]string `json:"tags,omitempty"`
+   Limit *int32   `json:"limit,omitempty"`
 }
 ```
 
@@ -135,6 +165,7 @@ specified, the pointer will be non-`nil`, and you can read its value.
 
 If you changed the OpenAPI specification to make the parameter required, the
 `FindPetsParams` structure will contain the type by value:
+
 ```go
 type FindPetsParams struct {
     Tags  *[]string `json:"tags,omitempty"`
@@ -143,6 +174,7 @@ type FindPetsParams struct {
 ```
 
 ### Registering handlers
+
 There are a few ways of registering your http handler based on the type of server generated i.e. `-generate server` or `-generate chi-server`
 
 <details><summary><code>Echo</code></summary>
@@ -152,6 +184,7 @@ Code generated using `-generate server`.
 The usage of `Echo` is out of scope of this doc, but once you have an
 echo instance, we generate a utility function to help you associate your handlers
 with this autogenerated code. For the pet store, it looks like this:
+
 ```go
 func RegisterHandlers(router codegen.EchoRouter, si ServerInterface) {
     wrapper := ServerInterfaceWrapper{
@@ -168,6 +201,7 @@ The wrapper functions referenced above contain generated code which pulls
 parameters off the `Echo` request context, and unmarshals them into Go objects.
 
 You would register the generated handlers as follows:
+
 ```go
 func SetupHandler() {
     var myApi PetStoreImpl  // This implements the pet store interface
@@ -177,7 +211,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>Chi</code></summary>
 
@@ -196,7 +230,8 @@ func SetupHandler() {
     r.Mount("/", Handler(&myApi))
 }
 ```
-</summary></details>
+
+</details>
 
 <details><summary><code>Gin</code></summary>
 
@@ -205,6 +240,7 @@ Code generated using `-generate gin`.
 The usage of `gin` is out of scope of this doc, but once you have an
 gin instance, we generate a utility function to help you associate your handlers
 with this autogenerated code. For the pet store, it looks like this:
+
 ```go
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options GinServerOptions) *gin.Engine {
@@ -225,7 +261,7 @@ func RegisterHandlersWithOptions(router *gin.Engine, si ServerInterface, options
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	middleware "github.com/oapi-codegen/gin-middleware"
 )
 
 type PetStoreImpl struct {}
@@ -237,11 +273,12 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     r := gin.Default()
-	  r.Use(middleware.OapiRequestValidator(swagger))
+    r.Use(middleware.OapiRequestValidator(swagger))
     r = api.RegisterHandlers(r, petStore)
 }
 ```
-</summary></details>
+
+</details>
 
 <details><summary><code>net/http</code></summary>
 
@@ -262,12 +299,125 @@ func SetupHandler() {
 
 Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
 
-</summary></details>
+</details>
+
+<details><summary><code>1.22+ net/http</code></summary>
+
+As of Go 1.22, enhancements have been made to the routing of the `net/http` package in the standard library.
+You can use `-generate std-http` to generate functions to help you associate your handlers with the auto-generated code.
+For the pet store, it looks like this:
+
+```go
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
+	m := options.BaseRouter
+
+	if m == nil {
+		m = http.NewServeMux()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	wrapper := ServerInterfaceWrapper{
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+	}
+
+	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
+	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
+	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+
+	return m
+}
+```
+
+The wrapper functions referenced above contain generated code which pulls parameters off the request and unmarshals them into Go objects.
+
+You would register the generated handlers as follows:
+
+```go
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
+    // Implement me
+}
+
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    options := petstore.StdHTTPServerOptions{
+        BaseRouter: http.DefaultServeMux, // Or use a new ServeMux
+    }
+	petstore.HandlerWithOptions(&myApi, options)
+}
+```
+
+**Note** that if you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` updated to:
+
+```go.mod
+go 1.22
+```
+
+</details>
+
+<details><summary><code>Iris</code></summary>
+
+Code generated using `-generate iris`.
+
+The usage of `iris` is out of scope of this doc, but once you have an
+iris instance, we generate a utility function to help you associate your handlers
+with this autogenerated code. For the pet store, it looks like this:
+
+```go
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+
+	router.Get(options.BaseURL+"/pets", wrapper.FindPets)
+	router.Post(options.BaseURL+"/pets", wrapper.AddPet)
+	router.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet)
+	router.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
+
+	router.Build()
+}
+```
+
+```go
+import (
+	"github.com/kataras/iris/v12"
+	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/iris/api"
+	middleware "github.com/oapi-codegen/iris-middleware"
+)
+```
+
+The wrapper functions referenced above contain generated code which pulls
+parameters off the `Iris` request context, and unmarshals them into Go objects.
+
+You would register the generated handlers as follows:
+
+```go
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    i := iris.Default()
+    i.Use(middleware.OapiRequestValidator(swagger))
+    api.RegisterHandlers(r, &myApi)
+}
+```
+
+</details>
 
 #### Strict server generation
 
-oapi-codegen also supports generating RPC inspired strict server, that will parse request bodies and encode responses. 
-The main points of this code is to automate some parsing, abstract user code from server specific code, 
+oapi-codegen also supports generating RPC inspired strict server, that will parse request bodies and encode responses.
+The main points of this code is to automate some parsing, abstract user code from server specific code,
 and also to force user code to comply with the schema.
 It supports binding of `application/json` and `application/x-www-form-urlencoded` to a struct, for `multipart` requests
 it generates a `multipart.Reader`, which can be used to either manually iterating over parts or using `runtime.BindMultipart`
@@ -279,6 +429,7 @@ Content-Type header, status code and will marshal the response data. You can als
 cause an `Internal Server Error` response.
 
 Short example:
+
 ```go
 type PetStoreImpl struct {}
 func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error) {
@@ -287,14 +438,16 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
     return GetPets200JSONResponse(result), nil
 }
 ```
-For a complete example see `/examples/petstore-expanded/strict`.
+
+For a complete example see [`examples/petstore-expanded/strict`](examples/petstore-expanded/strict).
 
 Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
+
 ```go
 func SetupHandler() {
     var myApi PetStoreImpl
-	myStrictApiHandler := api.NewStrictHandler(myApi, nil)
+    myStrictApiHandler := api.NewStrictHandler(myApi, nil)
     e := echo.New()
     petstore.RegisterHandlers(e, &myStrictApiHandler)
 }
@@ -317,20 +470,22 @@ defaults to `false` and we don't generate this boilerplate. If you would like
 an object to accept `additionalProperties`, specify a schema for `additionalProperties`.
 
 Say we declared `NewPet` above like so:
+
 ```yaml
-    NewPet:
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        tag:
-          type: string
-      additionalProperties:
-        type: string
+NewPet:
+  required:
+    - name
+  properties:
+    name:
+      type: string
+    tag:
+      type: string
+  additionalProperties:
+    type: string
 ```
 
 The Go code for `NewPet` would now look like this:
+
 ```go
 // NewPet defines model for NewPet.
 type NewPet struct {
@@ -342,6 +497,7 @@ type NewPet struct {
 
 The additionalProperties, of type `string` become `map[string]string`, which maps
 field names to instances of the `additionalProperties` schema.
+
 ```go
 // Getter for additional properties for NewPet. Returns the specified
 // element and whether it was found
@@ -359,23 +515,25 @@ func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 
 There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
-all of them are tested via the `internal/test/components` schemas and tests. Please
+all of them are tested via the [`internal/test/components`](internal/test/components) schemas and tests. Please
 look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
 
 - `oneOf` and `anyOf` are implemented using delayed parsing with the help of `json.RawMessage`.
-The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`, `MergeCat`, `MergeDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
+  The following schema will result in a type that has methods such as `AsCat`, `AsDog`, `FromCat`, `FromDog`, `MergeCat`, `MergeDog`. If the schema also includes a discriminator the generated code will also have methods such as `Discriminator`, `ValueByDiscriminator` and will force discriminator value in `From` methods.
+
 ```yaml
 schema:
   oneOf:
     - $ref: '#/components/schemas/Cat'
     - $ref: '#/components/schemas/Dog'
 ```
+
 - `allOf` is supported, by taking the union of all the fields in all the
-    component schemas. This is the most useful of these operations, and is
-    commonly used to merge objects with an identifier, as in the
-    `petstore-expanded` example.
+  component schemas. This is the most useful of these operations, and is
+  commonly used to merge objects with an identifier, as in the
+  `petstore-expanded` example.
 
 ## Generated Client Boilerplate
 
@@ -427,21 +585,21 @@ takes the same arguments. It's difficult to handle any arbitrary body that
 Swagger supports, so we've done some special casing for bodies, and you may get
 more than one function for an operation with a request body.
 
-1) If you have more than one request body type, meaning more than one media
- type, you will have a generic handler of this form:
+1.  If you have more than one request body type, meaning more than one media
+    type, you will have a generic handler of this form:
 
-        AddPet(ctx context.Context, contentType string, body io.Reader)
+           AddPet(ctx context.Context, contentType string, body io.Reader)
 
-2) If you have only a JSON request body, you will get:
+2.  If you have only a JSON request body, you will get:
 
-        AddPet(ctx context.Context, body NewPet)
+         AddPet(ctx context.Context, body NewPet)
 
-3) If you have multiple request body types, which include a JSON type you will
- get two functions. We've chosen to give the JSON version a shorter name, as
- we work with JSON and don't want to wear out our keyboards.
+3.  If you have multiple request body types, which include a JSON type you will
+    get two functions. We've chosen to give the JSON version a shorter name, as
+    we work with JSON and don't want to wear out our keyboards.
 
-        AddPet(ctx context.Context, body NewPet)
-        AddPetWithBody(ctx context.Context, contentType string, body io.Reader)
+           AddPet(ctx context.Context, body NewPet)
+           AddPetWithBody(ctx context.Context, contentType string, body io.Reader)
 
 The Client object above is fairly flexible, since you can pass in your own
 `http.Client` and a request editing callback. You can use that callback to add
@@ -473,29 +631,29 @@ will correspond to your request schema. They map one-to-one to the functions on
 the client, except that we always generate the generic non-JSON body handler.
 
 There are some caveats to using this code.
+
 - exploded, form style query arguments, which are the default argument format
- in OpenAPI 3.0 are undecidable. Say that I have two objects, one composed of
- the fields `(name=bob, id=5)` and another which has `(name=shoe, color=brown)`.
- The first parameter is named `person` and the second is named `item`. The
- default marshaling style for query args would result in
- `/path/?name=bob,id=5&name=shoe,color=brown`. In order to tell what belongs
- to which object, we'd have to look at all the parameters and try to deduce it,
- but we're lazy, so we didn't. Don't use exploded form style arguments if
- you're passing around objects which have similar field names. If you
- used unexploded form parameters, you'd have
- `/path/?person=name,bob,id,5&item=name,shoe,color,brown`, which an be
- parsed unambiguously.
+  in OpenAPI 3.0 are undecidable. Say that I have two objects, one composed of
+  the fields `(name=bob, id=5)` and another which has `(name=shoe, color=brown)`.
+  The first parameter is named `person` and the second is named `item`. The
+  default marshaling style for query args would result in
+  `/path/?name=bob,id=5&name=shoe,color=brown`. In order to tell what belongs
+  to which object, we'd have to look at all the parameters and try to deduce it,
+  but we're lazy, so we didn't. Don't use exploded form style arguments if
+  you're passing around objects which have similar field names. If you
+  used unexploded form parameters, you'd have
+  `/path/?person=name,bob,id,5&item=name,shoe,color,brown`, which an be
+  parsed unambiguously.
 
 - Parameters can be defined via `schema` or via `content`. Use the `content` form
- for anything other than trivial objects, they can marshal to arbitrary JSON
- structures. When you send them as cookie (`in: cookie`) arguments, we will
- URL encode them, since JSON delimiters aren't allowed in cookies.
+  for anything other than trivial objects, they can marshal to arbitrary JSON
+  structures. When you send them as cookie (`in: cookie`) arguments, we will
+  URL encode them, since JSON delimiters aren't allowed in cookies.
 
 ## Using SecurityProviders
 
 If you generate client-code, you can use some default-provided security providers
 which help you to use the various OpenAPI 3 Authentication mechanism.
-
 
 ```go
     import (
@@ -525,7 +683,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         }
 
         // Example providing your own provider using an anonymous function wrapping in the
-        // InterceptoFn adapter. The behaviour between the InterceptorFn and the Interceptor interface
+        // InterceptorFn adapter. The behaviour between the InterceptorFn and the Interceptor interface
         // are the same as http.HandlerFunc and http.Handler.
         customProvider := func(req *http.Request, ctx context.Context) error {
             // Just log the request header, nothing else.
@@ -552,6 +710,20 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
   flag incorrect usage of this property.
+- `x-go-type-skip-optional-pointer`: specifies if the Go type should or should not be a pointer
+  when the property is optional. If set to true, the type will not be a pointer if the field is
+  optional or nullable. If set to false, the type will be a pointer.
+  
+  ```yaml
+  properties:
+    field:
+      type: string
+      x-go-type-skip-optional-pointer: true
+  ```
+  
+  In the example above, the `field` field will be of type `string` instead of `*string`. This is
+  useful when you want to handle the case of an empty string differently than a null value.
+  
 - `x-go-name`: specifies Go field name. It allows you to specify the field name for a schema, and
   will override any default value. This extended property isn't supported in all parts of
   OpenAPI, so please refer to the spec as to where it's allowed. Swagger validation tools will
@@ -563,51 +735,56 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 - `x-go-json-ignore`: sets tag to `-` to ignore the field in json completely.
 - `x-oapi-codegen-extra-tags`: adds extra Go field tags to the generated struct field. This is
   useful for interfacing with tag based ORM or validation libraries. The extra tags that
-  are added are in addition to the regular json tags that are generated. If you specify your 
-  own `json` tag, you will override the default one. 
+  are added are in addition to the regular json tags that are generated. If you specify your
+  own `json` tag, you will override the default one.
 
-    ```yaml
-    components:
-      schemas:
-        Object:
-          properties:
-            name:
-              type: string
-              x-oapi-codegen-extra-tags:
-                tag1: value1
-                tag2: value2
-    ```
-  In the example above, field `name` will be declared as: 
-  
+  ```yaml
+  components:
+    schemas:
+      Object:
+        properties:
+          name:
+            type: string
+            x-oapi-codegen-extra-tags:
+              tag1: value1
+              tag2: value2
+  ```
+
+  In the example above, field `name` will be declared as:
+
   ```
   Name string `json:"name" tag1:"value1" tag2:"value2"`
   ```
+
 - `x-go-type-import`: adds extra Go imports to your generated code. It can help you, when you want to
-   choose your own import package for `x-go-type`.
+  choose your own import package for `x-go-type`.
 
   ```yaml
-    schemas:
-      Pet:
-        properties:
-          age:
-            x-go-type: myuuid.UUID
-            x-go-type-import:
-              name: myuuid
-              path: github.com/google/uuid
+  schemas:
+    Pet:
+      properties:
+        age:
+          x-go-type: myuuid.UUID
+          x-go-type-import:
+            name: myuuid
+            path: github.com/google/uuid
   ```
+
   After code generation you will get this:
+
   ```go
     import (
         ...
         myuuid "github.com/google/uuid"
     )
-    
+
   //Pet defines model for Pet.
     type Pet struct {
         Age *myuuid.UUID `json:"age,omitempty"`
     }
 
   ```
+
   `name` is an optional parameter. Example:
 
   ```yaml
@@ -627,45 +804,74 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
 
   ```go
   import (
-	  "github.com/google/uuid"
+    "github.com/google/uuid"
   )
 
   // Pet defines model for Pet.
   type Pet struct {
-	  Age uuid.UUID `json:"age"`
+    Age uuid.UUID `json:"age"`
   }
   ```
 
 - `x-enum-varnames`: supplies other enum names for the corresponding values. (alias: `x-enumNames`)
 
-    ```yaml
-    components:
-      schemas:
-        Object:
-          properties:
-            category:
-              type: integer
-              enum: [0, 1, 2]
-              x-enum-varnames:
-                - notice
-                - warning
-                - urgent
-    ```
+  ```yaml
+  components:
+    schemas:
+      Object:
+        properties:
+          category:
+            type: integer
+            enum: [0, 1, 2]
+            x-enum-varnames:
+              - notice
+              - warning
+              - urgent
+  ```
 
-    After code generation you will get this result:
+  After code generation you will get this result:
+
+  ```go
+  // Defines values for ObjectCategory.
+  const (
+  	Notice  ObjectCategory = 0
+  	Urgent  ObjectCategory = 2
+  	Warning ObjectCategory = 1
+  )
+
+  // ObjectCategory defines model for Object.Category.
+  type ObjectCategory int
+  ```
+
+- `x-order`: specifies the order of the fields in the structure. It allows you to specify the order
+  of the fields in the generated structure and will override any default value. This extended
+  property is not supported in all parts of OpenAPI, so check the specification to see where it is
+  allowed.
+
+    ```yaml
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+    ```
+  In the example above, struct will be declared as:
 
     ```go
-    // Defines values for ObjectCategory.
-    const (
-    	Notice  ObjectCategory = 0
-    	Urgent  ObjectCategory = 2
-    	Warning ObjectCategory = 1
-    )
-
-    // ObjectCategory defines model for Object.Category.
-    type ObjectCategory int
+    type DateInterval struct {
+      Start *openapi_types.Date `json:"start,omitempty"`
+      End   *openapi_types.Date `json:"end,omitempty"`
+    }
     ```
-
+  
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,
@@ -674,35 +880,41 @@ those via the `-generate` flag. It defaults to `types,client,server,spec`, but
 you can specify any combination of those.
 
 - `types`: generate all type definitions for all types in the OpenAPI spec. This
- will be everything under `#components`, as well as request parameter, request
- body, and response type objects.
+  will be everything under `#components`, as well as request parameter, request
+  body, and response type objects.
 - `server`: generate the Echo server boilerplate. `server` requires the types in the
- same package to compile.
+  same package to compile.
 - `chi-server`: generate the Chi server boilerplate. This code is dependent on
- that produced by the `types` target.
+  that produced by the `types` target.
+- `fiber`: generate the Fiber server boilerplate. This code is dependent
+  on that produced by the `types` target.
+- `iris`: generate the Iris server boilerplate. This code is dependent
+  on that produced by the `types` target.
+- `std-http`: generate the Go stdlib net/http server boilerplate. This code is
+  dependent on that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
- present in its package.
+  present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
   This is then usable with the `OapiRequestValidator`, or to be used by other
   methods that need access to the parsed OpenAPI specification
 - `skip-fmt`: skip running `goimports` on the generated code. This is useful for debugging
- the generated file in case the spec contains weird strings.
+  the generated file in case the spec contains weird strings.
 - `skip-prune`: skip pruning unused components from the spec prior to generating
- the code.
+  the code.
 - `import-mapping`: specifies a map of references external OpenAPI specs to go
- Go include paths. Please see below.
+  Go include paths. Please see below.
 
 So, for example, if you would like to produce only the server code, you could
 run `oapi-codegen -generate types,server`. You could generate `types` and
 `server` into separate files, but both are required for the server code.
 
-`oapi-codegen` can filter paths base on their tags in the openapi definition.
-Use either `-include-tags` or `-exclude-tags` followed by a comma-separated list
-of tags. For instance, to generate a server that serves all paths except those
-tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
+`oapi-codegen` can filter paths base on their tags or operationId in the openapi definition.
+Use either `-include-tags`, `include-operation-ids` or `-exclude-tags`, `-exclude-operation-ids` 
+followed by a comma-separated list of tags or operation ids. For instance, to generate a server
+that serves all paths except those tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
 To generate a server that only handles `admin` paths, use the argument
-`-include-tags="admin"`. When neither of these arguments is present, all paths
-are generated.
+`-include-tags="admin"` or use `-include-operation-ids="getPets"` to include this specific operation.
+When neither of these arguments is present, all paths are generated.
 
 `oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
 a comma separated list of schema names. For instance, `--exclude-schemas=Pet,NewPet`
@@ -713,9 +925,9 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`internal/test/externalref/`](internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
-    
+
 ```yaml
 package: externalref
 generate:
@@ -729,7 +941,7 @@ output-options:
   skip-prune: true
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48) 
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](cmd/oapi-codegen/oapi-codegen.go#L37)
 to see all the fields on the configuration structure.
 
 ### Import Mappings
@@ -760,10 +972,9 @@ This code is still young, and not complete, since we're filling it in as we
 need it. We've not yet implemented several things:
 
 - `patternProperties` isn't yet supported and will exit with an error. Pattern
- properties were defined in JSONSchema, and the `kin-openapi` Swagger object
- knows how to parse them, but they're not part of OpenAPI 3.0, so we've left
- them out, as support is very complicated.
-
+  properties were defined in JSONSchema, and the `kin-openapi` Swagger object
+  knows how to parse them, but they're not part of OpenAPI 3.0, so we've left
+  them out, as support is very complicated.
 
 ## Making changes to code generation
 
@@ -778,7 +989,7 @@ All this command does is inline the files ending in `.tmpl` into the specified
 Go file.
 
 Afterwards you should run `go generate ./...`, and the templates will be updated
- accordingly.
+accordingly.
 
 Alternatively, you can provide custom templates to override built-in ones using
 the `-templates` flag specifying a path to a directory containing templates
@@ -807,7 +1018,8 @@ HTTP request returns a non 200 response code, the generator will error.
 instead of a branch like `main`. Tracking a branch can lead to unexpected API
 drift, and loss of the ability to reproduce a build.
 
-Examples: 
+Examples:
+
 ```yaml
 output: api.gen.go
 package: api
@@ -816,9 +1028,9 @@ output-options:
     # using a local file
     client-with-responses.tmpl: /home/username/workspace/templatesProject/my-client-with-responses.tmpl
 
-    # The following are referencing a versuion of the default
-    # client-with-responses.tmpl file, but loaded in through 
-    # github's raw.githubusercontent.com. The general form 
+    # The following are referencing a version of the default
+    # client-with-responses.tmpl file, but loaded in through
+    # github's raw.githubusercontent.com. The general form
     # to use raw.githubusercontent.com is as follows
     # https://raw.githubusercontent.com/<username>/<project>/<hash|tag|branch>/path/to/template/template.tmpl
 
@@ -840,7 +1052,7 @@ output-options:
 
 ```
 
-Using the configuration file to load in templates **will** load in templates 
+Using the configuration file to load in templates **will** load in templates
 with names other than those defined by the built in templates. These user
 templates will not be called unless the user overrides a built in template to
 call them however.
