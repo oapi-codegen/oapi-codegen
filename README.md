@@ -12,6 +12,8 @@
 unreleased changes. Please ensure you're looking at the README for the latest
 release version.
 
+Does not 2.0
+
 ## OpenAPI Client and Server Code Generator
 
 ```
@@ -174,6 +176,26 @@ As well as inbuilt OpenAPI, we also support the following OpenAPI extensions.
 ### Custom code generation
 
 It is possible to extend **??** using the templates **??**.
+
+#### Local paths
+
+#### HTTPS paths
+
+It is also possible to use HTTPS URLs.
+
+> [!WARNING]
+> Although possible, this does lead to **??**. It's recommended to vendor (copy) the OpenAPI spec into your **??**
+
+To use it, **??**
+
+```yaml
+TODO
+```
+
+> [!WARNING]
+> If using URLs that pull locations from a Git repo, such as `raw.githubusercontent.com`, it is strongly encouraged to use a tag or a raw commit hash instead of a branch like `main`. Tracking a branch can lead to unexpected API drift, and loss of the ability to reproduce a build.
+
+#### Using the Go package
 
 Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
 
