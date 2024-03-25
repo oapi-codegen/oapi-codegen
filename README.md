@@ -112,6 +112,9 @@ Server
 <th>
 <code>generate</code> flag to enable<br> code generation
 </th>
+<th>
+Example usage
+</th>
 </tr>
 
 <tr>
@@ -122,6 +125,31 @@ Server
 </td>
 <td>
 <code>chi-server</code>
+</td>
+<td>
+<details>
+
+<summary><code>Chi</code></summary>
+
+Code generated using `-generate chi-server`.
+
+```go
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
+    // Implement me
+}
+
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    r := chi.NewRouter()
+    r.Mount("/", Handler(&myApi))
+}
+```
+
+
+
+</details>
 </td>
 </tr>
 
@@ -415,25 +443,7 @@ func SetupHandler() {
 
 </details>
 
-<details><summary><code>Chi</code></summary>
-
-Code generated using `-generate chi-server`.
-
-```go
-type PetStoreImpl struct {}
-func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
-    // Implement me
-}
-
-func SetupHandler() {
-    var myApi PetStoreImpl
-
-    r := chi.NewRouter()
-    r.Mount("/", Handler(&myApi))
-}
-```
-
-</details>
+<details></details>
 
 <details><summary><code>Gin</code></summary>
 
