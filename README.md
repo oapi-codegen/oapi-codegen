@@ -556,7 +556,7 @@ components:
         - id
       properties:
         id:
-          type: int
+          type: integer
 ```
 
 And a `cfg.yaml`:
@@ -750,7 +750,7 @@ components:
         - id
       properties:
         id:
-          type: int
+          type: integer
 ```
 
 And a `cfg.yaml`:
@@ -797,7 +797,50 @@ For a complete example see [`examples/petstore-expanded/only-models`](examples/p
 
 ### Generating Nullable types
 
-Opt-in, **??**
+It's possible that you want to be able to determine whether a field isn't sent, is sent as `null` or has a value.
+
+For instance, if you had the following OpenAPI property:
+
+```yaml
+S:
+  type: object
+  properties:
+    Field:
+      type: string
+      nullable: true
+    required: []
+```
+
+The default behaviour in oapi-codegen is to generate:
+
+```go
+type S struct {
+	Field *string `json:"field,omitempty"`
+}
+```
+
+However, you lose the ability to understand the three cases, as there's no way to distinguish two of the types from each other:
+
+- is this field not sent? (Can be checked with `S.Field == nil`)
+- is this field `null`? (Can be checked with `S.Field == nil`)
+- does this field have a value? (`S.Field != nil && *S.Field == "123"`)
+
+As of `oapi-codegen` [v2.1.0](https://github.com/deepmap/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
+
+If you configure your generator's Output Options to opt-in to this behaviour, as so:
+
+```yaml
+output-options:
+  nullable-type: true
+```
+
+You will now receive the following output:
+
+```go
+type S struct {
+    Field nullable.Nullable[string] `json:"field,omitempty"`
+}
+```
 
 ### OpenAPI extensions
 
@@ -808,6 +851,8 @@ As well as inbuilt OpenAPI, we also support the following OpenAPI extensions.
 ### Custom code generation
 
 It is possible to extend **??** using the templates **??**.
+
+**Note** that filenames must exactly match **??**
 
 #### Local paths
 
@@ -830,6 +875,369 @@ TODO
 #### Using the Go package
 
 Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
+
+### Additional Properties (`additionalProperties`)
+
+[OpenAPI Schemas](https://spec.openapis.org/oas/v3.0.3.html#schema-object) implicitly accept `additionalProperties`, meaning that any fields provided, but not explicitly defined via properties on the schema are accepted as input, and propagated. When unspecified, OpenAPI defines that the `additionalProperties` field is assumed to be `true`.
+
+For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-codegen` decides to ignore **??**.
+
+> [!NOTE]
+> In the future [this will be possible](https://github.com/deepmap/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
+
+Below you can see some examples of how `additionalProperties` affects the generated code.
+
+#### Implicit `additionalProperties: true` / no `additionalProperties` set
+
+```yaml
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+      # implicit additionalProperties: true
+```
+
+Will generate:
+
+```go
+// Thing defines model for Thing.
+type Thing struct {
+	Id int `json:"id"`
+}
+
+// with no generated boilerplate
+```
+
+#### Explicit `additionalProperties: true`
+
+```yaml
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+      # explicit true
+      additionalProperties: true
+```
+
+Will generate:
+
+```go
+// Thing defines model for Thing.
+type Thing struct {
+	Id                   int                    `json:"id"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// with generated boilerplate below
+```
+
+<details>
+
+<summary>Boilerplate</summary>
+
+```go
+
+// Getter for additional properties for Thing. Returns the specified
+// element and whether it was found
+func (a Thing) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Thing
+func (a *Thing) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a *Thing) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a Thing) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+```
+
+</details>
+
+
+#### `additionalProperties` as `integer`s
+
+```yaml
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+      # simple type
+      additionalProperties:
+        type: integer
+```
+
+Will generate:
+
+```go
+// Thing defines model for Thing.
+type Thing struct {
+	Id                   int            `json:"id"`
+	AdditionalProperties map[string]int `json:"-"`
+}
+
+// with generated boilerplate below
+```
+
+<details>
+
+<summary>Boilerplate</summary>
+
+```go
+// Getter for additional properties for Thing. Returns the specified
+// element and whether it was found
+func (a Thing) Get(fieldName string) (value int, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Thing
+func (a *Thing) Set(fieldName string, value int) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]int)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a *Thing) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]int)
+		for fieldName, fieldBuf := range object {
+			var fieldVal int
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a Thing) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+```
+
+</details>
+
+#### `additionalProperties` with an object
+
+```yaml
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+      # object
+      additionalProperties:
+        type: object
+        properties:
+          foo:
+            type: string
+```
+
+Will generate:
+
+```go
+// Thing defines model for Thing.
+type Thing struct {
+	Id                   int `json:"id"`
+	AdditionalProperties map[string]struct {
+		Foo *string `json:"foo,omitempty"`
+	} `json:"-"`
+}
+
+// with generated boilerplate below
+```
+
+<details>
+
+<summary>Boilerplate</summary>
+
+```go
+// Getter for additional properties for Thing. Returns the specified
+// element and whether it was found
+func (a Thing) Get(fieldName string) (value struct {
+	Foo *string `json:"foo,omitempty"`
+}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Thing
+func (a *Thing) Set(fieldName string, value struct {
+	Foo *string `json:"foo,omitempty"`
+}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]struct {
+			Foo *string `json:"foo,omitempty"`
+		})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a *Thing) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]struct {
+			Foo *string `json:"foo,omitempty"`
+		})
+		for fieldName, fieldBuf := range object {
+			var fieldVal struct {
+				Foo *string `json:"foo,omitempty"`
+			}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a Thing) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+```
+
+</details>
 
 ## Examples
 
