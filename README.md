@@ -880,12 +880,14 @@ Alternatively, you are able to use the underlying code generation as a package, 
 
 [OpenAPI Schemas](https://spec.openapis.org/oas/v3.0.3.html#schema-object) implicitly accept `additionalProperties`, meaning that any fields provided, but not explicitly defined via properties on the schema are accepted as input, and propagated. When unspecified, OpenAPI defines that the `additionalProperties` field is assumed to be `true`.
 
-For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-codegen` decides to ignore **??**.
+For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-codegen` decides to ignore the implicit `additionalProperties: true`, and instead requires you to specify the `additionalProperties` key to generate the boilerplate.
 
 > [!NOTE]
 > In the future [this will be possible](https://github.com/deepmap/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
 
 Below you can see some examples of how `additionalProperties` affects the generated code.
+
+There are many special cases for `additionalProperties`, such as having to define types for inner fields which themselves support `additionalProperties`, and all of them are tested via the [`internal/test/components`](internal/test/components) schemas and tests. Please look through those tests for more usage examples.
 
 #### Implicit `additionalProperties: true` / no `additionalProperties` set
 
@@ -910,7 +912,7 @@ type Thing struct {
 	Id int `json:"id"`
 }
 
-// with no generated boilerplate
+// with no generated boilerplate nor the `AdditionalProperties` field
 ```
 
 #### Explicit `additionalProperties: true`
@@ -1244,13 +1246,13 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 The [examples directory] contains some **??**, including how you'd take the Petstore API and **??**.
 
 
-
 ### Blog posts
 
-The are a number of **??**
+We love reading posts by the community about how to use the project.
 
-- TODO
-https://www.jvt.me/posts/2022/07/12/go-openapi-server/
+Here are a few we've found around the Web:
+
+- [Building a Go RESTful API with design-first OpenAPI contracts](https://www.jvt.me/posts/2022/07/12/go-openapi-server/)
 
 Got one to add? Please raise a PR!
 
