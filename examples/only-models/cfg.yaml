@@ -1,0 +1,7 @@
+package: onlymodels
+output: only-models.gen.go
+generate:
+  models: true
+output-options:
+  # NOTE that this is only required for the `Unreferenced` type
+  skip-prune: true
