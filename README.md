@@ -1,6 +1,6 @@
 # `oapi-codegen`
 
-`oapi-codegen` is a command-line tool and library, to convert OpenAPI API specifications to Go code, be it server-side implementations, API clients, or simply HTTP models.
+`oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it server-side implementations, API clients, or simply HTTP models.
 
 `oapi-codegen` aims to reduce some of the tedious boilerplate that can be found when building or interacting with APIs, and focusses on:
 
@@ -50,18 +50,18 @@ Which then means you can invoke it like so:
 
 ## Usage
 
-`oapi-codegen` is largely configured using a YAML configuration file, to simplify the number of flags that users need to remember.
+`oapi-codegen` is largely configured using a YAML configuration file, to simplify the number of flags that users need to remember, and to tune various **??**.
 
-For full https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#Configuration
+For full details of what is supported, it's worth checking out [the GoDoc for `codegen.Configuration`](https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#Configuration).
 
 ## Features
 
 `oapi-codegen` supports:
 
-- Generating server-side boilerplate for [a number of servers] TODO
-- Generating client API boilerplate
-- Generating the types
-- Splitting **??**
+- Generating server-side boilerplate for [a number of servers] TODO ([docs](#generating-server-side-boilerplate))
+- Generating client API boilerplate ([docs](#generating-api-clients))
+- Generating the types ([docs](#generating-api-models))
+- Splitting **??** ([docs](#import-mapping))
   - Also described as ["external refs"] or "Import Mappings" in our documentation
 
 ## Key design decisions
@@ -458,7 +458,7 @@ This **??**
 --------------------- TODO ---------
 ```
 
-oapi-codegen also supports generating RPC inspired strict server, that will parse request bodies and encode responses.
+`oapi-codegen` also supports generating RPC inspired strict server, that will parse request bodies and encode responses.
 The main points of this code is to automate some parsing, abstract user code from server specific code,
 and also to force user code to comply with the schema.
 It supports binding of `application/json` and `application/x-www-form-urlencoded` to a struct, for `multipart` requests
@@ -795,6 +795,13 @@ output-options:
 
 For a complete example see [`examples/petstore-expanded/only-models`](examples/petstore-expanded/only-models).
 
+### Splitting large OpenAPI specs across multiple packages (aka "Import Mapping" or "external references")
+<a name=import-mapping></a>
+
+```
+TODO
+```
+
 ### Generating Nullable types
 
 It's possible that you want to be able to determine whether a field isn't sent, is sent as `null` or has a value.
@@ -811,7 +818,7 @@ S:
     required: []
 ```
 
-The default behaviour in oapi-codegen is to generate:
+The default behaviour in `oapi-codegen` is to generate:
 
 ```go
 type S struct {
@@ -886,8 +893,6 @@ For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-c
 > In the future [this will be possible](https://github.com/deepmap/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
 
 Below you can see some examples of how `additionalProperties` affects the generated code.
-
-There are many special cases for `additionalProperties`, such as having to define types for inner fields which themselves support `additionalProperties`, and all of them are tested via the [`internal/test/components`](internal/test/components) schemas and tests. Please look through those tests for more usage examples.
 
 #### Implicit `additionalProperties: true` / no `additionalProperties` set
 
