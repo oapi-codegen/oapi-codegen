@@ -920,6 +920,24 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
       End   *openapi_types.Date `json:"end,omitempty"`
     }
     ```
+
+- `x-query-param-name`: allows you to specify custom name for query parameters.
+
+  ```yaml
+  components:
+    parameters:
+      Pets:
+        in: query
+        name: pets
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+              - dog
+              - cat
+        x-query-param-name: "pets[]"
+  ```
   
 ## Using `oapi-codegen`
 

@@ -22,6 +22,7 @@ const (
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
+	extQueryParamName    = "x-query-param-name"
 )
 
 func extString(extPropValue interface{}) (string, error) {
