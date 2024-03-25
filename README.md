@@ -8,7 +8,7 @@
 - fairly simple generated code, erring on the side of duplicate code over nicely refactored code
 - supporting as much of OpenAPI 3.x as is possible, alongside Go's type system
 
-You can read more about our [Design Decisions](#design-decisions) below.
+You can read more about our [Key Design Decisions](#key-design-decisions) below.
 
 ⚠️ This README may be for the latest development version, which may contain unreleased changes. Please ensure you're looking at the README for the latest release version.
 
@@ -110,7 +110,7 @@ To provide you a fully Test Driven Development style test harness, you could use
 Server
 </th>
 <th>
-<code>generate</code> flag to enable code generation
+<code>generate</code> flag to<br> enable code generation
 </th>
 </tr>
 
@@ -1167,16 +1167,6 @@ this command line argument:
 This tells us that in order to resolve references generated from `some_spec.yaml` we
 need to import `github.com/deepmap/some-package`. You may specify multiple mappings
 by comma separating them in the form `key1:value1,key2:value2`.
-
-## What's missing or incomplete
-
-This code is still young, and not complete, since we're filling it in as we
-need it. We've not yet implemented several things:
-
-- `patternProperties` isn't yet supported and will exit with an error. Pattern
-  properties were defined in JSONSchema, and the `kin-openapi` Swagger object
-  knows how to parse them, but they're not part of OpenAPI 3.0, so we've left
-  them out, as support is very complicated.
 
 ## Making changes to code generation
 
