@@ -1,6 +1,6 @@
 # `oapi-codegen`
 
-`oapi-codegen` is a library, and command-line tool, to convert OpenAPI API specifications to Go code, be it server-side implementations, API clients, or simply models.
+`oapi-codegen` is a command-line tool and library, to convert OpenAPI API specifications to Go code, be it server-side implementations, API clients, or simply HTTP models.
 
 `oapi-codegen` aims to reduce some of the tedious boilerplate that can be found when building or interacting with APIs, and focusses on:
 
@@ -8,40 +8,9 @@
 - fairly simple generated code, erring on the side of duplicate code over nicely refactored code
 - supporting as much of OpenAPI 3.x as is possible, alongside Go's type system
 
-⚠️ This README may be for the latest development version, which may contain
-unreleased changes. Please ensure you're looking at the README for the latest
-release version.
+You can read more about our [Design Decisions](#design-decisions) below.
 
-Does not 2.0
-
-## OpenAPI Client and Server Code Generator
-
-```
-This package contains a set of utilities for generating Go boilerplate code for
-services based on
-[OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
-API definitions. When working with services, it's important to have an API
-contract which servers and clients both implement to minimize the chances of
-incompatibilities. It's tedious to generate Go models which precisely correspond to
-OpenAPI specifications, so let our code generator do that work for you, so that
-you can focus on implementing the business logic for your service.
-
-We have chosen to focus on [Echo](https://github.com/labstack/echo) as
-our default HTTP routing engine, due to its speed and simplicity for the generated
-stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin),
-[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber),
-[Iris](https://github.com/kataras/iris), and [1.22+ net/http](https://pkg.go.dev/net/http)
-have also been added by contributors as additional routers.
-We chose Echo because the `Context` object is a mockable interface, and it allows for some advanced
-testing.
-
-This package tries to be too simple rather than too generic, so we've made some
-design decisions in favor of simplicity, knowing that we can't generate strongly
-typed Go code for all possible OpenAPI Schemas. If there is a way to accomplish
-something via utility code or reflection, it's probably a better approach than
-code generation, which is fragile due to the very dynamic nature of OpenAPI and
-the very static nature of Go.
-```
+⚠️ This README may be for the latest development version, which may contain unreleased changes. Please ensure you're looking at the README for the latest release version.
 
 ## Install
 
@@ -60,7 +29,11 @@ import (
 )
 ```
 
-Then, each **??**
+Then, each invocation of `oapi-codegen` would be used like so:
+
+```go
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../api.yaml
+```
 
 Alternatively, you can install it as a binary with:
 
@@ -69,9 +42,15 @@ $ go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@latest
 $ oapi-codegen -version
 ```
 
+Which then means you can invoke it like so:
+
+```go
+//go:generate go run oapi-codegen --config=config.yaml ../../api.yaml
+```
+
 ## Usage
 
-`oapi-codegen` is largely **??**.
+`oapi-codegen` is largely configured using a YAML configuration file, to simplify the number of flags that users need to remember.
 
 For full https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#Configuration
 
@@ -79,7 +58,7 @@ For full https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#Confi
 
 `oapi-codegen` supports:
 
-- Generating server-side boilerplate for [a number of servers]
+- Generating server-side boilerplate for [a number of servers] TODO
 - Generating client API boilerplate
 - Generating the types
 - Splitting **??**
@@ -93,6 +72,18 @@ For full https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#Confi
 - Single-file output
 - Support multiple OpenAPI files by having a package-per-file
 - **??**
+- Support of OpenAPI 3.x
+  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/deepmap/oapi-codegen/issues/373)
+  - Note that this does not include OpenAPI 2.0 (aka Swagger)
+
+```
+This package tries to be too simple rather than too generic, so we've made some
+design decisions in favor of simplicity, knowing that we can't generate strongly
+typed Go code for all possible OpenAPI Schemas. If there is a way to accomplish
+something via utility code or reflection, it's probably a better approach than
+code generation, which is fragile due to the very dynamic nature of OpenAPI and
+the very static nature of Go.
+```
 
 ### Generating server-side boilerplate
 
@@ -116,42 +107,88 @@ To provide you a fully Test Driven Development style test harness, you could use
 
 <tr>
 <th>
-Server name
+Server
 </th>
 <th>
-Configuration **??**
+<code>generate</code> flag to enable code generation
 </th>
 </tr>
 
 <tr>
 <td>
+
+[Chi](https://github.com/go-chi/chi)
+
 </td>
 <td>
-<code> </code>
+<code>chi-server</code>
 </td>
 </tr>
 
 <tr>
 <td>
+
+[Echo](https://github.com/labstack/echo)
+
 </td>
 <td>
-<code> </code>
+<code>echo-server</code>
 </td>
 </tr>
 
 <tr>
 <td>
+
+[Fiber](https://github.com/gofiber/fiber)
+
 </td>
 <td>
-<code> </code>
+<code>fiber-server</code>
+</td>
+</tr>
+
+
+<tr>
+<td>
+
+[Gin](https://github.com/gin-gonic/gin)
+
+</td>
+<td>
+<code>gin-server</code>
 </td>
 </tr>
 
 <tr>
 <td>
+
+[gorilla/mux](https://github.com/gorilla/mux)
+
 </td>
 <td>
-<code> </code>
+<code>gorilla-server</code>
+</td>
+</tr>
+
+<tr>
+<td>
+
+[Iris](https://github.com/kataras/iris)
+
+</td>
+<td>
+<code>iris-server</code>
+</td>
+</tr>
+
+<tr>
+<td>
+
+[1.22+ `net/http`](https://pkg.go.dev/net/http)
+
+</td>
+<td>
+<code>std-http-server</code>
 </td>
 </tr>
 
@@ -225,7 +262,7 @@ Got one to add? Please raise a PR!
 ## Overview
 
 We're going to use the OpenAPI example of the
-[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/master/examples/v3.0/petstore-expanded.yaml)
+[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore-expanded.yaml)
 in the descriptions below, please have a look at it.
 
 In order to create a Go server to serve this exact schema, you would have to

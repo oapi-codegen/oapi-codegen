@@ -55,6 +55,9 @@ Now, please note that significant changes to generated code are likley to **??**
 
 **Should introduce a flag if possible**
 
+**Opt-in by default?**
+
+
 ### Minimal reproductions
 
 ### Before you raise a PR
