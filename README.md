@@ -110,7 +110,7 @@ To provide you a fully Test Driven Development style test harness, you could use
 Server
 </th>
 <th>
-<code>generate</code> flag to<br> enable code generation
+<code>generate</code> flag to enable<br> code generation
 </th>
 </tr>
 
