@@ -48,6 +48,16 @@ Which then means you can invoke it like so:
 //go:generate go run oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
+### Pinning to ?>
+
+While the project does not (yet) have [a defined release cadence](https://github.com/deepmap/oapi-codegen/issues/1519), **??**.
+
+Therefore, you may want to pin **??**.
+
+This is officially **recommended**.
+
+We aim to keep the default branch ready-to-release so you should be able to safely pin.
+
 ## Usage
 
 `oapi-codegen` is largely configured using a YAML configuration file, to simplify the number of flags that users need to remember, and to tune various **??**.
@@ -1248,8 +1258,9 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 
 ## Examples
 
-The [examples directory] contains some **??**, including how you'd take the Petstore API and **??**.
+The [examples directory](examples) contains some additional cases which are useful examples for how to use `oapi-codegen`, including how you'd take the Petstore API and implement it with `oapi-codegen`.
 
+You could also find some cases of how the project can be used by checking out our [internal test cases](internal/test) which are real-world usages that make up our regression tests.
 
 ### Blog posts
 
