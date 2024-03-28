@@ -1,0 +1,4 @@
+package: param
+generate:
+  models: true
+output: issue1429.gen.go
