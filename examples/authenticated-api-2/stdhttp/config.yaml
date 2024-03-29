@@ -1,0 +1,6 @@
+package: stdhttp
+generate:
+  std-http-server: true
+  embedded-spec: true
+  models: true
+output: server.gen.go

@@ -1,0 +1,57 @@
+openapi: 3.0.0
+paths:
+  /unauthenticated:
+    get:
+      operationId: unauthenticated
+      description: Perform an unauthenticated request
+      responses:
+        200:
+          description:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /apiKey:
+    get:
+      operationId: apiKey
+      description: Perform an authenticated request, using an API Key in the `X-API-Key` header
+      security:
+        - apiKey: []
+      responses:
+        200:
+          description:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+  /httpBasic:
+    get:
+      operationId: httpBasic
+      description: Perform an authenticated request, using HTTP Basic auth
+      security:
+        - basicAuth: []
+      responses:
+        200:
+          description:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      name: X-API-Key
+      in: header
+    basicAuth:
+      type: http
+      scheme: basic
+  schemas:
+    Response:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
