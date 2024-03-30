@@ -258,6 +258,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:         refType,
+			RefType:        refType,
 			Description:    schema.Description,
 			DefineViaAlias: true,
 			OAPISchema:     schema,
