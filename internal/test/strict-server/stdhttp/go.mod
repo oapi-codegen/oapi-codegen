@@ -9,7 +9,7 @@ replace github.com/deepmap/oapi-codegen/v2/internal/test => ../..
 require (
 	github.com/deepmap/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/v2/internal/test v0.0.0-00010101000000-000000000000
-	github.com/getkin/kin-openapi v0.122.0
+	github.com/getkin/kin-openapi v0.123.0
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.9.0
@@ -18,8 +18,8 @@ require (
 require (
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/go-openapi/jsonpointer v0.20.0 // indirect
-	github.com/go-openapi/swag v0.22.4 // indirect
+	github.com/go-openapi/jsonpointer v0.20.2 // indirect
+	github.com/go-openapi/swag v0.22.8 // indirect
 	github.com/google/uuid v1.4.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
