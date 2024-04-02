@@ -139,6 +139,16 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
+func (pd ParameterDefinition) QueryParamName() string {
+	queryParamName := pd.ParamName
+	if _, ok := pd.Spec.Extensions[extQueryParamName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(pd.Spec.Extensions[extQueryParamName]); err == nil {
+			queryParamName = extGoFieldName
+		}
+	}
+	return queryParamName
+}
+
 type ParameterDefinitions []ParameterDefinition
 
 func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
