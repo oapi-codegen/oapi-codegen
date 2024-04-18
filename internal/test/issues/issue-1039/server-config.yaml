@@ -1,0 +1,4 @@
+package: issue1039
+generate:
+  chi-server: true
+output: server.gen.go

@@ -1,0 +1,6 @@
+package: issue1039
+generate:
+  models: true
+output-options:
+  nullable-type: true
+output: types.gen.go

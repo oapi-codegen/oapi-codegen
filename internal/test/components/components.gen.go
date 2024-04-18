@@ -293,7 +293,7 @@ type OneOfObject8 struct {
 	union json.RawMessage
 }
 
-// OneOfObject9 oneOf with fixed descriminator
+// OneOfObject9 oneOf with fixed discriminator
 type OneOfObject9 struct {
 	Type  string `json:"type"`
 	union json.RawMessage
@@ -329,7 +329,7 @@ type OneOfVariant6 struct {
 
 // ReferenceToRenameMe When a Schema is renamed, $ref should refer to the new name
 type ReferenceToRenameMe struct {
-	// ToNewName This schema should be renamed via x-go-name when generating
+	// NewName This schema should be renamed via x-go-name when generating
 	NewName NewName `json:"ToNewName"`
 }
 

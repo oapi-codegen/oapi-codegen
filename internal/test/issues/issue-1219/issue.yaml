@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 components:
   schemas:
-    WithAnyAddtional1:
+    WithAnyAdditional1:
       type: object
       properties:
         field1:
@@ -9,7 +9,7 @@ components:
         field2:
           type: string
       additionalProperties: true
-    WithAnyAddtional2:
+    WithAnyAdditional2:
       type: object
       properties:
         fieldA:
@@ -17,7 +17,7 @@ components:
         fieldB:
           type: string
       additionalProperties: true
-    WithStringAddtional1:
+    WithStringAdditional1:
       type: object
       properties:
         field1:
@@ -26,7 +26,7 @@ components:
           type: string
       additionalProperties:
         type: string
-    WithStringAddtional2:
+    WithStringAdditional2:
       type: object
       properties:
         fieldA:
@@ -35,7 +35,7 @@ components:
           type: string
       additionalProperties:
         type: string
-    WithoutAddtional1:
+    WithoutAdditional1:
       type: object
       properties:
         field1:
@@ -43,7 +43,7 @@ components:
         field2:
           type: string
       additionalProperties: false
-    WithoutAddtional2:
+    WithoutAdditional2:
       type: object
       properties:
         fieldA:
@@ -51,14 +51,14 @@ components:
         fieldB:
           type: string
       additionalProperties: false
-    DefaultAddtional1:
+    DefaultAdditional1:
       type: object
       properties:
         field1:
           type: integer
         field2:
           type: string
-    DefaultAddtional2:
+    DefaultAdditional2:
       type: object
       properties:
         fieldA:
@@ -68,70 +68,69 @@ components:
 
     MergeWithoutWithout:
       allOf:
-        - $ref: '#/components/schemas/WithoutAddtional1'
-        - $ref: '#/components/schemas/WithoutAddtional2'
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
     MergeWithoutWithString:
       allOf:
-        - $ref: '#/components/schemas/WithoutAddtional1'
-        - $ref: '#/components/schemas/WithStringAddtional2'
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
     MergeWithoutWithAny:
       allOf:
-        - $ref: '#/components/schemas/WithoutAddtional1'
-        - $ref: '#/components/schemas/WithAnyAddtional2'
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
     MergeWithoutDefault:
       allOf:
-        - $ref: '#/components/schemas/WithoutAddtional1'
-        - $ref: '#/components/schemas/DefaultAddtional2'
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
 
     MergeWithStringWithout:
       allOf:
-        - $ref: '#/components/schemas/WithStringAddtional1'
-        - $ref: '#/components/schemas/WithoutAddtional2'
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
     # Cannot merge this
     # MergeWithStringWithString:
     #   allOf:
-    #     - $ref: '#/components/schemas/WithStringAddtional1'
-    #     - $ref: '#/components/schemas/WithStringAddtional2'
+    #     - $ref: '#/components/schemas/WithStringAdditional1'
+    #     - $ref: '#/components/schemas/WithStringAdditional2'
     MergeWithStringWithAny:
       allOf:
-        - $ref: '#/components/schemas/WithStringAddtional1'
-        - $ref: '#/components/schemas/WithAnyAddtional2'
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
     MergeWithStringDefault:
       allOf:
-        - $ref: '#/components/schemas/WithStringAddtional1'
-        - $ref: '#/components/schemas/DefaultAddtional2'
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
 
     MergeWithAnyWithout:
       allOf:
-        - $ref: '#/components/schemas/WithAnyAddtional1'
-        - $ref: '#/components/schemas/WithoutAddtional2'
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
     MergeWithAnyWithString:
       allOf:
-        - $ref: '#/components/schemas/WithAnyAddtional1'
-        - $ref: '#/components/schemas/WithStringAddtional2'
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
     MergeWithAnyWithAny:
       allOf:
-        - $ref: '#/components/schemas/WithAnyAddtional1'
-        - $ref: '#/components/schemas/WithAnyAddtional2'
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
     MergeWithAnyDefault:
       allOf:
-        - $ref: '#/components/schemas/WithAnyAddtional1'
-        - $ref: '#/components/schemas/DefaultAddtional2'
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
 
     MergeDefaultWithout:
       allOf:
-        - $ref: '#/components/schemas/DefaultAddtional1'
-        - $ref: '#/components/schemas/WithoutAddtional2'
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
     MergeDefaultWithString:
       allOf:
-        - $ref: '#/components/schemas/DefaultAddtional1'
-        - $ref: '#/components/schemas/WithStringAddtional2'
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
     MergeDefaultWithAny:
       allOf:
-        - $ref: '#/components/schemas/DefaultAddtional1'
-        - $ref: '#/components/schemas/WithAnyAddtional2'
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
     MergeDefaultDefault:
       allOf:
-        - $ref: '#/components/schemas/DefaultAddtional1'
-        - $ref: '#/components/schemas/DefaultAddtional2'
-
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'

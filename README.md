@@ -6,7 +6,7 @@ release version.
 
 This package contains a set of utilities for generating Go boilerplate code for
 services based on
-[OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.0.md)
+[OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md)
 API definitions. When working with services, it's important to have an API
 contract which servers and clients both implement to minimize the chances of
 incompatibilities. It's tedious to generate Go models which precisely correspond to
@@ -16,8 +16,9 @@ you can focus on implementing the business logic for your service.
 We have chosen to focus on [Echo](https://github.com/labstack/echo) as
 our default HTTP routing engine, due to its speed and simplicity for the generated
 stubs. [Chi](https://github.com/go-chi/chi), [Gin](https://github.com/gin-gonic/gin),
-[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber), and
-[Iris](https://github.com/kataras/iris) have also been added by contributors as additional routers.
+[gorilla/mux](https://github.com/gorilla/mux), [Fiber](https://github.com/gofiber/fiber),
+[Iris](https://github.com/kataras/iris), and [1.22+ net/http](https://pkg.go.dev/net/http)
+have also been added by contributors as additional routers.
 We chose Echo because the `Context` object is a mockable interface, and it allows for some advanced
 testing.
 
@@ -59,7 +60,7 @@ code, you will break other people's code. It's safe to rename internal names.
 ## Overview
 
 We're going to use the OpenAPI example of the
-[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/master/examples/v3.0/petstore-expanded.yaml)
+[Expanded Petstore](https://github.com/OAI/OpenAPI-Specification/blob/main/examples/v3.0/petstore-expanded.yaml)
 in the descriptions below, please have a look at it.
 
 In order to create a Go server to serve this exact schema, you would have to
@@ -210,7 +211,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>Chi</code></summary>
 
@@ -230,7 +231,7 @@ func SetupHandler() {
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>Gin</code></summary>
 
@@ -272,12 +273,12 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     r := gin.Default()
-	  r.Use(middleware.OapiRequestValidator(swagger))
+    r.Use(middleware.OapiRequestValidator(swagger))
     r = api.RegisterHandlers(r, petStore)
 }
 ```
 
-</summary></details>
+</details>
 
 <details><summary><code>net/http</code></summary>
 
@@ -298,14 +299,77 @@ func SetupHandler() {
 
 Alternatively, [Gorilla](https://github.com/gorilla/mux) is also 100% compatible with `net/http` and can be generated with `-generate gorilla`.
 
-</summary></details>
+</details>
+
+<details><summary><code>1.22+ net/http</code></summary>
+
+As of Go 1.22, enhancements have been made to the routing of the `net/http` package in the standard library.
+You can use `-generate std-http` to generate functions to help you associate your handlers with the auto-generated code.
+For the pet store, it looks like this:
+
+```go
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
+	m := options.BaseRouter
+
+	if m == nil {
+		m = http.NewServeMux()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	wrapper := ServerInterfaceWrapper{
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+	}
+
+	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
+	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
+	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+
+	return m
+}
+```
+
+The wrapper functions referenced above contain generated code which pulls parameters off the request and unmarshals them into Go objects.
+
+You would register the generated handlers as follows:
+
+```go
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
+    // Implement me
+}
+
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    options := petstore.StdHTTPServerOptions{
+        BaseRouter: http.DefaultServeMux, // Or use a new ServeMux
+    }
+	petstore.HandlerWithOptions(&myApi, options)
+}
+```
+
+**Note** that if you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` updated to:
+
+```go.mod
+go 1.22
+```
+
+</details>
 
 <details><summary><code>Iris</code></summary>
 
 Code generated using `-generate iris`.
 
 The usage of `iris` is out of scope of this doc, but once you have an
-gin instance, we generate a utility function to help you associate your handlers
+iris instance, we generate a utility function to help you associate your handlers
 with this autogenerated code. For the pet store, it looks like this:
 
 ```go
@@ -343,12 +407,61 @@ func SetupHandler() {
     var myApi PetStoreImpl
 
     i := iris.Default()
-	  i.Use(middleware.OapiRequestValidator(swagger))
+    i.Use(middleware.OapiRequestValidator(swagger))
     api.RegisterHandlers(r, &myApi)
 }
 ```
 
-</summary></details>
+</details>
+
+<details><summary><code>Fiber</code></summary>
+
+Code generated using `-generate fiber`.
+
+The usage of `fiber` is out of scope of this doc, but once you have a
+fiber instance, we generate a utility function to help you associate your handlers
+with this autogenerated code. For the pet store, it looks like this:
+
+```go
+// RegisterHandlersWithOptions creates http.Handler with additional options                                                                                                                                                                                                                                                     
+func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {                                                                                                                                                                                                                         
+        wrapper := ServerInterfaceWrapper{                                                                                                                                                                                                                                                                                      
+                Handler: si,                                                                                                                                                                                                                                                                                                    
+        }                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                
+        for _, m := range options.Middlewares {                                                                                                                                                                                                                                                                                 
+                router.Use(m)                                                                                                                                                                                                                                                                                                   
+        }                                                                                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                                                                
+        router.Get(options.BaseURL+"/pets", wrapper.FindPets)                                                                                                                                                                                                                                                                   
+        router.Post(options.BaseURL+"/pets", wrapper.AddPet)                                                                                                                                                                                                                                                                    
+        router.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet)                                                                                                                                                                                                                                                           
+        router.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID)                                                                                                                                                                                                                                                            
+}
+```
+
+```go
+import (
+        "github.com/gofiber/fiber/v2"
+        "github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
+        middleware "github.com/oapi-codegen/fiber-middleware"
+)
+
+type PetStoreImpl struct {}
+func (*PetStoreImpl) GetPets(w http.ResponseWriter, r *http.Request) {
+    // Implement me
+}
+
+func SetupHandler() {
+    var myApi PetStoreImpl
+
+    f := fiber.New()
+    f.Use(middleware.OapiRequestValidator(swagger))
+    api.RegisterHandlers(f, myApi)
+}
+```
+
+</details>
 
 #### Strict server generation
 
@@ -375,7 +488,7 @@ func (*PetStoreImpl) GetPets(ctx context.Context, request GetPetsRequestObject) 
 }
 ```
 
-For a complete example see [`examples/petstore-expanded/strict`](https://github.com/deepmap/oapi-codegen/tree/master/examples/petstore-expanded/strict).
+For a complete example see [`examples/petstore-expanded/strict`](examples/petstore-expanded/strict).
 
 Code is generated with a configuration flag `generate: strict-server: true` along with any other server (echo, chi, gin and gorilla are supported).
 The generated strict wrapper can then be used as an implementation for `ServerInterface`. Setup example:
@@ -383,7 +496,7 @@ The generated strict wrapper can then be used as an implementation for `ServerIn
 ```go
 func SetupHandler() {
     var myApi PetStoreImpl
-	myStrictApiHandler := api.NewStrictHandler(myApi, nil)
+    myStrictApiHandler := api.NewStrictHandler(myApi, nil)
     e := echo.New()
     petstore.RegisterHandlers(e, &myStrictApiHandler)
 }
@@ -451,7 +564,7 @@ func (a NewPet) MarshalJSON() ([]byte, error) {...}w
 
 There are many special cases for `additionalProperties`, such as having to
 define types for inner fields which themselves support additionalProperties, and
-all of them are tested via the [`internal/test/components`](https://github.com/deepmap/oapi-codegen/tree/master/internal/test/components) schemas and tests. Please
+all of them are tested via the [`internal/test/components`](internal/test/components) schemas and tests. Please
 look through those tests for more usage examples.
 
 #### oneOf/anyOf/allOf support
@@ -619,7 +732,7 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
         }
 
         // Example providing your own provider using an anonymous function wrapping in the
-        // InterceptoFn adapter. The behaviour between the InterceptorFn and the Interceptor interface
+        // InterceptorFn adapter. The behaviour between the InterceptorFn and the Interceptor interface
         // are the same as http.HandlerFunc and http.Handler.
         customProvider := func(req *http.Request, ctx context.Context) error {
             // Just log the request header, nothing else.
@@ -779,6 +892,35 @@ which help you to use the various OpenAPI 3 Authentication mechanism.
   type ObjectCategory int
   ```
 
+- `x-order`: specifies the order of the fields in the structure. It allows you to specify the order
+  of the fields in the generated structure and will override any default value. This extended
+  property is not supported in all parts of OpenAPI, so check the specification to see where it is
+  allowed.
+
+    ```yaml
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+    ```
+  In the example above, struct will be declared as:
+
+    ```go
+    type DateInterval struct {
+      Start *openapi_types.Date `json:"start,omitempty"`
+      End   *openapi_types.Date `json:"end,omitempty"`
+    }
+    ```
+  
 ## Using `oapi-codegen`
 
 The default options for `oapi-codegen` will generate everything; client, server,
@@ -797,6 +939,8 @@ you can specify any combination of those.
   on that produced by the `types` target.
 - `iris`: generate the Iris server boilerplate. This code is dependent
   on that produced by the `types` target.
+- `std-http`: generate the Go stdlib net/http server boilerplate. This code is
+  dependent on that produced by the `types` target.
 - `client`: generate the client boilerplate. It, too, requires the types to be
   present in its package.
 - `spec`: embed the OpenAPI spec into the generated code as a gzipped blob.
@@ -813,13 +957,13 @@ So, for example, if you would like to produce only the server code, you could
 run `oapi-codegen -generate types,server`. You could generate `types` and
 `server` into separate files, but both are required for the server code.
 
-`oapi-codegen` can filter paths base on their tags in the openapi definition.
-Use either `-include-tags` or `-exclude-tags` followed by a comma-separated list
-of tags. For instance, to generate a server that serves all paths except those
-tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
+`oapi-codegen` can filter paths base on their tags or operationId in the openapi definition.
+Use either `-include-tags`, `include-operation-ids` or `-exclude-tags`, `-exclude-operation-ids` 
+followed by a comma-separated list of tags or operation ids. For instance, to generate a server
+that serves all paths except those tagged with `auth` or `admin`, use the argument, `-exclude-tags="auth,admin"`.
 To generate a server that only handles `admin` paths, use the argument
-`-include-tags="admin"`. When neither of these arguments is present, all paths
-are generated.
+`-include-tags="admin"` or use `-include-operation-ids="getPets"` to include this specific operation.
+When neither of these arguments is present, all paths are generated.
 
 `oapi-codegen` can filter schemas based on the option `--exclude-schemas`, which is
 a comma separated list of schema names. For instance, `--exclude-schemas=Pet,NewPet`
@@ -830,7 +974,7 @@ in the openapi spec.
 Since `go generate` commands must be a single line, all the options above can make
 them pretty unwieldy, so you can specify all of the options in a configuration
 file via the `--config` option. Please see the test under
-[`/internal/test/externalref/`](https://github.com/deepmap/oapi-codegen/blob/master/internal/test/externalref/externalref.cfg.yaml)
+[`internal/test/externalref/`](internal/test/externalref/externalref.cfg.yaml)
 for an example. The structure of the file is as follows:
 
 ```yaml
@@ -846,7 +990,7 @@ output-options:
   skip-prune: true
 ```
 
-Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](https://github.com/deepmap/oapi-codegen/blob/master/cmd/oapi-codegen/oapi-codegen.go#L48)
+Have a look at [`cmd/oapi-codegen/oapi-codegen.go`](cmd/oapi-codegen/oapi-codegen.go#L37)
 to see all the fields on the configuration structure.
 
 ### Import Mappings
