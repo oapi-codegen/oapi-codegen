@@ -278,6 +278,17 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var extraTemplateCode string
+	if len(opts.Generate.AdditionalTemplates) > 0 {
+		extraTemplateCode, err = GenerateTemplates(opts.Generate.AdditionalTemplates, t, map[string]any{
+			"ops":  ops,
+			"spec": spec,
+		})
+		if err != nil {
+			return "", fmt.Errorf("error generating extra template code: %w", err)
+		}
+	}
+
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -379,6 +390,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
 			return "", fmt.Errorf("error writing inlined spec: %w", err)
+		}
+	}
+
+	if len(opts.Generate.AdditionalTemplates) > 0 {
+		_, err = w.WriteString(extraTemplateCode)
+		if err != nil {
+			return "", fmt.Errorf("error writing extra template code: %w", err)
 		}
 	}
 

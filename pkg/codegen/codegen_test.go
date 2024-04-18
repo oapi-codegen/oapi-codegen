@@ -181,6 +181,48 @@ func TestGoTypeImport(t *testing.T) {
 
 }
 
+func TestArbitraryTemplateExecution(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+			AdditionalTemplates: []string{
+				"extra-template-name",
+			},
+		},
+		ImportMapping: map[string]string{
+			remoteRefFile: remoteRefImport,
+		},
+		OutputOptions: OutputOptions{
+			UserTemplates: map[string]string{
+				"extra": `{{define "extra-template-name"}}
+				// Extra Template Was Imported
+				{{end}}`,
+			},
+		},
+	}
+	spec := "test_specs/remote-external-reference.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check import of new package
+	assert.Contains(t, code, `Extra Template Was Imported`)
+
+}
+
 func TestRemoteExternalReference(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test that interacts with the network")

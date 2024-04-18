@@ -1067,11 +1067,24 @@ HTTP request returns a non 200 response code, the generator will error.
 instead of a branch like `main`. Tracking a branch can lead to unexpected API
 drift, and loss of the ability to reproduce a build.
 
+Using the configuration file to load in templates **will** load in templates
+with names other than those defined by the built in templates. These user
+templates can be called by adding the template name to the `additional-templates`
+array in the `generate` options.
+
+The additional templates are passed an object with two keys. `spec` and `ops`. 
+Spec contains the [openapi specification](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3#T) as read in by oapi-codegen. 
+Ops is the data passed to most templates, and contains an array of [OperationDefinitions](https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#OperationDefinition)
+
 Examples:
 
 ```yaml
 output: api.gen.go
 package: api
+generate:
+  additional-templates:
+   - "user-defined-template-1"
+   - "user-defined-template-2"
 output-options:
   user-templates:
     # using a local file
@@ -1101,7 +1114,4 @@ output-options:
 
 ```
 
-Using the configuration file to load in templates **will** load in templates
-with names other than those defined by the built in templates. These user
-templates will not be called unless the user overrides a built in template to
-call them however.
+
