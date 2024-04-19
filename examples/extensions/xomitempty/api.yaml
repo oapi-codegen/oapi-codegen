@@ -1,0 +1,26 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-omitempty
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          # for some reason, you may want this behaviour, even though it's a required field
+          x-omitempty: true
+        id:
+          type: number
