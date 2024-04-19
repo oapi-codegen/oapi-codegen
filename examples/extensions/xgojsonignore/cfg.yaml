@@ -1,0 +1,7 @@
+package: xgojsonignore
+output: gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated, even if they're unreferenced
+  skip-prune: true
