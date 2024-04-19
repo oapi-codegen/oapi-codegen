@@ -10,6 +10,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/gofiber/fiber/v2 v2.49.1
+	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kataras/iris/v12 v12.2.6-0.20230908161203-24ba4e8933b9
 	github.com/labstack/echo/v4 v4.11.3
@@ -52,7 +53,6 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20230716120725-531d2d74bc12 // indirect
-	github.com/google/uuid v1.4.0 // indirect
 	github.com/gorilla/css v1.0.0 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/iris-contrib/schema v0.0.6 // indirect
