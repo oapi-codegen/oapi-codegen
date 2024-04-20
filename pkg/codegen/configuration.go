@@ -77,7 +77,7 @@ type CompatibilityOptions struct {
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
 	OldAliasing bool `yaml:"old-aliasing,omitempty"`
 	// When an object contains no members, and only an additionalProperties specification,
-	// it is flattened to a map. Set
+	// it is flattened to a map
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
 	// When an object property is both required and readOnly the go model is generated
 	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
