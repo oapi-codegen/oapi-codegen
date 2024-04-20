@@ -21,7 +21,8 @@ type Configuration struct {
 	// OutputOptions are used to modify the output code in some way.
 	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
 	// ImportMapping specifies the golang package path for each external reference
-	ImportMapping     map[string]string  `yaml:"import-mapping,omitempty"`
+	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
+	// AdditionalImports defines any additional Go imports to add to the generated code
 	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
 	// NoVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
 	// See documentation for how to use it in examples/no-vcs-version-override/README.md
