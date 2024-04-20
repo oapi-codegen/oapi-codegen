@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
 package: issue1087
 output:
   api.gen.go

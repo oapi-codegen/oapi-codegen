@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:

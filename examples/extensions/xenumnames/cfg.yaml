@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
 package: xenumnames
 output: gen.go
 generate:
