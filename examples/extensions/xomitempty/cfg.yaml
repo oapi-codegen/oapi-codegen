@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
 package: xomitempty
 output: gen.go
 generate:
