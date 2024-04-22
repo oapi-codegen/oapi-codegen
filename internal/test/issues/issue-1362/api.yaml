@@ -1,0 +1,29 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Spec that use to create anonymous structures.
+paths:
+  /records:
+    get:
+      operationId: getRecords
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Records'
+  /record:
+    get:
+      operationId: getRecord
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+components:
+  schemas:
+    Record:
+      $ref: './schemas/record.yaml'
+    Records:
+      $ref: './schemas/records.yaml'

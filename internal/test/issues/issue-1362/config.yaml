@@ -1,0 +1,7 @@
+package: issue1362
+output: issue1362.gen.go
+generate:
+  models: true
+  client: true
+  echo-server: true
+  embedded-spec: true
