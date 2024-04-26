@@ -1,0 +1,20 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    ComplexObject:
+      type: object
+      properties:
+        field1:
+         type: string
+      additionalProperties: {}
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        200:
+          description: test
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"

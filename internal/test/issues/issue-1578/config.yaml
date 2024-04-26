@@ -1,0 +1,6 @@
+package: issue1578
+generate:
+  models: true
+  echo-server: true
+  strict-server: true
+output: issue1578.gen.go
