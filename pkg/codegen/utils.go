@@ -205,7 +205,7 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 			continue
 		}
 
-		ext := v.Value.Extensions["x-order"]
+		ext := v.Value.Extensions[extOrder]
 		if ext == nil {
 			continue
 		}
