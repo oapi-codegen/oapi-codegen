@@ -565,7 +565,7 @@ To use purely `net/http` (for Go 1.22+), you will want a configuration file such
 # yaml-language-server: ...
 package: api
 generate:
-  stdhttp-server: true
+  std-http-server: true
   models: true
 output: gen.go
 ```
