@@ -56,6 +56,13 @@
         "embedded-spec": {
           "type": "boolean",
           "description": "EmbeddedSpec indicates whether to embed the swagger spec in the generated code"
+        },
+        "additional-templates": {
+          "type": "array",
+          "description": "AdditionalTemplates specifies what additional user provided templates to call during generation",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },

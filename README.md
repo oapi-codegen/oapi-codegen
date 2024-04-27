@@ -2829,10 +2829,20 @@ Notice that we're using a pre-built provider from the [`pkg/securityprovider` pa
 
 It is possible to extend the inbuilt code generation from `oapi-codegen` using Go's `text/template`s.
 
-You can specify, through your configuration file, the `output-options.user-templates` setting to override the inbuilt templates and use a user-defined template.
+You can specify, through your configuration file, the `output-options.user-templates` setting to override the inbuilt templates, replacing it with your user-defined template.
+You may also add additional templates that do not correspond to any existing inbuilt templates.
+
+Templates added via the `output-options.user-templates` setting that do not correspond to an existing template will not be executed unless they are specified in the `generate.additional-templates` setting.
+
+```yaml
+generate:
+  additional-templates:
+    - "user-defined-template-1"
+    - "user-defined-template-2"
+```
 
 > [!NOTE]
-> Filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for
+> If you wish to override an inbuilt template, filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for.
 
 ### Local paths
 
@@ -2905,7 +2915,11 @@ output-options:
 
 ### Using the Go package
 
-Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
+The additional templates are passed an object with two keys. `spec` and `ops`.
+Spec contains the [openapi specification](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3#T) as read in by oapi-codegen.
+Ops is the data passed to most templates, and contains an array of [OperationDefinitions](https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#OperationDefinition)
+
+Additionally, you are able to use the underlying code generation functions as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
 
 ## Additional Properties (`additionalProperties`)
 
