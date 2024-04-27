@@ -2854,6 +2854,8 @@ It is also possible to use HTTPS URLs.
 > [!WARNING]
 > Although possible, this does lead to `oapi-codegen` executions not necessarily being reproducible. It's recommended to vendor (copy) the OpenAPI spec into your codebase and reference it locally
 >
+> See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
+>
 > This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/deepmap/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
