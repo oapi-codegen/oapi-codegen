@@ -22,6 +22,9 @@ const (
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
+	// breu related schema extensions
+	extBreuEntity     = "x-breu-entity"
+	extBreuEntityType = "x-breu-entity-type"
 )
 
 func extString(extPropValue interface{}) (string, error) {

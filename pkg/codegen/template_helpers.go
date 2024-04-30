@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -294,6 +295,41 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+func split(sep, orig string) map[string]string {
+	parts := strings.Split(orig, sep)
+	res := make(map[string]string, len(parts))
+	for i, v := range parts {
+		res["_"+strconv.Itoa(i)] = v
+	}
+	return res
+}
+
+func splitn(sep string, n int, orig string) map[string]string {
+	parts := strings.SplitN(orig, sep, n)
+	res := make(map[string]string, len(parts))
+	for i, v := range parts {
+		res["_"+strconv.Itoa(i)] = v
+	}
+	return res
+}
+
+// substring creates a substring of the given string.
+//
+// If start is < 0, this calls string[:end].
+//
+// If start is >= 0 and end < 0 or end bigger than s length, this calls string[start:]
+//
+// Otherwise, this calls string[start, end].
+func substring(start, end int, s string) string {
+	if start < 0 {
+		return s[:end]
+	}
+	if end < 0 || end > len(s) {
+		return s[start:]
+	}
+	return s[start:end]
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -321,4 +357,7 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"split":                      split,
+	"splitn":                     splitn,
+	"substring":                  substring,
 }

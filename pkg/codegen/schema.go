@@ -35,6 +35,10 @@ type Schema struct {
 	// type definition `type Foo bool`
 	DefineViaAlias bool
 
+	// Breu related schema extensions
+	BreuEntity     string // The name of the table this schema represents.
+	BreuEntityType string // type of db used. valid options are cql and sql.
+
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
 }
@@ -228,6 +232,20 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	schema := sref.Value
 
+	// Check if the breu entity and entity types exist.
+	// If they exist, load the corresponding values from thes schemas and return it.
+	entity := ""
+	entitype := ""
+
+	if extension, ok := schema.Extensions[extBreuEntity]; ok {
+		entity = extension.(string)
+	}
+
+	// Check for x-breu-entity-type
+	if extension, ok := schema.Extensions[extBreuEntityType]; ok {
+		entitype = extension.(string)
+	}
+
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	if IsGoTypeReference(sref.Ref) {
@@ -246,8 +264,10 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
-		OAPISchema:  schema,
+		Description:    schema.Description,
+		OAPISchema:     schema,
+		BreuEntity:     entity,
+		BreuEntityType: entitype,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -637,7 +657,7 @@ type FieldDescriptor struct {
 
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
-func GenFieldsFromProperties(props []Property) []string {
+func GenFieldsFromProperties(props []Property, entity, entitype string) []string {
 	var fields []string
 	for i, p := range props {
 		field := ""
@@ -713,6 +733,11 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
+		// Support x-breu-entity for cql types
+		if entity != "" && entitype == "cql" {
+			fieldTags["cql"] = p.JsonFieldName
+		}
+
 		// Support x-oapi-codegen-extra-tags
 		if extension, ok := p.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
@@ -749,7 +774,7 @@ func GenStructFromSchema(schema Schema) string {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	// Append all the field definitions
-	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
+	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties, schema.BreuEntity, schema.BreuEntityType)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
