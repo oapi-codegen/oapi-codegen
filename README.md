@@ -2173,7 +2173,7 @@ components:
           type: string
         id:
           type: number
-	  # or on a field
+          # or on a field
           x-go-name: AccountIdentifier
 ```
 
@@ -2383,7 +2383,7 @@ components:
       type: object
       required:
         - name
-	- id
+        - id
       properties:
         name:
           type: string
@@ -2393,7 +2393,7 @@ components:
       type: object
       required:
         - name
-	- id
+        - id
       properties:
         name:
           type: string
