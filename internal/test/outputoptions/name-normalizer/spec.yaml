@@ -1,8 +1,8 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Issue 312 test
-  description: Checks proper escaping of parameters
+  title: TODO
+  description: TODO
 paths:
   /api/pets/{petId}:
     get:
@@ -47,3 +47,18 @@ components:
         message:
           type: string
           description: Error message
+    OneOf2Things:
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
