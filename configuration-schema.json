@@ -187,7 +187,6 @@
           "type": "string",
           "description": "NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`",
           "enum": [
-            "",
             "ToCamelCase",
             "ToCamelCaseWithDigits",
             "ToCamelCaseWithInitialisms"
