@@ -35,15 +35,24 @@ var (
 	nameNormalizer NameNormalizer = ToCamelCase
 )
 
+type NameNormalizerFunction string
+
+const (
+	NameNormalizerFunctionUnset                      NameNormalizerFunction = ""
+	NameNormalizerFunctionToCamelCase                NameNormalizerFunction = "ToCamelCase"
+	NameNormalizerFunctionToCamelCaseWithDigits      NameNormalizerFunction = "ToCamelCaseWithDigits"
+	NameNormalizerFunctionToCamelCaseWithInitialisms NameNormalizerFunction = "ToCamelCaseWithInitialisms"
+)
+
 type NameNormalizer func(string) string
 
-type NameNormalizerMap map[string]NameNormalizer
+type NameNormalizerMap map[NameNormalizerFunction]NameNormalizer
 
 func (m NameNormalizerMap) Options() []string {
 	options := make([]string, 0, len(m))
 
 	for key := range nameNormalizerMap {
-		options = append(options, key)
+		options = append(options, string(key))
 	}
 
 	sort.Strings(options)
@@ -52,10 +61,10 @@ func (m NameNormalizerMap) Options() []string {
 }
 
 var nameNormalizerMap = NameNormalizerMap{
-	"":                           ToCamelCase,
-	"ToCamelCase":                ToCamelCase,
-	"ToCamelCaseWithDigits":      ToCamelCaseWithDigits,
-	"ToCamelCaseWithInitialisms": ToCamelCaseWithInitialisms,
+	NameNormalizerFunctionUnset:                      ToCamelCase,
+	NameNormalizerFunctionToCamelCase:                ToCamelCase,
+	NameNormalizerFunctionToCamelCaseWithDigits:      ToCamelCaseWithDigits,
+	NameNormalizerFunctionToCamelCaseWithInitialisms: ToCamelCaseWithInitialisms,
 }
 
 func init() {

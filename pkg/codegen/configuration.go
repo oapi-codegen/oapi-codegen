@@ -137,7 +137,7 @@ type OutputOptions struct {
 	//   "array"
 	DisableTypeAliasesForType []string `yaml:"disable-type-aliases-for-type"`
 
-	// NameNormalizer is the method used to normalize golang names and types. See the options in pkg/codegen/utils.go:nameNormalizerMap
+	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
 }
 
