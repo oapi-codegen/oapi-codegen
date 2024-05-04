@@ -3265,6 +3265,211 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 
 </details>
 
+## Changing the names of generated types
+
+As of `oapi-codegen` v2.2.0, it is now possible to use the `output-options` configuration's `name-normalizer` to define the logic for how to convert an OpenAPI name (i.e. an Operation ID or a Schema name) and construct a Go type name.
+
+<details>
+
+<summary>Example, using default configuration</summary>
+
+By default, `oapi-codegen` will perform camel-case conversion, so for a spec such as:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example code for the `name-normalizer` output option
+paths:
+  /api/pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      operationId: getHttpPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+          description: The pet uuid.
+        name:
+          type: string
+          description: The name of the pet.
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    OneOf2things:
+      description: "Notice that the `things` is not capitalised"
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+```
+
+This will produce:
+
+```go
+// OneOf2things Notice that the `things` is not capitalised
+type OneOf2things struct {
+	union json.RawMessage
+}
+
+// Pet defines model for Pet.
+type Pet struct {
+	// Name The name of the pet.
+	Name string `json:"name"`
+
+	// Uuid The pet uuid.
+	Uuid string `json:"uuid"`
+}
+
+// The interface specification for the client above.
+type ClientInterface interface {
+	// GetHttpPet request
+	GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+```
+
+</details>
+
+<details>
+
+<summary>Example, using <code>ToCamelCaseWithInitialisms</code></summary>
+
+By default, `oapi-codegen` will perform camel-case conversion, so for a spec such as:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example code for the `name-normalizer` output option
+paths:
+  /api/pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      operationId: getHttpPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+          description: The pet uuid.
+        name:
+          type: string
+          description: The name of the pet.
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    OneOf2things:
+      description: "Notice that the `things` is not capitalised"
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+```
+
+This will produce:
+
+```go
+// OneOf2things Notice that the `things` is not capitalised
+type OneOf2things struct {
+	union json.RawMessage
+}
+
+// Pet defines model for Pet.
+type Pet struct {
+	// Name The name of the pet.
+	Name string `json:"name"`
+
+	// UUID The pet uuid.
+	UUID string `json:"uuid"`
+}
+
+// The interface specification for the client above.
+type ClientInterface interface {
+	// GetHTTPPet request
+	GetHTTPPet(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+```
+
+</details>
+
+
+For more details of what the resulting code looks like, check out [the test cases](internal/test/outputoptions/name-normalizer/).
+
 ## Examples
 
 The [examples directory](examples) contains some additional cases which are useful examples for how to use `oapi-codegen`, including how you'd take the Petstore API and implement it with `oapi-codegen`.

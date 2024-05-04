@@ -1,8 +1,7 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: TODO
-  description: TODO
+  title: Example code for the `name-normalizer` output option
 paths:
   /api/pets/{petId}:
     get:
