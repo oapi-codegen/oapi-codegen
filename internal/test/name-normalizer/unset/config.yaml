@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: name_normalizer
+generate:
+  std-http-server: true
+  client: true
+  models: true
+  embedded-spec: true
+# When `name-normalizer` is unset
+output: name_normalizer.gen.go
