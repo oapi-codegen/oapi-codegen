@@ -127,7 +127,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
 	nameNormalizer = NameNormalizers[nameNormalizerFunction]
 	if nameNormalizer == nil {
-		return "", fmt.Errorf(`error cannot find name-normalizer "%s" among options %q`,
+		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
 			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
 
