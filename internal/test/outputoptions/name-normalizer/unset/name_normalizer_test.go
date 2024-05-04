@@ -19,6 +19,6 @@ func TestGenCodeHasCorrectNames(t *testing.T) {
 	server := &ServerInterfaceWrapper{}
 	assert.NotNil(t, server.GetHttpPet)
 
-	oneOf := OneOf2Things{}
+	oneOf := OneOf2things{}
 	assert.Zero(t, oneOf)
 }
