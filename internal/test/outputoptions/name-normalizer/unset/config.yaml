@@ -5,8 +5,7 @@ generate:
   client: true
   models: true
   embedded-spec: true
-# When `name-normalizer` is unset
 output: name_normalizer.gen.go
 output-options:
   skip-prune: true
-  name-normalizer: ToCamelCase
+  # When `name-normalizer` is unset
