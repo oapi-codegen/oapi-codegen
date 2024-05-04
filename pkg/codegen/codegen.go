@@ -125,10 +125,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
-	nameNormalizer = nameNormalizerMap[nameNormalizerFunction]
+	nameNormalizer = NameNormalizers[nameNormalizerFunction]
 	if nameNormalizer == nil {
 		return "", fmt.Errorf(`error cannot find name-normalizer "%s" among options %q`,
-			opts.OutputOptions.NameNormalizer, nameNormalizerMap.Options())
+			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
 
 	// This creates the golang templates text package

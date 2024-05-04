@@ -38,12 +38,38 @@ var (
 type NameNormalizerFunction string
 
 const (
-	NameNormalizerFunctionUnset                      NameNormalizerFunction = ""
-	NameNormalizerFunctionToCamelCase                NameNormalizerFunction = "ToCamelCase"
-	NameNormalizerFunctionToCamelCaseWithDigits      NameNormalizerFunction = "ToCamelCaseWithDigits"
+	// NameNormalizerFunctionUnset is the default case, where the `name-normalizer` option hasn't been set. This will use the `ToCamelCase` function.
+	//
+	// See the docs for `NameNormalizerFunctionToCamelCase` for more details.
+	NameNormalizerFunctionUnset NameNormalizerFunction = ""
+	// NameNormalizerFunctionToCamelCase will use the `ToCamelCase` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHttpPet`
+	// - `OneOf2things` => `OneOf2things`
+	NameNormalizerFunctionToCamelCase NameNormalizerFunction = "ToCamelCase"
+	// NameNormalizerFunctionToCamelCaseWithDigits will use the `NameNormalizerFunctionToCamelCaseWithDigits` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHttpPet`
+	// - `OneOf2things` => `OneOf2Things`
+	NameNormalizerFunctionToCamelCaseWithDigits NameNormalizerFunction = "ToCamelCaseWithDigits"
+	// NameNormalizerFunctionToCamelCaseWithInitialisms will use the `NameNormalizerFunctionToCamelCaseWithInitialisms` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHTTPPet`
+	// - `OneOf2things` => `OneOf2things`
 	NameNormalizerFunctionToCamelCaseWithInitialisms NameNormalizerFunction = "ToCamelCaseWithInitialisms"
 )
 
+// NameNormalizer is a function that takes a type name, and returns that type name converted into a different format.
+//
+// This may be an Operation ID i.e. `retrieveUserRequests` or a Schema name i.e. `BigBlockOfCheese`
+//
+// NOTE: this must return a string that can be used as a valid Go type name
 type NameNormalizer func(string) string
 
 type NameNormalizerMap map[NameNormalizerFunction]NameNormalizer
@@ -51,7 +77,7 @@ type NameNormalizerMap map[NameNormalizerFunction]NameNormalizer
 func (m NameNormalizerMap) Options() []string {
 	options := make([]string, 0, len(m))
 
-	for key := range nameNormalizerMap {
+	for key := range NameNormalizers {
 		options = append(options, string(key))
 	}
 
@@ -60,7 +86,10 @@ func (m NameNormalizerMap) Options() []string {
 	return options
 }
 
-var nameNormalizerMap = NameNormalizerMap{
+// NameNormalizers contains the valid options for `NameNormalizerFunction`s that `oapi-codegen` supports.
+//
+// If you are calling `oapi-codegen` as a library, this allows you to specify your own normalisation types before generating code.
+var NameNormalizers = NameNormalizerMap{
 	NameNormalizerFunctionUnset:                      ToCamelCase,
 	NameNormalizerFunctionToCamelCase:                ToCamelCase,
 	NameNormalizerFunctionToCamelCaseWithDigits:      ToCamelCaseWithDigits,
