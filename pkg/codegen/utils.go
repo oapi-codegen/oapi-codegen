@@ -335,7 +335,6 @@ func mediaTypeToCamelCase(s string) string {
 	s = strings.Replace(s, "+", "Plus_", 1)
 
 	return ToCamelCaseWithInitialism(s)
-
 }
 
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
