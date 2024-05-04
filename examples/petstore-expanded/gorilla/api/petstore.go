@@ -1,4 +1,4 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -26,7 +26,7 @@ func NewPetStore() *PetStore {
 	}
 }
 
-// This function wraps sending of an error in the Error format, and
+// sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
 func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 	petErr := Error{
@@ -34,7 +34,7 @@ func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 		Message: message,
 	}
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(petErr)
+	_ = json.NewEncoder(w).Encode(petErr)
 }
 
 // FindPets implements all the handlers in the ServerInterface
@@ -67,7 +67,7 @@ func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindP
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	_ = json.NewEncoder(w).Encode(result)
 }
 
 func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
@@ -89,14 +89,14 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet
 
 	// Now, we have to return the NewPet
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(pet)
+	_ = json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
@@ -110,7 +110,7 @@ func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(pet)
+	_ = json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {

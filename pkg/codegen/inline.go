@@ -32,22 +32,22 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
 	if err != nil {
-		return "", fmt.Errorf("error marshaling swagger: %s", err)
+		return "", fmt.Errorf("error marshaling swagger: %w", err)
 	}
 
 	// gzip
 	var buf bytes.Buffer
 	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	if err != nil {
-		return "", fmt.Errorf("error creating gzip compressor: %s", err)
+		return "", fmt.Errorf("error creating gzip compressor: %w", err)
 	}
 	_, err = zw.Write(encoded)
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping swagger file: %w", err)
 	}
 	err = zw.Close()
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping swagger file: %w", err)
 	}
 	str := base64.StdEncoding.EncodeToString(buf.Bytes())
 

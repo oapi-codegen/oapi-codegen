@@ -8,16 +8,17 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/gin-middleware"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/gin/api"
+	middleware "github.com/oapi-codegen/gin-middleware"
 )
 
-func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
+func NewGinPetServer(petStore *api.PetStore, port string) *http.Server {
 	swagger, err := api.GetSwagger()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
@@ -40,13 +41,13 @@ func NewGinPetServer(petStore *api.PetStore, port int) *http.Server {
 
 	s := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf("0.0.0.0:%d", port),
+		Addr:    net.JoinHostPort("0.0.0.0", port),
 	}
 	return s
 }
 
 func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 	// Create an instance of our handler which satisfies the generated interface
 	petStore := api.NewPetStore()

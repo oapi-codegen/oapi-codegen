@@ -19,12 +19,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api/models"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api"
+	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api/models"
+	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	middleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -64,7 +64,7 @@ func TestPetStore(t *testing.T) {
 		Name: "Spot",
 		Tag:  &tag,
 	}
-	result := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
+	result := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, e)
 	// We expect 201 code on successful pet insertion
 	assert.Equal(t, http.StatusCreated, result.Code())
 
@@ -72,7 +72,7 @@ func TestPetStore(t *testing.T) {
 	// sure that its fields match.
 	var resultPet models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet)
-	assert.NoError(t, err, "error unmarshalling response")
+	assert.NoError(t, err, "error unmarshaling response")
 	assert.Equal(t, newPet.Name, resultPet.Name)
 	assert.Equal(t, *newPet.Tag, *resultPet.Tag)
 
@@ -80,14 +80,14 @@ func TestPetStore(t *testing.T) {
 	petId := resultPet.Id
 
 	// Test the getter function.
-	result = testutil.NewRequest().Get(fmt.Sprintf("/pets/%d", petId)).WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get(fmt.Sprintf("/pets/%d", petId)).WithAcceptJson().GoWithHTTPHandler(t, e)
 	var resultPet2 models.Pet
 	err = result.UnmarshalBodyToObject(&resultPet2)
 	assert.NoError(t, err, "error getting pet")
 	assert.Equal(t, resultPet, resultPet2)
 
 	// We should get a 404 on invalid ID
-	result = testutil.NewRequest().Get("/pets/27179095781").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets/27179095781").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusNotFound, result.Code())
 	var petError models.Error
 	err = result.UnmarshalBodyToObject(&petError)
@@ -100,17 +100,17 @@ func TestPetStore(t *testing.T) {
 		Name: "Fido",
 		Tag:  &tag,
 	}
-	result = testutil.NewRequest().Post("/pets").WithJsonBody(newPet).Go(t, e)
+	result = testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, e)
 	// We expect 201 code on successful pet insertion
 	assert.Equal(t, http.StatusCreated, result.Code())
 	// We should have gotten a response from the server with the new pet. Make
 	// sure that its fields match.
 	err = result.UnmarshalBodyToObject(&resultPet)
-	assert.NoError(t, err, "error unmarshalling response")
+	assert.NoError(t, err, "error unmarshaling response")
 	petId2 := resultPet.Id
 
 	// Now, list all pets, we should have two
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	var petList []models.Pet
 	err = result.UnmarshalBodyToObject(&petList)
@@ -119,7 +119,7 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by tag, we should have 1
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=TagOfFido").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
@@ -127,28 +127,28 @@ func TestPetStore(t *testing.T) {
 
 	// Filter pets by non existent tag, we should have 0
 	petList = nil
-	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets?tags=NotExists").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)
 	assert.Equal(t, 0, len(petList))
 
 	// Let's delete non-existent pet
-	result = testutil.NewRequest().Delete("/pets/7").Go(t, e)
+	result = testutil.NewRequest().Delete("/pets/7").GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusNotFound, result.Code())
 	err = result.UnmarshalBodyToObject(&petError)
-	assert.NoError(t, err, "error unmarshalling PetError")
+	assert.NoError(t, err, "error unmarshaling PetError")
 	assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 	// Now, delete both real pets
-	result = testutil.NewRequest().Delete(fmt.Sprintf("/pets/%d", petId)).Go(t, e)
+	result = testutil.NewRequest().Delete(fmt.Sprintf("/pets/%d", petId)).GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusNoContent, result.Code())
-	result = testutil.NewRequest().Delete(fmt.Sprintf("/pets/%d", petId2)).Go(t, e)
+	result = testutil.NewRequest().Delete(fmt.Sprintf("/pets/%d", petId2)).GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusNoContent, result.Code())
 
 	// Should have no pets left.
 	petList = nil
-	result = testutil.NewRequest().Get("/pets").WithAcceptJson().Go(t, e)
+	result = testutil.NewRequest().Get("/pets").WithAcceptJson().GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
 	err = result.UnmarshalBodyToObject(&petList)
 	assert.NoError(t, err, "error getting response", err)

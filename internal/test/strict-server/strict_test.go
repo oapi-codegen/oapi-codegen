@@ -13,57 +13,79 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
+	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
-	api3 "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
-	api4 "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
-	api2 "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	chiAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/chi"
+	clientAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/client"
+	echoAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/echo"
+	fiberAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/fiber"
+	ginAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/gin"
+	irisAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/iris"
+
+	"github.com/oapi-codegen/runtime"
+	"github.com/oapi-codegen/testutil"
 )
 
+func TestIrisServer(t *testing.T) {
+	server := irisAPI.StrictServer{}
+	strictHandler := irisAPI.NewStrictHandler(server, nil)
+	i := iris.New()
+	irisAPI.RegisterHandlers(i, strictHandler)
+	testImpl(t, i)
+}
+
 func TestChiServer(t *testing.T) {
-	server := api.StrictServer{}
-	strictHandler := api.NewStrictHandler(server, nil)
+	server := chiAPI.StrictServer{}
+	strictHandler := chiAPI.NewStrictHandler(server, nil)
 	r := chi.NewRouter()
-	handler := api.HandlerFromMux(strictHandler, r)
+	handler := chiAPI.HandlerFromMux(strictHandler, r)
 	testImpl(t, handler)
 }
 
 func TestEchoServer(t *testing.T) {
-	server := api4.StrictServer{}
-	strictHandler := api4.NewStrictHandler(server, nil)
+	server := echoAPI.StrictServer{}
+	strictHandler := echoAPI.NewStrictHandler(server, nil)
 	e := echo.New()
-	api4.RegisterHandlers(e, strictHandler)
+	echoAPI.RegisterHandlers(e, strictHandler)
 	testImpl(t, e)
 }
 
 func TestGinServer(t *testing.T) {
-	server := api2.StrictServer{}
-	strictHandler := api2.NewStrictHandler(server, nil)
+	server := ginAPI.StrictServer{}
+	strictHandler := ginAPI.NewStrictHandler(server, nil)
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
-	api2.RegisterHandlers(r, strictHandler)
+	ginAPI.RegisterHandlers(r, strictHandler)
 	testImpl(t, r)
+}
+
+func TestFiberServer(t *testing.T) {
+	server := fiberAPI.StrictServer{}
+	strictHandler := fiberAPI.NewStrictHandler(server, nil)
+	r := fiber.New()
+	fiberAPI.RegisterHandlers(r, strictHandler)
+	testImpl(t, adaptor.FiberApp(r))
 }
 
 func testImpl(t *testing.T, handler http.Handler) {
 	t.Run("JSONExample", func(t *testing.T) {
 		value := "123"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/json").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
 	t.Run("URLEncodedExample", func(t *testing.T) {
 		value := "456"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		requestBodyEncoded, err := runtime.MarshalForm(&requestBody, nil)
 		assert.NoError(t, err)
 		rr := testutil.NewRequest().Post("/urlencoded").WithContentType("application/x-www-form-urlencoded").WithBody([]byte(requestBodyEncoded.Encode())).GoWithHTTPHandler(t, handler).Recorder
@@ -71,7 +93,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.Equal(t, "application/x-www-form-urlencoded", rr.Header().Get("Content-Type"))
 		values, err := url.ParseQuery(rr.Body.String())
 		assert.NoError(t, err)
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err = runtime.BindForm(&responseBody, values, nil, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -100,6 +122,30 @@ func testImpl(t *testing.T, handler http.Handler) {
 		_, err = reader.NextPart()
 		assert.Equal(t, io.EOF, err)
 	})
+	t.Run("MultipartRelatedExample", func(t *testing.T) {
+		value := "789"
+		fieldName := "value"
+		var writer bytes.Buffer
+		mw := multipart.NewWriter(&writer)
+		field, err := mw.CreateFormField(fieldName)
+		assert.NoError(t, err)
+		_, _ = field.Write([]byte(value))
+		assert.NoError(t, mw.Close())
+		rr := testutil.NewRequest().Post("/multipart-related").WithContentType(mime.FormatMediaType("multipart/related", map[string]string{"boundary": mw.Boundary()})).WithBody(writer.Bytes()).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		contentType, params, err := mime.ParseMediaType(rr.Header().Get("Content-Type"))
+		assert.NoError(t, err)
+		assert.Equal(t, "multipart/related", contentType)
+		reader := multipart.NewReader(rr.Body, params["boundary"])
+		part, err := reader.NextPart()
+		assert.NoError(t, err)
+		assert.Equal(t, part.FormName(), fieldName)
+		readValue, err := io.ReadAll(part)
+		assert.NoError(t, err)
+		assert.Equal(t, value, string(readValue))
+		_, err = reader.NextPart()
+		assert.Equal(t, io.EOF, err)
+	})
 	t.Run("TextExample", func(t *testing.T) {
 		value := "text"
 		rr := testutil.NewRequest().Post("/text").WithContentType("text/plain").WithBody([]byte(value)).GoWithHTTPHandler(t, handler).Recorder
@@ -116,18 +162,18 @@ func testImpl(t *testing.T, handler http.Handler) {
 	})
 	t.Run("MultipleRequestAndResponseTypesJSON", func(t *testing.T) {
 		value := "123"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/multiple").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
 	t.Run("MultipleRequestAndResponseTypesFormdata", func(t *testing.T) {
 		value := "456"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		requestBodyEncoded, err := runtime.MarshalForm(&requestBody, nil)
 		assert.NoError(t, err)
 		rr := testutil.NewRequest().Post("/multiple").WithContentType("application/x-www-form-urlencoded").WithBody([]byte(requestBodyEncoded.Encode())).GoWithHTTPHandler(t, handler).Recorder
@@ -135,7 +181,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.Equal(t, "application/x-www-form-urlencoded", rr.Header().Get("Content-Type"))
 		values, err := url.ParseQuery(rr.Body.String())
 		assert.NoError(t, err)
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err = runtime.BindForm(&responseBody, values, nil, nil)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -182,11 +228,11 @@ func testImpl(t *testing.T, handler http.Handler) {
 		header1 := "value1"
 		header2 := "890"
 		value := "asdf"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/with-headers").WithHeader("header1", header1).WithHeader("header2", header2).WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
@@ -203,11 +249,22 @@ func testImpl(t *testing.T, handler http.Handler) {
 	})
 	t.Run("ReusableResponses", func(t *testing.T) {
 		value := "jkl;"
-		requestBody := api3.Example{Value: &value}
+		requestBody := clientAPI.Example{Value: &value}
 		rr := testutil.NewRequest().Post("/reusable-responses").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
 		assert.Equal(t, http.StatusOK, rr.Code)
 		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
-		var responseBody api3.Example
+		var responseBody clientAPI.Example
+		err := json.NewDecoder(rr.Body).Decode(&responseBody)
+		assert.NoError(t, err)
+		assert.Equal(t, requestBody, responseBody)
+	})
+	t.Run("UnionResponses", func(t *testing.T) {
+		value := "union"
+		requestBody := clientAPI.Example{Value: &value}
+		rr := testutil.NewRequest().Post("/with-union").WithJsonBody(requestBody).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.True(t, strings.HasPrefix(rr.Header().Get("Content-Type"), "application/json"))
+		var responseBody clientAPI.Example
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)

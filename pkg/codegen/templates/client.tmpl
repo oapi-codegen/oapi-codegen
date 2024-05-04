@@ -77,7 +77,7 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}} request{{if .HasBody}} with any body{{end}}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} request{{if .HasBody}} with any body{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
@@ -135,7 +135,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genPar
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
 func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
-    {{if eq .NameTag "JSON" -}}
+    {{if .IsJSON -}}
         buf, err := json.Marshal(body)
         if err != nil {
             return nil, err
@@ -194,36 +194,38 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
 
 {{if .QueryParams}}
-    queryValues := queryURL.Query()
-{{range $paramIdx, $param := .QueryParams}}
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    {{if .IsPassThrough}}
-    queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
-    {{end}}
-    {{if .IsJson}}
-    if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
-        return nil, err
-    } else {
-        queryValues.Add("{{.ParamName}}", string(queryParamBuf))
-    }
+    if params != nil {
+        queryValues := queryURL.Query()
+            {{range $paramIdx, $param := .QueryParams}}
+            {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+            {{if .IsPassThrough}}
+            queryValues.Add("{{.ParamName}}", {{if not .Required}}*{{end}}params.{{.GoName}})
+            {{end}}
+            {{if .IsJson}}
+            if queryParamBuf, err := json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+                return nil, err
+            } else {
+                queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+            }
 
-    {{end}}
-    {{if .IsStyled}}
-    if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
+            {{end}}
+            {{if .IsStyled}}
+            if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if not .Required}}*{{end}}params.{{.GoName}}); err != nil {
+                return nil, err
+            } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+               return nil, err
+            } else {
+               for k, v := range parsed {
+                   for _, v2 := range v {
+                       queryValues.Add(k, v2)
+                   }
+               }
+            }
+            {{end}}
+            {{if not .Required}}}{{end}}
+        {{end}}
+        queryURL.RawQuery = queryValues.Encode()
     }
-    {{end}}
-    {{if not .Required}}}{{end}}
-{{end}}
-    queryURL.RawQuery = queryValues.Encode()
 {{end}}{{/* if .QueryParams */}}
     req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
@@ -231,57 +233,65 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
 
     {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
-{{range $paramIdx, $param := .HeaderParams}}
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    var headerParam{{$paramIdx}} string
-    {{if .IsPassThrough}}
-    headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+{{ if .HeaderParams }}
+    if params != nil {
+    {{range $paramIdx, $param := .HeaderParams}}
+        {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+        var headerParam{{$paramIdx}} string
+        {{if .IsPassThrough}}
+        headerParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+        {{end}}
+        {{if .IsJson}}
+        var headerParamBuf{{$paramIdx}} []byte
+        headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
+        {{end}}
+        {{if .IsStyled}}
+        headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        {{end}}
+        req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
+        {{if not .Required}}}{{end}}
     {{end}}
-    {{if .IsJson}}
-    var headerParamBuf{{$paramIdx}} []byte
-    headerParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
     }
-    headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
-    {{end}}
-    {{if .IsStyled}}
-    headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-    req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
-    {{if not .Required}}}{{end}}
-{{end}}
+{{- end }}{{/* if .HeaderParams */}}
 
-{{range $paramIdx, $param := .CookieParams}}
-    {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
-    var cookieParam{{$paramIdx}} string
-    {{if .IsPassThrough}}
-    cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
-    {{end}}
-    {{if .IsJson}}
-    var cookieParamBuf{{$paramIdx}} []byte
-    cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
+{{ if .CookieParams }}
+    if params != nil {
+    {{range $paramIdx, $param := .CookieParams}}
+        {{if not .Required}} if params.{{.GoName}} != nil { {{end}}
+        var cookieParam{{$paramIdx}} string
+        {{if .IsPassThrough}}
+        cookieParam{{$paramIdx}} = {{if not .Required}}*{{end}}params.{{.GoName}}
+        {{end}}
+        {{if .IsJson}}
+        var cookieParamBuf{{$paramIdx}} []byte
+        cookieParamBuf{{$paramIdx}}, err = json.Marshal({{if not .Required}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
+        {{end}}
+        {{if .IsStyled}}
+        cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        {{end}}
+        cookie{{$paramIdx}} := &http.Cookie{
+            Name:"{{.ParamName}}",
+            Value:cookieParam{{$paramIdx}},
+        }
+        req.AddCookie(cookie{{$paramIdx}})
+        {{if not .Required}}}{{end}}
+    {{ end -}}
     }
-    cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
-    {{end}}
-    {{if .IsStyled}}
-    cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if not .Required}}*{{end}}params.{{.GoName}})
-    if err != nil {
-        return nil, err
-    }
-    {{end}}
-    cookie{{$paramIdx}} := &http.Cookie{
-        Name:"{{.ParamName}}",
-        Value:cookieParam{{$paramIdx}},
-    }
-    req.AddCookie(cookie{{$paramIdx}})
-    {{if not .Required}}}{{end}}
-{{end}}
+{{- end }}{{/* if .CookieParams */}}
     return req, nil
 }
 

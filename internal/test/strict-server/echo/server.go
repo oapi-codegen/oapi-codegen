@@ -1,10 +1,11 @@
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../strict-schema.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../strict-schema.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../strict-schema.yaml
+//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=types.cfg.yaml ../strict-schema.yaml
 
 package api
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"mime/multipart"
 )
@@ -18,6 +19,30 @@ func (s StrictServer) JSONExample(ctx context.Context, request JSONExampleReques
 
 func (s StrictServer) MultipartExample(ctx context.Context, request MultipartExampleRequestObject) (MultipartExampleResponseObject, error) {
 	return MultipartExample200MultipartResponse(func(writer *multipart.Writer) error {
+		for {
+			part, err := request.Body.NextPart()
+			if err == io.EOF {
+				return nil
+			} else if err != nil {
+				return err
+			}
+			w, err := writer.CreatePart(part.Header)
+			if err != nil {
+				return err
+			}
+			_, err = io.Copy(w, part)
+			if err != nil {
+				return err
+			}
+			if err = part.Close(); err != nil {
+				return err
+			}
+		}
+	}), nil
+}
+
+func (s StrictServer) MultipartRelatedExample(ctx context.Context, request MultipartRelatedExampleRequestObject) (MultipartRelatedExampleResponseObject, error) {
+	return MultipartRelatedExample200MultipartResponse(func(writer *multipart.Writer) error {
 		for {
 			part, err := request.Body.NextPart()
 			if err == io.EOF {
@@ -103,4 +128,17 @@ func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableRes
 
 func (s StrictServer) ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error) {
 	return ReservedGoKeywordParameters200TextResponse(""), nil
+}
+
+func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error) {
+	union, err := json.Marshal(*request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return UnionExample200JSONResponse{
+		Body: struct{ union json.RawMessage }{
+			union: union,
+		},
+	}, nil
 }

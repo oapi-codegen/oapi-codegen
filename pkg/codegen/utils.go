@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"go/token"
 	"net/url"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -269,22 +270,74 @@ func makeInitialismsMap(l []string) map[string]string {
 	return m
 }
 
+func ToCamelCaseWithInitialism(str string) string {
+	return replaceInitialism(ToCamelCase(str))
+}
+
+func replaceInitialism(s string) string {
+	// These strings do not apply CamelCase
+	// Do not do CamelCase when these characters match when the preceding character is lowercase
+	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
+	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
+	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
+		// If the preceding character is lowercase, do not do CamelCase
+		if unicode.IsLower(rune(s[0])) {
+			return s
+		}
+		return strings.ToUpper(s)
+	})
+}
+
+// mediaTypeToCamelCase converts a media type to a PascalCase representation
+func mediaTypeToCamelCase(s string) string {
+	// ToCamelCase doesn't - and won't - add `/` to the characters it'll allow word boundary
+	s = strings.Replace(s, "/", "_", 1)
+	// including a _ to make sure that these are treated as word boundaries by `ToCamelCase`
+	s = strings.Replace(s, "*", "Wildcard_", 1)
+	s = strings.Replace(s, "+", "Plus_", 1)
+
+	return ToCamelCaseWithInitialism(s)
+
+}
+
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
 // order, since Golang scrambles dictionary keys
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
+	orders := make(map[string]int64, len(dict))
 	i := 0
-	for key := range dict {
-		keys[i] = key
+
+	for key, v := range dict {
+		keys[i], orders[key] = key, int64(len(dict))
 		i++
+
+		if v == nil || v.Value == nil {
+			continue
+		}
+
+		ext := v.Value.Extensions[extOrder]
+		if ext == nil {
+			continue
+		}
+
+		// YAML parsing picks up the x-order as a float64
+		if order, ok := ext.(float64); ok {
+			orders[key] = int64(order)
+		}
 	}
-	sort.Strings(keys)
+
+	sort.Slice(keys, func(i, j int) bool {
+		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
+			return i < j
+		}
+		return keys[i] < keys[j]
+	})
 	return keys
 }
 
 // SortedPathsKeys is the same as above, except it sorts the keys for a Paths
 // dictionary.
-func SortedPathsKeys(dict openapi3.Paths) []string {
+func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -308,7 +361,7 @@ func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
 }
 
 // SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict openapi3.Responses) []string {
+func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
 	keys := make([]string, len(dict))
 	i := 0
 	for key := range dict {
@@ -459,7 +512,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	if goImport, ok := importMapping[remoteComponent]; !ok {
+	if goImport, ok := globalState.importMapping[remoteComponent]; !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	} else {
 		goType, err := refPathToGoType("#"+flatComponent, false)
@@ -487,6 +540,21 @@ func IsGoTypeReference(ref string) bool {
 // http://deepmap.com/schemas/document.json#/Foo        -> false
 func IsWholeDocumentReference(ref string) bool {
 	return ref != "" && !strings.ContainsAny(ref, "#")
+}
+
+// SwaggerUriToIrisUri converts a OpenAPI style path URI with parameters to an
+// Iris compatible path URI. We need to replace all of OpenAPI parameters with
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func SwaggerUriToIrisUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
@@ -569,6 +637,22 @@ func SwaggerUriToGorillaUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
+// SwaggerUriToStdHttpUri converts a swagger style path URI with parameters to a
+// Chi compatible path URI. We need to replace all Swagger parameters with
+// "{param}". Valid input parameters are:
+//
+//	{param}
+//	{param*}
+//	{.param}
+//	{.param*}
+//	{;param}
+//	{;param*}
+//	{?param}
+//	{?param*}
+func SwaggerUriToStdHttpUri(uri string) string {
+	return pathParamRE.ReplaceAllString(uri, "{$1}")
+}
+
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
 // /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
 func OrderedParamsFromUri(uri string) []string {
@@ -611,7 +695,7 @@ func IsGoKeyword(str string) bool {
 }
 
 // IsPredeclaredGoIdentifier returns whether the given string
-// is a predefined go indentifier.
+// is a predefined go identifier.
 //
 // See https://golang.org/ref/spec#Predeclared_identifiers
 func IsPredeclaredGoIdentifier(str string) bool {
@@ -804,7 +888,7 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 }
 
 func DeprecationComment(reason string) string {
-	var content = "Deprecated:" // The colon is required at the end even without reason
+	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
 		content += fmt.Sprintf(" %s", reason)
 	}
@@ -818,8 +902,8 @@ func stringToGoCommentWithPrefix(in, prefix string) string {
 	}
 
 	// Normalize newlines from Windows/Mac to Linux
-	in = strings.Replace(in, "\r\n", "\n", -1)
-	in = strings.Replace(in, "\r", "\n", -1)
+	in = strings.ReplaceAll(in, "\r\n", "\n")
+	in = strings.ReplaceAll(in, "\r", "\n")
 
 	// Add comment to each line
 	var lines []string
@@ -931,6 +1015,9 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
 func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+	if spec.Components == nil {
+		return "", nil
+	}
 	pathElements := strings.Split(refPath, "/")
 	// All local references will have 4 path elements.
 	if len(pathElements) != 4 {
@@ -1013,5 +1100,23 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
-	return t1.Schema.OAPISchema == t2.Schema.OAPISchema
+	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+}
+
+// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
+func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
+	if s.AdditionalProperties.Has == nil {
+		return false
+	}
+
+	return *s.AdditionalProperties.Has == false //nolint:gosimple
+}
+
+func sliceContains[E comparable](s []E, v E) bool {
+	for _, ss := range s {
+		if ss == v {
+			return true
+		}
+	}
+	return false
 }

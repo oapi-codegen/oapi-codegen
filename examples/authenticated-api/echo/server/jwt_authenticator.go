@@ -9,6 +9,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/lestrrat-go/jwx/jwt"
+	middleware "github.com/oapi-codegen/echo-middleware"
 )
 
 // JWSValidator is used to validate JWS payloads and return a JWT if they're
@@ -16,6 +17,8 @@ import (
 type JWSValidator interface {
 	ValidateJWS(jws string) (jwt.Token, error)
 }
+
+const JWTClaimsContextKey = "jwt_claims"
 
 var (
 	ErrNoAuthHeader      = errors.New("Authorization header is missing")
@@ -73,6 +76,12 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 	if err != nil {
 		return fmt.Errorf("token claims don't match: %w", err)
 	}
+
+	// Set the property on the echo context so the handler is able to
+	// access the claims data we generate in here.
+	eCtx := middleware.GetEchoContext(ctx)
+	eCtx.Set(JWTClaimsContextKey, token)
+
 	return nil
 }
 
