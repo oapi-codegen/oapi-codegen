@@ -19,7 +19,32 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gorilla/mux"
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
+
+// Error defines model for Error.
+type Error struct {
+	// Code Error code
+	Code int32 `json:"code"`
+
+	// Message Error message
+	Message string `json:"message"`
+}
+
+// OneOf2Things defines model for OneOf2Things.
+type OneOf2Things struct {
+	union json.RawMessage
+}
+
+// OneOf2Things0 defines model for .
+type OneOf2Things0 struct {
+	Id int `json:"id"`
+}
+
+// OneOf2Things1 defines model for .
+type OneOf2Things1 struct {
+	Id openapi_types.UUID `json:"id"`
+}
 
 // Pet defines model for Pet.
 type Pet struct {
@@ -28,6 +53,68 @@ type Pet struct {
 
 	// Uuid The pet uuid.
 	Uuid string `json:"uuid"`
+}
+
+// AsOneOf2Things0 returns the union data inside the OneOf2Things as a OneOf2Things0
+func (t OneOf2Things) AsOneOf2Things0() (OneOf2Things0, error) {
+	var body OneOf2Things0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOf2Things0 overwrites any union data inside the OneOf2Things as the provided OneOf2Things0
+func (t *OneOf2Things) FromOneOf2Things0(v OneOf2Things0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOf2Things0 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things0
+func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOneOf2Things1 returns the union data inside the OneOf2Things as a OneOf2Things1
+func (t OneOf2Things) AsOneOf2Things1() (OneOf2Things1, error) {
+	var body OneOf2Things1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOf2Things1 overwrites any union data inside the OneOf2Things as the provided OneOf2Things1
+func (t *OneOf2Things) FromOneOf2Things1(v OneOf2Things1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOf2Things1 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things1
+func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OneOf2Things) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOf2Things) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -420,12 +507,14 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/2xRvW7jMAx+FYN3o2H57jbNB7SZ0qFbkEG16JhBLLESHSAw/O4F5bRJi0yy+fPx+5mh",
-	"iyPHgEEy2BlyN+DoyucLij6cImMSwlIMbkR9PeYuEQvFABZeB6y0U8W+kgErRmmgBrkwgoUsicIBlhqm",
-	"ifzjbUaptPtgbakh4ftECT3Y3YpRr0T2X8Px7YidwKLTFPr44Mr2/1bBSU54+z1jymv/T9M2rZKMjMEx",
-	"gYV/pVQDOxmKeuOYDKNkMzPKxi9aPKw+qUtOb208WHhCeRZh9VD3kxtRMGWwuxlIzynmpwwLBQ3uhUqa",
-	"sL7GofA/TdnrcOYY8hrM37bVp4tBMBRCjvlEXaFkjlk1znd4vxP2YOGXueVvruEbZV2c/O7g2Z3Ia1Il",
-	"kzyNo0uXVWvJ70BnDBV5DEI9YWoUZPkIAAD//29OfJ1iAgAA",
+	"H4sIAAAAAAAC/4RTMY/bPAz9Kwa/bxTsNLdpbtHelA63HTKoFm3zEEsqRQc4BP7vBeUklyYubkkkkXx8",
+	"79E8QRvHFAMGyWBPkNsBR1eO35gj6yFxTMhCWJ7b6FH/PeaWKQnFAHZJrkrMQBd5dAIWKMjTFgzIe8Ll",
+	"ij0yzAZGzNn1/wS6hK+lWZhCD/NsgPH3RIwe7CucG17S97OBXcBdt30ZKPSFb9Q72Nd7HeT1957ZHT55",
+	"2F85xF9v2ArMZh3qqnqayH/KfBVZ+f9EeTQ9uHHFq5cBK41UsatkwCqh1I+NzUJotTqhVBqtP+V7FlWI",
+	"PBLXbApdXOmy+7pTcJIDflyPyHmJf6k39UZJxoTBJQILT+XJQHIyFPWNS9QklNycEsqzn/WxX3xSl5z2",
+	"evZg4TvKD5GkHmo9uxEFOZfxk7ZTzIsMCwUNboUKT2jOW3DzfVxN2WtyTjHkZTDbzWZZiiAYCiGX0oHa",
+	"Qql5y6rxdIP3P2MHFv5rPtauOe9co6yLk387eHQH8jqpMpM8jaPj90VrmV9PRwwVeQxCHSHXCjL/CQAA",
+	"//8ZDQ9P2QMAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenCodeHasCorrectNamesWithInitialisms(t *testing.T) {
+func TestGenCodeHasCorrectNames(t *testing.T) {
 	pet := &Pet{}
 	assert.Equal(t, "", pet.Name)
 	assert.Equal(t, "", pet.Uuid)
@@ -18,4 +18,7 @@ func TestGenCodeHasCorrectNamesWithInitialisms(t *testing.T) {
 
 	server := &ServerInterfaceWrapper{}
 	assert.NotNil(t, server.GetHttpPet)
+
+	oneOf := OneOf2Things{}
+	assert.Zero(t, oneOf)
 }
