@@ -124,6 +124,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
 	}
 
+	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
+	nameNormalizer = NameNormalizers[nameNormalizerFunction]
+	if nameNormalizer == nil {
+		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
+			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
+	}
+
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
