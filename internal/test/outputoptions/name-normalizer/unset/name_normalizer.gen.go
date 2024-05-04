@@ -31,18 +31,18 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// OneOf2Things defines model for OneOf2Things.
-type OneOf2Things struct {
+// OneOf2things Notice that the `things` is not capitalised
+type OneOf2things struct {
 	union json.RawMessage
 }
 
-// OneOf2Things0 defines model for .
-type OneOf2Things0 struct {
+// OneOf2things0 defines model for .
+type OneOf2things0 struct {
 	Id int `json:"id"`
 }
 
-// OneOf2Things1 defines model for .
-type OneOf2Things1 struct {
+// OneOf2things1 defines model for .
+type OneOf2things1 struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
@@ -55,22 +55,22 @@ type Pet struct {
 	Uuid string `json:"uuid"`
 }
 
-// AsOneOf2Things0 returns the union data inside the OneOf2Things as a OneOf2Things0
-func (t OneOf2Things) AsOneOf2Things0() (OneOf2Things0, error) {
-	var body OneOf2Things0
+// AsOneOf2things0 returns the union data inside the OneOf2things as a OneOf2things0
+func (t OneOf2things) AsOneOf2things0() (OneOf2things0, error) {
+	var body OneOf2things0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things0 overwrites any union data inside the OneOf2Things as the provided OneOf2Things0
-func (t *OneOf2Things) FromOneOf2Things0(v OneOf2Things0) error {
+// FromOneOf2things0 overwrites any union data inside the OneOf2things as the provided OneOf2things0
+func (t *OneOf2things) FromOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things0 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things0
-func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
+// MergeOneOf2things0 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things0
+func (t *OneOf2things) MergeOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -81,22 +81,22 @@ func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
 	return err
 }
 
-// AsOneOf2Things1 returns the union data inside the OneOf2Things as a OneOf2Things1
-func (t OneOf2Things) AsOneOf2Things1() (OneOf2Things1, error) {
-	var body OneOf2Things1
+// AsOneOf2things1 returns the union data inside the OneOf2things as a OneOf2things1
+func (t OneOf2things) AsOneOf2things1() (OneOf2things1, error) {
+	var body OneOf2things1
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things1 overwrites any union data inside the OneOf2Things as the provided OneOf2Things1
-func (t *OneOf2Things) FromOneOf2Things1(v OneOf2Things1) error {
+// FromOneOf2things1 overwrites any union data inside the OneOf2things as the provided OneOf2things1
+func (t *OneOf2things) FromOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things1 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things1
-func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
+// MergeOneOf2things1 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things1
+func (t *OneOf2things) MergeOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -107,12 +107,12 @@ func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
 	return err
 }
 
-func (t OneOf2Things) MarshalJSON() ([]byte, error) {
+func (t OneOf2things) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *OneOf2Things) UnmarshalJSON(b []byte) error {
+func (t *OneOf2things) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -507,14 +507,14 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4RTMY/bPAz9Kwa/bxTsNLdpbtHelA63HTKoFm3zEEsqRQc4BP7vBeUklyYubkkkkXx8",
-	"79E8QRvHFAMGyWBPkNsBR1eO35gj6yFxTMhCWJ7b6FH/PeaWKQnFAHZJrkrMQBd5dAIWKMjTFgzIe8Ll",
-	"ij0yzAZGzNn1/wS6hK+lWZhCD/NsgPH3RIwe7CucG17S97OBXcBdt30ZKPSFb9Q72Nd7HeT1957ZHT55",
-	"2F85xF9v2ArMZh3qqnqayH/KfBVZ+f9EeTQ9uHHFq5cBK41UsatkwCqh1I+NzUJotTqhVBqtP+V7FlWI",
-	"PBLXbApdXOmy+7pTcJIDflyPyHmJf6k39UZJxoTBJQILT+XJQHIyFPWNS9QklNycEsqzn/WxX3xSl5z2",
-	"evZg4TvKD5GkHmo9uxEFOZfxk7ZTzIsMCwUNboUKT2jOW3DzfVxN2WtyTjHkZTDbzWZZiiAYCiGX0oHa",
-	"Qql5y6rxdIP3P2MHFv5rPtauOe9co6yLk387eHQH8jqpMpM8jaPj90VrmV9PRwwVeQxCHSHXCjL/CQAA",
-	"//8ZDQ9P2QMAAA==",
+	"H4sIAAAAAAAC/4RTwW7bMAz9FYHbUYiz9Obzhq2XZYfdigDVLNpmEUsaRQcoAv/7QDlJs8RFL4kkko/v",
+	"PZpHaOKQYsAgGeoj5KbHwZXjN+bIekgcE7IQlucmetR/j7lhSkIxQD0nmxKz0EYenEANFORhAxbkNeF8",
+	"xQ4ZJgsD5uy6d4HO4UtpFqbQwTRZYPw7EqOH+glODc/pu8nCNuC23UhPocv38D+jUINGeidGejTPc+Kz",
+	"oWxCFNO4ROL2lNGDhahYUD/dekBef29V3XAjD7sL//jnBRuByS5DXRwbR/Ifql5EVu2/UO4HFtyw4PPv",
+	"Ho1GTGyLEQlldd/YzoQWqxOK0ejqQ74nUYXIPXHNptDGhS7br1sFJ9nj2/WAnOf4l9V6tVaSMWFwiaCG",
+	"h/JkITnpi/rKJaoSSq6OCeXRT/rYzT6pS057PXqo4TvKD5GkHmo9uwEFOZfxk7ZTzLOMGgoaXAsVHtGe",
+	"Nujq+7iYstPknGLI82A26/W8UEEwFEIupT01hVL1klXj8QrvM2MLNXyq3la2Ou1rpayLk/87eHB78jqp",
+	"MpM8DoPj11lrmV9HBwyGPAahlpBXCjL9CwAA//9ClN1MFQQAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

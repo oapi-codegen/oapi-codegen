@@ -47,7 +47,8 @@ components:
         message:
           type: string
           description: Error message
-    OneOf2Things:
+    OneOf2things:
+      description: "Notice that the `things` is not capitalised"
       oneOf:
         - type: object
           required:

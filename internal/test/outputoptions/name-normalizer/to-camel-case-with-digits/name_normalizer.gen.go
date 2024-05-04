@@ -31,7 +31,7 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// OneOf2Things defines model for OneOf2Things.
+// OneOf2Things Notice that the `things` is not capitalised
 type OneOf2Things struct {
 	union json.RawMessage
 }
@@ -507,14 +507,14 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4RTMY/bPAz9Kwa/bxTsNLdpbtHelA63HTKoFm3zEEsqRQc4BP7vBeUklyYubkkkkXx8",
-	"79E8QRvHFAMGyWBPkNsBR1eO35gj6yFxTMhCWJ7b6FH/PeaWKQnFAHZJrkrMQBd5dAIWKMjTFgzIe8Ll",
-	"ij0yzAZGzNn1/wS6hK+lWZhCD/NsgPH3RIwe7CucG17S97OBXcBdt30ZKPSFb9Q72Nd7HeT1957ZHT55",
-	"2F85xF9v2ArMZh3qqnqayH/KfBVZ+f9EeTQ9uHHFq5cBK41UsatkwCqh1I+NzUJotTqhVBqtP+V7FlWI",
-	"PBLXbApdXOmy+7pTcJIDflyPyHmJf6k39UZJxoTBJQILT+XJQHIyFPWNS9QklNycEsqzn/WxX3xSl5z2",
-	"evZg4TvKD5GkHmo9uxEFOZfxk7ZTzIsMCwUNboUKT2jOW3DzfVxN2WtyTjHkZTDbzWZZiiAYCiGX0oHa",
-	"Qql5y6rxdIP3P2MHFv5rPtauOe9co6yLk387eHQH8jqpMpM8jaPj90VrmV9PRwwVeQxCHSHXCjL/CQAA",
-	"//8ZDQ9P2QMAAA==",
+	"H4sIAAAAAAAC/4RTwW7bMAz9FYHbUYiz9Obzhq2XZYfdigDVLNpmEUsaRQcoAv/7QDlJs8RFL4kkko/v",
+	"PZpHaOKQYsAgGeoj5KbHwZXjN+bIekgcE7IQlucmetR/j7lhSkIxQD0nmxKz0EYenEANFORhAxbkNeF8",
+	"xQ4ZJgsD5uy6d4HO4UtpFqbQwTRZYPw7EqOH+glODc/pu8nCNuC23UhPocv38D+jUINGeidGejTPc+Kz",
+	"oWxCFNO4ROL2lNGDhahYUD/dekBef29V3XAjD7sL//jnBRuByS5DXRwbR/Ifql5EVu2/UO4HFtyw4PPv",
+	"Ho1GTGyLEQlldd/YzoQWqxOK0ejqQ74nUYXIPXHNptDGhS7br1sFJ9nj2/WAnOf4l9V6tVaSMWFwiaCG",
+	"h/JkITnpi/rKJaoSSq6OCeXRT/rYzT6pS057PXqo4TvKD5GkHmo9uwEFOZfxk7ZTzLOMGgoaXAsVHtGe",
+	"Nujq+7iYstPknGLI82A26/W8UEEwFEIupT01hVL1klXj8QrvM2MLNXyq3la2Ou1rpayLk/87eHB78jqp",
+	"MpM8DoPj11lrmV9HBwyGPAahlpBXCjL9CwAA//9ClN1MFQQAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
