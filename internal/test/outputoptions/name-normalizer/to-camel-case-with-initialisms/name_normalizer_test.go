@@ -1,4 +1,4 @@
-package tocamelcase
+package tocamelcasewithinitialisms
 
 import (
 	"testing"
