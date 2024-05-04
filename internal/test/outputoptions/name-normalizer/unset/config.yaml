@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../../../../../configuration-schema.json
-package: name_normalizer
+package: unset
 generate:
   gorilla-server: true
   client: true
