@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
 )
 
@@ -26,8 +26,8 @@ type Pet struct {
 	// Name The name of the pet.
 	Name string `json:"name"`
 
-	// UUID The pet uuid.
-	UUID string `json:"uuid"`
+	// Uuid The pet uuid.
+	Uuid string `json:"uuid"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -103,12 +103,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetHTTPPet request
-	GetHTTPPet(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHttpPet request
+	GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetHTTPPet(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHTTPPetRequest(c.Server, petID)
+func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHttpPetRequest(c.Server, petId)
 	if err != nil {
 		return nil, err
 	}
@@ -119,13 +119,13 @@ func (c *Client) GetHTTPPet(ctx context.Context, petID string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-// NewGetHTTPPetRequest generates requests for GetHTTPPet
-func NewGetHTTPPetRequest(server string, petID string) (*http.Request, error) {
+// NewGetHttpPetRequest generates requests for GetHttpPet
+func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petID)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petId)
 	if err != nil {
 		return nil, err
 	}
@@ -196,18 +196,18 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetHTTPPetWithResponse request
-	GetHTTPPetWithResponse(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*GetHTTPPetResponse, error)
+	// GetHttpPetWithResponse request
+	GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error)
 }
 
-type GetHTTPPetResponse struct {
+type GetHttpPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Pet
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHTTPPetResponse) Status() string {
+func (r GetHttpPetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -215,31 +215,31 @@ func (r GetHTTPPetResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHTTPPetResponse) StatusCode() int {
+func (r GetHttpPetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetHTTPPetWithResponse request returning *GetHTTPPetResponse
-func (c *ClientWithResponses) GetHTTPPetWithResponse(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*GetHTTPPetResponse, error) {
-	rsp, err := c.GetHTTPPet(ctx, petID, reqEditors...)
+// GetHttpPetWithResponse request returning *GetHttpPetResponse
+func (c *ClientWithResponses) GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error) {
+	rsp, err := c.GetHttpPet(ctx, petId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHTTPPetResponse(rsp)
+	return ParseGetHttpPetResponse(rsp)
 }
 
-// ParseGetHTTPPetResponse parses an HTTP response from a GetHTTPPetWithResponse call
-func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
+// ParseGetHttpPetResponse parses an HTTP response from a GetHttpPetWithResponse call
+func ParseGetHttpPetResponse(rsp *http.Response) (*GetHttpPetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHTTPPetResponse{
+	response := &GetHttpPetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -261,72 +261,184 @@ func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
 type ServerInterface interface {
 	// Get pet given identifier.
 	// (GET /api/pets/{petId})
-	GetHTTPPet(ctx echo.Context, petID string) error
+	GetHttpPet(w http.ResponseWriter, r *http.Request, petId string)
 }
 
-// ServerInterfaceWrapper converts echo contexts to parameters.
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct{}
+
+// Get pet given identifier.
+// (GET /api/pets/{petId})
+func (_ Unimplemented) GetHttpPet(w http.ResponseWriter, r *http.Request, petId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// GetHTTPPet converts echo context to params.
-func (w *ServerInterfaceWrapper) GetHTTPPet(ctx echo.Context) error {
+type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetHttpPet operation middleware
+func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
 	var err error
+
 	// ------------- Path parameter "petId" -------------
-	var petID string
+	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", ctx.Param("petId"), &petID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", chi.URLParam(r, "petId"), &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
+		return
 	}
 
-	// Invoke the callback with all the unmarshaled arguments
-	err = w.Handler.GetHTTPPet(ctx, petID)
-	return err
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetHttpPet(w, r, petId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
 }
 
-// This is a simple interface which specifies echo.Route addition functions which
-// are present on both echo.Echo and echo.Group, since we want to allow using
-// either of them for path registration
-type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+type UnescapedCookieParamError struct {
+	ParamName string
+	Err       error
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+func (e *UnescapedCookieParamError) Error() string {
+	return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+func (e *UnescapedCookieParamError) Unwrap() error {
+	return e.Err
+}
 
+type UnmarshalingParamError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *UnmarshalingParamError) Unwrap() error {
+	return e.Err
+}
+
+type RequiredParamError struct {
+	ParamName string
+}
+
+func (e *RequiredParamError) Error() string {
+	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+}
+
+type RequiredHeaderError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *RequiredHeaderError) Error() string {
+	return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
+}
+
+func (e *RequiredHeaderError) Unwrap() error {
+	return e.Err
+}
+
+type InvalidParamFormatError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *InvalidParamFormatError) Error() string {
+	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *InvalidParamFormatError) Unwrap() error {
+	return e.Err
+}
+
+type TooManyValuesForParamError struct {
+	ParamName string
+	Count     int
+}
+
+func (e *TooManyValuesForParamError) Error() string {
+	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
+}
+
+// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{})
+}
+
+type ChiServerOptions struct {
+	BaseURL          string
+	BaseRouter       chi.Router
+	Middlewares      []MiddlewareFunc
+	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseRouter: r,
+	})
+}
+
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseURL:    baseURL,
+		BaseRouter: r,
+	})
+}
+
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
+	r := options.BaseRouter
+
+	if r == nil {
+		r = chi.NewRouter()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	router.GET(baseURL+"/api/pets/:petId", wrapper.GetHTTPPet)
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/api/pets/{petId}", wrapper.GetHttpPet)
+	})
 
+	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/2xSPXPbMAz9Kzy0o85yko1rh9ZbBm+5DCz1bCG1SJSEfJfT6b/3QKVp2nqCDgIe3gcX",
-	"inmSnJC0kl+oxhFTaJ+PUCtSsqAoozVTmGB1QI2FRTkn8nQc4eyPyyenI5xAd9SRvgrIU9XC6UxrR/PM",
-	"w+1tgTr7e2Nt7ajg58wFA/mnDaPbiDy/D+fvL4hKq01zOuX/r3wZEX9Ut8lxqDEIp7MxllDCBEWpdpz1",
-	"YoCHWme4h7t7p6hKHV1R6oZ0t9vv9iYnC1IQJk8PrdWRBB2bT30Q7gVa+0Wgh2G15nlz1AgEY3UYyNNX",
-	"6Lfj8dHctv13Kv5pIbZzhvlbsKeGRh8t0TKjewvO4P+179mGq+RUtwjv93srMSdFaoSCyIVjo9S/VNO4",
-	"fMD7XHAiT5/6Py+lf3smvbFunv/t9TVceLBMW3p1nqZQXjetLekzX5EcD0jKJ0bZGcj6KwAA//+jSqqR",
-	"jAIAAA==",
+	"H4sIAAAAAAAC/2xSPW/cMAz9KwLb0Thfkk1rh/a2Dt2CDKr8zmZ6lliJPiAw/N8LymmatjfRoMnH96GV",
+	"Yp4lJySt5FeqccIc2udXqBUpWVCU0ZopzLA6oMbCopwTefo2wdkfl89OJziBHqgjfRGQp6qF00hbR8vC",
+	"w+1tgTr7e2Nt66jg58IFA/nHHaPbiTy9Defvz4hKm01zOuf/r3yaEH9Ut8txqDEIp9EYSyhhhqJUO856",
+	"McBTrQvcw929U1Sljq4odUe6OxwPR5OTBSkIk6eH1upIgk7Npz4I9wKt/SrQ07BZc9wdNQLBWJ0G8vQZ",
+	"+kVVzG3bf6PiH1diO2eYvwV7amj03hItC7rX4Az+X/uebLhKTnWP8P54tBJzUqRGKIhcODZK/XM1jes7",
+	"vI8FZ/L0of/zUvrXZ9Ib6+b5315fw4UHy7SlV5d5DuVl19qSHvmK5HhAUj4zysFAtl8BAAD//zmqwtaM",
+	"AgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

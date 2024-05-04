@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: name_normalizer
+generate:
+  chi-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output-options:
+  name-normalizer: ToCamelCase
+output: name_normalizer.gen.go

@@ -9,13 +9,13 @@ import (
 func TestGenCodeHasCorrectNamesWithInitialisms(t *testing.T) {
 	pet := &Pet{}
 	assert.Equal(t, "", pet.Name)
-	assert.Equal(t, "", pet.UUID)
+	assert.Equal(t, "", pet.Uuid)
 
 	uri := "https://my-api.com/some-base-url/v1/"
 	client, err := NewClient(uri)
 	assert.Nil(t, err)
-	assert.NotNil(t, client.GetHTTPPet)
+	assert.NotNil(t, client.GetHttpPet)
 
 	server := &ServerInterfaceWrapper{}
-	assert.NotNil(t, server.GetHTTPPet)
+	assert.NotNil(t, server.GetHttpPet)
 }
