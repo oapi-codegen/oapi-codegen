@@ -68,6 +68,9 @@ When raising a bug report, or asking a question about functionality, it's super 
 
 ### Before you raise a PR
 
+> [!NOTE]
+> Please raise PRs from a branch that isn't the `master` or `main` branch on your repo. This generally means that as maintainers, we can't push changes to the branch directly.
+
 Before you send the PR, please run the following commands locally:
 
 ```sh
