@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: onlymodels
+output: only-models.gen.go
+generate:
+  models: true
+  additional-templates:
+    - "user-defined-template-1"
+    - "user-defined-template-2"
+    - "user-defined-template-3"
+    - "user-defined-template-3.tmpl"
+    - "user-defined-template-4.tmpl"
+    - "user-defined-template-5"
+    - "inputs-example-template"
+output-options:
+  # NOTE that this is only required for the `Unreferenced` type
+  skip-prune: true
+  user-templates:
+    #Templates defined inline can be called via the name in define
+    user-defined-template-1: |
+      {{define "user-defined-template-1"}}
+        //created by user-defined-template-1
+      {{end}}
+    #Templates defined inline can also be called via the key in the yaml.
+    user-defined-template-2: |
+      //created by user-defined-template-2
+
+    #Templates defined that have a key matching/overriding a filename can be called via the name in define, or via the filename.
+    #Be warned, if the key matches the define name, there will be an error attempting to parse the templates.
+    user-defined-template-3.tmpl: |
+      {{define "user-defined-template-3"}}
+        //created by user-defined-template-3 inside define
+      {{end}}
+        //created by user-defined-template-3 outside define
+
+    #The same rules as above apply to templates imported through files or via http, instead of inline. The filename itself will be ignored, and instead the yaml key matched
+    user-defined-template-4.tmpl: ./user-defined-template-file-4.tmpl
+    user-defined-template-5: ./user-defined-template-file-5.tmpl
+
+    #This template shows how to use the provided data object passed to user-defined templates.
+    inputs-example-template: ./inputs-example-template.tmpl
