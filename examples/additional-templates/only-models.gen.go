@@ -29,22 +29,27 @@ type Unreferenced struct {
 //:::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\::::::::.\
 //'      `--'      `--'      `--'      `--'      `--'      `--'      `--'      `--'      `--'      `--'      `--'      `
 
-//created by inputs-example-template.tmpl
+//User templates are passed a struct that has two fields, spec and ops, described below.
 
-//User templates are passed an object that has two keys, ops and spec, described below.
+///////////
+// spec //
+/////////
+//`spec` is essentially the full parsing of the openapi file. https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3#T
+//This can be used to generate theoretically anything that is desired.
+//Using this data however can be somewhat complicated as it is missing certain pre-processing steps otherwise handled by oapi-codegen.
 
+//This example pulls in data from the Info section of the api and creates a simple comment
+/*
+This file was generated from the Generate models openapi file.
+This is a simple api file for showing off some of the cool things you can do with user-constructed api generation templates.
+*/
+
+//////////
+// ops //
+////////
 //`ops` is an array of Operation Definitions. https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#OperationDefinition
 //An operation is created for each `paths.{endpoint}.{method}`. so that the template does not have to parse the endpoint and path parameters individually.
 
 //This example will output a simple comment for each of the operations defined in api.ymal.
 //GetClient can be quired by sending a GET request to /client
 //UpdateClient can be quired by sending a PUT request to /client
-
-//`spec` is essentially the full parsing of the openapi file. https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3#T
-
-//This example pulls in data from the Info section of the api and creates a simple comment
-
-/*
-This file was generated from the Generate models openapi file.
-This is a simple api file for showing off some of the cool things you can do with user-constructed api generation templates.
-*/
