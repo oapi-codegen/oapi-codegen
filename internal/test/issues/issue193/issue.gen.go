@@ -104,15 +104,16 @@ func (a Person) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	var joinedError error
+	var errs []error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
+			errs = append(errs, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
-	if joinedError != nil {
-		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	err = errors.Join(errs...)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling %w", err)
 	}
 
 	return json.Marshal(object)
