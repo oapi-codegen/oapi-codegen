@@ -350,6 +350,24 @@ func TestOneOfWithAdditional(t *testing.T) {
 	assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
 }
 
+func TestAdditionalPropertiesError(t *testing.T) {
+	var c chan int
+	var f func()
+
+	singular := BodyWithAddPropsJSONBody{
+		AdditionalProperties: map[string]interface{}{"unsupportedType1": f},
+	}
+	_, err := singular.MarshalJSON()
+	assert.Equal(t, `error marshaling 'unsupportedType1': json: unsupported type: func()`, err.Error())
+
+	multiple := BodyWithAddPropsJSONBody{
+		AdditionalProperties: map[string]interface{}{"unsupportedType1": c, "foo": 1, "unsupportedType2": f},
+	}
+	_, err = multiple.MarshalJSON()
+	assert.Equal(t, `error marshaling 'unsupportedType1': json: unsupported type: chan int
+'unsupportedType2': json: unsupported type: func()`, err.Error())
+}
+
 func TestMarshalWhenNoUnionValueSet(t *testing.T) {
 	const expected = `{}`
 

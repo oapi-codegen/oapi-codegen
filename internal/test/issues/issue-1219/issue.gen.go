@@ -5,6 +5,7 @@ package issue1219
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -291,12 +292,17 @@ func (a MergeDefaultWithAny) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -404,12 +410,17 @@ func (a MergeDefaultWithString) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -517,12 +528,17 @@ func (a MergeWithAnyDefault) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -630,12 +646,17 @@ func (a MergeWithAnyWithAny) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -743,12 +764,17 @@ func (a MergeWithAnyWithString) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -856,12 +882,17 @@ func (a MergeWithStringDefault) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -969,12 +1000,17 @@ func (a MergeWithStringWithAny) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -1052,12 +1088,17 @@ func (a WithAnyAdditional1) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -1135,12 +1176,17 @@ func (a WithAnyAdditional2) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -1218,12 +1264,17 @@ func (a WithStringAdditional1) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -1301,11 +1352,16 @@ func (a WithStringAdditional2) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }

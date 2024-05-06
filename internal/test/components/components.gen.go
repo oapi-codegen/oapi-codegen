@@ -495,12 +495,17 @@ func (a BodyWithAddPropsJSONBody) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'name': %w", err)
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -589,12 +594,17 @@ func (a AdditionalPropertiesObject1) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -655,12 +665,17 @@ func (a AdditionalPropertiesObject3) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'name': %w", err)
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -734,12 +749,17 @@ func (a AdditionalPropertiesObject4) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'name': %w", err)
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
@@ -800,12 +820,17 @@ func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 		return nil, fmt.Errorf("error marshaling 'name': %w", err)
 	}
 
+	var joinedError error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			joinedError = errors.Join(joinedError, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	if joinedError != nil {
+		return nil, fmt.Errorf("error marshaling %w", joinedError)
+	}
+
 	return json.Marshal(object)
 }
 
