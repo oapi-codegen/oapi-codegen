@@ -3,7 +3,6 @@ module github.com/deepmap/oapi-codegen/v2
 go 1.20
 
 require (
-	github.com/deepmap/oapi-codegen/v2 v2.1.0
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/text v0.15.0
