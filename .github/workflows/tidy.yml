@@ -14,10 +14,10 @@ jobs:
         - "1.22"
     steps:
       - name: Check out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.version }}
 
@@ -25,4 +25,7 @@ jobs:
         run: go install gitlab.com/jamietanna/tidied@latest
 
       - name: Check for no untracked files
-        run: git ls-files go.mod '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $(dirname {}) && tidied -verbose'
+        run: make tidy-ci
+        env:
+          # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
+          GOTOOLCHAIN: local

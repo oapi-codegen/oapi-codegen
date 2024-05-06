@@ -124,6 +124,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
 	}
 
+	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
+	nameNormalizer = NameNormalizers[nameNormalizerFunction]
+	if nameNormalizer == nil {
+		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
+			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
+	}
+
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
@@ -221,6 +228,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var gorillaServerOut string
 	if opts.Generate.GorillaServer {
 		gorillaServerOut, err = GenerateGorillaServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var stdHTTPServerOut string
+	if opts.Generate.StdHTTPServer {
+		stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -348,6 +363,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.GorillaServer {
 		_, err = w.WriteString(gorillaServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.StdHTTPServer {
+		_, err = w.WriteString(stdHTTPServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}

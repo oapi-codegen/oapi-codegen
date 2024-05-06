@@ -1,0 +1,37 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-json-ignore
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        complexField:
+          type: object
+          properties:
+            name:
+              type: string
+            accountName:
+              type: string
+          # ...
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        complexField:
+          type: object
+          properties:
+            name:
+              type: string
+            accountName:
+              type: string
+          # ...
+          x-go-json-ignore: true

@@ -99,7 +99,7 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "iris".`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "iris", "std-http".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagIncludeOperationIDs, "include-operation-ids", "", "Only include operations with the given operation-ids. Comma-separated list of operation-ids.")
@@ -281,6 +281,10 @@ func main() {
 	swagger, err := util.LoadSwaggerWithCircularReferenceCount(flag.Arg(0), opts.Compatibility.CircularReferenceLimit)
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+	}
+
+	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
+		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/deepmap/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
 	}
 
 	if len(noVCSVersionOverride) > 0 {
@@ -486,6 +490,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":
 			opts.GorillaServer = true
+		case "std-http", "std-http-server":
+			opts.StdHTTPServer = true
 		case "strict-server":
 			opts.Strict = true
 		case "client":

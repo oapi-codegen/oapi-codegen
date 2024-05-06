@@ -14,12 +14,15 @@ jobs:
         - "1.22"
     steps:
       - name: Check out source code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.version }}
 
       - name: Run `make lint-ci`
         run: make lint-ci
+        env:
+          # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
+          GOTOOLCHAIN: local

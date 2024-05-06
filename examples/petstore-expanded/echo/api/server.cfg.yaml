@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
 package: api
 output: petstore-server.gen.go
 additional-imports:
