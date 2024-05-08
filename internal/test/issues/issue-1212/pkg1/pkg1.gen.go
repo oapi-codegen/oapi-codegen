@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -301,7 +302,7 @@ type Test200MultipartResponse externalRef0.TestMultipartResponse
 
 func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
-	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
 	defer writer.Close()

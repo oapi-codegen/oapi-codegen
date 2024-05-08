@@ -115,7 +115,7 @@ func (pd *ParameterDefinition) Explode() bool {
 }
 
 func (pd ParameterDefinition) GoVariableName() string {
-	name := LowercaseFirstCharacter(pd.GoName())
+	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
 		name = "p" + UppercaseFirstCharacter(name)
 	}
@@ -127,8 +127,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.Extensions[extGoName]); err == nil {
+	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
 			goName = extGoFieldName
 		}
 	}
@@ -307,21 +307,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					// HAL+JSON:
 					case StringInArray(contentTypeName, contentTypesHalJSON):
-						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 					case "application/json" == contentTypeName:
 						// if it's the standard application/json
-						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
 					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
-						baseTypeName := fmt.Sprintf("%s%s", ToCamelCase(contentTypeName), ToCamelCase(responseName))
+						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
 					case StringInArray(contentTypeName, contentTypesXML):
-						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
 					}
@@ -569,7 +569,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = toCamelCaseFunc(op.OperationID)
+				op.OperationID = nameNormalizer(op.OperationID)
 			}
 			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
@@ -587,6 +587,8 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				return nil, err
 			}
 
+			ensureExternalRefsInParameterDefinitions(&allParams, pathItem.Ref)
+
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
 			// names match, as downstream code depends on that.
@@ -601,17 +603,21 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
+			ensureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
+
 			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses.Map())
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
+
+			ensureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
 
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  toCamelCaseFunc(op.OperationID),
+				OperationId:  nameNormalizer(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -666,7 +672,7 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 		}
 	}
 
-	return toCamelCaseFunc(operationId), nil
+	return nameNormalizer(operationId), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
@@ -817,6 +823,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				NameTag:     tag,
 				Schema:      contentSchema,
 			}
+
 			responseContentDefinitions = append(responseContentDefinitions, rcd)
 		}
 
@@ -996,11 +1003,17 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
 }
 
+// GenerateStdHTTPServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
+}
+
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 
 	var templates []string
 
-	if opts.Generate.ChiServer || opts.Generate.GorillaServer {
+	if opts.Generate.ChiServer || opts.Generate.GorillaServer || opts.Generate.StdHTTPServer {
 		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
 	}
 	if opts.Generate.EchoServer {

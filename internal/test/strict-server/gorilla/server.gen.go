@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -31,6 +32,9 @@ type ServerInterface interface {
 
 	// (POST /multipart)
 	MultipartExample(w http.ResponseWriter, r *http.Request)
+
+	// (POST /multipart-related)
+	MultipartRelatedExample(w http.ResponseWriter, r *http.Request)
 
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request)
@@ -90,6 +94,21 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartExample(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// MultipartRelatedExample operation middleware
+func (siw *ServerInterfaceWrapper) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MultipartRelatedExample(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -411,6 +430,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods("POST")
 
+	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods("POST")
+
 	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods("POST")
 
 	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods("GET")
@@ -509,6 +530,41 @@ type MultipartExampledefaultResponse struct {
 }
 
 func (response MultipartExampledefaultResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
+type MultipartRelatedExampleRequestObject struct {
+	Body *multipart.Reader
+}
+
+type MultipartRelatedExampleResponseObject interface {
+	VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error
+}
+
+type MultipartRelatedExample200MultipartResponse func(writer *multipart.Writer) error
+
+func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
+
+type MultipartRelatedExample400Response = BadrequestResponse
+
+func (response MultipartRelatedExample400Response) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type MultipartRelatedExampledefaultResponse struct {
+	StatusCode int
+}
+
+func (response MultipartRelatedExampledefaultResponse) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
 	w.WriteHeader(response.StatusCode)
 	return nil
 }
@@ -936,6 +992,9 @@ type StrictServerInterface interface {
 	// (POST /multipart)
 	MultipartExample(ctx context.Context, request MultipartExampleRequestObject) (MultipartExampleResponseObject, error)
 
+	// (POST /multipart-related)
+	MultipartRelatedExample(ctx context.Context, request MultipartRelatedExampleRequestObject) (MultipartRelatedExampleResponseObject, error)
+
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
@@ -964,8 +1023,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHttpHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHttpMiddlewareFunc
+type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -1048,6 +1107,40 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MultipartRelatedExample operation middleware
+func (sh *strictHandler) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
+	var request MultipartRelatedExampleRequestObject
+
+	if _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, err)
+		return
+	} else if boundary := params["boundary"]; boundary == "" {
+		sh.options.RequestErrorHandlerFunc(w, r, http.ErrMissingBoundary)
+		return
+	} else {
+		request.Body = multipart.NewReader(r.Body, boundary)
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MultipartRelatedExample(ctx, request.(MultipartRelatedExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MultipartRelatedExample")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MultipartRelatedExampleResponseObject); ok {
+		if err := validResponse.VisitMultipartRelatedExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -1366,23 +1459,24 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"e8okwiqPwr8BAAD//4h9qqfAGAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

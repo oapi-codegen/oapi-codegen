@@ -12,12 +12,18 @@ type AdditionalImport struct {
 
 // Configuration defines code generation customizations
 type Configuration struct {
-	PackageName       string               `yaml:"package"` // PackageName to generate
-	Generate          GenerateOptions      `yaml:"generate,omitempty"`
-	Compatibility     CompatibilityOptions `yaml:"compatibility,omitempty"`
-	OutputOptions     OutputOptions        `yaml:"output-options,omitempty"`
-	ImportMapping     map[string]string    `yaml:"import-mapping,omitempty"` // ImportMapping specifies the golang package path for each external reference
-	AdditionalImports []AdditionalImport   `yaml:"additional-imports,omitempty"`
+	// PackageName to generate the code under
+	PackageName string `yaml:"package"`
+	// Generate specifies which supported output formats to generate
+	Generate GenerateOptions `yaml:"generate,omitempty"`
+	// CompatibilityOptions specifies backward compatibility settings for the code generator
+	Compatibility CompatibilityOptions `yaml:"compatibility,omitempty"`
+	// OutputOptions are used to modify the output code in some way.
+	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
+	// ImportMapping specifies the golang package path for each external reference
+	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
+	// AdditionalImports defines any additional Go imports to add to the generated code
+	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
 	// NoVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
 	// See documentation for how to use it in examples/no-vcs-version-override/README.md
 	NoVCSVersionOverride *string `yaml:"-"`
@@ -25,16 +31,28 @@ type Configuration struct {
 
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
-	IrisServer    bool `yaml:"iris-server,omitempty"`    // IrisServer specifies whether to generate iris server boilerplate
-	ChiServer     bool `yaml:"chi-server,omitempty"`     // ChiServer specifies whether to generate chi server boilerplate
-	FiberServer   bool `yaml:"fiber-server,omitempty"`   // FiberServer specifies whether to generate fiber server boilerplate
-	EchoServer    bool `yaml:"echo-server,omitempty"`    // EchoServer specifies whether to generate echo server boilerplate
-	GinServer     bool `yaml:"gin-server,omitempty"`     // GinServer specifies whether to generate gin server boilerplate
-	GorillaServer bool `yaml:"gorilla-server,omitempty"` // GorillaServer specifies whether to generate Gorilla server boilerplate
-	Strict        bool `yaml:"strict-server,omitempty"`  // Strict specifies whether to generate strict server wrapper
-	Client        bool `yaml:"client,omitempty"`         // Client specifies whether to generate client boilerplate
-	Models        bool `yaml:"models,omitempty"`         // Models specifies whether to generate type definitions
-	EmbeddedSpec  bool `yaml:"embedded-spec,omitempty"`  // Whether to embed the swagger spec in the generated code
+	// IrisServer specifies whether to generate iris server boilerplate
+	IrisServer bool `yaml:"iris-server,omitempty"`
+	// ChiServer specifies whether to generate chi server boilerplate
+	ChiServer bool `yaml:"chi-server,omitempty"`
+	// FiberServer specifies whether to generate fiber server boilerplate
+	FiberServer bool `yaml:"fiber-server,omitempty"`
+	// EchoServer specifies whether to generate echo server boilerplate
+	EchoServer bool `yaml:"echo-server,omitempty"`
+	// GinServer specifies whether to generate gin server boilerplate
+	GinServer bool `yaml:"gin-server,omitempty"`
+	// GorillaServer specifies whether to generate Gorilla server boilerplate
+	GorillaServer bool `yaml:"gorilla-server,omitempty"`
+	// StdHTTPServer specifies whether to generate stdlib http server boilerplate
+	StdHTTPServer bool `yaml:"std-http-server,omitempty"`
+	// Strict specifies whether to generate strict server wrapper
+	Strict bool `yaml:"strict-server,omitempty"`
+	// Client specifies whether to generate client boilerplate
+	Client bool `yaml:"client,omitempty"`
+	// Models specifies whether to generate type definitions
+	Models bool `yaml:"models,omitempty"`
+	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
+	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
 }
 
 // CompatibilityOptions specifies backward compatibility settings for the
@@ -60,7 +78,7 @@ type CompatibilityOptions struct {
 	// Please see https://github.com/deepmap/oapi-codegen/issues/549
 	OldAliasing bool `yaml:"old-aliasing,omitempty"`
 	// When an object contains no members, and only an additionalProperties specification,
-	// it is flattened to a map. Set
+	// it is flattened to a map
 	DisableFlattenAdditionalProperties bool `yaml:"disable-flatten-additional-properties,omitempty"`
 	// When an object property is both required and readOnly the go model is generated
 	// as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer.
@@ -88,16 +106,39 @@ type CompatibilityOptions struct {
 
 // OutputOptions are used to modify the output code in some way.
 type OutputOptions struct {
-	SkipFmt       bool              `yaml:"skip-fmt,omitempty"`       // Whether to skip go imports on the generated code
-	SkipPrune     bool              `yaml:"skip-prune,omitempty"`     // Whether to skip pruning unused components on the generated code
-	IncludeTags   []string          `yaml:"include-tags,omitempty"`   // Only include operations that have one of these tags. Ignored when empty.
-	ExcludeTags   []string          `yaml:"exclude-tags,omitempty"`   // Exclude operations that have one of these tags. Ignored when empty.
-	UserTemplates map[string]string `yaml:"user-templates,omitempty"` // Override built-in templates from user-provided files
+	// Whether to skip go imports on the generated code
+	SkipFmt bool `yaml:"skip-fmt,omitempty"`
+	// Whether to skip pruning unused components on the generated code
+	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// Only include operations that have one of these tags. Ignored when empty.
+	IncludeTags []string `yaml:"include-tags,omitempty"`
+	// Exclude operations that have one of these tags. Ignored when empty.
+	ExcludeTags []string `yaml:"exclude-tags,omitempty"`
+	// Only include operations that have one of these operation-ids. Ignored when empty.
+	IncludeOperationIDs []string `yaml:"include-operation-ids,omitempty"`
+	// Exclude operations that have one of these operation-ids. Ignored when empty.
+	ExcludeOperationIDs []string `yaml:"exclude-operation-ids,omitempty"`
+	// Override built-in templates from user-provided files
+	UserTemplates map[string]string `yaml:"user-templates,omitempty"`
 
-	ExcludeSchemas      []string `yaml:"exclude-schemas,omitempty"`      // Exclude from generation schemas with given names. Ignored when empty.
-	ResponseTypeSuffix  string   `yaml:"response-type-suffix,omitempty"` // The suffix used for responses types
-	ClientTypeName      string   `yaml:"client-type-name,omitempty"`     // Override the default generated client type with the value
-	InitialismOverrides bool     `yaml:"initialism-overrides,omitempty"` // Whether to use the initialism overrides
+	// Exclude from generation schemas with given names. Ignored when empty.
+	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
+	// The suffix used for responses types
+	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
+	// Override the default generated client type with the value
+	ClientTypeName string `yaml:"client-type-name,omitempty"`
+	// Whether to use the initialism overrides
+	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
+	// Whether to generate nullable type for nullable fields
+	NullableType bool `yaml:"nullable-type,omitempty"`
+
+	// DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases
+	// Currently supports:
+	//   "array"
+	DisableTypeAliasesForType []string `yaml:"disable-type-aliases-for-type"`
+
+	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
+	NameNormalizer string `yaml:"name-normalizer,omitempty"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
@@ -130,6 +171,12 @@ func (o Configuration) Validate() error {
 		nServers++
 	}
 	if o.Generate.EchoServer {
+		nServers++
+	}
+	if o.Generate.GorillaServer {
+		nServers++
+	}
+	if o.Generate.StdHTTPServer {
 		nServers++
 	}
 	if o.Generate.GinServer {
