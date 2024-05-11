@@ -361,6 +361,23 @@ func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
 	return false
 }
 
+func (o OperationDefinition) NeedsContentTypeCheck() bool {
+	if len(o.Bodies) > 1 {
+		return true
+	}
+	// if we don't want to handle request bodies being required or not, we skip the rest of this function.
+	if !globalState.options.OutputOptions.RequiredRequestBody {
+		return false
+	}
+	for _, body := range o.Bodies {
+		if !body.Required {
+			return true
+		}
+	}
+
+	return false
+}
+
 // RequestBodyDefinition describes a request body
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
@@ -408,6 +425,17 @@ func (r RequestBodyDefinition) Suffix() string {
 		return ""
 	}
 	return "With" + r.NameTag + "Body"
+}
+
+// IsRequired returns if a request body is required
+// if we don't want to handle request bodies being required or not, we mark them all as not required
+// otherwise it is the value set in the open api specification
+func (r RequestBodyDefinition) IsRequired() bool {
+	if !globalState.options.OutputOptions.RequiredRequestBody {
+		return false
+	}
+
+	return r.Required
 }
 
 // IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
