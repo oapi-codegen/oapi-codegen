@@ -166,6 +166,41 @@ func TestGoTypeImport(t *testing.T) {
 	}
 }
 
+func TestGoAllofTypeOverride(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
+	}
+	spec := "test_specs/x-go-type-pet-allof.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	for _, expected := range []string{
+		"type Cat = cat.Cat",
+		"type Dog = dog.Dog",
+		"type Pet = pet.Pet",
+		"github.com/somepetproject/pkg/cat",
+		"github.com/somepetproject/pkg/dog",
+		"github.com/somepetproject/pkg/pet",
+	} {
+		assert.Contains(t, code, expected)
+	}
+}
+
 func TestRemoteExternalReference(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test that interacts with the network")

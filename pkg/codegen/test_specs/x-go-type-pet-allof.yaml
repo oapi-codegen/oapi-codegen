@@ -1,0 +1,56 @@
+paths:
+  /pets:
+    patch:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Cat'
+                - $ref: '#/components/schemas/Dog'
+              discriminator:
+                propertyName: pet_type
+      responses:
+        '200':
+          description: Updated
+components:
+  schemas:
+    Pet:
+      x-go-type: pet.Pet
+      x-go-type-import:
+        path: github.com/somepetproject/pkg/pet
+      type: object
+      required:
+        - pet_type
+      properties:
+        pet_type:
+          type: string
+      discriminator:
+        propertyName: pet_type
+    Dog:     # "Dog" is a value for the pet_type property (the discriminator value)
+      x-go-type: dog.Dog
+      x-go-type-import:
+        path: github.com/somepetproject/pkg/dog
+      allOf: # Combines the main `Pet` schema with `Dog`-specific properties 
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          # all other properties specific to a `Dog`
+          properties:
+            bark:
+              type: boolean
+            breed:
+              type: string
+              enum: [Dingo, Husky, Retriever, Shepherd]
+    Cat:     # "Cat" is a value for the pet_type property (the discriminator value)
+      x-go-type: cat.Cat
+      x-go-type-import:
+        path: github.com/somepetproject/pkg/cat
+      allOf: # Combines the main `Pet` schema with `Cat`-specific properties 
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          # all other properties specific to a `Cat`
+          properties:
+            hunts:
+              type: boolean
+            age:
+              type: integer
