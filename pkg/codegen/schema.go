@@ -279,6 +279,29 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
+
+		// Check x-go-type, which will completely override the definition of this
+		// schema with the provided type.
+		if extension, ok := schema.Extensions[extPropGoType]; ok {
+			typeName, err := extTypeName(extension)
+			if err != nil {
+				return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+			}
+			mergedSchema.GoType = typeName
+			mergedSchema.DefineViaAlias = true
+
+			return mergedSchema, nil
+		}
+
+		// Check x-go-type-skip-optional-pointer, which will override if the type
+		// should be a pointer or not when the field is optional.
+		if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+			if err != nil {
+				return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+			}
+			mergedSchema.SkipOptionalPointer = skipOptionalPointer
+		}
 		return mergedSchema, nil
 	}
 
