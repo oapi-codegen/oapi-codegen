@@ -739,14 +739,14 @@ func GenFieldsFromProperties(props []Property) []string {
 		// Support x-oapi-codegen-extra-tags
 		if extension, ok := p.Extensions[extPropExtraTags]; ok {
 			if tags, err := extExtraTags(extension); err == nil {
-				keys := SortedStringKeys(tags)
+				keys := SortedMapKeys(tags)
 				for _, k := range keys {
 					fieldTags[k] = tags[k]
 				}
 			}
 		}
 		// Convert the fieldTags map into Go field annotations.
-		keys := SortedStringKeys(fieldTags)
+		keys := SortedMapKeys(fieldTags)
 		tags := make([]string, len(keys))
 		for i, k := range keys {
 			tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])

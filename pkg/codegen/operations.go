@@ -197,7 +197,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for _, k := range SortedSecurityRequirementKeys(sr) {
+		for _, k := range SortedMapKeys(sr) {
 			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
@@ -279,7 +279,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 		return tds, nil
 	}
 
-	sortedResponsesKeys := SortedResponsesKeys(o.Spec.Responses.Map())
+	sortedResponsesKeys := SortedMapKeys(o.Spec.Responses.Map())
 	for _, responseName := range sortedResponsesKeys {
 		responseRef := o.Spec.Responses.Value(responseName)
 
@@ -292,7 +292,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				}
 			}
 
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			sortedContentKeys := SortedMapKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
@@ -544,7 +544,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 		return operations, nil
 	}
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths.Map()) {
+	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
@@ -556,7 +556,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
-		for _, opName := range SortedOperationsKeys(pathOps) {
+		for _, opName := range SortedMapKeys(pathOps) {
 			op := pathOps[opName]
 			if pathItem.Servers != nil {
 				op.Servers = &pathItem.Servers
@@ -686,7 +686,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
 
-	for _, contentType := range SortedContentKeys(body.Content) {
+	for _, contentType := range SortedMapKeys(body.Content) {
 		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
@@ -781,7 +781,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
 
-	for _, statusCode := range SortedResponsesKeys(responses) {
+	for _, statusCode := range SortedMapKeys(responses) {
 		responseOrRef := responses[statusCode]
 		if responseOrRef == nil {
 			continue
@@ -790,7 +790,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 
 		var responseContentDefinitions []ResponseContentDefinition
 
-		for _, contentType := range SortedContentKeys(response.Content) {
+		for _, contentType := range SortedMapKeys(response.Content) {
 			content := response.Content[contentType]
 			var tag string
 			switch {
@@ -828,7 +828,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 		}
 
 		var responseHeaderDefinitions []ResponseHeaderDefinition
-		for _, headerName := range SortedHeadersKeys(response.Headers) {
+		for _, headerName := range SortedMapKeys(response.Headers) {
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
