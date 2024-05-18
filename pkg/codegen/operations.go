@@ -115,7 +115,7 @@ func (pd *ParameterDefinition) Explode() bool {
 }
 
 func (pd ParameterDefinition) GoVariableName() string {
-	name := LowercaseFirstCharacter(pd.GoName())
+	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
 		name = "p" + UppercaseFirstCharacter(name)
 	}
@@ -127,8 +127,8 @@ func (pd ParameterDefinition) GoVariableName() string {
 
 func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
-	if _, ok := pd.Spec.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(pd.Spec.Extensions[extGoName]); err == nil {
+	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
 			goName = extGoFieldName
 		}
 	}
@@ -197,7 +197,7 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for _, k := range SortedSecurityRequirementKeys(sr) {
+		for _, k := range SortedMapKeys(sr) {
 			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
@@ -279,7 +279,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 		return tds, nil
 	}
 
-	sortedResponsesKeys := SortedResponsesKeys(o.Spec.Responses.Map())
+	sortedResponsesKeys := SortedMapKeys(o.Spec.Responses.Map())
 	for _, responseName := range sortedResponsesKeys {
 		responseRef := o.Spec.Responses.Value(responseName)
 
@@ -292,7 +292,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				}
 			}
 
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			sortedContentKeys := SortedMapKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
@@ -307,21 +307,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					// HAL+JSON:
 					case StringInArray(contentTypeName, contentTypesHalJSON):
-						typeName = fmt.Sprintf("HALJSON%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 					case "application/json" == contentTypeName:
 						// if it's the standard application/json
-						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
 					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
-						baseTypeName := fmt.Sprintf("%s%s", ToCamelCase(contentTypeName), ToCamelCase(responseName))
+						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
 					case StringInArray(contentTypeName, contentTypesXML):
-						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
 					}
@@ -544,7 +544,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 		return operations, nil
 	}
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths.Map()) {
+	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
@@ -556,7 +556,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
-		for _, opName := range SortedOperationsKeys(pathOps) {
+		for _, opName := range SortedMapKeys(pathOps) {
 			op := pathOps[opName]
 			if pathItem.Servers != nil {
 				op.Servers = &pathItem.Servers
@@ -569,7 +569,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = toCamelCaseFunc(op.OperationID)
+				op.OperationID = nameNormalizer(op.OperationID)
 			}
 			op.OperationID = typeNamePrefix(op.OperationID) + op.OperationID
 
@@ -617,7 +617,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  toCamelCaseFunc(op.OperationID),
+				OperationId:  nameNormalizer(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -672,7 +672,7 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 		}
 	}
 
-	return toCamelCaseFunc(operationId), nil
+	return nameNormalizer(operationId), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
@@ -686,7 +686,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
 
-	for _, contentType := range SortedContentKeys(body.Content) {
+	for _, contentType := range SortedMapKeys(body.Content) {
 		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
@@ -781,7 +781,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
 
-	for _, statusCode := range SortedResponsesKeys(responses) {
+	for _, statusCode := range SortedMapKeys(responses) {
 		responseOrRef := responses[statusCode]
 		if responseOrRef == nil {
 			continue
@@ -790,7 +790,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 
 		var responseContentDefinitions []ResponseContentDefinition
 
-		for _, contentType := range SortedContentKeys(response.Content) {
+		for _, contentType := range SortedMapKeys(response.Content) {
 			content := response.Content[contentType]
 			var tag string
 			switch {
@@ -828,7 +828,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 		}
 
 		var responseHeaderDefinitions []ResponseHeaderDefinition
-		for _, headerName := range SortedHeadersKeys(response.Headers) {
+		for _, headerName := range SortedMapKeys(response.Headers) {
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {

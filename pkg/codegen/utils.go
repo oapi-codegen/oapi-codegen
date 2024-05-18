@@ -14,6 +14,7 @@
 package codegen
 
 import (
+	"bytes"
 	"fmt"
 	"go/token"
 	"net/url"
@@ -31,7 +32,69 @@ var (
 	pathParamRE    *regexp.Regexp
 	predeclaredSet map[string]struct{}
 	separatorSet   map[rune]struct{}
+	nameNormalizer NameNormalizer = ToCamelCase
 )
+
+type NameNormalizerFunction string
+
+const (
+	// NameNormalizerFunctionUnset is the default case, where the `name-normalizer` option hasn't been set. This will use the `ToCamelCase` function.
+	//
+	// See the docs for `NameNormalizerFunctionToCamelCase` for more details.
+	NameNormalizerFunctionUnset NameNormalizerFunction = ""
+	// NameNormalizerFunctionToCamelCase will use the `ToCamelCase` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHttpPet`
+	// - `OneOf2things` => `OneOf2things`
+	NameNormalizerFunctionToCamelCase NameNormalizerFunction = "ToCamelCase"
+	// NameNormalizerFunctionToCamelCaseWithDigits will use the `NameNormalizerFunctionToCamelCaseWithDigits` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHttpPet`
+	// - `OneOf2things` => `OneOf2Things`
+	NameNormalizerFunctionToCamelCaseWithDigits NameNormalizerFunction = "ToCamelCaseWithDigits"
+	// NameNormalizerFunctionToCamelCaseWithInitialisms will use the `NameNormalizerFunctionToCamelCaseWithInitialisms` function.
+	//
+	// For instance:
+	//
+	// - `getHttpPet`   => `GetHTTPPet`
+	// - `OneOf2things` => `OneOf2things`
+	NameNormalizerFunctionToCamelCaseWithInitialisms NameNormalizerFunction = "ToCamelCaseWithInitialisms"
+)
+
+// NameNormalizer is a function that takes a type name, and returns that type name converted into a different format.
+//
+// This may be an Operation ID i.e. `retrieveUserRequests` or a Schema name i.e. `BigBlockOfCheese`
+//
+// NOTE: this must return a string that can be used as a valid Go type name
+type NameNormalizer func(string) string
+
+type NameNormalizerMap map[NameNormalizerFunction]NameNormalizer
+
+func (m NameNormalizerMap) Options() []string {
+	options := make([]string, 0, len(m))
+
+	for key := range NameNormalizers {
+		options = append(options, string(key))
+	}
+
+	sort.Strings(options)
+
+	return options
+}
+
+// NameNormalizers contains the valid options for `NameNormalizerFunction`s that `oapi-codegen` supports.
+//
+// If you are calling `oapi-codegen` as a library, this allows you to specify your own normalisation types before generating code.
+var NameNormalizers = NameNormalizerMap{
+	NameNormalizerFunctionUnset:                      ToCamelCase,
+	NameNormalizerFunctionToCamelCase:                ToCamelCase,
+	NameNormalizerFunctionToCamelCaseWithDigits:      ToCamelCaseWithDigits,
+	NameNormalizerFunctionToCamelCaseWithInitialisms: ToCamelCaseWithInitialisms,
+}
 
 func init() {
 	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
@@ -133,6 +196,27 @@ func LowercaseFirstCharacter(str string) string {
 	return string(runes)
 }
 
+// Lowercase the first upper characters in a string for case of abbreviation.
+// This assumes UTF-8, so we have to be careful with unicode, don't treat it as a byte array.
+func LowercaseFirstCharacters(str string) string {
+	if str == "" {
+		return ""
+	}
+
+	runes := []rune(str)
+
+	for i := 0; i < len(runes); i++ {
+		next := i + 1
+		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
+			break
+		}
+
+		runes[i] = unicode.ToLower(runes[i])
+	}
+
+	return string(runes)
+}
+
 // ToCamelCase will convert query-arg style strings to CamelCase. We will
 // use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
 // So, "word.word-word+word:word;word_word~word word(word)word{word}[word]"
@@ -159,6 +243,69 @@ func ToCamelCase(str string) string {
 		_, capNext = separatorSet[v]
 	}
 	return n
+}
+
+// ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
+// use `., -, +, :, ;, _, ~, ' ', (, ), {, }, [, ]` as valid delimiters for words.
+// The difference of ToCamelCase that letter after a number becomes capitalized.
+// So, "word.word-word+word:word;word_word~word word(word)word{word}[word]3word"
+// would be converted to WordWordWordWordWordWordWordWordWordWordWordWordWord3Word
+func ToCamelCaseWithDigits(s string) string {
+	res := bytes.NewBuffer(nil)
+	capNext := true
+	for _, v := range s {
+		if unicode.IsUpper(v) {
+			res.WriteRune(v)
+			capNext = false
+			continue
+		}
+		if unicode.IsDigit(v) {
+			res.WriteRune(v)
+			capNext = true
+			continue
+		}
+		if unicode.IsLower(v) {
+			if capNext {
+				res.WriteRune(unicode.ToUpper(v))
+			} else {
+				res.WriteRune(v)
+			}
+			capNext = false
+			continue
+		}
+		capNext = true
+	}
+	return res.String()
+}
+
+// ToCamelCaseWithInitialisms function will convert query-arg style strings to CamelCase with initialisms in uppercase.
+// So, httpOperationId would be converted to HTTPOperationID
+func ToCamelCaseWithInitialisms(s string) string {
+	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
+	for i := range parts {
+		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+			parts[i] = v
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
+
+// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+var initialismsMap = makeInitialismsMap([]string{
+	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
+	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
+	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
+})
+
+func makeInitialismsMap(l []string) map[string]string {
+	m := make(map[string]string, len(l))
+	for i := range l {
+		m[strings.ToLower(l[i])] = l[i]
+	}
+	return m
 }
 
 func ToCamelCaseWithInitialism(str string) string {
@@ -190,8 +337,21 @@ func mediaTypeToCamelCase(s string) string {
 	return ToCamelCaseWithInitialism(s)
 }
 
+// SortedMapKeys takes a map with keys of type string and returns a slice of those
+// keys sorted lexicographically.
+func SortedMapKeys[T any](m map[string]T) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
-// order, since Golang scrambles dictionary keys
+// order, since Golang scrambles dictionary keys. This isn't a generic key sort, because
+// we support an extension to grant specific orders to schemas to help control output
+// ordering.
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
 	orders := make(map[string]int64, len(dict))
@@ -205,7 +365,7 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 			continue
 		}
 
-		ext := v.Value.Extensions["x-order"]
+		ext := v.Value.Extensions[extOrder]
 		if ext == nil {
 			continue
 		}
@@ -222,112 +382,6 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		}
 		return keys[i] < keys[j]
 	})
-	return keys
-}
-
-// SortedPathsKeys is the same as above, except it sorts the keys for a Paths
-// dictionary.
-func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedOperationsKeys returns Operation dictionary keys in sorted order
-func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedHeadersKeys(dict openapi3.Headers) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedContentKeys returns Content dictionary keys in sorted order
-func SortedContentKeys(dict openapi3.Content) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedStringKeys returns string map keys in sorted order
-func SortedStringKeys(dict map[string]string) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedParameterKeys returns sorted keys for a ParameterRef dict
-func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
-	keys := make([]string, len(sr))
-	i := 0
-	for key := range sr {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
 	return keys
 }
 
@@ -735,7 +789,7 @@ func typeNamePrefix(name string) (prefix string) {
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	return typeNamePrefix(name) + ToCamelCase(name)
+	return typeNamePrefix(name) + nameNormalizer(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
@@ -759,7 +813,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 // type name.
 func PathToTypeName(path []string) string {
 	for i, p := range path {
-		path[i] = ToCamelCase(p)
+		path[i] = nameNormalizer(p)
 	}
 	return strings.Join(path, "_")
 }
