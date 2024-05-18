@@ -86,19 +86,14 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 // all of whose fields are composed.
 func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
-	if s1.Extensions != nil || s2.Extensions != nil {
-		result.Extensions = make(map[string]interface{})
-		if s1.Extensions != nil {
-			for k, v := range s1.Extensions {
-				result.Extensions[k] = v
-			}
-		}
-		if s2.Extensions != nil {
-			for k, v := range s2.Extensions {
-				// TODO: Check for collisions
-				result.Extensions[k] = v
-			}
-		}
+
+	result.Extensions = make(map[string]interface{})
+	for k, v := range s1.Extensions {
+		result.Extensions[k] = v
+	}
+	for k, v := range s2.Extensions {
+		// TODO: Check for collisions
+		result.Extensions[k] = v
 	}
 
 	result.OneOf = append(s1.OneOf, s2.OneOf...)
