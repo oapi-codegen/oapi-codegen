@@ -2135,12 +2135,12 @@ You can see this in more detail in [the example code](examples/extensions/xgotyp
 
 </td>
 <td>
-Override the generated name of a type
+Override the generated name of a field or a type
 </td>
 <td>
 <details>
 
-By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
+By default, `oapi-codegen` will attempt to generate the name of fields and types in as best a way it can.
 
 However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
 
@@ -2194,6 +2194,82 @@ type ClientRenamedByExtension struct {
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xgoname/).
+
+</details>
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-go-type-name`
+
+</td>
+<td>
+Override the generated name of a type
+</td>
+<td>
+<details>
+
+> [!NOTE]
+> Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within `struct`s.
+
+By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
+
+However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
+
+We can see this at play with the following schemas:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-type-name
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      x-go-type-name: ClientRenamedByExtension
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          # NOTE attempting a `x-go-type-name` here is a no-op, as we're not producing a _type_ only a _field_
+          x-go-type-name: ThisWillNotBeUsed
+```
+
+From here, we now get two different models and a type alias:
+
+```go
+// Client defines model for Client.
+type Client struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension = ClientRenamedByExtension
+
+// ClientRenamedByExtension defines model for .
+type ClientRenamedByExtension struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+```
+
+You can see this in more detail in [the example code](examples/extensions/xgotypename/).
 
 </details>
 </td>
