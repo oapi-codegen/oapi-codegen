@@ -654,7 +654,7 @@ func TestLowercaseFirstCharacters(t *testing.T) {
 	}
 }
 
-func Test_replaceInitialisms(t *testing.T) {
+func Test_replaceInitialism(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -687,6 +687,16 @@ func Test_replaceInitialisms(t *testing.T) {
 			name: "already initialism",
 			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
+		},
+		{
+			name: "one initialism at start",
+			args: args{s: "idFoo"},
+			want: "idFoo",
+		},
+		{
+			name: "one initialism at start and one in middle",
+			args: args{s: "apiIdFoo"},
+			want: "apiIDFoo",
 		},
 	}
 	for _, tt := range tests {
