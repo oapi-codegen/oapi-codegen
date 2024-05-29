@@ -223,6 +223,7 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	Extensions          map[string]interface{} // Extensions
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -626,6 +627,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				Extensions:      op.Extensions,
 			}
 
 			// check for overrides of SecurityDefinitions.

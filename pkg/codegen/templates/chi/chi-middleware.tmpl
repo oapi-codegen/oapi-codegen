@@ -43,6 +43,12 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
+{{range $key, $value := .Extensions}}
+  {{ if isStringMap $value }}
+    ctx = context.WithValue(ctx, {{ $key | ToCamelCaseWithInitialisms }}, {{ toStringMap $value }})
+  {{ end }}
+{{end}}
+
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
     var params {{.OperationId}}Params

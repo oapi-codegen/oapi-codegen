@@ -1,0 +1,57 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Test extension
+paths:
+  /partners:
+    get:
+      summary: Gets a list of partners
+      operationId: get-partners
+      security:
+        - bearerAuth:
+            - id.edgio_accounts
+            - "id.edgio_accounts:read"
+      x-edgio-authorize:
+        resource-kind: edg:id:edgio-accounts:partner
+        action: edg:id:edgio-accounts:get-partners
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/partners"
+      description: Gets a list of `partner`s.
+components:
+  schemas:
+    partner:
+      allOf:
+        - $ref: "https://raw.githubusercontent.com/Edgio/hyperion/v1.0.0/schema/node.json"
+        - type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: ID of the partner
+              x-go-name: PartnerId
+            name:
+              type: string
+              description: Name of the partner
+          required:
+            - id
+            - name
+    partners:
+      allOf:
+        - $ref: "https://raw.githubusercontent.com/Edgio/hyperion/v1.0.0/schema/collection.json"
+        - type: object
+          additionalProperties: false
+          properties:
+            items:
+              type: array
+              description: List of partners matching the query
+              items:
+                $ref: "#/components/schemas/partner"
+          required:
+            - items
+      description: A collection of `partner`s

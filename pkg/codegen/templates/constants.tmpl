@@ -13,3 +13,10 @@ const (
 {{end}}
 )
 {{end}}
+{{- if gt (len .OperationExtensionKeys) 0 }}
+const (
+{{range $key, $val := .OperationExtensionKeys}}
+    {{- $key}} = "{{$val}}"
+{{end}}
+)
+{{end}}

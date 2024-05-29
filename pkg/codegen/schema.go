@@ -155,6 +155,8 @@ type Constants struct {
 	SecuritySchemeProviderNames []string
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
+	// OperationExtensions holds all extensions from operation object.
+	OperationExtensions map[string]string
 }
 
 // TypeDefinition describes a Go type definition in generated code.

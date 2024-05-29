@@ -295,6 +295,25 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+func isStringMap(val any) bool {
+	_, ok := val.(map[string]interface{})
+
+	return ok
+}
+
+func toStringMap(val map[string]interface{}) string {
+	var ext []string
+	for k, v := range val {
+		if res, ok := v.(string); ok {
+			ext = append(ext, fmt.Sprintf("\"%s\": \"%s\"", k, res))
+		}
+	}
+
+	result := fmt.Sprintf("map[string]string{ %s }", strings.Join(ext, ", "))
+
+	return result
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -323,4 +342,7 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"isStringMap":                isStringMap,
+	"toStringMap":                toStringMap,
+	"ToCamelCaseWithInitialisms": ToCamelCaseWithInitialisms,
 }
