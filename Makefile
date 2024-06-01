@@ -23,7 +23,7 @@ lint: tools
 
 lint-ci: tools
 	# for the root module, explicitly run the step, to prevent recursive calls
-	$(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m
+	$(GOBIN)/golangci-lint run ./... --out-format=colored-line-number --timeout=5m
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint-ci'
 
