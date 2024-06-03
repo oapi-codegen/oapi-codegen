@@ -303,13 +303,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Schema type and format, eg. string / binary
 	t := schema.Type
 	// Handle objects and empty schemas first as a special case
-	if t == "" || t == "object" {
+	if t.Slice() == nil || t.Is("object") {
 		var outType string
 
 		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) && schema.AnyOf == nil && schema.OneOf == nil {
 			// If the object has no properties or additional properties, we
 			// have some special cases for its type.
-			if t == "object" {
+			if t.Is("object") {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
 				outType = "map[string]interface{}"
@@ -537,8 +537,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 	f := schema.Format
 	t := schema.Type
 
-	switch t {
-	case "array":
+	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
 		arrayType, err := GenerateGoSchema(schema.Items, path)
@@ -570,7 +569,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.DefineViaAlias = false
 		}
 
-	case "integer":
+	} else if t.Is("integer") {
 		// We default to int if format doesn't ask for something else.
 		if f == "int64" {
 			outSchema.GoType = "int64"
@@ -596,7 +595,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
-	case "number":
+	} else if t.Is("number") {
 		// We default to float for "number"
 		if f == "double" {
 			outSchema.GoType = "float64"
@@ -606,13 +605,13 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			return fmt.Errorf("invalid number format: %s", f)
 		}
 		outSchema.DefineViaAlias = true
-	case "boolean":
+	} else if t.Is("boolean") {
 		if f != "" {
 			return fmt.Errorf("invalid format (%s) for boolean", f)
 		}
 		outSchema.GoType = "bool"
 		outSchema.DefineViaAlias = true
-	case "string":
+	} else if t.Is("string") {
 		// Special case string formats here.
 		switch f {
 		case "byte":
@@ -635,8 +634,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "string"
 		}
 		outSchema.DefineViaAlias = true
-	default:
-		return fmt.Errorf("unhandled Schema type: %s", t)
+	} else {
+		return fmt.Errorf("unhandled Schema type: %v", t)
 	}
 	return nil
 }
