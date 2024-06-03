@@ -3878,3 +3878,25 @@ The [kin-openapi](https://github.com/getkin/kin-openapi) project - which we 💜
 This may lead to breakage in your consuming code, and if so, sorry that's happened!
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
+
+## Sponsors
+
+For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/deepmap/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
+
+We're very appreciative of [the many contributors over the years](https://github.com/deepmap/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
+
+See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
+
+We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+
+<p align="center">
+	<a href="https://devzero.io?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/devzero-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/devzero-dark.svg">
+		  <img alt="DevZero logo" src=".github/sponsors/devzero-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>
