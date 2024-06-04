@@ -206,7 +206,7 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	}
 
 	for _, m := range options.Middlewares {
-		router.Use(m)
+		router.Use(fiber.Handler(m))
 	}
 
 	router.Post(options.BaseURL+"/json", wrapper.JSONExample)

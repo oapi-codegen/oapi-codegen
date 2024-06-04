@@ -337,8 +337,21 @@ func mediaTypeToCamelCase(s string) string {
 	return ToCamelCaseWithInitialism(s)
 }
 
+// SortedMapKeys takes a map with keys of type string and returns a slice of those
+// keys sorted lexicographically.
+func SortedMapKeys[T any](m map[string]T) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 // SortedSchemaKeys returns the keys of the given SchemaRef dictionary in sorted
-// order, since Golang scrambles dictionary keys
+// order, since Golang scrambles dictionary keys. This isn't a generic key sort, because
+// we support an extension to grant specific orders to schemas to help control output
+// ordering.
 func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 	keys := make([]string, len(dict))
 	orders := make(map[string]int64, len(dict))
@@ -369,112 +382,6 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		}
 		return keys[i] < keys[j]
 	})
-	return keys
-}
-
-// SortedPathsKeys is the same as above, except it sorts the keys for a Paths
-// dictionary.
-func SortedPathsKeys(dict map[string]*openapi3.PathItem) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedOperationsKeys returns Operation dictionary keys in sorted order
-func SortedOperationsKeys(dict map[string]*openapi3.Operation) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedResponsesKeys returns Responses dictionary keys in sorted order
-func SortedResponsesKeys(dict map[string]*openapi3.ResponseRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedHeadersKeys(dict openapi3.Headers) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedContentKeys returns Content dictionary keys in sorted order
-func SortedContentKeys(dict openapi3.Content) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedStringKeys returns string map keys in sorted order
-func SortedStringKeys(dict map[string]string) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-// SortedParameterKeys returns sorted keys for a ParameterRef dict
-func SortedParameterKeys(dict map[string]*openapi3.ParameterRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedRequestBodyKeys(dict map[string]*openapi3.RequestBodyRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func SortedSecurityRequirementKeys(sr openapi3.SecurityRequirement) []string {
-	keys := make([]string, len(sr))
-	i := 0
-	for key := range sr {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
 	return keys
 }
 

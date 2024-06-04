@@ -537,7 +537,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			Schema:   goSchema,
 		})
 
-		types = append(types, goSchema.GetAdditionalTypeDefs()...)
+		types = append(types, goSchema.AdditionalTypes...)
 	}
 	return types, nil
 }
@@ -546,7 +546,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 // components/parameters section of the Swagger spec.
 func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
-	for _, paramName := range SortedParameterKeys(params) {
+	for _, paramName := range SortedMapKeys(params) {
 		paramOrRef := params[paramName]
 
 		goType, err := paramToGoType(paramOrRef.Value, nil)
@@ -584,7 +584,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 func GenerateTypesForResponses(t *template.Template, responses openapi3.ResponseBodies) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, responseName := range SortedResponsesKeys(responses) {
+	for _, responseName := range SortedMapKeys(responses) {
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
@@ -599,8 +599,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 		}
 
-		sortedContentKeys := SortedContentKeys(response.Content)
-		for _, mediaType := range sortedContentKeys {
+		SortedMapKeys := SortedMapKeys(response.Content)
+		for _, mediaType := range SortedMapKeys {
 			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
@@ -646,7 +646,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+	for _, requestBodyName := range SortedMapKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
 
 		// As for responses, we will only generate Go code for JSON bodies,
@@ -1088,8 +1088,7 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 		schemaVal := sref.Value
 
 		t := schemaVal.Type
-		switch t {
-		case "", "object":
+		if t.Slice() == nil || t.Is("object") {
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)
 				if err != nil {
@@ -1097,7 +1096,7 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 				}
 				MergeImports(res, imprts)
 			}
-		case "array":
+		} else if t.Is("array") {
 			imprts, err := GoSchemaImports(schemaVal.Items)
 			if err != nil {
 				return nil, err

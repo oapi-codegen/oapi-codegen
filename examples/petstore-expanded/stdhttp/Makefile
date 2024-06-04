@@ -21,7 +21,7 @@ lint:
 
 lint-ci:
 
-	$(call execute-if-go-122,$(GOBIN)/golangci-lint run ./... --out-format=github-actions --timeout=5m)
+	$(call execute-if-go-122,$(GOBIN)/golangci-lint run ./... --out-format=colored-line-number --timeout=5m)
 
 generate:
 	$(call execute-if-go-122,go generate ./...)

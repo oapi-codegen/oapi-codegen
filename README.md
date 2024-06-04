@@ -2135,12 +2135,12 @@ You can see this in more detail in [the example code](examples/extensions/xgotyp
 
 </td>
 <td>
-Override the generated name of a type
+Override the generated name of a field or a type
 </td>
 <td>
 <details>
 
-By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
+By default, `oapi-codegen` will attempt to generate the name of fields and types in as best a way it can.
 
 However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
 
@@ -2194,6 +2194,82 @@ type ClientRenamedByExtension struct {
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xgoname/).
+
+</details>
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-go-type-name`
+
+</td>
+<td>
+Override the generated name of a type
+</td>
+<td>
+<details>
+
+> [!NOTE]
+> Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within `struct`s.
+
+By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
+
+However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
+
+We can see this at play with the following schemas:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-type-name
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      x-go-type-name: ClientRenamedByExtension
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          # NOTE attempting a `x-go-type-name` here is a no-op, as we're not producing a _type_ only a _field_
+          x-go-type-name: ThisWillNotBeUsed
+```
+
+From here, we now get two different models and a type alias:
+
+```go
+// Client defines model for Client.
+type Client struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension = ClientRenamedByExtension
+
+// ClientRenamedByExtension defines model for .
+type ClientRenamedByExtension struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+```
+
+You can see this in more detail in [the example code](examples/extensions/xgotypename/).
 
 </details>
 </td>
@@ -3802,3 +3878,25 @@ The [kin-openapi](https://github.com/getkin/kin-openapi) project - which we 💜
 This may lead to breakage in your consuming code, and if so, sorry that's happened!
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
+
+## Sponsors
+
+For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/deepmap/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
+
+We're very appreciative of [the many contributors over the years](https://github.com/deepmap/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
+
+See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
+
+We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+
+<p align="center">
+	<a href="https://devzero.io?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/devzero-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/devzero-dark.svg">
+		  <img alt="DevZero logo" src=".github/sponsors/devzero-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>

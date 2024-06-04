@@ -9,7 +9,7 @@ replace github.com/deepmap/oapi-codegen/v2/internal/test => ../..
 require (
 	github.com/deepmap/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/deepmap/oapi-codegen/v2/internal/test v0.0.0-00010101000000-000000000000
-	github.com/getkin/kin-openapi v0.123.0
+	github.com/getkin/kin-openapi v0.124.0
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.9.0
@@ -29,7 +29,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
-	golang.org/x/tools v0.20.0 // indirect
+	golang.org/x/tools v0.21.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
