@@ -1,3 +1,4 @@
+// Deprecated: use github.com/deepmap/oapi-codegen/v2 as major version v1 is no longer maintained. The upgrade path is smooth (see https://github.com/deepmap/oapi-codegen/releases/tag/v2.0.0 for more details) and only introduces a reduced set of dependencies, as well as future releases introducing a large number of enhancements and bug fixes
 module github.com/deepmap/oapi-codegen
 
 go 1.20
