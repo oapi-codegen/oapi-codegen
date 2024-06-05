@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/minimal-server/stdhttp/api"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/stdhttp/api"
 )
 
 func main() {

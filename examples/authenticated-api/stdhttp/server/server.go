@@ -8,9 +8,9 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/stdhttp/api"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/stdhttp/api"
 )
 
 type server struct {
