@@ -12,8 +12,8 @@ import (
 	"net/url"
 	"strings"
 
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1087/deps"
 	"github.com/go-chi/chi/v5"
+	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1087/deps"
 )
 
 // Thing defines model for Thing.

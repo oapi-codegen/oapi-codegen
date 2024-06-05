@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"net/http"
 
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
 	"github.com/go-chi/chi/v5"
+	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 

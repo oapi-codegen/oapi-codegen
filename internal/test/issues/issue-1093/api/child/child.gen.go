@@ -15,9 +15,9 @@ import (
 	"path"
 	"strings"
 
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1093/api/parent"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1093/api/parent"
 	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 

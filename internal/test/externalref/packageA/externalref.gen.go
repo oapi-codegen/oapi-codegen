@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
 	"github.com/getkin/kin-openapi/openapi3"
+	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
 )
 
 // ObjectA defines model for ObjectA.
