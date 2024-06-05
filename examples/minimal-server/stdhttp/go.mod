@@ -1,10 +1,10 @@
-module github.com/deepmap/oapi-codegen/v2/examples/minimal-server/stdhttp
+module github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/stdhttp
 
 go 1.22
 
-replace github.com/deepmap/oapi-codegen/v2 => ../../../
+replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../
 
-require github.com/deepmap/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
+require github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 
 require (
 	github.com/getkin/kin-openapi v0.124.0 // indirect

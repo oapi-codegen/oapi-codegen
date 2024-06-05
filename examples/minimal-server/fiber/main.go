@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/minimal-server/fiber/api"
 	"github.com/gofiber/fiber/v2"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/fiber/api"
 )
 
 func main() {
