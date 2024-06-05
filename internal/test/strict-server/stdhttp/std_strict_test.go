@@ -15,7 +15,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	clientAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/client"
+	clientAPI "github.com/oapi-codegen/oapi-codegen/internal/test/strict-server/client"
 	"github.com/oapi-codegen/runtime"
 	"github.com/oapi-codegen/testutil"
 )

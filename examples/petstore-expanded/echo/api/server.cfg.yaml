@@ -2,7 +2,7 @@
 package: api
 output: petstore-server.gen.go
 additional-imports:
-  - package: github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/echo/api/models
+  - package: github.com/oapi-codegen/oapi-codegen/examples/petstore-expanded/echo/api/models
     alias: .
 generate:
   echo-server: true

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/minimal-server/iris/api"
 	"github.com/kataras/iris/v12"
+	"github.com/oapi-codegen/oapi-codegen/examples/minimal-server/iris/api"
 )
 
 func main() {

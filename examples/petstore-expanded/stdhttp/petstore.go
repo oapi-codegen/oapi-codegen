@@ -14,8 +14,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/stdhttp/api"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"github.com/oapi-codegen/oapi-codegen/examples/petstore-expanded/stdhttp/api"
 )
 
 func main() {

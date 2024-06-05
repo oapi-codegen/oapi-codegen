@@ -1,7 +1,7 @@
 //go:build go1.22
 
-//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../strict-schema.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen --config=types.cfg.yaml ../strict-schema.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../strict-schema.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../strict-schema.yaml
 
 package api
 
