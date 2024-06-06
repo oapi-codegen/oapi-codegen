@@ -21,9 +21,22 @@ we have moved the project from the deepmap organization to our own organization,
 import paths to pull updates past this point. You need to do a recursive search/replace from 
 `github.com/oapi-codegen/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
 
-`oapi-codegen` moved to its new home with the version tag `v2.3.0`. If you
-are installing a version prior to `v2.3.0`, please use `github.com/deepmap/oapi-codegen/v2',
-otherwise, use `github.com/oapi-codegen/oapi-codegen/v2`
+> [!IMPORTANT]
+> `oapi-codegen` moved to its new home with the version tag `v2.3.0`.
+
+If you are using `v2.2.0` or below, please install like so:
+
+```sh
+# for the binary install
+go install github.com/deepmap/oapi-codegen/v2/cmd/oapi-codegen@v2.2.0
+```
+
+If you are using `v2.3.0` or above, please install like so, using the new module import path:
+
+```sh
+# for the binary install
+go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+```
 
 ## Install
 
