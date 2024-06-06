@@ -3924,3 +3924,13 @@ We are currently generously sponsored by the following folks, each of whom provi
 		</picture>
 	</a>
 </p>
+
+<p align="center">
+	<a href="https://speakeasyapi.dev?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
+		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>
