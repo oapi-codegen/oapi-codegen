@@ -16,7 +16,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 
 ## Action Required: The repository for this project has changed
 
-We have moved the project from the deepmap organization to our own organization, and you will need to update your import
+As announced in [May 2024](https://github.com/oapi-codegen/oapi-codegen/discussions/1605), we have moved the project from the deepmap organization to our own organization, and you will need to update your import
 paths to pull updates past this point. You need to do a recursive search/replace from 
 `github.com/oapi-codegen/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
 
