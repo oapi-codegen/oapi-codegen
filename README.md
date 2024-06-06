@@ -14,6 +14,12 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 
 ⚠️ This README may be for the latest development version, which may contain unreleased changes. Please ensure you're looking at the README for the latest release version.
 
+## Action Required: The repository for this project has changed
+
+As announced in [May 2024](https://github.com/oapi-codegen/oapi-codegen/discussions/1605), we have moved the project from the deepmap organization to our own organization, and you will need to update your import
+paths to pull updates past this point. You need to do a recursive search/replace from 
+`github.com/oapi-codegen/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
+
 ## Install
 
 It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
@@ -64,7 +70,7 @@ To do so, you can run:
 
 ```sh
 # pin to the latest version on the default branch
-$ go get github.com/oapi-codegen/oapi-codegen/v2@master
+$ go get github.com/oapi-codegen/oapi-codegen/v2@main
 # alternatively, to a commit hash i.e. https://github.com/deepmap/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
 $ go get github.com/oapi-codegen/oapi-codegen/v2@71e916c59688a6379b5774dfe5904ec222b9a537
 ```
