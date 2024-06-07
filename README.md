@@ -19,7 +19,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 As announced in [May 2024](https://github.com/oapi-codegen/oapi-codegen/discussions/1605), 
 we have moved the project from the deepmap organization to our own organization, and you will need to update your
 import paths to pull updates past this point. You need to do a recursive search/replace from 
-`github.com/oapi-codegen/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
+`github.com/deepmap/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
 
 > [!IMPORTANT]
 > `oapi-codegen` moved to its new home with the version tag `v2.3.0`.
