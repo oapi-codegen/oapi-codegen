@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: allowlowercasefields
+generate:
+  models: true
+output: types.gen.go
+output-options:
+  skip-prune: true
+  allow-unexported-fields: true
+  # TODO: SchemaNameToTypeName

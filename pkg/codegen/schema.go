@@ -100,6 +100,8 @@ func (p Property) GoFieldName() string {
 		}
 	}
 
+	// return goFieldName
+
 	return SchemaNameToTypeName(goFieldName)
 }
 
@@ -664,6 +666,7 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		goFieldName := p.GoFieldName()
 
+		fmt.Printf("goFieldName: %v\n", goFieldName)
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.

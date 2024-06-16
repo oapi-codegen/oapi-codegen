@@ -226,6 +226,10 @@ func ToCamelCase(str string) string {
 
 	n := ""
 	capNext := true
+	// if globalState.options.OutputOptions.AllowUnexportedFields {
+	// 	capNext = false
+	// }
+
 	for _, v := range s {
 		if unicode.IsUpper(v) {
 			n += string(v)

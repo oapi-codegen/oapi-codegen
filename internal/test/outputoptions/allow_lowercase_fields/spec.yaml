@@ -1,0 +1,11 @@
+components:
+  schemas:
+    my_item:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          # NOTE that this is an unexported field
+          x-go-name: age

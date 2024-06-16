@@ -139,6 +139,8 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	AllowUnexportedFields bool `yaml:"allow-unexported-fields"`
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
