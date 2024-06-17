@@ -1,14 +1,14 @@
-module github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/stdhttp
+module github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/stdhttp
 
 go 1.22
 
-replace github.com/deepmap/oapi-codegen/v2 => ../../../
+replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../
 
 require (
-	github.com/deepmap/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/getkin/kin-openapi v0.124.0
 	github.com/lestrrat-go/jwx v1.2.29
 	github.com/oapi-codegen/nethttp-middleware v1.0.2
+	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.9.0
 )
