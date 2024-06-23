@@ -3944,3 +3944,5 @@ We are currently generously sponsored by the following folks, each of whom provi
 		</picture>
 	</a>
 </p>
+
+(Note that the order of appearance the order in which sponsorship was received)
