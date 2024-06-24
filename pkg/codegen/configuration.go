@@ -185,5 +185,10 @@ func (o Configuration) Validate() error {
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
+
+	if o.Generate.Strict && nServers == 0 {
+		return errors.New("the `strict-server` option is added in addition to another server to be generated. Adding `strict-server` on its own will not generate anything")
+	}
+
 	return nil
 }
