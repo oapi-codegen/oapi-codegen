@@ -152,7 +152,6 @@ type ServerInterface interface {
 
 // FindPets operation middleware
 func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -183,7 +182,7 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // HandlerWithOptions creates http.Handler with additional options

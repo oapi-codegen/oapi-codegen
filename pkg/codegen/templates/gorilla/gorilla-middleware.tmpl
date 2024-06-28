@@ -11,7 +11,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
   var err error
   {{end}}
@@ -39,9 +38,13 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
   {{end}}
 
+  {{if .SecurityDefinitions -}}
+  ctx := r.Context()
 {{range .SecurityDefinitions}}
   ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
+  r = r.WithContext(ctx)
+  {{end}}
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
@@ -187,7 +190,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   }
   {{end}}
 
-  handler.ServeHTTP(w, r.WithContext(ctx))
+  handler.ServeHTTP(w, r)
 }
 {{end}}
 

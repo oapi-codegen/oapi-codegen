@@ -37,7 +37,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // ExamplePatch operation middleware
 func (siw *ServerInterfaceWrapper) ExamplePatch(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ExamplePatch(w, r)
@@ -47,7 +46,7 @@ func (siw *ServerInterfaceWrapper) ExamplePatch(w http.ResponseWriter, r *http.R
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {
