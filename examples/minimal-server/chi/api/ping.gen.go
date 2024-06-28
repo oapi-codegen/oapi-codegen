@@ -42,7 +42,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetPing operation middleware
 func (siw *ServerInterfaceWrapper) GetPing(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPing(w, r)
@@ -52,7 +51,7 @@ func (siw *ServerInterfaceWrapper) GetPing(w http.ResponseWriter, r *http.Reques
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

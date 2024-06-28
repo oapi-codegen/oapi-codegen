@@ -319,7 +319,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetThings operation middleware
 func (siw *ServerInterfaceWrapper) GetThings(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetThings(w, r)
@@ -329,7 +328,7 @@ func (siw *ServerInterfaceWrapper) GetThings(w http.ResponseWriter, r *http.Requ
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

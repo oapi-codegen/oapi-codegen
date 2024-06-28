@@ -44,7 +44,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetUserById operation middleware
 func (siw *ServerInterfaceWrapper) GetUserById(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -65,7 +64,7 @@ func (siw *ServerInterfaceWrapper) GetUserById(w http.ResponseWriter, r *http.Re
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

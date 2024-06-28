@@ -48,7 +48,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetBionicleName operation middleware
 func (siw *ServerInterfaceWrapper) GetBionicleName(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -69,7 +68,7 @@ func (siw *ServerInterfaceWrapper) GetBionicleName(w http.ResponseWriter, r *htt
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

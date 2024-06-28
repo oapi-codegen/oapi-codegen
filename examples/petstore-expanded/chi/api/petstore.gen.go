@@ -115,7 +115,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // FindPets operation middleware
 func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -146,12 +145,11 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // AddPet operation middleware
 func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AddPet(w, r)
@@ -161,12 +159,11 @@ func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request
 		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // DeletePet operation middleware
 func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -187,12 +184,11 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // FindPetByID operation middleware
 func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -213,7 +209,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 		handler = siw.HandlerMiddlewares[i](handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

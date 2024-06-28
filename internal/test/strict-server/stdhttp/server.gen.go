@@ -76,7 +76,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // JSONExample operation middleware
 func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.JSONExample(w, r)
@@ -86,12 +85,11 @@ func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Re
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // MultipartExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartExample(w, r)
@@ -101,12 +99,11 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // MultipartRelatedExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartRelatedExample(w, r)
@@ -116,12 +113,11 @@ func (siw *ServerInterfaceWrapper) MultipartRelatedExample(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // MultipleRequestAndResponseTypes operation middleware
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
@@ -131,12 +127,11 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.Respon
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // ReservedGoKeywordParameters operation middleware
 func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -157,12 +152,11 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // ReusableResponses operation middleware
 func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReusableResponses(w, r)
@@ -172,12 +166,11 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TextExample operation middleware
 func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TextExample(w, r)
@@ -187,12 +180,11 @@ func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Re
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // UnknownExample operation middleware
 func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnknownExample(w, r)
@@ -202,12 +194,11 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // UnspecifiedContentType operation middleware
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnspecifiedContentType(w, r)
@@ -217,12 +208,11 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter,
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // URLEncodedExample operation middleware
 func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.URLEncodedExample(w, r)
@@ -232,12 +222,11 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // HeadersExample operation middleware
 func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -296,12 +285,11 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // UnionExample operation middleware
 func (siw *ServerInterfaceWrapper) UnionExample(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnionExample(w, r)
@@ -311,7 +299,7 @@ func (siw *ServerInterfaceWrapper) UnionExample(w http.ResponseWriter, r *http.R
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {
