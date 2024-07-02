@@ -87,6 +87,9 @@ type CompatibilityOptions struct {
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
+	// When prefixing enum values with typename, this specifies an optional separator string to include for improving
+	// readability. By default, the empty string is used (i.e., no separator).
+	EnumPrefixSeparator string `yaml:"enum-prefix-separator,omitempty"`
 	// Our generated code for Chi has historically inverted the order in which Chi middleware is
 	// applied such that the last invoked middleware ends up executing first in the Chi chain
 	// This resolves the behavior such that middlewares are chained in the order they are invoked.
