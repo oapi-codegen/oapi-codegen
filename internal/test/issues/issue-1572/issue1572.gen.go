@@ -27,9 +27,7 @@ type BookRecord struct {
 }
 
 // BookRecords defines model for BookRecords.
-type BookRecords = []struct {
-	Id float32 `json:"id"`
-}
+type BookRecords = []BookRecord
 
 // GetBookRecordParams defines parameters for GetBookRecord.
 type GetBookRecordParams struct {

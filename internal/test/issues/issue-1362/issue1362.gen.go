@@ -26,9 +26,7 @@ type Record struct {
 }
 
 // Records defines model for Records.
-type Records = []struct {
-	Id float32 `json:"id"`
-}
+type Records = []Record
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
