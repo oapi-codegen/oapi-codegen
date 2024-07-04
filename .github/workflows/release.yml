@@ -11,22 +11,19 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Check out source code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # Required for the changelog to work correctly.
           fetch-depth: 0
 
-      - name: Set up Go
-        uses: actions/setup-go@v3
+      - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@v6
         with:
-          distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
