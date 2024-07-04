@@ -759,7 +759,8 @@ func additionalPropertiesType(schema Schema) string {
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
 	}
-	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+	if (schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable) &&
+	((addPropsType != "interface{}" && addPropsType != "any") && !strings.HasSuffix(addPropsType, "[]") && strings.HasPrefix(addPropsType, "map[")) {
 		addPropsType = "*" + addPropsType
 	}
 	return addPropsType
