@@ -280,7 +280,7 @@ func main() {
 
 	swagger, err := util.LoadSwagger(flag.Arg(0))
 	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
 	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
