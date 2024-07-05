@@ -275,12 +275,12 @@ func (sh *strictHandler) GetBionicleName(w http.ResponseWriter, r *http.Request,
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5SRMU8zMQyG/0rl7xujyxWYbuyCWGBhqzqkqa+XqpcEx0VCp/x35FyPXikMZLEcO3n8",
-	"+h3Ahj4Gj54TNANEQ6ZHRirZ1gXv7BGfTY+S7zBZcpFd8NCA3C5Cu+AOF7YzZCwjgQInxWi4AwW+vByD",
-	"AsK3kyPcQcN0QgXJdtgb+Zk/ovQlJuf3kHOeimWO1XmOMiGFiMQOS8WfJ/v+fs5aj10bNXWF7QEtjxTn",
-	"23Ar7RUTgwJ2LNApfUdKY31Z1VUNWUGI6E100MB9VVdLUEV4GU1P29OD8LPc7ZEliAIjqKcdNPCIvJov",
-	"Wl25sB7gP2ELDfzTF6/0pUVfuZQ3Ij3F4NO4obu6lmCDZ/SFbmI8Olv4+pBEzzBz4ifY2Qr95UMuu3v4",
-	"49fB40v7q6JbyCZP5zMAAP//9Jg3p6cCAAA=",
+	"H4sIAAAAAAAC/5RRQU/zMAz9K5O/7xg1HXDqcRfEBS7cpgllmbtmWpPgeEioyn9HTldtYwOJXpzEr37P",
+	"7w1gQx+DR88JmgGiIdMjI5Xb2gXv7B7fpsOz6VEaG0yWXGQXPDQgr7PQzrjDme0MGctIoMBJMxruQIEv",
+	"f45FAeH7wRFuoGE6oIJkO+yNTObPKLjE5PwWcs5T81LQ4ngomilEJHZYIP4o8fugc9LliFqpCRXWO7Q8",
+	"0jnfhusdXzExKGDHQjpdP5DS2J9XdVVDVhAiehMdNHBf1dUcVHGgSNOTfD0If5a3LbIU2cAI1dMGGnhE",
+	"Xpw7ri5yWQ7wn7CFBv7pU3r6BNG3c8sr8SDF4NNo1V1dS7HBM/oiw8S4d7YI0bskiw1n2dxiPYajr5PJ",
+	"xc2HP3IEjy/tjzv+wrbK0/cVAAD//37MjEPUAgAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

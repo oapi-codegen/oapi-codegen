@@ -29,14 +29,14 @@ type Container struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5xUwW7bMAz9lYDbUWgybNjBt7W7L4ftVBQDYzOOBlvSKKZrUOjfB0pN7MRbk+YSKPJ7",
-	"5HvUk56h9n3wjpxEqJ4h1hvqMS/vUKj1vNN1YB+IxVL+Yhv9pSfsQ0dQfTCw9tyjQAXWyedPYEB2gcpf",
-	"aokhGXDY0xENvvo2DtAobF0LKR12/OoX1QIGnvpOmaUC1HtdCr3zTtA64qnKQv+Jun7PtIYK3s0Ht/MX",
-	"q/NvGfdFNb5QVpdRbkeU+hzlgEsGAsk5+JIEkhrcq5vY28/zZHxXmBja3F7cRjnLYuMYX49S81r3Q7qS",
-	"meRpcWWgGt+2lqaRMhA2XvwP7kp8hfo49XSasz1nHElkxt2A/MMYAjVQCW9JYVFQtrl2Q7FmG8R6p7VI",
-	"ZuXbzLqZbGgWxbNKJbftoboHfETb4arTvUCuKYqi7xp4+IchwfbYy2uz/o6Fc4mHZIDp99aybt2XWYzn",
-	"93DueoacXAPa9D8vxxsO962Pg2BBja8lNo3Vc8BuORKjdk+rZfvWrX1ubSWnCgw8EsdykPmCBXIYLFTw",
-	"8WZxs9DxoGzUX0p/AwAA//++YR/sUAUAAA==",
+	"H4sIAAAAAAAC/6RUTW/bMAz9KwG3o9Bk6LCDb213Xw7bqSgMRmYcbbakSUzWoNB/Hyg1jROnSLJdDJof",
+	"D+890n4B7XrvLFmOUL1A1CvqMYcPzjIaS0FefHCeAhvKJbf4SZprlPhjoCVU8GG6B5q+okw96l/Y0l0d",
+	"Pen6W566g6R2AIsLAe6HAPcDAH0O4K0vKfDE59rRm3pzWztPVsI5MaSUFBzlH5CpdWE7dsY08qRn7H1H",
+	"UH1SsHShR4YKjOUvn0EBbz2VV2opCDGLPR2MwVfXxn1r5GBsC0LkNVNkgYLnvpPJggB6x+sE53lRf0hX",
+	"D4Rc4cub/qRGimf/KLlxbWtoLFqBXzl2P0JXDGbqc3DYduzEbmZoGoaA233nn4DeUwMVhzVJW2TkdcZu",
+	"KOpgPBtnBYt4UmoTYye8oklkF4Qq2XUP1SPgBk2Hi05ynmxTGEXXNfB0QhBje6jlCuu/Y4G4RFJSEOj3",
+	"2gRJPRZrhnY+nbsnn+9/dErC4Z3Lv2L11x43Y+kafvrYNEa2hN18QEbUH6PJHZ38G42EvMPvv39aaU/h",
+	"qHQphZQxjF26XDScPxxQsKEQy61mnmVNUMHtzexmJitHXglwSn8DAAD//xIv2MTwBQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

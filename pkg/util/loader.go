@@ -19,19 +19,9 @@ func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 	}
 }
 
-func LoadSwaggerWithCircularReferenceCount(filePath string, circularReferenceCount int) (swagger *openapi3.T, err error) {
-	// get a copy of the existing count
-	existingCircularReferenceCount := openapi3.CircularReferenceCounter
-	if circularReferenceCount > 0 {
-		openapi3.CircularReferenceCounter = circularReferenceCount
-	}
-
-	swagger, err = LoadSwagger(filePath)
-
-	if circularReferenceCount > 0 {
-		// and make sure to reset it
-		openapi3.CircularReferenceCounter = existingCircularReferenceCount
-	}
-
-	return swagger, err
+// Deprecated: In kin-openapi v0.126.0 (https://github.com/getkin/kin-openapi/tree/v0.126.0?tab=readme-ov-file#v01260) the Circular Reference Counter functionality was removed, instead resolving all references with backtracking, to avoid needing to provide a limit to reference counts.
+//
+// This is now identital in method as `LoadSwagger`.
+func LoadSwaggerWithCircularReferenceCount(filePath string, _ int) (swagger *openapi3.T, err error) {
+	return LoadSwagger(filePath)
 }
