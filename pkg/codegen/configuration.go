@@ -64,19 +64,19 @@ func (o Configuration) Validate() error {
 	}
 
 	var errs []error
-	if problems := o.Generate.Validate(); problems != nil {
+	if problems := o.Generate.Validate(); len(problems) > 0 {
 		for k, v := range problems {
 			errs = append(errs, fmt.Errorf("`generate` configuration for %v was incorrect: %v", k, v))
 		}
 	}
 
-	if problems := o.Compatibility.Validate(); problems != nil {
+	if problems := o.Compatibility.Validate(); len(problems) > 0 {
 		for k, v := range problems {
 			errs = append(errs, fmt.Errorf("`compatibility-options` configuration for %v was incorrect: %v", k, v))
 		}
 	}
 
-	if problems := o.OutputOptions.Validate(); problems != nil {
+	if problems := o.OutputOptions.Validate(); len(problems) > 0 {
 		for k, v := range problems {
 			errs = append(errs, fmt.Errorf("`output-options` configuration for %v was incorrect: %v", k, v))
 		}
