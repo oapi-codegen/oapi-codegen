@@ -99,6 +99,10 @@
         "circular-reference-limit": {
           "type": "integer",
           "description": "DEPRECATED: No longer used.\nCircularReferenceLimit allows controlling the limit for circular reference checking. In some OpenAPI specifications, we have a higher number of circular references than is allowed out-of-the-box, but can be tuned to allow traversing them."
+        },
+        "allow-unexported-struct-field-names": {
+          "type": "boolean",
+          "description": "AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.\nThis is expected to be used in conjunction with an extension such as `x-go-name` to override the output name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`.\nNOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see it in the response, without understanding the nuance of how `oapi-codegen` generates the code."
         }
       }
     },

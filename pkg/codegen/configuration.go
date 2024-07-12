@@ -180,6 +180,21 @@ type CompatibilityOptions struct {
 	// traversing them.
 	// Deprecated: In kin-openapi v0.126.0 (https://github.com/getkin/kin-openapi/tree/v0.126.0?tab=readme-ov-file#v01260) the Circular Reference Counter functionality was removed, instead resolving all references with backtracking, to avoid needing to provide a limit to reference counts.
 	CircularReferenceLimit int `yaml:"circular-reference-limit"`
+	// AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.
+	//
+	// This is expected to be used in conjunction with `x-go-name` and `x-oapi-codegen-only-honour-go-name` to override the resulting output field name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`, such as:
+	//
+	//  ```yaml
+	//   id:
+	//     type: string
+	//     x-go-name: accountIdentifier
+	//     x-oapi-codegen-extra-tags:
+	//       json: "-"
+	//     x-oapi-codegen-only-honour-go-name: true
+	//   ```
+	//
+	// NOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see/use it in the request/response, without understanding the nuance of how `oapi-codegen` generates the code.
+	AllowUnexportedStructFieldNames bool `yaml:"allow-unexported-struct-field-names"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
