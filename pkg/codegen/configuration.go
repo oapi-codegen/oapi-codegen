@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -55,6 +56,10 @@ type GenerateOptions struct {
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
 }
 
+func (oo GenerateOptions) Validate() map[string]string {
+	return nil
+}
+
 // CompatibilityOptions specifies backward compatibility settings for the
 // code generator.
 type CompatibilityOptions struct {
@@ -105,6 +110,10 @@ type CompatibilityOptions struct {
 	CircularReferenceLimit int `yaml:"circular-reference-limit"`
 }
 
+func (co CompatibilityOptions) Validate() map[string]string {
+	return nil
+}
+
 // OutputOptions are used to modify the output code in some way.
 type OutputOptions struct {
 	// Whether to skip go imports on the generated code
@@ -140,6 +149,10 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+}
+
+func (oo OutputOptions) Validate() map[string]string {
+	return nil
 }
 
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
@@ -186,5 +199,30 @@ func (o Configuration) Validate() error {
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
+
+	var errs []error
+	if problems := o.Generate.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`generate` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	if problems := o.Compatibility.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`compatibility-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	if problems := o.OutputOptions.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`output-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		return fmt.Errorf("failed to validate configuration: %w", err)
+	}
+
 	return nil
 }
