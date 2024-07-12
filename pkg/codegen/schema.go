@@ -100,6 +100,16 @@ func (p Property) GoFieldName() string {
 		}
 	}
 
+	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
+		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
+			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
+				if extOapiCodegenOnlyHonourGoName {
+					return goFieldName
+				}
+			}
+		}
+	}
+
 	return SchemaNameToTypeName(goFieldName)
 }
 
