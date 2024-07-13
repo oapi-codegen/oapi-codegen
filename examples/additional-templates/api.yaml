@@ -1,0 +1,47 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Generate models
+  description: This is a simple api file for showing off some of the cool things you can do with user-constructed api generation templates.
+paths:
+  /client:
+    get:
+      operationId: getClient
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                # NOTE that Client is generated here, because it's within #/components/schemas
+                $ref: "#/components/schemas/Client"
+    put:
+      operationId: updateClient
+      responses:
+        400:
+          content:
+            application/json:
+              # NOTE that this anonymous object is /not/ generated because it's an anonymous, but would be generated if using `generate: client`
+              # See https://github.com/deepmap/oapi-codegen/issues/1512
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                required:
+                  - code
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Unreferenced:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer

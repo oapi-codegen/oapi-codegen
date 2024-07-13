@@ -413,7 +413,6 @@ Example usage
 </td>
 <td>
 
-
 For a Chi server, you will want a configuration file such as:
 
 ```yaml
@@ -484,7 +483,6 @@ To implement this, check out [the Fiber docs](#impl-fiber).
 
 </td>
 </tr>
-
 
 <tr>
 <td>
@@ -601,6 +599,7 @@ To implement this, check out [the Go 1.22+ `net/http` docs](#impl-stdhttp).
 </table>
 
 ### Go 1.22+ `net/http`
+
 <a name="impl-stdhttp"></a>
 
 As of Go 1.22, enhancements have been made to the routing of the `net/http` package in the standard library, which makes it a great starting point for implementing a server with, before needing to reach for another router or a full framework.
@@ -616,12 +615,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -737,6 +736,7 @@ go 1.22
 </details>
 
 ### Chi
+
 <a name="impl-chi"></a>
 
 For instance, let's take this straightforward specification:
@@ -750,12 +750,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -866,6 +866,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### gorilla/mux
+
 <a name="impl-gorillamux"></a>
 
 For instance, let's take this straightforward specification:
@@ -879,12 +880,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -993,6 +994,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### Echo server
+
 <a name="impl-echo"></a>
 
 For instance, let's take this straightforward specification:
@@ -1006,12 +1008,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -1118,6 +1120,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### Fiber server
+
 <a name="impl-fiber"></a>
 
 For instance, let's take this straightforward specification:
@@ -1131,12 +1134,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -1235,6 +1238,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### Gin server
+
 <a name="impl-gin"></a>
 
 For instance, let's take this straightforward specification:
@@ -1248,12 +1252,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -1357,6 +1361,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### Iris server
+
 <a name="impl-iris"></a>
 
 For instance, let's take this straightforward specification:
@@ -1370,12 +1375,12 @@ paths:
   /ping:
     get:
       responses:
-        '200':
+        "200":
           description: pet response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Pong'
+                $ref: "#/components/schemas/Pong"
 components:
   schemas:
     # base types
@@ -1549,7 +1554,7 @@ paths:
                   code:
                     type: string
                 required:
-                - code
+                  - code
 components:
   schemas:
     ClientType:
@@ -1749,7 +1754,7 @@ paths:
                   code:
                     type: string
                 required:
-                - code
+                  - code
 components:
   schemas:
     Client:
@@ -1817,6 +1822,7 @@ output-options:
 For a complete example see [`examples/only-models`](examples/only-models).
 
 ## Splitting large OpenAPI specs across multiple packages (aka "Import Mapping" or "external references")
+
 <a name=import-mapping></a>
 
 When you've got a large OpenAPI specification, you may find it useful to split the contents of the spec across multiple files, using external references, such as:
@@ -1825,7 +1831,7 @@ When you've got a large OpenAPI specification, you may find it useful to split t
 components:
   schemas:
     User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      $ref: "../common/api.yaml#/components/schemas/User"
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
@@ -1867,11 +1873,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: "#/components/schemas/User"
 components:
   schemas:
     User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      $ref: "../common/api.yaml#/components/schemas/User"
 ```
 
 This references the common spec:
@@ -2743,7 +2749,6 @@ You can see this in more detail in [the example code](examples/extensions/xorder
 </td>
 </tr>
 
-
 </table>
 
 ## Request/response validation middleware
@@ -2804,7 +2809,6 @@ Middleware library
 </td>
 
 </tr>
-
 
 <tr>
 <td>
@@ -2924,10 +2928,20 @@ Notice that we're using a pre-built provider from the [`pkg/securityprovider` pa
 
 It is possible to extend the inbuilt code generation from `oapi-codegen` using Go's `text/template`s.
 
-You can specify, through your configuration file, the `output-options.user-templates` setting to override the inbuilt templates and use a user-defined template.
+You can specify, through your configuration file, the `output-options.user-templates` setting to override the inbuilt templates, replacing it with your user-defined template.
+You may also add additional templates that do not correspond to any existing inbuilt templates.
+
+Templates added via the `output-options.user-templates` setting that do not correspond to an existing template will not be executed unless they are specified in the `generate.additional-templates` setting.
+
+```yaml
+generate:
+  additional-templates:
+    - "user-defined-template-1"
+    - "user-defined-template-2"
+```
 
 > [!NOTE]
-> Filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for
+> If you wish to override an inbuilt template, filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for.
 
 ### Local paths
 
@@ -2991,16 +3005,20 @@ output-options:
     # https://stackoverflow.com/a/18708156/2257038 and
     # https://stackoverflow.com/a/15365296/2257038
     client-with-responses.tmpl: |
-        // ClientWithResponses builds on ClientInterface to offer response payloads
-        type ClientWithResponses struct {
-            ClientInterface
-        }
-        ...
+      // ClientWithResponses builds on ClientInterface to offer response payloads
+      type ClientWithResponses struct {
+          ClientInterface
+      }
+      ...
 ```
 
 ### Using the Go package
 
-Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
+The additional templates are passed an object with two keys. `spec` and `ops`.
+Spec contains the [openapi specification](https://pkg.go.dev/github.com/getkin/kin-openapi/openapi3#T) as read in by oapi-codegen.
+Ops is the data passed to most templates, and contains an array of [OperationDefinitions](https://pkg.go.dev/github.com/deepmap/oapi-codegen/v2/pkg/codegen#OperationDefinition)
+
+Additionally, you are able to use the underlying code generation functions as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
 
 ## Additional Properties (`additionalProperties`)
 
@@ -3141,7 +3159,6 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 ```
 
 </details>
-
 
 ### `additionalProperties` as `integer`s
 
@@ -3624,7 +3641,7 @@ components:
     # allOf performs a union of all types defined
     ClientWithId:
       allOf:
-        - $ref: '#/components/schemas/Client'
+        - $ref: "#/components/schemas/Client"
         - properties:
             id:
               type: integer
@@ -3636,7 +3653,7 @@ components:
     IdentityWithDuplicateField:
       allOf:
         # `issuer` will be ignored
-        - $ref: '#/components/schemas/Identity'
+        - $ref: "#/components/schemas/Identity"
         # `issuer` will be ignored
         - properties:
             issuer:
@@ -3654,14 +3671,14 @@ components:
     # anyOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
     ClientAndMaybeIdentity:
       anyOf:
-        - $ref: '#/components/schemas/Client'
-        - $ref: '#/components/schemas/Identity'
+        - $ref: "#/components/schemas/Client"
+        - $ref: "#/components/schemas/Identity"
 
     # oneOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
     ClientOrIdentity:
       oneOf:
-        - $ref: '#/components/schemas/Client'
-        - $ref: '#/components/schemas/Identity'
+        - $ref: "#/components/schemas/Client"
+        - $ref: "#/components/schemas/Identity"
 ```
 
 This results in the following types:

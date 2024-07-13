@@ -126,6 +126,8 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+	// What additional, user provided templates to call during generation
+	AdditionalTemplates []string `yaml:"additional-templates,omitempty"`
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
