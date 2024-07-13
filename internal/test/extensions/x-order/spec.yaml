@@ -13,3 +13,17 @@ components:
           type: string
           format: date
           x-order: 1
+    Port:
+      type: integer
+    PortInterval:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        start:
+          $ref: '#/components/schemas/Port'
+          x-order: 1
+        end:
+          $ref: '#/components/schemas/Port'
+          x-order: 2
