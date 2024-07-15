@@ -1,4 +1,9 @@
-openapi: "3.0.1"
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure that recursive types are handled properly
 paths:
   /example:
     get:
@@ -9,8 +14,20 @@ paths:
           content:
             'application/json':
               schema:
-                type: object
-                x-go-type-name: SomeObject
-                properties:
-                  name:
-                    type: string
+                type: array
+                items:
+                  type: object
+                  x-go-type-name: SomeType
+                  properties:
+                    name:
+                      type: string
+                    objects:
+                      type: array
+                      items:
+                        type: object
+                        x-go-type-name: SomeChildType
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
