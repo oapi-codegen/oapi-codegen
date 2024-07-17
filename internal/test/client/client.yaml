@@ -90,6 +90,10 @@ paths:
             schema:
               type: object
 components:
+  securitySchemes:
+    OpenId:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
   schemas:
     SchemaObject:
       properties:
