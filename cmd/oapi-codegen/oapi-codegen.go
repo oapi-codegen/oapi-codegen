@@ -21,6 +21,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -281,12 +282,33 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	spec, err := util.LoadOpenAPI(flag.Arg(0))
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
-	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
+	// In older versions of OpenAPI (aka, Swagger), the `openapi` property won't be present in the top level, so we should
+	// refuse to load those. We can identify them by the OpenAPI version being an empty string.
+	if spec.OpenAPI == "" {
+		errExit("'openapi' property not found in parsed spec. You are likely loading an older Swagger file that's unsupported")
+	}
+
+	// Now, extract semver from the OpenAPI header.
+	versionParts := strings.Split(strings.TrimSpace(spec.OpenAPI), ".")
+	if len(versionParts) != 3 {
+		errExit("openapi property in spec is not valid semver: %s", spec.OpenAPI)
+	}
+	major := versionParts[0]
+	minor := versionParts[1]
+
+	if major != "3" {
+		errExit("only openapi specs with major version 3 are supported")
+	}
+	minorAsNum, err := strconv.ParseInt(minor, 10, 64)
+	if err != nil {
+		errExit("couldn't parse openapi minor version as integer: '%s'", minor)
+	}
+	if minorAsNum > 0 {
 		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/deepmap/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
 	}
 
@@ -294,7 +316,7 @@ func main() {
 		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
-	code, err := codegen.Generate(swagger, opts.Configuration)
+	code, err := codegen.Generate(spec, opts.Configuration)
 	if err != nil {
 		errExit("error generating code: %s\n", err)
 	}
