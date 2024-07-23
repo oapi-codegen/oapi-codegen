@@ -25,9 +25,9 @@ type ObjectA struct {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4yOMcrDMAxG7/L9/xjI7q25QI8QHKMkbhNZ2OpQgu5e7BS6dOikBw896UBIuyQm1gJ3",
-	"oISVdt/wOt0o6KWi5CSUNVIT7HeqU59CcCiaIy+wDqltjFOV/5lmOPz1n37/jvfiw90vNIxFKIznnQFm",
-	"1uG7+vUFa43Ic4Ljx7Z1SELsJcIBNa5rOY29AgAA//84dUj5+QAAAA==",
+	"H4sIAAAAAAAC/4yOQQrCMBBF7/J1WdqCu+zsBTxCScO0jTaTIYkLKbm7JBXcuHA1Hx7z/t9hvBPPxClC",
+	"7YhmJadrvE13MulaogQvFJKlClg7Kje9hKAQU7C8IDfw9WOcCjwHmqFw6r7+7iPvRJuHXmgYo5AZj54B",
+	"OecGv9G/E3J1WJ49FD+3rYEXYi0WCpe2b3uUhrTGA+d3AAAA//8qN5O+/gAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
