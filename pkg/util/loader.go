@@ -10,23 +10,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// Deprecated: LoadSwagger loads an OpenAPI 3.0 definition from a file or a
-// URL. Use LoadOpenAPI instead.
-func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-
-	u, err := url.Parse(filePath)
-	if err == nil && u.Scheme != "" && u.Host != "" {
-		return loader.LoadFromURI(u)
-	} else {
-		return loader.LoadFromFile(filePath)
-	}
-}
-
-// LoadOpenAPI loads an OpenAPI spec, and hooks into the kin loader to parse
+// LoadSwagger loads an OpenAPI spec, and hooks into the kin loader to parse
 // version information from the spec.
-func LoadOpenAPI(filePath string) (openapi *openapi3.T, err error) {
+func LoadSwagger(filePath string) (*openapi3.T, error) {
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 
@@ -36,23 +22,61 @@ func LoadOpenAPI(filePath string) (openapi *openapi3.T, err error) {
 	var ls loaderShim
 	loader.ReadFromURIFunc = ls.InterceptLoad
 
+	var openapi *openapi3.T
+
 	u, err := url.Parse(filePath)
 	if err == nil && u.Scheme != "" && u.Host != "" {
 		// The shim needs a URL to compare with, since it can be called multiple
 		// times durin a load when resolving multiple refs.
 		ls.srcURL = u
-		return loader.LoadFromURI(u)
+		openapi, err = loader.LoadFromURI(u)
 	} else {
 		// In the case where the URL failed to parse, we'll construct one explicitly
 		// in the same way that Kin does. LoadFromFile simply calls LoadFromURI
 		// internally.
 		ls.srcURL = &url.URL{Path: filePath}
-		return loader.LoadFromFile(filePath)
+		openapi, err = loader.LoadFromFile(filePath)
 	}
+
+	if err != nil {
+		return openapi, err
+	}
+
+	// Now, our shim will contain version information. We can return errors here
+	// which won't affect loading, but will tell the higher level some information
+	// about versions.
+
+	version := ls.versions.OpenAPI
+	if version == "" {
+		version = ls.versions.Swagger
+	}
+
+	// Try to extract the major, minor. Openapi will have patch level, swagger won't. If
+	// it doesn't match x.y pattern, we bail out without further checking.
+	versionParts := strings.Split(version, ".")
+	if len(versionParts) < 2 {
+		return openapi, nil
+	}
+	major := versionParts[0]
+	minor := versionParts[1]
+	if major == "2" {
+		// TODO: we can actually use openapi2conv to convert swagger2 to OpenAPI 3
+		return openapi, ErrSwagger2NotSupported
+	}
+	if major != "3" {
+		return openapi, fmt.Errorf("OpenAPI/Swagger %v is not supported", version)
+	}
+	// Now, we know we've got major 3.
+	if minor != "0" {
+		return openapi, ErrOpenAPI31NotSupported
+	}
+
+	return openapi, nil
 }
 
 type loaderShim struct {
-	srcURL *url.URL
+	srcURL   *url.URL
+	versions openAPIorSwaggerVersion
 }
 
 // openAPIorSwaggerVersion is used to parse either OpenAPI or Swagger version
@@ -72,41 +96,15 @@ func (l *loaderShim) InterceptLoad(loader *openapi3.Loader, url *url.URL) ([]byt
 	}
 
 	if l.srcURL.Scheme == url.Scheme && l.srcURL.Host == url.Host && l.srcURL.Path == url.Path {
-		var versionInfo openAPIorSwaggerVersion
 		// We've found our file of interest. Parse it and figure out a version. We'll parse as
 		// YAML since this handles JSON too.
-		err = yaml.Unmarshal(buf, &versionInfo)
+		err = yaml.Unmarshal(buf, &l.versions)
 		// If we failed to unmarshal we don't react, maintaining previous behavior of
 		// trying to process the file.
 		if err != nil {
 			return buf, nil
 		}
-
-		version := versionInfo.OpenAPI
-		if version == "" {
-			version = versionInfo.Swagger
-		}
-
-		// Try to extract the major, minor. Openapi will have patch level, swagger won't
-		versionParts := strings.Split(version, ".")
-		if len(versionParts) < 2 {
-			return buf, nil
-		}
-		major := versionParts[0]
-		minor := versionParts[1]
-		if major == "2" {
-			// TODO: we can actually use openapi2conv to convert swagger2 to OpenAPI 3
-			return nil, ErrSwagger2NotSupported
-		}
-		if major != "3" {
-			return nil, fmt.Errorf("OpenAPI/Swagger %v is not supported", version)
-		}
-		// Now, we know we've got major 3.
-		if minor != "0" {
-			return nil, ErrOpenAPI31NotSupported
-		}
 	}
-
 	return buf, nil
 }
 
@@ -116,5 +114,5 @@ func (l *loaderShim) InterceptLoad(loader *openapi3.Loader, url *url.URL) ([]byt
 //
 // This is now identical in method as `LoadSwagger`.
 func LoadSwaggerWithCircularReferenceCount(filePath string, _ int) (swagger *openapi3.T, err error) {
-	return LoadOpenAPI(filePath)
+	return LoadSwagger(filePath)
 }

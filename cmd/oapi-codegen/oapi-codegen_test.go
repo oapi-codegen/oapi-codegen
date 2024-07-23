@@ -15,7 +15,7 @@ func TestLoader(t *testing.T) {
 
 	for _, v := range paths {
 
-		swagger, err := util.LoadOpenAPI(v)
+		swagger, err := util.LoadSwagger(v)
 		if err != nil {
 			t.Error(err)
 		}
