@@ -97,7 +97,7 @@ func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 		},
 	}
 	spec := "test_specs/x-go-type-skip-optional-pointer.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
@@ -134,7 +134,7 @@ func TestGoTypeImport(t *testing.T) {
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:
@@ -182,7 +182,7 @@ func TestRemoteExternalReference(t *testing.T) {
 		},
 	}
 	spec := "test_specs/remote-external-reference.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	swagger, err := util.LoadOpenAPI(spec)
 	require.NoError(t, err)
 
 	// Run our code generation:

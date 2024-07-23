@@ -281,7 +281,7 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	swagger, err := util.LoadOpenAPI(flag.Arg(0))
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
