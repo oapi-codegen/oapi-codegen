@@ -52,8 +52,7 @@ func LoadOpenAPI(filePath string) (openapi *openapi3.T, err error) {
 }
 
 type loaderShim struct {
-	srcURL  *url.URL
-	version string
+	srcURL *url.URL
 }
 
 // openAPIorSwaggerVersion is used to parse either OpenAPI or Swagger version
