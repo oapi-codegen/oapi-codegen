@@ -380,6 +380,7 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 		return 0, false
 	}
 
+	// YAML parsing picks up the x-order as a float64
 	if order, ok := v.Extensions[extOrder].(float64); ok {
 		return int64(order), true
 	}
@@ -387,6 +388,8 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 	if v.Value == nil {
 		return 0, false
 	}
+
+	// if v.Value is set, then this is actually a `$ref`, and we should check if there's an x-order set on that
 
 	// YAML parsing picks up the x-order as a float64
 	if order, ok := v.Value.Extensions[extOrder].(float64); ok {

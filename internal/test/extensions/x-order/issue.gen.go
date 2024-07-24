@@ -18,6 +18,10 @@ type Port = int
 
 // PortInterval defines model for PortInterval.
 type PortInterval struct {
-	Start Port `json:"start"`
-	End   Port `json:"end"`
+	Start   Port             `json:"start"`
+	End     Port             `json:"end"`
+	VeryEnd *LowPriorityPort `json:"very_end,omitempty"`
 }
+
+// LowPriorityPort defines model for LowPriorityPort.
+type LowPriorityPort = int
