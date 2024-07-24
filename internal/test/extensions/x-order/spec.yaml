@@ -21,9 +21,9 @@ components:
         - start
         - end
       properties:
-        start:
-          $ref: '#/components/schemas/Port'
-          x-order: 1
         end:
           $ref: '#/components/schemas/Port'
           x-order: 2
+        start:
+          $ref: '#/components/schemas/Port'
+          x-order: 1
