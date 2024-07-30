@@ -7,7 +7,7 @@ replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../
 require github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 
 require (
-	github.com/getkin/kin-openapi v0.126.0 // indirect
+	github.com/getkin/kin-openapi v0.127.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/invopop/yaml v0.3.1 // indirect
