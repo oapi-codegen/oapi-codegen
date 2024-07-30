@@ -134,6 +134,8 @@ func NewTestGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "TestGet")
+
 	return req, nil
 }
 
