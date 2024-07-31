@@ -70,6 +70,9 @@ type importMap map[string]goImport
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
+		if v.Path == "*" {
+			continue
+		}
 		goImports = append(goImports, v.String())
 	}
 	return goImports
@@ -89,7 +92,7 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok {
+			if _, ok := pathToName[packagePath]; !ok && packagePath != "*" {
 				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 			}
 		}
