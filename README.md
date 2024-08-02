@@ -3972,7 +3972,7 @@ See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-
 We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
-	<a href="https://devzero.io?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/devzero-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/devzero-dark.svg">
