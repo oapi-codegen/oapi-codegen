@@ -881,6 +881,13 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	for _, body := range op.Bodies {
 		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
 	}
+
+	for _, response := range op.Responses {
+		for _, content := range response.Contents {
+			typeDefs = append(typeDefs, content.Schema.GetAdditionalTypeDefs()...)
+		}
+	}
+
 	return typeDefs
 }
 
