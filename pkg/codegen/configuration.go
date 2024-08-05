@@ -228,6 +228,8 @@ type OutputOptions struct {
 	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
+	// RequiredRequestBody do stuff
+	RequiredRequestBody bool `yaml:"required-request-body,omitempty"`
 
 	// DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases
 	// Currently supports:
