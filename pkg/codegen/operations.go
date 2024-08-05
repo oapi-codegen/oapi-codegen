@@ -1009,6 +1009,28 @@ func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinitio
 	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
 }
 
+// GenerateStdHTTPServerByTags generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateStdHTTPServerByTags(t *template.Template, operations map[string][]OperationDefinition) (string, error) {
+	interfaces, err := GenerateTemplates([]string{"stdhttp/std-http-interface-tag.tmpl"}, t, operations)
+	if err != nil {
+		return "", err
+	}
+	// Use a set to avoid duplication in Operations with multiple tags
+	uniqueMap := make(map[string]OperationDefinition)
+	var flattenOps []OperationDefinition
+	for _, ops := range operations {
+		for _, op := range ops {
+			uniqueMap[op.OperationId] = op
+		}
+	}
+	for _, op := range uniqueMap {
+		flattenOps = append(flattenOps, op)
+	}
+	rest, err := GenerateTemplates([]string{"stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, flattenOps)
+	return strings.Join([]string{interfaces, rest}, "\n"), nil
+}
+
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 
 	var templates []string

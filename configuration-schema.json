@@ -196,6 +196,10 @@
             "ToCamelCaseWithDigits",
             "ToCamelCaseWithInitialisms"
           ]
+        },
+        "group-by-tag": {
+          "type": "boolean",
+          "description": "Generate a type with the operations grouped per tag"
         }
       }
     },

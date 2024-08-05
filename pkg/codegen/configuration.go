@@ -236,6 +236,9 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	// Whether to generate a type per tag
+	GroupByTag bool `yaml:"group-by-tag,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {

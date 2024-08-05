@@ -235,7 +235,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var stdHTTPServerOut string
 	if opts.Generate.StdHTTPServer {
-		stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		if opts.OutputOptions.GroupByTag {
+			var groupedOps map[string][]OperationDefinition
+			groupedOps = OperationsGroupedByTags(ops)
+			stdHTTPServerOut, err = GenerateStdHTTPServerByTags(t, groupedOps)
+		} else {
+			stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		}
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
