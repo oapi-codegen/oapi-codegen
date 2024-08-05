@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: api
+  version: 0.0.0
+paths:
+  /_value:
+    get:
+      operationId: value
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/value'
+          description: OK
+components:
+  schemas:
+    value:
+      type: object
+      properties:
+        name:
+          type: string
+      x-go-type-name: Value  # this value is same as calculated name
