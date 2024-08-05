@@ -90,7 +90,9 @@ func (pd *ParameterDefinition) Style() string {
 		switch in {
 		case "path", "header":
 			return "simple"
-		case "query", "cookie":
+		case "query":
+			return "query"
+		case "cookie":
 			return "form"
 		default:
 			panic("unknown parameter format")
@@ -912,7 +914,8 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
-			NeedsFormTag:  param.Style() == "form",
+			NeedsFormTag:  param.Style() == "form" || param.Style() == "query",
+			NeedsQueryTag: param.Style() == "query",
 			Extensions:    param.Spec.Extensions,
 		}
 		s.Properties = append(s.Properties, prop)
