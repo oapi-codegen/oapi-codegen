@@ -1028,7 +1028,7 @@ func GenerateStdHTTPServerByTags(t *template.Template, operations map[string][]O
 		flattenOps = append(flattenOps, op)
 	}
 	rest, err := GenerateTemplates([]string{"stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, flattenOps)
-	return strings.Join([]string{interfaces, rest}, "\n"), nil
+	return strings.Join([]string{interfaces, rest}, "\n"), err
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
