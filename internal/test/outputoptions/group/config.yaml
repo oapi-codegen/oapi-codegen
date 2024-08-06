@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: grouptags
+generate:
+  std-http-server: true
+  models: true
+output: server.gen.go
+output-options:
+  exclude-tags:
+    - filtered-tag
+  group-by-tag: true
+  skip-prune: true
