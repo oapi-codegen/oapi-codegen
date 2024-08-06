@@ -74,20 +74,6 @@ func (siw *ServerInterfaceWrapper) MultipleTagsOperation(w http.ResponseWriter, 
 	handler.ServeHTTP(w, r)
 }
 
-// IncludedOperation2 operation middleware
-func (siw *ServerInterfaceWrapper) IncludedOperation2(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.IncludedOperation2(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
 // DefaultOperation operation middleware
 func (siw *ServerInterfaceWrapper) DefaultOperation(w http.ResponseWriter, r *http.Request) {
 
@@ -107,6 +93,20 @@ func (siw *ServerInterfaceWrapper) IncludedOperation1(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.IncludedOperation1(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// IncludedOperation2 operation middleware
+func (siw *ServerInterfaceWrapper) IncludedOperation2(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.IncludedOperation2(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -231,9 +231,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/multipletags", wrapper.MultipleTagsOperation)
-	m.HandleFunc("GET "+options.BaseURL+"/included2", wrapper.IncludedOperation2)
 	m.HandleFunc("GET "+options.BaseURL+"/default", wrapper.DefaultOperation)
 	m.HandleFunc("GET "+options.BaseURL+"/included1", wrapper.IncludedOperation1)
+	m.HandleFunc("GET "+options.BaseURL+"/included2", wrapper.IncludedOperation2)
 
 	return m
 }
