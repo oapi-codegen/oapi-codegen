@@ -1,0 +1,22 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: type-mappings
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name has no mappings defined
+        email:
+          type: string
+          format: email
+          description: Email should be defined via an alias
+        uuid:
+          type: string
+          format: uuid
+          description: Uuid should have no pointer receiver, even though it's an optional field
