@@ -2,6 +2,8 @@ module github.com/oapi-codegen/oapi-codegen/v2
 
 go 1.20
 
+replace github.com/getkin/kin-openapi => github.com/diamondburned/kin-openapi v0.92.1-0.20240812092412-a5b8ae983de2
+
 require (
 	github.com/getkin/kin-openapi v0.126.0
 	github.com/stretchr/testify v1.9.0
