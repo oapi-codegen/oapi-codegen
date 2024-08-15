@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -204,6 +205,10 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		result.Properties[k] = v
 	}
 
+	// We merge all property keys.
+	result.PropertyKeys = slices.Concat(s1.PropertyKeys, s2.PropertyKeys)
+	result.PropertyKeys = compactUsingSet(result.PropertyKeys)
+
 	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
 		result.WithoutAdditionalProperties()
 	} else if s1.AdditionalProperties.Schema != nil {
@@ -228,6 +233,21 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	}
 
 	return result, nil
+}
+
+// compactUsingSet compacts s by removing duplicates using a set.
+// The compaction is done in-place.
+func compactUsingSet[T comparable](s []T) []T {
+	set := make(map[T]struct{}, len(s))
+	s2 := s[:0]
+	for _, v := range s {
+		if _, ok := set[v]; ok {
+			continue
+		}
+		set[v] = struct{}{}
+		s2 = append(s2, v)
+	}
+	return s2
 }
 
 func equalTypes(t1 *openapi3.Types, t2 *openapi3.Types) bool {
