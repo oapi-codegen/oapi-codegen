@@ -281,7 +281,17 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	overlayOpts := util.LoadSwaggerWithOverlayOpts{
+		Path: opts.OutputOptions.Overlay.Path,
+		// default to strict, but can be overridden
+		Strict: true,
+	}
+
+	if opts.OutputOptions.Overlay.Strict != nil {
+		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
+	}
+
+	swagger, err := util.LoadSwaggerWithOverlay(flag.Arg(0), overlayOpts)
 	if err != nil {
 		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
