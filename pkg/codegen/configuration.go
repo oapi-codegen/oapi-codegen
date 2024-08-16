@@ -236,8 +236,19 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
+	Overlay OutputOptionsOverlay `yaml:"overlay"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
 	return nil
+}
+
+type OutputOptionsOverlay struct {
+	Path string `yaml:"path"`
+
+	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.
+	// Defaults to true.
+	Strict *bool `yaml:"strict,omitempty"`
 }
