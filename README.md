@@ -1947,6 +1947,91 @@ If you don't want to do this, an alternate option is to [bundle your multiple Op
 
 Check out [the import-mapping example](examples/import-mapping/) for the full code.
 
+## Modifying the input OpenAPI Specification
+
+Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
+
+In a lot of cases, this OpenAPI specification would be produced by a different team to the consumers (or even a different company) and so asking them to make changes like this were unreasonable.
+
+This would lead to the API consumers needing to vendor the specification from the producer (which is [our recommendation anyway](#https-paths)) and then make any number of local changes to the specification to make it generate code that looks reasonable.
+
+However, in the case that a consumer would update their specification, they would likely end up with a number of merge conflicts.
+
+Now, as of `oapi-codegen` v2.4.0, it is now possible to make changes to the input OpenAPI specification _without needing to modify it directly_.
+
+This takes advantage of the [OpenAPI Overlay specification](https://github.com/OAI/Overlay-Specification), which is a stable specification.
+
+> [!CAUTION]
+> Beware! Here (may) be dragons.
+>
+> The Overlay specification requires the use of JSON Path, which some users may find difficult to write and/or maintain.
+>
+> We still heavily recommend using Overlay functionality, but would like users to be aware of this.
+>
+> There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
+
+For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+    delete:
+      x-internal: true
+      responses:
+        '202':
+          content: {}
+```
+
+If we were to run `oapi-codegen` with out-of-the-box functionality, this would then lead to the DELETE endpoint being generated, which we don't want.
+
+Instead, we can define the following `overlay.yaml`:
+
+
+```yaml
+overlay: 1.0.0
+info:
+  title: Overlay
+  version: 0.0.0
+actions:
+- target: $.paths.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+- target: $.paths.*.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+```
+
+And our configuration file for `oapi-codegen`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+package: api
+output: ping.gen.go
+generate:
+  models: true
+  gorilla-server: true
+  embedded-spec: true
+output-options:
+  overlay:
+    path: overlay.yaml
+```
+
+This then completely removes the DELETE endpoint _before_ we even start to parse the specification in `oapi-codegen`, so it's as if your specification was provided without that endpoint.
+
+Check out [the overlay example](examples/overlay/) for the full code, and some more complex examples.
+
 ## Generating Nullable types
 
 It's possible that you want to be able to determine whether a field isn't sent, is sent as `null` or has a value.
