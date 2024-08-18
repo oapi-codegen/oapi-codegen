@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         }{{end}}
       {{end}}
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}})
+      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, {{.Schema.DefaultValue | toGoValueSyntax}}, "{{.ParamName}}", query, &params.{{.GoName}})
       if err != nil {
         return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
       }

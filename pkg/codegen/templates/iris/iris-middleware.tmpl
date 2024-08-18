@@ -46,7 +46,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
       // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
     {{ end }}
     {{if .IsStyled}}
-    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, {{.Schema.DefaultValue | toGoValueSyntax}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)

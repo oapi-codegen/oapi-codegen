@@ -18,6 +18,8 @@ type Schema struct {
 
 	EnumValues map[string]string // Enum values
 
+	DefaultValue any // The default value, nil indicates no default value.
+
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
@@ -118,6 +120,7 @@ func (p Property) GoTypeDef() string {
 	if globalState.options.OutputOptions.NullableType && p.Nullable {
 		return "nullable.Nullable[" + typeDef + "]"
 	}
+	//  && p.Schema.DefaultValue == nil
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
 			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
@@ -272,6 +275,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	outSchema := Schema{
 		Description: schema.Description,
 		OAPISchema:  schema,
+
+		DefaultValue: schema.Default,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
