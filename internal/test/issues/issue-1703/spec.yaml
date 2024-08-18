@@ -1,0 +1,23 @@
+openapi: '3.0.3'
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        200:
+          description: good
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                limit:
+                  type: boolean
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: boolean
+            #default: true
+          required: false
+          description: The number of items to return.
