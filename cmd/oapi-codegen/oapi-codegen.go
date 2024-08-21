@@ -50,15 +50,16 @@ var (
 
 	// Deprecated: The options below will be removed in a future
 	// release. Please use the new config file format.
-	flagIncludeTags         string
-	flagExcludeTags         string
-	flagIncludeOperationIDs string
-	flagExcludeOperationIDs string
-	flagImportMapping       string
-	flagExcludeSchemas      string
-	flagResponseTypeSuffix  string
-	flagAliasTypes          bool
-	flagInitialismOverrides bool
+	flagIncludeTags           string
+	flagExcludeTags           string
+	flagIncludeOperationIDs   string
+	flagExcludeOperationIDs   string
+	flagImportMapping         string
+	flagExcludeSchemas        string
+	flagResponseTypeSuffix    string
+	flagAliasTypes            bool
+	flagInitialismOverrides   bool
+	flagAdditionalInitialisms string
 )
 
 type configuration struct {
@@ -113,6 +114,7 @@ func main() {
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
 	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
+	flag.StringVar(&flagAdditionalInitialisms, "additional-initialisms", "", "Comma separated list of additional initialisms to use.")
 
 	flag.Parse()
 
@@ -444,6 +446,10 @@ func updateConfigFromFlags(cfg *configuration) error {
 
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
+	}
+
+	if flagAdditionalInitialisms != "" {
+		cfg.OutputOptions.AdditionalInitialisms = util.ParseCommandLineList(flagAdditionalInitialisms)
 	}
 
 	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides

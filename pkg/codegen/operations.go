@@ -1096,3 +1096,7 @@ func CombineOperationParameters(globalParams []ParameterDefinition, localParams 
 
 	return allParams, nil
 }
+
+func initializeInitialisms(additionalInitialisms []string) {
+	initialismsMap = makeInitialismsMap(additionalInitialisms)
+}
