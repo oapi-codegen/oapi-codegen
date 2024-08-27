@@ -777,9 +777,9 @@ func typeNamePrefix(name string) (prefix string) {
 		case '=':
 			prefix += "Equal"
 		case '>':
-			prefix += "Greater"
+			prefix += "GreaterThan"
 		case '<':
-			prefix += "Less"
+			prefix += "LessThan"
 		case '#':
 			prefix += "Hash"
 		case '.':
