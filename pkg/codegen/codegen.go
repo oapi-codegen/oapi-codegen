@@ -863,9 +863,13 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+	unionTypes := make(map[string]TypeDefinition)
 	for _, t := range typeDefs {
 		if len(t.Schema.UnionElements) != 0 {
 			filteredTypes = append(filteredTypes, t)
+			for _, el := range t.Schema.UnionElements {
+				unionTypes[el.String()] = TypeDefinition{}
+			}
 		}
 	}
 
@@ -873,10 +877,20 @@ func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (
 		return "", nil
 	}
 
+	for _, t := range typeDefs {
+		for k, _ := range unionTypes {
+			if t.TypeName == k {
+				unionTypes[k] = t
+			}
+		}
+	}
+
 	context := struct {
-		Types []TypeDefinition
+		Types      []TypeDefinition
+		UnionTypes map[string]TypeDefinition
 	}{
-		Types: filteredTypes,
+		Types:      filteredTypes,
+		UnionTypes: unionTypes,
 	}
 
 	return GenerateTemplates([]string{"union.tmpl"}, t, context)

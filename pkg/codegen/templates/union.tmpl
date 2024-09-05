@@ -1,3 +1,4 @@
+{{$unionTypes := .UnionTypes}}
 {{range .Types}}
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
@@ -23,7 +24,19 @@
                                 {{$hasProperty = true -}}
                             {{end -}}
                         {{end -}}
-                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                        {{if not $hasProperty -}}
+                            {{$discriminatorType := (index $unionTypes $element.String) -}}
+                            {{range $discriminatorType.Schema.Properties -}}
+                                {{if eq .JsonFieldName $discriminator.Property -}}
+                                    {{if .Nullable -}}
+                                        d := {{ .Schema.GoType }}("{{$value}}")
+                                        v.{{$discriminator.PropertyName}} = &d
+                                    {{else -}}
+                                        v.{{$discriminator.PropertyName}} = {{ .Schema.GoType }}("{{$value}}")
+                                    {{end -}}
+                                {{end -}}
+                            {{end -}}
+                        {{end -}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -44,7 +57,19 @@
                                 {{$hasProperty = true -}}
                             {{end -}}
                         {{end -}}
-                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                        {{if not $hasProperty -}}
+                            {{$discriminatorType := (index $unionTypes $element.String) -}}
+                            {{range $discriminatorType.Schema.Properties -}}
+                                {{if eq .JsonFieldName $discriminator.Property -}}
+                                    {{if .Nullable -}}
+                                        d := {{ .Schema.GoType }}("{{$value}}")
+                                        v.{{$discriminator.PropertyName}} = &d
+                                    {{else -}}
+                                        v.{{$discriminator.PropertyName}} = {{ .Schema.GoType }}("{{$value}}")
+                                    {{end -}}
+                                {{end -}}
+                            {{end -}}
+                        {{end -}}
                     {{end -}}
                 {{end -}}
             {{end -}}

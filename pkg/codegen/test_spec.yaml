@@ -127,7 +127,25 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
+  /stuff:
+    post:
+      description: Create stuff
+      operationId: createStuff
+      security:
+        - Bearer: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateStuff"
+      responses:
+        "201":
+          description: created stuff
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stuff"
 components:
   schemas:
 
@@ -205,3 +223,59 @@ components:
             name:
               type: string
               description: User name
+    CreateStuff:
+      oneOf:
+        - $ref: "#/components/schemas/CreateStuffBla"
+        - $ref: "#/components/schemas/CreateStuffNope"
+      discriminator:
+        propertyName: which
+        mapping:
+          bla: "#/components/schemas/CreateStuffBla"
+          nope: "#/components/schemas/CreateStuffNope"
+    CreateStuffProperties:
+      type: object
+      required:
+        - which
+      properties:
+        which:
+          $ref: "#/components/schemas/WhichStuff"
+    CreateStuffBla:
+      allOf:
+        - $ref: "#/components/schemas/CreateStuffProperties"
+        - type: object
+          properties:
+            settings:
+              $ref: "#/components/schemas/StuffBla"
+    CreateStuffNope:
+      allOf:
+        - $ref: "#/components/schemas/CreateStuffProperties"
+        - type: object
+          properties:
+            settings:
+              $ref: "#/components/schemas/StuffNope"
+    Stuff:
+      type: object
+      required:
+        - which
+      properties:
+        which:
+          $ref: "#/components/schemas/WhichStuff"
+    WhichStuff:
+      type: string
+      nullable: true
+      enum:
+        [
+          bla,
+          nope,
+        ]
+      default: bla
+    StuffBla:
+      type: object
+      properties:
+        something:
+          type: string
+    StuffNope:
+      type: object
+      properties:
+        nothing:
+          type: string
