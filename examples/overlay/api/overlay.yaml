@@ -3,6 +3,23 @@ info:
   title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
   version: 1.0.0
 actions:
+####################################################################################################
+# Structured Overlays, via https://github.com/OAI/Overlay-Specification/blob/main/versions/1.0.0.md#examples
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
+
+####################################################################################################
+# Wildcard/Targeted overlays, via https://github.com/OAI/Overlay-Specification/blob/main/versions/1.0.0.md#examples
+#
 - target: $.paths.*.*[?(!@.servers)]
   description: Override the servers
   update:
@@ -13,11 +30,6 @@ actions:
   description: Override the Pong schema to utilise the `x-go-name` to override the generated Go type name
   update:
     x-go-name: OverriddenPong
-
-- target: "$"
-  update:
-    info:
-      x-overlay-applied: structured-overlay
 
 - target: $.paths['/ping'].get
   description: Override the poorly documented internal description for the ping API

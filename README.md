@@ -2005,6 +2005,17 @@ info:
   title: Overlay
   version: 0.0.0
 actions:
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
 - target: $.paths.*[?(@.x-internal)]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
@@ -2029,6 +2040,8 @@ output-options:
 ```
 
 This then completely removes the DELETE endpoint _before_ we even start to parse the specification in `oapi-codegen`, so it's as if your specification was provided without that endpoint.
+
+Additionally, we can override other pieces of metadata, such as the description for operations.
 
 Check out [the overlay example](examples/overlay/) for the full code, and some more complex examples.
 
