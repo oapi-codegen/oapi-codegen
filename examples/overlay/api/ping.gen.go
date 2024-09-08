@@ -173,14 +173,14 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/1xSwW4UMQz9lchwAGl2s+2KS24VQmjFYVeCW9VDmvHuuMzEIfGUVlX+HTmzS6EnJ86L",
-	"33u2XyDwlDhilALuBUoYcPLteOB40pgyJ8xC2LKJliw++SmNCA6S4jqQ56S3IlkRtXaQ8ddMGXtwt8u3",
-	"u78ovn/AINDB0+rEq+gnTe4fMWfqe4yNumoNikdWOiFpZF8WWiNsKPYUvKAZ+Lfe54JGBjT7hPHmsDNa",
-	"bvTPpiQMdFQocTQfBpFUnLUnkmG+Xwee7P5mZ8/o1fd/0R+hg0fMhTiCg6v1Zr1pmvkM9imNpAbV9hxk",
-	"zthfHqF2wAmjTwQOtue/ycvQ+mh9P1G0fhYuwY9LV2sH9tLgE4qGHkvIlGSR8HnA8NPI4KVZVZtUTJ5j",
-	"pHgy+2/QOHMTv1NdX1EO1OaTsSSOZZni9WajIXAUjI2nWVlc24eiZJdl0NP7jEdw8M6+bos9r4p9Hdb/",
-	"WhOKuZC2fSiYtZngbt/a+jGg6fHo51HMglpDB3MewYHOy1k7cvDjwEXc9tPV9RbqXa21/gkAAP//2FDh",
-	"Ob8CAAA=",
+	"H4sIAAAAAAAC/1xSwW7UMBD9FWvgAFJ2ve2Ki28VQmjFYVeCW9WD60xil8Rj7ElpVfnf0Ti7FHqaePLs",
+	"997MewFHc6KIkQuYFyjO42zb54niKDVlSpg5YOumsHbxyc5pQjCQBNcBPyc5Fc6CqLWDjL+WkLEHc7te",
+	"u/uLovsHdAwdPG1G2kQ7S/P4iDmHvsfYqKu8EeJAQseBG9mXlVYxqRD74Cyj8vRbzktBxR7VMWG8OR2U",
+	"PDfZZ1USujAINFBUHzxzKkbrMbBf7reOZn28OegzevP9X/RH6OARcwkUwcDVdrfdNc10BtuUpiAGxfbi",
+	"eMnYX35C7YASRpsCGNif7ybLvs1R234OUduFqTg7rVOtHejLgEdkKT0Wl0PiVcJnj+6nYm+5WRWboai8",
+	"xBjiqI7foHHmJv4gur4in0LbT8aSKJZ1i9e7nRRHkTE2nmZlda0fipBdwiBf7zMOYOCdfk2LPkdFvy7r",
+	"f60nzAPlWVkllpSkAQu3ZBTMMlYwt28N/vCoehzsMrFaUVvoYMkTGJDNGa0ncnbyVNjsP11d76He1Vrr",
+	"nwAAAP//QsRK0MkCAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
