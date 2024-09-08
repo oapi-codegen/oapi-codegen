@@ -35,7 +35,7 @@ If you are making changes to the codebase that affects the code that gets genera
 These generated test cases and examples provide a means to not only validate the functionality, but as they are checked in to source code, allow us to see if there are any subtle issues or breaking changes.
 
 > [!NOTE]
-> Significant changes to generated code are likely to be merged, especially in cases where there would be a breaking change that all consumers would have to respond to i.e. renaming a function or changing the function signature.
+> Significant changes to generated code are unlikely to be merged, especially in cases where there would be a breaking change that all consumers would have to respond to i.e. renaming a function or changing the function signature.
 >
 > However, if we can make this an opt-in feature (using the `output-options` configuration object) then that would be our preference.
 
