@@ -123,7 +123,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
     {{range .CookieParams}}
       var cookie string
 
-      if cookie = c.Cookies("{{.ParamName}}"); cookie == "" {
+      if cookie = c.Cookies("{{.ParamName}}"); cookie != "" {
 
       {{- if .IsPassThrough}}
         params.{{.GoName}} = {{if not .Required}}&{{end}}cookie
