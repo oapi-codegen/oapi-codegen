@@ -417,6 +417,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if p.Value != nil {
 					description = p.Value.Description
 				}
+
+				// Add extensions for properties from AllOf
+				p.Value.Extensions = make(map[string]interface{})
+				for _, pva := range p.Value.AllOf {
+					for key, value := range pva.Value.Extensions {
+						p.Value.Extensions[key] = value
+					}
+				}
+
 				prop := Property{
 					JsonFieldName: pName,
 					Schema:        pSchema,
