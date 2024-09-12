@@ -389,6 +389,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
+
+				// Merge allOf in property
+				if p.Value.AllOf != nil {
+					val, err := mergeAllOf(p.Value.AllOf)
+					if err != nil {
+						return Schema{}, fmt.Errorf("error generating Go schema from allOf for property '%s': %w", pName, err)
+					}
+					p.Value = &val
+				}
+
 				propertyPath := append(path, pName)
 				pSchema, err := GenerateGoSchema(p, propertyPath)
 				if err != nil {
@@ -417,15 +427,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				if p.Value != nil {
 					description = p.Value.Description
 				}
-
-				// Add extensions for properties from AllOf
-				p.Value.Extensions = make(map[string]interface{})
-				for _, pva := range p.Value.AllOf {
-					for key, value := range pva.Value.Extensions {
-						p.Value.Extensions[key] = value
-					}
-				}
-
 				prop := Property{
 					JsonFieldName: pName,
 					Schema:        pSchema,
