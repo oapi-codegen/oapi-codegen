@@ -6,10 +6,10 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
+	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
 )
 
 type server struct {
@@ -59,7 +59,10 @@ func (s *server) ListThings(ctx echo.Context) error {
 
 	for _, key := range thingKeys {
 		thing := s.things[key]
-		things = append(things, api.ThingWithID{Thing: thing, Id: key})
+		things = append(things, api.ThingWithID{
+			Id:   key,
+			Name: thing.Name,
+		})
 	}
 
 	s.RUnlock()
@@ -97,8 +100,8 @@ func (s *server) AddThing(ctx echo.Context) error {
 
 	s.things[s.lastID] = thing
 	thingWithId := api.ThingWithID{
-		Thing: thing,
-		Id:    s.lastID,
+		Name: thing.Name,
+		Id:   s.lastID,
 	}
 	s.lastID++
 

@@ -1,0 +1,109 @@
+openapi: 3.0.3
+info:
+  title: test
+  description: "The API for Test"
+  version: 2.0.0
+servers:
+  - url: http://localhost:8000
+tags:
+  - name: Tag
+    description: Foo Bar
+paths:
+  /api/my/path:
+    get:
+      tags:
+        - Tag
+      summary: list things
+      description: my list of things
+      operationId: getThings
+      responses:
+        200:
+          $ref: "#/components/responses/ThingResponse"
+        304:
+          $ref: "#/components/responses/304"
+        401:
+          $ref: "./deps/my-deps.json#/components/responses/401"
+        403:
+          $ref: "./deps/my-deps.json#/components/responses/403"
+        404:
+          $ref: "#/components/responses/404"
+        500:
+          $ref: "./deps/my-deps.json#/components/responses/DefaultError"
+components:
+  securitySchemes:
+    bearerAuthWebhook:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: The JWT access token.
+  responses:
+    Empty:
+      description: No content
+    ThingResponse:
+      description: List of Things
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ThingList"
+    304:
+      description: Response when client should use cached results
+      headers:
+        Cache-Control:
+          description: defines TTL of resource in seconds, indicates that the response can be stored in caches, and indicates that the response can be stored only in a private cache
+          example: "max-age: 86400, must-revalidate, private"
+          schema:
+            type: string
+        ETag:
+          description: "indicate the current version of the resource"
+          schema:
+            type: string
+    404:
+      description: Not Found. Resource could not be found
+      content:
+        application/json:
+          schema:
+            $ref: "./deps/my-deps.json#/components/schemas/Error"
+          example:
+            code: 404
+            domain: "Foo"
+            message: "Not Found. Subscription could not be found"
+            reason: "Not_Found"
+    409:
+      description: Conflict. Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: "./deps/my-deps.json#/components/schemas/Error"
+          example:
+            code: 404
+            domain: "Webhook"
+            message: "Conflict. Resource already exists"
+            reason: "Conflict"
+    410:
+      description: Gone. Record no longer available
+      content:
+        application/json:
+          schema:
+            $ref: "./deps/my-deps.json#/components/schemas/Error"
+          example:
+            code: 403
+            domain: ""
+            message: "Gone"
+            reason: "Already deleted"
+  schemas:
+    Thing:
+      type: object
+      properties:
+        name:
+          type: string
+          description: just a name
+      required: [ name]
+    ThingList:
+      type: object
+      description: Object containing list of Things
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: "#/components/schemas/Thing"
+      required: [ keys ]

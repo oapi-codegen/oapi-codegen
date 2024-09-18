@@ -7,10 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/gin/api"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/gin/api"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
 )
 
 func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRecorder {
@@ -21,7 +20,7 @@ func doGet(t *testing.T, handler http.Handler, url string) *httptest.ResponseRec
 func TestPetStore(t *testing.T) {
 	var err error
 	store := api.NewPetStore()
-	ginPetServer := NewGinPetServer(store, 8080)
+	ginPetServer := NewGinPetServer(store, "8080")
 	r := ginPetServer.Handler
 
 	t.Run("Add pet", func(t *testing.T) {
@@ -83,9 +82,7 @@ func TestPetStore(t *testing.T) {
 
 		store.Pets = map[int64]api.Pet{
 			1: {
-				NewPet: api.NewPet{
-					Tag: &tag,
-				},
+				Tag: &tag,
 			},
 			2: {},
 		}

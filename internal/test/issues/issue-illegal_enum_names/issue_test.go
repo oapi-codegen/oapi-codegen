@@ -1,4 +1,4 @@
-package illegal_enum_names
+package illegalenumnames
 
 import (
 	"go/ast"
@@ -6,8 +6,8 @@ import (
 	"go/token"
 	"testing"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,14 +15,17 @@ func TestIllegalEnumNames(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
-	opts := codegen.Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
+	opts := codegen.Configuration{
+		PackageName: "illegalenumnames",
+		Generate: codegen.GenerateOptions{
+			EchoServer:   true,
+			Client:       true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
 	}
 
-	code, err := codegen.Generate(swagger, "illegal_enum_names", opts)
+	code, err := codegen.Generate(swagger, opts)
 	require.NoError(t, err)
 
 	f, err := parser.ParseFile(token.NewFileSet(), "", code, parser.AllErrors)
@@ -43,6 +46,7 @@ func TestIllegalEnumNames(t *testing.T) {
 		}
 	}
 
+	require.Equal(t, `""`, constDefs["BarEmpty"])
 	require.Equal(t, `"Bar"`, constDefs["BarBar"])
 	require.Equal(t, `"Foo"`, constDefs["BarFoo"])
 	require.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])

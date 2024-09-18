@@ -1,0 +1,41 @@
+{{range . -}}
+    {{$hasHeaders := ne 0 (len .Headers) -}}
+    {{$name := .GoName | ucFirst -}}
+    {{if $hasHeaders -}}
+        type {{$name}}ResponseHeaders struct {
+            {{range .Headers -}}
+                {{.GoName}} {{.Schema.TypeDecl}}
+            {{end -}}
+        }
+    {{end -}}
+
+    {{range .Contents -}}
+        {{if and (not $hasHeaders) (.IsSupported) -}}
+            type {{$name}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+        {{else -}}
+            type {{$name}}{{.NameTagOrContentType}}Response struct {
+                Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+
+                {{if $hasHeaders -}}
+                    Headers {{$name}}ResponseHeaders
+                {{end -}}
+
+                {{if not .HasFixedContentType -}}
+                    ContentType string
+                {{end -}}
+
+                {{if not .IsSupported -}}
+                    ContentLength int64
+                {{end -}}
+            }
+        {{end -}}
+    {{end -}}
+
+    {{if eq 0 (len .Contents) -}}
+        type {{$name}}Response struct {
+            {{if $hasHeaders -}}
+                Headers {{$name}}ResponseHeaders
+            {{end}}
+        }
+    {{end}}
+{{end -}}

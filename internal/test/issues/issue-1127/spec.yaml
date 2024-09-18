@@ -1,0 +1,42 @@
+openapi: 3.0.1
+info:
+  title: api
+  version: "0.1.0"
+paths:
+  /whatever:
+    post:
+      operationId: CreateWhatever
+      requestBody:
+        content:
+          application/json-patch+json:
+            schema:
+              $ref: "#/components/schemas/Whatever"
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Whatever"
+          text/json:
+            schema:
+              $ref: "#/components/schemas/Whatever"
+          application/*+json:
+            schema:
+              $ref: "#/components/schemas/Whatever"
+      responses:
+        201:
+          description: Whatever created
+          content:
+            text/plain:
+              schema:
+                $ref: "#/components/schemas/Whatever"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Whatever"
+            text/json:
+              schema:
+                $ref: "#/components/schemas/Whatever"
+components:
+  schemas:
+    Whatever:
+      type: object
+      properties:
+        someProperty:
+          type: string

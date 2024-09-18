@@ -44,7 +44,7 @@ paths:
         required: false
         content:
           application/json:
-            schema: {}
+            schema: { }
   /issues/30/{fallthrough}:
     get:
       operationId: Issue30
@@ -121,11 +121,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EnumInObjInArray"
+  /issues/975:
+    get:
+      operationId: Issue975
+      description: |
+        Deprecated fields should get a proper comment
+      responses:
+        200:
+          description: A struct with deprecated fields with varying level of documentation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeprecatedProperty"
+  /issues/1051:
+    get:
+      operationId: Issue1051
+      description: |
+        Multiple media types contain JSON
+      responses:
+        '200':
+          content:
+            application/vnd.something.v1+json:
+              schema:
+                type: object
+            application/json:
+              schema:
+                type: object
 components:
   schemas:
     GenericObject:
       type: object
-    AnyType1: {}
+    AnyType1: { }
     AnyType2:
       description: |
         AnyType2 represents any type.
@@ -151,7 +177,7 @@ components:
         requiredAndNullable:
           type: string
           nullable: true
-      required: [required, requiredAndNullable]
+      required: [ required, requiredAndNullable ]
     5StartsWithNumber:
       type: object
       description: This schema name starts with a number
@@ -163,8 +189,47 @@ components:
           val:
             type: string
             enum:
-            - first
-            - second
+              - first
+              - second
+    DeprecatedProperty:
+      type: object
+      required:
+        - newProp
+        - oldProp
+      properties:
+        newProp:
+          type: string
+          description: Use this now!
+        oldProp1:
+          type: string
+          deprecated: true
+          # description: No description on this one to test generation in that case
+        oldProp2:
+          type: string
+          deprecated: true
+          description: It used to do this and that
+        oldProp3:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+        oldProp4:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+          description: It used to do this and that
+    OuterTypeWithAnonymousInner:
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          x-go-type-name: InnerRenamedAnonymousObject
+          properties:
+            id:
+              type: integer
+          required: [ id ]
+      required: [ name, inner ]
   parameters:
     StringInPath:
       name: str
@@ -182,5 +247,4 @@ components:
       bearerFormat: |
         JWT-format access token.
 security:
-  - access-token: []
-
+  - access-token: [ ]

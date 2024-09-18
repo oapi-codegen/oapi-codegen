@@ -1,0 +1,6 @@
+package: issue52
+generate:
+  models: true
+output: issue.gen.go
+output-options:
+  skip-prune: true

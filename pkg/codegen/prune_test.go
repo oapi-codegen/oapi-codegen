@@ -18,8 +18,10 @@ func TestFindReferences(t *testing.T) {
 	t.Run("only cat", func(t *testing.T) {
 		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
-		opts := Options{
-			IncludeTags: []string{"cat"},
+		opts := Configuration{
+			OutputOptions: OutputOptions{
+				IncludeTags: []string{"cat"},
+			},
 		}
 
 		filterOperationsByTag(swagger, opts)
@@ -31,8 +33,10 @@ func TestFindReferences(t *testing.T) {
 		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 
-		opts := Options{
-			IncludeTags: []string{"dog"},
+		opts := Configuration{
+			OutputOptions: OutputOptions{
+				IncludeTags: []string{"dog"},
+			},
 		}
 
 		filterOperationsByTag(swagger, opts)
@@ -47,8 +51,10 @@ func TestFilterOnlyCat(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
-	opts := Options{
-		IncludeTags: []string{"cat"},
+	opts := Configuration{
+		OutputOptions: OutputOptions{
+			IncludeTags: []string{"cat"},
+		},
 	}
 
 	refs := findComponentRefs(swagger)
@@ -61,9 +67,9 @@ func TestFilterOnlyCat(t *testing.T) {
 	refs = findComponentRefs(swagger)
 	assert.Len(t, refs, 7)
 
-	assert.NotEmpty(t, swagger.Paths["/cat"], "/cat path should still be in spec")
-	assert.NotEmpty(t, swagger.Paths["/cat"].Get, "GET /cat operation should still be in spec")
-	assert.Empty(t, swagger.Paths["/dog"].Get, "GET /dog should have been removed from spec")
+	assert.NotEmpty(t, swagger.Paths.Value("/cat"), "/cat path should still be in spec")
+	assert.NotEmpty(t, swagger.Paths.Value("/cat").Get, "GET /cat operation should still be in spec")
+	assert.Empty(t, swagger.Paths.Value("/dog").Get, "GET /dog should have been removed from spec")
 
 	pruneUnusedComponents(swagger)
 
@@ -75,8 +81,10 @@ func TestFilterOnlyDog(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
-	opts := Options{
-		IncludeTags: []string{"dog"},
+	opts := Configuration{
+		OutputOptions: OutputOptions{
+			IncludeTags: []string{"dog"},
+		},
 	}
 
 	refs := findComponentRefs(swagger)
@@ -89,9 +97,9 @@ func TestFilterOnlyDog(t *testing.T) {
 
 	assert.Len(t, swagger.Components.Schemas, 5)
 
-	assert.NotEmpty(t, swagger.Paths["/dog"])
-	assert.NotEmpty(t, swagger.Paths["/dog"].Get)
-	assert.Empty(t, swagger.Paths["/cat"].Get)
+	assert.NotEmpty(t, swagger.Paths.Value("/dog"))
+	assert.NotEmpty(t, swagger.Paths.Value("/dog").Get)
+	assert.Empty(t, swagger.Paths.Value("/cat").Get)
 
 	pruneUnusedComponents(swagger)
 

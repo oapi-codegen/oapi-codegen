@@ -1,0 +1,121 @@
+type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
+type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+
+type StrictHTTPServerOptions struct {
+    RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
+    ResponseErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictHTTPServerOptions {
+        RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+        },
+        ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, err.Error(), http.StatusInternalServerError)
+        },
+    }}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictHTTPServerOptions) ServerInterface {
+    return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
+}
+
+type strictHandler struct {
+    ssi StrictServerInterface
+    middlewares []StrictMiddlewareFunc
+    options StrictHTTPServerOptions
+}
+
+{{range .}}
+    {{$opid := .OperationId}}
+    // {{$opid}} operation middleware
+    func (sh *strictHandler) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+        var request {{$opid | ucFirst}}RequestObject
+
+        {{range .PathParams -}}
+            request.{{.GoName}} = {{.GoVariableName}}
+        {{end -}}
+
+        {{if .RequiresParamObject -}}
+            request.Params = params
+        {{end -}}
+
+        {{ if .HasMaskedRequestContentTypes -}}
+            request.ContentType = r.Header.Get("Content-Type")
+        {{end -}}
+
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
+                {{if .IsJSON }}
+                    var body {{$opid}}{{.NameTag}}RequestBody
+                    if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Formdata" -}}
+                    if err := r.ParseForm(); err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
+                        return
+                    }
+                    var body {{$opid}}{{.NameTag}}RequestBody
+                    if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
+                        return
+                    }
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else if eq .NameTag "Multipart" -}}
+                    {{if eq .ContentType "multipart/form-data" -}}
+                    if reader, err := r.MultipartReader(); err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+                        return
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
+                    }
+                    {{else -}}
+                    if _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, err)
+                        return
+                    } else if boundary := params["boundary"]; boundary == "" {
+                        sh.options.RequestErrorHandlerFunc(w, r, http.ErrMissingBoundary)
+                        return
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(r.Body, boundary)
+                    }
+                    {{end -}}
+                {{else if eq .NameTag "Text" -}}
+                    data, err := io.ReadAll(r.Body)
+                    if err != nil {
+                        sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
+                        return
+                    }
+                    body := {{$opid}}{{.NameTag}}RequestBody(data)
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                {{else -}}
+                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            {{if $multipleBodies}}}{{end}}
+        {{end}}{{/* range .Bodies */}}
+
+        handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
+        }
+        for _, middleware := range sh.middlewares {
+            handler = middleware(handler, "{{.OperationId}}")
+        }
+
+        response, err := handler(r.Context(), w, r, request)
+
+        if err != nil {
+            sh.options.ResponseErrorHandlerFunc(w, r, err)
+        } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
+            if err := validResponse.Visit{{$opid}}Response(w); err != nil {
+                sh.options.ResponseErrorHandlerFunc(w, r, err)
+            }
+        } else if response != nil {
+            sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+        }
+    }
+{{end}}

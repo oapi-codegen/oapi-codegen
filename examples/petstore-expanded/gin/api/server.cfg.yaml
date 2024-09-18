@@ -1,5 +1,6 @@
-output: examples/petstore-expanded/gin/api/petstore-server.gen.go
-generate:
-  - gin
-  - spec
+# yaml-language-server: $schema=../../../../configuration-schema.json
 package: api
+generate:
+  gin-server: true
+  embedded-spec: true
+output: petstore-server.gen.go

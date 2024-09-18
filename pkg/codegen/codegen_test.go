@@ -1,132 +1,46 @@
 package codegen
 
 import (
-	"bytes"
+	_ "embed"
 	"go/format"
-	"io/ioutil"
-	"net/http"
 	"testing"
 
-	examplePetstoreClient "github.com/deepmap/oapi-codegen/examples/petstore-expanded"
-	examplePetstore "github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/golangci/lint-1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
-func TestExamplePetStoreCodeGeneration(t *testing.T) {
-
-	// Input vars for code generation:
-	packageName := "api"
-	opts := Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
-	}
-
-	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
-	assert.NoError(t, err)
-
-	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
-
-	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
-
-	// Check that we have a package:
-	assert.Contains(t, code, "package api")
-
-	// Check that the client method signatures return response structs:
-	assert.Contains(t, code, "func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {")
-
-	// Check that the property comments were generated
-	assert.Contains(t, code, "// Unique id of the pet")
-
-	// Check that the summary comment contains newlines
-	assert.Contains(t, code, `// Deletes a pet by ID
-	// (DELETE /pets/{id})
-`)
-
-	// Make sure the generated code is valid:
-	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", []byte(code))
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
-}
-
-func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
-
-	userTemplates := map[string]string{"typedef.tmpl": "//blah"}
-
-	// Input vars for code generation:
-	packageName := "api"
-	opts := Options{
-		GenerateTypes: true,
-		UserTemplates: userTemplates,
-	}
-
-	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
-	assert.NoError(t, err)
-
-	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
-	assert.NoError(t, err)
-	assert.NotEmpty(t, code)
-
-	// Check that we have valid (formattable) code:
-	_, err = format.Source([]byte(code))
-	assert.NoError(t, err)
-
-	// Check that we have a package:
-	assert.Contains(t, code, "package api")
-
-	// Check that the built-in template has been overriden
-	assert.Contains(t, code, "//blah")
-}
-
-func TestExamplePetStoreParseFunction(t *testing.T) {
-
-	bodyBytes := []byte(`{"id": 5, "name": "testpet", "tag": "cat"}`)
-
-	cannedResponse := &http.Response{
-		StatusCode: 200,
-		Body:       ioutil.NopCloser(bytes.NewReader(bodyBytes)),
-		Header:     http.Header{},
-	}
-	cannedResponse.Header.Add("Content-type", "application/json")
-
-	findPetByIDResponse, err := examplePetstoreClient.ParseFindPetByIDResponse(cannedResponse)
-	assert.NoError(t, err)
-	assert.NotNil(t, findPetByIDResponse.JSON200)
-	assert.Equal(t, int64(5), findPetByIDResponse.JSON200.Id)
-	assert.Equal(t, "testpet", findPetByIDResponse.JSON200.Name)
-	assert.NotNil(t, findPetByIDResponse.JSON200.Tag)
-	assert.Equal(t, "cat", *findPetByIDResponse.JSON200.Tag)
-}
+const (
+	remoteRefFile = `https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded` +
+		`/petstore-expanded.yaml`
+	remoteRefImport = `github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded`
+)
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "testswagger"
-	opts := Options{
-		GenerateClient:     true,
-		GenerateEchoServer: true,
-		GenerateTypes:      true,
-		EmbedSpec:          true,
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Client:       true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
 	}
 
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+
 	// Get a spec from the test definition in this file:
-	swagger, err := openapi3.NewLoader().LoadFromData([]byte(testOpenAPIDefinition))
+	swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
 	assert.NoError(t, err)
 
 	// Run our code generation:
-	code, err := Generate(swagger, packageName, opts)
+	code, err := Generate(swagger, opts)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, code)
 
@@ -160,155 +74,158 @@ type GetTestByNameResponse struct {
 
 	// Check the client method signatures:
 	assert.Contains(t, code, "type GetTestByNameParams struct {")
-	assert.Contains(t, code, "Top *int `json:\"$top,omitempty\"`")
+	assert.Contains(t, code, "Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
 	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
-
-	// Make sure the generated code is valid:
-	linter := new(lint.Linter)
-	problems, err := linter.Lint("test.gen.go", []byte(code))
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
+	assert.Contains(t, code, "type EnumTestNumerics int")
+	assert.Contains(t, code, "N2 EnumTestNumerics = 2")
+	assert.Contains(t, code, "type EnumTestEnumNames int")
+	assert.Contains(t, code, "Two  EnumTestEnumNames = 2")
+	assert.Contains(t, code, "Double EnumTestEnumVarnames = 2")
 }
 
-const testOpenAPIDefinition = `
-openapi: 3.0.1
+func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+			Strict:       true,
+		},
+	}
+	spec := "test_specs/x-go-type-skip-optional-pointer.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
 
-info:
-  title: OpenAPI-CodeGen Test
-  description: 'This is a test OpenAPI Spec'
-  version: 1.0.0
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
 
-servers:
-- url: https://test.oapi-codegen.com/v2
-- url: http://test.oapi-codegen.com/v2
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
 
-paths:
-  /test/{name}:
-    get:
-      tags:
-      - test
-      summary: Get test
-      operationId: getTestByName
-      parameters:
-      - name: name
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: $top
-        in: query
-        required: false
-        schema:
-          type: integer
-      responses:
-        200:
-          description: Success
-          content:
-            application/xml:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Test'
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Test'
-        422:
-          description: InvalidArray
-          content:
-            application/xml:
-              schema:
-                type: array
-            application/json:
-              schema:
-                type: array
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /cat:
-    get:
-      tags:
-      - cat
-      summary: Get cat status
-      operationId: getCatStatus
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                oneOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-            application/xml:
-              schema:
-                anyOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-            application/yaml:
-              schema:
-                allOf:
-                - $ref: '#/components/schemas/CatAlive'
-                - $ref: '#/components/schemas/CatDead'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+	// Check that optional pointer fields are skipped if requested
+	assert.Contains(t, code, "NullableFieldSkipFalse *string `json:\"nullableFieldSkipFalse\"`")
+	assert.Contains(t, code, "NullableFieldSkipTrue  string  `json:\"nullableFieldSkipTrue\"`")
+	assert.Contains(t, code, "OptionalField          *string `json:\"optionalField,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipFalse *string `json:\"optionalFieldSkipFalse,omitempty\"`")
+	assert.Contains(t, code, "OptionalFieldSkipTrue  string  `json:\"optionalFieldSkipTrue,omitempty\"`")
 
-components:
-  schemas:
+	// Check that the extension applies on custom types as well
+	assert.Contains(t, code, "CustomTypeWithSkipTrue string  `json:\"customTypeWithSkipTrue,omitempty\"`")
 
-    Test:
-      properties:
-        name:
-          type: string
-        cases:
-          type: array
-          items:
-            $ref: '#/components/schemas/TestCase'
+	// Check that the extension has no effect on required fields
+	assert.Contains(t, code, "RequiredField          string  `json:\"requiredField\"`")
+}
 
-    TestCase:
-      properties:
-        name:
-          type: string
-        command:
-          type: string
+func TestGoTypeImport(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
+	}
+	spec := "test_specs/x-go-type-import-pet.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
 
-    Error:
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
 
-    CatAlive:
-      properties:
-        name:
-          type: string
-        alive_since:
-          type: string
-          format: date-time
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
 
-    CatDead:
-      properties:
-        name:
-          type: string
-        dead_since:
-          type: string
-          format: date-time
-          x-oapi-codegen-extra-tags:
-            tag1: value1
-            tag2: value2
-        cause:
-          type: string
-          enum: [car, dog, oldage]
-`
+	imports := []string{
+		`github.com/CavernaTechnologies/pgext`, // schemas - direct object
+		`myuuid "github.com/google/uuid"`,      // schemas - object
+		`github.com/lib/pq`,                    // schemas - array
+		`github.com/spf13/viper`,               // responses - direct object
+		`golang.org/x/text`,                    // responses - complex object
+		`golang.org/x/email`,                   // requestBodies - in components
+		`github.com/fatih/color`,               // parameters - query
+		`github.com/go-openapi/swag`,           // parameters - path
+		`github.com/jackc/pgtype`,              // direct parameters - path
+		`github.com/mailru/easyjson`,           // direct parameters - query
+		`github.com/subosito/gotenv`,           // direct request body
+	}
+
+	// Check import
+	for _, imp := range imports {
+		assert.Contains(t, code, imp)
+	}
+}
+
+func TestRemoteExternalReference(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping test that interacts with the network")
+	}
+
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		ImportMapping: map[string]string{
+			remoteRefFile: remoteRefImport,
+		},
+	}
+	spec := "test_specs/remote-external-reference.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package api")
+
+	// Check import
+	assert.Contains(t, code, `externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded"`)
+
+	// Check generated oneOf structure:
+	assert.Contains(t, code, `
+// ExampleSchema_Item defines model for ExampleSchema.Item.
+type ExampleSchema_Item struct {
+	union json.RawMessage
+}
+`)
+
+	// Check generated oneOf structure As method:
+	assert.Contains(t, code, `
+// AsExternalRef0NewPet returns the union data inside the ExampleSchema_Item as a externalRef0.NewPet
+func (t ExampleSchema_Item) AsExternalRef0NewPet() (externalRef0.NewPet, error) {
+`)
+
+	// Check generated oneOf structure From method:
+	assert.Contains(t, code, `
+// FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
+func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
+`)
+
+	// Check generated oneOf structure Merge method:
+	assert.Contains(t, code, `
+// FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
+func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
+`)
+}
+
+//go:embed test_spec.yaml
+var testOpenAPIDefinition string

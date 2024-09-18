@@ -1,0 +1,161 @@
+// ServerInterfaceWrapper converts echo contexts to parameters.
+type ServerInterfaceWrapper struct {
+    Handler ServerInterface
+}
+
+type MiddlewareFunc iris.Handler
+
+{{range .}}{{$opid := .OperationId}}// {{$opid}} converts iris context to params.
+func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
+{{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+    var err error
+{{end}}
+
+{{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+    var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+{{if .IsPassThrough}}
+    {{$varName}} = ctx.URLParam("{{.ParamName}}")
+{{end}}
+{{if .IsJson}}
+    err = json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
+    if err != nil {
+    	ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return
+    }
+{{end}}
+{{if .IsStyled}}
+    err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", ctx.Params().Get("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
+    }
+{{end}}
+{{end}}
+
+{{range .SecurityDefinitions}}
+    ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{end}}
+
+{{if .RequiresParamObject}}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+{{range $paramIdx, $param := .QueryParams}}
+    {{- if (or (or .Required .IsPassThrough) (or .IsJson .IsStyled)) -}}
+      // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+    {{ end }}
+    {{if .IsStyled}}
+    err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}})
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
+    }
+    {{else}}
+    if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    err = json.Unmarshal([]byte(paramValue), &value)
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Query argument {{.ParamName}} is required, but not found")
+        return
+    }{{end}}
+    {{end}}
+{{end}}
+
+{{if .HeaderParams}}
+    headers := ctx.Request().Header
+{{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+    if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+        var {{.GoName}} {{.TypeDef}}
+        n := len(valueList)
+        if n != 1 {
+            ctx.StatusCode(http.StatusBadRequest)
+            ctx.Writef("Expected one value for {{.ParamName}}, got %d", n)
+            return
+        }
+{{if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+{{end}}
+{{if .IsJson}}
+        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        if err != nil {
+            ctx.StatusCode(http.StatusBadRequest)
+            ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+            return
+        }
+{{end}}
+{{if .IsStyled}}
+        err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+        if err != nil {
+            ctx.StatusCode(http.StatusBadRequest)
+            ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+            return
+        }
+{{end}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        } {{if .Required}}else {
+            ctx.StatusCode(http.StatusBadRequest)
+            ctx.WriteString("Header {{.ParamName}} is required, but not found")
+            return
+        }{{end}}
+{{end}}
+{{end}}
+
+{{range .CookieParams}}
+    if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
+    {{if .IsPassThrough}}
+    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    {{end}}
+    {{if .IsJson}}
+    var value {{.TypeDef}}
+    var decoded string
+    decoded, err := url.QueryUnescape(cookie.Value)
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Error unescaping cookie parameter '{{.ParamName}}'")
+        return
+    }
+    err = json.Unmarshal([]byte(decoded), &value)
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        return
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    {{if .IsStyled}}
+    var value {{.TypeDef}}
+    err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}})
+    if err != nil {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
+        return
+    }
+    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    {{end}}
+    }{{if .Required}} else {
+        ctx.StatusCode(http.StatusBadRequest)
+        ctx.WriteString("Cookie {{.ParamName}} is required, but not found")
+        return
+    }{{end}}
+
+{{end}}{{/* .CookieParams */}}
+
+{{end}}{{/* .RequiresParamObject */}}
+    // Invoke the callback with all the unmarshaled arguments
+    w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+}
+{{end}}

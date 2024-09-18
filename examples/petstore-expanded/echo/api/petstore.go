@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=types.cfg.yaml ../../petstore-expanded.yaml
-//go:generate go run github.com/deepmap/oapi-codegen/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=models.cfg.yaml ../../petstore-expanded.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../../petstore-expanded.yaml
 
 package api
 
@@ -23,25 +23,26 @@ import (
 	"sync"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api/models"
 )
 
 type PetStore struct {
-	Pets   map[int64]Pet
+	Pets   map[int64]models.Pet
 	NextId int64
 	Lock   sync.Mutex
 }
 
 func NewPetStore() *PetStore {
 	return &PetStore{
-		Pets:   make(map[int64]Pet),
+		Pets:   make(map[int64]models.Pet),
 		NextId: 1000,
 	}
 }
 
-// This function wraps sending of an error in the Error format, and
+// sendPetStoreError wraps sending of an error in the Error format, and
 // handling the failure to marshal that.
-func sendPetstoreError(ctx echo.Context, code int, message string) error {
-	petErr := Error{
+func sendPetStoreError(ctx echo.Context, code int, message string) error {
+	petErr := models.Error{
 		Code:    int32(code),
 		Message: message,
 	}
@@ -49,12 +50,12 @@ func sendPetstoreError(ctx echo.Context, code int, message string) error {
 	return err
 }
 
-// Here, we implement all of the handlers in the ServerInterface
-func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
+// FindPets implements all the handlers in the ServerInterface
+func (p *PetStore) FindPets(ctx echo.Context, params models.FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
-	var result []Pet
+	var result []models.Pet
 
 	for _, pet := range p.Pets {
 		if params.Tags != nil {
@@ -82,10 +83,10 @@ func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
 
 func (p *PetStore) AddPet(ctx echo.Context) error {
 	// We expect a NewPet object in the request body.
-	var newPet NewPet
+	var newPet models.NewPet
 	err := ctx.Bind(&newPet)
 	if err != nil {
-		return sendPetstoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
+		return sendPetStoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
 	}
 	// We now have a pet, let's add it to our "database".
 
@@ -94,11 +95,11 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	defer p.Lock.Unlock()
 
 	// We handle pets, not NewPets, which have an additional ID field
-	var pet Pet
+	var pet models.Pet
 	pet.Name = newPet.Name
 	pet.Tag = newPet.Tag
 	pet.Id = p.NextId
-	p.NextId = p.NextId + 1
+	p.NextId++
 
 	// Insert into map
 	p.Pets[pet.Id] = pet
@@ -125,7 +126,7 @@ func (p *PetStore) FindPetByID(ctx echo.Context, petId int64) error {
 
 	pet, found := p.Pets[petId]
 	if !found {
-		return sendPetstoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(ctx, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", petId))
 	}
 	return ctx.JSON(http.StatusOK, pet)
@@ -137,7 +138,7 @@ func (p *PetStore) DeletePet(ctx echo.Context, id int64) error {
 
 	_, found := p.Pets[id]
 	if !found {
-		return sendPetstoreError(ctx, http.StatusNotFound,
+		return sendPetStoreError(ctx, http.StatusNotFound,
 			fmt.Sprintf("Could not find pet with ID %d", id))
 	}
 	delete(p.Pets, id)

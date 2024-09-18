@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: api
+generate:
+  models: true
+  client: true
+output: client.gen.go
