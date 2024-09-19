@@ -598,8 +598,10 @@ func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultiple
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.Writer) error
@@ -740,8 +742,10 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type UnknownExample400Response = BadrequestResponse
@@ -785,8 +789,10 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type UnspecifiedContentType400Response = BadrequestResponse
