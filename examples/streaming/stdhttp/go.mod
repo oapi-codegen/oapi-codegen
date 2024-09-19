@@ -2,8 +2,6 @@ module github.com/oapi-codegen/oapi-codegen/v2/examples/streaming/stdhttp
 
 go 1.21.13
 
-toolchain go1.23.0
-
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../
 
 require (
