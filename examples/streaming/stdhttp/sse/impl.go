@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
-	"math/rand/v2"
 	"net/http"
 	"time"
 )
@@ -29,7 +28,7 @@ func NewServer() *Server {
 func (s Server) Run(ctx context.Context) error {
 	go func() {
 		<-ctx.Done()
-		fmt.Println("context cancelled, shutting down")
+		slog.Warn("context cancelled, shutting down")
 		ctxTimeout, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		err := s.httpServer.Shutdown(ctxTimeout)
 		cancel()
@@ -52,22 +51,15 @@ type SObject struct {
 
 // (GET /ping)
 func (Server) GetStream(ctx context.Context, _ GetStreamRequestObject) (GetStreamResponseObject, error) {
-	// 10% chance of returning an error
-	if rand.IntN(10) == 0 {
-		return nil, errors.New("random error")
-	}
-	fmt.Println("GetStream invoked")
-	defer fmt.Println("GetStream returneds")
-	r, w := io.Pipe()
+	r, w := io.Pipe() // creates a pipe so that we can write to the response body asynchronously
 	go func() {
 		defer w.Close()
-		defer fmt.Println("goro done")
 		seq := 1
 		ticker := time.NewTicker(time.Second)
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Println("goro finished up")
+				slog.Info("request context done, closing stream")
 				return
 			case <-ticker.C:
 				content := getContent(seq)
@@ -78,7 +70,6 @@ func (Server) GetStream(ctx context.Context, _ GetStreamRequestObject) (GetStrea
 					return
 				}
 				seq++
-				fmt.Println("output sent")
 			}
 		}
 	}()

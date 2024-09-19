@@ -192,29 +192,33 @@ func (response GetStream200TexteventStreamResponse) VisitGetStreamResponse(w htt
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
-	for {
-		buf := make([]byte, 8*1024)
-		n, err := response.Body.Read(buf)
-		if err != nil && err != io.EOF {
-			return err
-		}
-		if n == 0 {
-			break
-		}
-		if _, err := w.Write(buf[:n]); err != nil {
-			return err
-		}
 
-		if f, ok := w.(http.Flusher); ok {
-			f.Flush()
-		}
-		if err == io.EOF {
-			break
-		}
-
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		// If w doesn't support flushing, might as well use io.Copy
+		_, err := io.Copy(w, response.Body)
+		return err
 	}
-	_, err := io.Copy(w, response.Body)
-	return err
+
+	// Use a buffer for efficient copying and flushing
+	buf := make([]byte, 4096) // text/event-stream are usually very small messages
+	for {
+		n, err := response.Body.Read(buf)
+		if n > 0 {
+			_, writeErr := w.Write(buf[:n])
+			if writeErr != nil {
+				return writeErr
+			}
+			flusher.Flush() // Flush after each write
+		}
+		if err != nil {
+			if err == io.EOF {
+				return nil // End of file, no error
+			}
+			return err
+		}
+	}
+
 }
 
 // StrictServerInterface represents all server handlers.

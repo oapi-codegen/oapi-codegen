@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/streaming/stdhttp/sse"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -16,7 +16,7 @@ func main() {
 	defer cancel()
 	err := server.Run(ctx)
 	if err != nil {
-		fmt.Println("error:", err)
+		slog.Error("server run failed", "error:", err)
 		os.Exit(1)
 	}
 }
