@@ -77,7 +77,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         }{{end}}
       {{end}}
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
+      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, {{.Schema.DefaultValue | toGoValueSyntax}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
       if err != nil {
         siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
         return

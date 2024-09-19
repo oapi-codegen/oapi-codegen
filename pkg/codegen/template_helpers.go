@@ -17,6 +17,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -283,11 +285,122 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 
 // This outputs a string array
 func toStringArray(sarr []string) string {
-	s := strings.Join(sarr, `","`)
-	if len(s) > 0 {
-		s = `"` + s + `"`
+	return ToGoValueSyntax(sarr)
+}
+
+// ToGoValueSyntax returns the string go-syntax representation of the value.
+func ToGoValueSyntax(input any) string {
+	v := reflect.ValueOf(input)
+
+	switch v.Kind() {
+	case reflect.Invalid: // nil with no type
+		return "nil"
+	case reflect.Pointer:
+		if v.IsNil() {
+			return "nil"
+		}
+
+		return ToGoValueSyntax(v.Elem())
+	case reflect.Interface:
+		if v.IsNil() {
+			return "nil"
+		}
+		fallthrough
+	case reflect.Chan, reflect.Func, reflect.Struct, reflect.UnsafePointer:
+		panic("unsupported")
+	case reflect.Array, reflect.Slice:
+		var sb strings.Builder
+
+		refKind := v.Type().Elem().Kind()
+		var eleKind reflect.Kind
+
+		for i := 0; i < v.Len(); i++ {
+			item := v.Index(i).Interface()
+
+			if i > 0 {
+				sb.WriteString(",")
+			}
+			sb.WriteString(ToGoValueSyntax(item))
+
+			if refKind == reflect.Interface {
+				k := reflect.ValueOf(item).Kind()
+
+				if i == 0 {
+					eleKind = k
+				} else if eleKind != reflect.Invalid {
+					if eleKind != k {
+						eleKind = reflect.Invalid
+					}
+				}
+			}
+		}
+
+		if refKind == reflect.Interface && eleKind != reflect.Invalid {
+			refKind = eleKind
+		}
+
+		// Only print fixed length in the case of an array. Could use
+		// the '...' synatx sugar but may as well be precise.
+		var length string
+		if v.Kind() == reflect.Array {
+			length = strconv.FormatInt(int64(v.Len()), 10)
+		}
+
+		return fmt.Sprintf(`[%s]%s{%s}`, length, refKind, sb.String())
+	case reflect.Map:
+		var sb strings.Builder
+
+		refKind := v.Type().Elem().Kind()
+		var eleKind reflect.Kind
+
+		first := true
+
+		iter := v.MapRange()
+		for iter.Next() {
+			k := iter.Key().Interface()
+			v := iter.Value().Interface()
+
+			if !first {
+				sb.WriteString(",")
+			}
+			sb.WriteString(ToGoValueSyntax(k))
+			sb.WriteString(": ")
+			sb.WriteString(ToGoValueSyntax(v))
+
+			if refKind == reflect.Interface {
+				k := reflect.ValueOf(v).Kind()
+
+				if first {
+					eleKind = k
+				} else if eleKind != reflect.Invalid {
+					if eleKind != k {
+						eleKind = reflect.Invalid
+					}
+				}
+			}
+
+			first = false
+		}
+
+		if refKind == reflect.Interface && eleKind != reflect.Invalid {
+			refKind = eleKind
+		}
+
+		return fmt.Sprintf(`map[%s]%s{%s}`, v.Type().Key(), refKind, sb.String())
+	case reflect.String:
+		// Pages about string literals and escaping
+		// https://go.dev/ref/spec#String_literals
+		// https://go.dev/blog/strings#utf-8-and-string-literals
+
+		// https://pkg.go.dev/fmt
+		// The + "guarantee ASCII-only output for %q (%+q)"
+		// The #, "print a raw (backquoted) string if [strconv.CanBackquote] returns true;"
+		return fmt.Sprintf("%+#q", input)
+	default: // numbers & bool
+		// https://pkg.go.dev/fmt
+		// The #, "a Go-syntax representation of the value (floating-point infinities and NaNs print as ±Inf and NaN)"
+		return fmt.Sprintf("%#v", input)
 	}
-	return `[]string{` + s + `}`
 }
 
 func stripNewLines(s string) string {
@@ -323,4 +436,5 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"toGoValueSyntax":            ToGoValueSyntax,
 }
