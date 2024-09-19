@@ -49,7 +49,7 @@ type SObject struct {
 	Sequence int       `json:"sequence"`
 }
 
-// (GET /ping)
+// GetStream handles GET / and will stream a JSON object every second.
 func (Server) GetStream(ctx context.Context, _ GetStreamRequestObject) (GetStreamResponseObject, error) {
 	r, w := io.Pipe() // creates a pipe so that we can write to the response body asynchronously
 	go func() {
