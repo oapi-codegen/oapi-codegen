@@ -133,10 +133,10 @@
 			            return err
 		                }
                 	}
-                    {{ else }}
+                {{else}}
                     _, err := io.Copy(w, response.Body)
                     return err
-                    {{ end }}
+                {{end}}
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             }
         {{end}}
