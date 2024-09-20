@@ -9,4 +9,4 @@ output-options:
   # to make sure that all types are generated
   skip-prune: true
 import-mapping:
-  user.yaml: "*"
+  user.yaml: "-"

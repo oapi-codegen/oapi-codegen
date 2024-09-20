@@ -66,11 +66,16 @@ func (gi goImport) String() string {
 // importMap maps external OpenAPI specifications files/urls to external go packages
 type importMap map[string]goImport
 
+// importMappingCurrentPackage allows an Import Mapping to map to the current package, rather than an external package.
+// This allows users to split their OpenAPI specification across multiple files, but keep them in the same package, which can reduce a bit of the overhead for users.
+// We use `-` to indicate that this is a bit of a special case
+const importMappingCurrentPackage = "-"
+
 // GoImports returns a slice of go import statements
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
-		if v.Path == "*" {
+		if v.Path == importMappingCurrentPackage {
 			continue
 		}
 		goImports = append(goImports, v.String())

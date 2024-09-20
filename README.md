@@ -1834,6 +1834,21 @@ This is supported by `oapi-codegen`, through the ability to perform "Import Mapp
 
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 
+### Using a single package, with multiple OpenAPI spec for a given package
+
+<a name=import-mapping-self></a>
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, it is now possible to define **??**
+
+This allows you to specify **??**
+
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+
+### Using multiple packages, with one OpenAPI spec per package
+
 In this case, we may have an Admin API that looks like:
 
 ```yaml
@@ -1945,18 +1960,9 @@ import (
 type User = externalRef0.User
 ```
 
-If you don't want to do this, an alternate option is to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
+If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
 Check out [the import-mapping example](examples/import-mapping/) for the full code.
-
-### **??**
-
-> [!TIP]
-> Since `oapi-codegen` v2.4.0, **??**
-
-This allows you to specify **??**
-
-Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
 
 ## Modifying the input OpenAPI Specification
 
