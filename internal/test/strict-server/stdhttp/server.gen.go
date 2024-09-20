@@ -733,8 +733,9 @@ func (response StreamingExample200TexteventStreamResponse) VisitStreamingExample
 		return err
 	}
 
+	// Use a buffer for efficient copying and flushing
+	buf := make([]byte, 4096) // text/event-stream are usually very small messages
 	for {
-		buf := make([]byte, 4096) // remember that the buffer might be referenced by the Write method, so it must be allocated on each iteration
 		n, err := response.Body.Read(buf)
 		if n > 0 {
 			_, writeErr := w.Write(buf[:n])
