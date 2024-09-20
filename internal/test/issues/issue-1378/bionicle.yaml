@@ -1,0 +1,43 @@
+openapi: 3.0.1
+
+info:
+  title: Test
+  description: Test
+  version: 1.0.0
+
+paths:
+  /bionicle/{name}:
+    get:
+      parameters:
+        - $ref: "#/components/parameters/bionicleName"
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bionicle'
+        '400':
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Bionicle'
+
+components:
+  parameters:
+    bionicleName:
+      name: name
+      in: path
+      description: Name of the character
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    Bionicle:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name

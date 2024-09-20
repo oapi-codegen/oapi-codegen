@@ -46,7 +46,17 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Multipart" -}}
+                    {{if eq .ContentType "multipart/form-data" -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(bytes.NewReader(ctx.Request().Body()), string(ctx.Request().Header.MultipartFormBoundary()))
+                    {{else -}}
+                    if _, params, err := mime.ParseMediaType(string(ctx.Request().Header.ContentType())); err != nil {
+                        return fiber.NewError(fiber.StatusBadRequest, err.Error())
+                    } else if boundary := params["boundary"]; boundary == "" {
+                        return fiber.NewError(fiber.StatusBadRequest, http.ErrMissingBoundary.Error())
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(bytes.NewReader(ctx.Request().Body()), boundary)
+                    }
+                    {{end -}}
                 {{else if eq .NameTag "Text" -}}
                     data := ctx.Request().Body()
                     body := {{$opid}}{{.NameTag}}RequestBody(data)
