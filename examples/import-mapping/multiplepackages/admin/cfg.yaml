@@ -8,4 +8,4 @@ output-options:
   # to make sure that all types are generated
   skip-prune: true
 import-mapping:
-  ../common/api.yaml: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/common
+  ../common/api.yaml: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/multiplepackages/common
