@@ -26,3 +26,17 @@ jobs:
         env:
           # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
           GOTOOLCHAIN: local
+
+  results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Check results
+    needs: [build]
+    steps:
+      - run: |
+          result="${{ needs.build.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
