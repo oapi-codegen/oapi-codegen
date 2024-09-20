@@ -1,6 +1,6 @@
-package: inline
+package: ref_schema
 generate:
   models: true
   client: true
   echo-server: true
-output: inline/openapi.gen.go
+output: openapi.gen.go
