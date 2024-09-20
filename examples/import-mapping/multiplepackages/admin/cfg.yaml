@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: admin
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  ../common/api.yaml: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/multiplepackages/common

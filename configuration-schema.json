@@ -221,7 +221,7 @@
       "type": "object",
       "additionalProperties": {
         "type": "string",
-        "description": "ImportMapping specifies the golang package path for each external reference"
+        "description": "ImportMapping specifies the golang package path for each external reference. A value of `-` will indicate that the current package will be used"
       }
     },
     "additional-imports": {

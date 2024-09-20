@@ -1824,10 +1824,13 @@ For a complete example see [`examples/only-models`](examples/only-models).
 When you've got a large OpenAPI specification, you may find it useful to split the contents of the spec across multiple files, using external references, such as:
 
 ```yaml
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
@@ -1869,11 +1872,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+                $ref: '../common/api.yaml#/components/schemas/User'
 ```
 
 This references the common spec:
@@ -1892,7 +1891,75 @@ components:
         - name
 ```
 
-And finally we have our configuration file:
+So how do we get `oapi-codegen` to generate our code?
+
+### Using a single package, with multiple OpenAPI spec for a given package
+
+<a name=import-mapping-self></a>
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, it is now possible to split large OpenAPI specifications into the same Go package, using the "self" mapping (denoted by a `-`) when using Import Mapping.
+>
+> This is an improvement on the previous model, which would require splitting files across multiple packages.
+
+> [!NOTE]
+> You still need to have multiple `go generate`s, and any other configuration files.
+
+To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
+
+```sh
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
+```
+
+This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  user.yaml: "-"
+```
+
+And then our `cfg-user.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+```
+
+From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+### Using multiple packages, with one OpenAPI spec per package
+
+To get `oapi-codegen`'s multi-package support working, we need to set up our directory structure:
+
+```
+├── admin
+│   ├── cfg.yaml
+│   └── generate.go
+└── common
+    ├── cfg.yaml
+    └── generate.go
+```
+
+We could start with our configuration file for our admin API spec:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -1914,7 +1981,7 @@ If we were to run `oapi-codegen`, this will fail with the following error
 error generating code: error creating operation definitions: error generating response definitions: error generating request body definition: error turning reference (../common/api.yaml#/components/schemas/User) into a Go type: unrecognized external reference '../common/api.yaml'; please provide the known import for this reference using option --import-mapping
 ```
 
-This is because `oapi-codegen` requires:
+This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -1945,9 +2012,9 @@ import (
 type User = externalRef0.User
 ```
 
-If you don't want to do this, an alternate option is to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
+If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/) for the full code.
+Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
 ## Modifying the input OpenAPI Specification
 
