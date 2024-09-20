@@ -171,7 +171,10 @@ type GetPing200ResponseHeaders struct {
 	MyHeader string
 }
 
-type GetPing200TextResponse string
+type GetPing200TextResponse struct {
+	Body    string
+	Headers GetPing200ResponseHeaders
+}
 
 func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "text/plain")
