@@ -44,13 +44,20 @@ type ClientWithResponsesInterface interface {
 }
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
+{{$responseTypeDefinitions := getResponseTypeDefinitions .}}
 type {{genResponseTypeName $opid | ucFirst}} struct {
     Body         []byte
 	HTTPResponse *http.Response
-    {{- range getResponseTypeDefinitions .}}
+    {{- range $responseTypeDefinitions}}
     {{.TypeName}} *{{.Schema.TypeDecl}}
     {{- end}}
 }
+
+{{- range $responseTypeDefinitions}}
+  {{- range .AdditionalTypeDefinitions}}
+    type {{.TypeName}} {{if .IsAlias }}={{end}} {{.Schema.TypeDecl}}
+  {{- end}}
+{{- end}}
 
 // Status returns HTTPResponse.Status
 func (r {{genResponseTypeName $opid | ucFirst}}) Status() string {

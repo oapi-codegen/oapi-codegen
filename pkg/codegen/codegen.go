@@ -30,9 +30,10 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 // Embed the templates directory
@@ -112,6 +113,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
+	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(spec)
 	}
@@ -123,6 +125,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if globalState.options.OutputOptions.ClientTypeName == "" {
 		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
+	}
+
+	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
+	nameNormalizer = NameNormalizers[nameNormalizerFunction]
+	if nameNormalizer == nil {
+		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
+			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
 
 	// This creates the golang templates text package
@@ -222,6 +231,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var gorillaServerOut string
 	if opts.Generate.GorillaServer {
 		gorillaServerOut, err = GenerateGorillaServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var stdHTTPServerOut string
+	if opts.Generate.StdHTTPServer {
+		stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -349,6 +366,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.GorillaServer {
 		_, err = w.WriteString(gorillaServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.StdHTTPServer {
+		_, err = w.WriteString(stdHTTPServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -516,7 +540,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			Schema:   goSchema,
 		})
 
-		types = append(types, goSchema.GetAdditionalTypeDefs()...)
+		types = append(types, goSchema.AdditionalTypes...)
 	}
 	return types, nil
 }
@@ -525,7 +549,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 // components/parameters section of the Swagger spec.
 func GenerateTypesForParameters(t *template.Template, params map[string]*openapi3.ParameterRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
-	for _, paramName := range SortedParameterKeys(params) {
+	for _, paramName := range SortedMapKeys(params) {
 		paramOrRef := params[paramName]
 
 		goType, err := paramToGoType(paramOrRef.Value, nil)
@@ -560,10 +584,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 // GenerateTypesForResponses generates type definitions for any custom types defined in the
 // components/responses section of the Swagger spec.
-func GenerateTypesForResponses(t *template.Template, responses openapi3.Responses) ([]TypeDefinition, error) {
+func GenerateTypesForResponses(t *template.Template, responses openapi3.ResponseBodies) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, responseName := range SortedResponsesKeys(responses) {
+	for _, responseName := range SortedMapKeys(responses) {
 		responseOrRef := responses[responseName]
 
 		// We have to generate the response object. We're only going to
@@ -578,8 +602,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 		}
 
-		sortedContentKeys := SortedContentKeys(response.Content)
-		for _, mediaType := range sortedContentKeys {
+		SortedMapKeys := SortedMapKeys(response.Content)
+		for _, mediaType := range SortedMapKeys {
 			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
@@ -625,7 +649,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*openapi3.RequestBodyRef) ([]TypeDefinition, error) {
 	var types []TypeDefinition
 
-	for _, requestBodyName := range SortedRequestBodyKeys(bodies) {
+	for _, requestBodyName := range SortedMapKeys(bodies) {
 		requestBodyRef := bodies[requestBodyName]
 
 		// As for responses, we will only generate Go code for JSON bodies,
@@ -1067,8 +1091,7 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 		schemaVal := sref.Value
 
 		t := schemaVal.Type
-		switch t {
-		case "", "object":
+		if t.Slice() == nil || t.Is("object") {
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)
 				if err != nil {
@@ -1076,7 +1099,7 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 				}
 				MergeImports(res, imprts)
 			}
-		case "array":
+		} else if t.Is("array") {
 			imprts, err := GoSchemaImports(schemaVal.Items)
 			if err != nil {
 				return nil, err

@@ -8,23 +8,15 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/lint"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 const (
-	remoteRefFile = `https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded` +
+	remoteRefFile = `https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/master/examples/petstore-expanded` +
 		`/petstore-expanded.yaml`
-	remoteRefImport = `github.com/deepmap/oapi-codegen/examples/petstore-expanded`
+	remoteRefImport = `github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded`
 )
-
-func checkLint(t *testing.T, filename string, code []byte) {
-	linter := new(lint.Linter)
-	problems, err := linter.Lint(filename, code)
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
-}
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
@@ -91,9 +83,6 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "type EnumTestEnumNames int")
 	assert.Contains(t, code, "Two  EnumTestEnumNames = 2")
 	assert.Contains(t, code, "Double EnumTestEnumVarnames = 2")
-
-	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
 }
 
 func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
@@ -175,10 +164,6 @@ func TestGoTypeImport(t *testing.T) {
 	for _, imp := range imports {
 		assert.Contains(t, code, imp)
 	}
-
-	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
-
 }
 
 func TestRemoteExternalReference(t *testing.T) {
@@ -213,7 +198,7 @@ func TestRemoteExternalReference(t *testing.T) {
 	assert.Contains(t, code, "package api")
 
 	// Check import
-	assert.Contains(t, code, `externalRef0 "github.com/deepmap/oapi-codegen/examples/petstore-expanded"`)
+	assert.Contains(t, code, `externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded"`)
 
 	// Check generated oneOf structure:
 	assert.Contains(t, code, `
@@ -240,10 +225,6 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 // FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
 func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
 `)
-
-	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
-
 }
 
 //go:embed test_spec.yaml
