@@ -15,7 +15,7 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/RecursiveObject'
-                
+
 components:
   schemas:
     RecursiveObject:
@@ -30,4 +30,3 @@ components:
       properties:
         FieldInNonRecursive:
           type: string
-      
