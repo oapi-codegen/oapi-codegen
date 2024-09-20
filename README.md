@@ -1949,6 +1949,15 @@ If you don't want to do this, an alternate option is to [bundle your multiple Op
 
 Check out [the import-mapping example](examples/import-mapping/) for the full code.
 
+### **??**
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, **??**
+
+This allows you to specify **??**
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
 ## Modifying the input OpenAPI Specification
 
 Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.

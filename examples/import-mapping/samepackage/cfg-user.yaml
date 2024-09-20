@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../../../configuration-schema.json
-package: multiplefiles
+package: samepackage
 output: user.gen.go
 generate:
   models: true
