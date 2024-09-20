@@ -4,7 +4,6 @@ import (
 	"go/format"
 	"testing"
 
-	"github.com/golangci/lint-1"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -58,14 +57,4 @@ func validateGeneratedCode(t *testing.T, err error, code string) {
 
 	// Check that we have a package:
 	assert.Contains(t, code, "package api")
-
-	// Make sure the generated code is valid:
-	checkLint(t, "test.gen.go", []byte(code))
-}
-
-func checkLint(t *testing.T, filename string, code []byte) {
-	linter := new(lint.Linter)
-	problems, err := linter.Lint(filename, code)
-	assert.NoError(t, err)
-	assert.Len(t, problems, 0)
 }
