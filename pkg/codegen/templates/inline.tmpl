@@ -43,7 +43,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
     {{ if .ImportMapping }}
     pathPrefix := path.Dir(pathToFile)
     {{ end }}
-    {{ range $key, $value := .ImportMapping }}{{- if ne $value.Path "*"}}
+    {{ range $key, $value := .ImportMapping }}{{- if ne $value.Path "-"}}
     for rawPath, rawFunc := range {{ $value.Name }}.PathToRawSpec(path.Join(pathPrefix, "{{ $key }}")) {
         if _, ok := res[rawPath]; ok {
             // it is not possible to compare functions in golang, so always overwrite the old value
