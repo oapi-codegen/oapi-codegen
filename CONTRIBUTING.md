@@ -26,7 +26,7 @@ This may get converted into a feature request if we don't deem it a bug, but a m
 
 ### Asking a question
 
-We'd prefer that questions about "how do I use (this feature)?" or "what do the community think about ...?" get asked using [GitHub Discussions](https://github.com/deepmap/oapi-codegen/discussions) which allow the community to answer them more easily.
+We'd prefer that questions about "how do I use (this feature)?" or "what do the community think about ...?" get asked using [GitHub Discussions](https://github.com/oapi-codegen/oapi-codegen/discussions) which allow the community to answer them more easily.
 
 ### Making changes that tweak generated code
 
