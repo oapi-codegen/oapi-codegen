@@ -13,6 +13,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: serverId
+          description: Another cookie parameter
+          in: cookie
+          required: false
+          schema:
+            type: string
       responses:
         204:
           description: no content

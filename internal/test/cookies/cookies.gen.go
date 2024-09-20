@@ -15,6 +15,9 @@ import (
 type CookieParamsParams struct {
 	// AuthId Cookie parameter
 	AuthId *string `form:"authId,omitempty" json:"authId,omitempty"`
+
+	// ServerId Another cookie parameter
+	ServerId *string `form:"serverId,omitempty" json:"serverId,omitempty"`
 }
 
 // ServerInterface represents all server handlers.
@@ -50,17 +53,34 @@ func (siw *ServerInterfaceWrapper) CookieParams(w http.ResponseWriter, r *http.R
 	// Parameter object where we will unmarshal all parameters from the context
 	var params CookieParamsParams
 
-	var cookie *http.Cookie
+	{
+		var cookie *http.Cookie
 
-	if cookie, err = r.Cookie("authId"); err == nil {
-		var value string
-		err = runtime.BindStyledParameterWithOptions("simple", "authId", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "authId", Err: err})
-			return
+		if cookie, err = r.Cookie("authId"); err == nil {
+			var value string
+			err = runtime.BindStyledParameterWithOptions("simple", "authId", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false})
+			if err != nil {
+				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "authId", Err: err})
+				return
+			}
+			params.AuthId = &value
+
 		}
-		params.AuthId = &value
+	}
 
+	{
+		var cookie *http.Cookie
+
+		if cookie, err = r.Cookie("serverId"); err == nil {
+			var value string
+			err = runtime.BindStyledParameterWithOptions("simple", "serverId", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false})
+			if err != nil {
+				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "serverId", Err: err})
+				return
+			}
+			params.ServerId = &value
+
+		}
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
