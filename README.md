@@ -1946,68 +1946,20 @@ From here, `oapi-codegen` will generate multiple Go files, all within the same p
 
 Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
 
-
 ### Using multiple packages, with one OpenAPI spec per package
 
-In this case, we may have an Admin API that looks like:
+To get `oapi-codegen`'s multi-package support working, we need to set up our directory structure:
 
-```yaml
-# admin/api.yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Admin API
-  description: The admin-only portion of the API, which has its own separate OpenAPI spec
-tags:
-  - name: admin
-    description: Admin API endpoints
-  - name: user
-    description: API endpoint that pertains to user data
-paths:
-  /admin/user/{id}:
-    get:
-      tags:
-        - admin
-        - user
-      summary: Get a user's details
-      operationId: getUserById
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+```
+├── admin
+│   ├── cfg.yaml
+│   └── generate.go
+└── common
+    ├── cfg.yaml
+    └── generate.go
 ```
 
-This references the common spec:
-
-```yaml
-# common/api.yaml
-components:
-  schemas:
-    User:
-      type: object
-      additionalProperties: false
-      properties:
-        name:
-          type: string
-      required:
-        - name
-```
-
-And finally we have our configuration file:
+We could start with our configuration file for our admin API spec:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -2029,7 +1981,7 @@ If we were to run `oapi-codegen`, this will fail with the following error
 error generating code: error creating operation definitions: error generating response definitions: error generating request body definition: error turning reference (../common/api.yaml#/components/schemas/User) into a Go type: unrecognized external reference '../common/api.yaml'; please provide the known import for this reference using option --import-mapping
 ```
 
-This is because `oapi-codegen` requires:
+This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -2062,7 +2014,7 @@ type User = externalRef0.User
 
 If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/multiplepackages/) for the full code.
+Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
 ## Modifying the input OpenAPI Specification
 
