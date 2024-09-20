@@ -20,10 +20,10 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/deepmap/oapi-codegen/pkg/util"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 const (
@@ -34,10 +34,10 @@ const (
 )
 
 var (
-	contentTypesJSON    = []string{echo.MIMEApplicationJSON, "text/x-json", "application/problem+json"}
+	contentTypesJSON    = []string{"application/json", "text/x-json", "application/problem+json"}
 	contentTypesHalJSON = []string{"application/hal+json"}
 	contentTypesYAML    = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML     = []string{echo.MIMEApplicationXML, echo.MIMETextXML, "application/problems+xml"}
+	contentTypesXML     = []string{"application/xml", "text/xml", "application/problems+xml"}
 
 	responseTypeSuffix = "Response"
 
@@ -123,8 +123,8 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	responses := op.Spec.Responses
 	for _, typeDefinition := range typeDefinitions {
 
-		responseRef, ok := responses[typeDefinition.ResponseName]
-		if !ok {
+		responseRef := responses.Value(typeDefinition.ResponseName)
+		if responseRef == nil {
 			continue
 		}
 
@@ -143,8 +143,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
-		for _, contentTypeName := range sortedContentKeys {
+		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
+		jsonCount := 0
+		for _, contentTypeName := range SortedMapKeys {
+			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+				jsonCount++
+			}
+		}
+
+		for _, contentTypeName := range SortedMapKeys {
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
 			if typeDefinition.TypeName == "interface{}" {
@@ -166,8 +173,13 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 						typeDefinition.Schema.TypeDecl(),
 						typeDefinition.TypeName)
 
-					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
-					handledCaseClauses[caseKey] = caseClause
+					if jsonCount > 1 {
+						caseKey, caseClause := buildUnmarshalCaseStrict(typeDefinition, caseAction, contentTypeName)
+						handledCaseClauses[caseKey] = caseClause
+					} else {
+						caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "json")
+						handledCaseClauses[caseKey] = caseClause
+					}
 				}
 
 			// YAML:
@@ -216,11 +228,11 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(handledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
-	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(unhandledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
@@ -233,7 +245,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", echo.HeaderContentType, contentType, caseClauseKey, caseAction)
+	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	return caseKey, caseClause
+}
+
+func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
+	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
@@ -283,11 +302,13 @@ var TemplateFunctions = template.FuncMap{
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
 	"genParamFmtString":          ReplacePathParamsWithStr,
+	"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"swaggerUriToGinUri":         SwaggerUriToGinUri,
 	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
+	"swaggerUriToStdHttpUri":     SwaggerUriToStdHttpUri,
 	"lcFirst":                    LowercaseFirstCharacter,
 	"ucFirst":                    UppercaseFirstCharacter,
 	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,

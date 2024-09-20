@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../configuration-schema.json
 package: customclienttype
 output: custom-client-type.gen.go
 generate:

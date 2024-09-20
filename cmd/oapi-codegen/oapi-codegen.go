@@ -25,11 +25,14 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 func errExit(format string, args ...interface{}) {
+	if !strings.HasSuffix(format, "\n") {
+		format = format + "\n"
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
 }
@@ -47,13 +50,15 @@ var (
 
 	// Deprecated: The options below will be removed in a future
 	// release. Please use the new config file format.
-	flagIncludeTags        string
-	flagExcludeTags        string
-	flagImportMapping      string
-	flagExcludeSchemas     string
-	flagResponseTypeSuffix string
-	flagAliasTypes         bool
-	flagInitalismOverrides bool
+	flagIncludeTags         string
+	flagExcludeTags         string
+	flagIncludeOperationIDs string
+	flagExcludeOperationIDs string
+	flagImportMapping       string
+	flagExcludeSchemas      string
+	flagResponseTypeSuffix  string
+	flagAliasTypes          bool
+	flagInitialismOverrides bool
 )
 
 type configuration struct {
@@ -66,17 +71,23 @@ type configuration struct {
 // oldConfiguration is deprecated. Please add no more flags here. It is here
 // for backwards compatibility, and it will be removed in the future.
 type oldConfiguration struct {
-	PackageName        string                       `yaml:"package"`
-	GenerateTargets    []string                     `yaml:"generate"`
-	OutputFile         string                       `yaml:"output"`
-	IncludeTags        []string                     `yaml:"include-tags"`
-	ExcludeTags        []string                     `yaml:"exclude-tags"`
-	TemplatesDir       string                       `yaml:"templates"`
-	ImportMapping      map[string]string            `yaml:"import-mapping"`
-	ExcludeSchemas     []string                     `yaml:"exclude-schemas"`
-	ResponseTypeSuffix string                       `yaml:"response-type-suffix"`
-	Compatibility      codegen.CompatibilityOptions `yaml:"compatibility"`
+	PackageName         string                       `yaml:"package"`
+	GenerateTargets     []string                     `yaml:"generate"`
+	OutputFile          string                       `yaml:"output"`
+	IncludeTags         []string                     `yaml:"include-tags"`
+	ExcludeTags         []string                     `yaml:"exclude-tags"`
+	IncludeOperationIDs []string                     `yaml:"include-operation-ids"`
+	ExcludeOperationIDs []string                     `yaml:"exclude-operation-ids"`
+	TemplatesDir        string                       `yaml:"templates"`
+	ImportMapping       map[string]string            `yaml:"import-mapping"`
+	ExcludeSchemas      []string                     `yaml:"exclude-schemas"`
+	ResponseTypeSuffix  string                       `yaml:"response-type-suffix"`
+	Compatibility       codegen.CompatibilityOptions `yaml:"compatibility"`
 }
+
+// noVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
+// See documentation for how to use it in examples/no-vcs-version-override/README.md
+var noVCSVersionOverride string
 
 func main() {
 	flag.StringVar(&flagOutputFile, "o", "", "Where to output generated code, stdout is default.")
@@ -91,15 +102,17 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber".`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "iris", "std-http".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
+	flag.StringVar(&flagIncludeOperationIDs, "include-operation-ids", "", "Only include operations with the given operation-ids. Comma-separated list of operation-ids.")
+	flag.StringVar(&flagExcludeOperationIDs, "exclude-operation-ids", "", "Exclude operations with the given operation-ids. Comma-separated list of operation-ids.")
 	flag.StringVar(&flagTemplatesDir, "templates", "", "Path to directory containing user templates.")
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path.")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
-	flag.BoolVar(&flagInitalismOverrides, "initialism-overrides", false, "Use initialism overrides.")
+	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -115,7 +128,11 @@ func main() {
 			os.Exit(1)
 		}
 		fmt.Println(bi.Main.Path + "/cmd/oapi-codegen")
-		fmt.Println(bi.Main.Version)
+		version := bi.Main.Version
+		if len(noVCSVersionOverride) > 0 {
+			version = noVCSVersionOverride
+		}
+		fmt.Println(version)
 		return
 	}
 
@@ -232,7 +249,13 @@ func main() {
 				errExit("error parsing'%s' as YAML: %v\n", flagConfigFile, err)
 			}
 		}
-		opts = newConfigFromOldConfig(oldConfig)
+		var err error
+		opts, err = newConfigFromOldConfig(oldConfig)
+		if err != nil {
+			flag.PrintDefaults()
+			errExit("error creating new config from old config: %v\n", err)
+		}
+
 	}
 
 	// Ensure default values are set if user hasn't specified some needed
@@ -258,9 +281,27 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwagger(flag.Arg(0))
+	overlayOpts := util.LoadSwaggerWithOverlayOpts{
+		Path: opts.OutputOptions.Overlay.Path,
+		// default to strict, but can be overridden
+		Strict: true,
+	}
+
+	if opts.OutputOptions.Overlay.Strict != nil {
+		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
+	}
+
+	swagger, err := util.LoadSwaggerWithOverlay(flag.Arg(0), overlayOpts)
 	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
+	}
+
+	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
+		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/deepmap/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
+	}
+
+	if len(noVCSVersionOverride) > 0 {
+		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
@@ -370,6 +411,13 @@ func updateConfigFromFlags(cfg *configuration) error {
 	if flagExcludeTags != "" {
 		cfg.OutputOptions.ExcludeTags = util.ParseCommandLineList(flagExcludeTags)
 	}
+	if flagIncludeOperationIDs != "" {
+		cfg.OutputOptions.IncludeOperationIDs = util.ParseCommandLineList(flagIncludeOperationIDs)
+	}
+	if flagExcludeOperationIDs != "" {
+		cfg.OutputOptions.ExcludeOperationIDs = util.ParseCommandLineList(flagExcludeOperationIDs)
+	}
+
 	if flagTemplatesDir != "" {
 		templates, err := loadTemplateOverrides(flagTemplatesDir)
 		if err != nil {
@@ -398,7 +446,7 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	cfg.OutputOptions.InitialismOverrides = flagInitalismOverrides
+	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides
 
 	return nil
 }
@@ -443,6 +491,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 	opts := codegen.GenerateOptions{} // Blank to start with.
 	for _, opt := range targets {
 		switch opt {
+		case "iris", "iris-server":
+			opts.IrisServer = true
 		case "chi-server", "chi":
 			opts.ChiServer = true
 		case "fiber-server", "fiber":
@@ -453,6 +503,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":
 			opts.GorillaServer = true
+		case "std-http", "std-http-server":
+			opts.StdHTTPServer = true
 		case "strict-server":
 			opts.Strict = true
 		case "client":
@@ -474,7 +526,7 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 	return nil
 }
 
-func newConfigFromOldConfig(c oldConfiguration) configuration {
+func newConfigFromOldConfig(c oldConfiguration) (configuration, error) {
 	// Take flags into account.
 	cfg := updateOldConfigFromFlags(c)
 
@@ -486,9 +538,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
 
 	if err := generationTargets(&opts, cfg.GenerateTargets); err != nil {
-		fmt.Println(err)
-		flag.PrintDefaults()
-		os.Exit(1)
+		return configuration{}, fmt.Errorf("generation targets: %w", err)
 	}
 
 	opts.OutputOptions.IncludeTags = cfg.IncludeTags
@@ -497,7 +547,7 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 
 	templates, err := loadTemplateOverrides(cfg.TemplatesDir)
 	if err != nil {
-		errExit("error loading template overrides: %s\n", err)
+		return configuration{}, fmt.Errorf("loading template overrides: %w", err)
 	}
 	opts.OutputOptions.UserTemplates = templates
 
@@ -508,5 +558,5 @@ func newConfigFromOldConfig(c oldConfiguration) configuration {
 	return configuration{
 		Configuration: opts,
 		OutputFile:    cfg.OutputFile,
-	}
+	}, nil
 }
