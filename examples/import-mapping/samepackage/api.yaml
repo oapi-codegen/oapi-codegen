@@ -1,11 +1,9 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: A multi-file **??** API
-  description: The **??** portion of the API, which has its own separate OpenAPI spec
+  title: An OpenAPI specification that is split into multiple files
+  description: An API that has its response body type defined in another file
 tags:
-  - name: admin
-    description: Admin API endpoints
   - name: user
     description: API endpoint that pertains to user data
 paths:
