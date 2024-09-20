@@ -28,7 +28,7 @@ jobs:
           GOTOOLCHAIN: local
 
       - name: Check for no untracked files
-        run: git status && git diff-index --exit-code -p HEAD --color --
+        run: git status && git diff-index --exit-code -p HEAD --
 
   results:
     if: ${{ always() }}
