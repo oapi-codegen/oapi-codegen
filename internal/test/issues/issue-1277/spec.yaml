@@ -1,0 +1,19 @@
+openapi: "3.0.1"
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field1:
+                      type: string
+                    field2:
+                      type: string
+                  additionalProperties: true
