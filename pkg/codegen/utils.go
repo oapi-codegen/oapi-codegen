@@ -454,7 +454,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	}
 
-	if goPkg.Path == "*" {
+	if goPkg.Path == importMappingCurrentPackage {
 		return refPathToGoTypeSelf(fmt.Sprintf("#%s", pathParts[1]), local)
 	}
 
