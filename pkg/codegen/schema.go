@@ -199,6 +199,8 @@ type ResponseTypeDefinition struct {
 
 	// The type name of a response model.
 	ResponseName string
+
+	AdditionalTypeDefinitions []TypeDefinition
 }
 
 func (t *TypeDefinition) IsAlias() bool {
