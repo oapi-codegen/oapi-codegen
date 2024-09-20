@@ -21,6 +21,6 @@ components:
         item:
           type: object
           oneOf:
-            - $ref: 'https://raw.githubusercontent.com/deepmap/oapi-codegen/master/examples/petstore-expanded/petstore-expanded.yaml#/components/schemas/NewPet'
+            - $ref: 'https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/master/examples/petstore-expanded/petstore-expanded.yaml#/components/schemas/NewPet'
       required:
         - item
