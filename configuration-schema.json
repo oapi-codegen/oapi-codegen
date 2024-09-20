@@ -98,7 +98,11 @@
         },
         "circular-reference-limit": {
           "type": "integer",
-          "description": "CircularReferenceLimit allows controlling the limit for circular reference checking. In some OpenAPI specifications, we have a higher number of circular references than is allowed out-of-the-box, but can be tuned to allow traversing them."
+          "description": "DEPRECATED: No longer used.\nCircularReferenceLimit allows controlling the limit for circular reference checking. In some OpenAPI specifications, we have a higher number of circular references than is allowed out-of-the-box, but can be tuned to allow traversing them."
+        },
+        "allow-unexported-struct-field-names": {
+          "type": "boolean",
+          "description": "AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.\nThis is expected to be used in conjunction with an extension such as `x-go-name` to override the output name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`.\nNOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see it in the response, without understanding the nuance of how `oapi-codegen` generates the code."
         }
       }
     },
@@ -191,6 +195,24 @@
             "ToCamelCase",
             "ToCamelCaseWithDigits",
             "ToCamelCaseWithInitialisms"
+          ]
+        },
+        "overlay": {
+          "type": "object",
+          "description": "Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.",
+          "properties": {
+            "path": {
+              "description": "The path to the Overlay file",
+              "type": "string"
+            },
+            "strict": {
+              "type": "boolean",
+              "description": "Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.",
+              "default": true
+            }
+          },
+          "required": [
+            "path"
           ]
         }
       }

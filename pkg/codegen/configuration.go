@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -29,6 +30,78 @@ type Configuration struct {
 	NoVCSVersionOverride *string `yaml:"-"`
 }
 
+// Validate checks whether Configuration represent a valid configuration
+func (o Configuration) Validate() error {
+	if o.PackageName == "" {
+		return errors.New("package name must be specified")
+	}
+
+	// Only one server type should be specified at a time.
+	nServers := 0
+	if o.Generate.IrisServer {
+		nServers++
+	}
+	if o.Generate.ChiServer {
+		nServers++
+	}
+	if o.Generate.FiberServer {
+		nServers++
+	}
+	if o.Generate.EchoServer {
+		nServers++
+	}
+	if o.Generate.GorillaServer {
+		nServers++
+	}
+	if o.Generate.StdHTTPServer {
+		nServers++
+	}
+	if o.Generate.GinServer {
+		nServers++
+	}
+	if nServers > 1 {
+		return errors.New("only one server type is supported at a time")
+	}
+
+	var errs []error
+	if problems := o.Generate.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`generate` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	if problems := o.Compatibility.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`compatibility-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	if problems := o.OutputOptions.Validate(); problems != nil {
+		for k, v := range problems {
+			errs = append(errs, fmt.Errorf("`output-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		return fmt.Errorf("failed to validate configuration: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateDefaults sets reasonable default values for unset fields in Configuration
+func (o Configuration) UpdateDefaults() Configuration {
+	if reflect.ValueOf(o.Generate).IsZero() {
+		o.Generate = GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+		}
+	}
+	return o
+}
+
 // GenerateOptions specifies which supported output formats to generate.
 type GenerateOptions struct {
 	// IrisServer specifies whether to generate iris server boilerplate
@@ -53,6 +126,10 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+}
+
+func (oo GenerateOptions) Validate() map[string]string {
+	return nil
 }
 
 // CompatibilityOptions specifies backward compatibility settings for the
@@ -101,7 +178,27 @@ type CompatibilityOptions struct {
 	// In some OpenAPI specifications, we have a higher number of circular
 	// references than is allowed out-of-the-box, but can be tuned to allow
 	// traversing them.
+	// Deprecated: In kin-openapi v0.126.0 (https://github.com/getkin/kin-openapi/tree/v0.126.0?tab=readme-ov-file#v01260) the Circular Reference Counter functionality was removed, instead resolving all references with backtracking, to avoid needing to provide a limit to reference counts.
 	CircularReferenceLimit int `yaml:"circular-reference-limit"`
+	// AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.
+	//
+	// This is expected to be used in conjunction with `x-go-name` and `x-oapi-codegen-only-honour-go-name` to override the resulting output field name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`, such as:
+	//
+	//  ```yaml
+	//   id:
+	//     type: string
+	//     x-go-name: accountIdentifier
+	//     x-oapi-codegen-extra-tags:
+	//       json: "-"
+	//     x-oapi-codegen-only-honour-go-name: true
+	//   ```
+	//
+	// NOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see/use it in the request/response, without understanding the nuance of how `oapi-codegen` generates the code.
+	AllowUnexportedStructFieldNames bool `yaml:"allow-unexported-struct-field-names"`
+}
+
+func (co CompatibilityOptions) Validate() map[string]string {
+	return nil
 }
 
 // OutputOptions are used to modify the output code in some way.
@@ -139,51 +236,19 @@ type OutputOptions struct {
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
+
+	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
+	Overlay OutputOptionsOverlay `yaml:"overlay"`
 }
 
-// UpdateDefaults sets reasonable default values for unset fields in Configuration
-func (o Configuration) UpdateDefaults() Configuration {
-	if reflect.ValueOf(o.Generate).IsZero() {
-		o.Generate = GenerateOptions{
-			EchoServer:   true,
-			Models:       true,
-			EmbeddedSpec: true,
-		}
-	}
-	return o
-}
-
-// Validate checks whether Configuration represent a valid configuration
-func (o Configuration) Validate() error {
-	if o.PackageName == "" {
-		return errors.New("package name must be specified")
-	}
-
-	// Only one server type should be specified at a time.
-	nServers := 0
-	if o.Generate.IrisServer {
-		nServers++
-	}
-	if o.Generate.ChiServer {
-		nServers++
-	}
-	if o.Generate.FiberServer {
-		nServers++
-	}
-	if o.Generate.EchoServer {
-		nServers++
-	}
-	if o.Generate.GorillaServer {
-		nServers++
-	}
-	if o.Generate.StdHTTPServer {
-		nServers++
-	}
-	if o.Generate.GinServer {
-		nServers++
-	}
-	if nServers > 1 {
-		return errors.New("only one server type is supported at a time")
-	}
+func (oo OutputOptions) Validate() map[string]string {
 	return nil
+}
+
+type OutputOptionsOverlay struct {
+	Path string `yaml:"path"`
+
+	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.
+	// Defaults to true.
+	Strict *bool `yaml:"strict,omitempty"`
 }

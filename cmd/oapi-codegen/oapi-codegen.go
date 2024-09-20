@@ -30,6 +30,9 @@ import (
 )
 
 func errExit(format string, args ...interface{}) {
+	if !strings.HasSuffix(format, "\n") {
+		format = format + "\n"
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
 }
@@ -278,9 +281,19 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwaggerWithCircularReferenceCount(flag.Arg(0), opts.Compatibility.CircularReferenceLimit)
+	overlayOpts := util.LoadSwaggerWithOverlayOpts{
+		Path: opts.OutputOptions.Overlay.Path,
+		// default to strict, but can be overridden
+		Strict: true,
+	}
+
+	if opts.OutputOptions.Overlay.Strict != nil {
+		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
+	}
+
+	swagger, err := util.LoadSwaggerWithOverlay(flag.Arg(0), overlayOpts)
 	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
 	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {

@@ -1,5 +1,7 @@
 # `oapi-codegen`
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)
+
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
 Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
@@ -114,7 +116,7 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 # ...
 ```
@@ -650,7 +652,7 @@ type ServerInterface interface {
 	GetPing(w http.ResponseWriter, r *http.Request)
 }
 
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
@@ -1947,6 +1949,104 @@ If you don't want to do this, an alternate option is to [bundle your multiple Op
 
 Check out [the import-mapping example](examples/import-mapping/) for the full code.
 
+## Modifying the input OpenAPI Specification
+
+Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
+
+In a lot of cases, this OpenAPI specification would be produced by a different team to the consumers (or even a different company) and so asking them to make changes like this were unreasonable.
+
+This would lead to the API consumers needing to vendor the specification from the producer (which is [our recommendation anyway](#https-paths)) and then make any number of local changes to the specification to make it generate code that looks reasonable.
+
+However, in the case that a consumer would update their specification, they would likely end up with a number of merge conflicts.
+
+Now, as of `oapi-codegen` v2.4.0, it is now possible to make changes to the input OpenAPI specification _without needing to modify it directly_.
+
+This takes advantage of the [OpenAPI Overlay specification](https://github.com/OAI/Overlay-Specification), which is a stable specification.
+
+> [!CAUTION]
+> Beware! Here (may) be dragons.
+>
+> The Overlay specification requires the use of JSON Path, which some users may find difficult to write and/or maintain.
+>
+> We still heavily recommend using Overlay functionality, but would like users to be aware of this.
+>
+> There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
+
+For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+    delete:
+      x-internal: true
+      responses:
+        '202':
+          content: {}
+```
+
+If we were to run `oapi-codegen` with out-of-the-box functionality, this would then lead to the DELETE endpoint being generated, which we don't want.
+
+Instead, we can define the following `overlay.yaml`:
+
+
+```yaml
+overlay: 1.0.0
+info:
+  title: Overlay
+  version: 0.0.0
+actions:
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
+- target: $.paths.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+- target: $.paths.*.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+```
+
+And our configuration file for `oapi-codegen`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+package: api
+output: ping.gen.go
+generate:
+  models: true
+  gorilla-server: true
+  embedded-spec: true
+output-options:
+  overlay:
+    path: overlay.yaml
+```
+
+This then completely removes the DELETE endpoint _before_ we even start to parse the specification in `oapi-codegen`, so it's as if your specification was provided without that endpoint.
+
+Additionally, we can override other pieces of metadata, such as the description for operations.
+
+Check out [the overlay example](examples/overlay/) for the full code, and some more complex examples.
+
 ## Generating Nullable types
 
 It's possible that you want to be able to determine whether a field isn't sent, is sent as `null` or has a value.
@@ -2743,6 +2843,63 @@ You can see this in more detail in [the example code](examples/extensions/xorder
 </td>
 </tr>
 
+<tr>
+<td>
+
+`x-oapi-codegen-only-honour-go-name`
+
+</td>
+<td>
+Only honour the `x-go-name` when generating field names
+</td>
+<td>
+<details>
+
+> [!WARNING]
+> Using this option may lead to cases where `oapi-codegen`'s rewriting of field names to prevent clashes with other types, or to prevent including characters that may not be valid Go field names.
+
+In some cases, you may not want use the inbuilt options for converting an OpenAPI field name to a Go field name, such as the `name-normalizer: "ToCamelCaseWithInitialisms"`, and instead trust the name that you've defined for the type better.
+
+In this case, you can use `x-oapi-codegen-only-honour-go-name` to enforce this, alongside specifying the `allow-unexported-struct-field-names` compatibility option.
+
+This allows you to take a spec such as:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-oapi-codegen-only-honour-go-name
+components:
+  schemas:
+    TypeWithUnexportedField:
+      description: A struct will be output where one of the fields is not exported
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+          # NOTE that there is an explicit usage of a lowercase character
+          x-go-name: accountIdentifier
+          x-oapi-codegen-extra-tags:
+            json: "-"
+          x-oapi-codegen-only-honour-go-name: true
+```
+
+And we'll generate:
+
+```go
+// TypeWithUnexportedField A struct will be output where one of the fields is not exported
+type TypeWithUnexportedField struct {
+	accountIdentifier *string `json:"-"`
+	Name              *string `json:"name,omitempty"`
+}
+```
+
+You can see this in more detail in [the example code](examples/extensions/xoapicodegenonlyhonourgoname).
+
+</details>
+</td>
+</tr>
 
 </table>
 
@@ -3915,7 +4072,7 @@ See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-
 We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
-	<a href="https://devzero.io?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/devzero-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/devzero-dark.svg">
@@ -3925,7 +4082,7 @@ We are currently generously sponsored by the following folks, each of whom provi
 </p>
 
 <p align="center">
-	<a href="https://speakeasyapi.dev?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
@@ -3941,6 +4098,12 @@ We are currently generously sponsored by the following folks, each of whom provi
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
 		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
 		</picture>
+	</a>
+</p>
+
+<p align="center">
+	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
 	</a>
 </p>
 

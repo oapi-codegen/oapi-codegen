@@ -361,18 +361,8 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		keys[i], orders[key] = key, int64(len(dict))
 		i++
 
-		if v == nil || v.Value == nil {
-			continue
-		}
-
-		ext := v.Value.Extensions[extOrder]
-		if ext == nil {
-			continue
-		}
-
-		// YAML parsing picks up the x-order as a float64
-		if order, ok := ext.(float64); ok {
-			orders[key] = int64(order)
+		if order, ok := schemaXOrder(v); ok {
+			orders[key] = order
 		}
 	}
 
@@ -383,6 +373,30 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		return keys[i] < keys[j]
 	})
 	return keys
+}
+
+func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
+	if v == nil {
+		return 0, false
+	}
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	if v.Value == nil {
+		return 0, false
+	}
+
+	// if v.Value is set, then this is actually a `$ref`, and we should check if there's an x-order set on that
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Value.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	return 0, false
 }
 
 // StringInArray checks whether the specified string is present in an array
@@ -762,6 +776,10 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Tilde"
 		case '=':
 			prefix += "Equal"
+		case '>':
+			prefix += "GreaterThan"
+		case '<':
+			prefix += "LessThan"
 		case '#':
 			prefix += "Hash"
 		case '.':
