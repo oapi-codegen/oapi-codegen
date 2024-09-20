@@ -4101,4 +4101,10 @@ We are currently generously sponsored by the following folks, each of whom provi
 	</a>
 </p>
 
+<p align="center">
+	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	</a>
+</p>
+
 (Note that the order of appearance the order in which sponsorship was received)
