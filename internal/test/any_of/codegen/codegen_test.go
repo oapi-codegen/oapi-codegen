@@ -1,13 +1,14 @@
 package codegen
 
 import (
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/pkg/util"
-	"github.com/golangci/lint-1"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"go/format"
 	"testing"
+
+	"github.com/golangci/lint-1"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAnyOfInlineSchema(t *testing.T) {
