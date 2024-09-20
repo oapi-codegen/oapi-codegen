@@ -652,7 +652,7 @@ type ServerInterface interface {
 	GetPing(w http.ResponseWriter, r *http.Request)
 }
 
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
