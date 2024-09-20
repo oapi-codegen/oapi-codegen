@@ -1893,7 +1893,7 @@ components:
 
 So how do we get `oapi-codegen` to generate our code?
 
-### Using a single package, with multiple OpenAPI spec for a given package
+### Using a single package with multiple OpenAPI specs
 
 <a name=import-mapping-self></a>
 
