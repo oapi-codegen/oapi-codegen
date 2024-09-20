@@ -1839,10 +1839,104 @@ For instance, let's say that we have a large API, which has a user-facing API an
 <a name=import-mapping-self></a>
 
 > [!TIP]
-> Since `oapi-codegen` v2.4.0, it is now possible to define **??**
+> Since `oapi-codegen` v2.4.0, it is now possible to split large OpenAPI specifications into the same Go package, using the "self" mapping (denoted by a `-`) when using Import Mapping.
+>
+> This is an improvement on the previous model, which would require splitting files across multiple packages.
 
-This allows you to specify **??**
+This allows you to take a large OpenAPI specification, decompose it into multiple files, but still retain a single package for your implementation.
 
+> [!NOTE]
+> You still need to have multiple `go generate`s, and any other configuration files.
+
+In this case, we may have an API that looks like:
+
+```yaml
+# api.yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: An OpenAPI specification that is split into multiple files
+  description: An API that has its response body type defined in another file
+tags:
+  - name: user
+    description: API endpoint that pertains to user data
+paths:
+  /users/{id}:
+    get:
+      tags:
+        - user
+      summary: Get a user's details
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: 'user.yaml#/components/schemas/User'
+```
+
+This references the `user.yaml` spec:
+
+```yaml
+# user.yaml
+components:
+  schemas:
+    User:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+      required:
+        - name
+```
+
+To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
+
+```sh
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml api.yaml
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml user.yaml
+```
+
+This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  user.yaml: "-"
+```
+
+And then our `cfg-user.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+```
+
+From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
 
 Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
 
@@ -1962,7 +2056,7 @@ type User = externalRef0.User
 
 If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/) for the full code.
+Check out [the import-mapping example](examples/import-mapping/multiplepackages/) for the full code.
 
 ## Modifying the input OpenAPI Specification
 
