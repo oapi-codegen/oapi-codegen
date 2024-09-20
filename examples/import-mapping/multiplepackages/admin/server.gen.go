@@ -8,13 +8,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/multiplepackages/common"
 	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
-
-// User defines model for User.
-type User = externalRef0.User
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {

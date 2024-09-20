@@ -18,7 +18,7 @@ import (
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Get a user's details
-	// (GET /users/{id})
+	// (GET /admin/user/{id})
 	GetUserById(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 }
 
@@ -27,7 +27,7 @@ type ServerInterface interface {
 type Unimplemented struct{}
 
 // Get a user's details
-// (GET /users/{id})
+// (GET /admin/user/{id})
 func (_ Unimplemented) GetUserById(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
@@ -180,7 +180,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/users/{id}", wrapper.GetUserById)
+		r.Get(options.BaseURL+"/admin/user/{id}", wrapper.GetUserById)
 	})
 
 	return r
@@ -206,7 +206,7 @@ func (response GetUserById200JSONResponse) VisitGetUserByIdResponse(w http.Respo
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Get a user's details
-	// (GET /users/{id})
+	// (GET /admin/user/{id})
 	GetUserById(ctx context.Context, request GetUserByIdRequestObject) (GetUserByIdResponseObject, error)
 }
 
