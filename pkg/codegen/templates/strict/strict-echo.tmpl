@@ -48,11 +48,21 @@ type strictHandler struct {
                         return err
                     }
                 {{else if eq .NameTag "Multipart" -}}
+                    {{if eq .ContentType "multipart/form-data" -}}
                     if reader, err := ctx.Request().MultipartReader(); err != nil {
                         return err
                     } else {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     }
+                    {{else -}}
+                    if _, params, err := mime.ParseMediaType(ctx.Request().Header.Get("Content-Type")); err != nil {
+                        return err
+                    } else if boundary := params["boundary"]; boundary == "" {
+                        return http.ErrMissingBoundary
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(ctx.Request().Body, boundary)
+                    }
+                    {{end -}}
                 {{else if eq .NameTag "Text" -}}
                     data, err := io.ReadAll(ctx.Request().Body)
                     if err != nil {
