@@ -237,7 +237,8 @@ func TestRefPathToGoType(t *testing.T) {
 		map[string]string{
 			"doc.json":                    "externalref0",
 			"http://deepmap.com/doc.json": "externalref1",
-			"dj-star.yml":                 "*",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
 		},
 	)
 	defer func() { globalState.importMapping = old }()
@@ -263,8 +264,8 @@ func TestRefPathToGoType(t *testing.T) {
 			goType: "Wibble",
 		},
 		{
-			name:   "local-mapped-star",
-			path:   "dj-star.yml#/components/schemas/Foo",
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
 			goType: "Foo",
 		},
 		{
