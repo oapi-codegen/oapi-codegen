@@ -39,9 +39,7 @@
 
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
-            {{if eq .NameTag "Text" -}}
-                type {{$receiverTypeName}} string
-            {{else if and $fixedStatusCode $isRef -}}
+            {{if and $fixedStatusCode $isRef -}}
                 {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
                 {{else if $isExternalRef -}}

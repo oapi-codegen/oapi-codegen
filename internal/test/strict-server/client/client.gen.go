@@ -1327,6 +1327,7 @@ type UnionExampleResponse struct {
 		union json.RawMessage
 	}
 }
+type UnionExample2000 = string
 
 // Status returns HTTPResponse.Status
 func (r UnionExampleResponse) Status() string {
