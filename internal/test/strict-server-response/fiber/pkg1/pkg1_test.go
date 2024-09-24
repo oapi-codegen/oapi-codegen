@@ -19,7 +19,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/fiber/pkg1"
+	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/fiber/pkg1"
 )
 
 type strictServerInterface struct{}

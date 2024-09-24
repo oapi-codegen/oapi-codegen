@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	imports.LocalPrefix = "github.com/deepmap/oapi-codegen/v2"
+	imports.LocalPrefix = "github.com/oapi-codegen/oapi-codegen/v2"
 }
 
 type ServerType string
@@ -55,7 +55,7 @@ generate:
   strict-server: true
 output: %s/pkg1/pkg1.gen.go
 import-mapping:
-  pkg2.yaml: github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg2
+  pkg2.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg2
 `, server, server, server)
 		}
 
@@ -91,8 +91,8 @@ output: %s/pkg2/pkg2.gen.go
 				"github.com/labstack/echo/v4"
 				"github.com/stretchr/testify/assert"
 
-				"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg1"
-				"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg2"
+				"github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg1"
+				"github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/%s/pkg2"
 			)
 
 			type strictServerInterface struct{}

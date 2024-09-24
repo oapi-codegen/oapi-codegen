@@ -18,7 +18,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/echo/pkg1"
+	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/echo/pkg1"
 )
 
 type strictServerInterface struct{}

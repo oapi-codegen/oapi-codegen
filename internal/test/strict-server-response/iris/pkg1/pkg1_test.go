@@ -18,7 +18,7 @@ import (
 	"github.com/kataras/iris/v12"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/iris/pkg1"
+	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/iris/pkg1"
 )
 
 type strictServerInterface struct{}

@@ -1,8 +1,8 @@
-module github.com/deepmap/oapi-codegen/v2/internal/test/strict-server-response/std-http
+module github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/std-http
 
 go 1.22
 
-replace github.com/deepmap/oapi-codegen/v2 => ../../../../
+replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../../
 
 require (
 	github.com/oapi-codegen/runtime v1.1.0
