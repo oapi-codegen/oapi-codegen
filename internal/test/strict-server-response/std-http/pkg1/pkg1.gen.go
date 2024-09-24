@@ -5623,7 +5623,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // TestFixedFormdata operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedFormdata(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedFormdata(w, r)
@@ -5633,12 +5632,11 @@ func (siw *ServerInterfaceWrapper) TestFixedFormdata(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedJSON(w, r)
@@ -5648,12 +5646,11 @@ func (siw *ServerInterfaceWrapper) TestFixedJSON(w http.ResponseWriter, r *http.
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedMultipart(w, r)
@@ -5663,12 +5660,11 @@ func (siw *ServerInterfaceWrapper) TestFixedMultipart(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedMultipartRelated(w, r)
@@ -5678,12 +5674,11 @@ func (siw *ServerInterfaceWrapper) TestFixedMultipartRelated(w http.ResponseWrit
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedNoContent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedNoContent(w, r)
@@ -5693,12 +5688,11 @@ func (siw *ServerInterfaceWrapper) TestFixedNoContent(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedOther operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedOther(w, r)
@@ -5708,12 +5702,11 @@ func (siw *ServerInterfaceWrapper) TestFixedOther(w http.ResponseWriter, r *http
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedSpecialJSON(w, r)
@@ -5723,12 +5716,11 @@ func (siw *ServerInterfaceWrapper) TestFixedSpecialJSON(w http.ResponseWriter, r
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFixedWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestFixedWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFixedWildcard(w, r)
@@ -5738,12 +5730,11 @@ func (siw *ServerInterfaceWrapper) TestFixedWildcard(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestFormdata operation middleware
 func (siw *ServerInterfaceWrapper) TestFormdata(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestFormdata(w, r)
@@ -5753,12 +5744,11 @@ func (siw *ServerInterfaceWrapper) TestFormdata(w http.ResponseWriter, r *http.R
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedFormdata operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedFormdata(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedFormdata(w, r)
@@ -5768,12 +5758,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedFormdata(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedJSON(w, r)
@@ -5783,12 +5772,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedJSON(w http.ResponseWriter, r 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedMultipart(w, r)
@@ -5798,12 +5786,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipart(w http.ResponseWrite
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedMultipartRelated(w, r)
@@ -5813,12 +5800,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedMultipartRelated(w http.Respon
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedOther operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedOther(w, r)
@@ -5828,12 +5814,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedOther(w http.ResponseWriter, r
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedSpecialJSON(w, r)
@@ -5843,12 +5828,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedSpecialJSON(w http.ResponseWri
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFixedWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFixedWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFixedWildcard(w, r)
@@ -5858,12 +5842,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFixedWildcard(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderFormdata operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderFormdata(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderFormdata(w, r)
@@ -5873,12 +5856,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderFormdata(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderJSON(w, r)
@@ -5888,12 +5870,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderJSON(w http.ResponseWriter, r *http
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderMultipart(w, r)
@@ -5903,12 +5884,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderMultipart(w http.ResponseWriter, r 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderMultipartRelated(w, r)
@@ -5918,12 +5898,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderMultipartRelated(w http.ResponseWri
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderOther operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderOther(w, r)
@@ -5933,12 +5912,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderOther(w http.ResponseWriter, r *htt
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderSpecialJSON(w, r)
@@ -5948,12 +5926,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderSpecialJSON(w http.ResponseWriter, 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestHeaderWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestHeaderWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestHeaderWildcard(w, r)
@@ -5963,12 +5940,11 @@ func (siw *ServerInterfaceWrapper) TestHeaderWildcard(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestJSON(w, r)
@@ -5978,12 +5954,11 @@ func (siw *ServerInterfaceWrapper) TestJSON(w http.ResponseWriter, r *http.Reque
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestMultipart(w, r)
@@ -5993,12 +5968,11 @@ func (siw *ServerInterfaceWrapper) TestMultipart(w http.ResponseWriter, r *http.
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestMultipartRelated(w, r)
@@ -6008,12 +5982,11 @@ func (siw *ServerInterfaceWrapper) TestMultipartRelated(w http.ResponseWriter, r
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestNoContent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestNoContent(w, r)
@@ -6023,12 +5996,11 @@ func (siw *ServerInterfaceWrapper) TestNoContent(w http.ResponseWriter, r *http.
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestOther operation middleware
 func (siw *ServerInterfaceWrapper) TestOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestOther(w, r)
@@ -6038,12 +6010,11 @@ func (siw *ServerInterfaceWrapper) TestOther(w http.ResponseWriter, r *http.Requ
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedJSON(w, r)
@@ -6053,12 +6024,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedJSON(w http.ResponseWriter, r *ht
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedMultipart(w, r)
@@ -6068,12 +6038,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedMultipart(w http.ResponseWriter, 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedMultipartRelated(w, r)
@@ -6083,12 +6052,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedMultipartRelated(w http.ResponseW
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedNoContent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedNoContent(w, r)
@@ -6098,12 +6066,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedNoContent(w http.ResponseWriter, 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedOther operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedOther(w, r)
@@ -6113,12 +6080,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedOther(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedSpecialJSON(w, r)
@@ -6128,12 +6094,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedSpecialJSON(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefFixedWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestRefFixedWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefFixedWildcard(w, r)
@@ -6143,12 +6108,11 @@ func (siw *ServerInterfaceWrapper) TestRefFixedWildcard(w http.ResponseWriter, r
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedJSON(w, r)
@@ -6158,12 +6122,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedJSON(w http.ResponseWriter,
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedMultipart(w, r)
@@ -6173,12 +6136,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipart(w http.ResponseWr
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedMultipartRelated(w, r)
@@ -6188,12 +6150,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedMultipartRelated(w http.Res
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedOther operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedOther(w, r)
@@ -6203,12 +6164,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedOther(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedSpecialJSON(w, r)
@@ -6218,12 +6178,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedSpecialJSON(w http.Response
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderFixedWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderFixedWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderFixedWildcard(w, r)
@@ -6233,12 +6192,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderFixedWildcard(w http.ResponseWri
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderJSON(w, r)
@@ -6248,12 +6206,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderJSON(w http.ResponseWriter, r *h
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderMultipart(w, r)
@@ -6263,12 +6220,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderMultipart(w http.ResponseWriter,
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderMultipartRelated(w, r)
@@ -6278,12 +6234,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderMultipartRelated(w http.Response
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderOther operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderOther(w, r)
@@ -6293,12 +6248,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderOther(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderSpecialJSON(w, r)
@@ -6308,12 +6262,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderSpecialJSON(w http.ResponseWrite
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefHeaderWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestRefHeaderWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefHeaderWildcard(w, r)
@@ -6323,12 +6276,11 @@ func (siw *ServerInterfaceWrapper) TestRefHeaderWildcard(w http.ResponseWriter, 
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefJSON(w, r)
@@ -6338,12 +6290,11 @@ func (siw *ServerInterfaceWrapper) TestRefJSON(w http.ResponseWriter, r *http.Re
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefMultipart operation middleware
 func (siw *ServerInterfaceWrapper) TestRefMultipart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefMultipart(w, r)
@@ -6353,12 +6304,11 @@ func (siw *ServerInterfaceWrapper) TestRefMultipart(w http.ResponseWriter, r *ht
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefMultipartRelated operation middleware
 func (siw *ServerInterfaceWrapper) TestRefMultipartRelated(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefMultipartRelated(w, r)
@@ -6368,12 +6318,11 @@ func (siw *ServerInterfaceWrapper) TestRefMultipartRelated(w http.ResponseWriter
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefNoContent operation middleware
 func (siw *ServerInterfaceWrapper) TestRefNoContent(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefNoContent(w, r)
@@ -6383,12 +6332,11 @@ func (siw *ServerInterfaceWrapper) TestRefNoContent(w http.ResponseWriter, r *ht
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefOther operation middleware
 func (siw *ServerInterfaceWrapper) TestRefOther(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefOther(w, r)
@@ -6398,12 +6346,11 @@ func (siw *ServerInterfaceWrapper) TestRefOther(w http.ResponseWriter, r *http.R
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestRefSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefSpecialJSON(w, r)
@@ -6413,12 +6360,11 @@ func (siw *ServerInterfaceWrapper) TestRefSpecialJSON(w http.ResponseWriter, r *
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestRefWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestRefWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestRefWildcard(w, r)
@@ -6428,12 +6374,11 @@ func (siw *ServerInterfaceWrapper) TestRefWildcard(w http.ResponseWriter, r *htt
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestSpecialJSON operation middleware
 func (siw *ServerInterfaceWrapper) TestSpecialJSON(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestSpecialJSON(w, r)
@@ -6443,12 +6388,11 @@ func (siw *ServerInterfaceWrapper) TestSpecialJSON(w http.ResponseWriter, r *htt
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // TestWildcard operation middleware
 func (siw *ServerInterfaceWrapper) TestWildcard(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TestWildcard(w, r)
@@ -6458,7 +6402,7 @@ func (siw *ServerInterfaceWrapper) TestWildcard(w http.ResponseWriter, r *http.R
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {
@@ -6535,21 +6479,27 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
+// ServeMux is an abstraction of http.ServeMux.
+type ServeMux interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
+}
+
 type StdHTTPServerOptions struct {
 	BaseURL          string
-	BaseRouter       *http.ServeMux
+	BaseRouter       ServeMux
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, m *http.ServeMux, baseURL string) http.Handler {
+func HandlerFromMuxWithBaseURL(si ServerInterface, m ServeMux, baseURL string) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: m,
