@@ -74,6 +74,11 @@ func (r {{genResponseTypeName $opid | ucFirst}}) StatusCode() int {
     }
     return 0
 }
+
+// Bytes returns HTTP response body bytes
+func (r {{genResponseTypeName $opid | ucFirst}}) Bytes() []byte {
+    return r.Body
+}
 {{end}}
 
 
