@@ -7,4 +7,4 @@ generate:
   strict-server: true
 output-options:
   skip-prune: true
-output: std-http/pkg2/pkg2.gen.go
+output: stdhttp/pkg2/pkg2.gen.go

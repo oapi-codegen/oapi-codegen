@@ -1,4 +1,4 @@
-module github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/std-http
+module github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server-response/stdhttp
 
 go 1.22
 
