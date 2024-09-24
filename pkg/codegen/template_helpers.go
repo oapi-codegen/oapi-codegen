@@ -23,7 +23,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 const (
@@ -143,15 +143,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
-		for _, contentTypeName := range sortedContentKeys {
+		for _, contentTypeName := range SortedMapKeys {
 			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
 
-		for _, contentTypeName := range sortedContentKeys {
+		for _, contentTypeName := range SortedMapKeys {
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
 			if typeDefinition.TypeName == "interface{}" {
@@ -225,14 +225,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	}
 
 	// Now build the switch statement in order of most-to-least specific:
-	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
+	// See: https://github.com/oapi-codegen/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(handledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
-	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(unhandledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
