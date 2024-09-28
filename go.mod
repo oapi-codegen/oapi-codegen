@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2
 
-go 1.21.13
+go 1.21.0
 
 require (
 	github.com/getkin/kin-openapi v0.127.0
