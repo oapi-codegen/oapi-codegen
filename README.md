@@ -76,6 +76,8 @@ Which then means you can invoke it like so:
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
+Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
+
 ### Pinning to commits
 
 While the project does not ([yet](https://github.com/oapi-codegen/oapi-codegen/issues/1519)) have a defined release cadence, there may be cases where you want to pull in yet-unreleased changes to your codebase.
