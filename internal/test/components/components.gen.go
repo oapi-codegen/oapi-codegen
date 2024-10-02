@@ -1311,8 +1311,7 @@ func (t OneOfObject13) AsOneOfVariant1() (OneOfVariant1, error) {
 
 // FromOneOfVariant1 overwrites any union data inside the OneOfObject13 as the provided OneOfVariant1
 func (t *OneOfObject13) FromOneOfVariant1(v OneOfVariant1) error {
-	t.Type = "v1"
-
+	t.Type = v.Type
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -1341,8 +1340,7 @@ func (t OneOfObject13) AsOneOfVariant6() (OneOfVariant6, error) {
 
 // FromOneOfVariant6 overwrites any union data inside the OneOfObject13 as the provided OneOfVariant6
 func (t *OneOfObject13) FromOneOfVariant6(v OneOfVariant6) error {
-	t.Type = "v6"
-
+	t.Type = v.Type
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -2206,8 +2204,7 @@ func (t OneOfObject9) AsOneOfVariant1() (OneOfVariant1, error) {
 
 // FromOneOfVariant1 overwrites any union data inside the OneOfObject9 as the provided OneOfVariant1
 func (t *OneOfObject9) FromOneOfVariant1(v OneOfVariant1) error {
-	t.Type = "v1"
-
+	t.Type = v.Type
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
@@ -2236,8 +2233,7 @@ func (t OneOfObject9) AsOneOfVariant6() (OneOfVariant6, error) {
 
 // FromOneOfVariant6 overwrites any union data inside the OneOfObject9 as the provided OneOfVariant6
 func (t *OneOfObject9) FromOneOfVariant6(v OneOfVariant6) error {
-	t.Type = "v6"
-
+	t.Type = v.Type
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
