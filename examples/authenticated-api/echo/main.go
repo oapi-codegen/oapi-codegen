@@ -5,10 +5,10 @@ import (
 	"log"
 	"net"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/v2/examples/authenticated-api/echo/server"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/server"
 )
 
 func main() {

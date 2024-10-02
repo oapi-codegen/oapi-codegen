@@ -21,27 +21,139 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestStringOps(t *testing.T) {
-	// Test that each substitution works
-	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
-
-	// Make sure numbers don't interact in a funny way.
-	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
+func TestToCamelCase(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  " foo_bar ",
+		want: "FooBar",
+	}, {
+		str:  "hi hello-hey-hallo",
+		want: "HiHelloHeyHallo",
+	}, {
+		str:  "foo#bar",
+		want: "FooBar",
+	}, {
+		str:  "foo2bar",
+		want: "Foo2bar",
+	}, {
+		// Test that each substitution works
+		str:  "word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
+		want: "WordWordWORDWordWordWordWordWordWordWordWordWordWord",
+	}, {
+		// Make sure numbers don't interact in a funny way.
+		str:  "number-1234",
+		want: "Number1234",
+	},
+	}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCase(tt.str))
+		})
+	}
 }
 
-func TestSortedSchemaKeys(t *testing.T) {
-	dict := map[string]*openapi3.SchemaRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
+func TestToCamelCaseWithDigits(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  " foo_bar ",
+		want: "FooBar",
+	}, {
+		str:  "hi hello-hey-hallo",
+		want: "HiHelloHeyHallo",
+	}, {
+		str:  "foo#bar",
+		want: "FooBar",
+	}, {
+		str:  "foo2bar",
+		want: "Foo2Bar",
+	}, {
+		str:  "пир2пир",
+		want: "Пир2Пир",
+	}, {
+		// Test that each substitution works
+		str:  "word.word3word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
+		want: "WordWord3WordWORDWordWordWordWordWordWordWordWordWordWord",
+	}, {
+		// Make sure numbers don't interact in a funny way.
+		str:  "number-1234",
+		want: "Number1234",
+	},
 	}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCaseWithDigits(tt.str))
+		})
+	}
+}
 
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
+func TestToCamelCaseWithInitialisms(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  "hello",
+		want: "Hello",
+	}, {
+		str:  "DBError",
+		want: "DBError",
+	}, {
+		str:  "httpOperationId",
+		want: "HTTPOperationID",
+	}, {
+		str:  "OperationId",
+		want: "OperationID",
+	}, {
+		str:  "peer2peer",
+		want: "Peer2Peer",
+	}, {
+		str:  "makeUtf8",
+		want: "MakeUTF8",
+	}, {
+		str:  "utf8Hello",
+		want: "UTF8Hello",
+	}, {
+		str:  "myDBError",
+		want: "MyDBError",
+	}, {
+		str:  " DbLayer ",
+		want: "DBLayer",
+	}, {
+		str:  "FindPetById",
+		want: "FindPetByID",
+	}, {
+		str:  "MyHttpUrl",
+		want: "MyHTTPURL",
+	}, {
+		str:  "find_user_by_uuid",
+		want: "FindUserByUUID",
+	}, {
+		str:  "HelloПриветWorldМир42",
+		want: "HelloПриветWorldМир42",
+	}, {
+		str:  "пир2пир",
+		want: "Пир2Пир",
+	}}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCaseWithInitialisms(tt.str))
+		})
+	}
 }
 
 func TestSortedSchemaKeysWithXOrder(t *testing.T) {
@@ -119,102 +231,16 @@ components:
 
 }
 
-func TestSortedPathsKeys(t *testing.T) {
-	dict := map[string]*openapi3.PathItem{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedPathsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedOperationsKeys(t *testing.T) {
-	dict := map[string]*openapi3.Operation{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedOperationsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedResponsesKeys(t *testing.T) {
-	dict := map[string]*openapi3.ResponseRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedResponsesKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedContentKeys(t *testing.T) {
-	dict := openapi3.Content{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedContentKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedParameterKeys(t *testing.T) {
-	dict := map[string]*openapi3.ParameterRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedParameterKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedRequestBodyKeys(t *testing.T) {
-	dict := map[string]*openapi3.RequestBodyRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedRequestBodyKeys(dict), "Keys are not sorted properly")
-}
-
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -236,6 +262,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
@@ -572,6 +603,10 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		">=":           "GreaterThanEqual",
+		"<=":           "LessThanEqual",
+		"<":            "LessThan",
+		">":            "GreaterThan",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
@@ -601,7 +636,38 @@ func TestRefPathToObjName(t *testing.T) {
 	}
 }
 
-func Test_replaceInitialisms(t *testing.T) {
+func TestLowercaseFirstCharacters(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "id",
+			expected: "id",
+		},
+		{
+			name:     "CamelCase",
+			expected: "camelCase",
+		},
+		{
+			name:     "ID",
+			expected: "id",
+		},
+		{
+			name:     "DBTree",
+			expected: "dbTree",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, LowercaseFirstCharacters(tt.name))
+		})
+	}
+}
+
+func Test_replaceInitialism(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -634,6 +700,16 @@ func Test_replaceInitialisms(t *testing.T) {
 			name: "already initialism",
 			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
+		},
+		{
+			name: "one initialism at start",
+			args: args{s: "idFoo"},
+			want: "idFoo",
+		},
+		{
+			name: "one initialism at start and one in middle",
+			args: args{s: "apiIdFoo"},
+			want: "apiIDFoo",
 		},
 	}
 	for _, tt := range tests {
