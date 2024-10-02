@@ -59,8 +59,6 @@ func (t *Pet) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the Pet, using the provided Dog
 func (t *Pet) MergeDog(v Dog) error {
-	v.Breed = "beagle"
-	v.Breed = "poodle"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -87,8 +85,6 @@ func (t *Pet) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the Pet, using the provided Cat
 func (t *Pet) MergeCat(v Cat) error {
-	v.Breed = "maine_coon"
-	v.Breed = "ragdoll"
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err

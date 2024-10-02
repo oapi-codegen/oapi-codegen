@@ -14,25 +14,33 @@
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
-                {{$hasProperty := false -}}
+                {{$setProperty := false -}}
+                {{$tHasProperty := false -}}
                 {{$typeMatches := 0 -}}
                 {{$discValue := "" -}}
                 {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
+                    {{if eq $type $element.GoType -}}
                         {{$typeMatches = add $typeMatches 1 -}}
                         {{$discValue = $value -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
-                                {{$hasProperty = true -}}
-                                {{break -}}
+                                {{$tHasProperty = true -}}
+                                {{if $element.HasDiscriminatorProperty -}}
+                                    t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
+                                    {{$setProperty = true -}}
+                                    {{break -}}
+                                {{end -}}
                             {{end -}}
                         {{end -}}
                     {{end -}}
                 {{end -}}
-                {{if not $hasProperty -}}
+                {{if not $setProperty -}}
                     {{if eq $typeMatches 1 -}}
-                        v.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{if $tHasProperty -}}
+                            t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{else}}
+                            v.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{end -}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -44,16 +52,33 @@
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
+                {{$setProperty := false -}}
+                {{$tHasProperty := false -}}
+                {{$typeMatches := 0 -}}
+                {{$discValue := "" -}}
                 {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
-                        {{$hasProperty := false -}}
+                    {{if eq $type $element.GoType -}}
+                        {{$typeMatches = add $typeMatches 1 -}}
+                        {{$discValue = $value -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                {{$hasProperty = true -}}
+                                {{$tHasProperty = true -}}
+                                {{if $element.HasDiscriminatorProperty -}}
+                                    t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
+                                    {{$setProperty = true -}}
+                                    {{break -}}
+                                {{end -}}
                             {{end -}}
                         {{end -}}
-                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                    {{end -}}
+                {{end -}}
+                {{if not $setProperty -}}
+                    {{if eq $typeMatches 1 -}}
+                        {{if $tHasProperty -}}
+                            t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{else}}
+                            v.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{end -}}
                     {{end -}}
                 {{end -}}
             {{end -}}
