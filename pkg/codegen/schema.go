@@ -884,8 +884,15 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			}
 
 			if discriminator.PropertyName != "" {
+				// elementSchema.Properties may not be filled in
 				for _, p := range elementSchema.Properties {
 					if p.JsonFieldName == discriminator.PropertyName {
+						elementHasDiscriminatorProperty = true
+						break
+					}
+				}
+				for name := range elementSchema.OAPISchema.Properties {
+					if name == discriminator.PropertyName {
 						elementHasDiscriminatorProperty = true
 						break
 					}

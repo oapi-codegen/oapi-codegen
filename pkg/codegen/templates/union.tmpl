@@ -16,31 +16,32 @@
             {{if $discriminator -}}
                 {{$setProperty := false -}}
                 {{$tHasProperty := false -}}
+                {{$vHasProperty := false -}}
                 {{$typeMatches := 0 -}}
                 {{$discValue := "" -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element.GoType -}}
                         {{$typeMatches = add $typeMatches 1 -}}
                         {{$discValue = $value -}}
+                        {{$vHasProperty = $element.HasDiscriminatorProperty -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
                                 {{$tHasProperty = true -}}
-                                {{if $element.HasDiscriminatorProperty -}}
-                                    t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
-                                    {{$setProperty = true -}}
-                                    {{break -}}
-                                {{end -}}
+                                {{break -}}
                             {{end -}}
                         {{end -}}
                     {{end -}}
                 {{end -}}
-                {{if not $setProperty -}}
-                    {{if eq $typeMatches 1 -}}
-                        {{if $tHasProperty -}}
-                            t.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                        {{else}}
-                            v.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                        {{end -}}
+                {{if le $typeMatches 1 -}}
+                    {{if $tHasProperty -}}
+                        t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                    {{end -}}
+                    {{if $vHasProperty -}}
+                        v.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                    {{end -}}
+                {{else -}}
+                    {{if and $vHasProperty $tHasProperty -}}
+                        t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -54,31 +55,32 @@
             {{if $discriminator -}}
                 {{$setProperty := false -}}
                 {{$tHasProperty := false -}}
+                {{$vHasProperty := false -}}
                 {{$typeMatches := 0 -}}
                 {{$discValue := "" -}}
                 {{range $value, $type := $discriminator.Mapping -}}
                     {{if eq $type $element.GoType -}}
                         {{$typeMatches = add $typeMatches 1 -}}
                         {{$discValue = $value -}}
+                        {{$vHasProperty = $element.HasDiscriminatorProperty -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
                                 {{$tHasProperty = true -}}
-                                {{if $element.HasDiscriminatorProperty -}}
-                                    t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
-                                    {{$setProperty = true -}}
-                                    {{break -}}
-                                {{end -}}
+                                {{break -}}
                             {{end -}}
                         {{end -}}
                     {{end -}}
                 {{end -}}
-                {{if not $setProperty -}}
-                    {{if eq $typeMatches 1 -}}
-                        {{if $tHasProperty -}}
-                            t.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                        {{else}}
-                            v.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                        {{end -}}
+                {{if le $typeMatches 1 -}}
+                    {{if $tHasProperty -}}
+                        t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                    {{end -}}
+                    {{if $vHasProperty -}}
+                        v.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                    {{end -}}
+                {{else -}}
+                    {{if and $vHasProperty $tHasProperty -}}
+                        t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
                     {{end -}}
                 {{end -}}
             {{end -}}
