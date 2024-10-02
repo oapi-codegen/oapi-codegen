@@ -78,16 +78,20 @@ func (t Test_FieldA) AsTestFieldA0() (TestFieldA0, error) {
 	return body, err
 }
 
+func (t *Test_FieldA) prepareTestFieldA0(v TestFieldA0) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTestFieldA0 overwrites any union data inside the Test_FieldA as the provided TestFieldA0
 func (t *Test_FieldA) FromTestFieldA0(v TestFieldA0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldA0(v)
 	t.union = b
 	return err
 }
 
 // MergeTestFieldA0 performs a merge with any union data inside the Test_FieldA, using the provided TestFieldA0
 func (t *Test_FieldA) MergeTestFieldA0(v TestFieldA0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldA0(v)
 	if err != nil {
 		return err
 	}
@@ -104,16 +108,20 @@ func (t Test_FieldA) AsTestFieldA1() (TestFieldA1, error) {
 	return body, err
 }
 
+func (t *Test_FieldA) prepareTestFieldA1(v TestFieldA1) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTestFieldA1 overwrites any union data inside the Test_FieldA as the provided TestFieldA1
 func (t *Test_FieldA) FromTestFieldA1(v TestFieldA1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldA1(v)
 	t.union = b
 	return err
 }
 
 // MergeTestFieldA1 performs a merge with any union data inside the Test_FieldA, using the provided TestFieldA1
 func (t *Test_FieldA) MergeTestFieldA1(v TestFieldA1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldA1(v)
 	if err != nil {
 		return err
 	}
@@ -140,16 +148,20 @@ func (t Test_FieldC) AsTestFieldC0() (TestFieldC0, error) {
 	return body, err
 }
 
+func (t *Test_FieldC) prepareTestFieldC0(v TestFieldC0) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTestFieldC0 overwrites any union data inside the Test_FieldC as the provided TestFieldC0
 func (t *Test_FieldC) FromTestFieldC0(v TestFieldC0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldC0(v)
 	t.union = b
 	return err
 }
 
 // MergeTestFieldC0 performs a merge with any union data inside the Test_FieldC, using the provided TestFieldC0
 func (t *Test_FieldC) MergeTestFieldC0(v TestFieldC0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldC0(v)
 	if err != nil {
 		return err
 	}
@@ -166,16 +178,20 @@ func (t Test_FieldC) AsTestFieldC1() (TestFieldC1, error) {
 	return body, err
 }
 
+func (t *Test_FieldC) prepareTestFieldC1(v TestFieldC1) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTestFieldC1 overwrites any union data inside the Test_FieldC as the provided TestFieldC1
 func (t *Test_FieldC) FromTestFieldC1(v TestFieldC1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldC1(v)
 	t.union = b
 	return err
 }
 
 // MergeTestFieldC1 performs a merge with any union data inside the Test_FieldC, using the provided TestFieldC1
 func (t *Test_FieldC) MergeTestFieldC1(v TestFieldC1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTestFieldC1(v)
 	if err != nil {
 		return err
 	}

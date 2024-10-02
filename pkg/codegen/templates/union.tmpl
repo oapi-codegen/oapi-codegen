@@ -11,11 +11,11 @@
             return body, err
         }
 
-        // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
-        func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
+        func (t *{{$typeName}}) prepare{{ .Method }}(v {{.}}) ([]byte, error) {
             {{if $discriminator -}}
                 {{$setProperty := false -}}
                 {{$tHasProperty := false -}}
+                {{$tPropertyType := "" -}}
                 {{$vHasProperty := false -}}
                 {{$typeMatches := 0 -}}
                 {{$discValue := "" -}}
@@ -27,6 +27,7 @@
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
                                 {{$tHasProperty = true -}}
+                                {{$tPropertyType = .GoTypeDef -}}
                                 {{break -}}
                             {{end -}}
                         {{end -}}
@@ -41,50 +42,23 @@
                     {{end -}}
                 {{else -}}
                     {{if and $vHasProperty $tHasProperty -}}
-                        t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
+                        t.{{$discriminator.PropertyName}} = ({{$tPropertyType}})(string(v.{{$discriminator.PropertyName}}))
                     {{end -}}
                 {{end -}}
             {{end -}}
-            b, err := json.Marshal(v)
+            return json.Marshal(v)
+        }
+
+        // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
+        func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
+            b, err := t.prepare{{ .Method }}(v)
             t.union = b
             return err
         }
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
-            {{if $discriminator -}}
-                {{$setProperty := false -}}
-                {{$tHasProperty := false -}}
-                {{$vHasProperty := false -}}
-                {{$typeMatches := 0 -}}
-                {{$discValue := "" -}}
-                {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element.GoType -}}
-                        {{$typeMatches = add $typeMatches 1 -}}
-                        {{$discValue = $value -}}
-                        {{$vHasProperty = $element.HasDiscriminatorProperty -}}
-                        {{range $properties -}}
-                            {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                {{$tHasProperty = true -}}
-                                {{break -}}
-                            {{end -}}
-                        {{end -}}
-                    {{end -}}
-                {{end -}}
-                {{if le $typeMatches 1 -}}
-                    {{if $tHasProperty -}}
-                        t.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                    {{end -}}
-                    {{if $vHasProperty -}}
-                        v.{{$discriminator.PropertyName}} = "{{$discValue}}"
-                    {{end -}}
-                {{else -}}
-                    {{if and $vHasProperty $tHasProperty -}}
-                        t.{{$discriminator.PropertyName}} = v.{{$discriminator.PropertyName}}
-                    {{end -}}
-                {{end -}}
-            {{end -}}
-            b, err := json.Marshal(v)
+            b, err := t.prepare{{ .Method }}(v)
             if err != nil {
               return err
             }
