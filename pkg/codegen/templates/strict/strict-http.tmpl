@@ -45,16 +45,16 @@ type strictHandler struct {
             request.ContentType = r.Header.Get("Content-Type")
         {{end -}}
 
-        {{$multipleBodies := gt (len .Bodies) 1 -}}
+        {{$needsContentTypeCheck := .NeedsContentTypeCheck -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
+            {{if $needsContentTypeCheck}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = {{if not .IsRequired}}&{{end}}body
                 {{else if eq .NameTag "Formdata" -}}
                     if err := r.ParseForm(); err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
@@ -65,14 +65,14 @@ type strictHandler struct {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
                         return
                     }
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = {{if not .IsRequired}}&{{end}}body
                 {{else if eq .NameTag "Multipart" -}}
                     {{if eq .ContentType "multipart/form-data" -}}
                     if reader, err := r.MultipartReader(); err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
                         return
                     } else {
-                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
+                        request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = reader
                     }
                     {{else -}}
                     if _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil {
@@ -82,7 +82,7 @@ type strictHandler struct {
                         sh.options.RequestErrorHandlerFunc(w, r, http.ErrMissingBoundary)
                         return
                     } else {
-                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(r.Body, boundary)
+                        request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = multipart.NewReader(r.Body, boundary)
                     }
                     {{end -}}
                 {{else if eq .NameTag "Text" -}}
@@ -92,11 +92,11 @@ type strictHandler struct {
                         return
                     }
                     body := {{$opid}}{{.NameTag}}RequestBody(data)
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = {{if not .IsRequired}}&{{end}}body
                 {{else -}}
-                    request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
+                    request.{{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body = r.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
-            {{if $multipleBodies}}}{{end}}
+            {{if $needsContentTypeCheck}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
