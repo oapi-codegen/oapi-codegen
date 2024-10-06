@@ -4129,11 +4129,17 @@ This may lead to breakage in your consuming code, and if so, sorry that's happen
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
 
+## Contributors
+
+We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+<a href="https://github.com/oapi-codegen/oapi-codegen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
+</a>
+
 ## Sponsors
 
 For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
-
-We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
