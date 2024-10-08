@@ -268,6 +268,8 @@ func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, e
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "FindPets")
+
 	return req, nil
 }
 
@@ -306,6 +308,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "AddPet")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -342,6 +345,8 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "DeletePet")
+
 	return req, nil
 }
 
@@ -375,6 +380,8 @@ func NewFindPetByIDRequest(server string, id int64) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "FindPetByID")
 
 	return req, nil
 }
