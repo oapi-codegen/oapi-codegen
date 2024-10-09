@@ -718,3 +718,25 @@ func Test_replaceInitialism(t *testing.T) {
 		})
 	}
 }
+
+func TestIsPredeclaredGoIdentifier(t *testing.T) {
+	type args struct {
+		s string
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{name: "empty string", args: args{s: ""}, want: false},
+		{name: "not predeclared", args: args{s: "foo"}, want: false},
+		{name: "predeclared type", args: args{s: "any"}, want: true},
+		{name: "predeclared const", args: args{s: "true"}, want: true},
+		{name: "predeclared function", args: args{s: "len"}, want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, IsPredeclaredGoIdentifier(tt.args.s))
+		})
+	}
+}
