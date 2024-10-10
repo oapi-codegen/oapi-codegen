@@ -134,10 +134,10 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/pets", wrapper.FindPets)
-	router.POST(baseURL+"/pets", wrapper.AddPet)
-	router.DELETE(baseURL+"/pets/:id", wrapper.DeletePet)
-	router.GET(baseURL+"/pets/:id", wrapper.FindPetByID)
+	router.GET(baseURL+"/pets", wrapper.FindPets).Name = "GET /pets"
+	router.POST(baseURL+"/pets", wrapper.AddPet).Name = "POST /pets"
+	router.DELETE(baseURL+"/pets/:id", wrapper.DeletePet).Name = "DELETE /pets/:id"
+	router.GET(baseURL+"/pets/:id", wrapper.FindPetByID).Name = "GET /pets/:id"
 
 }
 

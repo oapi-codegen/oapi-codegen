@@ -415,6 +415,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/pets", wrapper.GetPets)
+	router.GET(baseURL+"/pets", wrapper.GetPets).Name = "GET /pets"
 
 }
