@@ -1063,7 +1063,7 @@ func RegisterHandlers(router EchoRouter, si ServerInterface) {
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 	// ...
 
-	router.GET(baseURL+"/ping", wrapper.GetPing)
+	router.GET(baseURL+"/ping", wrapper.GetPing).Name = "GET /ping"
 
 }
 ```
@@ -1178,7 +1178,7 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	// ...
 
-	router.Get(options.BaseURL+"/ping", wrapper.GetPing)
+	router.Get(options.BaseURL+"/ping", wrapper.GetPing).Name("GET /ping")
 }
 ```
 
