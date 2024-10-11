@@ -1,0 +1,40 @@
+openapi: 3.0.0
+paths:
+  /test:
+    get:
+      operationId: Test
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/pet'
+components:
+  schemas:
+    dog:
+      type: object
+      required:
+        - breed
+      properties:
+        breed:
+          type: string
+          enum: [ poodle, beagle ]
+    cat:
+      type: object
+      required:
+        - breed
+      properties:
+        breed:
+          type: string
+          enum: [ maine_coon, ragdoll ]
+    pet:
+      oneOf:
+        - $ref: "#/components/schemas/dog"
+        - $ref: "#/components/schemas/cat"
+      discriminator:
+        propertyName: breed
+        mapping:
+          beagle: "#/components/schemas/dog"
+          maine_coon: "#/components/schemas/cat"
+          poodle: "#/components/schemas/dog"
+          ragdoll: "#/components/schemas/cat"
