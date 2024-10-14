@@ -232,7 +232,8 @@ components:
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	old := globalState.importMapping
+	oldMapping := globalState.importMapping
+	oldSpec := globalState.spec
 	globalState.importMapping = constructImportMapping(
 		map[string]string{
 			"doc.json":                    "externalref0",
@@ -241,7 +242,11 @@ func TestRefPathToGoType(t *testing.T) {
 			"dj-current-package.yml": "-",
 		},
 	)
-	defer func() { globalState.importMapping = old }()
+	globalState.spec = &openapi3.T{}
+	defer func() {
+		globalState.importMapping = oldMapping
+		globalState.spec = oldSpec
+	}()
 
 	tests := []struct {
 		name   string

@@ -35,7 +35,7 @@ generate:
 
 test:
 	# for the root module, explicitly run the step, to prevent recursive calls
-	go test -cover ./...
+	go test -shuffle=on -cover ./...
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make test'
 
