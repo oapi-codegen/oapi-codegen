@@ -239,6 +239,9 @@ type OutputOptions struct {
 
 	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
 	Overlay OutputOptionsOverlay `yaml:"overlay"`
+
+	// EnableYamlTags adds yaml tags to generated structs, in addition to default json ones
+	EnableYamlTags bool `yaml:"enable-yaml-tags,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
