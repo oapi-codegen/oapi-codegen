@@ -16,6 +16,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"go/doc"
 	"go/token"
 	"net/url"
 	"reflect"
@@ -30,7 +31,6 @@ import (
 
 var (
 	pathParamRE    *regexp.Regexp
-	predeclaredSet map[string]struct{}
 	separatorSet   map[rune]struct{}
 	nameNormalizer NameNormalizer = ToCamelCase
 )
@@ -98,56 +98,6 @@ var NameNormalizers = NameNormalizerMap{
 
 func init() {
 	pathParamRE = regexp.MustCompile(`{[.;?]?([^{}*]+)\*?}`)
-
-	predeclaredIdentifiers := []string{
-		// Types
-		"bool",
-		"byte",
-		"complex64",
-		"complex128",
-		"error",
-		"float32",
-		"float64",
-		"int",
-		"int8",
-		"int16",
-		"int32",
-		"int64",
-		"rune",
-		"string",
-		"uint",
-		"uint8",
-		"uint16",
-		"uint32",
-		"uint64",
-		"uintptr",
-		// Constants
-		"true",
-		"false",
-		"iota",
-		// Zero value
-		"nil",
-		// Functions
-		"append",
-		"cap",
-		"close",
-		"complex",
-		"copy",
-		"delete",
-		"imag",
-		"len",
-		"make",
-		"new",
-		"panic",
-		"print",
-		"println",
-		"real",
-		"recover",
-	}
-	predeclaredSet = map[string]struct{}{}
-	for _, id := range predeclaredIdentifiers {
-		predeclaredSet[id] = struct{}{}
-	}
 
 	separators := "-#@!$&=.+:;_~ (){}[]"
 	separatorSet = map[rune]struct{}{}
@@ -672,8 +622,7 @@ func IsGoKeyword(str string) bool {
 //
 // See https://golang.org/ref/spec#Predeclared_identifiers
 func IsPredeclaredGoIdentifier(str string) bool {
-	_, exists := predeclaredSet[str]
-	return exists
+	return doc.IsPredeclared(str)
 }
 
 // IsGoIdentity checks if the given string can be used as an identity
