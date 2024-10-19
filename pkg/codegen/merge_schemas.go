@@ -238,7 +238,7 @@ func equalTypes(t1 *openapi3.Types, t2 *openapi3.Types) bool {
 		return false
 	}
 
-	// NOTE that ideally we'd use `slices.Equal` but as we're currently supporting Go 1.20+, we can't use it (yet https://github.com/deepmap/oapi-codegen/issues/1634)
+	// NOTE that ideally we'd use `slices.Equal` but as we're currently supporting Go 1.20+, we can't use it (yet https://github.com/oapi-codegen/oapi-codegen/issues/1634)
 	for i := range s1 {
 		if s1[i] != s2[i] {
 			return false

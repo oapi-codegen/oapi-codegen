@@ -111,7 +111,7 @@ func main() {
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path.")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
-	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
+	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations if possible.")
 	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
@@ -297,7 +297,7 @@ func main() {
 	}
 
 	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
-		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/deepmap/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
+		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
 	}
 
 	if len(noVCSVersionOverride) > 0 {

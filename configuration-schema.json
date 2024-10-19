@@ -66,15 +66,15 @@
       "properties": {
         "old-merge-schemas": {
           "type": "boolean",
-          "description": "In the past, we merged schemas for `allOf` by inlining each schema within the schema list. This approach, though, is incorrect because `allOf` merges at the schema definition level, not at the resulting model level. So, new behavior merges OpenAPI specs but generates different code than we have in the past. Set OldMergeSchemas to true for the old behavior. Please see https://github.com/deepmap/oapi-codegen/issues/531"
+          "description": "In the past, we merged schemas for `allOf` by inlining each schema within the schema list. This approach, though, is incorrect because `allOf` merges at the schema definition level, not at the resulting model level. So, new behavior merges OpenAPI specs but generates different code than we have in the past. Set OldMergeSchemas to true for the old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/531"
         },
         "old-enum-conflicts": {
           "type": "boolean",
-          "description": "Enum values can generate conflicting typenames, so we've updated the code for enum generation to avoid these conflicts, but it will result in some enum types being renamed in existing code. Set OldEnumConflicts to true to revert to old behavior. Please see: Please see https://github.com/deepmap/oapi-codegen/issues/549"
+          "description": "Enum values can generate conflicting typenames, so we've updated the code for enum generation to avoid these conflicts, but it will result in some enum types being renamed in existing code. Set OldEnumConflicts to true to revert to old behavior. Please see: Please see https://github.com/oapi-codegen/oapi-codegen/issues/549"
         },
         "old-aliasing": {
           "type": "boolean",
-          "description": "It was a mistake to generate a go type definition for every $ref in the OpenAPI schema. New behavior uses type aliases where possible, but this can generate code which breaks existing builds. Set OldAliasing to true for old behavior. Please see https://github.com/deepmap/oapi-codegen/issues/549"
+          "description": "It was a mistake to generate a go type definition for every $ref in the OpenAPI schema. New behavior uses type aliases where possible, but this can generate code which breaks existing builds. Set OldAliasing to true for old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/549"
         },
         "disable-flatten-additional-properties": {
           "type": "boolean",
@@ -82,7 +82,7 @@
         },
         "disable-required-readonly-as-pointer": {
           "type": "boolean",
-          "description": "When an object property is both required and readOnly the go model is generated as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer. Please see https://github.com/deepmap/oapi-codegen/issues/604"
+          "description": "When an object property is both required and readOnly the go model is generated as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer. Please see https://github.com/oapi-codegen/oapi-codegen/issues/604"
         },
         "always-prefix-enum-values": {
           "type": "boolean",
@@ -90,11 +90,11 @@
         },
         "apply-chi-middleware-first-to-last": {
           "type": "boolean",
-          "description": "Our generated code for Chi has historically inverted the order in which Chi middleware is applied such that the last invoked middleware ends up executing first in the Chi chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/deepmap/oapi-codegen/issues/786"
+          "description": "Our generated code for Chi has historically inverted the order in which Chi middleware is applied such that the last invoked middleware ends up executing first in the Chi chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/oapi-codegen/oapi-codegen/issues/786"
         },
         "apply-gorilla-middleware-first-to-last": {
           "type": "boolean",
-          "description": "Our generated code for gorilla/mux has historically inverted the order in which gorilla/mux middleware is applied such that the last invoked middleware ends up executing first in the middlewares chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/deepmap/oapi-codegen/issues/841"
+          "description": "Our generated code for gorilla/mux has historically inverted the order in which gorilla/mux middleware is applied such that the last invoked middleware ends up executing first in the middlewares chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/oapi-codegen/oapi-codegen/issues/841"
         },
         "circular-reference-limit": {
           "type": "integer",
@@ -221,7 +221,7 @@
       "type": "object",
       "additionalProperties": {
         "type": "string",
-        "description": "ImportMapping specifies the golang package path for each external reference"
+        "description": "ImportMapping specifies the golang package path for each external reference. A value of `-` will indicate that the current package will be used"
       }
     },
     "additional-imports": {
