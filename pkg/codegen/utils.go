@@ -543,6 +543,7 @@ func SwaggerUriToIrisUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToEchoUri(uri string) string {
+	uri = strings.ReplaceAll(uri, ":", "\\:")
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -591,6 +592,7 @@ func SwaggerUriToChiUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToGinUri(uri string) string {
+	uri = strings.ReplaceAll(uri, ":", "\\:")
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
