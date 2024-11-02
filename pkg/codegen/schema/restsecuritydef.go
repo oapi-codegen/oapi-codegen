@@ -1,4 +1,4 @@
-package codegen
+package schema
 
 type SecurityDefinition struct {
 	ProviderName string

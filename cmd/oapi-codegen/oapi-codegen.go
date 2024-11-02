@@ -387,7 +387,7 @@ func detectPackageName(cfg *configuration) error {
 
 	// Fallback to determining from the spec file name.
 	parts := strings.Split(filepath.Base(flag.Arg(0)), ".")
-	cfg.PackageName = codegen.LowercaseFirstCharacter(codegen.ToCamelCase(parts[0]))
+	cfg.PackageName = codegen.lowercaseFirstCharacter(codegen.toCamelCase(parts[0]))
 
 	return nil
 }

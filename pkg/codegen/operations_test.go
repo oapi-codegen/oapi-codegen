@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/schema"
 )
 
 func TestIsJson(t *testing.T) {
@@ -66,7 +67,7 @@ func TestIsJson(t *testing.T) {
 	}
 	for _, test := range suite {
 		t.Run(test.name, func(t *testing.T) {
-			pd := ParameterDefinition{
+			pd := schema.ParameterDefinition{
 				Spec: &openapi3.Parameter{
 					Content: make(map[string]*openapi3.MediaType),
 				},
@@ -131,7 +132,7 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 	}
 
 	for _, test := range suite {
-		got, err := generateDefaultOperationID(test.op, test.path, ToCamelCase)
+		got, err := generateDefaultOperationID(test.op, test.path, schema.ToCamelCase)
 		if err != nil {
 			if !test.wantErr {
 				t.Fatalf("did not expected error but got %v", err)

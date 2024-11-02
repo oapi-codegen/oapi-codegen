@@ -20,9 +20,8 @@ import (
 	"strings"
 	"text/template"
 
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/constants"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/schema"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -33,22 +32,11 @@ const (
 	defaultClientTypeName = "Client"
 )
 
-var (
-	contentTypesJSON    = []string{"application/json", "text/x-json", "application/problem+json"}
-	contentTypesHalJSON = []string{"application/hal+json"}
-	contentTypesYAML    = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
-	contentTypesXML     = []string{"application/xml", "text/xml", "application/problems+xml"}
-
-	responseTypeSuffix = "Response"
-
-	titleCaser = cases.Title(language.English)
-)
-
 // genParamArgs takes an array of Parameter definition, and generates a valid
 // Go parameter declaration from them, eg:
 // ", foo int, bar string, baz float32". The preceding comma is there to save
 // a lot of work in the template engine.
-func genParamArgs(params []ParameterDefinition) string {
+func genParamArgs(params []schema.ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
@@ -64,7 +52,7 @@ func genParamArgs(params []ParameterDefinition) string {
 // types of the parameters for a type declaration. It would produce this
 // from the same input as above:
 // ", int, string, float32".
-func genParamTypes(params []ParameterDefinition) string {
+func genParamTypes(params []schema.ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
@@ -78,7 +66,7 @@ func genParamTypes(params []ParameterDefinition) string {
 // This is another variation of the function above which generates only the
 // parameter names:
 // ", foo, bar, baz"
-func genParamNames(params []ParameterDefinition) string {
+func genParamNames(params []schema.ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
@@ -103,7 +91,7 @@ func genResponsePayload(operationID string) string {
 }
 
 // genResponseUnmarshal generates unmarshaling steps for structured response payloads
-func genResponseUnmarshal(op *OperationDefinition) string {
+func genResponseUnmarshal(op *schema.OperationDefinition) string {
 	var handledCaseClauses = make(map[string]string)
 	var unhandledCaseClauses = make(map[string]string)
 
@@ -143,10 +131,10 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
+		SortedMapKeys := schema.SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
 		for _, contentTypeName := range SortedMapKeys {
-			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+			if schema.StringInArray(contentTypeName, constants.ContentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
@@ -163,7 +151,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+			case schema.StringInArray(contentTypeName, constants.ContentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -183,7 +171,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// YAML:
-			case StringInArray(contentTypeName, contentTypesYAML):
+			case schema.StringInArray(contentTypeName, constants.ContentTypesYAML):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -197,7 +185,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// XML:
-			case StringInArray(contentTypeName, contentTypesXML):
+			case schema.StringInArray(contentTypeName, constants.ContentTypesXML):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -228,11 +216,11 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// See: https://github.com/oapi-codegen/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedMapKeys(handledCaseClauses) {
+	for _, caseClauseKey := range schema.SortedMapKeys(handledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
-	for _, caseClauseKey := range SortedMapKeys(unhandledCaseClauses) {
+	for _, caseClauseKey := range schema.SortedMapKeys(unhandledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
@@ -242,14 +230,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 }
 
 // buildUnmarshalCase builds an unmarshaling case clause for different content-types:
-func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+func buildUnmarshalCase(typeDefinition schema.ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
-func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
+func buildUnmarshalCaseStrict(typeDefinition schema.ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
@@ -258,10 +246,10 @@ func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction 
 
 // genResponseTypeName creates the name of generated response types (given the operationID):
 func genResponseTypeName(operationID string) string {
-	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
+	return fmt.Sprintf("%s%s", schema.UppercaseFirstCharacter(operationID), constants.ResponseTypeSuffix)
 }
 
-func getResponseTypeDefinitions(op *OperationDefinition) []ResponseTypeDefinition {
+func getResponseTypeDefinitions(op *schema.OperationDefinition) []schema.ResponseTypeDefinition {
 	td, err := op.GetResponseTypeDefinitions()
 	if err != nil {
 		panic(err)
@@ -301,26 +289,26 @@ var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
-	"genParamFmtString":          ReplacePathParamsWithStr,
-	"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
-	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
-	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
-	"swaggerUriToChiUri":         SwaggerUriToChiUri,
-	"swaggerUriToGinUri":         SwaggerUriToGinUri,
-	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
-	"swaggerUriToStdHttpUri":     SwaggerUriToStdHttpUri,
-	"lcFirst":                    LowercaseFirstCharacter,
-	"ucFirst":                    UppercaseFirstCharacter,
-	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
-	"camelCase":                  ToCamelCase,
+	"genParamFmtString":          schema.ReplacePathParamsWithStr,
+	"swaggerUriToIrisUri":        schema.SwaggerUriToIrisUri,
+	"swaggerUriToEchoUri":        schema.SwaggerUriToEchoUri,
+	"swaggerUriToFiberUri":       schema.SwaggerUriToFiberUri,
+	"swaggerUriToChiUri":         schema.SwaggerUriToChiUri,
+	"swaggerUriToGinUri":         schema.SwaggerUriToGinUri,
+	"swaggerUriToGorillaUri":     schema.SwaggerUriToGorillaUri,
+	"swaggerUriToStdHttpUri":     schema.SwaggerUriToStdHttpUri,
+	"lcFirst":                    schema.LowercaseFirstCharacter,
+	"ucFirst":                    schema.UppercaseFirstCharacter,
+	"ucFirstWithPkgName":         schema.UppercaseFirstCharacterWithPkgName,
+	"camelCase":                  schema.ToCamelCase,
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
-	"title":                      titleCaser.String,
+	"title":                      constants.TitleCaser.String,
 	"stripNewLines":              stripNewLines,
-	"sanitizeGoIdentity":         SanitizeGoIdentity,
-	"toGoComment":                StringWithTypeNameToGoComment,
+	"sanitizeGoIdentity":         schema.SanitizeGoIdentity,
+	"toGoComment":                schema.StringWithTypeNameToGoComment,
 }

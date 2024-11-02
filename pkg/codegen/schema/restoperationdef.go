@@ -1,11 +1,11 @@
-package codegen
+package schema
 
 import (
 	"fmt"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/constants"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -109,21 +109,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					switch {
 
 					// HAL+JSON:
-					case StringInArray(contentTypeName, contentTypesHalJSON):
+					case StringInArray(contentTypeName, constants.ContentTypesHalJSON):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
-					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+					case StringInArray(contentTypeName, constants.ContentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
+					case StringInArray(contentTypeName, constants.ContentTypesYAML):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
+					case StringInArray(contentTypeName, constants.ContentTypesXML):
 						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
