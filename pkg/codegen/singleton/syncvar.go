@@ -5,12 +5,13 @@ import (
 	"sort"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 )
 
 // GlobalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var GlobalState struct {
-	Options       Configuration
+	Options       openapiv3.Configuration
 	Spec          *openapi3.T
 	ImportMapping ImportMap
 }

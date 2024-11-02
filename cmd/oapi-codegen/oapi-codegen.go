@@ -26,6 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -62,7 +63,7 @@ var (
 )
 
 type configuration struct {
-	codegen.Configuration `yaml:",inline"`
+	openapiv3.Configuration `yaml:",inline"`
 
 	// OutputFile is the filename to output.
 	OutputFile string `yaml:"output,omitempty"`
@@ -71,18 +72,18 @@ type configuration struct {
 // oldConfiguration is deprecated. Please add no more flags here. It is here
 // for backwards compatibility, and it will be removed in the future.
 type oldConfiguration struct {
-	PackageName         string                       `yaml:"package"`
-	GenerateTargets     []string                     `yaml:"generate"`
-	OutputFile          string                       `yaml:"output"`
-	IncludeTags         []string                     `yaml:"include-tags"`
-	ExcludeTags         []string                     `yaml:"exclude-tags"`
-	IncludeOperationIDs []string                     `yaml:"include-operation-ids"`
-	ExcludeOperationIDs []string                     `yaml:"exclude-operation-ids"`
-	TemplatesDir        string                       `yaml:"templates"`
-	ImportMapping       map[string]string            `yaml:"import-mapping"`
-	ExcludeSchemas      []string                     `yaml:"exclude-schemas"`
-	ResponseTypeSuffix  string                       `yaml:"response-type-suffix"`
-	Compatibility       codegen.CompatibilityOptions `yaml:"compatibility"`
+	PackageName         string                         `yaml:"package"`
+	GenerateTargets     []string                       `yaml:"generate"`
+	OutputFile          string                         `yaml:"output"`
+	IncludeTags         []string                       `yaml:"include-tags"`
+	ExcludeTags         []string                       `yaml:"exclude-tags"`
+	IncludeOperationIDs []string                       `yaml:"include-operation-ids"`
+	ExcludeOperationIDs []string                       `yaml:"exclude-operation-ids"`
+	TemplatesDir        string                         `yaml:"templates"`
+	ImportMapping       map[string]string              `yaml:"import-mapping"`
+	ExcludeSchemas      []string                       `yaml:"exclude-schemas"`
+	ResponseTypeSuffix  string                         `yaml:"response-type-suffix"`
+	Compatibility       openapiv3.CompatibilityOptions `yaml:"compatibility"`
 }
 
 // noVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
@@ -222,8 +223,8 @@ func main() {
 			// defaults, so that when this is invoked very simply, it's similar
 			// to old behavior.
 			opts = configuration{
-				Configuration: codegen.Configuration{
-					Generate: codegen.GenerateOptions{
+				Configuration: openapiv3.Configuration{
+					Generate: openapiv3.GenerateOptions{
 						EchoServer:   true,
 						Client:       true,
 						Models:       true,
@@ -487,8 +488,8 @@ func updateOldConfigFromFlags(cfg oldConfiguration) oldConfiguration {
 }
 
 // generationTargets sets cfg options based on the generation targets.
-func generationTargets(cfg *codegen.Configuration, targets []string) error {
-	opts := codegen.GenerateOptions{} // Blank to start with.
+func generationTargets(cfg *openapiv3.Configuration, targets []string) error {
+	opts := openapiv3.GenerateOptions{} // Blank to start with.
 	for _, opt := range targets {
 		switch opt {
 		case "iris", "iris-server":
@@ -532,7 +533,7 @@ func newConfigFromOldConfig(c oldConfiguration) (configuration, error) {
 
 	// Now, copy over field by field, translating flags and old values as
 	// necessary.
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: cfg.PackageName,
 	}
 	opts.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix

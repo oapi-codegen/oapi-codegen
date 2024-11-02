@@ -33,6 +33,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
@@ -45,7 +46,7 @@ var templates embed.FS
 // Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
-func Generate(spec *openapi3.T, opts Configuration) (string, error) {
+func Generate(spec *openapi3.T, opts openapiv3.Configuration) (string, error) {
 	// This is global state
 	singleton.GlobalState.Options = opts
 	singleton.GlobalState.Spec = spec
@@ -74,7 +75,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Configuration { return singleton.GlobalState.Options }
+	TemplateFunctions["opts"] = func() openapiv3.Configuration { return singleton.GlobalState.Options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -763,7 +764,7 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		PackageName       string
 		ModuleName        string
 		Version           string
-		AdditionalImports []AdditionalImport
+		AdditionalImports []openapiv3.AdditionalImport
 	}{
 		ExternalImports:   externalImports,
 		PackageName:       packageName,

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,8 +19,8 @@ func TestFindReferences(t *testing.T) {
 	t.Run("only cat", func(t *testing.T) {
 		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
-		opts := Configuration{
-			OutputOptions: OutputOptions{
+		opts := openapiv3.Configuration{
+			OutputOptions: openapiv3.OutputOptions{
 				IncludeTags: []string{"cat"},
 			},
 		}
@@ -33,8 +34,8 @@ func TestFindReferences(t *testing.T) {
 		swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 		assert.NoError(t, err)
 
-		opts := Configuration{
-			OutputOptions: OutputOptions{
+		opts := openapiv3.Configuration{
+			OutputOptions: openapiv3.OutputOptions{
 				IncludeTags: []string{"dog"},
 			},
 		}
@@ -51,8 +52,8 @@ func TestFilterOnlyCat(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
-	opts := Configuration{
-		OutputOptions: OutputOptions{
+	opts := openapiv3.Configuration{
+		OutputOptions: openapiv3.OutputOptions{
 			IncludeTags: []string{"cat"},
 		},
 	}
@@ -81,8 +82,8 @@ func TestFilterOnlyDog(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
 	assert.NoError(t, err)
 
-	opts := Configuration{
-		OutputOptions: OutputOptions{
+	opts := openapiv3.Configuration{
+		OutputOptions: openapiv3.OutputOptions{
 			IncludeTags: []string{"dog"},
 		},
 	}

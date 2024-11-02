@@ -1,6 +1,9 @@
 package codegen
 
-import "github.com/getkin/kin-openapi/openapi3"
+import (
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
+)
 
 func sliceToMap(items []string) map[string]bool {
 	m := make(map[string]bool, len(items))
@@ -10,7 +13,7 @@ func sliceToMap(items []string) map[string]bool {
 	return m
 }
 
-func filterOperationsByTag(swagger *openapi3.T, opts Configuration) {
+func filterOperationsByTag(swagger *openapi3.T, opts openapiv3.Configuration) {
 	if len(opts.OutputOptions.ExcludeTags) > 0 {
 		operationsWithTags(swagger.Paths, sliceToMap(opts.OutputOptions.ExcludeTags), true)
 	}
@@ -51,7 +54,7 @@ func operationHasTag(op *openapi3.Operation, tags map[string]bool) bool {
 	return false
 }
 
-func filterOperationsByOperationID(swagger *openapi3.T, opts Configuration) {
+func filterOperationsByOperationID(swagger *openapi3.T, opts openapiv3.Configuration) {
 	if len(opts.OutputOptions.ExcludeOperationIDs) > 0 {
 		operationsWithOperationIDs(swagger.Paths, sliceToMap(opts.OutputOptions.ExcludeOperationIDs), true)
 	}

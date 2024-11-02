@@ -25,6 +25,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -1010,7 +1011,7 @@ func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinitio
 	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
 }
 
-func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts openapiv3.Configuration) (string, error) {
 
 	var templates []string
 

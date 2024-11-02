@@ -1,4 +1,4 @@
-package codegen
+package openapiv3
 
 import (
 	"errors"

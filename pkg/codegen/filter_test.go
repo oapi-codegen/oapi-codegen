@@ -4,21 +4,22 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFilterOperationsByTag(t *testing.T) {
 	packageName := "testswagger"
 	t.Run("include tags", func(t *testing.T) {
-		opts := Configuration{
+		opts := openapiv3.Configuration{
 			PackageName: packageName,
-			Generate: GenerateOptions{
+			Generate: openapiv3.GenerateOptions{
 				EchoServer:   true,
 				Client:       true,
 				Models:       true,
 				EmbeddedSpec: true,
 			},
-			OutputOptions: OutputOptions{
+			OutputOptions: openapiv3.OutputOptions{
 				IncludeTags: []string{"hippo", "giraffe", "cat"},
 			},
 		}
@@ -39,15 +40,15 @@ func TestFilterOperationsByTag(t *testing.T) {
 	})
 
 	t.Run("exclude tags", func(t *testing.T) {
-		opts := Configuration{
+		opts := openapiv3.Configuration{
 			PackageName: packageName,
-			Generate: GenerateOptions{
+			Generate: openapiv3.GenerateOptions{
 				EchoServer:   true,
 				Client:       true,
 				Models:       true,
 				EmbeddedSpec: true,
 			},
-			OutputOptions: OutputOptions{
+			OutputOptions: openapiv3.OutputOptions{
 				ExcludeTags: []string{"hippo", "giraffe", "cat"},
 			},
 		}
@@ -71,15 +72,15 @@ func TestFilterOperationsByTag(t *testing.T) {
 func TestFilterOperationsByOperationID(t *testing.T) {
 	packageName := "testswagger"
 	t.Run("include operation ids", func(t *testing.T) {
-		opts := Configuration{
+		opts := openapiv3.Configuration{
 			PackageName: packageName,
-			Generate: GenerateOptions{
+			Generate: openapiv3.GenerateOptions{
 				EchoServer:   true,
 				Client:       true,
 				Models:       true,
 				EmbeddedSpec: true,
 			},
-			OutputOptions: OutputOptions{
+			OutputOptions: openapiv3.OutputOptions{
 				IncludeOperationIDs: []string{"getCatStatus"},
 			},
 		}
@@ -100,15 +101,15 @@ func TestFilterOperationsByOperationID(t *testing.T) {
 	})
 
 	t.Run("exclude operation ids", func(t *testing.T) {
-		opts := Configuration{
+		opts := openapiv3.Configuration{
 			PackageName: packageName,
-			Generate: GenerateOptions{
+			Generate: openapiv3.GenerateOptions{
 				EchoServer:   true,
 				Client:       true,
 				Models:       true,
 				EmbeddedSpec: true,
 			},
-			OutputOptions: OutputOptions{
+			OutputOptions: openapiv3.OutputOptions{
 				ExcludeOperationIDs: []string{"getCatStatus"},
 			},
 		}

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -22,9 +23,9 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "testswagger"
-	opts := Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
 			Models:       true,
@@ -87,9 +88,9 @@ type GetTestByNameResponse struct {
 
 func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 	packageName := "api"
-	opts := Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			EchoServer:   true,
 			Models:       true,
 			EmbeddedSpec: true,
@@ -125,9 +126,9 @@ func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 
 func TestGoTypeImport(t *testing.T) {
 	packageName := "api"
-	opts := Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			EchoServer:   true,
 			Models:       true,
 			EmbeddedSpec: true,
@@ -172,9 +173,9 @@ func TestRemoteExternalReference(t *testing.T) {
 	}
 
 	packageName := "api"
-	opts := Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			Models: true,
 		},
 		ImportMapping: map[string]string{
