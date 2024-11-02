@@ -232,8 +232,8 @@ components:
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	old := GlobalState.importMapping
-	GlobalState.importMapping = ConstructImportMapping(
+	old := GlobalState.ImportMapping
+	GlobalState.ImportMapping = ConstructImportMapping(
 		map[string]string{
 			"doc.json":                    "externalref0",
 			"http://deepmap.com/doc.json": "externalref1",
@@ -241,7 +241,7 @@ func TestRefPathToGoType(t *testing.T) {
 			"dj-current-package.yml": "-",
 		},
 	)
-	defer func() { GlobalState.importMapping = old }()
+	defer func() { GlobalState.ImportMapping = old }()
 
 	tests := []struct {
 		name   string

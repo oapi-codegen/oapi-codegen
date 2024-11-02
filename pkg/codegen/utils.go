@@ -448,7 +448,7 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	goPkg, ok := GlobalState.importMapping[remoteComponent]
+	goPkg, ok := GlobalState.ImportMapping[remoteComponent]
 
 	if !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
@@ -475,7 +475,7 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 
 	// Schemas may have been renamed locally, so look up the actual name in
 	// the spec.
-	name, err := findSchemaNameByRefPath(refPath, GlobalState.spec)
+	name, err := findSchemaNameByRefPath(refPath, GlobalState.Spec)
 	if err != nil {
 		return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
 	}
