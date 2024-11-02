@@ -202,7 +202,7 @@ func TestProperty_GoTypeDef(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
+			GlobalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
 			p := Property{
 				Schema:    tt.fields.Schema,
 				Required:  tt.fields.Required,
@@ -441,8 +441,8 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
-			globalState.options.OutputOptions.NullableType = tt.fields.GlobalStateNullableType
+			GlobalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
+			GlobalState.options.OutputOptions.NullableType = tt.fields.GlobalStateNullableType
 			p := Property{
 				Schema:    tt.fields.Schema,
 				Required:  tt.fields.Required,

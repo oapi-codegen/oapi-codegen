@@ -26,7 +26,7 @@ import (
 
 // GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
-func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
+func GenerateInlinedSpec(t *template.Template, importMapping ImportMap, swagger *openapi3.T) (string, error) {
 	// ensure that any external file references are embedded into the embedded spec
 	swagger.InternalizeRefs(context.Background(), nil)
 	// Marshal to json
@@ -69,7 +69,7 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 		t,
 		struct {
 			SpecParts     []string
-			ImportMapping importMap
+			ImportMapping ImportMap
 		}{
 			SpecParts:     parts,
 			ImportMapping: importMapping,

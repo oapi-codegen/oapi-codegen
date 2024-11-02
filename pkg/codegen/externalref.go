@@ -74,7 +74,7 @@ func ensureExternalRefsInSchema(schema *Schema, ref string) {
 	}
 
 	parts := strings.SplitN(ref, "#", 2)
-	if pack, ok := globalState.importMapping[parts[0]]; ok {
+	if pack, ok := GlobalState.importMapping[parts[0]]; ok {
 		schema.RefType = fmt.Sprintf("%s.%s", pack.Name, schema.GoType)
 	}
 }

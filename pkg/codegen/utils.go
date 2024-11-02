@@ -448,13 +448,13 @@ func refPathToGoType(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	goPkg, ok := globalState.importMapping[remoteComponent]
+	goPkg, ok := GlobalState.importMapping[remoteComponent]
 
 	if !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
 	}
 
-	if goPkg.Path == importMappingCurrentPackage {
+	if goPkg.Path == ImportMappingCurrentPackage {
 		return refPathToGoTypeSelf(fmt.Sprintf("#%s", pathParts[1]), local)
 	}
 
@@ -475,7 +475,7 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 
 	// Schemas may have been renamed locally, so look up the actual name in
 	// the spec.
-	name, err := findSchemaNameByRefPath(refPath, globalState.spec)
+	name, err := findSchemaNameByRefPath(refPath, GlobalState.spec)
 	if err != nil {
 		return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
 	}
@@ -488,7 +488,7 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 	return SchemaNameToTypeName(lastPart), nil
 }
 
-func refPathToGoTypeRemote(flatComponent string, goPkg goImport) (string, error) {
+func refPathToGoTypeRemote(flatComponent string, goPkg GoImport) (string, error) {
 	goType, err := refPathToGoType("#"+flatComponent, false)
 	if err != nil {
 		return "", err
@@ -1031,7 +1031,7 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	return "", nil
 }
 
-func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
+func ParseGoImportExtension(v *openapi3.SchemaRef) (*GoImport, error) {
 	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
 		return nil, nil
 	}
@@ -1043,7 +1043,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
 
-	gi := goImport{}
+	gi := GoImport{}
 	// replicate the case-insensitive field mapping json.Unmarshal would do
 	for k, v := range importI {
 		if strings.EqualFold(k, "name") {
@@ -1064,7 +1064,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	return &gi, nil
 }
 
-func MergeImports(dst, src map[string]goImport) {
+func MergeImports(dst, src map[string]GoImport) {
 	for k, v := range src {
 		dst[k] = v
 	}
