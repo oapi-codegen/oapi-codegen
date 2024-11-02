@@ -34,6 +34,7 @@ import (
 	"golang.org/x/tools/imports"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/preprocess"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
@@ -52,10 +53,10 @@ func Generate(spec *openapi3.T, opts openapiv3.Configuration) (string, error) {
 	singleton.GlobalState.Spec = spec
 	singleton.GlobalState.ImportMapping = singleton.ConstructImportMapping(opts.ImportMapping)
 
-	filterOperationsByTag(spec, opts)
-	filterOperationsByOperationID(spec, opts)
+	preprocess.FilterOperationsByTag(spec, opts)
+	preprocess.FilterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
-		pruneUnusedComponents(spec)
+		preprocess.PruneUnusedComponents(spec)
 	}
 
 	// if we are provided an override for the response type suffix update it

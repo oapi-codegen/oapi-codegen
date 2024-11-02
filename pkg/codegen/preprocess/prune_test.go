@@ -1,4 +1,4 @@
-package codegen
+package preprocess
 
 import (
 	"testing"
@@ -25,7 +25,7 @@ func TestFindReferences(t *testing.T) {
 			},
 		}
 
-		filterOperationsByTag(swagger, opts)
+		FilterOperationsByTag(swagger, opts)
 
 		refs := findComponentRefs(swagger)
 		assert.Len(t, refs, 7)
@@ -40,7 +40,7 @@ func TestFindReferences(t *testing.T) {
 			},
 		}
 
-		filterOperationsByTag(swagger, opts)
+		FilterOperationsByTag(swagger, opts)
 
 		refs := findComponentRefs(swagger)
 		assert.Len(t, refs, 7)
@@ -63,7 +63,7 @@ func TestFilterOnlyCat(t *testing.T) {
 
 	assert.Len(t, swagger.Components.Schemas, 5)
 
-	filterOperationsByTag(swagger, opts)
+	FilterOperationsByTag(swagger, opts)
 
 	refs = findComponentRefs(swagger)
 	assert.Len(t, refs, 7)
@@ -72,7 +72,7 @@ func TestFilterOnlyCat(t *testing.T) {
 	assert.NotEmpty(t, swagger.Paths.Value("/cat").Get, "GET /cat operation should still be in spec")
 	assert.Empty(t, swagger.Paths.Value("/dog").Get, "GET /dog should have been removed from spec")
 
-	pruneUnusedComponents(swagger)
+	PruneUnusedComponents(swagger)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -91,7 +91,7 @@ func TestFilterOnlyDog(t *testing.T) {
 	refs := findComponentRefs(swagger)
 	assert.Len(t, refs, 14)
 
-	filterOperationsByTag(swagger, opts)
+	FilterOperationsByTag(swagger, opts)
 
 	refs = findComponentRefs(swagger)
 	assert.Len(t, refs, 7)
@@ -102,7 +102,7 @@ func TestFilterOnlyDog(t *testing.T) {
 	assert.NotEmpty(t, swagger.Paths.Value("/dog").Get)
 	assert.Empty(t, swagger.Paths.Value("/cat").Get)
 
-	pruneUnusedComponents(swagger)
+	PruneUnusedComponents(swagger)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -122,7 +122,7 @@ func TestPruningUnusedComponents(t *testing.T) {
 	assert.Len(t, swagger.Components.Links, 1)
 	assert.Len(t, swagger.Components.Callbacks, 1)
 
-	pruneUnusedComponents(swagger)
+	PruneUnusedComponents(swagger)
 
 	assert.Len(t, swagger.Components.Schemas, 0)
 	assert.Len(t, swagger.Components.Parameters, 0)

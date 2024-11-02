@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// All tests using the Generate function are integration tests and not unit tests. Cannot be moved to subpackages without causing issues
 func TestFilterOperationsByTag(t *testing.T) {
 	packageName := "testswagger"
 	t.Run("include tags", func(t *testing.T) {

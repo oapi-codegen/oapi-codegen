@@ -1,4 +1,4 @@
-package codegen
+package preprocess
 
 import (
 	"fmt"
@@ -478,7 +478,7 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.T) {
+func PruneUnusedComponents(swagger *openapi3.T) {
 	for {
 		refs := findComponentRefs(swagger)
 		countRemoved := removeOrphanedComponents(swagger, refs)
