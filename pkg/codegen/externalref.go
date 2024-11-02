@@ -3,6 +3,8 @@ package codegen
 import (
 	"fmt"
 	"strings"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 )
 
 // ensureExternalRefsInRequestBodyDefinitions ensures that when an externalRef (`$ref` that points to a file that isn't the current spec) is encountered, we make sure we update our underlying `RefType` to make sure that we point to that type.
@@ -74,7 +76,7 @@ func ensureExternalRefsInSchema(schema *Schema, ref string) {
 	}
 
 	parts := strings.SplitN(ref, "#", 2)
-	if pack, ok := GlobalState.ImportMapping[parts[0]]; ok {
+	if pack, ok := singleton.GlobalState.ImportMapping[parts[0]]; ok {
 		schema.RefType = fmt.Sprintf("%s.%s", pack.Name, schema.GoType)
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 )
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
@@ -13,7 +14,7 @@ import (
 func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
-	if GlobalState.Options.Compatibility.OldMergeSchemas {
+	if singleton.GlobalState.Options.Compatibility.OldMergeSchemas {
 		return mergeSchemasV1(allOf, path)
 	}
 	return mergeSchemas(allOf, path)

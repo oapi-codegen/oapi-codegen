@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 )
 
 // Schema describes an OpenAPI schema, with lots of helper fields to use in the
@@ -100,7 +101,7 @@ func (p Property) GoFieldName() string {
 		}
 	}
 
-	if GlobalState.Options.Compatibility.AllowUnexportedStructFieldNames {
+	if singleton.GlobalState.Options.Compatibility.AllowUnexportedStructFieldNames {
 		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
 			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
 				if extOapiCodegenOnlyHonourGoName {
@@ -115,12 +116,12 @@ func (p Property) GoFieldName() string {
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if GlobalState.Options.OutputOptions.NullableType && p.Nullable {
+	if singleton.GlobalState.Options.OutputOptions.NullableType && p.Nullable {
 		return "nullable.Nullable[" + typeDef + "]"
 	}
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||
-			(p.ReadOnly && (!p.Required || !GlobalState.Options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
+			(p.ReadOnly && (!p.Required || !singleton.GlobalState.Options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
 			p.WriteOnly) {
 
 		typeDef = "*" + typeDef
@@ -204,7 +205,7 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) IsAlias() bool {
-	return !GlobalState.Options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
+	return !singleton.GlobalState.Options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
 type Discriminator struct {
@@ -377,7 +378,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// early-out here and generate a map[string]<schema> instead of an object
 			// that contains this map. We skip over anyOf/oneOf here because they can
 			// introduce properties. allOf was handled above.
-			if !GlobalState.Options.Compatibility.DisableFlattenAdditionalProperties &&
+			if !singleton.GlobalState.Options.Compatibility.DisableFlattenAdditionalProperties &&
 				len(schema.Properties) == 0 && schema.AnyOf == nil && schema.OneOf == nil {
 				// We have a dictionary here. Returns the goType to be just a map from
 				// string to the property type. HasAdditionalProperties=false means
@@ -507,7 +508,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				enumName = k
 			}
-			if GlobalState.Options.Compatibility.OldEnumConflicts {
+			if singleton.GlobalState.Options.Compatibility.OldEnumConflicts {
 				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
 			} else {
 				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
@@ -577,7 +578,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
-		if sliceContains(GlobalState.Options.OutputOptions.DisableTypeAliasesForType, "array") {
+		if sliceContains(singleton.GlobalState.Options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
 
@@ -709,11 +710,11 @@ func GenFieldsFromProperties(props []Property) []string {
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
 		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
-			(!p.Required || !p.ReadOnly || !GlobalState.Options.Compatibility.DisableRequiredReadOnlyAsPointer)
+			(!p.Required || !p.ReadOnly || !singleton.GlobalState.Options.Compatibility.DisableRequiredReadOnlyAsPointer)
 
 		omitEmpty := !p.Nullable && shouldOmitEmpty
 
-		if p.Nullable && GlobalState.Options.OutputOptions.NullableType {
+		if p.Nullable && singleton.GlobalState.Options.OutputOptions.NullableType {
 			omitEmpty = shouldOmitEmpty
 		}
 

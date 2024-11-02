@@ -33,6 +33,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/singleton"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -41,81 +42,14 @@ import (
 //go:embed templates
 var templates embed.FS
 
-// GlobalState stores all global state. Please don't put global state anywhere
-// else so that we can easily track it.
-var GlobalState struct {
-	Options       Configuration
-	Spec          *openapi3.T
-	ImportMapping ImportMap
-}
-
-// GoImport represents a go package to be imported in the generated code
-type GoImport struct {
-	Name string // package name
-	Path string // package path
-}
-
-// String returns a go import statement
-func (gi GoImport) String() string {
-	if gi.Name != "" {
-		return fmt.Sprintf("%s %q", gi.Name, gi.Path)
-	}
-	return fmt.Sprintf("%q", gi.Path)
-}
-
-// ImportMap maps external OpenAPI specifications files/urls to external go packages
-type ImportMap map[string]GoImport
-
-// ImportMappingCurrentPackage allows an Import Mapping to map to the current package, rather than an external package.
-// This allows users to split their OpenAPI specification across multiple files, but keep them in the same package, which can reduce a bit of the overhead for users.
-// We use `-` to indicate that this is a bit of a special case
-const ImportMappingCurrentPackage = "-"
-
-// GoImports returns a slice of go import statements
-func (im ImportMap) GoImports() []string {
-	goImports := make([]string, 0, len(im))
-	for _, v := range im {
-		if v.Path == ImportMappingCurrentPackage {
-			continue
-		}
-		goImports = append(goImports, v.String())
-	}
-	return goImports
-}
-
-func ConstructImportMapping(importMapping map[string]string) ImportMap {
-	var (
-		pathToName = map[string]string{}
-		result     = ImportMap{}
-	)
-
-	{
-		var packagePaths []string
-		for _, packageName := range importMapping {
-			packagePaths = append(packagePaths, packageName)
-		}
-		sort.Strings(packagePaths)
-
-		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok && packagePath != ImportMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
-			}
-		}
-	}
-	for specPath, packagePath := range importMapping {
-		result[specPath] = GoImport{Name: pathToName[packagePath], Path: packagePath}
-	}
-	return result
-}
-
 // Generate uses the Go templating engine to generate all of our server wrappers from
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
-	GlobalState.Options = opts
-	GlobalState.Spec = spec
-	GlobalState.ImportMapping = ConstructImportMapping(opts.ImportMapping)
+	singleton.GlobalState.Options = opts
+	singleton.GlobalState.Spec = spec
+	singleton.GlobalState.ImportMapping = singleton.ConstructImportMapping(opts.ImportMapping)
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
@@ -128,8 +62,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
-	if GlobalState.Options.OutputOptions.ClientTypeName == "" {
-		GlobalState.Options.OutputOptions.ClientTypeName = defaultClientTypeName
+	if singleton.GlobalState.Options.OutputOptions.ClientTypeName == "" {
+		singleton.GlobalState.Options.OutputOptions.ClientTypeName = defaultClientTypeName
 	}
 
 	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
@@ -140,7 +74,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Configuration { return GlobalState.Options }
+	TemplateFunctions["opts"] = func() Configuration { return singleton.GlobalState.Options }
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -287,7 +221,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
-		inlinedSpec, err = GenerateInlinedSpec(t, GlobalState.ImportMapping, spec)
+		inlinedSpec, err = GenerateInlinedSpec(t, singleton.GlobalState.ImportMapping, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -296,7 +230,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	externalImports := append(GlobalState.ImportMapping.GoImports(), ImportMap(xGoTypeImports).GoImports()...)
+	externalImports := append(singleton.GlobalState.ImportMapping.GoImports(), singleton.ImportMap(xGoTypeImports).GoImports()...)
 	importsOut, err := GenerateImports(
 		t,
 		externalImports,
@@ -751,7 +685,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				Schema:         tp.Schema,
 				TypeName:       tp.TypeName,
 				ValueWrapper:   wrapper,
-				PrefixTypeName: GlobalState.Options.Compatibility.AlwaysPrefixEnumValues,
+				PrefixTypeName: singleton.GlobalState.Options.Compatibility.AlwaysPrefixEnumValues,
 			})
 		}
 	}
@@ -835,7 +769,7 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		PackageName:       packageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
-		AdditionalImports: GlobalState.Options.AdditionalImports,
+		AdditionalImports: singleton.GlobalState.Options.AdditionalImports,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
@@ -994,8 +928,8 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 	})
 }
 
-func OperationSchemaImports(s *Schema) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func OperationSchemaImports(s *Schema) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 
 	for _, p := range s.Properties {
 		imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: p.Schema.OAPISchema})
@@ -1013,8 +947,8 @@ func OperationSchemaImports(s *Schema) (map[string]GoImport, error) {
 	return res, nil
 }
 
-func OperationImports(ops []OperationDefinition) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func OperationImports(ops []OperationDefinition) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	for _, op := range ops {
 		for _, pd := range [][]ParameterDefinition{op.PathParams, op.QueryParams} {
 			for _, p := range pd {
@@ -1048,8 +982,8 @@ func OperationImports(ops []OperationDefinition) (map[string]GoImport, error) {
 	return res, nil
 }
 
-func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	if swagger.Components == nil {
 		return res, nil
 	}
@@ -1074,14 +1008,14 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 		return nil, err
 	}
 
-	for _, imprts := range []map[string]GoImport{schemaImports, reqBodiesImports, responsesImports, parametersImports} {
+	for _, imprts := range []map[string]singleton.GoImport{schemaImports, reqBodiesImports, responsesImports, parametersImports} {
 		MergeImports(res, imprts)
 	}
 	return res, nil
 }
 
-func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	for _, sref := range schemas {
 		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
 			return nil, nil
@@ -1115,8 +1049,8 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]GoImport, error
 	return res, nil
 }
 
-func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []string) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	excludeSchemasMap := make(map[string]bool)
 	for _, schema := range excludeSchemas {
 		excludeSchemasMap[schema] = true
@@ -1135,8 +1069,8 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 	return res, nil
 }
 
-func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	for _, r := range bodies {
 		response := r.Value
 		for mediaType, body := range response.Content {
@@ -1154,8 +1088,8 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 	return res, nil
 }
 
-func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	for _, r := range responses {
 		response := r.Value
 		for mediaType, body := range response.Content {
@@ -1173,8 +1107,8 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 	return res, nil
 }
 
-func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]GoImport, error) {
-	res := map[string]GoImport{}
+func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]singleton.GoImport, error) {
+	res := map[string]singleton.GoImport{}
 	for _, param := range params {
 		if param.Value == nil {
 			continue
@@ -1189,5 +1123,5 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 }
 
 func SetGlobalStateSpec(spec *openapi3.T) {
-	GlobalState.Spec = spec
+	singleton.GlobalState.Spec = spec
 }
