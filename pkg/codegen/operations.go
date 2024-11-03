@@ -129,7 +129,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]sche
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = schema.NameNormalizer(op.OperationID)
+				op.OperationID = schema.DefaultNameNormalizer(op.OperationID)
 			}
 			op.OperationID = schema.TypeNamePrefix(op.OperationID) + op.OperationID
 
@@ -177,7 +177,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]sche
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  schema.NameNormalizer(op.OperationID),
+				OperationId:  schema.DefaultNameNormalizer(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -232,7 +232,7 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 		}
 	}
 
-	return nameNormalizer(operationId), nil
+	return schema.DefaultNameNormalizer(operationId), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body

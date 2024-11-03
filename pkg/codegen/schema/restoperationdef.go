@@ -110,21 +110,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 					// HAL+JSON:
 					case StringInArray(contentTypeName, constants.ContentTypesHalJSON):
-						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
+						typeName = fmt.Sprintf("HALJSON%s", DefaultNameNormalizer(responseName))
 					case contentTypeName == "application/json":
 						// if it's the standard application/json
-						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
+						typeName = fmt.Sprintf("JSON%s", DefaultNameNormalizer(responseName))
 					// Vendored JSON
 					case StringInArray(contentTypeName, constants.ContentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
-						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
+						baseTypeName := fmt.Sprintf("%s%s", DefaultNameNormalizer(contentTypeName), DefaultNameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, constants.ContentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
+						typeName = fmt.Sprintf("YAML%s", DefaultNameNormalizer(responseName))
 					// XML:
 					case StringInArray(contentTypeName, constants.ContentTypesXML):
-						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
+						typeName = fmt.Sprintf("XML%s", DefaultNameNormalizer(responseName))
 					default:
 						continue
 					}

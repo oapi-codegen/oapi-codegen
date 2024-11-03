@@ -30,10 +30,10 @@ import (
 )
 
 var (
-	pathParamRE    *regexp.Regexp
-	predeclaredSet map[string]struct{}
-	separatorSet   map[rune]struct{}
-	nameNormalizer NameNormalizer = ToCamelCase
+	pathParamRE           *regexp.Regexp
+	predeclaredSet        map[string]struct{}
+	separatorSet          map[rune]struct{}
+	DefaultNameNormalizer NameNormalizer = ToCamelCase
 )
 
 type NameNormalizerFunction string
@@ -823,7 +823,7 @@ func TypeNamePrefix(name string) (prefix string) {
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	return TypeNamePrefix(name) + nameNormalizer(name)
+	return TypeNamePrefix(name) + DefaultNameNormalizer(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
@@ -847,7 +847,7 @@ func SchemaHasAdditionalProperties(schema *openapi3.Schema) bool {
 // type name.
 func PathToTypeName(path []string) string {
 	for i, p := range path {
-		path[i] = nameNormalizer(p)
+		path[i] = DefaultNameNormalizer(p)
 	}
 	return strings.Join(path, "_")
 }
