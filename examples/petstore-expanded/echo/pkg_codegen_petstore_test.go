@@ -12,6 +12,7 @@ import (
 	examplePetstoreClient "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded"
 	examplePetstore "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/lint"
 )
@@ -27,9 +28,9 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
 			Models:       true,
@@ -74,12 +75,12 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			Models: true,
 		},
-		OutputOptions: codegen.OutputOptions{
+		OutputOptions: openapiv3.OutputOptions{
 			UserTemplates: userTemplates,
 		},
 	}
@@ -110,12 +111,12 @@ func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			Models: true,
 		},
-		OutputOptions: codegen.OutputOptions{
+		OutputOptions: openapiv3.OutputOptions{
 			UserTemplates: userTemplates,
 		},
 	}
@@ -151,12 +152,12 @@ func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 
 	// Input vars for code generation:
 	packageName := "api"
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: packageName,
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			Models: true,
 		},
-		OutputOptions: codegen.OutputOptions{
+		OutputOptions: openapiv3.OutputOptions{
 			UserTemplates: userTemplates,
 		},
 	}
