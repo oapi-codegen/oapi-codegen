@@ -34,13 +34,13 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]schema.Par
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := schema.paramToGoType(param, append(path, param.Name))
+		goType, err := schema.ParamToGoType(param, append(path, param.Name))
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
 		}
 
-		pd := ParameterDefinition{
+		pd := schema.ParameterDefinition{
 			ParamName: param.Name,
 			In:        param.In,
 			Required:  param.Required,
@@ -129,9 +129,9 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]sche
 						opName, requestPath, err)
 				}
 			} else {
-				op.OperationID = schema.nameNormalizer(op.OperationID)
+				op.OperationID = schema.NameNormalizer(op.OperationID)
 			}
-			op.OperationID = schema.typeNamePrefix(op.OperationID) + op.OperationID
+			op.OperationID = schema.TypeNamePrefix(op.OperationID) + op.OperationID
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
@@ -147,7 +147,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]sche
 				return nil, err
 			}
 
-			schema.ensureExternalRefsInParameterDefinitions(&allParams, pathItem.Ref)
+			schema.EnsureExternalRefsInParameterDefinitions(&allParams, pathItem.Ref)
 
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
@@ -163,21 +163,21 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]sche
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
-			schema.ensureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
+			schema.EnsureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
 
 			responseDefinitions, err := GenerateResponseDefinitions(op.OperationID, op.Responses.Map())
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
 
-			schema.ensureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
+			schema.EnsureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
 
 			opDef := schema.OperationDefinition{
 				PathParams:   pathParams,
-				HeaderParams: schema.FilterParameterDefinitionByType(allParams, "header"),
-				QueryParams:  schema.FilterParameterDefinitionByType(allParams, "query"),
+				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
+				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  nameNormalizer(op.OperationID),
+				OperationId:  schema.NameNormalizer(op.OperationID),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -256,7 +256,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			tag = "JSON"
 			defaultBody = true
 		case util.IsMediaTypeJson(contentType):
-			tag = mediaTypeToCamelCase(contentType)
+			tag = schema.MediaTypeToCamelCase(contentType)
 		case strings.HasPrefix(contentType, "multipart/"):
 			tag = "Multipart"
 		case contentType == "application/x-www-form-urlencoded":
@@ -357,7 +357,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			case contentType == "application/json":
 				tag = "JSON"
 			case util.IsMediaTypeJson(contentType):
-				tag = mediaTypeToCamelCase(contentType)
+				tag = schema.MediaTypeToCamelCase(contentType)
 			case contentType == "application/x-www-form-urlencoded":
 				tag = "Formdata"
 			case strings.HasPrefix(contentType, "multipart/"):

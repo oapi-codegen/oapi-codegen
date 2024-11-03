@@ -205,7 +205,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		result.Properties[k] = v
 	}
 
-	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
+	if IsAdditionalPropertiesExplicitFalse(&s1) || IsAdditionalPropertiesExplicitFalse(&s2) {
 		result.WithoutAdditionalProperties()
 	} else if s1.AdditionalProperties.Schema != nil {
 		if s2.AdditionalProperties.Schema != nil {

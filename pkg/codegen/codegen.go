@@ -472,7 +472,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			return nil, fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
 		}
 
-		goTypeName, err := schema.renameSchema(schemaName, schemaRef)
+		goTypeName, err := schema.RenameSchema(schemaName, schemaRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", schemaName, err)
 		}
@@ -495,12 +495,12 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 	for _, paramName := range schema.SortedMapKeys(params) {
 		paramOrRef := params[paramName]
 
-		goType, err := paramToGoType(paramOrRef.Value, nil)
+		goType, err := schema.ParamToGoType(paramOrRef.Value, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
 		}
 
-		goTypeName, err := renameParameter(paramName, paramOrRef)
+		goTypeName, err := schema.RenameParameter(paramName, paramOrRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/parameters/%s: %w", paramName, err)
 		}
@@ -557,7 +557,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
 
-			goTypeName, err := renameResponse(responseName, responseOrRef)
+			goTypeName, err := schema.RenameResponse(responseName, responseOrRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
 			}
@@ -578,7 +578,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 
 			if jsonCount > 1 {
-				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
+				typeDef.TypeName = typeDef.TypeName + schema.MediaTypeToCamelCase(mediaType)
 			}
 
 			types = append(types, typeDef)
@@ -608,7 +608,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, fmt.Errorf("error generating Go type for schema in body %s: %w", requestBodyName, err)
 			}
 
-			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
+			goTypeName, err := schema.RenameRequestBody(requestBodyName, requestBodyRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
 			}

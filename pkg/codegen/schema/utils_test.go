@@ -715,7 +715,7 @@ func Test_replaceInitialism(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
+			assert.Equalf(t, tt.want, ReplaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
 		})
 	}
 }

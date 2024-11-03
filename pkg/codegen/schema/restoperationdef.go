@@ -144,7 +144,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
 						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
-							refType += mediaTypeToCamelCase(contentTypeName)
+							refType += MediaTypeToCamelCase(contentTypeName)
 						}
 						td.Schema.RefType = refType
 					}

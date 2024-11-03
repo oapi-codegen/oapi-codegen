@@ -27,6 +27,7 @@ import (
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/schema"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -387,7 +388,7 @@ func detectPackageName(cfg *configuration) error {
 
 	// Fallback to determining from the spec file name.
 	parts := strings.Split(filepath.Base(flag.Arg(0)), ".")
-	cfg.PackageName = codegen.lowercaseFirstCharacter(codegen.toCamelCase(parts[0]))
+	cfg.PackageName = schema.LowercaseFirstCharacter(schema.ToCamelCase(parts[0]))
 
 	return nil
 }

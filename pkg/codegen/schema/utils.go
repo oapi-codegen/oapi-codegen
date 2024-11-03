@@ -295,13 +295,13 @@ var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
 
 // initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 // List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-var initialismsMap = makeInitialismsMap([]string{
+var initialismsMap = MakeInitialismsMap([]string{
 	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
 	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
 	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
 })
 
-func makeInitialismsMap(l []string) map[string]string {
+func MakeInitialismsMap(l []string) map[string]string {
 	m := make(map[string]string, len(l))
 	for i := range l {
 		m[strings.ToLower(l[i])] = l[i]
@@ -310,10 +310,10 @@ func makeInitialismsMap(l []string) map[string]string {
 }
 
 func ToCamelCaseWithInitialism(str string) string {
-	return replaceInitialism(ToCamelCase(str))
+	return ReplaceInitialism(ToCamelCase(str))
 }
 
-func replaceInitialism(s string) string {
+func ReplaceInitialism(s string) string {
 	// These strings do not apply CamelCase
 	// Do not do CamelCase when these characters match when the preceding character is lowercase
 	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
@@ -327,8 +327,8 @@ func replaceInitialism(s string) string {
 	})
 }
 
-// mediaTypeToCamelCase converts a media type to a PascalCase representation
-func mediaTypeToCamelCase(s string) string {
+// MediaTypeToCamelCase converts a media type to a PascalCase representation
+func MediaTypeToCamelCase(s string) string {
 	// ToCamelCase doesn't - and won't - add `/` to the characters it'll allow word boundary
 	s = strings.Replace(s, "/", "_", 1)
 	// including a _ to make sure that these are treated as word boundaries by `ToCamelCase`
@@ -476,7 +476,7 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 
 	// Schemas may have been renamed locally, so look up the actual name in
 	// the spec.
-	name, err := findSchemaNameByRefPath(refPath, singleton.GlobalState.Spec)
+	name, err := FindSchemaNameByRefPath(refPath, singleton.GlobalState.Spec)
 	if err != nil {
 		return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
 	}
@@ -683,7 +683,7 @@ func IsPredeclaredGoIdentifier(str string) bool {
 // See https://golang.org/ref/spec#Identifiers
 func IsGoIdentity(str string) bool {
 	for i, c := range str {
-		if !isValidRuneForGoID(i, c) {
+		if !IsValidRuneForGoID(i, c) {
 			return false
 		}
 	}
@@ -691,7 +691,7 @@ func IsGoIdentity(str string) bool {
 	return IsGoKeyword(str)
 }
 
-func isValidRuneForGoID(index int, char rune) bool {
+func IsValidRuneForGoID(index int, char rune) bool {
 	if index == 0 && unicode.IsNumber(char) {
 		return false
 	}
@@ -715,7 +715,7 @@ func SanitizeGoIdentity(str string) string {
 	sanitized := []rune(str)
 
 	for i, c := range sanitized {
-		if !isValidRuneForGoID(i, c) {
+		if !IsValidRuneForGoID(i, c) {
 			sanitized[i] = '_'
 		} else {
 			sanitized[i] = c
@@ -770,7 +770,7 @@ func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
 	return sanitizedDeDup
 }
 
-func typeNamePrefix(name string) (prefix string) {
+func TypeNamePrefix(name string) (prefix string) {
 	if len(name) == 0 {
 		return "Empty"
 	}
@@ -823,7 +823,7 @@ func typeNamePrefix(name string) (prefix string) {
 // SchemaNameToTypeName converts a Schema name to a valid Go type name. It converts to camel case, and makes sure the name is
 // valid in Go
 func SchemaNameToTypeName(name string) string {
-	return typeNamePrefix(name) + nameNormalizer(name)
+	return TypeNamePrefix(name) + nameNormalizer(name)
 }
 
 // According to the spec, additionalProperties may be true, false, or a
@@ -914,11 +914,11 @@ func EscapePathElements(path string) string {
 	return strings.Join(elems, "/")
 }
 
-// renameSchema takes as input the name of a schema as provided in the spec,
+// RenameSchema takes as input the name of a schema as provided in the spec,
 // and the definition of the schema. If the schema overrides the name via
 // x-go-name, the new name is returned, otherwise, the original name is
 // returned.
-func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
+func RenameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, error) {
 	// References will not change type names.
 	if schemaRef.Ref != "" {
 		return SchemaNameToTypeName(schemaName), nil
@@ -935,9 +935,9 @@ func renameSchema(schemaName string, schemaRef *openapi3.SchemaRef) (string, err
 	return SchemaNameToTypeName(schemaName), nil
 }
 
-// renameParameter generates the name for a parameter, taking x-go-name into
+// RenameParameter generates the name for a parameter, taking x-go-name into
 // account
-func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
+func RenameParameter(parameterName string, parameterRef *openapi3.ParameterRef) (string, error) {
 	if parameterRef.Ref != "" {
 		return SchemaNameToTypeName(parameterName), nil
 	}
@@ -953,9 +953,9 @@ func renameParameter(parameterName string, parameterRef *openapi3.ParameterRef) 
 	return SchemaNameToTypeName(parameterName), nil
 }
 
-// renameResponse generates the name for a parameter, taking x-go-name into
+// RenameResponse generates the name for a parameter, taking x-go-name into
 // account
-func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
+func RenameResponse(responseName string, responseRef *openapi3.ResponseRef) (string, error) {
 	if responseRef.Ref != "" {
 		return SchemaNameToTypeName(responseName), nil
 	}
@@ -971,9 +971,9 @@ func renameResponse(responseName string, responseRef *openapi3.ResponseRef) (str
 	return SchemaNameToTypeName(responseName), nil
 }
 
-// renameRequestBody generates the name for a parameter, taking x-go-name into
+// RenameRequestBody generates the name for a parameter, taking x-go-name into
 // account
-func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
+func RenameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestBodyRef) (string, error) {
 	if requestBodyRef.Ref != "" {
 		return SchemaNameToTypeName(requestBodyName), nil
 	}
@@ -992,7 +992,7 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // findSchemaByRefPath turns a $ref path into a schema. This will return ""
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
-func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
+func FindSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	if spec.Components == nil {
 		return "", nil
 	}
@@ -1014,19 +1014,19 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 	switch pathElements[2] {
 	case "schemas":
 		if schema, found := spec.Components.Schemas[propertyName]; found {
-			return renameSchema(propertyName, schema)
+			return RenameSchema(propertyName, schema)
 		}
 	case "parameters":
 		if parameter, found := spec.Components.Parameters[propertyName]; found {
-			return renameParameter(propertyName, parameter)
+			return RenameParameter(propertyName, parameter)
 		}
 	case "responses":
 		if response, found := spec.Components.Responses[propertyName]; found {
-			return renameResponse(propertyName, response)
+			return RenameResponse(propertyName, response)
 		}
 	case "requestBodies":
 		if requestBody, found := spec.Components.RequestBodies[propertyName]; found {
-			return renameRequestBody(propertyName, requestBody)
+			return RenameRequestBody(propertyName, requestBody)
 		}
 	}
 	return "", nil
@@ -1081,8 +1081,8 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
 
-// isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
-func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
+// IsAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
+func IsAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 	if s.AdditionalProperties.Has == nil {
 		return false
 	}

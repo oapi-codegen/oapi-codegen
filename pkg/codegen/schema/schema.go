@@ -566,7 +566,7 @@ func GenStructFromSchema(schema Schema) string {
 
 // This constructs a Go type for a parameter, looking at either the schema or
 // the content, whichever is available
-func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
+func ParamToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if param.Content == nil && param.Schema == nil {
 		return Schema{}, fmt.Errorf("parameter '%s' has no schema or content", param.Name)
 	}
