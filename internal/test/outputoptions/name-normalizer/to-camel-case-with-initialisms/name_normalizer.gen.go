@@ -31,19 +31,19 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// OneOf2Things Notice that the `things` is not capitalised
-type OneOf2Things struct {
+// OneOf2things Notice that the `things` is not capitalised
+type OneOf2things struct {
 	union json.RawMessage
 }
 
-// OneOf2Things0 defines model for .
-type OneOf2Things0 struct {
-	ID int `json:"id"`
+// OneOf2things0 defines model for .
+type OneOf2things0 struct {
+	Id int `json:"id"`
 }
 
-// OneOf2Things1 defines model for .
-type OneOf2Things1 struct {
-	ID openapi_types.UUID `json:"id"`
+// OneOf2things1 defines model for .
+type OneOf2things1 struct {
+	Id openapi_types.UUID `json:"id"`
 }
 
 // Pet defines model for Pet.
@@ -51,26 +51,26 @@ type Pet struct {
 	// Name The name of the pet.
 	Name string `json:"name"`
 
-	// UUID The pet uuid.
-	UUID string `json:"uuid"`
+	// Uuid The pet uuid.
+	Uuid string `json:"uuid"`
 }
 
-// AsOneOf2Things0 returns the union data inside the OneOf2Things as a OneOf2Things0
-func (t OneOf2Things) AsOneOf2Things0() (OneOf2Things0, error) {
-	var body OneOf2Things0
+// AsOneOf2things0 returns the union data inside the OneOf2things as a OneOf2things0
+func (t OneOf2things) AsOneOf2things0() (OneOf2things0, error) {
+	var body OneOf2things0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things0 overwrites any union data inside the OneOf2Things as the provided OneOf2Things0
-func (t *OneOf2Things) FromOneOf2Things0(v OneOf2Things0) error {
+// FromOneOf2things0 overwrites any union data inside the OneOf2things as the provided OneOf2things0
+func (t *OneOf2things) FromOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things0 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things0
-func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
+// MergeOneOf2things0 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things0
+func (t *OneOf2things) MergeOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -81,22 +81,22 @@ func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
 	return err
 }
 
-// AsOneOf2Things1 returns the union data inside the OneOf2Things as a OneOf2Things1
-func (t OneOf2Things) AsOneOf2Things1() (OneOf2Things1, error) {
-	var body OneOf2Things1
+// AsOneOf2things1 returns the union data inside the OneOf2things as a OneOf2things1
+func (t OneOf2things) AsOneOf2things1() (OneOf2things1, error) {
+	var body OneOf2things1
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things1 overwrites any union data inside the OneOf2Things as the provided OneOf2Things1
-func (t *OneOf2Things) FromOneOf2Things1(v OneOf2Things1) error {
+// FromOneOf2things1 overwrites any union data inside the OneOf2things as the provided OneOf2things1
+func (t *OneOf2things) FromOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things1 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things1
-func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
+// MergeOneOf2things1 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things1
+func (t *OneOf2things) MergeOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -107,12 +107,12 @@ func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
 	return err
 }
 
-func (t OneOf2Things) MarshalJSON() ([]byte, error) {
+func (t OneOf2things) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *OneOf2Things) UnmarshalJSON(b []byte) error {
+func (t *OneOf2things) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -190,12 +190,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetHTTPPet request
-	GetHTTPPet(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// GetHttpPet request
+	GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-func (c *Client) GetHTTPPet(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetHTTPPetRequest(c.Server, petID)
+func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetHttpPetRequest(c.Server, petId)
 	if err != nil {
 		return nil, err
 	}
@@ -206,13 +206,13 @@ func (c *Client) GetHTTPPet(ctx context.Context, petID string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-// NewGetHTTPPetRequest generates requests for GetHTTPPet
-func NewGetHTTPPetRequest(server string, petID string) (*http.Request, error) {
+// NewGetHttpPetRequest generates requests for GetHttpPet
+func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petID)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petId)
 	if err != nil {
 		return nil, err
 	}
@@ -283,18 +283,18 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetHTTPPetWithResponse request
-	GetHTTPPetWithResponse(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*GetHTTPPetResponse, error)
+	// GetHttpPetWithResponse request
+	GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error)
 }
 
-type GetHTTPPetResponse struct {
+type GetHttpPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Pet
 }
 
 // Status returns HTTPResponse.Status
-func (r GetHTTPPetResponse) Status() string {
+func (r GetHttpPetResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -302,31 +302,31 @@ func (r GetHTTPPetResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetHTTPPetResponse) StatusCode() int {
+func (r GetHttpPetResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-// GetHTTPPetWithResponse request returning *GetHTTPPetResponse
-func (c *ClientWithResponses) GetHTTPPetWithResponse(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*GetHTTPPetResponse, error) {
-	rsp, err := c.GetHTTPPet(ctx, petID, reqEditors...)
+// GetHttpPetWithResponse request returning *GetHttpPetResponse
+func (c *ClientWithResponses) GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error) {
+	rsp, err := c.GetHttpPet(ctx, petId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetHTTPPetResponse(rsp)
+	return ParseGetHttpPetResponse(rsp)
 }
 
-// ParseGetHTTPPetResponse parses an HTTP response from a GetHTTPPetWithResponse call
-func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
+// ParseGetHttpPetResponse parses an HTTP response from a GetHttpPetWithResponse call
+func ParseGetHttpPetResponse(rsp *http.Response) (*GetHttpPetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetHTTPPetResponse{
+	response := &GetHttpPetResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -348,7 +348,7 @@ func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
 type ServerInterface interface {
 	// Get pet given identifier.
 	// (GET /api/pets/{petId})
-	GetHTTPPet(w http.ResponseWriter, r *http.Request, petID string)
+	GetHttpPet(w http.ResponseWriter, r *http.Request, petId string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -360,22 +360,22 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// GetHTTPPet operation middleware
-func (siw *ServerInterfaceWrapper) GetHTTPPet(w http.ResponseWriter, r *http.Request) {
+// GetHttpPet operation middleware
+func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 
 	// ------------- Path parameter "petId" -------------
-	var petID string
+	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petID, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return
 	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.GetHTTPPet(w, r, petID)
+		siw.Handler.GetHttpPet(w, r, petId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -498,7 +498,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/api/pets/{petId}", wrapper.GetHTTPPet).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/api/pets/{petId}", wrapper.GetHttpPet).Methods("GET")
 
 	return r
 }
@@ -506,15 +506,15 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4RTTW/bPAz+KwLf96jZWXrzvdh6WXvIrQgQzaJtFrakSXSwLvB/HyglWZZk6CWRRerR",
-	"8yEeoPVT8A4dJ2gOkNoBJ5OXjzH6KIsQfcDIhHm79Rbl32JqIwUm76ApzSrXNHQ+ToahAXL8sAYN/B6w",
-	"fGKPERYNE6Zk+n8Cncrno4kjuR6WRUPEHzNFtNC8wvHCU/t20fDs8Llb80CuT7fw3zxTi4oHw4oHVLvS",
-	"uFOUlPOsWhOIzUgJLWjwggXN67UHZOX3WtUVN7KwPfP339+wZVj0faizY/NM9kPVd5FF+wvybWDOTHd8",
-	"3gyopKJ8l40IyNXtxboQuns6ICupVh/yPYrKRG6JSze5zmdLiUepPf40UxgxPyjV+ViyEoBPTqwa6RfG",
-	"nfIzh5mVL7Q07DGmQvBztapWwt8HdCYQNPCQtzQEw0M2pjaB6oCc6kNAfrKLbPbFQjHQCOqThQa+IH/d",
-	"bF7EXjkfzYSMMeWXQXKdYJ4UNpDR4NIDjjPq43BdPJ2zX1tpTsG7VDJbr1Zl1hyjy4RMCCO1mVL9lkTj",
-	"4QLv/4gdNPBf/Wea6+Mo18I6m/x3hHszkpUQc1xpniYT34vWHG1Pe3SKLDqmjjBWArL8DgAA//+VcR3v",
-	"MAQAAA==",
+	"H4sIAAAAAAAC/4RTzY7TMBB+FWvgaJLSveW+gr2wHLitKtXEk2RWiW3sScVS5d3R2G0pbVe9tI5n/Pn7",
+	"8eyh9VPwDh0naPaQ2gEnk5ePMfooixB9wMiEebv1FuXfYmojBSbvoCnNKtc0dD5OhqEBcvywBg38FrB8",
+	"Yo8RFg0TpmT6d4GO5dPRxJFcD8uiIeKvmSJaaF7gcOGxfbNoeHb43K15INena/hvnqlFxYNhxQOqbWnc",
+	"KkrKeVatCcRmpIQWNHjBgubl0gOy8nup6oIbWdic+Pufr9gyLPo21MmxeSZ7V/VNZNH+Hfk6MGemGz7/",
+	"GFBJRfkuGxGQq+uLdSF083RAVlKt7vI9iMpErolLN7nOZ0uJR6k9/jZTGDE/KNX5WLISgE9OrBrpD8at",
+	"8jOHmZUvtDTsMKZC8HO1qlbC3wd0JhA08JC3NATDQzamNoHqgJzqfUB+sots9sVCMdAI6pOFBr4gf2UO",
+	"Yq+cj2ZCxpjyyyC5TjCPChvIaHDuAccZ9WG4zp7Oya+NNKfgXSqZrVerMmuO0WVCJoSR2kypfk2icX+G",
+	"9zFiBw18qP9Nc30Y5VpYZ5P/j3BnRrISYo4rzdNk4lvRmqPtaYdOkUXH1BHGSkCWvwEAAP//D5F1qDAE",
+	"AAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

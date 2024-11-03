@@ -31,18 +31,18 @@ type Error struct {
 	Message string `json:"message"`
 }
 
-// OneOf2Things Notice that the `things` is not capitalised
-type OneOf2Things struct {
+// OneOf2things Notice that the `things` is not capitalised
+type OneOf2things struct {
 	union json.RawMessage
 }
 
-// OneOf2Things0 defines model for .
-type OneOf2Things0 struct {
+// OneOf2things0 defines model for .
+type OneOf2things0 struct {
 	Id int `json:"id"`
 }
 
-// OneOf2Things1 defines model for .
-type OneOf2Things1 struct {
+// OneOf2things1 defines model for .
+type OneOf2things1 struct {
 	Id openapi_types.UUID `json:"id"`
 }
 
@@ -55,22 +55,22 @@ type Pet struct {
 	Uuid string `json:"uuid"`
 }
 
-// AsOneOf2Things0 returns the union data inside the OneOf2Things as a OneOf2Things0
-func (t OneOf2Things) AsOneOf2Things0() (OneOf2Things0, error) {
-	var body OneOf2Things0
+// AsOneOf2things0 returns the union data inside the OneOf2things as a OneOf2things0
+func (t OneOf2things) AsOneOf2things0() (OneOf2things0, error) {
+	var body OneOf2things0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things0 overwrites any union data inside the OneOf2Things as the provided OneOf2Things0
-func (t *OneOf2Things) FromOneOf2Things0(v OneOf2Things0) error {
+// FromOneOf2things0 overwrites any union data inside the OneOf2things as the provided OneOf2things0
+func (t *OneOf2things) FromOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things0 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things0
-func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
+// MergeOneOf2things0 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things0
+func (t *OneOf2things) MergeOneOf2things0(v OneOf2things0) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -81,22 +81,22 @@ func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
 	return err
 }
 
-// AsOneOf2Things1 returns the union data inside the OneOf2Things as a OneOf2Things1
-func (t OneOf2Things) AsOneOf2Things1() (OneOf2Things1, error) {
-	var body OneOf2Things1
+// AsOneOf2things1 returns the union data inside the OneOf2things as a OneOf2things1
+func (t OneOf2things) AsOneOf2things1() (OneOf2things1, error) {
+	var body OneOf2things1
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromOneOf2Things1 overwrites any union data inside the OneOf2Things as the provided OneOf2Things1
-func (t *OneOf2Things) FromOneOf2Things1(v OneOf2Things1) error {
+// FromOneOf2things1 overwrites any union data inside the OneOf2things as the provided OneOf2things1
+func (t *OneOf2things) FromOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeOneOf2Things1 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things1
-func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
+// MergeOneOf2things1 performs a merge with any union data inside the OneOf2things, using the provided OneOf2things1
+func (t *OneOf2things) MergeOneOf2things1(v OneOf2things1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -107,12 +107,12 @@ func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
 	return err
 }
 
-func (t OneOf2Things) MarshalJSON() ([]byte, error) {
+func (t OneOf2things) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
 }
 
-func (t *OneOf2Things) UnmarshalJSON(b []byte) error {
+func (t *OneOf2things) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
