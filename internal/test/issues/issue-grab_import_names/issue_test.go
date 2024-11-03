@@ -5,6 +5,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,9 +13,9 @@ func TestLineComments(t *testing.T) {
 	swagger, err := openapi3.NewLoader().LoadFromFile("spec.yaml")
 	require.NoError(t, err)
 
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: "grabimportnames",
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
 			Models:       true,

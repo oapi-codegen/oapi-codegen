@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/openapiv3"
 )
 
 //go:embed child.api.yaml
@@ -20,9 +21,9 @@ func TestIssue(t *testing.T) {
 	swagger, err := loader.LoadFromData(spec)
 	require.NoError(t, err)
 
-	opts := codegen.Configuration{
+	opts := openapiv3.Configuration{
 		PackageName: "issue1093",
-		Generate: codegen.GenerateOptions{
+		Generate: openapiv3.GenerateOptions{
 			GinServer:    true,
 			Strict:       true,
 			Models:       true,
