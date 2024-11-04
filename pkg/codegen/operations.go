@@ -25,7 +25,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 type ParameterDefinition struct {
@@ -297,7 +297,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
 					if err != nil {
 						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -331,8 +331,9 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							TypeName: typeName,
 							Schema:   responseSchema,
 						},
-						ResponseName:    responseName,
-						ContentTypeName: contentTypeName,
+						ResponseName:              responseName,
+						ContentTypeName:           contentTypeName,
+						AdditionalTypeDefinitions: responseSchema.GetAdditionalTypeDefs(),
 					}
 					if IsGoTypeReference(responseRef.Ref) {
 						refType, err := RefPathToGoType(responseRef.Ref)

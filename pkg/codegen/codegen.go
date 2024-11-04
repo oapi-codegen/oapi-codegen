@@ -33,7 +33,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 // Embed the templates directory
@@ -66,10 +66,18 @@ func (gi goImport) String() string {
 // importMap maps external OpenAPI specifications files/urls to external go packages
 type importMap map[string]goImport
 
+// importMappingCurrentPackage allows an Import Mapping to map to the current package, rather than an external package.
+// This allows users to split their OpenAPI specification across multiple files, but keep them in the same package, which can reduce a bit of the overhead for users.
+// We use `-` to indicate that this is a bit of a special case
+const importMappingCurrentPackage = "-"
+
 // GoImports returns a slice of go import statements
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
+		if v.Path == importMappingCurrentPackage {
+			continue
+		}
 		goImports = append(goImports, v.String())
 	}
 	return goImports
@@ -89,7 +97,7 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok {
+			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
 				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 			}
 		}
