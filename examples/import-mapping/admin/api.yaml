@@ -1,0 +1,32 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Admin API
+  description: The admin-only portion of the API, which has its own separate OpenAPI spec
+tags:
+  - name: admin
+    description: Admin API endpoints
+  - name: user
+    description: API endpoint that pertains to user data
+paths:
+  /admin/user/{id}:
+    get:
+      tags:
+        - admin
+        - user
+      summary: Get a user's details
+      operationId: getUserById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '../common/api.yaml#/components/schemas/User'

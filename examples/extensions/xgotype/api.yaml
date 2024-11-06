@@ -1,0 +1,36 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-type
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          # this is a bit of a contrived example, as you could instead use
+          # `format: uuid` but it explains how you'd do this when there may be
+          # a clash, for instance if you already had a `uuid` package that was
+          # being imported, or ...
+          x-go-type: googleuuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+            name: googleuuid
+        id:
+          type: number
+          # ... this is also a bit of a contrived example, as you could use
+          # `type: integer` but in the case that you know better than what
+          # oapi-codegen is generating, like so:
+          x-go-type: int64

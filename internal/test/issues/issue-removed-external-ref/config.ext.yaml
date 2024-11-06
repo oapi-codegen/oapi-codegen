@@ -1,4 +1,5 @@
 ---
+# yaml-language-server: $schema=../../../../configuration-schema.json
 package: spec_ext
 generate:
   chi-server: true
