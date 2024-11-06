@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	issue1302 "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1302"
+	issue1302 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1302"
 	"github.com/stretchr/testify/assert"
 )
 

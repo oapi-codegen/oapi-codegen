@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	test_target "github.com/deepmap/oapi-codegen/v2/internal/test/issues/issue-1236/new-nullable"
 	"github.com/oapi-codegen/nullable"
+	test_target "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1236/new-nullable"
 	"github.com/stretchr/testify/assert"
 )
 
