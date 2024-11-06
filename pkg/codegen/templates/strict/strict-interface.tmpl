@@ -10,9 +10,9 @@
         {{if .HasMaskedRequestContentTypes -}}
             ContentType string
         {{end -}}
-        {{$multipleBodies := gt (len .Bodies) 1 -}}
+        {{$needsContentTypeCheck := .NeedsContentTypeCheck -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "Multipart"}}*multipart.Reader{{else if ne .NameTag ""}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
+            {{if $needsContentTypeCheck}}{{.NameTag}}{{end}}Body {{if eq .NameTag "Multipart"}}{{if not .IsRequired}}*{{end}}multipart.Reader{{else if ne .NameTag ""}}{{if not .IsRequired}}*{{end}}{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
         {{end -}}
     }
 

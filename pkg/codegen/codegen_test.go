@@ -166,6 +166,108 @@ func TestGoTypeImport(t *testing.T) {
 	}
 }
 
+func TestRequiredBody(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models:        true,
+			StdHTTPServer: true,
+			Strict:        true,
+		},
+	}
+	spec := "test_specs/required-body.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	assert.Contains(t, code, `type PostRequestsRequestObject struct {
+	Body *PostRequestsJSONRequestBody
+}`)
+
+	assert.Contains(t, code, `type PostRequiredrequestsRequestObject struct {
+	Body *PostRequiredrequestsJSONRequestBody
+}`)
+
+	assert.Contains(t, code, `var request PostRequestsRequestObject
+
+	var body PostRequestsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body`)
+	assert.Contains(t, code, `var request PostRequiredrequestsRequestObject
+
+	var body PostRequiredrequestsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body`)
+}
+
+func TestRequiredBodyWithOption(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			Models:        true,
+			StdHTTPServer: true,
+			Strict:        true,
+		},
+		OutputOptions: OutputOptions{RequiredRequestBody: true},
+	}
+	spec := "test_specs/required-body.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	assert.Contains(t, code, `type PostRequestsRequestObject struct {
+	JSONBody *PostRequestsJSONRequestBody
+}`)
+
+	assert.Contains(t, code, `type PostRequiredrequestsRequestObject struct {
+	Body PostRequiredrequestsJSONRequestBody
+}`)
+
+	assert.Contains(t, code, `var request PostRequestsRequestObject
+
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+
+		var body PostRequestsJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+		request.JSONBody = &body
+	}`)
+	assert.Contains(t, code, `var request PostRequiredrequestsRequestObject
+
+	var body PostRequiredrequestsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = body`)
+}
+
 func TestRemoteExternalReference(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping test that interacts with the network")
