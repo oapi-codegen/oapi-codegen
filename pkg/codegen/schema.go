@@ -191,11 +191,12 @@ func (p Property) getEmptyType() emptyValue {
 
 	schema := p.Schema.OAPISchema
 
-	switch schema.Type {
-	case "", "object":
+	t := schema.Type
+	switch {
+	case t.Slice() == nil || t.Is("object"):
 		if len(schema.Properties) == 0 && len(schema.AllOf) == 0 && len(schema.AnyOf) == 0 && len(schema.OneOf) == 0 {
 			// empty object
-			if schema.Type == "" && !SchemaHasAdditionalProperties(schema) {
+			if t.Slice() == nil && !SchemaHasAdditionalProperties(schema) {
 				// interface{}
 				return emptyValueNil
 			} else {
@@ -206,19 +207,19 @@ func (p Property) getEmptyType() emptyValue {
 		// struct
 		return emptyValueNever
 
-	case "array":
+	case t.Is("array"):
 		// slice
 		return emptyValueZeroLength
 
-	case "integer", "number":
+	case t.Is("integer") || t.Is("number"):
 		// numerical types
 		return emptyValueZero
 
-	case "boolean":
+	case t.Is("boolean"):
 		// bool
 		return emptyValueFalse
 
-	case "string":
+	case t.Is("string"):
 		switch schema.Format {
 		case "byte":
 			// []byte
