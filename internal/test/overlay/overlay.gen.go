@@ -16,13 +16,19 @@ import (
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/overlay/packageA"
 )
 
+// Container defines model for Container.
+type Container struct {
+	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
+	ObjectB *map[string]interface{} `json:"object_b,omitempty"`
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4yOQU4DMQxFrxJ9sUyrYesdJ+AAiIU1MTRSSCzHqToa5e5oKGXNytJ/fvbfwavnVjvo",
-	"bUeSvlrWIwDhJaXAQa2pmG/BW/CLhFw/Wkj5x2LbEOFsn+IgPCFiaGIX0I5j8Zi3U7uKFd5OrFqyJBC6",
-	"21h9mKQHxJzzPf5Jnr0ICK93GuTGX1oEEVexfu+3nJfzgvjvBxFNpbJmEBDxyAnPv4eU/dJBdZQyvwMA",
-	"AP//1u4XtRkBAAA=",
+	"H4sIAAAAAAAC/4SP0U7DMAxF/8Xw2K2TeOvbxAfAH1Re6m2G1rESd2Ka8u/IWQcIkPaUWNf33OsLhDhp",
+	"FBLL0F0ghyNNWL/PUQxZKPmgKSolY6pS3L1RsB79/5hoDx08tN+gdqG0iuEdD7Tts1LoX6prC6W5AXb3",
+	"AF97pfxy4TCwcRQcX39UszRTA3ZWgm5Z97j/e/w5S3Aifxd/tsRy8GgPZ9nHKrKNrkIDJ0qZo1yHj1U8",
+	"URrxvELVkWm4EuZgc6LhJtbjlQSVoYOn9Wa9Ae9nR29QymcAAAD//5P9oGCQAQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
@@ -62,7 +68,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "./packageA/spec.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "../packageA/spec.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
