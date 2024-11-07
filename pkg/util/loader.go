@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -32,8 +33,9 @@ func LoadSwaggerWithCircularReferenceCount(filePath string, _ int) (swagger *ope
 }
 
 type LoadSwaggerWithOverlayOpts struct {
-	Path   string
-	Strict bool
+	Path        string
+	Strict      bool
+	ResolveRefs bool
 }
 
 func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (swagger *openapi3.T, err error) {
@@ -85,7 +87,15 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
-	swagger, err = openapi3.NewLoader().LoadFromData(b)
+	loader := openapi3.NewLoader()
+	if opts.ResolveRefs {
+		loader.IsExternalRefsAllowed = true
+		swagger, err = loader.LoadFromDataWithPath(b, &url.URL{
+			Path: filepath.ToSlash(filePath),
+		})
+	} else {
+		swagger, err = loader.LoadFromData(b)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}

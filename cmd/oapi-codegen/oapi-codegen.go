@@ -290,6 +290,9 @@ func main() {
 	if opts.OutputOptions.Overlay.Strict != nil {
 		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
 	}
+	if opts.OutputOptions.Overlay.ResolveRefs != nil {
+		overlayOpts.ResolveRefs = *opts.OutputOptions.Overlay.ResolveRefs
+	}
 
 	swagger, err := util.LoadSwaggerWithOverlay(flag.Arg(0), overlayOpts)
 	if err != nil {

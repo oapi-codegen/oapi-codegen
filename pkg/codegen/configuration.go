@@ -251,4 +251,8 @@ type OutputOptionsOverlay struct {
 	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.
 	// Defaults to true.
 	Strict *bool `yaml:"strict,omitempty"`
+
+	// ResolveRefs enables reference resolving relative to the base path of the input file after the overlay is applied.
+	// Defaults to false.
+	ResolveRefs *bool `yaml:"resolve-refs,omitempty"`
 }
