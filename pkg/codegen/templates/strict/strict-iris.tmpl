@@ -50,12 +50,24 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Multipart" -}}
+                    {{if eq .ContentType "multipart/form-data" -}}
                     if reader, err := ctx.Request().MultipartReader(); err == nil {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = reader
                     } else {
                         ctx.StopWithError(http.StatusBadRequest, err)
                         return
                     }
+                    {{else -}}
+                    if _, params, err := mime.ParseMediaType(ctx.Request().Header.Get("Content-Type")); err != nil {
+                        ctx.StopWithError(http.StatusBadRequest, err)
+                        return
+                    } else if boundary := params["boundary"]; boundary == "" {
+                        ctx.StopWithError(http.StatusBadRequest, http.ErrMissingBoundary)
+                        return
+                    } else {
+                        request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(ctx.Request().Body, boundary)
+                    }
+                    {{end -}}
                 {{else if eq .NameTag "Text" -}}
                     data, err := io.ReadAll(ctx.Request().Body)
                     if err != nil {

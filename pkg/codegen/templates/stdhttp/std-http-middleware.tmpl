@@ -1,0 +1,266 @@
+// ServerInterfaceWrapper converts contexts to parameters.
+type ServerInterfaceWrapper struct {
+    Handler ServerInterface
+    HandlerMiddlewares []MiddlewareFunc
+    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+type MiddlewareFunc func(http.Handler) http.Handler
+
+{{range .}}{{$opid := .OperationId}}
+
+// {{$opid}} operation middleware
+func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
+  {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
+  var err error
+  {{end}}
+
+  {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
+  var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
+
+  {{if .IsPassThrough}}
+  {{$varName}} = r.PathValue("{{.ParamName}}")
+  {{end}}
+  {{if .IsJson}}
+  err = json.Unmarshal([]byte(r.PathValue("{{.ParamName}}")), &{{$varName}})
+  if err != nil {
+    siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+    return
+  }
+  {{end}}
+  {{if .IsStyled}}
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
+  if err != nil {
+    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+    return
+  }
+  {{end}}
+
+  {{end}}
+
+  {{if .SecurityDefinitions -}}
+  ctx := r.Context()
+{{range .SecurityDefinitions}}
+  ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+{{end}}
+  r = r.WithContext(ctx)
+  {{end}}
+
+  {{if .RequiresParamObject}}
+    // Parameter object where we will unmarshal all parameters from the context
+    var params {{.OperationId}}Params
+
+    {{range $paramIdx, $param := .QueryParams}}
+      {{- if (or (or .Required .IsPassThrough) (or .IsJson .IsStyled)) -}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+      {{ end }}
+      {{ if (or (or .Required .IsPassThrough) .IsJson) }}
+        if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
+
+        {{if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+        {{end}}
+
+        {{if .IsJson}}
+          var value {{.TypeDef}}
+          err = json.Unmarshal([]byte(paramValue), &value)
+          if err != nil {
+            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+            return
+          }
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        {{end}}
+        }{{if .Required}} else {
+            siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+            return
+        }{{end}}
+      {{end}}
+      {{if .IsStyled}}
+      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
+      if err != nil {
+        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+        return
+      }
+      {{end}}
+  {{end}}
+
+    {{if .HeaderParams}}
+      headers := r.Header
+
+      {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+          var {{.GoName}} {{.TypeDef}}
+          n := len(valueList)
+          if n != 1 {
+            siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "{{.ParamName}}", Count: n})
+            return
+          }
+
+        {{if .IsPassThrough}}
+          params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+        {{end}}
+
+        {{if .IsJson}}
+          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+          if err != nil {
+            siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+            return
+          }
+        {{end}}
+
+        {{if .IsStyled}}
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          if err != nil {
+            siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+            return
+          }
+        {{end}}
+
+          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+
+        } {{if .Required}}else {
+            err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
+            siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "{{.ParamName}}", Err: err})
+            return
+        }{{end}}
+
+      {{end}}
+    {{end}}
+
+    {{range .CookieParams}}
+    {
+      var cookie *http.Cookie
+
+      if cookie, err = r.Cookie("{{.ParamName}}"); err == nil {
+
+      {{- if .IsPassThrough}}
+        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+      {{end}}
+
+      {{- if .IsJson}}
+        var value {{.TypeDef}}
+        var decoded string
+        decoded, err := url.QueryUnescape(cookie.Value)
+        if err != nil {
+          err = fmt.Errorf("Error unescaping cookie parameter '{{.ParamName}}'")
+          siw.ErrorHandlerFunc(w, r, &UnescapedCookieParamError{ParamName: "{{.ParamName}}", Err: err})
+          return
+        }
+
+        err = json.Unmarshal([]byte(decoded), &value)
+        if err != nil {
+          siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+          return
+        }
+
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+      {{end}}
+
+      {{- if .IsStyled}}
+        var value {{.TypeDef}}
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+        if err != nil {
+          siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+          return
+        }
+        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+      {{end}}
+
+      }
+
+      {{- if .Required}} else {
+        siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+        return
+      }
+      {{- end}}
+    }
+    {{end}}
+  {{end}}
+
+  handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+  }))
+
+  {{if opts.Compatibility.ApplyChiMiddlewareFirstToLast}}
+  for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
+    handler = siw.HandlerMiddlewares[i](handler)
+  }
+  {{else}}
+  for _, middleware := range siw.HandlerMiddlewares {
+    handler = middleware(handler)
+  }
+  {{end}}
+
+  handler.ServeHTTP(w, r)
+}
+{{end}}
+
+type UnescapedCookieParamError struct {
+    ParamName string
+    Err error
+}
+
+func (e *UnescapedCookieParamError) Error() string {
+    return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
+}
+
+func (e *UnescapedCookieParamError) Unwrap() error {
+    return e.Err
+}
+
+type UnmarshalingParamError struct {
+    ParamName string
+    Err error
+}
+
+func (e *UnmarshalingParamError) Error() string {
+    return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *UnmarshalingParamError) Unwrap() error {
+    return e.Err
+}
+
+type RequiredParamError struct {
+    ParamName string
+}
+
+func (e *RequiredParamError) Error() string {
+    return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+}
+
+type RequiredHeaderError struct {
+    ParamName string
+    Err error
+}
+
+func (e *RequiredHeaderError) Error() string {
+    return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
+}
+
+func (e *RequiredHeaderError) Unwrap() error {
+    return e.Err
+}
+
+type InvalidParamFormatError struct {
+    ParamName string
+	  Err error
+}
+
+func (e *InvalidParamFormatError) Error() string {
+    return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *InvalidParamFormatError) Unwrap() error {
+    return e.Err
+}
+
+type TooManyValuesForParamError struct {
+    ParamName string
+    Count int
+}
+
+func (e *TooManyValuesForParamError) Error() string {
+    return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
+}

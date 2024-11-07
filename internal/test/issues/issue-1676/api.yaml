@@ -1,0 +1,17 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 1676
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          headers:
+            MyHeader:
+              schema:
+                type: string
+          content:
+            text/plain:
+              schema:
+                type: string

@@ -1,7 +1,14 @@
 package util
 
-import "strings"
+import (
+	"mime"
+	"strings"
+)
 
 func IsMediaTypeJson(mediaType string) bool {
-	return mediaType == "application/json" || strings.HasSuffix(mediaType, "+json")
+	parsed, _, err := mime.ParseMediaType(mediaType)
+	if err != nil {
+		return false
+	}
+	return parsed == "application/json" || strings.HasSuffix(parsed, "+json")
 }
