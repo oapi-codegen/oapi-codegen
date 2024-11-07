@@ -1,0 +1,24 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Cookie parameters
+paths:
+  /cookies:
+    get:
+      operationId: cookieParams
+      parameters:
+        - name: authId
+          description: Cookie parameter
+          in: cookie
+          required: false
+          schema:
+            type: string
+        - name: serverId
+          description: Another cookie parameter
+          in: cookie
+          required: false
+          schema:
+            type: string
+      responses:
+        204:
+          description: no content

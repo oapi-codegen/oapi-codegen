@@ -42,11 +42,13 @@
             {{if and $fixedStatusCode $isRef -}}
                 {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
+                {{else if $isExternalRef -}}
+                type {{$receiverTypeName}} struct { {{$ref}} }
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
-                type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}

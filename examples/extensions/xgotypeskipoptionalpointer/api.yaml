@@ -1,0 +1,25 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-type-skip-optional-pointer
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          x-go-type-skip-optional-pointer: true
