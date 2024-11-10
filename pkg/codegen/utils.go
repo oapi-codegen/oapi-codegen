@@ -623,7 +623,10 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
-	return pathParamRE.ReplaceAllString(uri, "{$1}")
+	// Create a regex to match path parameters with `*` and replace them with `...`
+	re := regexp.MustCompile(`{([^}]+)\*}`)
+	modifiedUri := re.ReplaceAllString(uri, `{$1...}`)
+	return pathParamRE.ReplaceAllString(modifiedUri, "{$1}")
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
