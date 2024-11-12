@@ -382,7 +382,7 @@ func decodeSpec() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-var rawSpec = decodeSpecCached()
+var RawSpec = decodeSpecCached()
 
 // a naive cached of a decoded swagger spec
 func decodeSpecCached() func() ([]byte, error) {
@@ -396,7 +396,7 @@ func decodeSpecCached() func() ([]byte, error) {
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	res := make(map[string]func() ([]byte, error))
 	if len(pathToFile) > 0 {
-		res[pathToFile] = rawSpec
+		res[pathToFile] = RawSpec
 	}
 
 	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "pkg2.yaml")) {
@@ -429,7 +429,7 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return getSpec()
 	}
 	var specData []byte
-	specData, err = rawSpec()
+	specData, err = RawSpec()
 	if err != nil {
 		return
 	}
