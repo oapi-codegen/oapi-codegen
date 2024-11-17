@@ -2763,7 +2763,7 @@ const (
 type ClientTypeWithExtension string
 ```
 
-You can see this in more detail in [the example code](examples/extensions/xenumvarnames/).
+You can see this in more detail in [the example code](examples/extensions/xenumnames/).
 
 </details>
 </td>
