@@ -281,7 +281,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		// deepcopy and clear allOf to avoid circular references
+		s := *schema
+		s.AllOf = nil
+
+		// merge parent schema with allOf schemas to include parent properties (Issue #697)
+		allOfRefs := append(schema.AllOf, &openapi3.SchemaRef{Value: &s})
+
+		mergedSchema, err := MergeSchemas(allOfRefs, path)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
