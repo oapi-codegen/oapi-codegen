@@ -18,7 +18,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -433,8 +432,8 @@ type StrictServerInterface interface {
 	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -464,110 +463,117 @@ type strictHandler struct {
 
 // FindPets operation middleware
 func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
-	var request FindPetsRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request FindPetsRequestObject
 
-	request.Params = params
+		request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.FindPets(ctx, request.(FindPetsRequestObject))
+		response, err := sh.ssi.FindPets(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitFindPetsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "FindPets")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(FindPetsResponseObject); ok {
-		if err := validResponse.VisitFindPetsResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // AddPet operation middleware
 func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
-	var request AddPetRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request AddPetRequestObject
 
-	var body AddPetJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
+		var body AddPetJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return fmt.Errorf("can't decode JSON body: %w", err)
+		}
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.AddPet(ctx, request.(AddPetRequestObject))
+		response, err := sh.ssi.AddPet(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitAddPetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "AddPet")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(AddPetResponseObject); ok {
-		if err := validResponse.VisitAddPetResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // DeletePet operation middleware
 func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
-	var request DeletePetRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request DeletePetRequestObject
 
-	request.Id = id
+		request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.DeletePet(ctx, request.(DeletePetRequestObject))
+		response, err := sh.ssi.DeletePet(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitDeletePetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "DeletePet")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(DeletePetResponseObject); ok {
-		if err := validResponse.VisitDeletePetResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // FindPetByID operation middleware
 func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
-	var request FindPetByIDRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request FindPetByIDRequestObject
 
-	request.Id = id
+		request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.FindPetByID(ctx, request.(FindPetByIDRequestObject))
+		response, err := sh.ssi.FindPetByID(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitFindPetByIDResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "FindPetByID")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(FindPetByIDResponseObject); ok {
-		if err := validResponse.VisitFindPetByIDResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 

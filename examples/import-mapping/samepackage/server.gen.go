@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -210,8 +209,8 @@ type StrictServerInterface interface {
 	GetUserById(ctx context.Context, request GetUserByIdRequestObject) (GetUserByIdResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -241,26 +240,28 @@ type strictHandler struct {
 
 // GetUserById operation middleware
 func (sh *strictHandler) GetUserById(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
-	var request GetUserByIdRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request GetUserByIdRequestObject
 
-	request.Id = id
+		request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.GetUserById(ctx, request.(GetUserByIdRequestObject))
+		response, err := sh.ssi.GetUserById(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitGetUserByIdResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "GetUserById")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(GetUserByIdResponseObject); ok {
-		if err := validResponse.VisitGetUserByIdResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }

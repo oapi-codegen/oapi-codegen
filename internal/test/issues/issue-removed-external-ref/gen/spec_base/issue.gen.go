@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // DirectBar defines model for DirectBar.
@@ -255,8 +254,8 @@ type StrictServerInterface interface {
 	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) (PostNoTroubleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -286,48 +285,52 @@ type strictHandler struct {
 
 // PostInvalidExtRefTrouble operation middleware
 func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	var request PostInvalidExtRefTroubleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request PostInvalidExtRefTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PostInvalidExtRefTrouble(ctx, request.(PostInvalidExtRefTroubleRequestObject))
+		response, err := sh.ssi.PostInvalidExtRefTrouble(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitPostInvalidExtRefTroubleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "PostInvalidExtRefTrouble")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PostInvalidExtRefTroubleResponseObject); ok {
-		if err := validResponse.VisitPostInvalidExtRefTroubleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // PostNoTrouble operation middleware
 func (sh *strictHandler) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
-	var request PostNoTroubleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request PostNoTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PostNoTrouble(ctx, request.(PostNoTroubleRequestObject))
+		response, err := sh.ssi.PostNoTrouble(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitPostNoTroubleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "PostNoTrouble")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PostNoTroubleResponseObject); ok {
-		if err := validResponse.VisitPostNoTroubleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }

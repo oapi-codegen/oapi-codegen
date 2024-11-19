@@ -19,7 +19,6 @@ import (
 	"github.com/gorilla/mux"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1378/common"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // Bionicle defines model for Bionicle.
@@ -224,8 +223,8 @@ type StrictServerInterface interface {
 	GetBionicleName(ctx context.Context, request GetBionicleNameRequestObject) (GetBionicleNameResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -255,27 +254,29 @@ type strictHandler struct {
 
 // GetBionicleName operation middleware
 func (sh *strictHandler) GetBionicleName(w http.ResponseWriter, r *http.Request, name BionicleName) {
-	var request GetBionicleNameRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request GetBionicleNameRequestObject
 
-	request.Name = name
+		request.Name = name
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.GetBionicleName(ctx, request.(GetBionicleNameRequestObject))
+		response, err := sh.ssi.GetBionicleName(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitGetBionicleNameResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "GetBionicleName")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(GetBionicleNameResponseObject); ok {
-		if err := validResponse.VisitGetBionicleNameResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 

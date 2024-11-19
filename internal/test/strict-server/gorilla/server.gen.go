@@ -21,7 +21,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gorilla/mux"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -1011,8 +1010,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -1042,405 +1041,414 @@ type strictHandler struct {
 
 // JSONExample operation middleware
 func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
-	var request JSONExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request JSONExampleRequestObject
 
-	var body JSONExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
+		var body JSONExampleJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return fmt.Errorf("can't decode JSON body: %w", err)
+		}
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
+		response, err := sh.ssi.JSONExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitJSONExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "JSONExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
-		if err := validResponse.VisitJSONExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // MultipartExample operation middleware
 func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request) {
-	var request MultipartExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request MultipartExampleRequestObject
 
-	if reader, err := r.MultipartReader(); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
-		return
-	} else {
-		request.Body = reader
+		if reader, err := r.MultipartReader(); err != nil {
+			return fmt.Errorf("can't decode multipart body: %w", err)
+		} else {
+			request.Body = reader
+		}
+
+		response, err := sh.ssi.MultipartExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitMultipartExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipartExample(ctx, request.(MultipartExampleRequestObject))
-	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
-		if err := validResponse.VisitMultipartExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // MultipartRelatedExample operation middleware
 func (sh *strictHandler) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
-	var request MultipartRelatedExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request MultipartRelatedExampleRequestObject
 
-	if _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, err)
-		return
-	} else if boundary := params["boundary"]; boundary == "" {
-		sh.options.RequestErrorHandlerFunc(w, r, http.ErrMissingBoundary)
-		return
-	} else {
-		request.Body = multipart.NewReader(r.Body, boundary)
+		if _, params, err := mime.ParseMediaType(r.Header.Get("Content-Type")); err != nil {
+			return err
+		} else if boundary := params["boundary"]; boundary == "" {
+			return http.ErrMissingBoundary
+		} else {
+			request.Body = multipart.NewReader(r.Body, boundary)
+		}
+
+		response, err := sh.ssi.MultipartRelatedExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitMultipartRelatedExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipartRelatedExample(ctx, request.(MultipartRelatedExampleRequestObject))
-	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartRelatedExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(MultipartRelatedExampleResponseObject); ok {
-		if err := validResponse.VisitMultipartRelatedExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // MultipleRequestAndResponseTypes operation middleware
 func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
-	var request MultipleRequestAndResponseTypesRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request MultipleRequestAndResponseTypesRequestObject
 
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 
-		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-			return
+			var body MultipleRequestAndResponseTypesJSONRequestBody
+			if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+				return fmt.Errorf("can't decode JSON body: %w", err)
+			}
+			request.JSONBody = &body
 		}
-		request.JSONBody = &body
-	}
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
-		if err := r.ParseForm(); err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
-			return
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
+			if err := r.ParseForm(); err != nil {
+				return fmt.Errorf("can't decode formdata: %w", err)
+			}
+			var body MultipleRequestAndResponseTypesFormdataRequestBody
+			if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+				return fmt.Errorf("can't bind formdata: %w", err)
+			}
+			request.FormdataBody = &body
 		}
-		var body MultipleRequestAndResponseTypesFormdataRequestBody
-		if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
-			return
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "image/png") {
+			request.Body = r.Body
 		}
-		request.FormdataBody = &body
-	}
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "image/png") {
-		request.Body = r.Body
-	}
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
-		if reader, err := r.MultipartReader(); err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
-			return
-		} else {
-			request.MultipartBody = reader
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+			if reader, err := r.MultipartReader(); err != nil {
+				return fmt.Errorf("can't decode multipart body: %w", err)
+			} else {
+				request.MultipartBody = reader
+			}
 		}
-	}
-	if strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain") {
-		data, err := io.ReadAll(r.Body)
+		if strings.HasPrefix(r.Header.Get("Content-Type"), "text/plain") {
+			data, err := io.ReadAll(r.Body)
+			if err != nil {
+				return fmt.Errorf("can't read body: %w", err)
+			}
+			body := MultipleRequestAndResponseTypesTextRequestBody(data)
+			request.TextBody = &body
+		}
+
+		response, err := sh.ssi.MultipleRequestAndResponseTypes(ctx, request)
 		if err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
-			return
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
 		}
-		body := MultipleRequestAndResponseTypesTextRequestBody(data)
-		request.TextBody = &body
+
+		if err := response.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipleRequestAndResponseTypes(ctx, request.(MultipleRequestAndResponseTypesRequestObject))
-	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipleRequestAndResponseTypes")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
-		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // ReservedGoKeywordParameters operation middleware
 func (sh *strictHandler) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request, pType string) {
-	var request ReservedGoKeywordParametersRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request ReservedGoKeywordParametersRequestObject
 
-	request.Type = pType
+		request.Type = pType
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ReservedGoKeywordParameters(ctx, request.(ReservedGoKeywordParametersRequestObject))
+		response, err := sh.ssi.ReservedGoKeywordParameters(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitReservedGoKeywordParametersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReservedGoKeywordParameters")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
-		if err := validResponse.VisitReservedGoKeywordParametersResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // ReusableResponses operation middleware
 func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Request) {
-	var request ReusableResponsesRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request ReusableResponsesRequestObject
 
-	var body ReusableResponsesJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
+		var body ReusableResponsesJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return fmt.Errorf("can't decode JSON body: %w", err)
+		}
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
+		response, err := sh.ssi.ReusableResponses(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitReusableResponsesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReusableResponses")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
-		if err := validResponse.VisitReusableResponsesResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // TextExample operation middleware
 func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
-	var request TextExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request TextExampleRequestObject
 
-	data, err := io.ReadAll(r.Body)
-	if err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
-		return
-	}
-	body := TextExampleTextRequestBody(data)
-	request.Body = &body
+		data, err := io.ReadAll(r.Body)
+		if err != nil {
+			return fmt.Errorf("can't read body: %w", err)
+		}
+		body := TextExampleTextRequestBody(data)
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
+		response, err := sh.ssi.TextExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitTextExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "TextExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
-		if err := validResponse.VisitTextExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // UnknownExample operation middleware
 func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) {
-	var request UnknownExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request UnknownExampleRequestObject
 
-	request.Body = r.Body
+		request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UnknownExample(ctx, request.(UnknownExampleRequestObject))
+		response, err := sh.ssi.UnknownExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitUnknownExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnknownExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
-		if err := validResponse.VisitUnknownExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // UnspecifiedContentType operation middleware
 func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
-	var request UnspecifiedContentTypeRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request UnspecifiedContentTypeRequestObject
 
-	request.ContentType = r.Header.Get("Content-Type")
+		request.ContentType = r.Header.Get("Content-Type")
 
-	request.Body = r.Body
+		request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UnspecifiedContentType(ctx, request.(UnspecifiedContentTypeRequestObject))
+		response, err := sh.ssi.UnspecifiedContentType(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitUnspecifiedContentTypeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnspecifiedContentType")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
-		if err := validResponse.VisitUnspecifiedContentTypeResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // URLEncodedExample operation middleware
 func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
-	var request URLEncodedExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request URLEncodedExampleRequestObject
 
-	if err := r.ParseForm(); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
-		return
-	}
-	var body URLEncodedExampleFormdataRequestBody
-	if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
-		return
-	}
-	request.Body = &body
+		if err := r.ParseForm(); err != nil {
+			return fmt.Errorf("can't decode formdata: %w", err)
+		}
+		var body URLEncodedExampleFormdataRequestBody
+		if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+			return fmt.Errorf("can't bind formdata: %w", err)
+		}
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.URLEncodedExample(ctx, request.(URLEncodedExampleRequestObject))
+		response, err := sh.ssi.URLEncodedExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitURLEncodedExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "URLEncodedExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
-		if err := validResponse.VisitURLEncodedExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // HeadersExample operation middleware
 func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, params HeadersExampleParams) {
-	var request HeadersExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request HeadersExampleRequestObject
 
-	request.Params = params
+		request.Params = params
 
-	var body HeadersExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
+		var body HeadersExampleJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return fmt.Errorf("can't decode JSON body: %w", err)
+		}
+		request.Body = &body
+
+		response, err := sh.ssi.HeadersExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitHeadersExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
-	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
-	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "HeadersExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
-		if err := validResponse.VisitHeadersExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
 // UnionExample operation middleware
 func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
-	var request UnionExampleRequestObject
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var request UnionExampleRequestObject
 
-	var body UnionExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
-	}
-	request.Body = &body
+		var body UnionExampleJSONRequestBody
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			return fmt.Errorf("can't decode JSON body: %w", err)
+		}
+		request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
+		response, err := sh.ssi.UnionExample(ctx, request)
+		if err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+			return nil
+		}
+
+		if err := response.VisitUnionExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+		return nil
 	}
+
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnionExample")
 	}
 
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
+	if err := handler(r.Context(), w, r); err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
-		if err := validResponse.VisitUnionExampleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
