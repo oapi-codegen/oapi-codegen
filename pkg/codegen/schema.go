@@ -25,6 +25,8 @@ type Schema struct {
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
+	ForceCodeAsString bool //Some non string types need to encode/decode as string
+
 	Description string // The description of the element
 
 	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
@@ -626,6 +628,18 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 	} else if t.Is("string") {
 		// Special case string formats here.
 		switch f {
+		case "int64":
+			outSchema.GoType = "int64"
+			outSchema.ForceCodeAsString = true
+		case "uint64":
+			outSchema.GoType = "uint64"
+			outSchema.ForceCodeAsString = true
+		case "double":
+			outSchema.GoType = "float64"
+			outSchema.ForceCodeAsString = true
+		case "float":
+			outSchema.GoType = "float32"
+			outSchema.ForceCodeAsString = true
 		case "byte":
 			outSchema.GoType = "[]byte"
 		case "email":
@@ -726,15 +740,23 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		fieldTags := make(map[string]string)
 
-		if !omitEmpty {
-			fieldTags["json"] = p.JsonFieldName
+
+		fieldTags["json"] = p.JsonFieldName
+		if p.NeedsFormTag {
+			fieldTags["form"] = p.JsonFieldName
+		}
+
+		if omitEmpty {
+			fieldTags["json"] = fieldTags["json"] + ",omitempty"
 			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName
+				fieldTags["form"] = fieldTags["form"] + ",omitempty"
 			}
-		} else {
-			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+		}
+
+		if p.Schema.ForceCodeAsString {
+			fieldTags["json"] = fieldTags["json"] + ",string"
 			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName + ",omitempty"
+				fieldTags["form"] = fieldTags["form"] + ",string"
 			}
 		}
 
