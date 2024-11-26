@@ -14,6 +14,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
@@ -23,7 +24,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
@@ -157,11 +158,18 @@ func main() {
 		if err != nil {
 			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
 		}
+
+		decoderOld := yaml.NewDecoder(bytes.NewReader(configFile))
+		decoderOld.KnownFields(true)
+
 		var oldConfig oldConfiguration
-		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
+		oldErr := decoderOld.Decode(&oldConfig)
+
+		decoderNew := yaml.NewDecoder(bytes.NewReader(configFile))
+		decoderNew.KnownFields(true)
 
 		var newConfig configuration
-		newErr := yaml.UnmarshalStrict(configFile, &newConfig)
+		newErr := decoderNew.Decode(&newConfig)
 
 		// If one of the two files parses, but the other fails, we know the
 		// answer.
