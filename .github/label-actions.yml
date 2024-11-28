@@ -37,3 +37,13 @@
     Also remember that although it can seem like "just" a "small change", the maintainers are on the hook for maintaining the changes:
 
     > [No is temporary, yes is forever](https://www.oreilly.com/library/view/hands-on-design-patterns/9781789135565/3f396314-dac8-446c-ab02-768ae91296fa.xhtml)
+
+'reproduction:needed':
+  comment: >
+    Thanks for the report!
+
+    To help maintainers (or other users) help with triaging and fixing of the issue more easily, we need a [Minimal Reproduction](https://github.com/oapi-codegen/oapi-codegen/blob/main/CONTRIBUTING.md#minimal-reproductions) test case.
+
+    Please follow the instructions, and then share a URL to the repository.
+
+    We will not accept `.zip` files as reproductions, sorry!
