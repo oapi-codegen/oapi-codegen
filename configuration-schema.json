@@ -215,7 +215,7 @@
             "path"
           ]
         },
-        "enable-yaml-tags": {
+        "yaml-tags": {
           "type": "boolean",
           "description": "Enable the generation of YAML tags for struct fields"
         }
