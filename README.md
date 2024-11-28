@@ -4185,4 +4185,14 @@ In addition, we are also generously sponsored by the following folks, each of wh
 	</a>
 </p>
 
+<p align="center">
+	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
+		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
+		</picture>
+	</a>
+</p>
+
 (Note that the order of appearance the order in which sponsorship was received)
