@@ -1,0 +1,11 @@
+'auto:no-head-branch':
+  comment: >
+    Thanks for the contribution!
+
+    It looks like this PR was raised from the `main` branch.
+
+    As per [our contributing guidelines](https://github.com/oapi-codegen/oapi-codegen/blob/main/CONTRIBUTING.md#before-you-raise-a-pr), this can make it difficult for us to push changes to your fork - for instance to directly push a change to address a comment that we would raise, or to finalise changes before merge.
+
+    Please re-raise the PR from a branch on your repository that isn't `main` / any protected branches.
+
+    Thank you in advance 🙇🏼
