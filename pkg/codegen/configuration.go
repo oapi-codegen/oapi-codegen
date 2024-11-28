@@ -251,6 +251,12 @@ type OutputOptions struct {
 }
 
 func (oo OutputOptions) Validate() map[string]string {
+	if NameNormalizerFunction(oo.NameNormalizer) != NameNormalizerFunctionToCamelCaseWithInitialisms && len(oo.AdditionalInitialisms) > 0 {
+		return map[string]string{
+			"additional-initialisms": "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration",
+		}
+	}
+
 	return nil
 }
 
