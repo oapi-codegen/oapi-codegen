@@ -728,11 +728,17 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		if !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
+			if globalState.options.OutputOptions.EnableYamlTags {
+				fieldTags["yaml"] = p.JsonFieldName
+			}
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
 			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			if globalState.options.OutputOptions.EnableYamlTags {
+				fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
+			}
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName + ",omitempty"
 			}
