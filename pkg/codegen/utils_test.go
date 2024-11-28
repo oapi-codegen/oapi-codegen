@@ -156,21 +156,6 @@ func TestToCamelCaseWithInitialisms(t *testing.T) {
 	}
 }
 
-func TestSortedSchemaKeys(t *testing.T) {
-	dict := map[string]*openapi3.SchemaRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
-}
-
 func TestSortedSchemaKeysWithXOrder(t *testing.T) {
 	withOrder := func(i float64) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{
@@ -246,102 +231,16 @@ components:
 
 }
 
-func TestSortedPathsKeys(t *testing.T) {
-	dict := map[string]*openapi3.PathItem{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedPathsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedOperationsKeys(t *testing.T) {
-	dict := map[string]*openapi3.Operation{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedOperationsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedResponsesKeys(t *testing.T) {
-	dict := map[string]*openapi3.ResponseRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedResponsesKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedContentKeys(t *testing.T) {
-	dict := openapi3.Content{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedContentKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedParameterKeys(t *testing.T) {
-	dict := map[string]*openapi3.ParameterRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedParameterKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedRequestBodyKeys(t *testing.T) {
-	dict := map[string]*openapi3.RequestBodyRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedRequestBodyKeys(dict), "Keys are not sorted properly")
-}
-
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -363,6 +262,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
@@ -695,10 +599,14 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"@timestamp,":  "Timestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
-		"_foo":         "Foo",
+		"_foo":         "UnderscoreFoo",
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		">=":           "GreaterThanEqual",
+		"<=":           "LessThanEqual",
+		"<":            "LessThan",
+		">":            "GreaterThan",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
@@ -759,7 +667,7 @@ func TestLowercaseFirstCharacters(t *testing.T) {
 	}
 }
 
-func Test_replaceInitialisms(t *testing.T) {
+func Test_replaceInitialism(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -792,6 +700,16 @@ func Test_replaceInitialisms(t *testing.T) {
 			name: "already initialism",
 			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
+		},
+		{
+			name: "one initialism at start",
+			args: args{s: "idFoo"},
+			want: "idFoo",
+		},
+		{
+			name: "one initialism at start and one in middle",
+			args: args{s: "apiIdFoo"},
+			want: "apiIDFoo",
 		},
 	}
 	for _, tt := range tests {

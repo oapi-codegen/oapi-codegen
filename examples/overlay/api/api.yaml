@@ -1,0 +1,91 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+    delete:
+      x-internal: true
+      responses:
+        '202':
+          content: {}
+  /admin/autoscaling:
+    get:
+      # this is a method-level `tags`
+      tags:
+      - internal
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instances:
+                    type: number
+                required:
+                  - instances
+  /healthz:
+    x-internal: true
+    get:
+      responses:
+        '200':
+          content: {}
+  /admin/users/reset-password:
+    x-internal: true
+    put:
+      requestBody:
+        content:
+          application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                  not_documented:
+                    type: string
+                    format: uuid
+                    x-internal: true
+                required:
+                  - username
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  password:
+                    type: string
+                  not_documented:
+                    type: string
+                    format: uuid
+                    x-internal: true
+                required:
+                  - password
+components:
+  schemas:
+    # base types
+    Pong:
+      type: object
+      required:
+        - ping
+      properties:
+        ping:
+          type: string
+          example: pong
+        seed:
+          type: number
+          description: The seed for the internal randomness. SHOULD NOT be explained to users
+        # undocumented and not useful
+        verbose:
+          type: boolean
+          x-internal: true

@@ -19,12 +19,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	chiAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/chi"
-	clientAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/client"
-	echoAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/echo"
-	fiberAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/fiber"
-	ginAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/gin"
-	irisAPI "github.com/deepmap/oapi-codegen/v2/internal/test/strict-server/iris"
+	chiAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/chi"
+	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/client"
+	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/echo"
+	fiberAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/fiber"
+	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/gin"
+	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/iris"
 
 	"github.com/oapi-codegen/runtime"
 	"github.com/oapi-codegen/testutil"

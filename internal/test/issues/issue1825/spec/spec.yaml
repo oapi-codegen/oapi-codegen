@@ -1,0 +1,11 @@
+openapi: "3.0.0"
+info: {}
+paths: {}
+components:
+  schemas:
+    Container:
+      properties:
+        object_a:
+          $ref: ../packageA/spec.yaml#/components/schemas/ObjectA
+        object_b:
+          $ref: ../object_b.json
