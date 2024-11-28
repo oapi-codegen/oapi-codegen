@@ -13,21 +13,18 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
 )
 
 // ObjectA defines model for ObjectA.
 type ObjectA struct {
-	Name    *string               `json:"name,omitempty"`
-	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
+	Name *string `json:"name,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4yOMcrDMAxG7/L9/xjI7q25QI8QHKMkbhNZ2OpQgu5e7BS6dOikBw896UBIuyQm1gJ3",
-	"oISVdt/wOt0o6KWi5CSUNVIT7HeqU59CcCiaIy+wDqltjFOV/5lmOPz1n37/jvfiw90vNIxFKIznnQFm",
-	"1uG7+vUFa43Ic4Ljx7Z1SELsJcIBNa5rOY29AgAA//84dUj5+QAAAA==",
+	"H4sIAAAAAAAC/yTJwQ0CMQxE0V7mnApyowJqCNHAGm1sKzYHtNreUZa5zJfegW7DTakZqAeibxztyvvj",
+	"zZ63lT7NOVN4gbbB9fl1oiJyir5wrhWIPg1VP/teYE5tLqhAgbfc4i/nLwAA//+kHCeTdgAAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
@@ -67,12 +64,6 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "../packageB/spec.yaml")) {
-		if _, ok := res[rawPath]; ok {
-			// it is not possible to compare functions in golang, so always overwrite the old value
-		}
-		res[rawPath] = rawFunc
-	}
 	return res
 }
 
