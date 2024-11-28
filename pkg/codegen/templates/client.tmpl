@@ -31,7 +31,7 @@ type {{ $clientTypeName }} struct {
 type ClientOption func(*{{ $clientTypeName }}) error
 
 // Creates a new {{ $clientTypeName }}, with reasonable defaults
-func NewClient(server string, opts ...ClientOption) (*{{ $clientTypeName }}, error) {
+func New{{ $clientTypeName }}(server string, opts ...ClientOption) (*{{ $clientTypeName }}, error) {
     // create a client with sane default values
     client := {{ $clientTypeName }}{
         Server: server,
