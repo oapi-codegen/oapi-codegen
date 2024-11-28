@@ -27,3 +27,13 @@
 'auto:pinning-until-release':
   comment: >
     [Until there is a defined release cadence planned](https://github.com/oapi-codegen/oapi-codegen/issues/1519), our [official recommendation](https://github.com/oapi-codegen/oapi-codegen/blob/main/README.md#pinning-to-commits) is that you pin to the latest commit on `main`, which will allow you to pull in this change.
+
+'auto:sponsorship':
+  comment: >
+    Please remember that `oapi-codegen` is for the most part run by volunteers, and [we have a request out](https://github.com/oapi-codegen/oapi-codegen/discussions/1606) to companies who use the project to help make it more sustainable, with sponsorship.
+
+    If this is high-priority for your organisation, please consider whether you would like to sponsor ongoing maintenance of the project, or that you may want to engage the maintainers to perform a one-off contract/bug bounty.
+
+    Also remember that although it can seem like "just" a "small change", the maintainers are on the hook for maintaining the changes:
+
+    > [No is temporary, yes is forever](https://www.oreilly.com/library/view/hands-on-design-patterns/9781789135565/3f396314-dac8-446c-ab02-768ae91296fa.xhtml)
