@@ -130,13 +130,13 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
-	router.Get(options.BaseURL+"/pets", wrapper.FindPets)
+	router.Get(options.BaseURL+"/pets", wrapper.FindPets).Name("GET /pets")
 
-	router.Post(options.BaseURL+"/pets", wrapper.AddPet)
+	router.Post(options.BaseURL+"/pets", wrapper.AddPet).Name("POST /pets")
 
-	router.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet)
+	router.Delete(options.BaseURL+"/pets/:id", wrapper.DeletePet).Name("DELETE /pets/:id")
 
-	router.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID)
+	router.Get(options.BaseURL+"/pets/:id", wrapper.FindPetByID).Name("GET /pets/:id")
 
 }
 
