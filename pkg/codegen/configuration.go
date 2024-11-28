@@ -242,6 +242,9 @@ type OutputOptions struct {
 
 	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones
 	EnableYamlTags bool `yaml:"yaml-tags,omitempty"`
+
+	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
+	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
