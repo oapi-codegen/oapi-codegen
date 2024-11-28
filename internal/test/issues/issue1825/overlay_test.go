@@ -1,4 +1,4 @@
-package overlay
+package issue1825
 
 import (
 	"testing"

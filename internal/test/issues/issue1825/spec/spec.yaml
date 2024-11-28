@@ -1,6 +1,6 @@
 openapi: "3.0.0"
-info: { }
-paths: { }
+info: {}
+paths: {}
 components:
   schemas:
     Container:
