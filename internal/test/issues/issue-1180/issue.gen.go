@@ -211,11 +211,6 @@ func (r GetSimplePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimplePrimitiveResponse) Bytes() []byte {
-	return r.Body
-}
-
 // GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
 func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param, reqEditors...)

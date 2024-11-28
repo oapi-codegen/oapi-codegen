@@ -218,6 +218,10 @@
         "yaml-tags": {
           "type": "boolean",
           "description": "Enable the generation of YAML tags for struct fields"
+        },
+        "client-response-bytes-function": {
+          "type": "boolean",
+          "description": "Enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`"
         }
       }
     },

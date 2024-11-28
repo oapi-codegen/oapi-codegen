@@ -1733,11 +1733,6 @@ func (r GetContentObjectResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetContentObjectResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetCookieResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1757,11 +1752,6 @@ func (r GetCookieResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetCookieResponse) Bytes() []byte {
-	return r.Body
 }
 
 type EnumParamsResponse struct {
@@ -1785,11 +1775,6 @@ func (r EnumParamsResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r EnumParamsResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetHeaderResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1809,11 +1794,6 @@ func (r GetHeaderResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetHeaderResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetLabelExplodeArrayResponse struct {
@@ -1837,11 +1817,6 @@ func (r GetLabelExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetLabelExplodeArrayResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetLabelExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1861,11 +1836,6 @@ func (r GetLabelExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetLabelExplodeObjectResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetLabelNoExplodeArrayResponse struct {
@@ -1889,11 +1859,6 @@ func (r GetLabelNoExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetLabelNoExplodeArrayResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetLabelNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1913,11 +1878,6 @@ func (r GetLabelNoExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetLabelNoExplodeObjectResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetMatrixExplodeArrayResponse struct {
@@ -1941,11 +1901,6 @@ func (r GetMatrixExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetMatrixExplodeArrayResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetMatrixExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1965,11 +1920,6 @@ func (r GetMatrixExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetMatrixExplodeObjectResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetMatrixNoExplodeArrayResponse struct {
@@ -1993,11 +1943,6 @@ func (r GetMatrixNoExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetMatrixNoExplodeArrayResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetMatrixNoExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2017,11 +1962,6 @@ func (r GetMatrixNoExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetMatrixNoExplodeObjectResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetPassThroughResponse struct {
@@ -2045,11 +1985,6 @@ func (r GetPassThroughResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetPassThroughResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetDeepObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2069,11 +2004,6 @@ func (r GetDeepObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetDeepObjectResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetQueryFormResponse struct {
@@ -2097,11 +2027,6 @@ func (r GetQueryFormResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetQueryFormResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetSimpleExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2121,11 +2046,6 @@ func (r GetSimpleExplodeArrayResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimpleExplodeArrayResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetSimpleExplodeObjectResponse struct {
@@ -2149,11 +2069,6 @@ func (r GetSimpleExplodeObjectResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimpleExplodeObjectResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetSimpleNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2173,11 +2088,6 @@ func (r GetSimpleNoExplodeArrayResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimpleNoExplodeArrayResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetSimpleNoExplodeObjectResponse struct {
@@ -2201,11 +2111,6 @@ func (r GetSimpleNoExplodeObjectResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimpleNoExplodeObjectResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetSimplePrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2227,11 +2132,6 @@ func (r GetSimplePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetSimplePrimitiveResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetStartingWithNumberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2251,11 +2151,6 @@ func (r GetStartingWithNumberResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetStartingWithNumberResponse) Bytes() []byte {
-	return r.Body
 }
 
 // GetContentObjectWithResponse request returning *GetContentObjectResponse

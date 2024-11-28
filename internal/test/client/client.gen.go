@@ -624,11 +624,6 @@ func (r PostBothResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r PostBothResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetBothResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -648,11 +643,6 @@ func (r GetBothResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetBothResponse) Bytes() []byte {
-	return r.Body
 }
 
 type PostJsonResponse struct {
@@ -676,11 +666,6 @@ func (r PostJsonResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r PostJsonResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -700,11 +685,6 @@ func (r GetJsonResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetJsonResponse) Bytes() []byte {
-	return r.Body
 }
 
 type PostOtherResponse struct {
@@ -728,11 +708,6 @@ func (r PostOtherResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r PostOtherResponse) Bytes() []byte {
-	return r.Body
-}
-
 type GetOtherResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -752,11 +727,6 @@ func (r GetOtherResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetOtherResponse) Bytes() []byte {
-	return r.Body
 }
 
 type GetJsonWithTrailingSlashResponse struct {
@@ -780,11 +750,6 @@ func (r GetJsonWithTrailingSlashResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetJsonWithTrailingSlashResponse) Bytes() []byte {
-	return r.Body
-}
-
 type PostVendorJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -804,11 +769,6 @@ func (r PostVendorJsonResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r PostVendorJsonResponse) Bytes() []byte {
-	return r.Body
 }
 
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse

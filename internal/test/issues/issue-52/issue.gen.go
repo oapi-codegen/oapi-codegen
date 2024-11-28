@@ -219,11 +219,6 @@ func (r ExampleGetResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r ExampleGetResponse) Bytes() []byte {
-	return r.Body
-}
-
 // ExampleGetWithResponse request returning *ExampleGetResponse
 func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error) {
 	rsp, err := c.ExampleGet(ctx, reqEditors...)

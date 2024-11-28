@@ -235,11 +235,6 @@ func (r GetPetsResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetPetsResponse) Bytes() []byte {
-	return r.Body
-}
-
 // GetPetsWithResponse request returning *GetPetsResponse
 func (c *ClientWithResponses) GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error) {
 	rsp, err := c.GetPets(ctx, reqEditors...)

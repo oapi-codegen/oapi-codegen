@@ -222,11 +222,6 @@ func (r GetThingsResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r GetThingsResponse) Bytes() []byte {
-	return r.Body
-}
-
 // GetThingsWithResponse request returning *GetThingsResponse
 func (c *ClientWithResponses) GetThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetThingsResponse, error) {
 	rsp, err := c.GetThings(ctx, reqEditors...)

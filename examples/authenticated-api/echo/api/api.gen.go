@@ -306,11 +306,6 @@ func (r ListThingsResponse) StatusCode() int {
 	return 0
 }
 
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r ListThingsResponse) Bytes() []byte {
-	return r.Body
-}
-
 type AddThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -331,11 +326,6 @@ func (r AddThingResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
-}
-
-// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
-func (r AddThingResponse) Bytes() []byte {
-	return r.Body
 }
 
 // ListThingsWithResponse request returning *ListThingsResponse
