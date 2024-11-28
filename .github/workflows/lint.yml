@@ -30,7 +30,7 @@ jobs:
   results:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    name: Check results
+    name: Check linting results
     needs: [build]
     steps:
       - run: |

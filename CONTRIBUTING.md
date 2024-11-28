@@ -51,6 +51,8 @@ Features that amend the way existing codegen works should - ideally - be behind 
 
 > [!TIP]
 > The minimal reproductions for bugs may get taken into the codebase (licensed under `Apache-2.0`) as a test-case for future regression testing
+>
+> However, this can only be done if you license the code under `Apache-2.0` itself - if you are comfortable doing so, please do.
 
 When raising a bug report, or asking a question about functionality, it's super helpful if you can share:
 

@@ -283,7 +283,7 @@ func ToCamelCaseWithDigits(s string) string {
 func ToCamelCaseWithInitialisms(s string) string {
 	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
 	for i := range parts {
-		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+		if v, ok := globalState.initialismsMap[strings.ToLower(parts[i])]; ok {
 			parts[i] = v
 		}
 	}
@@ -292,19 +292,26 @@ func ToCamelCaseWithInitialisms(s string) string {
 
 var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
 
-// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
-// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-var initialismsMap = makeInitialismsMap([]string{
+var initialismsList = []string{
 	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
 	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
 	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
-})
+}
 
-func makeInitialismsMap(l []string) map[string]string {
+// targetWordRegex is a regex that matches all initialisms.
+var targetWordRegex *regexp.Regexp
+
+func makeInitialismsMap(additionalInitialisms []string) map[string]string {
+	l := append(initialismsList, additionalInitialisms...)
+
 	m := make(map[string]string, len(l))
 	for i := range l {
 		m[strings.ToLower(l[i])] = l[i]
 	}
+
+	// Create a regex to match the initialisms
+	targetWordRegex = regexp.MustCompile(`(?i)(` + strings.Join(l, "|") + `)`)
+
 	return m
 }
 
@@ -315,8 +322,6 @@ func ToCamelCaseWithInitialism(str string) string {
 func replaceInitialism(s string) string {
 	// These strings do not apply CamelCase
 	// Do not do CamelCase when these characters match when the preceding character is lowercase
-	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
-	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
 	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
 		// If the preceding character is lowercase, do not do CamelCase
 		if unicode.IsLower(rune(s[0])) {
