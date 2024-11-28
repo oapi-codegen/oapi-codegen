@@ -283,7 +283,7 @@ func ToCamelCaseWithDigits(s string) string {
 func ToCamelCaseWithInitialisms(s string) string {
 	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
 	for i := range parts {
-		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+		if v, ok := globalState.initialismsMap[strings.ToLower(parts[i])]; ok {
 			parts[i] = v
 		}
 	}
@@ -297,11 +297,6 @@ var initialismsList = []string{
 	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
 	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
 }
-
-// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
-// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-// TODO globalState
-var initialismsMap = makeInitialismsMap(nil)
 
 // targetWordRegex is a regex that matches all initialisms.
 var targetWordRegex *regexp.Regexp

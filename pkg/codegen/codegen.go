@@ -47,6 +47,9 @@ var globalState struct {
 	options       Configuration
 	spec          *openapi3.T
 	importMapping importMap
+	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+	initialismsMap map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -138,10 +141,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
 			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
-	// TODO error
 
-	// TODO set initialisms into global state
-	initializeInitialisms(opts.OutputOptions.AdditionalInitialisms)
+	if nameNormalizerFunction != NameNormalizerFunctionToCamelCaseWithInitialisms && len(opts.OutputOptions.AdditionalInitialisms) > 0 {
+		return "", fmt.Errorf("you have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration")
+	}
+
+	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
@@ -1194,8 +1199,4 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 
 func SetGlobalStateSpec(spec *openapi3.T) {
 	globalState.spec = spec
-}
-
-func initializeInitialisms(additionalInitialisms []string) {
-	initialismsMap = makeInitialismsMap(additionalInitialisms)
 }
