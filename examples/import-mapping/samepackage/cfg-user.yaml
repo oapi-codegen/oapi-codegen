@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true

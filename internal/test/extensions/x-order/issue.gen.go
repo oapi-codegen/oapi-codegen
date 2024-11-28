@@ -12,3 +12,16 @@ type DateInterval struct {
 	Start *openapi_types.Date `json:"start,omitempty"`
 	End   *openapi_types.Date `json:"end,omitempty"`
 }
+
+// Port defines model for Port.
+type Port = int
+
+// PortInterval defines model for PortInterval.
+type PortInterval struct {
+	Start   Port             `json:"start"`
+	End     Port             `json:"end"`
+	VeryEnd *LowPriorityPort `json:"very_end,omitempty"`
+}
+
+// LowPriorityPort defines model for LowPriorityPort.
+type LowPriorityPort = int

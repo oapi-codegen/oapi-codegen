@@ -361,18 +361,8 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		keys[i], orders[key] = key, int64(len(dict))
 		i++
 
-		if v == nil || v.Value == nil {
-			continue
-		}
-
-		ext := v.Value.Extensions[extOrder]
-		if ext == nil {
-			continue
-		}
-
-		// YAML parsing picks up the x-order as a float64
-		if order, ok := ext.(float64); ok {
-			orders[key] = int64(order)
+		if order, ok := schemaXOrder(v); ok {
+			orders[key] = order
 		}
 	}
 
@@ -383,6 +373,30 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		return keys[i] < keys[j]
 	})
 	return keys
+}
+
+func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
+	if v == nil {
+		return 0, false
+	}
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	if v.Value == nil {
+		return 0, false
+	}
+
+	// if v.Value is set, then this is actually a `$ref`, and we should check if there's an x-order set on that
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Value.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	return 0, false
 }
 
 // StringInArray checks whether the specified string is present in an array
@@ -427,44 +441,59 @@ func RefPathToGoType(refPath string) (string, error) {
 // refPathToGoType returns the Go typename for refPath given its
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
-		pathParts := strings.Split(refPath, "/")
-		depth := len(pathParts)
-		if local {
-			if depth != 4 {
-				return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-			}
-		} else if depth != 4 && depth != 2 {
-			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-		}
-
-		// Schemas may have been renamed locally, so look up the actual name in
-		// the spec.
-		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
-		if err != nil {
-			return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
-		}
-		if name != "" {
-			return name, nil
-		}
-		// lastPart now stores the final element of the type path. This is what
-		// we use as the base for a type name.
-		lastPart := pathParts[len(pathParts)-1]
-		return SchemaNameToTypeName(lastPart), nil
+		return refPathToGoTypeSelf(refPath, local)
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	if goImport, ok := globalState.importMapping[remoteComponent]; !ok {
+	goPkg, ok := globalState.importMapping[remoteComponent]
+
+	if !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
-	} else {
-		goType, err := refPathToGoType("#"+flatComponent, false)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s.%s", goImport.Name, goType), nil
 	}
+
+	if goPkg.Path == importMappingCurrentPackage {
+		return refPathToGoTypeSelf(fmt.Sprintf("#%s", pathParts[1]), local)
+	}
+
+	return refPathToGoTypeRemote(flatComponent, goPkg)
+
+}
+
+func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
+	pathParts := strings.Split(refPath, "/")
+	depth := len(pathParts)
+	if local {
+		if depth != 4 {
+			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+		}
+	} else if depth != 4 && depth != 2 {
+		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+	}
+
+	// Schemas may have been renamed locally, so look up the actual name in
+	// the spec.
+	name, err := findSchemaNameByRefPath(refPath, globalState.spec)
+	if err != nil {
+		return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
+	}
+	if name != "" {
+		return name, nil
+	}
+	// lastPart now stores the final element of the type path. This is what
+	// we use as the base for a type name.
+	lastPart := pathParts[len(pathParts)-1]
+	return SchemaNameToTypeName(lastPart), nil
+}
+
+func refPathToGoTypeRemote(flatComponent string, goPkg goImport) (string, error) {
+	goType, err := refPathToGoType("#"+flatComponent, false)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s", goPkg.Name, goType), nil
 }
 
 // IsGoTypeReference takes a $ref value and checks if it has link to go type.
@@ -762,6 +791,10 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Tilde"
 		case '=':
 			prefix += "Equal"
+		case '>':
+			prefix += "GreaterThan"
+		case '<':
+			prefix += "LessThan"
 		case '#':
 			prefix += "Hash"
 		case '.':
@@ -772,6 +805,8 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Caret"
 		case '%':
 			prefix += "Percent"
+		case '_':
+			prefix += "Underscore"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {
