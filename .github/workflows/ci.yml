@@ -29,3 +29,17 @@ jobs:
 
       - name: Build
         run: go build ./cmd/oapi-codegen
+
+  results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Check build results
+    needs: [build]
+    steps:
+      - run: |
+          result="${{ needs.build.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi

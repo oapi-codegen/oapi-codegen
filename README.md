@@ -1,5 +1,7 @@
 # `oapi-codegen`
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)
+
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
 Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
@@ -74,9 +76,11 @@ Which then means you can invoke it like so:
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
+Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
+
 ### Pinning to commits
 
-While the project does not ([yet](https://github.com/deepmap/oapi-codegen/issues/1519)) have a defined release cadence, there may be cases where you want to pull in yet-unreleased changes to your codebase.
+While the project does not ([yet](https://github.com/oapi-codegen/oapi-codegen/issues/1519)) have a defined release cadence, there may be cases where you want to pull in yet-unreleased changes to your codebase.
 
 Therefore, you may want to pin your dependency on `oapi-codegen` to a given commit hash, rather than a tag.
 
@@ -89,7 +93,7 @@ To do so, you can run:
 ```sh
 # pin to the latest version on the default branch
 $ go get github.com/oapi-codegen/oapi-codegen/v2@main
-# alternatively, to a commit hash i.e. https://github.com/deepmap/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
+# alternatively, to a commit hash i.e. https://github.com/oapi-codegen/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
 $ go get github.com/oapi-codegen/oapi-codegen/v2@71e916c59688a6379b5774dfe5904ec222b9a537
 ```
 
@@ -114,7 +118,7 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 # ...
 ```
@@ -370,7 +374,7 @@ We can see that this provides the best means to focus on the implementation of t
 - Single-file output
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
-  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/deepmap/oapi-codegen/issues/373)
+  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
@@ -650,7 +654,7 @@ type ServerInterface interface {
 	GetPing(w http.ResponseWriter, r *http.Request)
 }
 
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
@@ -1500,7 +1504,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -1575,7 +1579,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -1742,7 +1746,7 @@ paths:
           content:
             application/json:
               # NOTE that this anonymous object is /not/ generated because it's an anonymous, but would be generated if using `generate: client`
-              # See https://github.com/deepmap/oapi-codegen/issues/1512
+              # See https://github.com/oapi-codegen/oapi-codegen/issues/1512
               schema:
                 type: object
                 properties:
@@ -1775,7 +1779,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1804,7 +1808,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1822,10 +1826,13 @@ For a complete example see [`examples/only-models`](examples/only-models).
 When you've got a large OpenAPI specification, you may find it useful to split the contents of the spec across multiple files, using external references, such as:
 
 ```yaml
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
@@ -1867,11 +1874,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+                $ref: '../common/api.yaml#/components/schemas/User'
 ```
 
 This references the common spec:
@@ -1890,10 +1893,78 @@ components:
         - name
 ```
 
-And finally we have our configuration file:
+So how do we get `oapi-codegen` to generate our code?
+
+### Using a single package with multiple OpenAPI specs
+
+<a name=import-mapping-self></a>
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, it is now possible to split large OpenAPI specifications into the same Go package, using the "self" mapping (denoted by a `-`) when using Import Mapping.
+>
+> This is an improvement on the previous model, which would require splitting files across multiple packages.
+
+> [!NOTE]
+> You still need to have multiple `go generate`s, and any other configuration files.
+
+To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
+
+```sh
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
+```
+
+This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  user.yaml: "-"
+```
+
+And then our `cfg-user.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+```
+
+From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+### Using multiple packages, with one OpenAPI spec per package
+
+To get `oapi-codegen`'s multi-package support working, we need to set up our directory structure:
+
+```
+├── admin
+│   ├── cfg.yaml
+│   └── generate.go
+└── common
+    ├── cfg.yaml
+    └── generate.go
+```
+
+We could start with our configuration file for our admin API spec:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -1912,10 +1983,10 @@ If we were to run `oapi-codegen`, this will fail with the following error
 error generating code: error creating operation definitions: error generating response definitions: error generating request body definition: error turning reference (../common/api.yaml#/components/schemas/User) into a Go type: unrecognized external reference '../common/api.yaml'; please provide the known import for this reference using option --import-mapping
 ```
 
-This is because `oapi-codegen` requires:
+This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -1943,9 +2014,9 @@ import (
 type User = externalRef0.User
 ```
 
-If you don't want to do this, an alternate option is to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
+If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/) for the full code.
+Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
 ## Modifying the input OpenAPI Specification
 
@@ -2005,6 +2076,17 @@ info:
   title: Overlay
   version: 0.0.0
 actions:
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
 - target: $.paths.*[?(@.x-internal)]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
@@ -2016,7 +2098,7 @@ actions:
 And our configuration file for `oapi-codegen`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 output: ping.gen.go
 generate:
@@ -2029,6 +2111,8 @@ output-options:
 ```
 
 This then completely removes the DELETE endpoint _before_ we even start to parse the specification in `oapi-codegen`, so it's as if your specification was provided without that endpoint.
+
+Additionally, we can override other pieces of metadata, such as the description for operations.
 
 Check out [the overlay example](examples/overlay/) for the full code, and some more complex examples.
 
@@ -2062,7 +2146,7 @@ However, you lose the ability to understand the three cases, as there's no way t
 - is this field `null`? (Can be checked with `S.Field == nil`)
 - does this field have a value? (`S.Field != nil && *S.Field == "123"`)
 
-As of `oapi-codegen` [v2.1.0](https://github.com/deepmap/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
+As of `oapi-codegen` [v2.1.0](https://github.com/oapi-codegen/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
 
 If you configure your generator's Output Options to opt-in to this behaviour, as so:
 
@@ -3006,7 +3090,7 @@ Middleware library
 </table>
 
 > [!NOTE]
-> It is [not currently possible](https://github.com/deepmap/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
+> It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
 > [!NOTE]
 > We're also [exploring](https://github.com/oapi-codegen/exp/issues/1) the use of [libopenapi-validator](https://github.com/pb33f/libopenapi-validator/) for request/response validation middleware
@@ -3022,7 +3106,7 @@ If you're using a specification with [Security Schemes](https://spec.openapis.or
 >
 > To perform authentication, you will need to use the [validation middleware](#request-response-validation-middleware).
 >
-> In the future, we plan to [implement server-side validation in the generated code](https://github.com/deepmap/oapi-codegen/issues/1524)
+> In the future, we plan to [implement server-side validation in the generated code](https://github.com/oapi-codegen/oapi-codegen/issues/1524)
 
 To see how this can work, check out the [authenticated API example](examples/authenticated-api/echo).
 
@@ -3076,7 +3160,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3097,23 +3181,23 @@ It is also possible to use HTTPS URLs.
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
 >
-> This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/deepmap/oapi-codegen/issues/1564)
+> This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
     # The following are referencing a version of the default client-with-responses.tmpl file, but loaded in through GitHub's raw.githubusercontent.com. The general form to use raw.githubusercontent.com is as follows https://raw.githubusercontent.com/<username>/<project>/<commitish>/path/to/template/template.tmpl
 
     # Alternatively using raw.githubusercontent.com with a hash
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/ad5eada4f3ccc28a88477cef62ea21c17fc8aa01/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/ad5eada4f3ccc28a88477cef62ea21c17fc8aa01/pkg/codegen/templates/client-with-responses.tmpl
     # Alternatively using raw.githubusercontent.com with a tag
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/v2.1.0/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.1.0/pkg/codegen/templates/client-with-responses.tmpl
     # Alternatively using raw.githubusercontent.com with a branch
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
 ```
 
 > [!WARNING]
@@ -3124,7 +3208,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3142,7 +3226,7 @@ output-options:
 
 ### Using the Go package
 
-Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
+Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1487).
 
 ## Additional Properties (`additionalProperties`)
 
@@ -3151,7 +3235,7 @@ Alternatively, you are able to use the underlying code generation as a package, 
 For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-codegen` decides to ignore the implicit `additionalProperties: true`, and instead requires you to specify the `additionalProperties` key to generate the boilerplate.
 
 > [!NOTE]
-> In the future [this will be possible](https://github.com/deepmap/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
+> In the future [this will be possible](https://github.com/oapi-codegen/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
 
 Below you can see some examples of how `additionalProperties` affects the generated code.
 
@@ -3728,6 +3812,7 @@ Here are a few we've found around the Web:
 - [Generating Go server code from OpenAPI 3 definitions](https://ldej.nl/post/generating-go-from-openapi-3/)
 - [Go Client Code Generation from Swagger and OpenAPI](https://medium.com/@kyodo-tech/go-client-code-generation-from-swagger-and-openapi-a0576831836c)
 - [Go oapi-codegen + request validation](https://blog.commitsmart.com/go-oapi-codegen-request-validation-285398b37dc8)
+- [Streamlining Go + Chi Development: Generating Code from an OpenAPI Spec](https://i4o.dev/blog/oapi-codegen-with-chi-router)
 
 Got one to add? Please raise a PR!
 
@@ -3774,7 +3859,7 @@ components:
             - id
 
     # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/deepmap/oapi-codegen/issues/1569
+    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
     IdentityWithDuplicateField:
       allOf:
         # `issuer` will be ignored
@@ -4009,7 +4094,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []
@@ -4044,17 +4129,35 @@ This may lead to breakage in your consuming code, and if so, sorry that's happen
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
 
+## Contributors
+
+We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+<a href="https://github.com/oapi-codegen/oapi-codegen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
+</a>
+
 ## Sponsors
 
-For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/deepmap/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
-
-We're very appreciative of [the many contributors over the years](https://github.com/deepmap/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+We are currently sponsored for 4 hours of work a month by Elastic:
+
+<p align="center">
+	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
+		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>
+
+In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -4077,11 +4180,17 @@ We are currently generously sponsored by the following folks, each of whom provi
 </p>
 
 <p align="center">
-	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	</a>
+</p>
+
+<p align="center">
+	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
-		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
+		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
 		</picture>
 	</a>
 </p>

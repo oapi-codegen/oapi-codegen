@@ -29,3 +29,17 @@ jobs:
 
       - name: Check for no untracked files
         run: git status && git diff-index --exit-code -p HEAD --
+
+  results:
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    name: Check generation results
+    needs: [build]
+    steps:
+      - run: |
+          result="${{ needs.build.result }}"
+          if [[ $result == "success" || $result == "skipped" ]]; then
+            exit 0
+          else
+            exit 1
+          fi
