@@ -282,9 +282,7 @@ func main() {
 	}
 
 	overlayOpts := util.LoadSwaggerWithOverlayOpts{
-		Path:        opts.OutputOptions.Overlay.Path,
-		ResolveRefs: true,
-
+		Path: opts.OutputOptions.Overlay.Path,
 		// default to strict, but can be overridden
 		Strict: true,
 	}
