@@ -1040,6 +1040,11 @@ func (r JSONExampleResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r JSONExampleResponse) Bytes() []byte {
+	return r.Body
+}
+
 type MultipartExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1061,6 +1066,11 @@ func (r MultipartExampleResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r MultipartExampleResponse) Bytes() []byte {
+	return r.Body
+}
+
 type MultipartRelatedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1080,6 +1090,11 @@ func (r MultipartRelatedExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r MultipartRelatedExampleResponse) Bytes() []byte {
+	return r.Body
 }
 
 type MultipleRequestAndResponseTypesResponse struct {
@@ -1104,6 +1119,11 @@ func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r MultipleRequestAndResponseTypesResponse) Bytes() []byte {
+	return r.Body
+}
+
 type ReservedGoKeywordParametersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1123,6 +1143,11 @@ func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r ReservedGoKeywordParametersResponse) Bytes() []byte {
+	return r.Body
 }
 
 type ReusableResponsesResponse struct {
@@ -1147,6 +1172,11 @@ func (r ReusableResponsesResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r ReusableResponsesResponse) Bytes() []byte {
+	return r.Body
+}
+
 type TextExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1166,6 +1196,11 @@ func (r TextExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r TextExampleResponse) Bytes() []byte {
+	return r.Body
 }
 
 type UnknownExampleResponse struct {
@@ -1189,6 +1224,11 @@ func (r UnknownExampleResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r UnknownExampleResponse) Bytes() []byte {
+	return r.Body
+}
+
 type UnspecifiedContentTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1208,6 +1248,11 @@ func (r UnspecifiedContentTypeResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r UnspecifiedContentTypeResponse) Bytes() []byte {
+	return r.Body
 }
 
 type URLEncodedExampleResponse struct {
@@ -1231,6 +1276,11 @@ func (r URLEncodedExampleResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r URLEncodedExampleResponse) Bytes() []byte {
+	return r.Body
+}
+
 type HeadersExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1251,6 +1301,11 @@ func (r HeadersExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r HeadersExampleResponse) Bytes() []byte {
+	return r.Body
 }
 
 type UnionExampleResponse struct {
@@ -1277,6 +1332,11 @@ func (r UnionExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r UnionExampleResponse) Bytes() []byte {
+	return r.Body
 }
 
 // JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse

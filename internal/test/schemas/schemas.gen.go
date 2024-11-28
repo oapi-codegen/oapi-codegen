@@ -808,6 +808,11 @@ func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r EnsureEverythingIsReferencedResponse) Bytes() []byte {
+	return r.Body
+}
+
 type Issue1051Response struct {
 	Body                             []byte
 	HTTPResponse                     *http.Response
@@ -829,6 +834,11 @@ func (r Issue1051Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue1051Response) Bytes() []byte {
+	return r.Body
 }
 
 type Issue127Response struct {
@@ -856,6 +866,11 @@ func (r Issue127Response) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue127Response) Bytes() []byte {
+	return r.Body
+}
+
 type Issue185Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -875,6 +890,11 @@ func (r Issue185Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue185Response) Bytes() []byte {
+	return r.Body
 }
 
 type Issue209Response struct {
@@ -898,6 +918,11 @@ func (r Issue209Response) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue209Response) Bytes() []byte {
+	return r.Body
+}
+
 type Issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -917,6 +942,11 @@ func (r Issue30Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue30Response) Bytes() []byte {
+	return r.Body
 }
 
 type GetIssues375Response struct {
@@ -941,6 +971,11 @@ func (r GetIssues375Response) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r GetIssues375Response) Bytes() []byte {
+	return r.Body
+}
+
 type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -960,6 +995,11 @@ func (r Issue41Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue41Response) Bytes() []byte {
+	return r.Body
 }
 
 type Issue9Response struct {
@@ -983,6 +1023,11 @@ func (r Issue9Response) StatusCode() int {
 	return 0
 }
 
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue9Response) Bytes() []byte {
+	return r.Body
+}
+
 type Issue975Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1003,6 +1048,11 @@ func (r Issue975Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r Issue975Response) Bytes() []byte {
+	return r.Body
 }
 
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
