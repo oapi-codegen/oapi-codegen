@@ -9,3 +9,17 @@
     Please re-raise the PR from a branch on your repository that isn't `main` / any protected branches.
 
     Thank you in advance 🙇🏼
+
+'auto:no-mentions':
+  comment: >
+    Thanks for your use of `oapi-codegen`!
+
+    We are very appreciative of your interest in improving the project, and that you're engaged with us.
+
+    However, @-mentioning the maintainers will be very unlikely to help move your issue along, and we do not want to encourage behaviour that leads to the "noisiest" users getting the benefit over folks who are waiting their turn.
+
+    Please remember that `oapi-codegen` is for the most part run by volunteers, and [we have a request out](https://github.com/oapi-codegen/oapi-codegen/discussions/1606) to companies who use the project to help make it more sustainable, with sponsorship.
+
+    It will only be that sustained financial support will be able to make it possible to work more efficiently towards user requests.
+
+    For more info on engaging with the maintainers, see [our CONTRIBUTING guide](https://github.com/oapi-codegen/oapi-codegen/blob/main/CONTRIBUTING.md#should-i--mention-the-maintainers-on-an-issue).
