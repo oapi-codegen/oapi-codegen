@@ -165,7 +165,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	initializeInitialisms(opts.OutputOptions.AdditionalInitialisms)
-	
+
 	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
