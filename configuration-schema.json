@@ -214,6 +214,10 @@
           "required": [
             "path"
           ]
+        },
+        "yaml-tags": {
+          "type": "boolean",
+          "description": "Enable the generation of YAML tags for struct fields"
         }
       }
     },
