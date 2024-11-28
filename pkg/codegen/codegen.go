@@ -138,6 +138,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
 			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
+	// TODO error
+
+	// TODO set initialisms into global state
+	initializeInitialisms(opts.OutputOptions.AdditionalInitialisms)
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
@@ -163,8 +167,6 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error parsing user-provided template %q: %w", name, err)
 		}
 	}
-
-	initializeInitialisms(opts.OutputOptions.AdditionalInitialisms)
 
 	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
 	if err != nil {

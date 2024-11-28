@@ -300,7 +300,8 @@ var initialismsList = []string{
 
 // initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 // List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-var initialismsMap = map[string]string{}
+// TODO globalState
+var initialismsMap = makeInitialismsMap(nil)
 
 // targetWordRegex is a regex that matches all initialisms.
 var targetWordRegex *regexp.Regexp
