@@ -23,3 +23,7 @@
     It will only be that sustained financial support will be able to make it possible to work more efficiently towards user requests.
 
     For more info on engaging with the maintainers, see [our CONTRIBUTING guide](https://github.com/oapi-codegen/oapi-codegen/blob/main/CONTRIBUTING.md#should-i--mention-the-maintainers-on-an-issue).
+
+'auto:pinning-until-release':
+  comment: >
+    [Until there is a defined release cadence planned](https://github.com/oapi-codegen/oapi-codegen/issues/1519), our [official recommendation](https://github.com/oapi-codegen/oapi-codegen/blob/main/README.md#pinning-to-commits) is that you pin to the latest commit on `main`, which will allow you to pull in this change.
