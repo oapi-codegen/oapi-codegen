@@ -1,0 +1,7 @@
+package: newnullable
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  nullable-type: true
+output: issue.gen.go
