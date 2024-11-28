@@ -175,7 +175,7 @@
         },
         "additional-initialisms": {
           "type": "array",
-          "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator",
+          "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
           "items": {
             "type": "string"
           }

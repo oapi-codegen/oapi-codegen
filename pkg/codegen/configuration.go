@@ -226,7 +226,8 @@ type OutputOptions struct {
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
 	// Whether to use the initialism overrides
 	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
-	// AdditionalInitialisms is a list of additional initialisms to use when generating names
+	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
+	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
