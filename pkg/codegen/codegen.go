@@ -1193,3 +1193,7 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 func SetGlobalStateSpec(spec *openapi3.T) {
 	globalState.spec = spec
 }
+
+func initializeInitialisms(additionalInitialisms []string) {
+	initialismsMap = makeInitialismsMap(additionalInitialisms)
+}
