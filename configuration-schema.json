@@ -204,6 +204,30 @@
             "ToCamelCaseWithInitialisms"
           ]
         },
+        "type-mappings": {
+          "type": "object",
+          "description": "TypeMappings provides the ability to configure how types are mapped, including overriding the default behaviour",
+          "patternProperties": {
+            "^[a-zA-Z]+-[a-zA-Z]+": {
+              "type": "object",
+              "properties": {
+                "go-type": {
+                  "type": "string",
+                  "description": "GoType is the Go type that will be used to represent the schema",
+                  "minLength": 1
+                },
+                "skip-optional-pointer": {
+                  "type": "boolean",
+                  "description": "SkipOptionalPointer should be set to true if we don't need a pointer type even when they are optional."
+                },
+                "define-via-alias": {
+                  "type": "boolean",
+                  "description": "DefineViaAlias if true schema will declare a type via alias `type Foo = bool`, otherwise the type definition will be a classic `type Foo bool`"
+                }
+              }
+            }
+          }
+        },
         "overlay": {
           "type": "object",
           "description": "Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.",
