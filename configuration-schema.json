@@ -173,6 +173,13 @@
           "type": "boolean",
           "description": "Whether to use the initialism overrides"
         },
+        "additional-initialisms": {
+          "type": "array",
+          "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
+          "items": {
+            "type": "string"
+          }
+        },
         "nullable-type": {
           "type": "boolean",
           "description": "Whether to generate nullable type for nullable fields"
@@ -214,6 +221,14 @@
           "required": [
             "path"
           ]
+        },
+        "yaml-tags": {
+          "type": "boolean",
+          "description": "Enable the generation of YAML tags for struct fields"
+        },
+        "client-response-bytes-function": {
+          "type": "boolean",
+          "description": "Enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`"
         }
       }
     },

@@ -1,0 +1,10 @@
+overlay: 1.0.0
+info:
+  title: Overlay example
+  version: 0.0.0
+actions:
+  - target: "$"
+    description: Add a property to the info dictionary
+    update:
+      info:
+        x-overlay-applied: structured-overlay
