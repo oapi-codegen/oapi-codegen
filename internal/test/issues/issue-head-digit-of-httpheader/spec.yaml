@@ -14,3 +14,4 @@ components:
         "000-foo":
           schema:
             type: string
+          required: true
