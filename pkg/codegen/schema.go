@@ -392,13 +392,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
 
-				// Merge allOf in property
 				if p.Value.AllOf != nil {
 					val, err := mergeAllOf(p.Value.AllOf)
 					if err != nil {
 						return Schema{}, fmt.Errorf("error generating Go schema from allOf for property '%s': %w", pName, err)
 					}
-					p.Value = &val
+					p.Value.Extensions = val.Extensions
 				}
 
 				propertyPath := append(path, pName)
