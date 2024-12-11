@@ -98,7 +98,7 @@ func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWrite
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 
-	return json.NewEncoder(w).Encode(response)
+	return json.NewEncoder(w).Encode(Pet(response))
 }
 
 // StrictServerInterface represents all server handlers.
