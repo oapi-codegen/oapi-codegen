@@ -1,0 +1,11 @@
+package: issue1825
+generate:
+  models: true
+  embedded-spec: true
+import-mapping:
+  ../packageA/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue1825/packageA
+output: issue1825.gen.go
+output-options:
+  skip-prune: true
+  overlay:
+    path: overlay.yaml

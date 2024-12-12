@@ -226,6 +226,9 @@ type OutputOptions struct {
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
 	// Whether to use the initialism overrides
 	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
+	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
+	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
+	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
 
@@ -239,9 +242,21 @@ type OutputOptions struct {
 
 	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
 	Overlay OutputOptionsOverlay `yaml:"overlay"`
+
+	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones
+	EnableYamlTags bool `yaml:"yaml-tags,omitempty"`
+
+	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
+	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
+	if NameNormalizerFunction(oo.NameNormalizer) != NameNormalizerFunctionToCamelCaseWithInitialisms && len(oo.AdditionalInitialisms) > 0 {
+		return map[string]string{
+			"additional-initialisms": "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration",
+		}
+	}
+
 	return nil
 }
 
