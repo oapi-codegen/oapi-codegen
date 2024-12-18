@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: yamltags
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  yaml-tags: true
+output: yamltags.go

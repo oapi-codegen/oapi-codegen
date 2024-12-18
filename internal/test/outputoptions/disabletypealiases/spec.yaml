@@ -1,0 +1,13 @@
+components:
+  schemas:
+    my_item:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+    example:
+      type: array
+      items:
+        $ref: '#/components/schemas/my_item'

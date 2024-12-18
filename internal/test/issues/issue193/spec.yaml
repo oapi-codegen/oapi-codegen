@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: test schema
+
+paths:
+
+components:
+  schemas:
+    Person:
+      allOf:
+        # common fields
+        - type: object
+          additionalProperties: true
+          required:
+            - metadata
+          properties:
+            metadata:
+              type: string
+        # person specific fields
+        - type: object
+          additionalProperties: true
+          properties:
+            name:
+              type: string
+            age:
+              type: number

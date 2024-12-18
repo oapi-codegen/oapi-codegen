@@ -19,16 +19,15 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 
-	chiAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/chi"
-	clientAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/client"
-	echoAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/echo"
-	fiberAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/fiber"
-	ginAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/gin"
-	irisAPI "github.com/deepmap/oapi-codegen/internal/test/strict-server/iris"
+	chiAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/chi"
+	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/client"
+	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/echo"
+	fiberAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/fiber"
+	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/gin"
+	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/iris"
 
-	// "github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/runtime"
-	"github.com/deepmap/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/runtime"
+	"github.com/oapi-codegen/testutil"
 )
 
 func TestIrisServer(t *testing.T) {
@@ -113,6 +112,30 @@ func testImpl(t *testing.T, handler http.Handler) {
 		contentType, params, err := mime.ParseMediaType(rr.Header().Get("Content-Type"))
 		assert.NoError(t, err)
 		assert.Equal(t, "multipart/form-data", contentType)
+		reader := multipart.NewReader(rr.Body, params["boundary"])
+		part, err := reader.NextPart()
+		assert.NoError(t, err)
+		assert.Equal(t, part.FormName(), fieldName)
+		readValue, err := io.ReadAll(part)
+		assert.NoError(t, err)
+		assert.Equal(t, value, string(readValue))
+		_, err = reader.NextPart()
+		assert.Equal(t, io.EOF, err)
+	})
+	t.Run("MultipartRelatedExample", func(t *testing.T) {
+		value := "789"
+		fieldName := "value"
+		var writer bytes.Buffer
+		mw := multipart.NewWriter(&writer)
+		field, err := mw.CreateFormField(fieldName)
+		assert.NoError(t, err)
+		_, _ = field.Write([]byte(value))
+		assert.NoError(t, mw.Close())
+		rr := testutil.NewRequest().Post("/multipart-related").WithContentType(mime.FormatMediaType("multipart/related", map[string]string{"boundary": mw.Boundary()})).WithBody(writer.Bytes()).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		contentType, params, err := mime.ParseMediaType(rr.Header().Get("Content-Type"))
+		assert.NoError(t, err)
+		assert.Equal(t, "multipart/related", contentType)
 		reader := multipart.NewReader(rr.Body, params["boundary"])
 		part, err := reader.NextPart()
 		assert.NoError(t, err)
