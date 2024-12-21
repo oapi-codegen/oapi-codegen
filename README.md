@@ -3813,6 +3813,7 @@ Here are a few we've found around the Web:
 - [Go Client Code Generation from Swagger and OpenAPI](https://medium.com/@kyodo-tech/go-client-code-generation-from-swagger-and-openapi-a0576831836c)
 - [Go oapi-codegen + request validation](https://blog.commitsmart.com/go-oapi-codegen-request-validation-285398b37dc8)
 - [Streamlining Go + Chi Development: Generating Code from an OpenAPI Spec](https://i4o.dev/blog/oapi-codegen-with-chi-router)
+- [HTTP Basic Authentication and Session Management With Golang's OAPI-Codegen](https://ryanmichaeltech.net/Blog/HTTP+Basic+Authentication+and+Session+Management+With+Golang's+OAPI-Codegen)
 
 Got one to add? Please raise a PR!
 
