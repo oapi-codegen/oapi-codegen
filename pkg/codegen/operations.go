@@ -1010,6 +1010,12 @@ func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinitio
 	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
 }
 
+// GenerateCustomServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateCustomServer(t *template.Template, operations []OperationDefinition, customServer []string) (string, error) {
+	return GenerateTemplates(customServer, t, operations)
+}
+
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 
 	var templates []string

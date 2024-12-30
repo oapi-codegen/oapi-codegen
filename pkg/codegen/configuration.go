@@ -126,6 +126,8 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+	// CustomServer specifies whether to generate custom server boilerplate
+	CustomServer []string `yaml:"custom-server,omitempty"`
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
@@ -218,6 +220,8 @@ type OutputOptions struct {
 	// Override built-in templates from user-provided files
 	UserTemplates map[string]string `yaml:"user-templates,omitempty"`
 
+	// CustomServerTemplate specifies the path to a custom server template
+	CustomServerTemplate map[string][]string `yaml:"custom-server-template,omitempty"`
 	// Exclude from generation schemas with given names. Ignored when empty.
 	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
 	// The suffix used for responses types

@@ -258,6 +258,20 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var customServerOut []string
+	if len(opts.Generate.CustomServer) > 0 {
+		for _, customServer := range opts.Generate.CustomServer {
+			if len(opts.OutputOptions.CustomServerTemplate[customServer]) == 0 {
+				return "", fmt.Errorf("custom server template %q is not defined", customServer)
+			}
+			res, err := GenerateCustomServer(t, ops, opts.OutputOptions.CustomServerTemplate[customServer])
+			if err != nil {
+				return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+			}
+			customServerOut = append(customServerOut, res)
+		}
+	}
+
 	var strictServerOut string
 	if opts.Generate.Strict {
 		var responses []ResponseDefinition
@@ -403,6 +417,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(inlinedSpec)
 		if err != nil {
 			return "", fmt.Errorf("error writing inlined spec: %w", err)
+		}
+	}
+
+	if len(customServerOut) > 0 {
+		for _, res := range customServerOut {
+			_, err = w.WriteString(res)
+			if err != nil {
+				return "", fmt.Errorf("error writing server path handlers: %w", err)
+			}
 		}
 	}
 
