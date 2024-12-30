@@ -1,4 +1,4 @@
-module github.com/oapi-codegen/oapi-codegen/v2
+module github.com/woxQAQ/oapi-codegen/v2
 
 go 1.21.0
 
@@ -27,3 +27,5 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 )
+
+replace github.com/oapi-codegen/oapi-codegen/v2 => github.com/woxQAQ/oapi-codegen v2.0.0
