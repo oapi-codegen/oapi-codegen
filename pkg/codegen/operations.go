@@ -16,6 +16,7 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"sort"
 	"strconv"
@@ -660,11 +661,11 @@ func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFu
 	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
-		return "", fmt.Errorf("operation name cannot be an empty string")
+		return "", errors.New("operation name cannot be an empty string")
 	}
 
 	if requestPath == "" {
-		return "", fmt.Errorf("request path cannot be an empty string")
+		return "", errors.New("request path cannot be an empty string")
 	}
 
 	for _, part := range strings.Split(requestPath, "/") {
