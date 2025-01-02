@@ -19,6 +19,7 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -143,7 +144,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	if nameNormalizerFunction != NameNormalizerFunctionToCamelCaseWithInitialisms && len(opts.OutputOptions.AdditionalInitialisms) > 0 {
-		return "", fmt.Errorf("you have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration")
+		return "", errors.New("you have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration")
 	}
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
