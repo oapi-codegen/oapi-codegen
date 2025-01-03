@@ -99,6 +99,11 @@ func TestToCamelCaseWithDigits(t *testing.T) {
 }
 
 func TestToCamelCaseWithInitialisms(t *testing.T) {
+	oldInitialismsMap := globalState.initialismsMap
+	globalState.initialismsMap = makeInitialismsMap(nil)
+	t.Cleanup(func() {
+		globalState.initialismsMap = oldInitialismsMap
+	})
 	tests := []struct {
 		str  string
 		want string
@@ -232,7 +237,8 @@ components:
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	old := globalState.importMapping
+	oldMapping := globalState.importMapping
+	oldSpec := globalState.spec
 	globalState.importMapping = constructImportMapping(
 		map[string]string{
 			"doc.json":                    "externalref0",
@@ -241,7 +247,11 @@ func TestRefPathToGoType(t *testing.T) {
 			"dj-current-package.yml": "-",
 		},
 	)
-	defer func() { globalState.importMapping = old }()
+	globalState.spec = &openapi3.T{}
+	t.Cleanup(func() {
+		globalState.importMapping = oldMapping
+		globalState.spec = oldSpec
+	})
 
 	tests := []struct {
 		name   string
@@ -668,6 +678,11 @@ func TestLowercaseFirstCharacters(t *testing.T) {
 }
 
 func Test_replaceInitialism(t *testing.T) {
+	oldInitialismsMap := globalState.initialismsMap
+	globalState.initialismsMap = makeInitialismsMap(nil)
+	t.Cleanup(func() {
+		globalState.initialismsMap = oldInitialismsMap
+	})
 	type args struct {
 		s string
 	}
