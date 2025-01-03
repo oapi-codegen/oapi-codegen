@@ -1,0 +1,26 @@
+openapi: "3.0.0"
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: integer
+          format: int64
+        tag:
+          type: string
+    Dog:
+      type: object
+      properties:
+        pet:
+          allOf:
+            - $ref: "#/components/schemas/Pet"
+            - type: object
+              x-go-json-ignore: true
+        petId:
+          type: integer
+          format: int64
+        name:
+          type: string
