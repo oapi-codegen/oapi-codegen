@@ -92,7 +92,7 @@ type GetPetsResponseObject interface {
 	VisitGetPetsResponse(w http.ResponseWriter) error
 }
 
-type GetPets200JSONResponse Pet
+type GetPets200JSONResponse = Pet
 
 func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
