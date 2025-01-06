@@ -18,6 +18,8 @@ components:
       x-go-name: ClientRenamedByExtension
       required:
         - name
+        - constant
+        - unexported_name
       properties:
         name:
           type: string
@@ -25,3 +27,9 @@ components:
           type: number
           # maybe we want to be intentionally verbose here?
           x-go-name: AccountIdentifier
+        constant:
+          type: string
+          x-go-name: CONSTANT_IDENTIFIER
+        unexported_name:
+          type: string
+          x-go-name: unexportedName

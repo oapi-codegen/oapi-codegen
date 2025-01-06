@@ -2404,11 +2404,11 @@ Override the generated name of a type
 <details>
 
 > [!NOTE]
-> Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within `struct`s.
+> Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within structs.
 
 By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
 
-However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
+However, sometimes, the name of the type doesn't quite fit what your codebase standards are, or the intent, so you can override it with `x-go-type-name`.
 
 We can see this at play with the following schemas:
 
@@ -2907,64 +2907,6 @@ type ClientWithExtension struct {
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xorder/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-oapi-codegen-only-honour-go-name`
-
-</td>
-<td>
-Only honour the `x-go-name` when generating field names
-</td>
-<td>
-<details>
-
-> [!WARNING]
-> Using this option may lead to cases where `oapi-codegen`'s rewriting of field names to prevent clashes with other types, or to prevent including characters that may not be valid Go field names.
-
-In some cases, you may not want use the inbuilt options for converting an OpenAPI field name to a Go field name, such as the `name-normalizer: "ToCamelCaseWithInitialisms"`, and instead trust the name that you've defined for the type better.
-
-In this case, you can use `x-oapi-codegen-only-honour-go-name` to enforce this, alongside specifying the `allow-unexported-struct-field-names` compatibility option.
-
-This allows you to take a spec such as:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-oapi-codegen-only-honour-go-name
-components:
-  schemas:
-    TypeWithUnexportedField:
-      description: A struct will be output where one of the fields is not exported
-      properties:
-        name:
-          type: string
-        id:
-          type: string
-          # NOTE that there is an explicit usage of a lowercase character
-          x-go-name: accountIdentifier
-          x-oapi-codegen-extra-tags:
-            json: "-"
-          x-oapi-codegen-only-honour-go-name: true
-```
-
-And we'll generate:
-
-```go
-// TypeWithUnexportedField A struct will be output where one of the fields is not exported
-type TypeWithUnexportedField struct {
-	accountIdentifier *string `json:"-"`
-	Name              *string `json:"name,omitempty"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xoapicodegenonlyhonourgoname).
 
 </details>
 </td>

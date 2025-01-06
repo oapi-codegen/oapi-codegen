@@ -93,24 +93,13 @@ type Property struct {
 }
 
 func (p Property) GoFieldName() string {
-	goFieldName := p.JsonFieldName
 	if extension, ok := p.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goFieldName = extGoFieldName
+			return extGoFieldName
 		}
 	}
 
-	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
-		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
-			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
-				if extOapiCodegenOnlyHonourGoName {
-					return goFieldName
-				}
-			}
-		}
-	}
-
-	return SchemaNameToTypeName(goFieldName)
+	return SchemaNameToTypeName(p.JsonFieldName)
 }
 
 func (p Property) GoTypeDef() string {
