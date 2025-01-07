@@ -296,6 +296,22 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /with-union-in-ref:
+    post:
+      operationId: UnionInRefExample
+      description: Union type in ref
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/oneOfExample"
 components:
   responses:
     badrequest:
@@ -319,3 +335,7 @@ components:
       properties:
         value:
           type: string
+    oneOfExample:
+      oneOf:
+        - $ref: "#/components/schemas/example"
+        - type: integer
