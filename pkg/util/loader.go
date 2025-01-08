@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -85,7 +86,12 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
-	swagger, err = openapi3.NewLoader().LoadFromData(b)
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+
+	swagger, err = loader.LoadFromDataWithPath(b, &url.URL{
+		Path: filepath.ToSlash(filePath),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}

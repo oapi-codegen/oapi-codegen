@@ -16,7 +16,7 @@ require (
 	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/oapi-codegen/testutil v1.0.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -97,7 +97,7 @@ require (
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/text v0.20.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
