@@ -1045,7 +1045,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	// values next to $ref will be used before those in the actual schema
 	if v.Extensions[extPropGoImport] != nil {
 		goTypeImportExt = v.Extensions[extPropGoImport]
-	} else if v.Value.Extensions[extPropGoImport] != nil {
+	} else if v.Value != nil && v.Value.Extensions[extPropGoImport] != nil {
 		goTypeImportExt = v.Value.Extensions[extPropGoImport]
 	} else {
 		return nil, nil

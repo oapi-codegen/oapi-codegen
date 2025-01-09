@@ -1,0 +1,18 @@
+components:
+  schemas:
+    Default:
+      type: integer
+    OmitemptyTrue:
+      type: integer
+      x-omitempty: true
+    SomeObject:
+      type: object
+      properties:
+        omitempty:
+          $ref: '#/components/schemas/OmitemptyTrue'
+        omitempty_override_to_false:
+          $ref: '#/components/schemas/OmitemptyTrue'
+          x-omitempty: false
+        omitempty_next_to_ref:
+          $ref: '#/components/schemas/Default'
+          x-omitempty: true
