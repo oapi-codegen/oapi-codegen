@@ -1039,11 +1039,17 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 }
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+	var goTypeImportExt any
+
+	// check extensions next to the $ref before checking the schema itself
+	// values next to $ref will be used before those in the actual schema
+	if v.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Extensions[extPropGoImport]
+	} else if v.Value.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Value.Extensions[extPropGoImport]
+	} else {
 		return nil, nil
 	}
-
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
 	importI, ok := goTypeImportExt.(map[string]interface{})
 	if !ok {

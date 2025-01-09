@@ -257,11 +257,24 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	if IsGoTypeReference(sref.Ref) {
-		// Convert the reference path to Go type
-		refType, err := RefPathToGoType(sref.Ref)
-		if err != nil {
-			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
-				sref.Ref, err)
+		var refType string
+
+		// check if there is an x-go-type extension next to the $ref and use that over the overrided type.
+		if extension, ok := sref.Extensions[extPropGoType]; ok {
+			var ok bool
+			refType, ok = extension.(string)
+			if !ok {
+				return Schema{}, fmt.Errorf("error turning '%s: %v' into string",
+					extPropGoType, extension)
+			}
+		} else {
+			// Convert the reference path to Go type
+			var err error
+			refType, err = RefPathToGoType(sref.Ref)
+			if err != nil {
+				return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
+					sref.Ref, err)
+			}
 		}
 		return Schema{
 			GoType:         refType,
