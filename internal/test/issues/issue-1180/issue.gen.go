@@ -140,6 +140,8 @@ func NewGetSimplePrimitiveRequest(server string, param string) (*http.Request, e
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetSimplePrimitive")
+
 	return req, nil
 }
 
