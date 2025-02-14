@@ -254,7 +254,7 @@ func TestAllOf(t *testing.T) {
 		),
 		// other test cases
 		makeTestCase(
-			"should preserve nested oneOf",
+			"should preserve nested oneOf (https://github.com/oapi-codegen/oapi-codegen/issues/1905)",
 			`[
 				{
 					"allOf": [
