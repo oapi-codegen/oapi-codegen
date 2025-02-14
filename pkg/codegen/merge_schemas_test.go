@@ -254,7 +254,7 @@ func TestAllOf(t *testing.T) {
 		),
 		// other test cases
 		makeTestCase(
-			"should preserve nested onOf",
+			"should preserve nested oneOf",
 			`[
 				{
 					"allOf": [
