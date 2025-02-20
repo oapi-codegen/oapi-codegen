@@ -126,13 +126,12 @@ func (pd ParameterDefinition) GoVariableName() string {
 }
 
 func (pd ParameterDefinition) GoName() string {
-	goName := pd.ParamName
 	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goName = extGoFieldName
+			return extGoFieldName
 		}
 	}
-	return SchemaNameToTypeName(goName)
+	return SchemaNameToTypeName(pd.ParamName)
 }
 
 func (pd ParameterDefinition) IndirectOptional() bool {
