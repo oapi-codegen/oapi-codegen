@@ -62,6 +62,9 @@ type ServerInterface interface {
 
 	// (POST /with-union)
 	UnionExample(ctx echo.Context) error
+
+	// (POST /with-union-in-ref)
+	UnionInRefExample(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -221,6 +224,15 @@ func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
 	return err
 }
 
+// UnionInRefExample converts echo context to params.
+func (w *ServerInterfaceWrapper) UnionInRefExample(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.UnionInRefExample(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -261,6 +273,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(baseURL+"/with-headers", wrapper.HeadersExample)
 	router.POST(baseURL+"/with-union", wrapper.UnionExample)
+	router.POST(baseURL+"/with-union-in-ref", wrapper.UnionInRefExample)
 
 }
 
@@ -794,6 +807,23 @@ func (response UnionExampledefaultResponse) VisitUnionExampleResponse(w http.Res
 	return nil
 }
 
+type UnionInRefExampleRequestObject struct {
+	Body *UnionInRefExampleJSONRequestBody
+}
+
+type UnionInRefExampleResponseObject interface {
+	VisitUnionInRefExampleResponse(w http.ResponseWriter) error
+}
+
+type UnionInRefExample200JSONResponse OneOfExample
+
+func (response UnionInRefExample200JSONResponse) VisitUnionInRefExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response.union)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
@@ -832,6 +862,9 @@ type StrictServerInterface interface {
 
 	// (POST /with-union)
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
+
+	// (POST /with-union-in-ref)
+	UnionInRefExample(ctx context.Context, request UnionInRefExampleRequestObject) (UnionInRefExampleResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -1224,27 +1257,57 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 	return nil
 }
 
+// UnionInRefExample operation middleware
+func (sh *strictHandler) UnionInRefExample(ctx echo.Context) error {
+	var request UnionInRefExampleRequestObject
+
+	var body UnionInRefExampleJSONRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.UnionInRefExample(ctx.Request().Context(), request.(UnionInRefExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnionInRefExample")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(UnionInRefExampleResponseObject); ok {
+		return validResponse.VisitUnionInRefExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYS3PbNhD+Kxi0p5QUZccn3hpPJm3T1h3ZPnV8gIilhIQE0MVStEaj/94BQb0sWpUS",
-	"PTqZ3PhY7C6+b3ex2BnPTGmNBk2OpzOO4KzRDpqXoZAI/1TgyL9JcBkqS8ponvJ3Qg7af/OII1RODAtY",
-	"LPfymdEEulkqrC1UJvzS5JPz62fcZWMohX/6ESHnKf8hWbmShL8ugWdR2gL4fD6PXnhw95FHfAxCAjbe",
-	"hserTd00tcBT7giVHnGvJIhdd4opTTAC9Na8aOuEF1j4kc64RWMBSQWMJqKooNtS+8UMP0FGYQdK52Yb",
-	"y1ujSSjtmFR5DgiaWAse8zocc5W1BgkkG06Zt5ARc4ATQB5xUuQd4/fr31nrsOMRnwC6YOiq1+/1PV/G",
-	"ghZW8ZS/bT5F3AoaNxtaEmRNF++/3d/9yZRjoiJTClKZKIopKwW6sShAMqXJeBerjFyPN5awIf5X2a5+",
-	"30Lpo6YJoHdGTk8RME1croXzdb9/pricR/wmGOvSsXQqWUuwRk0uqqID80f9WZtaM0A02O4sKauClBVI",
-	"61xtov3HQmQfyJf6ktxgGUtB4kSoH8vSpYGPEQpBIPcgYBAkD+NhTf1JWfgaOxfloK3HnXXqfmxqx8am",
-	"ZmSYBFGwWtGYLRa+KLBKM8Gc0qMC2MKpqJPMAtpj72ctB+1eHryOk9ezaEPLc1zXddwkUIUF6MzIL6Mw",
-	"4qoUI0isHm0u97oF8ZQPp+RDdvuAO1IiR5zgmRJbCKV3n95nKunfkT5aYod0RWi6EhmPTPwZprVBGVuB",
-	"ogQCdMnMW597xSPoSOW/lpIsE5oNgWlRgmQiJ0D2wbBWpdtK2UFr94P5GERWqpqWZ/mS/j3jHpKmDeIR",
-	"9wZ4GlAJea3Qk05YQbQDtqf/jM+vImCBZmi24w1T3WVwUaKW0CHkzpfELuY68AuWBmsSl2nadkfc1vXj",
-	"HGeQZ/L1o/8Bnvdqu45Y+s6d24cCVoWPr2PWrtoHti+spHugOFESTFLamwM1XwxUZyFTuQIZt7uIg2+v",
-	"lYRbozME2myB/JVOG2JLZf6mSWNgAYGIOcNqYGXliFnhHFPUVJFChduqhK3i8bjy7DZYeliV012svjkR",
-	"p28uxehN/+rwJW9PHDcbrcwr+Tj4/X2QOfTOfrSe6cCO73h2L5TO/pISrw21ulP4lyCwOtMzUBPfEWnJ",
-	"EKhCDZJNlFgMYrZys1WworWrFwpurLqhxYDtkIYo2qnrmke7hnBP3/CI6JSjy3PFaaXVrlHho//N2h76",
-	"5dmgjP6fDgJFQYBakJrAT8e5QW5rMRru8ibTXrAc7Wnh6duLqnnEw+w6lKAKC18niGyaJGHm3XO1GI0A",
-	"e8okwiqPwr8BAAD//4h9qqfAGAAA",
+	"H4sIAAAAAAAC/+xZS3PbNhD+Kxi0p5QUZccn3hpPJk3T1h3ZPnV8gIilhIQEUGApWqPRf+8AIPWwKEVK",
+	"9Oh4cuNjsbv8vt3FYjmjmSq1kiDR0nRGDVitpAV/M2TcwL8VWHR3HGxmhEahJE3pO8YHzbt5RA1Ulg0L",
+	"aJc7+UxJBOmXMq0LkTG3NPls3foZtdkYSuaufjaQ05T+lCxdScJbm8AzK3UBdD6fRy88uPtEIzoGxsF4",
+	"b8Pl1bpunGqgKbVohBxRpySIXXeKCYkwAuOsOdHGCSfQ+pHOqDZKg0ERMJqwooJuS80TNfwMmUdJSbjL",
+	"3y81+Xua/rMnBNGmn0/eTyFztcnQrZLIhLSEizwHAxJJQwlxaiyxldbKIHAynBLnd4bEgpmAoRFFgc5J",
+	"er/6nDS+WBrRCRgbDF31+r2+/z4NkmlBU/rWP4qoZjj2MC1o16ormn6/v/uLCEtYhapkKDJWFFNSMmPH",
+	"rABOhETlXKwytD3qLRkfTh95s7qF1cWiD8t3ik9PEYY+2leS5LrfP1O0zyN6E4x16Vg4laykrVeTs6ro",
+	"wPxRfpGqlgSMUab5sqSsChSaGVzlah3tP1uRfSBf6EtyZcqYM2QnQv1Yli4NfGygYAh8DwIGQfIwHlbU",
+	"n5SF77FzUQ6aKt9Zp+7HqrZkrGqCinBgBakFjkm78EWBFZIwYoUcFUBap6JOMgtoNtNfJR803/LgdJy8",
+	"nkVrWp7juq5jn0CVKUBmin8bhREVJRtBouVofbnTzZCmdDhFF7Kb2+aREjmiCM+Y6IIJubsnOFNJ/4H0",
+	"0RI7pKsB35XweKTiLzCtleGxZoaVgGBsMnPW507xCDpS+e+FJMmYJEMgkpXACcsRDPmgSKPSbqTsoLH7",
+	"QX0KIktVvuVZ3LjOzkHi2yAaUWeApgGVkNfCONLRVBDtgO3pq/H5XQS0aIYWPl4z1V0G2xK1gM5Abl1J",
+	"7GKuA79gabAicZmmbXfEbRxqzrEHOSa3b/0P8LxX23XE0nfu3D4UsCo83I5Zs2of2L6xku6B4kRwUEmp",
+	"bw7UfDFQrYZM5AJ43HxFHHzbVhJulcwM4HoL5I50UiFZKHMnTRwDCQhExCpSAykri0Qza4lAX0UKEU6r",
+	"HDaKx+PSs9tg6WFZTnex+uZEnL65FKM3/avDl7w9cdystTJb8nHwx/sgc+iZ/Wg904Ed3/HsXiid3SEl",
+	"XhmVdafwb0FguadnICauI5KcGMDKSOBkIlg7iNnIzUbBktauXii4seyG2rHdIQ1RtFPXNY12jfaeXvGI",
+	"6JQD0XPFaSXFrlHho3tNmh765d4glPyfDgJZgWAkQzGBX45zgtzUspwnv2A52tPC0yuPqljI2Jv5enAR",
+	"Id2ppjvGPsoB5K9i4rz2S2L7+XAe0fAHIBTyyhSu2iLqNEnCn4OerdloBKYnVMK0cLH0XwAAAP//QnMj",
+	"r1waAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
