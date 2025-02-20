@@ -1,0 +1,8 @@
+package: pkg1
+generate:
+  models: true
+output: pkg1.gen.go
+output-options:
+  skip-prune: true
+import-mapping:
+  pkg2.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1202/pkg2
