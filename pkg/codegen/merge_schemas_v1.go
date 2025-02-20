@@ -100,7 +100,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 				}
 
 				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
-				if !StringInArray(additionalPropertiesPart, objectParts) {
+				if !sliceContains(objectParts, additionalPropertiesPart) {
 					objectParts = append(objectParts, additionalPropertiesPart)
 				}
 			}
