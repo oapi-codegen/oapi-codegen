@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: id
+generate:
+  models: true
+output: id/id.gen.go
+output-options:
+  skip-prune: true
