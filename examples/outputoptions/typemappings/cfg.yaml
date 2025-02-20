@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: typemappings
+output: typemappings.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated, even if they're unreferenced
+  skip-prune: true
+  type-mappings:
+    string-email:
+      go-type: string
+    string-uuid:
+      skip-optional-pointer: true
+    string-custom-type:
+      define-via-alias: false
+    string-custom-alias:
+      define-via-alias: true
