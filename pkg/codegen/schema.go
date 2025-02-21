@@ -359,15 +359,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					// but are not a pre-defined type, we need to define a type
 					// for them, which will be based on the field names we followed
 					// to get to the type.
-					typeName := PathToTypeName(append(path, "AdditionalProperties"))
-
-					typeDef := TypeDefinition{
-						TypeName: typeName,
-						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
-						Schema:   additionalSchema,
-					}
-					additionalSchema.RefType = typeName
-					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
+					pth := append(path, "AdditionalProperties")
+					typNme := PathToTypeName(pth)
+					additionalPropertiesInSchema(pth, typNme, &additionalSchema)
 				}
 				outSchema.AdditionalPropertiesType = &additionalSchema
 				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
@@ -404,16 +398,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					// but are not a pre-defined type, we need to define a type
 					// for them, which will be based on the field names we followed
 					// to get to the type.
-					typeName := PathToTypeName(propertyPath)
-
-					typeDef := TypeDefinition{
-						TypeName: typeName,
-						JsonName: strings.Join(propertyPath, "."),
-						Schema:   pSchema,
-					}
-					pSchema.AdditionalTypes = append(pSchema.AdditionalTypes, typeDef)
-
-					pSchema.RefType = typeName
+					typNme := PathToTypeName(propertyPath)
+					additionalPropertiesInSchema(propertyPath, typNme, &pSchema)
 				}
 				description := ""
 				if p.Value != nil {
@@ -525,14 +511,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			} else {
 				typeName = SchemaNameToTypeName(PathToTypeName(path))
 			}
-
-			typeDef := TypeDefinition{
-				TypeName: typeName,
-				JsonName: strings.Join(path, "."),
-				Schema:   outSchema,
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
-			outSchema.RefType = typeName
+			additionalPropertiesInSchema(path, typeName, &outSchema)
 		}
 	} else {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
@@ -541,6 +520,18 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 	}
 	return outSchema, nil
+}
+
+func additionalPropertiesInSchema(path []string, typeName string, schema *Schema) {
+	//typeName := PathToTypeName(path)
+
+	typeDef := TypeDefinition{
+		TypeName: typeName,
+		JsonName: strings.Join(path, "."),
+		Schema:   *schema,
+	}
+	schema.RefType = typeName
+	schema.AdditionalTypes = append(schema.AdditionalTypes, typeDef)
 }
 
 // oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
@@ -561,16 +552,9 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			// but are not a pre-defined type, we need to define a type
 			// for them, which will be based on the field names we followed
 			// to get to the type.
-			typeName := PathToTypeName(append(path, "Item"))
-
-			typeDef := TypeDefinition{
-				TypeName: typeName,
-				JsonName: strings.Join(append(path, "Item"), "."),
-				Schema:   arrayType,
-			}
-			arrayType.AdditionalTypes = append(arrayType.AdditionalTypes, typeDef)
-
-			arrayType.RefType = typeName
+			pth := append(path, "Item")
+			typNme := PathToTypeName(pth)
+			additionalPropertiesInSchema(pth, typNme, &arrayType)
 		}
 		outSchema.ArrayType = &arrayType
 		outSchema.GoType = "[]" + arrayType.TypeDecl()
@@ -591,8 +575,6 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.GoType = "int16"
 		} else if f == "int8" {
 			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
 		} else if f == "uint64" {
 			outSchema.GoType = "uint64"
 		} else if f == "uint32" {
