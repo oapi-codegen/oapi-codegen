@@ -5,12 +5,11 @@ package externalref
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageA"
@@ -26,34 +25,31 @@ type Container struct {
 	Pet     *externalRef2.Pet       `json:"pet,omitempty"`
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/6RUTW/bMAz9KwG3o9Bk6LCDb213Xw7bqSgMRmYcbbakSUzWoNB/Hyg1jROnSLJdDJof",
-	"D+890n4B7XrvLFmOUL1A1CvqMYcPzjIaS0FefHCeAhvKJbf4SZprlPhjoCVU8GG6B5q+okw96l/Y0l0d",
-	"Pen6W566g6R2AIsLAe6HAPcDAH0O4K0vKfDE59rRm3pzWztPVsI5MaSUFBzlH5CpdWE7dsY08qRn7H1H",
-	"UH1SsHShR4YKjOUvn0EBbz2VV2opCDGLPR2MwVfXxn1r5GBsC0LkNVNkgYLnvpPJggB6x+sE53lRf0hX",
-	"D4Rc4cub/qRGimf/KLlxbWtoLFqBXzl2P0JXDGbqc3DYduzEbmZoGoaA233nn4DeUwMVhzVJW2TkdcZu",
-	"KOpgPBtnBYt4UmoTYye8oklkF4Qq2XUP1SPgBk2Hi05ynmxTGEXXNfB0QhBje6jlCuu/Y4G4RFJSEOj3",
-	"2gRJPRZrhnY+nbsnn+9/dErC4Z3Lv2L11x43Y+kafvrYNEa2hN18QEbUH6PJHZ38G42EvMPvv39aaU/h",
-	"qHQphZQxjF26XDScPxxQsKEQy61mnmVNUMHtzexmJitHXglwSn8DAAD//xIv2MTwBQAA",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"pFRNb9swDP0rAbej0GTosINvbXdfDtupKAxGZhxttqRJTNag0H8fKDWNE6dIsl0Mmh8P7z3SfgHteu8s" +
+	"WY5QvUDUK+oxhw/OMhpLQV58cJ4CG8olt/hJmmuU+GOgJVTwYboHmr6iTD3qX9jSXR096fpbnrqDpHYA" +
+	"iwsB7ocA9wMAfQ7grS8p8MTn2tGbenNbO09WwjkxpJQUHOUfkKl1YTt2xjTypGfsfUdQfVKwdKFHhgqM" +
+	"5S+fQQFvPZVXaikIMYs9HYzBV9fGfWvkYGwLQuQ1U2SBgue+k8mCAHrH6wTneVF/SFcPhFzhy5v+pEaK" +
+	"Z/8ouXFta2gsWoFfOXY/QlcMZupzcNh27MRuZmgahoDbfeefgN5TAxWHNUlbZOR1xm4o6mA8G2cFi3hS" +
+	"ahNjJ7yiSWQXhCrZdQ/VI+AGTYeLTnKebFMYRdc18HRCEGN7qOUK679jgbhEUlIQ6PfaBEk9FmuGdj6d" +
+	"uyef7390SsLhncu/YvXXHjdj6Rp++tg0RraE3XxARtQfo8kdnfwbjYS8w++/f1ppT+GodCmFlDGMXbpc" +
+	"NJw/HFCwoRDLrWaeZU1Qwe3N7GYmK0deCXBKfwMAAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

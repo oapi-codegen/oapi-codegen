@@ -5,7 +5,7 @@ package tocamelcase
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -503,35 +503,31 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	return r
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/4RTzY7TMBB+FWvgaJLSveW+gr2wHLitKtXEk2RWiW3sScVS5d3R2G0pbVe9tI5n/Pn7",
-	"8eyh9VPwDh0naPaQ2gEnk5ePMfooixB9wMiEebv1FuXfYmojBSbvoCnNKtc0dD5OhqEBcvywBg38FrB8",
-	"Yo8RFg0TpmT6d4GO5dPRxJFcD8uiIeKvmSJaaF7gcOGxfbNoeHb43K15INena/hvnqlFxYNhxQOqbWnc",
-	"KkrKeVatCcRmpIQWNHjBgubl0gOy8nup6oIbWdic+Pufr9gyLPo21MmxeSZ7V/VNZNH+Hfk6MGemGz7/",
-	"GFBJRfkuGxGQq+uLdSF083RAVlKt7vI9iMpErolLN7nOZ0uJR6k9/jZTGDE/KNX5WLISgE9OrBrpD8at",
-	"8jOHmZUvtDTsMKZC8HO1qlbC3wd0JhA08JC3NATDQzamNoHqgJzqfUB+sots9sVCMdAI6pOFBr4gf2UO",
-	"Yq+cj2ZCxpjyyyC5TjCPChvIaHDuAccZ9WG4zp7Oya+NNKfgXSqZrVerMmuO0WVCJoSR2kypfk2icX+G",
-	"9zFiBw18qP9Nc30Y5VpYZ5P/j3BnRrISYo4rzdNk4lvRmqPtaYdOkUXH1BHGSkCWvwEAAP//D5F1qDAE",
-	"AAA=",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"hFPNjtMwEH4Va+BoktK95b6CvbAcuK0q1cSTZFaJbexJxVLl3dHYbSltV720jmf8+fvx7KH1U/AOHSdo" +
+	"9pDaASeTl48x+iiLEH3AyIR5u/UW5d9iaiMFJu+gKc0q1zR0Pk6GoQFy/LAGDfwWsHxijxEWDROmZPp3" +
+	"gY7l09HEkVwPy6Ih4q+ZIlpoXuBw4bF9s2h4dvjcrXkg16dr+G+eqUXFg2HFA6ptadwqSsp5Vq0JxGak" +
+	"hBY0eMGC5uXSA7Lye6nqghtZ2Jz4+5+v2DIs+jbUybF5JntX9U1k0f4d+TowZ6YbPv8YUElF+S4bEZCr" +
+	"64t1IXTzdEBWUq3u8j2IykSuiUs3uc5nS4lHqT3+NlMYMT8o1flYshKAT06sGukPxq3yM4eZlS+0NOww" +
+	"pkLwc7WqVsLfB3QmEDTwkLc0BMNDNqY2geqAnOp9QH6yi2z2xUIx0Ajqk4UGviB/ZQ5ir5yPZkLGmPLL" +
+	"ILlOMI8KG8hocO4Bxxn1YbjOns7Jr400p+BdKpmtV6sya47RZUImhJHaTKl+TaJxf4b3MWIHDXyo/01z" +
+	"fRjlWlhnk/+PcGdGshJijivN02TiW9Gao+1ph06RRcfUEcZKQJa/AQAA//8="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
