@@ -340,8 +340,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/test", wrapper.Test)
 }
 
-type BazApplicationBarPlusJSONResponse Bar
-type BazApplicationFooPlusJSONResponse Foo
+type BazApplicationBarPlusJSONResponse = Bar
+type BazApplicationFooPlusJSONResponse = Foo
 
 type TestRequestObject struct {
 }
@@ -350,7 +350,7 @@ type TestResponseObject interface {
 	VisitTestResponse(w http.ResponseWriter) error
 }
 
-type Test200ApplicationBarPlusJSONResponse Bar
+type Test200ApplicationBarPlusJSONResponse = Bar
 
 func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/bar+json")
@@ -359,7 +359,7 @@ func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 	return json.NewEncoder(w).Encode(response)
 }
 
-type Test200ApplicationFooPlusJSONResponse Foo
+type Test200ApplicationFooPlusJSONResponse = Foo
 
 func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/foo+json")
