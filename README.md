@@ -4,6 +4,10 @@
 
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
+For a full design first API experience we suggest you use one of these amazing tools which will generate the OpenAPI spec for you. Then you can use `oapi-codegen` to generate Golang servers/client:
+- TypeSpec from microsoft [https://typespec.io/](https://typespec.io/)
+- Smithy from AWS [https://smithy.io/](https://smithy.io/)
+
 Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
 
 With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decisions) we've made, including:
