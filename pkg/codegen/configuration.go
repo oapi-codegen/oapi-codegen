@@ -248,6 +248,9 @@ type OutputOptions struct {
 
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
+
+	// DefaultNumberFormat is the default format to use for numbers when no format is specified in the OpenAPI schema. If not specified or empty, the default format is `float`.
+	DefaultNumberFormat string `yaml:"default-number-format,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
