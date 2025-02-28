@@ -11,8 +11,9 @@ import (
 // Schema describes an OpenAPI schema, with lots of helper fields to use in the
 // templating engine.
 type Schema struct {
-	GoType  string // The Go type needed to represent the schema
-	RefType string // If the type has a type name, this is set
+	GoType     string // The Go type needed to represent the schema
+	RefType    string // If the type has a type name, this is set
+	RefIsUnion bool   // If the ref is a union
 
 	ArrayType *Schema // The schema of array element
 
@@ -265,6 +266,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 		return Schema{
 			GoType:         refType,
+			RefIsUnion:     schema.OneOf != nil || schema.AnyOf != nil,
 			Description:    schema.Description,
 			DefineViaAlias: true,
 			OAPISchema:     schema,
