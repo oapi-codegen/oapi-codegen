@@ -37,7 +37,7 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true)
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -74,7 +74,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -84,7 +84,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
 	result.Extensions = make(map[string]interface{})
@@ -96,10 +96,13 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		result.Extensions[k] = v
 	}
 
-	result.OneOf = append(s1.OneOf, s2.OneOf...)
-
 	// We are going to make AllOf transitive, so that merging an AllOf that
 	// contains AllOf's will result in a flat object.
+	// TODO: this does not account for other schema fields at the same level as
+	//       an AllOf - they will be lost, see also where MergeSchemas is used
+	//       in GenerateGoSchema (all fields from the parent are disregarded
+	//       and instead only the schema containing the merged AllOfs is
+	//       returned)
 	var err error
 	if s1.AllOf != nil {
 		var merged openapi3.Schema
@@ -119,6 +122,17 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	}
 
 	result.AllOf = append(s1.AllOf, s2.AllOf...)
+
+	// NOTE: this must happen _after_ AllOf merging above or OneOfs can be lost, for example:
+	//          SchemaFoo: {allOf: [{allOf: [{oneOf: [A, B]}], SchemaBar]}
+	//       the resulting schema will only include SchemaBar if OneOf merging is done before
+	//       AllOf recursion - this is because we won't have any deeply nested OneOfs flattened
+	//       into s1/s2 yet at that point
+	// TODO: this does not accurately merge OneOf/AnyOf, for example if an AllOf contains 2
+	//       OneOf schema children, the result should require one from each set, but this will
+	//       require only one from the combined set
+	result.OneOf = append(s1.OneOf, s2.OneOf...)
+	result.AnyOf = append(s1.AnyOf, s2.AnyOf...)
 
 	if s1.Type.Slice() != nil && s2.Type.Slice() != nil && !equalTypes(s1.Type, s2.Type) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
@@ -220,11 +234,6 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 				result.WithAnyAdditionalProperties()
 			}
 		}
-	}
-
-	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
-	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
-		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
 	}
 
 	return result, nil
