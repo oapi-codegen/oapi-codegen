@@ -14,6 +14,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -439,7 +440,7 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputOptions.ResponseTypeSuffix = flagResponseTypeSuffix
 	}
 	if flagAliasTypes {
-		return fmt.Errorf("--alias-types isn't supported any more")
+		return errors.New("--alias-types isn't supported any more")
 	}
 
 	if cfg.OutputFile == "" {

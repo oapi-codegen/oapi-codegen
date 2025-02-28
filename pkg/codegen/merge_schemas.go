@@ -105,7 +105,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		var merged openapi3.Schema
 		merged, err = mergeAllOf(s1.AllOf)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
+			return openapi3.Schema{}, errors.New("error transitive merging AllOf on schema 1")
 		}
 		s1 = merged
 	}
@@ -113,7 +113,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		var merged openapi3.Schema
 		merged, err = mergeAllOf(s2.AllOf)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
+			return openapi3.Schema{}, errors.New("error transitive merging AllOf on schema 2")
 		}
 		s2 = merged
 	}
