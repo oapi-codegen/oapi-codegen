@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: Simple SSE Service
+  version: 1.0.0
+paths:
+  /:
+    get:
+      summary: Server-Sent Events Stream
+      description: Provides a stream of JSON documents containing a timestamp and sequence number.
+      operationId: getStream
+      responses:
+        200:
+          description: SSE Stream
+          content:
+            text/event-stream:
+              schema:
+                type: object
+                properties:
+                  time:
+                    type: string
+                    format: date-time
+                    description: Timestamp of the event.
+                  sequence:
+                    type: integer
+                    description: Sequence number of the event.
+              example:
+                time: "2023-11-20T10:30:00Z"
+                sequence: 1
