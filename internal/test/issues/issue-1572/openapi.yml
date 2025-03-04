@@ -1,0 +1,60 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Spec that use to generate inconsistent incorrect embedded spec.
+paths:
+  /records:
+    get:
+      operationId: getBookRecords
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookRecords'
+        500:
+          $ref: './other/response.yml'
+  /record:
+    get:
+      operationId: getBookRecord
+      parameters:
+        - $ref: 'other/parameter.yml'
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookRecord'
+              examples:
+                first-example:
+                  $ref: './other/example.yml'
+          headers:
+            X-Custom-Header:
+              $ref: 'schema/book/../../other/header.yml'
+            X-Custom-Header2:
+              schema:
+                type: string
+        500:
+          $ref: './other/response.yml'
+components:
+  schemas:
+    BookRecord:
+      $ref: './schemas/book/record.yml'
+    BookRecords:
+      $ref: './schemas/book/records.yml'
+    CdRecord:
+      $ref: './schemas/cd/record.yml'
+    CdRecords:
+      $ref: './schemas/cd/records.yml'
+  responses:
+    ErrorResponse:
+      $ref: './other/response.yml'
+  parameters:
+    BookIDParameter:
+      $ref: './other/parameter.yml'
+  headers:
+    CustomHeader:
+      $ref: './other/header.yml'
+  examples:
+    RecordResponseExample:
+      $ref: './other/example.yml'
