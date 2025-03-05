@@ -51,3 +51,14 @@ components:
               type: integer
               format: int64
           required: [ ID ]
+    PersonWithMorePropertiesOutsideOfAllOf:
+      type: object
+      description: |
+        This is a person record as returned from a Create endpoint. It contains
+        all the fields of a Person, with an additional property outside of allOf directives.
+      properties:
+        additionalProperty:
+          type: string
+      required: [ additionalProperty ]
+      allOf:
+        - $ref: "#/components/schemas/Person"
