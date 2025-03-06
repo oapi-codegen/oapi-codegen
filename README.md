@@ -2549,7 +2549,7 @@ type ClientWithExtension struct {
 
 Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
 
-You can see this in more detail in [the example code](examples/extensions/xgojsonignore/).
+You can see this in more detail in [the example code](examples/extensions/xomitempty/).
 
 </details>
 </td>
@@ -2782,7 +2782,7 @@ const (
 type ClientTypeWithExtension string
 ```
 
-You can see this in more detail in [the example code](examples/extensions/xenumvarnames/).
+You can see this in more detail in [the example code](examples/extensions/xenumnames/).
 
 </details>
 </td>
