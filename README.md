@@ -56,7 +56,7 @@ $ go get -tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 From there, each invocation of `oapi-codegen` would be used like so:
 
 ```go
-//go:generate go tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg.yaml ../../api.yaml
+//go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
 ```
 
 ## Prior to Go 1.24
