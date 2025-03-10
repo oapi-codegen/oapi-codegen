@@ -120,7 +120,7 @@ func (sh *strictHandler) GetPets(ctx *gin.Context) {
 	var request GetPetsRequestObject
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.GetPets(ctx, request.(GetPetsRequestObject))
+		return sh.ssi.GetPets(ctx.Request.Context(), request.(GetPetsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "GetPets")
