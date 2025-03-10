@@ -82,6 +82,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -201,6 +212,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "JSONExampleWithBody")
 	req, err := NewJSONExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -213,6 +225,7 @@ func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, bo
 }
 
 func (c *Client) JSONExample(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "JSONExample")
 	req, err := NewJSONExampleRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -225,6 +238,7 @@ func (c *Client) JSONExample(ctx context.Context, body JSONExampleJSONRequestBod
 }
 
 func (c *Client) MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipartExampleWithBody")
 	req, err := NewMultipartExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -237,6 +251,7 @@ func (c *Client) MultipartExampleWithBody(ctx context.Context, contentType strin
 }
 
 func (c *Client) MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipartRelatedExampleWithBody")
 	req, err := NewMultipartRelatedExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -249,6 +264,7 @@ func (c *Client) MultipartRelatedExampleWithBody(ctx context.Context, contentTyp
 }
 
 func (c *Client) MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipleRequestAndResponseTypesWithBody")
 	req, err := NewMultipleRequestAndResponseTypesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -261,6 +277,7 @@ func (c *Client) MultipleRequestAndResponseTypesWithBody(ctx context.Context, co
 }
 
 func (c *Client) MultipleRequestAndResponseTypes(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipleRequestAndResponseTypes")
 	req, err := NewMultipleRequestAndResponseTypesRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -273,6 +290,7 @@ func (c *Client) MultipleRequestAndResponseTypes(ctx context.Context, body Multi
 }
 
 func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipleRequestAndResponseTypesWithFormdataBody")
 	req, err := NewMultipleRequestAndResponseTypesRequestWithFormdataBody(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -285,6 +303,7 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 }
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "MultipleRequestAndResponseTypesWithTextBody")
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -297,6 +316,7 @@ func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context
 }
 
 func (c *Client) ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ReservedGoKeywordParameters")
 	req, err := NewReservedGoKeywordParametersRequest(c.Server, pType)
 	if err != nil {
 		return nil, err
@@ -309,6 +329,7 @@ func (c *Client) ReservedGoKeywordParameters(ctx context.Context, pType string, 
 }
 
 func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ReusableResponsesWithBody")
 	req, err := NewReusableResponsesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -321,6 +342,7 @@ func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType stri
 }
 
 func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ReusableResponses")
 	req, err := NewReusableResponsesRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -333,6 +355,7 @@ func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJS
 }
 
 func (c *Client) TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "TextExampleWithBody")
 	req, err := NewTextExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -345,6 +368,7 @@ func (c *Client) TextExampleWithBody(ctx context.Context, contentType string, bo
 }
 
 func (c *Client) TextExampleWithTextBody(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "TextExampleWithTextBody")
 	req, err := NewTextExampleRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -357,6 +381,7 @@ func (c *Client) TextExampleWithTextBody(ctx context.Context, body TextExampleTe
 }
 
 func (c *Client) UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "UnknownExampleWithBody")
 	req, err := NewUnknownExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -369,6 +394,7 @@ func (c *Client) UnknownExampleWithBody(ctx context.Context, contentType string,
 }
 
 func (c *Client) UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "UnspecifiedContentTypeWithBody")
 	req, err := NewUnspecifiedContentTypeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -381,6 +407,7 @@ func (c *Client) UnspecifiedContentTypeWithBody(ctx context.Context, contentType
 }
 
 func (c *Client) URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "URLEncodedExampleWithBody")
 	req, err := NewURLEncodedExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -393,6 +420,7 @@ func (c *Client) URLEncodedExampleWithBody(ctx context.Context, contentType stri
 }
 
 func (c *Client) URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "URLEncodedExampleWithFormdataBody")
 	req, err := NewURLEncodedExampleRequestWithFormdataBody(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -405,6 +433,7 @@ func (c *Client) URLEncodedExampleWithFormdataBody(ctx context.Context, body URL
 }
 
 func (c *Client) HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "HeadersExampleWithBody")
 	req, err := NewHeadersExampleRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -417,6 +446,7 @@ func (c *Client) HeadersExampleWithBody(ctx context.Context, params *HeadersExam
 }
 
 func (c *Client) HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "HeadersExample")
 	req, err := NewHeadersExampleRequest(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -429,6 +459,7 @@ func (c *Client) HeadersExample(ctx context.Context, params *HeadersExampleParam
 }
 
 func (c *Client) UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "UnionExampleWithBody")
 	req, err := NewUnionExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -441,6 +472,7 @@ func (c *Client) UnionExampleWithBody(ctx context.Context, contentType string, b
 }
 
 func (c *Client) UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "UnionExample")
 	req, err := NewUnionExampleRequest(c.Server, body)
 	if err != nil {
 		return nil, err

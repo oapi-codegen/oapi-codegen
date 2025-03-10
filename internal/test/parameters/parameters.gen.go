@@ -149,6 +149,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -277,6 +288,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetContentObject")
 	req, err := NewGetContentObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -289,6 +301,7 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqE
 }
 
 func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetCookie")
 	req, err := NewGetCookieRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -301,6 +314,7 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEdit
 }
 
 func (c *Client) EnumParams(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "EnumParams")
 	req, err := NewEnumParamsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -313,6 +327,7 @@ func (c *Client) EnumParams(ctx context.Context, params *EnumParamsParams, reqEd
 }
 
 func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetHeader")
 	req, err := NewGetHeaderRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -325,6 +340,7 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEdit
 }
 
 func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetLabelExplodeArray")
 	req, err := NewGetLabelExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -337,6 +353,7 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEdi
 }
 
 func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetLabelExplodeObject")
 	req, err := NewGetLabelExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -349,6 +366,7 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEdi
 }
 
 func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetLabelNoExplodeArray")
 	req, err := NewGetLabelNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -361,6 +379,7 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqE
 }
 
 func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetLabelNoExplodeObject")
 	req, err := NewGetLabelNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -373,6 +392,7 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqE
 }
 
 func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetMatrixExplodeArray")
 	req, err := NewGetMatrixExplodeArrayRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -385,6 +405,7 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEdito
 }
 
 func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetMatrixExplodeObject")
 	req, err := NewGetMatrixExplodeObjectRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -397,6 +418,7 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEdito
 }
 
 func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetMatrixNoExplodeArray")
 	req, err := NewGetMatrixNoExplodeArrayRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -409,6 +431,7 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEdi
 }
 
 func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetMatrixNoExplodeObject")
 	req, err := NewGetMatrixNoExplodeObjectRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -421,6 +444,7 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEdi
 }
 
 func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetPassThrough")
 	req, err := NewGetPassThroughRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -433,6 +457,7 @@ func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ..
 }
 
 func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetDeepObject")
 	req, err := NewGetDeepObjectRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -445,6 +470,7 @@ func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams,
 }
 
 func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetQueryForm")
 	req, err := NewGetQueryFormRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -457,6 +483,7 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, r
 }
 
 func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetSimpleExplodeArray")
 	req, err := NewGetSimpleExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -469,6 +496,7 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEd
 }
 
 func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetSimpleExplodeObject")
 	req, err := NewGetSimpleExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -481,6 +509,7 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEd
 }
 
 func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetSimpleNoExplodeArray")
 	req, err := NewGetSimpleNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -493,6 +522,7 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, req
 }
 
 func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetSimpleNoExplodeObject")
 	req, err := NewGetSimpleNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -505,6 +535,7 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, req
 }
 
 func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetSimplePrimitive")
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
 	if err != nil {
 		return nil, err
@@ -517,6 +548,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 }
 
 func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetStartingWithNumber")
 	req, err := NewGetStartingWithNumberRequest(c.Server, n1param)
 	if err != nil {
 		return nil, err
