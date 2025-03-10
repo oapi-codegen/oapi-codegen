@@ -1570,16 +1570,16 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET(baseURL+"/issues/1051", wrapper.Issue1051)
-	router.GET(baseURL+"/issues/127", wrapper.Issue127)
-	router.GET(baseURL+"/issues/185", wrapper.Issue185)
-	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
-	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET(baseURL+"/issues/375", wrapper.GetIssues375)
-	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
-	router.GET(baseURL+"/issues/9", wrapper.Issue9)
-	router.GET(baseURL+"/issues/975", wrapper.Issue975)
+	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced).Name = "GET /ensure-everything-is-referenced"
+	router.GET(baseURL+"/issues/1051", wrapper.Issue1051).Name = "GET /issues/1051"
+	router.GET(baseURL+"/issues/127", wrapper.Issue127).Name = "GET /issues/127"
+	router.GET(baseURL+"/issues/185", wrapper.Issue185).Name = "GET /issues/185"
+	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209).Name = "GET /issues/209/$:str"
+	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30).Name = "GET /issues/30/:fallthrough"
+	router.GET(baseURL+"/issues/375", wrapper.GetIssues375).Name = "GET /issues/375"
+	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41).Name = "GET /issues/41/:1param"
+	router.GET(baseURL+"/issues/9", wrapper.Issue9).Name = "GET /issues/9"
+	router.GET(baseURL+"/issues/975", wrapper.Issue975).Name = "GET /issues/975"
 
 }
 
