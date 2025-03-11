@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue240
+output: client.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  client-response-bytes-function: true
