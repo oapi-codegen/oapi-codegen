@@ -1,7 +1,6 @@
 package: issue1277
 generate:
   models: true
-  client: true
   chi-server: true
   strict-server: true
 output: content-array.gen.go

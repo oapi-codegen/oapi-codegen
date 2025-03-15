@@ -70,6 +70,10 @@
                 }
             {{end}}
 
+            {{- range .Schema.AdditionalTypes}}
+            type {{.TypeName}} {{if .IsAlias }}={{end}} {{.Schema.TypeDecl}}
+            {{- end}}
+
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(w)

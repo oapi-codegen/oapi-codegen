@@ -18,6 +18,6 @@ paths:
                   properties:
                     field1:
                       type: string
-                    field2:
+                    fieldX:
                       type: string
                   additionalProperties: true
