@@ -23,6 +23,9 @@ type ServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx iris.Context)
+
+	// (POST /post-object)
+	PostPostObject(ctx iris.Context)
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -53,6 +56,13 @@ func (w *ServerInterfaceWrapper) PostPostMultibody(ctx iris.Context) {
 	w.Handler.PostPostMultibody(ctx)
 }
 
+// PostPostObject converts iris context to params.
+func (w *ServerInterfaceWrapper) PostPostObject(ctx iris.Context) {
+
+	// Invoke the callback with all the unmarshaled arguments
+	w.Handler.PostPostObject(ctx)
+}
+
 // IrisServerOption is the option for iris server
 type IrisServerOptions struct {
 	BaseURL     string
@@ -74,6 +84,7 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 	router.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.Get(options.BaseURL+"/object", wrapper.GetObject)
 	router.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+	router.Post(options.BaseURL+"/post-object", wrapper.PostPostObject)
 
 	router.Build()
 }
@@ -128,22 +139,12 @@ type PostPostMultibodyResponseObject interface {
 	VisitPostPostMultibodyResponse(ctx iris.Context) error
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	ctx.StatusCode(200)
-
-	return ctx.JSON(&response)
+type PostPostObjectRequestObject struct {
+	Body *PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	ctx.StatusCode(200)
-
-	return ctx.JSON(&response)
+type PostPostObjectResponseObject interface {
+	VisitPostPostObjectResponse(ctx iris.Context) error
 }
 
 // StrictServerInterface represents all server handlers.
@@ -157,6 +158,9 @@ type StrictServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
+
+	// (POST /post-object)
+	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
 type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
@@ -262,6 +266,40 @@ func (sh *strictHandler) PostPostMultibody(ctx iris.Context) {
 		return
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx); err != nil {
+			ctx.StopWithError(http.StatusBadRequest, err)
+			return
+		}
+	} else if response != nil {
+		ctx.Writef("Unexpected response type: %T", response)
+		return
+	}
+}
+
+// PostPostObject operation middleware
+func (sh *strictHandler) PostPostObject(ctx iris.Context) {
+	var request PostPostObjectRequestObject
+
+	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	if err := ctx.ReadJSON(&body); err != nil {
+		ctx.StopWithError(http.StatusBadRequest, err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostPostObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.StopWithError(http.StatusBadRequest, err)
+		return
+	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
+		if err := validResponse.VisitPostPostObjectResponse(ctx); err != nil {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
 		}

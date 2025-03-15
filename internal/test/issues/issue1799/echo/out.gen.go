@@ -25,6 +25,9 @@ type ServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx echo.Context) error
+
+	// (POST /post-object)
+	PostPostObject(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -59,6 +62,15 @@ func (w *ServerInterfaceWrapper) PostPostMultibody(ctx echo.Context) error {
 	return err
 }
 
+// PostPostObject converts echo context to params.
+func (w *ServerInterfaceWrapper) PostPostObject(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.PostPostObject(ctx)
+	return err
+}
+
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
@@ -90,6 +102,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.GET(baseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.GET(baseURL+"/object", wrapper.GetObject)
 	router.POST(baseURL+"/post-multibody", wrapper.PostPostMultibody)
+	router.POST(baseURL+"/post-object", wrapper.PostPostObject)
 
 }
 
@@ -143,22 +156,12 @@ type PostPostMultibodyResponseObject interface {
 	VisitPostPostMultibodyResponse(w http.ResponseWriter) error
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectRequestObject struct {
+	Body *PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectResponseObject interface {
+	VisitPostPostObjectResponse(w http.ResponseWriter) error
 }
 
 // StrictServerInterface represents all server handlers.
@@ -172,6 +175,9 @@ type StrictServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
+
+	// (POST /post-object)
+	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -264,6 +270,35 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		return validResponse.VisitPostPostMultibodyResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PostPostObject operation middleware
+func (sh *strictHandler) PostPostObject(ctx echo.Context) error {
+	var request PostPostObjectRequestObject
+
+	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	if err := ctx.Bind(&body); err != nil {
+		return err
+	}
+	request.Body = &body
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PostPostObject(ctx.Request().Context(), request.(PostPostObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostPostObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
+		return validResponse.VisitPostPostObjectResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}

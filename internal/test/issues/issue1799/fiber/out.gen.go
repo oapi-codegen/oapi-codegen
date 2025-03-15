@@ -22,6 +22,9 @@ type ServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(c *fiber.Ctx) error
+
+	// (POST /post-object)
+	PostPostObject(c *fiber.Ctx) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -47,6 +50,12 @@ func (siw *ServerInterfaceWrapper) GetObject(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) PostPostMultibody(c *fiber.Ctx) error {
 
 	return siw.Handler.PostPostMultibody(c)
+}
+
+// PostPostObject operation middleware
+func (siw *ServerInterfaceWrapper) PostPostObject(c *fiber.Ctx) error {
+
+	return siw.Handler.PostPostObject(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
@@ -75,6 +84,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 	router.Get(options.BaseURL+"/object", wrapper.GetObject)
 
 	router.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+
+	router.Post(options.BaseURL+"/post-object", wrapper.PostPostObject)
 
 }
 
@@ -128,22 +139,12 @@ type PostPostMultibodyResponseObject interface {
 	VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error {
-	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	ctx.Status(200)
-
-	return ctx.JSON(&response)
+type PostPostObjectRequestObject struct {
+	Body *PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error {
-	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	ctx.Status(200)
-
-	return ctx.JSON(&response)
+type PostPostObjectResponseObject interface {
+	VisitPostPostObjectResponse(ctx *fiber.Ctx) error
 }
 
 // StrictServerInterface represents all server handlers.
@@ -157,6 +158,9 @@ type StrictServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
+
+	// (POST /post-object)
+	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
@@ -256,6 +260,37 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// PostPostObject operation middleware
+func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
+	var request PostPostObjectRequestObject
+
+	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	if err := ctx.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	}
+	request.Body = &body
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.PostPostObject(ctx.UserContext(), request.(PostPostObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostPostObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
+		if err := validResponse.VisitPostPostObjectResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {

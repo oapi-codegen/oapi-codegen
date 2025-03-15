@@ -25,6 +25,9 @@ type ServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(w http.ResponseWriter, r *http.Request)
+
+	// (POST /post-object)
+	PostPostObject(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -43,6 +46,11 @@ func (_ Unimplemented) GetObject(w http.ResponseWriter, r *http.Request) {
 
 // (POST /post-multibody)
 func (_ Unimplemented) PostPostMultibody(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /post-object)
+func (_ Unimplemented) PostPostObject(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -88,6 +96,20 @@ func (siw *ServerInterfaceWrapper) PostPostMultibody(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostPostMultibody(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PostPostObject operation middleware
+func (siw *ServerInterfaceWrapper) PostPostObject(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostPostObject(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -219,6 +241,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/post-object", wrapper.PostPostObject)
+	})
 
 	return r
 }
@@ -273,22 +298,12 @@ type PostPostMultibodyResponseObject interface {
 	VisitPostPostMultibodyResponse(w http.ResponseWriter) error
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectRequestObject struct {
+	Body *PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectResponseObject interface {
+	VisitPostPostObjectResponse(w http.ResponseWriter) error
 }
 
 // StrictServerInterface represents all server handlers.
@@ -302,6 +317,9 @@ type StrictServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
+
+	// (POST /post-object)
+	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -417,6 +435,37 @@ func (sh *strictHandler) PostPostMultibody(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostPostObject operation middleware
+func (sh *strictHandler) PostPostObject(w http.ResponseWriter, r *http.Request) {
+	var request PostPostObjectRequestObject
+
+	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostPostObject")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
+		if err := validResponse.VisitPostPostObjectResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

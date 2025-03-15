@@ -25,6 +25,9 @@ type ServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(c *gin.Context)
+
+	// (POST /post-object)
+	PostPostObject(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -75,6 +78,19 @@ func (siw *ServerInterfaceWrapper) PostPostMultibody(c *gin.Context) {
 	siw.Handler.PostPostMultibody(c)
 }
 
+// PostPostObject operation middleware
+func (siw *ServerInterfaceWrapper) PostPostObject(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PostPostObject(c)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -105,6 +121,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.GET(options.BaseURL+"/object", wrapper.GetObject)
 	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+	router.POST(options.BaseURL+"/post-object", wrapper.PostPostObject)
 }
 
 type GetGetMultibodyRequestObject struct {
@@ -157,22 +174,12 @@ type PostPostMultibodyResponseObject interface {
 	VisitPostPostMultibodyResponse(w http.ResponseWriter) error
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectRequestObject struct {
+	Body *PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 }
 
-type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
-
-func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+type PostPostObjectResponseObject interface {
+	VisitPostPostObjectResponse(w http.ResponseWriter) error
 }
 
 // StrictServerInterface represents all server handlers.
@@ -186,6 +193,9 @@ type StrictServerInterface interface {
 
 	// (POST /post-multibody)
 	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
+
+	// (POST /post-object)
+	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -289,6 +299,39 @@ func (sh *strictHandler) PostPostMultibody(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PostPostObject operation middleware
+func (sh *strictHandler) PostPostObject(ctx *gin.Context) {
+	var request PostPostObjectRequestObject
+
+	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostPostObject")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
+		if err := validResponse.VisitPostPostObjectResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
