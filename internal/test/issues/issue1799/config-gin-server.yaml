@@ -1,0 +1,7 @@
+package: gin
+generate:
+  gin-server: true
+  strict-server: true
+output: gin/out.gen.go
+output-options:
+  skip-prune: true

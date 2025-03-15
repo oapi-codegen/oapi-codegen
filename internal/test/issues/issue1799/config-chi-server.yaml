@@ -1,0 +1,7 @@
+package: chi
+generate:
+  chi-server: true
+  strict-server: true
+output: chi/out.gen.go
+output-options:
+  skip-prune: true

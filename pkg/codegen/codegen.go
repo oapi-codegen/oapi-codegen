@@ -26,6 +26,7 @@ import (
 	"os"
 	"runtime/debug"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -995,6 +996,9 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 
 		templateName := strings.TrimPrefix(path, "templates/")
 		tmpl := t.New(templateName)
+		tmpl.Funcs(template.FuncMap{
+			"quote": strconv.Quote,
+		})
 		_, err = tmpl.Parse(string(buf))
 		if err != nil {
 			return fmt.Errorf("parsing template '%s': %w", path, err)

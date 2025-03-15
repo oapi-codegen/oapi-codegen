@@ -1,0 +1,7 @@
+package: echo
+generate:
+  echo-server: true
+  strict-server: true
+output: echo/out.gen.go
+output-options:
+  skip-prune: true

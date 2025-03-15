@@ -1,0 +1,16 @@
+openapi: "3.0.0"
+
+info:
+  version: 0.0.1
+  title: example
+
+paths:
+  /object:
+    get:
+      responses:
+        '200':
+          description: something
+          content:
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+              schema:
+                type: string

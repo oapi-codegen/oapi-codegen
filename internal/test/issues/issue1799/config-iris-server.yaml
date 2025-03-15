@@ -1,0 +1,7 @@
+package: iris
+generate:
+  iris-server: true
+  strict-server: true
+output: iris/out.gen.go
+output-options:
+  skip-prune: true
