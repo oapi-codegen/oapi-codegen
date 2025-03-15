@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -48,10 +49,16 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	// parse out the yaml.Node, which is required by the overlay library
-	data, err := yaml.Marshal(spec)
-	if err != nil {
+	buffer := bytes.NewBuffer(nil)
+	enc := yaml.NewEncoder(buffer)
+	enc.SetIndent(2)
+
+	if err := enc.Encode(spec); err != nil {
 		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
 	}
+	data := buffer.Bytes()
+
+	_ = os.WriteFile("random-crap.yaml", data, 0644)
 
 	var node yaml.Node
 	err = yaml.NewDecoder(bytes.NewReader(data)).Decode(&node)

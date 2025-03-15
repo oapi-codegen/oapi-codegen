@@ -4,13 +4,13 @@ paths:
   /info:
     get:
       parameters:
-        - description: |2-
-             - a: something
-             - b: something else
-          in: query
+        - description: |-
+             a
+            b
           name: filter
           schema:
             type: string
+          in: query
       responses: {}
 
 
