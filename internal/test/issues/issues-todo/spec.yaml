@@ -4,8 +4,8 @@ paths:
   /info:
     get:
       parameters:
-        - description: |-
-             a
+        - description: |2-
+              a
             b
           name: filter
           schema:
