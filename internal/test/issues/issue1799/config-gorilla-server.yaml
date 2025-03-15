@@ -1,0 +1,8 @@
+package: gorilla
+generate:
+  gorilla-server: true
+  strict-server: true
+  models: true
+output: gorilla/out.gen.go
+output-options:
+  skip-prune: true
