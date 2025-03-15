@@ -17,6 +17,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -245,14 +246,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), %q) && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
 func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == %q && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
@@ -320,6 +321,7 @@ var TemplateFunctions = template.FuncMap{
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
 	"title":                      titleCaser.String,
+	"quote":                      strconv.Quote,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,

@@ -14,3 +14,15 @@ paths:
             "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
               schema:
                 type: string
+  /object-multibody:
+    get:
+      responses:
+        '200':
+          description: something
+          content:
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+              schema:
+                type: string
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"":
+              schema:
+                type: string

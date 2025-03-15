@@ -15,6 +15,9 @@ type ServerInterface interface {
 
 	// (GET /object)
 	GetObject(c *fiber.Ctx) error
+
+	// (GET /object-multibody)
+	GetObjectMultibody(c *fiber.Ctx) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -28,6 +31,12 @@ type MiddlewareFunc fiber.Handler
 func (siw *ServerInterfaceWrapper) GetObject(c *fiber.Ctx) error {
 
 	return siw.Handler.GetObject(c)
+}
+
+// GetObjectMultibody operation middleware
+func (siw *ServerInterfaceWrapper) GetObjectMultibody(c *fiber.Ctx) error {
+
+	return siw.Handler.GetObjectMultibody(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
@@ -53,6 +62,8 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 
 	router.Get(options.BaseURL+"/object", wrapper.GetObject)
 
+	router.Get(options.BaseURL+"/object-multibody", wrapper.GetObjectMultibody)
+
 }
 
 type GetObjectRequestObject struct {
@@ -71,11 +82,39 @@ func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivityst
 	return ctx.JSON(&response)
 }
 
+type GetObjectMultibodyRequestObject struct {
+}
+
+type GetObjectMultibodyResponseObject interface {
+	VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /object)
 	GetObject(ctx context.Context, request GetObjectRequestObject) (GetObjectResponseObject, error)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(ctx context.Context, request GetObjectMultibodyRequestObject) (GetObjectMultibodyResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
@@ -108,6 +147,31 @@ func (sh *strictHandler) GetObject(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetObjectMultibody operation middleware
+func (sh *strictHandler) GetObjectMultibody(ctx *fiber.Ctx) error {
+	var request GetObjectMultibodyRequestObject
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.GetObjectMultibody(ctx.UserContext(), request.(GetObjectMultibodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetObjectMultibody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(GetObjectMultibodyResponseObject); ok {
+		if err := validResponse.VisitGetObjectMultibodyResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {

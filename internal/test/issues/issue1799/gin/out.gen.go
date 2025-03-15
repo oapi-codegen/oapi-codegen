@@ -18,6 +18,9 @@ type ServerInterface interface {
 
 	// (GET /object)
 	GetObject(c *gin.Context)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -40,6 +43,19 @@ func (siw *ServerInterfaceWrapper) GetObject(c *gin.Context) {
 	}
 
 	siw.Handler.GetObject(c)
+}
+
+// GetObjectMultibody operation middleware
+func (siw *ServerInterfaceWrapper) GetObjectMultibody(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetObjectMultibody(c)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -70,6 +86,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.GET(options.BaseURL+"/object", wrapper.GetObject)
+	router.GET(options.BaseURL+"/object-multibody", wrapper.GetObjectMultibody)
 }
 
 type GetObjectRequestObject struct {
@@ -88,11 +105,39 @@ func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivityst
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetObjectMultibodyRequestObject struct {
+}
+
+type GetObjectMultibodyResponseObject interface {
+	VisitGetObjectMultibodyResponse(w http.ResponseWriter) error
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /object)
 	GetObject(ctx context.Context, request GetObjectRequestObject) (GetObjectResponseObject, error)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(ctx context.Context, request GetObjectMultibodyRequestObject) (GetObjectMultibodyResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -125,6 +170,31 @@ func (sh *strictHandler) GetObject(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetObjectMultibody operation middleware
+func (sh *strictHandler) GetObjectMultibody(ctx *gin.Context) {
+	var request GetObjectMultibodyRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetObjectMultibody(ctx, request.(GetObjectMultibodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetObjectMultibody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(GetObjectMultibodyResponseObject); ok {
+		if err := validResponse.VisitGetObjectMultibodyResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {

@@ -19,6 +19,9 @@ type ServerInterface interface {
 
 	// (GET /object)
 	GetObject(w http.ResponseWriter, r *http.Request)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -35,6 +38,20 @@ func (siw *ServerInterfaceWrapper) GetObject(w http.ResponseWriter, r *http.Requ
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetObject(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetObjectMultibody operation middleware
+func (siw *ServerInterfaceWrapper) GetObjectMultibody(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetObjectMultibody(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -165,6 +182,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/object", wrapper.GetObject)
+	m.HandleFunc("GET "+options.BaseURL+"/object-multibody", wrapper.GetObjectMultibody)
 
 	return m
 }
@@ -185,11 +203,39 @@ func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivityst
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetObjectMultibodyRequestObject struct {
+}
+
+type GetObjectMultibodyResponseObject interface {
+	VisitGetObjectMultibodyResponse(w http.ResponseWriter) error
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /object)
 	GetObject(ctx context.Context, request GetObjectRequestObject) (GetObjectResponseObject, error)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(ctx context.Context, request GetObjectMultibodyRequestObject) (GetObjectMultibodyResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -238,6 +284,30 @@ func (sh *strictHandler) GetObject(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetObjectMultibody operation middleware
+func (sh *strictHandler) GetObjectMultibody(w http.ResponseWriter, r *http.Request) {
+	var request GetObjectMultibodyRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetObjectMultibody(ctx, request.(GetObjectMultibodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetObjectMultibody")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetObjectMultibodyResponseObject); ok {
+		if err := validResponse.VisitGetObjectMultibodyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

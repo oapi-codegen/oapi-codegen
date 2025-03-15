@@ -18,6 +18,9 @@ type ServerInterface interface {
 
 	// (GET /object)
 	GetObject(ctx echo.Context) error
+
+	// (GET /object-multibody)
+	GetObjectMultibody(ctx echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -31,6 +34,15 @@ func (w *ServerInterfaceWrapper) GetObject(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetObject(ctx)
+	return err
+}
+
+// GetObjectMultibody converts echo context to params.
+func (w *ServerInterfaceWrapper) GetObjectMultibody(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetObjectMultibody(ctx)
 	return err
 }
 
@@ -63,6 +75,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	}
 
 	router.GET(baseURL+"/object", wrapper.GetObject)
+	router.GET(baseURL+"/object-multibody", wrapper.GetObjectMultibody)
 
 }
 
@@ -82,11 +95,39 @@ func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivityst
 	return json.NewEncoder(w).Encode(response)
 }
 
+type GetObjectMultibodyRequestObject struct {
+}
+
+type GetObjectMultibodyResponseObject interface {
+	VisitGetObjectMultibodyResponse(w http.ResponseWriter) error
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+
+func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetObjectMultibodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /object)
 	GetObject(ctx context.Context, request GetObjectRequestObject) (GetObjectResponseObject, error)
+
+	// (GET /object-multibody)
+	GetObjectMultibody(ctx context.Context, request GetObjectMultibodyRequestObject) (GetObjectMultibodyResponseObject, error)
 }
 
 type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
@@ -118,6 +159,29 @@ func (sh *strictHandler) GetObject(ctx echo.Context) error {
 		return err
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		return validResponse.VisitGetObjectResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
+// GetObjectMultibody operation middleware
+func (sh *strictHandler) GetObjectMultibody(ctx echo.Context) error {
+	var request GetObjectMultibodyRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.GetObjectMultibody(ctx.Request().Context(), request.(GetObjectMultibodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetObjectMultibody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(GetObjectMultibodyResponseObject); ok {
+		return validResponse.VisitGetObjectMultibodyResponse(ctx.Response())
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
 	}
