@@ -1,0 +1,8 @@
+package: issuestodo
+generate:
+  models: true
+  embedded-spec: true
+output: spec.gen.go
+output-options:
+  overlay:
+    path: overlay.yaml
