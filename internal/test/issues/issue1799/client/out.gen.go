@@ -4,6 +4,7 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,6 +13,18 @@ import (
 	"net/url"
 	"strings"
 )
+
+// PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines parameters for PostPostMultibody.
+type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = string
+
+// PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body defines parameters for PostPostMultibody.
+type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = string
+
+// PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody defines body for PostPostMultibody for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
+type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody = PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody
+
+// PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody defines body for PostPostMultibody for application/ld+json; profile="https://www.w3.org/ns/activitystreams2" ContentType.
+type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody = PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -86,11 +99,30 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// GetGetMultibody request
+	GetGetMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetObject request
 	GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetObjectMultibody request
-	GetObjectMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// PostPostMultibodyWithBody request with any body
+	PostPostMultibodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) GetGetMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGetMultibodyRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -105,8 +137,8 @@ func (c *Client) GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetObjectMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetObjectMultibodyRequest(c.Server)
+func (c *Client) PostPostMultibodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostPostMultibodyRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -115,6 +147,57 @@ func (c *Client) GetObjectMultibody(ctx context.Context, reqEditors ...RequestEd
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// NewGetGetMultibodyRequest generates requests for GetGetMultibody
+func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/get-multibody")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetObjectRequest generates requests for GetObject
@@ -144,8 +227,30 @@ func NewGetObjectRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetObjectMultibodyRequest generates requests for GetObjectMultibody
-func NewGetObjectMultibodyRequest(server string) (*http.Request, error) {
+// NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody calls the generic PostPostMultibody builder with application/ld+json; profile="https://www.w3.org/ns/activitystreams" body
+func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(server string, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostPostMultibodyRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"", bodyReader)
+}
+
+// NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body calls the generic PostPostMultibody builder with application/ld+json; profile="https://www.w3.org/ns/activitystreams2" body
+func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(server string, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostPostMultibodyRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"", bodyReader)
+}
+
+// NewPostPostMultibodyRequestWithBody generates requests for PostPostMultibody with any type of body
+func NewPostPostMultibodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -153,7 +258,7 @@ func NewGetObjectMultibodyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/object-multibody")
+	operationPath := fmt.Sprintf("/post-multibody")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -163,10 +268,12 @@ func NewGetObjectMultibodyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest("POST", queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -214,11 +321,41 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// GetGetMultibodyWithResponse request
+	GetGetMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGetMultibodyResponse, error)
+
 	// GetObjectWithResponse request
 	GetObjectWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetObjectResponse, error)
 
-	// GetObjectMultibodyWithResponse request
-	GetObjectMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetObjectMultibodyResponse, error)
+	// PostPostMultibodyWithBodyWithResponse request with any body
+	PostPostMultibodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
+
+	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
+
+	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2BodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
+}
+
+type GetGetMultibodyResponse struct {
+	Body                                                       []byte
+	HTTPResponse                                               *http.Response
+	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200  *string
+	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 *string
+}
+
+// Status returns HTTPResponse.Status
+func (r GetGetMultibodyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetGetMultibodyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetObjectResponse struct {
@@ -243,7 +380,7 @@ func (r GetObjectResponse) StatusCode() int {
 	return 0
 }
 
-type GetObjectMultibodyResponse struct {
+type PostPostMultibodyResponse struct {
 	Body                                                       []byte
 	HTTPResponse                                               *http.Response
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200  *string
@@ -251,7 +388,7 @@ type GetObjectMultibodyResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r GetObjectMultibodyResponse) Status() string {
+func (r PostPostMultibodyResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -259,11 +396,20 @@ func (r GetObjectMultibodyResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r GetObjectMultibodyResponse) StatusCode() int {
+func (r PostPostMultibodyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// GetGetMultibodyWithResponse request returning *GetGetMultibodyResponse
+func (c *ClientWithResponses) GetGetMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGetMultibodyResponse, error) {
+	rsp, err := c.GetGetMultibody(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGetMultibodyResponse(rsp)
 }
 
 // GetObjectWithResponse request returning *GetObjectResponse
@@ -275,13 +421,62 @@ func (c *ClientWithResponses) GetObjectWithResponse(ctx context.Context, reqEdit
 	return ParseGetObjectResponse(rsp)
 }
 
-// GetObjectMultibodyWithResponse request returning *GetObjectMultibodyResponse
-func (c *ClientWithResponses) GetObjectMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetObjectMultibodyResponse, error) {
-	rsp, err := c.GetObjectMultibody(ctx, reqEditors...)
+// PostPostMultibodyWithBodyWithResponse request with arbitrary body returning *PostPostMultibodyResponse
+func (c *ClientWithResponses) PostPostMultibodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
+	rsp, err := c.PostPostMultibodyWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseGetObjectMultibodyResponse(rsp)
+	return ParsePostPostMultibodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
+	rsp, err := c.PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostPostMultibodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2BodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
+	rsp, err := c.PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostPostMultibodyResponse(rsp)
+}
+
+// ParseGetGetMultibodyResponse parses an HTTP response from a GetGetMultibodyWithResponse call
+func ParseGetGetMultibodyResponse(rsp *http.Response) (*GetGetMultibodyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetGetMultibodyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"" && rsp.StatusCode == 200:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"" && rsp.StatusCode == 200:
+		var dest string
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetObjectResponse parses an HTTP response from a GetObjectWithResponse call
@@ -310,15 +505,15 @@ func ParseGetObjectResponse(rsp *http.Response) (*GetObjectResponse, error) {
 	return response, nil
 }
 
-// ParseGetObjectMultibodyResponse parses an HTTP response from a GetObjectMultibodyWithResponse call
-func ParseGetObjectMultibodyResponse(rsp *http.Response) (*GetObjectMultibodyResponse, error) {
+// ParsePostPostMultibodyResponse parses an HTTP response from a PostPostMultibodyWithResponse call
+func ParsePostPostMultibodyResponse(rsp *http.Response) (*PostPostMultibodyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &GetObjectMultibodyResponse{
+	response := &PostPostMultibodyResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

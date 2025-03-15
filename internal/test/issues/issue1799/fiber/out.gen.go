@@ -6,6 +6,7 @@ package fiber
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,11 +14,14 @@ import (
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /get-multibody)
+	GetGetMultibody(c *fiber.Ctx) error
+
 	// (GET /object)
 	GetObject(c *fiber.Ctx) error
 
-	// (GET /object-multibody)
-	GetObjectMultibody(c *fiber.Ctx) error
+	// (POST /post-multibody)
+	PostPostMultibody(c *fiber.Ctx) error
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -27,16 +31,22 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc fiber.Handler
 
+// GetGetMultibody operation middleware
+func (siw *ServerInterfaceWrapper) GetGetMultibody(c *fiber.Ctx) error {
+
+	return siw.Handler.GetGetMultibody(c)
+}
+
 // GetObject operation middleware
 func (siw *ServerInterfaceWrapper) GetObject(c *fiber.Ctx) error {
 
 	return siw.Handler.GetObject(c)
 }
 
-// GetObjectMultibody operation middleware
-func (siw *ServerInterfaceWrapper) GetObjectMultibody(c *fiber.Ctx) error {
+// PostPostMultibody operation middleware
+func (siw *ServerInterfaceWrapper) PostPostMultibody(c *fiber.Ctx) error {
 
-	return siw.Handler.GetObjectMultibody(c)
+	return siw.Handler.PostPostMultibody(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
@@ -60,10 +70,37 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
+	router.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
+
 	router.Get(options.BaseURL+"/object", wrapper.GetObject)
 
-	router.Get(options.BaseURL+"/object-multibody", wrapper.GetObjectMultibody)
+	router.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 
+}
+
+type GetGetMultibodyRequestObject struct {
+}
+
+type GetGetMultibodyResponseObject interface {
+	VisitGetGetMultibodyResponse(ctx *fiber.Ctx) error
+}
+
+type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+
+func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetGetMultibodyResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
+}
+
+type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+
+func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetGetMultibodyResponse(ctx *fiber.Ctx) error {
+	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
+	ctx.Status(200)
+
+	return ctx.JSON(&response)
 }
 
 type GetObjectRequestObject struct {
@@ -82,25 +119,27 @@ func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivityst
 	return ctx.JSON(&response)
 }
 
-type GetObjectMultibodyRequestObject struct {
+type PostPostMultibodyRequestObject struct {
+	ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody  *PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+	ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body *PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
 }
 
-type GetObjectMultibodyResponseObject interface {
-	VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error
+type PostPostMultibodyResponseObject interface {
+	VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error
 }
 
-type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
+type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
 
-func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error {
+func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
 	ctx.Status(200)
 
 	return ctx.JSON(&response)
 }
 
-type GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
+type PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
 
-func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetObjectMultibodyResponse(ctx *fiber.Ctx) error {
+func (response PostPostMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitPostPostMultibodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
 	ctx.Status(200)
 
@@ -110,11 +149,14 @@ func (response GetObjectMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsa
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (GET /get-multibody)
+	GetGetMultibody(ctx context.Context, request GetGetMultibodyRequestObject) (GetGetMultibodyResponseObject, error)
+
 	// (GET /object)
 	GetObject(ctx context.Context, request GetObjectRequestObject) (GetObjectResponseObject, error)
 
-	// (GET /object-multibody)
-	GetObjectMultibody(ctx context.Context, request GetObjectMultibodyRequestObject) (GetObjectMultibodyResponseObject, error)
+	// (POST /post-multibody)
+	PostPostMultibody(ctx context.Context, request PostPostMultibodyRequestObject) (PostPostMultibodyResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
@@ -128,6 +170,31 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+}
+
+// GetGetMultibody operation middleware
+func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
+	var request GetGetMultibodyRequestObject
+
+	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+		return sh.ssi.GetGetMultibody(ctx.UserContext(), request.(GetGetMultibodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetGetMultibody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+	} else if validResponse, ok := response.(GetGetMultibodyResponseObject); ok {
+		if err := validResponse.VisitGetGetMultibodyResponse(ctx); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
 }
 
 // GetObject operation middleware
@@ -155,23 +222,40 @@ func (sh *strictHandler) GetObject(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// GetObjectMultibody operation middleware
-func (sh *strictHandler) GetObjectMultibody(ctx *fiber.Ctx) error {
-	var request GetObjectMultibodyRequestObject
+// PostPostMultibody operation middleware
+func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
+	var request PostPostMultibodyRequestObject
+
+	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
+
+		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
+		if err := ctx.BodyParser(&body); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+		request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
+	}
+	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
+
+		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
+		if err := ctx.BodyParser(&body); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+		request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
+	}
 
 	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
-		return sh.ssi.GetObjectMultibody(ctx.UserContext(), request.(GetObjectMultibodyRequestObject))
+		return sh.ssi.PostPostMultibody(ctx.UserContext(), request.(PostPostMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "GetObjectMultibody")
+		handler = middleware(handler, "PostPostMultibody")
 	}
 
 	response, err := handler(ctx, request)
 
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
-	} else if validResponse, ok := response.(GetObjectMultibodyResponseObject); ok {
-		if err := validResponse.VisitGetObjectMultibodyResponse(ctx); err != nil {
+	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
+		if err := validResponse.VisitPostPostMultibodyResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}
 	} else if response != nil {
