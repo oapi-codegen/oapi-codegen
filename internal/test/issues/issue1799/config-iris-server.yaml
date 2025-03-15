@@ -2,6 +2,7 @@ package: iris
 generate:
   iris-server: true
   strict-server: true
+  models: true
 output: iris/out.gen.go
 output-options:
   skip-prune: true

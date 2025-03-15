@@ -2,6 +2,7 @@ package: stdhttp
 generate:
   std-http-server: true
   strict-server: true
+  models: true
 output: std-http/out.gen.go
 output-options:
   skip-prune: true

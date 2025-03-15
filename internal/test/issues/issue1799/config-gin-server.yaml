@@ -2,6 +2,7 @@ package: gin
 generate:
   gin-server: true
   strict-server: true
+  models: true
 output: gin/out.gen.go
 output-options:
   skip-prune: true

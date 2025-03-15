@@ -2,6 +2,7 @@ package: echo
 generate:
   echo-server: true
   strict-server: true
+  models: true
 output: echo/out.gen.go
 output-options:
   skip-prune: true
