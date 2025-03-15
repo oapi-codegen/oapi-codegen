@@ -15,8 +15,14 @@ func TestYamlMarshal(t *testing.T) {
 		Parameters: openapi3.Parameters{
 			{
 				Value: &openapi3.Parameter{
-					Name:        "name",
-					Description: " a\n b",
+					Name:        "param1",
+					Description: " a\nb",
+				},
+			},
+			{
+				Value: &openapi3.Parameter{
+					Name:        "param2",
+					Description: "   a\n  b\n",
 				},
 			},
 		},
