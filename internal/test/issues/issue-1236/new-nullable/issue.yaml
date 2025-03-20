@@ -1,0 +1,52 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    WithoutAdditionalProperties:
+      type: object
+      required:
+        - Required
+        - ReadOnly
+        - WriteOnly
+        - Nullable
+      properties:
+        Required:
+          type: integer
+        Optional:
+          type: integer
+        ReadOnly:
+          type: integer
+          readOnly: true
+        WriteOnly:
+          type: integer
+          writeOnly: true
+        Nullable:
+          type: integer
+          nullable: true
+        NullableOptional:
+          type: integer
+          nullable: true
+    WithAdditionalProperties:
+      type: object
+      required:
+        - Required
+        - ReadOnly
+        - WriteOnly
+        - Nullable
+      properties:
+        Required:
+          type: integer
+        Optional:
+          type: integer
+        ReadOnly:
+          type: integer
+          readOnly: true
+        WriteOnly:
+          type: integer
+          writeOnly: true
+        Nullable:
+          type: integer
+          nullable: true
+        NullableOptional:
+          type: integer
+          nullable: true
+      additionalProperties: true
