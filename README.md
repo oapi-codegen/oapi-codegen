@@ -3188,7 +3188,7 @@ output-options:
     typedef.tmpl: no-prefix.tmpl
 ```
 
-> [!WARN]
+> [!WARNING]
 > We do not interpolate `~` or `$HOME` (or other environment variables) in paths given
 
 ### HTTPS paths
