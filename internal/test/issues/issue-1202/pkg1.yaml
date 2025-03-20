@@ -1,0 +1,18 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test1
+  license:
+    name: MIT
+components:
+  schemas:
+    TestAllOf:
+      allOf:
+        - $ref: "pkg2.yaml#/components/schemas/TestObj2"
+        - $ref: "#/components/schemas/TestObj1"
+    TestObj1:
+      properties:
+        Field1:
+          type: string
+        Field2:
+          type: string
