@@ -527,6 +527,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.ChiServer = true
 		case "fiber-server", "fiber":
 			opts.FiberServer = true
+		case "fiber-v3-server", "fiber-v3":
+			opts.FiberV3Server = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
 		case "echo5", "echo5-server":
