@@ -986,6 +986,12 @@ func GenerateFiberServer(t *template.Template, operations []OperationDefinition)
 	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
 }
 
+// GenerateFiberV3Server generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberV3Server(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl", "fiber-v3/fiber-handler.tmpl"}, t, operations)
+}
+
 // GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -1025,6 +1031,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	}
 	if opts.Generate.FiberServer {
 		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+	if opts.Generate.FiberV3Server {
+		templates = append(templates, "strict/strict-fiber-v3-interface.tmpl", "strict/strict-fiber-v3.tmpl")
 	}
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
