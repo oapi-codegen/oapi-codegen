@@ -34,9 +34,17 @@ type strictHandler struct {
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := ctx.ShouldBindJSON(&body); err != nil {
+                        {{ if .Required -}}
                         ctx.Status(http.StatusBadRequest)
                         ctx.Error(err)
                         return
+                        {{ else -}}
+                        if !errors.Is(err, io.EOF) {
+                            ctx.Status(http.StatusBadRequest)
+                            ctx.Error(err)
+                            return
+                        }
+                        {{ end -}}
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
