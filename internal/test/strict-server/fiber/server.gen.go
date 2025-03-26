@@ -102,7 +102,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *fiber.Ctx) err
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", strings.Clone(c.Params("type")), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter type: %w", err).Error())
 	}

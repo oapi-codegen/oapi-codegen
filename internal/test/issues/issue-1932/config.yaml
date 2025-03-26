@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1932
+generate:
+  models: true
+  fiber-server: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
+output: issue.gen.go
