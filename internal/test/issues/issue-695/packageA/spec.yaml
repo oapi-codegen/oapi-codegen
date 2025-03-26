@@ -1,0 +1,57 @@
+paths:
+  /api/test:
+    post:
+      operationId: TestApi
+      summary: test
+      description: test
+      responses:
+        '200':
+          description: ''
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: ''
+          $ref: ../packageB/spec.yaml#/components/responses/ResponseC
+components:
+  schemas:
+    ObjectA:
+      properties:
+        name:
+          type: string
+        object_b:
+          $ref: ../packageB/spec.yaml#/components/schemas/ObjectB
+          
+### Working Internal Ref to ObjectB ####
+# paths:
+#   /api/test:
+#     post:
+#       operationId: TestApi
+#       summary: test
+#       description: test
+#       responses:
+#         '200':
+#           description: ''
+#           content:
+#             text/plain:
+#               schema:
+#                 type: string
+#         '400':
+#           description: ''
+#           $ref: '#/components/responses/ResponseC'
+# components:
+#   schemas:
+#     ObjectB:
+#       type: object
+#       properties:
+#         name:
+#           type: string
+#   responses:
+#     ResponseC:
+#       description: ResponseC
+#       content:
+#         application/json:
+#           schema:
+#             $ref: '#/components/schemas/ObjectB'
+

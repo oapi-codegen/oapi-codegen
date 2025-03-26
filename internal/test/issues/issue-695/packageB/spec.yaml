@@ -1,0 +1,14 @@
+components:
+  schemas:
+    ObjectB:
+      type: object
+      properties:
+        name:
+          type: string
+  responses:
+    ResponseC:
+      description: ResponseC
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ObjectB'
