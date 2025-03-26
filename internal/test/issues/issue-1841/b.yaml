@@ -1,0 +1,16 @@
+openapi: 3.0.0
+components:
+  schemas:
+    Merge:
+      type: object
+      properties:
+        b:
+          type: array
+          items:
+            $ref: "#/components/schemas/Element"
+    Element:
+      type: object
+      properties:
+        c:
+          type: string
+
