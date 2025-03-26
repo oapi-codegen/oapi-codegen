@@ -11,6 +11,8 @@ type Client struct {
 
 // ClientRenamedByExtension defines model for ClientWithExtension.
 type ClientRenamedByExtension struct {
-	AccountIdentifier *float32 `json:"id,omitempty"`
-	Name              string   `json:"name"`
+	CONSTANT_IDENTIFIER string   `json:"constant"`
+	AccountIdentifier   *float32 `json:"id,omitempty"`
+	Name                string   `json:"name"`
+	unexportedName      string   `json:"unexported_name"`
 }
