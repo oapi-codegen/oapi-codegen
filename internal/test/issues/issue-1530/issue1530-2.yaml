@@ -16,9 +16,23 @@ paths:
 components:
   schemas:
     objstr:
-      type: string
+      type: object
+      required: [mytype, value]
+      properties:
+        mytype:
+          type: string
+          enum: ["str"]
+        value:
+          type: string
     objint:
-      type: integer
+      type: object
+      required: [mytype, value]
+      properties:
+        mytype:
+          type: string
+          enum: ["str"]
+        value:
+          type: integer
     objX:
       anyOf:
         - $ref: "#/components/schemas/objstr"

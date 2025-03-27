@@ -13,8 +13,18 @@ import (
 
 // Defines values for ObjXMytype.
 const (
-	Int ObjXMytype = "int"
-	Str ObjXMytype = "str"
+	ObjXMytypeInt ObjXMytype = "int"
+	ObjXMytypeStr ObjXMytype = "str"
+)
+
+// Defines values for ObjintMytype.
+const (
+	ObjintMytypeStr ObjintMytype = "str"
+)
+
+// Defines values for ObjstrMytype.
+const (
+	Str ObjstrMytype = "str"
 )
 
 // ObjX defines model for objX.
@@ -27,10 +37,22 @@ type ObjX struct {
 type ObjXMytype string
 
 // Objint defines model for objint.
-type Objint = int
+type Objint struct {
+	Mytype ObjintMytype `json:"mytype"`
+	Value  int          `json:"value"`
+}
+
+// ObjintMytype defines model for Objint.Mytype.
+type ObjintMytype string
 
 // Objstr defines model for objstr.
-type Objstr = string
+type Objstr struct {
+	Mytype ObjstrMytype `json:"mytype"`
+	Value  string       `json:"value"`
+}
+
+// ObjstrMytype defines model for Objstr.Mytype.
+type ObjstrMytype string
 
 // AsObjstr returns the union data inside the ObjX as a Objstr
 func (t ObjX) AsObjstr() (Objstr, error) {
@@ -41,6 +63,7 @@ func (t ObjX) AsObjstr() (Objstr, error) {
 
 func (t *ObjX) prepareObjstr(v Objstr) ([]byte, error) {
 	t.Mytype = "str"
+	v.Mytype = "str"
 	return json.Marshal(v)
 }
 
@@ -72,6 +95,7 @@ func (t ObjX) AsObjint() (Objint, error) {
 
 func (t *ObjX) prepareObjint(v Objint) ([]byte, error) {
 	t.Mytype = "int"
+	v.Mytype = "int"
 	return json.Marshal(v)
 }
 
