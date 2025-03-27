@@ -11,48 +11,46 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Defines values for ObjXMytype.
+// Defines values for ObjXObjectType.
 const (
-	ObjXMytypeInt ObjXMytype = "int"
-	ObjXMytypeStr ObjXMytype = "str"
+	ObjXObjectTypeInt ObjXObjectType = "int"
+	ObjXObjectTypeStr ObjXObjectType = "str"
 )
 
-// Defines values for ObjintMytype.
+// Defines values for ObjintObjectType.
 const (
-	ObjintMytypeStr ObjintMytype = "str"
+	ObjintObjectTypeInt ObjintObjectType = "int"
 )
 
-// Defines values for ObjstrMytype.
+// Defines values for ObjstrObjectType.
 const (
-	Str ObjstrMytype = "str"
+	Str ObjstrObjectType = "str"
 )
 
 // ObjX defines model for objX.
 type ObjX struct {
-	Mytype ObjXMytype `json:"mytype"`
-	union  json.RawMessage
+	ObjectType *ObjXObjectType `json:"objectType,omitempty"`
+	union      json.RawMessage
 }
 
-// ObjXMytype defines model for ObjX.Mytype.
-type ObjXMytype string
+// ObjXObjectType defines model for ObjX.ObjectType.
+type ObjXObjectType string
 
 // Objint defines model for objint.
 type Objint struct {
-	Mytype ObjintMytype `json:"mytype"`
-	Value  int          `json:"value"`
+	ObjectType ObjintObjectType `json:"objectType"`
 }
 
-// ObjintMytype defines model for Objint.Mytype.
-type ObjintMytype string
+// ObjintObjectType defines model for Objint.ObjectType.
+type ObjintObjectType string
 
 // Objstr defines model for objstr.
 type Objstr struct {
-	Mytype ObjstrMytype `json:"mytype"`
-	Value  string       `json:"value"`
+	ObjectType ObjstrObjectType `json:"objectType,omitempty"`
 }
 
-// ObjstrMytype defines model for Objstr.Mytype.
-type ObjstrMytype string
+// ObjstrObjectType defines model for Objstr.ObjectType.
+type ObjstrObjectType string
 
 // AsObjstr returns the union data inside the ObjX as a Objstr
 func (t ObjX) AsObjstr() (Objstr, error) {
@@ -62,8 +60,9 @@ func (t ObjX) AsObjstr() (Objstr, error) {
 }
 
 func (t *ObjX) prepareObjstr(v Objstr) ([]byte, error) {
-	t.Mytype = "str"
-	v.Mytype = "str"
+	discValue := "str"
+	t.ObjectType = (*ObjXObjectType)(&discValue)
+	v.ObjectType = "str"
 	return json.Marshal(v)
 }
 
@@ -94,8 +93,9 @@ func (t ObjX) AsObjint() (Objint, error) {
 }
 
 func (t *ObjX) prepareObjint(v Objint) ([]byte, error) {
-	t.Mytype = "int"
-	v.Mytype = "int"
+	discValue := "int"
+	t.ObjectType = (*ObjXObjectType)(&discValue)
+	v.ObjectType = "int"
 	return json.Marshal(v)
 }
 
@@ -120,7 +120,7 @@ func (t *ObjX) MergeObjint(v Objint) error {
 
 func (t ObjX) Discriminator() (string, error) {
 	var discriminator struct {
-		Discriminator string `json:"mytype"`
+		Discriminator string `json:"objectType"`
 	}
 	err := json.Unmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
@@ -154,11 +154,12 @@ func (t ObjX) MarshalJSON() ([]byte, error) {
 		}
 	}
 
-	object["mytype"], err = json.Marshal(t.Mytype)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'mytype': %w", err)
+	if t.ObjectType != nil {
+		object["objectType"], err = json.Marshal(t.ObjectType)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'objectType': %w", err)
+		}
 	}
-
 	b, err = json.Marshal(object)
 	return b, err
 }
@@ -174,10 +175,10 @@ func (t *ObjX) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	if raw, found := object["mytype"]; found {
-		err = json.Unmarshal(raw, &t.Mytype)
+	if raw, found := object["objectType"]; found {
+		err = json.Unmarshal(raw, &t.ObjectType)
 		if err != nil {
-			return fmt.Errorf("error reading 'mytype': %w", err)
+			return fmt.Errorf("error reading 'objectType': %w", err)
 		}
 	}
 

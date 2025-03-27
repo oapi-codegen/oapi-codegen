@@ -322,4 +322,5 @@ var TemplateFunctions = template.FuncMap{
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"add":                        func(a, b int) int { return a + b },
+	"hasPrefix":                  strings.HasPrefix,
 }

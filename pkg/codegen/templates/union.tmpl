@@ -35,7 +35,14 @@
                 {{end -}}
                 {{if le $typeMatches 1 -}}
                     {{if $tHasProperty -}}
-                        t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{if hasPrefix $tPropertyType "*" -}}
+                            discValue := "{{$discValue}}"
+                            t.{{$discriminator.PropertyName}} = ({{$tPropertyType}})(&discValue)
+                        {{else if hasPrefix $tPropertyType "nullable." -}}
+                            t.{{$discriminator.PropertyName}} = nullable.NewNullableWithValue("{{$discValue}}")
+                        {{else -}}
+                            t.{{$discriminator.PropertyName}} = "{{$discValue}}"
+                        {{end -}}
                     {{end -}}
                     {{if $vHasProperty -}}
                         v.{{$discriminator.PropertyName}} = "{{$discValue}}"
