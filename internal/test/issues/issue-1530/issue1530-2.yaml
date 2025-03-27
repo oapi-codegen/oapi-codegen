@@ -1,0 +1,35 @@
+openapi: 3.0.4
+info:
+  title: test
+  version: v1
+paths:
+  /aaa:
+    get:
+      operationId: aaa
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/objX"
+components:
+  schemas:
+    objstr:
+      type: string
+    objint:
+      type: integer
+    objX:
+      anyOf:
+        - $ref: "#/components/schemas/objstr"
+        - $ref: "#/components/schemas/objint"
+      required: [mytype]
+      properties:
+        mytype:
+          type: string
+          enum: ["int", "str"]
+      discriminator:
+        propertyName: mytype
+        mapping:
+          "int": "#/components/schemas/objint"
+          "str": "#/components/schemas/objstr"

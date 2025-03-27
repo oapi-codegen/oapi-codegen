@@ -1,4 +1,4 @@
 package: param
 generate:
   models: true
-output: issue1530.gen.go
+output: issue1530-2.gen.go
