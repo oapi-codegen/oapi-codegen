@@ -2324,6 +2324,17 @@ Force the presence of the JSON tag `omitempty` on a field
 <tr>
 <td>
 
+`x-omitzero`
+
+</td>
+<td>
+Force the presence of the JSON tag `omitzero` on a field
+</td>
+</tr>
+
+<tr>
+<td>
+
 `x-go-json-ignore`
 
 </td>
@@ -2677,6 +2688,61 @@ type ClientWithExtension struct {
 Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
 
 You can see this in more detail in [the example code](examples/extensions/xomitempty/).
+
+### `x-omitzero` - force the presence of the JSON tag `omitzero` on a field
+
+> [!NOTE]
+> `omitzero` was added in Go 1.24. If you're not using Go 1.24 in your project, this won't work.
+
+In a case that you may want to add the JSON struct tag `omitzero` to types, you can use the `x-omitempty` extension.
+
+We can see this at play with the following schemas:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-omitempty
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          x-omitzero: true
+```
+
+From here, we now get two different models:
+
+```go
+// Client defines model for Client.
+type Client struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension struct {
+	Id   *float32 `json:"id,omitempty,omitzero"`
+	Name string   `json:"name"`
+}
+```
+
+You can see this in more detail in [the example code](examples/extensions/xomitzero/).
 
 ### `x-go-json-ignore` - when (un)marshaling JSON, ignore field(s)
 
