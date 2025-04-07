@@ -1,5 +1,6 @@
 # Additional Features
 - `BeforeEach` hook (supported servers: `Echo`)
+- Multiple response cookies for strict server (supported servers: `all`)
 
 # `oapi-codegen`
 
