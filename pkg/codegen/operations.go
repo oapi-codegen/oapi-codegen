@@ -558,7 +558,8 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedMapKeys(pathOps) {
-			op := pathOps[opName]
+			// NOTE that we make sure we have a copy here, so we don't modify the underlying specificiation
+			op := *pathOps[opName]
 			if pathItem.Servers != nil {
 				op.Servers = &pathItem.Servers
 			}
@@ -623,7 +624,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				Summary:         op.Summary,
 				Method:          opName,
 				Path:            requestPath,
-				Spec:            op,
+				Spec:            &op,
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
