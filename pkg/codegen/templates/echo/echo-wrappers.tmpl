@@ -124,6 +124,12 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{end}}{{/* .CookieParams */}}
 
 {{end}}{{/* .RequiresParamObject */}}
+    // first, call the BeforeEach handler
+    if stop, hErr := w.Handler.BeforeEach(ctx); hErr != nil {
+    return hErr
+    } else if stop {
+    return nil
+    }
     // Invoke the callback with all the unmarshaled arguments
     err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
     return err

@@ -1,3 +1,6 @@
+# Additional Features
+- `BeforeEach` hook (supported servers: `Echo`)
+
 # `oapi-codegen`
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)

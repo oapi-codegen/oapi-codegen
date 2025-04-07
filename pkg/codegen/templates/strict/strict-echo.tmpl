@@ -10,6 +10,10 @@ type strictHandler struct {
     middlewares []StrictMiddlewareFunc
 }
 
+func (sh *strictHandler) BeforeEach(ctx echo.Context) (stop bool, _ error) {
+return sh.ssi.BeforeEach(ctx)
+}
+
 {{range .}}
     {{$opid := .OperationId}}
     // {{$opid}} operation middleware

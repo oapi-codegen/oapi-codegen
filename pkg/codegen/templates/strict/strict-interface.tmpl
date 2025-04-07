@@ -142,4 +142,6 @@ type StrictServerInterface interface {
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
 {{end}}{{/* range . */ -}}
+// BeforeEach is the best place to do any kind of validation or pre-processing on the request.
+BeforeEach(ctx echo.Context) (stop bool, _ error)
 }

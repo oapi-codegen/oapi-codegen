@@ -4,4 +4,6 @@ type ServerInterface interface {
 // ({{.Method}} {{.Path}})
 {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
+// BeforeEach is the best place to do any kind of validation or pre-processing on the request.
+BeforeEach(ctx echo.Context) (stop bool, _ error)
 }
