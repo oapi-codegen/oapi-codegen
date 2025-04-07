@@ -27,3 +27,5 @@ require (
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 )
+
+replace github.com/oapi-codegen/oapi-codegen/v2 => github.com/Juno-T/oapi-codegen v0.0.1
