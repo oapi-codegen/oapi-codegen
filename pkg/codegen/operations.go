@@ -208,7 +208,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 
 // OperationDefinition describes an Operation
 type OperationDefinition struct {
-	OperationId string // The operation_id description from Swagger, used to generate function names
+	// OperationId is the `operationId` field from the OpenAPI Specification, after going through a `nameNormalizer`, and will be used to generate function names
+	OperationId string
 
 	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
 	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
