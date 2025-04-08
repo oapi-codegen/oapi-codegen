@@ -1,0 +1,38 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+servers:
+  - url: http://openapitest.deepmap.ai
+paths:
+  /param/{param}:
+    get:
+      operationId: GetParam
+      parameters:
+        - $ref: "#/components/parameters/param"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleParam"
+components:
+  responses:
+    SimpleParam:
+      description: A simple response object
+      content:
+        application/json:
+          schema:
+            required:
+                - message
+            type: object
+            properties:
+              message:
+                type: string
+  parameters:
+    param:
+      name: param
+      in: path
+      required: true
+      style: simple
+      schema:
+        type: string
