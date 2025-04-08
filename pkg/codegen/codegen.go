@@ -1092,15 +1092,18 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, sref := range schemas {
-		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
+		if sref == nil {
 			return nil, nil
 		}
+
 		if gi, err := ParseGoImportExtension(sref); err != nil {
 			return nil, err
-		} else {
-			if gi != nil {
-				res[gi.String()] = *gi
-			}
+		} else if gi != nil {
+			res[gi.String()] = *gi
+		}
+
+		if sref.Value == nil || IsGoTypeReference(sref.Ref) {
+			continue
 		}
 		schemaVal := sref.Value
 
