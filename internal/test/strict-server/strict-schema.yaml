@@ -249,21 +249,21 @@ paths:
           description: Unknown error
   /reserved-go-keyword-parameters/{type}:
     get:
-        operationId: ReservedGoKeywordParameters
-        description: Parameters can be named after Go keywords
-        parameters:
-          - name: type
-            in: path
-            required: true
-            schema:
+      operationId: ReservedGoKeywordParameters
+      description: Parameters can be named after Go keywords
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
                 type: string
-        responses:
-          200:
-            description: OK
-            content:
-              text/plain:
-                schema:
-                  type: string
   /with-union:
     post:
       operationId: UnionExample
@@ -287,8 +287,8 @@ paths:
             application/json:
               schema:
                 oneOf:
-                - type: string
-                - $ref: "#/components/schemas/example"
+                  - type: string
+                  - $ref: "#/components/schemas/example"
             application/alternative+json:
               schema:
                 $ref: "#/components/schemas/example"
@@ -296,6 +296,18 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /streaming:
+    get:
+      operationId: StreamingExample
+      description: Streaming response
+      responses:
+        200:
+          description: OK
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                format: byte
 components:
   responses:
     badrequest:
