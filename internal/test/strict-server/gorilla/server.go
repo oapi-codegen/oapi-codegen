@@ -118,3 +118,14 @@ func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequ
 		},
 	}, nil
 }
+
+func (s StrictServer) UnionInRefExample(ctx context.Context, request UnionInRefExampleRequestObject) (UnionInRefExampleResponseObject, error) {
+	union, err := json.Marshal(*request.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return UnionInRefExample200JSONResponse{
+		union: union,
+	}, nil
+}

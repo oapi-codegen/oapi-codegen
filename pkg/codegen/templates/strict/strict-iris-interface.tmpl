@@ -88,7 +88,7 @@
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
-                    {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
+                    {{$hasUnionElements := or (ne 0 (len .Schema.UnionElements)) .Schema.RefIsUnion}}
                     return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
