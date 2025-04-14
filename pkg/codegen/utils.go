@@ -628,6 +628,12 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
+	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
+	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
+	if uri == "/" {
+		return "/{$}"
+	}
+
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
