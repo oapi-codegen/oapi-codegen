@@ -3106,6 +3106,20 @@ Middleware library
 
 </tr>
 
+<tr>
+<td>
+
+Any other server (which conforms to `net/http`)
+
+</td>
+<td>
+
+[nethttp-middleware](https://github.com/oapi-codegen/nethttp-middleware)
+
+</td>
+
+</tr>
+
 </table>
 
 > [!NOTE]
