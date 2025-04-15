@@ -5,6 +5,7 @@ package issue52
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -103,11 +104,17 @@ func (a Person) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	var errs []error
 	for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
 		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+			errs = append(errs, fmt.Errorf("'%s': %w", fieldName, err))
 		}
 	}
+	err = errors.Join(errs...)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling %w", err)
+	}
+
 	return json.Marshal(object)
 }
