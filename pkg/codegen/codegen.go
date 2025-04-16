@@ -234,6 +234,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var fiberV3ServerOut string
+	if opts.Generate.FiberV3Server {
+		fiberV3ServerOut, err = GenerateFiberV3Server(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var ginServerOut string
 	if opts.Generate.GinServer {
 		ginServerOut, err = GenerateGinServer(t, ops)
@@ -309,8 +317,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	importsOut, err := GenerateImports(
 		t,
 		externalImports,
-		opts.PackageName,
-		opts.NoVCSVersionOverride,
+		opts,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
@@ -366,6 +373,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.FiberServer {
 		_, err = w.WriteString(fiberServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.FiberV3Server {
+		_, err = w.WriteString(fiberV3ServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -814,7 +828,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // GenerateImports generates our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, opts Configuration) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the
 	// version if we can't read this.
@@ -828,8 +842,8 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		if bi.Main.Version != "" {
 			moduleVersion = bi.Main.Version
 		}
-		if versionOverride != nil {
-			moduleVersion = *versionOverride
+		if opts.NoVCSVersionOverride != nil {
+			moduleVersion = *opts.NoVCSVersionOverride
 		}
 	}
 
@@ -839,12 +853,14 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
+		FiberV3           bool
 	}{
 		ExternalImports:   externalImports,
-		PackageName:       packageName,
+		PackageName:       opts.PackageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
 		AdditionalImports: globalState.options.AdditionalImports,
+		FiberV3:           opts.Generate.FiberV3Server,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
