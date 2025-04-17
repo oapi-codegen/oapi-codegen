@@ -63,16 +63,20 @@ func (t GetPetsDto_Data) AsCat() (Cat, error) {
 	return body, err
 }
 
+func (t *GetPetsDto_Data) prepareCat(v Cat) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromCat overwrites any union data inside the GetPetsDto_Data as the provided Cat
 func (t *GetPetsDto_Data) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareCat(v)
 	t.union = b
 	return err
 }
 
 // MergeCat performs a merge with any union data inside the GetPetsDto_Data, using the provided Cat
 func (t *GetPetsDto_Data) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareCat(v)
 	if err != nil {
 		return err
 	}
@@ -89,16 +93,20 @@ func (t GetPetsDto_Data) AsDog() (Dog, error) {
 	return body, err
 }
 
+func (t *GetPetsDto_Data) prepareDog(v Dog) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromDog overwrites any union data inside the GetPetsDto_Data as the provided Dog
 func (t *GetPetsDto_Data) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareDog(v)
 	t.union = b
 	return err
 }
 
 // MergeDog performs a merge with any union data inside the GetPetsDto_Data, using the provided Dog
 func (t *GetPetsDto_Data) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareDog(v)
 	if err != nil {
 		return err
 	}
@@ -115,16 +123,20 @@ func (t GetPetsDto_Data) AsRat() (Rat, error) {
 	return body, err
 }
 
+func (t *GetPetsDto_Data) prepareRat(v Rat) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromRat overwrites any union data inside the GetPetsDto_Data as the provided Rat
 func (t *GetPetsDto_Data) FromRat(v Rat) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareRat(v)
 	t.union = b
 	return err
 }
 
 // MergeRat performs a merge with any union data inside the GetPetsDto_Data, using the provided Rat
 func (t *GetPetsDto_Data) MergeRat(v Rat) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareRat(v)
 	if err != nil {
 		return err
 	}
