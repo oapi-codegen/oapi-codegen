@@ -22,6 +22,7 @@ const (
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
+	extEmptyValue        = "x-empty-value"
 	extOrder             = "x-order"
 	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
 	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
@@ -102,6 +103,14 @@ func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
 
 func extParseDeprecationReason(extPropValue interface{}) (string, error) {
 	return extString(extPropValue)
+}
+
+func extParseEmptyValue(extEmptyValueValue interface{}) (emptyValue, error) {
+	str, err := extString(extEmptyValueValue)
+	if err != nil {
+		return "", err
+	}
+	return emptyValue(str), nil
 }
 
 func extParseOapiCodegenOnlyHonourGoName(extPropValue interface{}) (bool, error) {
