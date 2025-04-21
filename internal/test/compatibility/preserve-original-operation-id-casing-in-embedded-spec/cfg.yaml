@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: preserveoriginaloperationidcasinginembeddedspec
+output: spec.gen.go
+generate:
+  embedded-spec: true
+output-options:
+  skip-prune: false
+compatibility:
+  preserve-original-operation-id-casing-in-embedded-spec: true
