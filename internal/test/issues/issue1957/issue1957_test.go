@@ -27,32 +27,28 @@ func TestGeneratedCode(t *testing.T) {
 	})
 
 	t.Run("For a query parameter", func(t *testing.T) {
-		// TODO that this is NOT wanted behaviour, but it is our current behaviour
-		t.Run("An optional field with x-go-type-skip-optional-pointer should be a pointer", func(t *testing.T) {
+		t.Run("An optional field with x-go-type-skip-optional-pointer should be a non-pointer", func(t *testing.T) {
 
 			u := uuid.New()
 
 			theType := GetRootParams{
-				At: &u,
+				At: u,
 			}
 
-			require.NotNil(t, theType.At)
-			require.NotZero(t, *theType.At)
+			require.NotZero(t, theType.At)
 		})
 	})
 
 	t.Run("For a field with an AllOf", func(t *testing.T) {
-		// TODO that this is NOT wanted behaviour, but it is our current behaviour
-		t.Run("An optional field with x-go-type-skip-optional-pointer should be a pointer", func(t *testing.T) {
+		t.Run("An optional field with x-go-type-skip-optional-pointer should be a non-pointer", func(t *testing.T) {
 
 			u := uuid.New()
 
 			theType := TypeWithAllOf{
-				Id: &u,
+				Id: u,
 			}
 
-			require.NotNil(t, theType.Id)
-			require.NotZero(t, *theType.Id)
+			require.NotZero(t, theType.Id)
 		})
 	})
 }
