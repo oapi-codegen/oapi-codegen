@@ -12,7 +12,7 @@ type ID = googleuuid.UUID
 
 // TypeWithAllOf defines model for TypeWithAllOf.
 type TypeWithAllOf struct {
-	Id *googleuuid.UUID `json:"id,omitempty"`
+	Id googleuuid.UUID `json:"id,omitempty"`
 }
 
 // TypeWithOptionalField defines model for TypeWithOptionalField.
@@ -23,5 +23,5 @@ type TypeWithOptionalField struct {
 
 // GetRootParams defines parameters for GetRoot.
 type GetRootParams struct {
-	At *googleuuid.UUID `form:"at,omitempty" json:"at,omitempty"`
+	At googleuuid.UUID `form:"at,omitempty" json:"at,omitempty"`
 }

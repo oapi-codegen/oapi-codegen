@@ -289,6 +289,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+		outSchema.SkipOptionalPointer = skipOptionalPointer
+	}
+
 	// Check x-go-type, which will completely override the definition of this
 	// schema with the provided type.
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
@@ -300,16 +310,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		outSchema.DefineViaAlias = true
 
 		return outSchema, nil
-	}
-
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
-	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-		if err != nil {
-			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-		}
-		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Schema type and format, eg. string / binary
