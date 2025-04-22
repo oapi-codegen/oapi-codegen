@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-test/deep"
 	"golang.org/x/tools/imports"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
@@ -719,8 +720,16 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 				continue
 			}
 			// We want to create an error when we try to define the same type twice.
-			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
-				"please use x-go-name to specify your own name for one of them", typ.TypeName)
+			diff := deep.Equal(prevType.Schema.OAPISchema, typ.Schema.OAPISchema)
+			return "", fmt.Errorf(
+				"duplicate typename '%s', can't auto-rename, "+
+					"please use x-go-name to specify your own name for one of them"+
+					"\n\tpath1:\n\t\t%s\n\tpath2:\n\t\t%s\n\tdiff:\n\t\t%s",
+				typ.TypeName,
+				prevType.JsonName,
+				typ.JsonName,
+				strings.Join(diff, "\n\t\t"),
+			)
 		}
 
 		m[typ.TypeName] = typ
