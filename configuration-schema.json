@@ -1,0 +1,274 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Configuration files for oapi-codegen",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "package": {
+      "type": "string",
+      "description": "Go package name to generate the code under"
+    },
+    "generate": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Generate specifies which supported output formats to generate",
+      "properties": {
+        "iris-server": {
+          "type": "boolean",
+          "description": "IrisServer specifies whether to generate iris server boilerplate"
+        },
+        "chi-server": {
+          "type": "boolean",
+          "description": "ChiServer specifies whether to generate chi server boilerplate"
+        },
+        "fiber-server": {
+          "type": "boolean",
+          "description": "FiberServer specifies whether to generate fiber server boilerplate"
+        },
+        "echo-server": {
+          "type": "boolean",
+          "description": "EchoServer specifies whether to generate echo server boilerplate"
+        },
+        "gin-server": {
+          "type": "boolean",
+          "description": "GinServer specifies whether to generate gin server boilerplate"
+        },
+        "gorilla-server": {
+          "type": "boolean",
+          "description": "GorillaServer specifies whether to generate Gorilla server boilerplate"
+        },
+        "std-http-server": {
+          "type": "boolean",
+          "description": "StdHTTPServer specifies whether to generate stdlib http server boilerplate"
+        },
+        "strict-server": {
+          "type": "boolean",
+          "description": "Strict specifies whether to generate strict server wrapper"
+        },
+        "client": {
+          "type": "boolean",
+          "description": "Client specifies whether to generate client boilerplate"
+        },
+        "models": {
+          "type": "boolean",
+          "description": "Models specifies whether to generate type definitions"
+        },
+        "embedded-spec": {
+          "type": "boolean",
+          "description": "EmbeddedSpec indicates whether to embed the swagger spec in the generated code"
+        }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "",
+      "properties": {
+        "old-merge-schemas": {
+          "type": "boolean",
+          "description": "In the past, we merged schemas for `allOf` by inlining each schema within the schema list. This approach, though, is incorrect because `allOf` merges at the schema definition level, not at the resulting model level. So, new behavior merges OpenAPI specs but generates different code than we have in the past. Set OldMergeSchemas to true for the old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/531"
+        },
+        "old-enum-conflicts": {
+          "type": "boolean",
+          "description": "Enum values can generate conflicting typenames, so we've updated the code for enum generation to avoid these conflicts, but it will result in some enum types being renamed in existing code. Set OldEnumConflicts to true to revert to old behavior. Please see: Please see https://github.com/oapi-codegen/oapi-codegen/issues/549"
+        },
+        "old-aliasing": {
+          "type": "boolean",
+          "description": "It was a mistake to generate a go type definition for every $ref in the OpenAPI schema. New behavior uses type aliases where possible, but this can generate code which breaks existing builds. Set OldAliasing to true for old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/549"
+        },
+        "disable-flatten-additional-properties": {
+          "type": "boolean",
+          "description": "When an object contains no members, and only an additionalProperties specification, it is flattened to a map"
+        },
+        "disable-required-readonly-as-pointer": {
+          "type": "boolean",
+          "description": "When an object property is both required and readOnly the go model is generated as a pointer. Set DisableRequiredReadOnlyAsPointer to true to mark them as non pointer. Please see https://github.com/oapi-codegen/oapi-codegen/issues/604"
+        },
+        "always-prefix-enum-values": {
+          "type": "boolean",
+          "description": "When set to true, always prefix enum values with their type name instead of only when typenames would be conflicting."
+        },
+        "apply-chi-middleware-first-to-last": {
+          "type": "boolean",
+          "description": "Our generated code for Chi has historically inverted the order in which Chi middleware is applied such that the last invoked middleware ends up executing first in the Chi chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/oapi-codegen/oapi-codegen/issues/786"
+        },
+        "apply-gorilla-middleware-first-to-last": {
+          "type": "boolean",
+          "description": "Our generated code for gorilla/mux has historically inverted the order in which gorilla/mux middleware is applied such that the last invoked middleware ends up executing first in the middlewares chain This resolves the behavior such that middlewares are chained in the order they are invoked. Please see https://github.com/oapi-codegen/oapi-codegen/issues/841"
+        },
+        "circular-reference-limit": {
+          "type": "integer",
+          "description": "DEPRECATED: No longer used.\nCircularReferenceLimit allows controlling the limit for circular reference checking. In some OpenAPI specifications, we have a higher number of circular references than is allowed out-of-the-box, but can be tuned to allow traversing them."
+        },
+        "allow-unexported-struct-field-names": {
+          "type": "boolean",
+          "description": "AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.\nThis is expected to be used in conjunction with an extension such as `x-go-name` to override the output name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`.\nNOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see it in the response, without understanding the nuance of how `oapi-codegen` generates the code."
+        },
+        "preserve-original-operation-id-casing-in-embedded-spec": {
+          "type": "boolean",
+          "description": "When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.\nHowever, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.\nTo ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this. NOTE that this will not impact generated code.\nNOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct."
+        }
+      }
+    },
+    "output-options": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "OutputOptions are used to modify the output code in some way",
+      "properties": {
+        "skip-fmt": {
+          "type": "boolean",
+          "description": "Whether to skip go imports on the generated code"
+        },
+        "skip-prune": {
+          "type": "boolean",
+          "description": "Whether to skip pruning unused components on the generated code"
+        },
+        "include-tags": {
+          "type": "array",
+          "description": "Only include operations that have one of these tags. Ignored when empty.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude-tags": {
+          "type": "array",
+          "description": "Exclude operations that have one of these tags. Ignored when empty.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "include-operation-ids": {
+          "type": "array",
+          "description": "Only include operations that have one of these operation-ids. Ignored when empty.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exclude-operation-ids": {
+          "type": "array",
+          "description": "Exclude operations that have one of these operation-ids. Ignored when empty.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "user-templates": {
+          "type": "object",
+          "description": "Override built-in templates from user-provided files",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "exclude-schemas": {
+          "type": "array",
+          "description": "Exclude from generation schemas with given names. Ignored when empty.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "response-type-suffix": {
+          "type": "string",
+          "description": "The suffix used for responses types"
+        },
+        "client-type-name": {
+          "type": "string",
+          "description": "Override the default generated client type with the value"
+        },
+        "initialism-overrides": {
+          "type": "boolean",
+          "description": "Whether to use the initialism overrides"
+        },
+        "additional-initialisms": {
+          "type": "array",
+          "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
+          "items": {
+            "type": "string"
+          }
+        },
+        "nullable-type": {
+          "type": "boolean",
+          "description": "Whether to generate nullable type for nullable fields"
+        },
+        "disable-type-aliases-for-type": {
+          "type": "array",
+          "description": "DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases",
+          "items": {
+            "type": "string",
+            "enum": [
+              "array"
+            ]
+          }
+        },
+        "name-normalizer": {
+          "type": "string",
+          "description": "NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`",
+          "default": "ToCamelCase",
+          "enum": [
+            "ToCamelCase",
+            "ToCamelCaseWithDigits",
+            "ToCamelCaseWithInitialisms"
+          ]
+        },
+        "overlay": {
+          "type": "object",
+          "description": "Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.",
+          "properties": {
+            "path": {
+              "description": "The path to the Overlay file",
+              "type": "string"
+            },
+            "strict": {
+              "type": "boolean",
+              "description": "Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.",
+              "default": true
+            }
+          },
+          "required": [
+            "path"
+          ]
+        },
+        "yaml-tags": {
+          "type": "boolean",
+          "description": "Enable the generation of YAML tags for struct fields"
+        },
+        "client-response-bytes-function": {
+          "type": "boolean",
+          "description": "Enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`"
+        }
+      }
+    },
+    "import-mapping": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string",
+        "description": "ImportMapping specifies the golang package path for each external reference. A value of `-` will indicate that the current package will be used"
+      }
+    },
+    "additional-imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "package": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "package"
+        ]
+      },
+      "description": "AdditionalImports defines any additional Go imports to add to the generated code"
+    },
+    "output": {
+      "type": "string",
+      "description": "The filename to output"
+    }
+  },
+  "required": [
+    "package",
+    "output"
+  ]
+}

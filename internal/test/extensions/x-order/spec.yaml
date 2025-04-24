@@ -1,0 +1,34 @@
+components:
+  schemas:
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+    Port:
+      type: integer
+    LowPriorityPort:
+      type: integer
+      x-order: 50
+    PortInterval:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        end:
+          $ref: '#/components/schemas/Port'
+          x-order: 2
+        very_end:
+          $ref: '#/components/schemas/LowPriorityPort'
+        start:
+          $ref: '#/components/schemas/Port'
+          x-order: 1

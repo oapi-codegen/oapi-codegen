@@ -18,127 +18,229 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestStringOps(t *testing.T) {
-	// Test that each substitution works
-	assert.Equal(t, "WordWordWORDWordWordWordWordWordWordWordWordWordWord", ToCamelCase("word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;"), "Camel case conversion failed")
-
-	// Make sure numbers don't interact in a funny way.
-	assert.Equal(t, "Number1234", ToCamelCase("number-1234"), "Number Camelcasing not working.")
+func TestToCamelCase(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  " foo_bar ",
+		want: "FooBar",
+	}, {
+		str:  "hi hello-hey-hallo",
+		want: "HiHelloHeyHallo",
+	}, {
+		str:  "foo#bar",
+		want: "FooBar",
+	}, {
+		str:  "foo2bar",
+		want: "Foo2bar",
+	}, {
+		// Test that each substitution works
+		str:  "word.word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
+		want: "WordWordWORDWordWordWordWordWordWordWordWordWordWord",
+	}, {
+		// Make sure numbers don't interact in a funny way.
+		str:  "number-1234",
+		want: "Number1234",
+	},
+	}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCase(tt.str))
+		})
+	}
 }
 
-func TestSortedSchemaKeys(t *testing.T) {
+func TestToCamelCaseWithDigits(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  " foo_bar ",
+		want: "FooBar",
+	}, {
+		str:  "hi hello-hey-hallo",
+		want: "HiHelloHeyHallo",
+	}, {
+		str:  "foo#bar",
+		want: "FooBar",
+	}, {
+		str:  "foo2bar",
+		want: "Foo2Bar",
+	}, {
+		str:  "пир2пир",
+		want: "Пир2Пир",
+	}, {
+		// Test that each substitution works
+		str:  "word.word3word-WORD+Word_word~word(Word)Word{Word}Word[Word]Word:Word;",
+		want: "WordWord3WordWORDWordWordWordWordWordWordWordWordWordWord",
+	}, {
+		// Make sure numbers don't interact in a funny way.
+		str:  "number-1234",
+		want: "Number1234",
+	},
+	}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCaseWithDigits(tt.str))
+		})
+	}
+}
+
+func TestToCamelCaseWithInitialisms(t *testing.T) {
+	tests := []struct {
+		str  string
+		want string
+	}{{
+		str:  "",
+		want: "",
+	}, {
+		str:  "hello",
+		want: "Hello",
+	}, {
+		str:  "DBError",
+		want: "DBError",
+	}, {
+		str:  "httpOperationId",
+		want: "HTTPOperationID",
+	}, {
+		str:  "OperationId",
+		want: "OperationID",
+	}, {
+		str:  "peer2peer",
+		want: "Peer2Peer",
+	}, {
+		str:  "makeUtf8",
+		want: "MakeUTF8",
+	}, {
+		str:  "utf8Hello",
+		want: "UTF8Hello",
+	}, {
+		str:  "myDBError",
+		want: "MyDBError",
+	}, {
+		str:  " DbLayer ",
+		want: "DBLayer",
+	}, {
+		str:  "FindPetById",
+		want: "FindPetByID",
+	}, {
+		str:  "MyHttpUrl",
+		want: "MyHTTPURL",
+	}, {
+		str:  "find_user_by_uuid",
+		want: "FindUserByUUID",
+	}, {
+		str:  "HelloПриветWorldМир42",
+		want: "HelloПриветWorldМир42",
+	}, {
+		str:  "пир2пир",
+		want: "Пир2Пир",
+	}}
+	for i := range tests {
+		tt := tests[i]
+		t.Run(tt.str, func(t *testing.T) {
+			require.Equal(t, tt.want, ToCamelCaseWithInitialisms(tt.str))
+		})
+	}
+}
+
+func TestSortedSchemaKeysWithXOrder(t *testing.T) {
+	withOrder := func(i float64) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{
+			Value: &openapi3.Schema{
+				Extensions: map[string]interface{}{"x-order": i},
+			},
+		}
+	}
 	dict := map[string]*openapi3.SchemaRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
+		"first":            withOrder(1),
+		"minusTenth":       withOrder(-10),
+		"zero":             withOrder(0),
+		"minusHundredth_2": withOrder(-100),
+		"minusHundredth_1": withOrder(-100),
+		"afterFirst":       withOrder(2),
+		"last":             withOrder(100),
+		"middleA":          nil,
+		"middleB":          nil,
+		"middleC":          nil,
 	}
 
-	expected := []string{"a", "b", "c", "d", "e", "f"}
+	expected := []string{"minusHundredth_1", "minusHundredth_2", "minusTenth", "zero", "first", "afterFirst", "middleA", "middleB", "middleC", "last"}
 
 	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
 }
 
-func TestSortedPathsKeys(t *testing.T) {
-	dict := openapi3.Paths{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
+func TestSortedSchemaKeysWithXOrderFromParsed(t *testing.T) {
+	rawSpec := `---
+components:
+  schemas:
+    AlwaysLast:
+      type: string
+      x-order: 100000
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+  `
 
-	expected := []string{"a", "b", "c", "d", "e", "f"}
+	loader := openapi3.NewLoader()
+	spec, err := loader.LoadFromData([]byte(rawSpec))
+	require.NoError(t, err)
+	require.NotNil(t, spec.Components)
+	require.NotNil(t, spec.Components.Schemas)
 
-	assert.EqualValues(t, expected, SortedPathsKeys(dict), "Keys are not sorted properly")
-}
+	t.Run("for the top-level schemas", func(t *testing.T) {
+		expected := []string{"DateInterval", "AlwaysLast"}
 
-func TestSortedOperationsKeys(t *testing.T) {
-	dict := map[string]*openapi3.Operation{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
+		actual := SortedSchemaKeys(spec.Components.Schemas)
 
-	expected := []string{"a", "b", "c", "d", "e", "f"}
+		assert.EqualValues(t, expected, actual)
+	})
 
-	assert.EqualValues(t, expected, SortedOperationsKeys(dict), "Keys are not sorted properly")
-}
+	t.Run("for DateInterval's keys", func(t *testing.T) {
+		schemas, found := spec.Components.Schemas["DateInterval"]
+		require.True(t, found, "did not find `#/components/schemas/DateInterval`")
 
-func TestSortedResponsesKeys(t *testing.T) {
-	dict := openapi3.Responses{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
+		expected := []string{"start", "end"}
 
-	expected := []string{"a", "b", "c", "d", "e", "f"}
+		actual := SortedSchemaKeys(schemas.Value.Properties)
 
-	assert.EqualValues(t, expected, SortedResponsesKeys(dict), "Keys are not sorted properly")
-}
+		assert.EqualValues(t, expected, actual, "Keys are not sorted properly")
+	})
 
-func TestSortedContentKeys(t *testing.T) {
-	dict := openapi3.Content{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedContentKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedParameterKeys(t *testing.T) {
-	dict := map[string]*openapi3.ParameterRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedParameterKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedRequestBodyKeys(t *testing.T) {
-	dict := map[string]*openapi3.RequestBodyRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedRequestBodyKeys(dict), "Keys are not sorted properly")
 }
 
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -160,6 +262,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
@@ -229,6 +336,23 @@ func TestIsGoTypeReference(t *testing.T) {
 	assert.Equal(t, false, IsGoTypeReference("http://deepmap.com/doc.json"))
 }
 
+func TestSwaggerUriToIrisUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToIrisUri("/path"))
+	assert.Equal(t, "/path/:arg", SwaggerUriToIrisUri("/path/{arg}"))
+	assert.Equal(t, "/path/:arg1/:arg2", SwaggerUriToIrisUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/:arg1/:arg2/foo", SwaggerUriToIrisUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/:arg/foo", SwaggerUriToIrisUri("/path/{?arg*}/foo"))
+}
+
 func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path", SwaggerUriToEchoUri("/path"))
 	assert.Equal(t, "/path/:arg", SwaggerUriToEchoUri("/path/{arg}"))
@@ -295,6 +419,41 @@ func TestSwaggerUriToFiberUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToChiUri(t *testing.T) {
+	assert.Equal(t, "/path", SwaggerUriToChiUri("/path"))
+	assert.Equal(t, "/path/{arg}", SwaggerUriToChiUri("/path/{arg}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToChiUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}/foo", SwaggerUriToChiUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToChiUri("/path/{?arg*}/foo"))
+}
+
+func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
+	assert.Equal(t, "/{$}", SwaggerUriToStdHttpUri("/"))
+	assert.Equal(t, "/path", SwaggerUriToStdHttpUri("/path"))
+	assert.Equal(t, "/path/{arg}", SwaggerUriToStdHttpUri("/path/{arg}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}"))
+	assert.Equal(t, "/path/{arg1}/{arg2}/foo", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}/foo"))
+
+	// Make sure all the exploded and alternate formats match too
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{.arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{.arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg*}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg}/foo"))
+	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg*}/foo"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
@@ -441,15 +600,18 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"@timestamp,":  "Timestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
-		"_foo":         "Foo",
+		"_foo":         "UnderscoreFoo",
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		">=":           "GreaterThanEqual",
+		"<=":           "LessThanEqual",
+		"<":            "LessThan",
+		">":            "GreaterThan",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
 }
-
 
 func TestTypeDefinitionsEquivalent(t *testing.T) {
 	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
@@ -460,7 +622,6 @@ func TestTypeDefinitionsEquivalent(t *testing.T) {
 	}}
 	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
 }
-
 
 func TestRefPathToObjName(t *testing.T) {
 	t.Parallel()
@@ -476,7 +637,38 @@ func TestRefPathToObjName(t *testing.T) {
 	}
 }
 
-func Test_replaceInitialisms(t *testing.T) {
+func TestLowercaseFirstCharacters(t *testing.T) {
+	tests := []struct {
+		name     string
+		in       string
+		expected string
+	}{
+		{
+			name:     "id",
+			expected: "id",
+		},
+		{
+			name:     "CamelCase",
+			expected: "camelCase",
+		},
+		{
+			name:     "ID",
+			expected: "id",
+		},
+		{
+			name:     "DBTree",
+			expected: "dbTree",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, LowercaseFirstCharacters(tt.name))
+		})
+	}
+}
+
+func Test_replaceInitialism(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -509,6 +701,16 @@ func Test_replaceInitialisms(t *testing.T) {
 			name: "already initialism",
 			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
+		},
+		{
+			name: "one initialism at start",
+			args: args{s: "idFoo"},
+			want: "idFoo",
+		},
+		{
+			name: "one initialism at start and one in middle",
+			args: args{s: "apiIdFoo"},
+			want: "apiIDFoo",
 		},
 	}
 	for _, tt := range tests {

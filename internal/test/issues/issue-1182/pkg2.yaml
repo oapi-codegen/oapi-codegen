@@ -1,0 +1,12 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+servers:
+  - url: http://openapitest.deepmap.ai
+components:
+  responses:
+    ResponseWithReference:
+      description: A response object which is referred to from another package

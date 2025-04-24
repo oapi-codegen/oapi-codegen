@@ -1,0 +1,52 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        field1:
+          description: A array of enum values
+          items:
+            enum:
+            - option1
+            - option2
+            type: string
+          maxItems: 5
+          minItems: 0
+          type: array
+        field2:
+          description: A nested object with allocated name
+          properties:
+            field1:
+              type: boolean
+            field2:
+              type: string
+          required:
+          - field1
+          - field2
+          type: object
+          x-go-type-name: MyTestRequestNestedField
+        field3:
+          description: A nested object without allocated name
+          properties:
+            field1:
+              type: boolean
+            field2:
+              type: string
+          required:
+          - field1
+          - field2
+          type: object
+      x-go-type-name: MyTestRequest
+paths:
+  /test:
+    get:
+      operationId: test
+      requestBody:
+        content:
+          application/test+json:
+            schema:
+              $ref: "#/components/schemas/Test"
+      responses:
+        204:
+          description: good
