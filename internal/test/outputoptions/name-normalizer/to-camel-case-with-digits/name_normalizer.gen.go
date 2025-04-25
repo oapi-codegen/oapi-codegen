@@ -362,7 +362,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // GetHttpPet operation middleware
 func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	var err error
 
@@ -383,7 +382,7 @@ func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Req
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

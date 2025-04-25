@@ -356,10 +356,10 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4SQv24DIQyH3+XXjihc042xQ6XufQFyZxIqzkbgDFWUd6+A/lGkq3KLfeDPH/YFs6xZ",
-	"mFgr3AWFahau1H+UqrY4CytxT9dz0ph9UVsoeaWlHdb5RKtvWS6SqWgc/EcVfvGlpY+FAhwe7J/ODqza",
-	"gy+4ml79KnKvOojgOj7zbe6ywxDdviBESsu+z/KZCQ5VS+QjOhyGbIN42iQaEzkIHJ9TMpBM7HOEw/Nu",
-	"2k0wyF5PvYv9Wd2RemgGr1H4bYHDe7s0t7veT9N/k//Wja5j9q8AAAD//2k9V1a5AQAA",
+	"H4sIAAAAAAAC/4yRMU/DMBCF/8uDMapD2DwyILGzIze5pAbnzrKvA6r635FtaFSpSM2SO9vfe6d3J4yy",
+	"RmFizbAnJMpROFNt4tcyfChlLc0orMS1XI9BfXRJTaLglKZymMcDra5iSSIl9U3kMwu/uFTKx0QzLB7M",
+	"5mkalk312ruEc1eRV5G7kFkE5/Z1vzNss++b7/VAs6cwDaXS70iwyJo8L6gKF83b2NNNrICeZ4HlYwgd",
+	"JBK76GHxvOt3PTpEp4eqYv7iXKj+ioNTL/w2weK9XHbXSxj6/r8gLu/MtqkWxU8AAAD//+WESHLXAQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
@@ -399,9 +399,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "pkg2.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "pkg2.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

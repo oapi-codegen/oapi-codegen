@@ -59,7 +59,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // PostInvalidExtRefTrouble operation middleware
 func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostInvalidExtRefTrouble(w, r)
@@ -69,12 +68,11 @@ func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWrite
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // PostNoTrouble operation middleware
 func (siw *ServerInterfaceWrapper) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostNoTrouble(w, r)
@@ -84,7 +82,7 @@ func (siw *ServerInterfaceWrapper) PostNoTrouble(w http.ResponseWriter, r *http.
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {

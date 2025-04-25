@@ -283,7 +283,7 @@ func ToCamelCaseWithDigits(s string) string {
 func ToCamelCaseWithInitialisms(s string) string {
 	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
 	for i := range parts {
-		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+		if v, ok := globalState.initialismsMap[strings.ToLower(parts[i])]; ok {
 			parts[i] = v
 		}
 	}
@@ -292,19 +292,26 @@ func ToCamelCaseWithInitialisms(s string) string {
 
 var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
 
-// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
-// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-var initialismsMap = makeInitialismsMap([]string{
+var initialismsList = []string{
 	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
 	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
 	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
-})
+}
 
-func makeInitialismsMap(l []string) map[string]string {
+// targetWordRegex is a regex that matches all initialisms.
+var targetWordRegex *regexp.Regexp
+
+func makeInitialismsMap(additionalInitialisms []string) map[string]string {
+	l := append(initialismsList, additionalInitialisms...)
+
 	m := make(map[string]string, len(l))
 	for i := range l {
 		m[strings.ToLower(l[i])] = l[i]
 	}
+
+	// Create a regex to match the initialisms
+	targetWordRegex = regexp.MustCompile(`(?i)(` + strings.Join(l, "|") + `)`)
+
 	return m
 }
 
@@ -315,8 +322,6 @@ func ToCamelCaseWithInitialism(str string) string {
 func replaceInitialism(s string) string {
 	// These strings do not apply CamelCase
 	// Do not do CamelCase when these characters match when the preceding character is lowercase
-	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
-	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
 	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
 		// If the preceding character is lowercase, do not do CamelCase
 		if unicode.IsLower(rune(s[0])) {
@@ -361,18 +366,8 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		keys[i], orders[key] = key, int64(len(dict))
 		i++
 
-		if v == nil || v.Value == nil {
-			continue
-		}
-
-		ext := v.Value.Extensions[extOrder]
-		if ext == nil {
-			continue
-		}
-
-		// YAML parsing picks up the x-order as a float64
-		if order, ok := ext.(float64); ok {
-			orders[key] = int64(order)
+		if order, ok := schemaXOrder(v); ok {
+			orders[key] = order
 		}
 	}
 
@@ -383,6 +378,30 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		return keys[i] < keys[j]
 	})
 	return keys
+}
+
+func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
+	if v == nil {
+		return 0, false
+	}
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	if v.Value == nil {
+		return 0, false
+	}
+
+	// if v.Value is set, then this is actually a `$ref`, and we should check if there's an x-order set on that
+
+	// YAML parsing picks up the x-order as a float64
+	if order, ok := v.Value.Extensions[extOrder].(float64); ok {
+		return int64(order), true
+	}
+
+	return 0, false
 }
 
 // StringInArray checks whether the specified string is present in an array
@@ -427,44 +446,59 @@ func RefPathToGoType(refPath string) (string, error) {
 // refPathToGoType returns the Go typename for refPath given its
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
-		pathParts := strings.Split(refPath, "/")
-		depth := len(pathParts)
-		if local {
-			if depth != 4 {
-				return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-			}
-		} else if depth != 4 && depth != 2 {
-			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
-		}
-
-		// Schemas may have been renamed locally, so look up the actual name in
-		// the spec.
-		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
-		if err != nil {
-			return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
-		}
-		if name != "" {
-			return name, nil
-		}
-		// lastPart now stores the final element of the type path. This is what
-		// we use as the base for a type name.
-		lastPart := pathParts[len(pathParts)-1]
-		return SchemaNameToTypeName(lastPart), nil
+		return refPathToGoTypeSelf(refPath, local)
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
 		return "", fmt.Errorf("unsupported reference: %s", refPath)
 	}
 	remoteComponent, flatComponent := pathParts[0], pathParts[1]
-	if goImport, ok := globalState.importMapping[remoteComponent]; !ok {
+	goPkg, ok := globalState.importMapping[remoteComponent]
+
+	if !ok {
 		return "", fmt.Errorf("unrecognized external reference '%s'; please provide the known import for this reference using option --import-mapping", remoteComponent)
-	} else {
-		goType, err := refPathToGoType("#"+flatComponent, false)
-		if err != nil {
-			return "", err
-		}
-		return fmt.Sprintf("%s.%s", goImport.Name, goType), nil
 	}
+
+	if goPkg.Path == importMappingCurrentPackage {
+		return refPathToGoTypeSelf(fmt.Sprintf("#%s", pathParts[1]), local)
+	}
+
+	return refPathToGoTypeRemote(flatComponent, goPkg)
+
+}
+
+func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
+	pathParts := strings.Split(refPath, "/")
+	depth := len(pathParts)
+	if local {
+		if depth != 4 {
+			return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+		}
+	} else if depth != 4 && depth != 2 {
+		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+	}
+
+	// Schemas may have been renamed locally, so look up the actual name in
+	// the spec.
+	name, err := findSchemaNameByRefPath(refPath, globalState.spec)
+	if err != nil {
+		return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
+	}
+	if name != "" {
+		return name, nil
+	}
+	// lastPart now stores the final element of the type path. This is what
+	// we use as the base for a type name.
+	lastPart := pathParts[len(pathParts)-1]
+	return SchemaNameToTypeName(lastPart), nil
+}
+
+func refPathToGoTypeRemote(flatComponent string, goPkg goImport) (string, error) {
+	goType, err := refPathToGoType("#"+flatComponent, false)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s.%s", goPkg.Name, goType), nil
 }
 
 // IsGoTypeReference takes a $ref value and checks if it has link to go type.
@@ -594,6 +628,12 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
+	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
+	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
+	if uri == "/" {
+		return "/{$}"
+	}
+
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
@@ -762,6 +802,10 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Tilde"
 		case '=':
 			prefix += "Equal"
+		case '>':
+			prefix += "GreaterThan"
+		case '<':
+			prefix += "LessThan"
 		case '#':
 			prefix += "Hash"
 		case '.':
@@ -772,6 +816,8 @@ func typeNamePrefix(name string) (prefix string) {
 			prefix += "Caret"
 		case '%':
 			prefix += "Percent"
+		case '_':
+			prefix += "Underscore"
 		default:
 			// Prepend "N" to schemas starting with a number
 			if prefix == "" && unicode.IsDigit(r) {

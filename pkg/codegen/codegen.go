@@ -47,6 +47,9 @@ var globalState struct {
 	options       Configuration
 	spec          *openapi3.T
 	importMapping importMap
+	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
+	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
+	initialismsMap map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -66,10 +69,18 @@ func (gi goImport) String() string {
 // importMap maps external OpenAPI specifications files/urls to external go packages
 type importMap map[string]goImport
 
+// importMappingCurrentPackage allows an Import Mapping to map to the current package, rather than an external package.
+// This allows users to split their OpenAPI specification across multiple files, but keep them in the same package, which can reduce a bit of the overhead for users.
+// We use `-` to indicate that this is a bit of a special case
+const importMappingCurrentPackage = "-"
+
 // GoImports returns a slice of go import statements
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
+		if v.Path == importMappingCurrentPackage {
+			continue
+		}
 		goImports = append(goImports, v.String())
 	}
 	return goImports
@@ -89,7 +100,7 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok {
+			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
 				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 			}
 		}
@@ -130,6 +141,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf(`the name-normalizer option %v could not be found among options %q`,
 			opts.OutputOptions.NameNormalizer, NameNormalizers.Options())
 	}
+
+	if nameNormalizerFunction != NameNormalizerFunctionToCamelCaseWithInitialisms && len(opts.OutputOptions.AdditionalInitialisms) > 0 {
+		return "", fmt.Errorf("you have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration")
+	}
+
+	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }

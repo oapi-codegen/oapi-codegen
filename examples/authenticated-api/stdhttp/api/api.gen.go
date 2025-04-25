@@ -428,9 +428,12 @@ type MiddlewareFunc func(http.Handler) http.Handler
 
 // ListThings operation middleware
 func (siw *ServerInterfaceWrapper) ListThings(w http.ResponseWriter, r *http.Request) {
+
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListThings(w, r)
@@ -440,14 +443,17 @@ func (siw *ServerInterfaceWrapper) ListThings(w http.ResponseWriter, r *http.Req
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 // AddThing operation middleware
 func (siw *ServerInterfaceWrapper) AddThing(w http.ResponseWriter, r *http.Request) {
+
 	ctx := r.Context()
 
 	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"things:w"})
+
+	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AddThing(w, r)
@@ -457,7 +463,7 @@ func (siw *ServerInterfaceWrapper) AddThing(w http.ResponseWriter, r *http.Reque
 		handler = middleware(handler)
 	}
 
-	handler.ServeHTTP(w, r.WithContext(ctx))
+	handler.ServeHTTP(w, r)
 }
 
 type UnescapedCookieParamError struct {
@@ -534,21 +540,27 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
+// ServeMux is an abstraction of http.ServeMux.
+type ServeMux interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+	ServeHTTP(w http.ResponseWriter, r *http.Request)
+}
+
 type StdHTTPServerOptions struct {
 	BaseURL          string
-	BaseRouter       *http.ServeMux
+	BaseRouter       ServeMux
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, m *http.ServeMux, baseURL string) http.Handler {
+func HandlerFromMuxWithBaseURL(si ServerInterface, m ServeMux, baseURL string) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseURL:    baseURL,
 		BaseRouter: m,
