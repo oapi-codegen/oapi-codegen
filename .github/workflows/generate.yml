@@ -9,7 +9,6 @@ jobs:
       # perform matrix testing to give us an earlier insight into issues with different versions of supported major versions of Go
       matrix:
         version:
-        - "1.21"
         - "1.22"
         - "1.23"
         - "1.24"
