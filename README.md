@@ -3857,6 +3857,8 @@ No, we don't currently.
 
 OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
 
+In the meantime, you could follow [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/) to [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" the OpenAPI 3.1 spec to OpenAPI 3.0.
+
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
 `oapi-codegen` supports `anyOf`, `allOf` and `oneOf` for generated code.
