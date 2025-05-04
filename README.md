@@ -3851,6 +3851,12 @@ Got one to add? Please raise a PR!
 
 ## Frequently Asked Questions (FAQs)
 
+### Does `oapi-codegen` support OpenAPI 3.1?
+
+No, we don't currently.
+
+OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
+
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
 `oapi-codegen` supports `anyOf`, `allOf` and `oneOf` for generated code.
