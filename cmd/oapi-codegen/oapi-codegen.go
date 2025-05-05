@@ -271,6 +271,15 @@ func main() {
 		errExit("configuration error: %v\n", err)
 	}
 
+	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
+		out := "WARNING: A number of warning(s) were returned when validating the GenerateOptions:"
+		for k, v := range warnings {
+			out += "\n- " + k + ": " + v
+		}
+
+		_, _ = fmt.Fprint(os.Stderr, out)
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)

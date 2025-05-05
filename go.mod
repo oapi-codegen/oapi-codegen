@@ -6,6 +6,7 @@ require (
 	github.com/getkin/kin-openapi v0.128.0
 	github.com/speakeasy-api/openapi-overlay v0.10.1
 	github.com/stretchr/testify v1.10.0
+	golang.org/x/mod v0.17.0
 	golang.org/x/text v0.20.0
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d
 	gopkg.in/yaml.v2 v2.4.0
@@ -26,5 +27,4 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
-	golang.org/x/mod v0.17.0 // indirect
 )

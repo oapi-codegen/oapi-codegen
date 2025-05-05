@@ -132,6 +132,35 @@ func (oo GenerateOptions) Validate() map[string]string {
 	return nil
 }
 
+func (oo GenerateOptions) Warnings() map[string]string {
+	warnings := make(map[string]string)
+
+	if oo.StdHTTPServer {
+		if warning := oo.warningForStdHTTP(); warning != "" {
+			warnings["std-http-server"] = warning
+		}
+	}
+
+	return warnings
+}
+
+func (oo GenerateOptions) warningForStdHTTP() string {
+	pathToGoMod, mod, err := findAndParseGoModuleForDepth(".", maximumDepthToSearchForGoMod)
+	if err != nil {
+		return fmt.Sprintf("Encountered an error while trying to find a `go.mod` or a `tools.mod` in this directory, or %d levels above it: %v", maximumDepthToSearchForGoMod, err)
+	}
+
+	if mod == nil {
+		return fmt.Sprintf("Failed to find a `go.mod` or a `tools.mod` in this directory, or %d levels above it, so unable to validate that you're using Go 1.22+. If you start seeing API interactions resulting in a `404 page not found`, the Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", maximumDepthToSearchForGoMod)
+	}
+
+	if !hasMinimalMinorGoDirective(minimumGoVersionForGenerateStdHTTPServer, mod) {
+		return fmt.Sprintf("Found a `go.mod` or a `tools.mod` at path %v, but it only had a version of %v, whereas the minimum required is 1.%d. It's very likely API interactions will result in a `404 page not found`. The Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", pathToGoMod, mod.Go.Version, minimumGoVersionForGenerateStdHTTPServer)
+	}
+
+	return ""
+}
+
 // CompatibilityOptions specifies backward compatibility settings for the
 // code generator.
 type CompatibilityOptions struct {
