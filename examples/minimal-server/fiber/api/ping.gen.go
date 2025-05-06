@@ -53,6 +53,6 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
-	router.Get(options.BaseURL+"/ping", wrapper.GetPing)
+	router.Get(options.BaseURL+"/ping", wrapper.GetPing).Name("GET /ping")
 
 }
