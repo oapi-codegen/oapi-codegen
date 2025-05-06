@@ -561,6 +561,8 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetContentObject")
+
 	return req, nil
 }
 
@@ -587,6 +589,8 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetCookie")
 
 	if params != nil {
 
@@ -761,6 +765,8 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "EnumParams")
+
 	return req, nil
 }
 
@@ -787,6 +793,8 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetHeader")
 
 	if params != nil {
 
@@ -916,6 +924,8 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetLabelExplodeArray")
+
 	return req, nil
 }
 
@@ -949,6 +959,8 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetLabelExplodeObject")
 
 	return req, nil
 }
@@ -984,6 +996,8 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetLabelNoExplodeArray")
+
 	return req, nil
 }
 
@@ -1017,6 +1031,8 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetLabelNoExplodeObject")
 
 	return req, nil
 }
@@ -1052,6 +1068,8 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetMatrixExplodeArray")
+
 	return req, nil
 }
 
@@ -1085,6 +1103,8 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetMatrixExplodeObject")
 
 	return req, nil
 }
@@ -1120,6 +1140,8 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetMatrixNoExplodeArray")
+
 	return req, nil
 }
 
@@ -1154,6 +1176,8 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetMatrixNoExplodeObject")
+
 	return req, nil
 }
 
@@ -1184,6 +1208,8 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetPassThrough")
 
 	return req, nil
 }
@@ -1229,6 +1255,8 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetDeepObject")
 
 	return req, nil
 }
@@ -1401,6 +1429,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetQueryForm")
+
 	return req, nil
 }
 
@@ -1434,6 +1464,8 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetSimpleExplodeArray")
 
 	return req, nil
 }
@@ -1469,6 +1501,8 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetSimpleExplodeObject")
+
 	return req, nil
 }
 
@@ -1502,6 +1536,8 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetSimpleNoExplodeArray")
 
 	return req, nil
 }
@@ -1537,6 +1573,8 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetSimpleNoExplodeObject")
+
 	return req, nil
 }
 
@@ -1571,6 +1609,8 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetSimplePrimitive")
+
 	return req, nil
 }
 
@@ -1601,6 +1641,8 @@ func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Reque
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "GetStartingWithNumber")
 
 	return req, nil
 }
