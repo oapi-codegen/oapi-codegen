@@ -14,6 +14,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -302,6 +303,11 @@ func main() {
 
 	if len(noVCSVersionOverride) > 0 {
 		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+	}
+
+	err = swagger.Validate(context.Background())
+	if err != nil {
+		errExit("the swagger spec in %s is not valid\n: %s", flag.Arg(0), err)
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
