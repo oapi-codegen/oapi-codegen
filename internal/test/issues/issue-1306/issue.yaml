@@ -1,0 +1,33 @@
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure that recursive types are handled properly
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  type: object
+                  x-go-type-name: SomeType
+                  properties:
+                    name:
+                      type: string
+                    objects:
+                      type: array
+                      items:
+                        type: object
+                        x-go-type-name: SomeChildType
+                        properties:
+                          key:
+                            type: string
+                          value:
+                            type: string
