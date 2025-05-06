@@ -350,7 +350,7 @@ type JSONExampleResponseObject interface {
 	VisitJSONExampleResponse(w http.ResponseWriter) error
 }
 
-type JSONExample200JSONResponse Example
+type JSONExample200JSONResponse = Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -457,7 +457,7 @@ type MultipleRequestAndResponseTypesResponseObject interface {
 	VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error
 }
 
-type MultipleRequestAndResponseTypes200JSONResponse Example
+type MultipleRequestAndResponseTypes200JSONResponse = Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -466,7 +466,7 @@ func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequ
 	return json.NewEncoder(w).Encode(response)
 }
 
-type MultipleRequestAndResponseTypes200FormdataResponse Example
+type MultipleRequestAndResponseTypes200FormdataResponse = Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
@@ -726,7 +726,7 @@ type URLEncodedExampleResponseObject interface {
 	VisitURLEncodedExampleResponse(w http.ResponseWriter) error
 }
 
-type URLEncodedExample200FormdataResponse Example
+type URLEncodedExample200FormdataResponse = Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
