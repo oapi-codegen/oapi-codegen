@@ -1,0 +1,20 @@
+builds:
+  - binary: oapi-codegen
+    main: ./cmd/oapi-codegen/oapi-codegen.go
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - windows
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
