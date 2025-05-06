@@ -1,0 +1,48 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        Boolean:
+          type: boolean
+          x-go-type-skip-optional-pointer: true
+        Integer:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+        Number:
+          type: number
+          x-go-type-skip-optional-pointer: true
+        String:
+          type: string
+          x-go-type-skip-optional-pointer: true
+        Array:
+          type: array
+          items:
+            type: integer
+          x-go-type-skip-optional-pointer: true
+        Object:
+          type: object
+          properties:
+            field1:
+              type: string
+            field2:
+              type: string
+          x-go-type-skip-optional-pointer: true
+        BigInteger:
+          type: integer
+          x-go-type-skip-optional-pointer: true
+          x-go-type: big.Int
+          x-go-type-import:
+            path: math/big
+          x-empty-value: never
+      additionalProperties: true
+paths:
+  /test:
+    get:
+      operationId: test
+      requestBody:
+        content:
+          application/test+json:
+            schema:
+              $ref: "#/components/schemas/Test"
