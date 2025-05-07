@@ -608,10 +608,17 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		}
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
-		// We default to float for "number"
+		// We default to float for "number", unless overridden by config
+		if f == "" {
+			if globalState.options.OutputOptions.DefaultNumberFormat != "" {
+				f = globalState.options.OutputOptions.DefaultNumberFormat
+			} else {
+				f = "float"
+			}
+		}
 		if f == "double" {
 			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
+		} else if f == "float" {
 			outSchema.GoType = "float32"
 		} else {
 			return fmt.Errorf("invalid number format: %s", f)
