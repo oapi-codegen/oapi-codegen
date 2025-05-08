@@ -1,0 +1,3 @@
+package: issue1091
+generate:
+  models: true
