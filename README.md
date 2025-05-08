@@ -4211,7 +4211,7 @@ In addition, we are also generously sponsored by the following folks, each of wh
 </p>
 
 <p align="center">
-	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
