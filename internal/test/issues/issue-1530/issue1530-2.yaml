@@ -1,0 +1,52 @@
+openapi: 3.0.4
+info:
+  title: test
+  version: v1
+paths:
+  /aaa:
+    get:
+      operationId: aaa
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/objX"
+components:
+  schemas:
+    objstr:
+      type: object
+      # cannot cope with this one being a pointer, since we don't have access to
+      # the field type information at the key point of generating the union. it
+      # either needs to be required, or have the skip-optional-pointer
+      # annotation.
+      #required: [objectType]
+      properties:
+        objectType:
+          type: string
+          enum: ["str"]
+          x-go-type-skip-optional-pointer: true
+    objint:
+      type: object
+      required: [objectType]
+      properties:
+        objectType:
+          type: string
+          enum: ["int"]
+    objX:
+      properties:
+        objectType:
+          type: string
+          enum: ["str", "int"]
+      # can cope with this one being optional, because we have access to its
+      # type information when generating the union
+      #required: [objectType]
+      anyOf:
+        - $ref: "#/components/schemas/objstr"
+        - $ref: "#/components/schemas/objint"
+      discriminator:
+        propertyName: objectType
+        mapping:
+          "int": "#/components/schemas/objint"
+          "str": "#/components/schemas/objstr"
