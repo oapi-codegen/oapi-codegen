@@ -964,7 +964,9 @@ func GetUserTemplateText(inputData string) (template string, err error) {
 		return "", fmt.Errorf("failed to execute GET request data from %s: %w", inputData, err)
 	}
 	if resp != nil {
-		defer resp.Body.Close()
+		defer func() {
+			_ = resp.Body.Close()
+		}()
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("got non %d status code on GET %s", resp.StatusCode, inputData)
