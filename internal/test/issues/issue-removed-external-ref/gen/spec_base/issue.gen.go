@@ -217,6 +217,10 @@ type PostInvalidExtRefTroubleResponseObject interface {
 
 type PostInvalidExtRefTrouble300JSONResponse struct{ externalRef0.Pascal }
 
+func (response PostInvalidExtRefTrouble300JSONResponse) MarshalJSON() ([]byte, error) {
+	return json.Marshal(response.PascalJSONResponse)
+}
+
 func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(300)
