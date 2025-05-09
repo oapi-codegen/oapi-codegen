@@ -310,7 +310,7 @@ func main() {
 	}
 
 	if len(noVCSVersionOverride) > 0 {
-		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
