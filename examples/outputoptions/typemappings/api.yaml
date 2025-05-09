@@ -1,0 +1,25 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: type-mappings
+components:
+  schemas:
+    StringType:
+      type: string
+      format: custom-type
+      description: should not be defined via an alias.
+    StringAlias:
+      type: string
+      format: custom-alias
+      description: should be defined via an alias.
+    Client:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: should have the overridden go type.
+        uuid:
+          type: string
+          format: uuid
+          description: should have no pointer receiver, even though it's an optional field.
