@@ -2493,7 +2493,7 @@ You can see this in more detail in [the example code](examples/extensions/xgotyp
 
 </td>
 <td>
-Force the presence of the JSON tag `omitempty` on a field
+Force the presence (or the removal) of the JSON tag `omitempty` on a field
 </td>
 <td>
 <details>
@@ -3186,7 +3186,7 @@ It is possible to extend the inbuilt code generation from `oapi-codegen` using G
 You can specify, through your configuration file, the `output-options.user-templates` setting to override the inbuilt templates and use a user-defined template.
 
 > [!NOTE]
-> Filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for
+> Filenames given to the `user-templates` configuration must **exactly** match the filename that `oapi-codegen` is looking for. List of available templates can be found in the [default templates](https://github.com/oapi-codegen/oapi-codegen/tree/main/pkg/codegen/templates) directory.
 
 ### Local paths
 
