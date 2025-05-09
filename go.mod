@@ -4,7 +4,7 @@ go 1.22
 
 require (
 	github.com/getkin/kin-openapi v0.128.0
-	github.com/speakeasy-api/openapi-overlay v0.10.1
+	github.com/speakeasy-api/openapi-overlay v0.10.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.17.0
 	golang.org/x/text v0.20.0

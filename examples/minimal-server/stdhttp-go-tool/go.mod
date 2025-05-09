@@ -18,7 +18,7 @@ require (
 	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.10.1 // indirect
+	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
