@@ -584,26 +584,17 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 	} else if t.Is("integer") {
 		// We default to int if format doesn't ask for something else.
 		switch f {
-		case "int64":
-			outSchema.GoType = "int64"
-		case "int32":
-			outSchema.GoType = "int32"
-		case "int16":
-			outSchema.GoType = "int16"
-		case "int8":
-			outSchema.GoType = "int8"
-		case "int":
-			outSchema.GoType = "int"
-		case "uint64":
-			outSchema.GoType = "uint64"
-		case "uint32":
-			outSchema.GoType = "uint32"
-		case "uint16":
-			outSchema.GoType = "uint16"
-		case "uint8":
-			outSchema.GoType = "uint8"
-		case "uint":
-			outSchema.GoType = "uint"
+		case "int64",
+			"int32",
+			"int16",
+			"int8",
+			"int",
+			"uint64",
+			"uint32",
+			"uint16",
+			"uint8",
+			"uint":
+			outSchema.GoType = f
 		default:
 			outSchema.GoType = "int"
 		}
