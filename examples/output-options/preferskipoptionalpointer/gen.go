@@ -5,13 +5,21 @@ package preferskipoptionalpointer
 
 // Client defines model for Client.
 type Client struct {
-	Id   float32 `json:"id,omitempty"`
-	Name string  `json:"name"`
+	// Id This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
+	Id float32 `json:"id,omitempty"`
+
+	// Name This field is required, so will never have an optional pointer.
+	Name string `json:"name"`
 }
 
 // ClientWithExtension defines model for ClientWithExtension.
 type ClientWithExtension struct {
-	Id        float32  `json:"id,omitempty"`
-	Name      string   `json:"name"`
+	// Id This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
+	Id float32 `json:"id,omitempty"`
+
+	// Name This field is required, so will never have an optional pointer.
+	Name string `json:"name"`
+
+	// PointerId This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option.
 	PointerId *float32 `json:"pointer_id,omitempty"`
 }
