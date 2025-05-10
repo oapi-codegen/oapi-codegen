@@ -1,4 +1,5 @@
-package: issue_52
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue52
 generate:
   echo-server: true
   client: true

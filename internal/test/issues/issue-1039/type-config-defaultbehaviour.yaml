@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: defaultbehaviour
+generate:
+  models: true
+output: defaultbehaviour/types.gen.go

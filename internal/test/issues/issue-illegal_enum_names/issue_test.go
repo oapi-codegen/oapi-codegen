@@ -1,4 +1,4 @@
-package illegal_enum_names
+package illegalenumnames
 
 import (
 	"go/ast"
@@ -7,9 +7,8 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/stretchr/testify/require"
-
-	"github.com/deepmap/oapi-codegen/pkg/codegen"
 )
 
 func TestIllegalEnumNames(t *testing.T) {
@@ -17,7 +16,7 @@ func TestIllegalEnumNames(t *testing.T) {
 	require.NoError(t, err)
 
 	opts := codegen.Configuration{
-		PackageName: "illegal_enum_names",
+		PackageName: "illegalenumnames",
 		Generate: codegen.GenerateOptions{
 			EchoServer:   true,
 			Client:       true,
@@ -47,6 +46,7 @@ func TestIllegalEnumNames(t *testing.T) {
 		}
 	}
 
+	require.Equal(t, `""`, constDefs["BarEmpty"])
 	require.Equal(t, `"Bar"`, constDefs["BarBar"])
 	require.Equal(t, `"Foo"`, constDefs["BarFoo"])
 	require.Equal(t, `"Foo Bar"`, constDefs["BarFooBar"])
@@ -54,6 +54,6 @@ func TestIllegalEnumNames(t *testing.T) {
 	require.Equal(t, `"1Foo"`, constDefs["BarN1Foo"])
 	require.Equal(t, `" Foo"`, constDefs["BarFoo1"])
 	require.Equal(t, `" Foo "`, constDefs["BarFoo2"])
-	require.Equal(t, `"_Foo_"`, constDefs["BarFoo3"])
+	require.Equal(t, `"_Foo_"`, constDefs["BarUnderscoreFoo"])
 	require.Equal(t, `"1"`, constDefs["BarN1"])
 }

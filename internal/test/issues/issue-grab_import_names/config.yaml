@@ -1,4 +1,5 @@
-package: grab_import_names
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: grabimportnames
 generate:
   echo-server: true
   client: true

@@ -1,4 +1,5 @@
-package: packageB
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: packageb
 generate:
   models: true
   embedded-spec: true

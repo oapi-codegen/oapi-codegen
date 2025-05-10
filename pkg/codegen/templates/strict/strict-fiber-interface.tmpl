@@ -1,0 +1,145 @@
+{{range .}}
+    {{$opid := .OperationId -}}
+    type {{$opid | ucFirst}}RequestObject struct {
+        {{range .PathParams -}}
+            {{.GoName | ucFirst}} {{.TypeDef}} {{.JsonTag}}
+        {{end -}}
+        {{if .RequiresParamObject -}}
+            Params {{$opid}}Params
+        {{end -}}
+        {{if .HasMaskedRequestContentTypes -}}
+            ContentType string
+        {{end -}}
+        {{$multipleBodies := gt (len .Bodies) 1 -}}
+        {{range .Bodies -}}
+            {{if $multipleBodies}}{{.NameTag}}{{end}}Body {{if eq .NameTag "Multipart"}}*multipart.Reader{{else if ne .NameTag ""}}*{{$opid}}{{.NameTag}}RequestBody{{else}}io.Reader{{end}}
+        {{end -}}
+    }
+
+    type {{$opid | ucFirst}}ResponseObject interface {
+        Visit{{$opid}}Response(ctx *fiber.Ctx) error
+    }
+
+    {{range .Responses}}
+        {{$statusCode := .StatusCode -}}
+        {{$hasHeaders := ne 0 (len .Headers) -}}
+        {{$fixedStatusCode := .HasFixedStatusCode -}}
+        {{$isRef := .IsRef -}}
+        {{$isExternalRef := .IsExternalRef -}}
+        {{$ref := .Ref  | ucFirst -}}
+        {{$headers := .Headers -}}
+
+        {{if (and $hasHeaders (not $isRef)) -}}
+            type {{$opid}}{{$statusCode}}ResponseHeaders struct {
+                {{range .Headers -}}
+                    {{.GoName}} {{.Schema.TypeDecl}}
+                {{end -}}
+            }
+        {{end}}
+
+        {{range .Contents}}
+            {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
+            {{if and $fixedStatusCode $isRef -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+                type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
+                {{else if $isExternalRef -}}
+                type {{$receiverTypeName}} struct { {{$ref}} }
+                {{else -}}
+                type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
+                {{end}}
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+                type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+            {{else -}}
+                type {{$receiverTypeName}} struct {
+                    Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                    {{if $hasHeaders -}}
+                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
+                    {{end -}}
+
+                    {{if not $fixedStatusCode -}}
+                        StatusCode int
+                    {{end -}}
+
+                    {{if not .HasFixedContentType -}}
+                        ContentType string
+                    {{end -}}
+
+                    {{if not .IsSupported -}}
+                        ContentLength int64
+                    {{end -}}
+                }
+            {{end}}
+
+            func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
+                {{range $headers -}}
+                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                {{end -}}
+                {{if eq .NameTag "Multipart" -}}
+                    writer := multipart.NewWriter(ctx.Response().BodyWriter())
+                {{end -}}
+                ctx.Response().Header.Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType("{{.ContentType}}", map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}response.ContentType{{end}})
+                {{if not .IsSupported -}}
+                    if response.ContentLength != 0 {
+                        ctx.Response().Header.Set("Content-Length", fmt.Sprint(response.ContentLength))
+                    }
+                {{end -}}
+                ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{if .IsJSON }}
+                    {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
+                {{else if eq .NameTag "Text" -}}
+                    _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
+                    return err
+                {{else if eq .NameTag "Formdata" -}}
+                    if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil); err != nil {
+                        return err
+                    } else {
+                        _, err := ctx.WriteString(form.Encode())
+                        return err
+                    }
+                {{else if eq .NameTag "Multipart" -}}
+                    defer writer.Close()
+                    return {{if $hasBodyVar}}response.Body{{else}}response{{end}}(writer);
+                {{else -}}
+                    if closer, ok := response.Body.(io.ReadCloser); ok {
+                        defer closer.Close()
+                    }
+                    _, err := io.Copy(ctx.Response().BodyWriter(), response.Body)
+                    return err
+                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+            }
+        {{end}}
+
+        {{if eq 0 (len .Contents) -}}
+            {{if and $fixedStatusCode $isRef -}}
+                type {{$opid}}{{$statusCode}}Response {{if not $isExternalRef}}={{end}} {{$ref}}Response
+            {{else -}}
+                type {{$opid}}{{$statusCode}}Response struct {
+                    {{if $hasHeaders -}}
+                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
+                    {{end}}
+                    {{if not $fixedStatusCode -}}
+                        StatusCode int
+                    {{end -}}
+                }
+            {{end -}}
+            func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
+                {{range $headers -}}
+                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                {{end -}}
+                ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                return nil
+            }
+        {{end}}
+    {{end}}
+{{end}}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{$opid := .OperationId -}}
+{{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
+{{end}}{{/* range . */ -}}
+}

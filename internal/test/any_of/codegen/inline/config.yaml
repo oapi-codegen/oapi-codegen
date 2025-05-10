@@ -1,0 +1,6 @@
+package: inline
+generate:
+  models: true
+  client: true
+  echo-server: true
+output: openapi.gen.go

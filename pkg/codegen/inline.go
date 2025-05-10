@@ -16,6 +16,7 @@ package codegen
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"text/template"
@@ -23,28 +24,30 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// This generates a gzipped, base64 encoded JSON representation of the
+// GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
 func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
+	// ensure that any external file references are embedded into the embedded spec
+	swagger.InternalizeRefs(context.Background(), nil)
 	// Marshal to json
 	encoded, err := swagger.MarshalJSON()
 	if err != nil {
-		return "", fmt.Errorf("error marshaling swagger: %s", err)
+		return "", fmt.Errorf("error marshaling swagger: %w", err)
 	}
 
 	// gzip
 	var buf bytes.Buffer
 	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
 	if err != nil {
-		return "", fmt.Errorf("error creating gzip compressor: %s", err)
+		return "", fmt.Errorf("error creating gzip compressor: %w", err)
 	}
 	_, err = zw.Write(encoded)
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping swagger file: %w", err)
 	}
 	err = zw.Close()
 	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %s", err)
+		return "", fmt.Errorf("error gzipping swagger file: %w", err)
 	}
 	str := base64.StdEncoding.EncodeToString(buf.Bytes())
 

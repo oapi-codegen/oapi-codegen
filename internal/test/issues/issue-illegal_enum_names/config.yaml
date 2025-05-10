@@ -1,4 +1,5 @@
-package: illegal_enum_names
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: illegalenumnames
 generate:
   echo-server: true
   client: true

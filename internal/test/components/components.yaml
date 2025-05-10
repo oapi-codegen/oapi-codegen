@@ -11,9 +11,9 @@ paths:
       description: |
         This endpoint exists so that components can be created in this
         spec and not be pruned
-    # TODO: figure out why uncommenting this causes failures
-    #   parameters:
-    #     - $ref: "#/components/parameters/ParameterObject"
+      # TODO: figure out why uncommenting this causes failures
+      #   parameters:
+      #     - $ref: "#/components/parameters/ParameterObject"
       requestBody:
         $ref: "#/components/requestBodies/RequestBody"
       responses:
@@ -93,7 +93,7 @@ paths:
                 type: object
                 additionalProperties:
                   type: string
-            required: [inner]
+            required: [ inner ]
       responses:
         default:
           description: placeholder
@@ -118,7 +118,7 @@ paths:
                   type: object
                   additionalProperties:
                     type: integer
-              required: [name, inner]
+              required: [ name, inner ]
               additionalProperties: true
       responses:
         default:
@@ -137,7 +137,7 @@ components:
           type: string
         readOnlyRequiredProp:
           description: |
-            This property is required and readOnly, so the go model should have it as a pointer, 
+            This property is required and readOnly, so the go model should have it as a pointer,
             as it will not be included when it is sent from client to server.
           type: string
           readOnly: true
@@ -149,6 +149,27 @@ components:
         - firstName
         - readOnlyRequiredProp
         - writeOnlyRequiredProp
+    SchemaObjectNullable:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+      nullable: true
     AdditionalPropertiesObject1:
       description: Has additional properties of type int
       type: object
@@ -159,7 +180,7 @@ components:
           type: integer
         optional:
           type: string
-      required: [name, id]
+      required: [ name, id ]
       additionalProperties:
         type: integer
     AdditionalPropertiesObject2:
@@ -170,7 +191,7 @@ components:
           type: string
         id:
           type: integer
-      required: [name, id]
+      required: [ name, id ]
       additionalProperties: false
     AdditionalPropertiesObject3:
       description: Allows any additional property
@@ -178,7 +199,7 @@ components:
       properties:
         name:
           type: string
-      required: [name]
+      required: [ name ]
       additionalProperties: true
     AdditionalPropertiesObject4:
       description: Has anonymous field which has additional properties
@@ -191,9 +212,9 @@ components:
           properties:
             name:
               type: string
-          required: [name]
+          required: [ name ]
           additionalProperties: true
-      required: [inner, name]
+      required: [ inner, name ]
       additionalProperties: true
     AdditionalPropertiesObject5:
       description: Has additional properties with schema for dictionaries
@@ -207,8 +228,13 @@ components:
         type: object
         additionalProperties:
           $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject7:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObjectNullable'
     OneOfObject1:
-      description: oneOf with references and no disciminator
+      description: oneOf with references and no discriminator
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
@@ -244,7 +270,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant2'
         - $ref: '#/components/schemas/OneOfVariant3'
     OneOfObject5:
-      description: oneOf with disciminator but no mapping
+      description: oneOf with discriminator but no mapping
       oneOf:
         - $ref: '#/components/schemas/OneOfVariant4'
         - $ref: '#/components/schemas/OneOfVariant5'
@@ -260,6 +286,24 @@ components:
         mapping:
           v4: '#/components/schemas/OneOfVariant4'
           v5: '#/components/schemas/OneOfVariant5'
+    OneOfObject61:
+      description: oneOf with discriminator and partial mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+    OneOfObject62:
+      description: oneOf with snake_case discriminator and partial snake_case mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/one_of_variant51'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          variant_four: '#/components/schemas/OneOfVariant4'
     OneOfObject7:
       description: array of oneOf
       type: array
@@ -277,7 +321,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
     OneOfObject9:
-      description: oneOf with fixed descriminator
+      description: oneOf with fixed discriminator
       type: object
       properties:
         type:
@@ -325,6 +369,23 @@ components:
         - oneOf:
             - $ref: '#/components/schemas/OneOfVariant3'
             - $ref: '#/components/schemas/OneOfVariant4'
+    OneOfObject13:
+      description: oneOf with fixed discriminator and other fields allowed
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+      additionalProperties: true
     AnyOfObject1:
       description: simple anyOf case
       anyOf:
@@ -363,6 +424,16 @@ components:
       required:
         - discriminator
         - id
+    one_of_variant51:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
     OneOfVariant6:
       type: object
       properties:
@@ -381,13 +452,13 @@ components:
         value2:
           type: string
           format: json
-      required: [name, value1]
+      required: [ name, value1 ]
     Enum1:
       description: |
         Conflicts with Enum2, enum values need to be prefixed with type
         name.
       type: string
-      enum: [One, Two, Three]
+      enum: [ One, Two, Three ]
     Enum2:
       description: |
         Conflicts with Enum1, enum values need to be prefixed with type
@@ -420,8 +491,8 @@ components:
       description: |
         Two enums of the same type combined with allOf.
       allOf:
-      - $ref: "#/components/schemas/Enum1"
-      - enum: [ Seven ]
+        - $ref: "#/components/schemas/Enum1"
+        - enum: [ Seven ]
     FunnyValues:
       description: Edge cases for enum names
       type: string
@@ -429,6 +500,7 @@ components:
         - '*'
         - '5'
         - '&'
+        - '%'
         - ''
     RenameMe:
       description: This schema should be renamed via x-go-name when generating
@@ -439,14 +511,14 @@ components:
           type: string
         prop2:
           type: string
-      required: [prop1, prop2]
+      required: [ prop1, prop2 ]
     ReferenceToRenameMe:
       description: When a Schema is renamed, $ref should refer to the new name
       type: object
       properties:
         ToNewName:
           $ref: "#/components/schemas/RenameMe"
-      required: [ToNewName]
+      required: [ ToNewName ]
   responses:
     ResponseObject:
       x-go-name: RenamedResponseObject
@@ -483,7 +555,7 @@ components:
       in: query
       schema:
         type: string
-        enum: [on, off, both]
+        enum: [ on, off, both ]
     EnumParam2:
       name: ParamEnum2
       description: a parameter

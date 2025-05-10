@@ -8,17 +8,17 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
-
-	api "github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
-	middleware "github.com/deepmap/oapi-codegen/pkg/chi-middleware"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/chi/api"
 )
 
 func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
 	swagger, err := api.GetSwagger()
@@ -46,7 +46,7 @@ func main() {
 
 	s := &http.Server{
 		Handler: r,
-		Addr:    fmt.Sprintf("0.0.0.0:%d", *port),
+		Addr:    net.JoinHostPort("0.0.0.0", *port),
 	}
 
 	// And we serve HTTP until the world ends.
