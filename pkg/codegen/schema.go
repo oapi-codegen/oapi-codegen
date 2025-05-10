@@ -299,6 +299,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+		outSchema.SkipOptionalPointer = skipOptionalPointer
+	}
+
 	// Check x-go-type, which will completely override the definition of this
 	// schema with the provided type.
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
@@ -310,16 +320,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		outSchema.DefineViaAlias = true
 
 		return outSchema, nil
-	}
-
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
-	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-		if err != nil {
-			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-		}
-		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Schema type and format, eg. string / binary
@@ -593,37 +593,30 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 	} else if t.Is("integer") {
 		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else {
+		switch f {
+		case "int64",
+			"int32",
+			"int16",
+			"int8",
+			"int",
+			"uint64",
+			"uint32",
+			"uint16",
+			"uint8",
+			"uint":
+			outSchema.GoType = f
+		default:
 			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
 		// We default to float for "number"
-		if f == "double" {
+		switch f {
+		case "double":
 			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
+		case "float", "":
 			outSchema.GoType = "float32"
-		} else {
+		default:
 			return fmt.Errorf("invalid number format: %s", f)
 		}
 		outSchema.DefineViaAlias = true
@@ -738,11 +731,17 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		if !omitEmpty {
 			fieldTags["json"] = p.JsonFieldName
+			if globalState.options.OutputOptions.EnableYamlTags {
+				fieldTags["yaml"] = p.JsonFieldName
+			}
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
 			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
+			if globalState.options.OutputOptions.EnableYamlTags {
+				fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
+			}
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName + ",omitempty"
 			}

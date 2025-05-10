@@ -42,6 +42,25 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
+## For Go 1.24+
+
+It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
+
+To do this, you run `go get -tool`:
+
+```sh
+$ go get -tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+# this will then modify your `go.mod`
+```
+
+From there, each invocation of `oapi-codegen` would be used like so:
+
+```go
+//go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
+```
+
+## Prior to Go 1.24
+
 It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 This would give you a `tools/tools.go`:
@@ -2018,7 +2037,7 @@ If you don't want to do this, an alternate option is to [use a single package, w
 
 Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
-## Modifying the input OpenAPI Specification
+## Modifying the input OpenAPI Specification (with OpenAPI Overlay)
 
 Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
 
@@ -3087,6 +3106,20 @@ Middleware library
 
 </tr>
 
+<tr>
+<td>
+
+Any other server (which conforms to `net/http`)
+
+</td>
+<td>
+
+[nethttp-middleware](https://github.com/oapi-codegen/nethttp-middleware)
+
+</td>
+
+</tr>
+
 </table>
 
 > [!NOTE]
@@ -3169,7 +3202,7 @@ output-options:
     typedef.tmpl: no-prefix.tmpl
 ```
 
-> [!WARN]
+> [!WARNING]
 > We do not interpolate `~` or `$HOME` (or other environment variables) in paths given
 
 ### HTTPS paths
@@ -3812,10 +3845,19 @@ Here are a few we've found around the Web:
 - [Generating Go server code from OpenAPI 3 definitions](https://ldej.nl/post/generating-go-from-openapi-3/)
 - [Go Client Code Generation from Swagger and OpenAPI](https://medium.com/@kyodo-tech/go-client-code-generation-from-swagger-and-openapi-a0576831836c)
 - [Go oapi-codegen + request validation](https://blog.commitsmart.com/go-oapi-codegen-request-validation-285398b37dc8)
+- [Streamlining Go + Chi Development: Generating Code from an OpenAPI Spec](https://i4o.dev/blog/oapi-codegen-with-chi-router)
 
 Got one to add? Please raise a PR!
 
 ## Frequently Asked Questions (FAQs)
+
+### Does `oapi-codegen` support OpenAPI 3.1?
+
+No, we don't currently.
+
+OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
+
+In the meantime, you could follow [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/) to [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" the OpenAPI 3.1 spec to OpenAPI 3.0.
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
@@ -4128,11 +4170,17 @@ This may lead to breakage in your consuming code, and if so, sorry that's happen
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
 
+## Contributors
+
+We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+<a href="https://github.com/oapi-codegen/oapi-codegen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
+</a>
+
 ## Sponsors
 
 For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
-
-We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
@@ -4163,7 +4211,7 @@ In addition, we are also generously sponsored by the following folks, each of wh
 </p>
 
 <p align="center">
-	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
@@ -4175,6 +4223,16 @@ In addition, we are also generously sponsored by the following folks, each of wh
 <p align="center">
 	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	</a>
+</p>
+
+<p align="center">
+	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
+		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
+		</picture>
 	</a>
 </p>
 
