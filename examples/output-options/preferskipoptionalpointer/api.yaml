@@ -10,8 +10,10 @@ components:
         - name
       properties:
         name:
+          description: This field is required, so will never have an optional pointer.
           type: string
         id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
           type: number
     ClientWithExtension:
       type: object
@@ -19,10 +21,18 @@ components:
         - name
       properties:
         name:
+          description: This field is required, so will never have an optional pointer.
           type: string
         id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
           type: number
         pointer_id:
           type: number
+          description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option.
           # NOTE that this overrides the global preference
           x-go-type-skip-optional-pointer: false
+  # TODO
+  # TODO
+  # TODO
+  # NOTE that this will **??**, which even if we specify **??**, will then be **??**
+  #
