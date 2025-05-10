@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: preferskipoptionalpointer
+output: gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated, even if they're unreferenced
+  skip-prune: true
+  prefer-skip-optional-pointer: true
