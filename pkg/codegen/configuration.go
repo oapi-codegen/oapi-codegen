@@ -286,7 +286,8 @@ type OutputOptions struct {
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
 
-	// Whether to use non-pointer types by default.
+	// PreferSkipOptionalPointer allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional.
+	// This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay)
 	PreferSkipOptionalPointer bool `yaml:"prefer-skip-optional-pointer,omitempty"`
 }
 
