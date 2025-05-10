@@ -135,7 +135,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *gin.Context) {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Param("type"), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter type: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, &InvalidParamFormatError{ParamName: "type", Err: err}, http.StatusBadRequest)
 		return
 	}
 
@@ -229,20 +229,21 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 		var Header1 string
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandler(c, fmt.Errorf("Expected one value for header1, got %d", n), http.StatusBadRequest)
+			siw.ErrorHandler(c, &TooManyValuesForParamError{ParamName: "header1", Count: n}, http.StatusBadRequest)
 			return
 		}
 
 		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
-			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter header1: %w", err), http.StatusBadRequest)
+			siw.ErrorHandler(c, &InvalidParamFormatError{ParamName: "header1", Err: err}, http.StatusBadRequest)
 			return
 		}
 
 		params.Header1 = Header1
 
 	} else {
-		siw.ErrorHandler(c, fmt.Errorf("Header parameter header1 is required, but not found"), http.StatusBadRequest)
+		err := fmt.Errorf("Header parameter header1 is required, but not found")
+		siw.ErrorHandler(c, &RequiredHeaderError{ParamName: "header1", Err: err}, http.StatusBadRequest)
 		return
 	}
 
@@ -251,13 +252,13 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *gin.Context) {
 		var Header2 int
 		n := len(valueList)
 		if n != 1 {
-			siw.ErrorHandler(c, fmt.Errorf("Expected one value for header2, got %d", n), http.StatusBadRequest)
+			siw.ErrorHandler(c, &TooManyValuesForParamError{ParamName: "header2", Count: n}, http.StatusBadRequest)
 			return
 		}
 
 		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
-			siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter header2: %w", err), http.StatusBadRequest)
+			siw.ErrorHandler(c, &InvalidParamFormatError{ParamName: "header2", Err: err}, http.StatusBadRequest)
 			return
 		}
 
@@ -286,6 +287,75 @@ func (siw *ServerInterfaceWrapper) UnionExample(c *gin.Context) {
 	}
 
 	siw.Handler.UnionExample(c)
+}
+
+type UnescapedCookieParamError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *UnescapedCookieParamError) Error() string {
+	return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
+}
+
+func (e *UnescapedCookieParamError) Unwrap() error {
+	return e.Err
+}
+
+type UnmarshalingParamError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *UnmarshalingParamError) Error() string {
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *UnmarshalingParamError) Unwrap() error {
+	return e.Err
+}
+
+type RequiredParamError struct {
+	ParamName string
+}
+
+func (e *RequiredParamError) Error() string {
+	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+}
+
+type RequiredHeaderError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *RequiredHeaderError) Error() string {
+	return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
+}
+
+func (e *RequiredHeaderError) Unwrap() error {
+	return e.Err
+}
+
+type InvalidParamFormatError struct {
+	ParamName string
+	Err       error
+}
+
+func (e *InvalidParamFormatError) Error() string {
+	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+}
+
+func (e *InvalidParamFormatError) Unwrap() error {
+	return e.Err
+}
+
+type TooManyValuesForParamError struct {
+	ParamName string
+	Count     int
+}
+
+func (e *TooManyValuesForParamError) Error() string {
+	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
 
 // GinServerOptions provides options for the Gin server.
