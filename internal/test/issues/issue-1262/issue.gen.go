@@ -14,7 +14,7 @@ type PostAttachmentMultipartBody struct {
 	Data openapi_types.File `form:"data" json:"data"`
 
 	// Description Summary description of the upload.
-	Description *string `form:"description,omitempty" json:"description,omitempty"`
+	Description *string `form:"description" json:"description,omitempty"`
 }
 
 // PostAttachmentMultipartRequestBody defines body for PostAttachment for multipart/form-data ContentType.
