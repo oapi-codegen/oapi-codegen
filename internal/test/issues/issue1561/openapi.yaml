@@ -1,0 +1,25 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "When using `prefer-skip-optional-pointer-on-container-types`, container types do not have an 'optional pointer'"
+paths:
+components:
+  schemas:
+    ResponseBody:
+      type: object
+      properties:
+        a_slice:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pong'
+        a_map:
+          additionalProperties:
+            $ref: '#/components/schemas/Pong'
+    Pong:
+      type: object
+      required:
+        - ping
+      properties:
+        ping:
+          type: string
+          example: pong
