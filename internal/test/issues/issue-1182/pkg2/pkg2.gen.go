@@ -143,6 +143,9 @@ type ClientWithResponsesInterface interface {
 type ServerInterface interface {
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
