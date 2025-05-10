@@ -11,10 +11,10 @@ import (
 // PostAttachmentMultipartBody defines parameters for PostAttachment.
 type PostAttachmentMultipartBody struct {
 	// Data User-provided file.
-	Data openapi_types.File `json:"data"`
+	Data openapi_types.File `form:"data" json:"data"`
 
 	// Description Summary description of the upload.
-	Description *string `json:"description,omitempty"`
+	Description *string `form:"description,omitempty" json:"description,omitempty"`
 }
 
 // PostAttachmentMultipartRequestBody defines body for PostAttachment for multipart/form-data ContentType.
