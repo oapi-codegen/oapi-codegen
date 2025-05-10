@@ -23,5 +23,5 @@ type TypeWithOptionalField struct {
 
 // GetRootParams defines parameters for GetRoot.
 type GetRootParams struct {
-	At googleuuid.UUID `form:"at,omitempty" json:"at,omitempty"`
+	At googleuuid.UUID `form:"at" json:"at,omitempty"`
 }

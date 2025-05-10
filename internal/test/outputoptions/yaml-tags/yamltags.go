@@ -6,8 +6,8 @@ package yamltags
 // CookieParamsParams defines parameters for CookieParams.
 type CookieParamsParams struct {
 	// AuthId Cookie parameter
-	AuthId *string `form:"authId,omitempty" json:"authId,omitempty" yaml:"authId,omitempty"`
+	AuthId *string `form:"authId" json:"authId,omitempty" yaml:"authId,omitempty"`
 
 	// ServerId Another cookie parameter
-	ServerId *string `form:"serverId,omitempty" json:"serverId,omitempty" yaml:"serverId,omitempty"`
+	ServerId *string `form:"serverId" json:"serverId,omitempty" yaml:"serverId,omitempty"`
 }
