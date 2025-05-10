@@ -2287,6 +2287,9 @@ Do not add a pointer type for optional fields in structs
 <td>
 <details>
 
+> [!TIP]
+> If you prefer this **??**, you can use `output-options.prefer-skip-optional-pointer`. TODO LINK **??**
+
 By default, `oapi-codegen` will generate a pointer for optional fields.
 
 Using the `x-go-type-skip-optional-pointer` extension allows omitting that pointer.
