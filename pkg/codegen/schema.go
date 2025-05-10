@@ -327,6 +327,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
 				outType = "map[string]interface{}"
+				setSkipOptionalPointerForContainerType(&outSchema)
 			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
@@ -389,6 +390,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// since we don't need them for a simple map.
 				outSchema.HasAdditionalProperties = false
 				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				setSkipOptionalPointerForContainerType(&outSchema)
 				return outSchema, nil
 			}
 
@@ -584,6 +586,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
+		setSkipOptionalPointerForContainerType(outSchema)
 
 	} else if t.Is("integer") {
 		// We default to int if format doesn't ask for something else.
@@ -625,6 +628,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		switch f {
 		case "byte":
 			outSchema.GoType = "[]byte"
+			setSkipOptionalPointerForContainerType(outSchema)
 		case "email":
 			outSchema.GoType = "openapi_types.Email"
 		case "date":
@@ -891,4 +895,15 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 	}
 
 	return nil
+}
+
+// setSkipOptionalPointerForContainerType ensures that the "optional pointer" is skipped on container types (such as a slice or a map).
+// This is controlled using the `prefer-skip-optional-pointer-on-container-types` Output Option
+// NOTE that it is still possible to override this on a per-field basis with `x-go-type-skip-optional-pointer`
+func setSkipOptionalPointerForContainerType(outSchema *Schema) {
+	if !globalState.options.OutputOptions.PreferSkipOptionalPointerOnContainerTypes {
+		return
+	}
+
+	outSchema.SkipOptionalPointer = true
 }

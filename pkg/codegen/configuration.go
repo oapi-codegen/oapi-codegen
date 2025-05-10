@@ -289,6 +289,9 @@ type OutputOptions struct {
 	// PreferSkipOptionalPointer allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional.
 	// This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay)
 	PreferSkipOptionalPointer bool `yaml:"prefer-skip-optional-pointer,omitempty"`
+
+	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
+	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
