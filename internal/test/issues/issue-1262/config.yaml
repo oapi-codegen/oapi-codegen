@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1262
+generate:
+  models: true
+  echo-server: true
+output-options:
+  skip-prune: true
+output: issue.gen.go
