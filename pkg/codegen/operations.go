@@ -135,6 +135,7 @@ func (pd ParameterDefinition) GoName() string {
 	return SchemaNameToTypeName(goName)
 }
 
+// Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.
 func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
