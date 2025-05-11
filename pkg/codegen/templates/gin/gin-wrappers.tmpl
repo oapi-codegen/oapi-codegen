@@ -55,7 +55,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}paramValue
+          params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}paramValue
         {{end}}
 
         {{if .IsJson}}
@@ -66,7 +66,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             return
           }
 
-          params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}value
+          params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
            siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found"), http.StatusBadRequest)
@@ -96,7 +96,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}valueList[0]
+          params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
@@ -115,7 +115,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           }
         {{end}}
 
-          params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found"), http.StatusBadRequest)
@@ -132,7 +132,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       if cookie, err = c.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}cookie
+        params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}cookie
       {{end}}
 
       {{- if .IsJson}}
@@ -150,7 +150,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             return
         }
 
-        params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}value
+        params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
@@ -160,7 +160,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
         }
-        params.{{.GoName}} = {{if and (not .Required) (not .Schema.SkipOptionalPointer)}}&{{end}}value
+        params.{{.GoName}} = {{if and (.HasOptionalPointer) (not .Schema.SkipOptionalPointer)}}&{{end}}value
       {{end}}
 
       }

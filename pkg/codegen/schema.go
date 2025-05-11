@@ -128,6 +128,12 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// NOTE that this does not take into account the `x-go-type-skip-optional-pointer` extension
+func (p Property) HasOptionalPointer() bool {
+	return p.Required == false //nolint:staticcheck
+}
+
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
 	// Schema is the scheme of a type which has a list of enum values, eg, the
