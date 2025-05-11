@@ -139,6 +139,12 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// NOTE that this does not take into account the `x-go-type-skip-optional-pointer` extension
+func (pd ParameterDefinition) HasOptionalPointer() bool {
+	return pd.Required == false //nolint:staticcheck
+}
+
 type ParameterDefinitions []ParameterDefinition
 
 func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
