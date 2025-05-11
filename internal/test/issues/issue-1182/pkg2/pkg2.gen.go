@@ -5,7 +5,7 @@ package pkg2
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -193,30 +193,27 @@ type strictHandler struct {
 	middlewares []StrictMiddlewareFunc
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/zSOMU/DMBSE/4p1c+S2YvPGyMBSKjEgBuNcsCGxLb/XMkT+7yihjJ/e++5uRShLLZlZ",
-	"BW5Fo9SShTuc7/CaNJ45sTEHboeRElqqmkqGw6P5t0z5+GJQ8xNTiCaJaZvVOBotZmplMT4XjWym+vDt",
-	"P4ne+4CUp7LFzikwy96Q/UI4PD9d0Ado0nnDC0XNC9uNDQNubPK34GSP9rg9lsrsa4LDgz3aEwZUr1Hg",
-	"8nWeB8iuCtzbimub4RBVqzsc7p5S1I5kXXy1PqG/998AAAD//4Nm84whAQAA",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"NI4xT8MwFIT/inVz5LZi88bIwFIqMSAG41ywIbEtv9cyRP7vKKGMn9777m5FKEstmVkFbkWj1JKFO5zv" +
+	"8Jo0njmxMQduh5ESWqqaSobDo/m3TPn4YlDzE1OIJolpm9U4Gi1mamUxPheNbKb68O0/id77gJSnssXO" +
+	"KTDL3pD9Qjg8P13QB2jSecMLRc0L240NA25s8rfgZI/2uD2WyuxrgsODPdoTBlSvUeDydZ4HyK4K3NuK" +
+	"a5vhEFWrOxzunlLUjmRdfLU+ob/33wAAAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
