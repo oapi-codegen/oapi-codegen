@@ -129,9 +129,9 @@ func (p Property) GoTypeDef() string {
 }
 
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
-// NOTE that this does not take into account the `x-go-type-skip-optional-pointer` extension
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (p Property) HasOptionalPointer() bool {
-	return p.Required == false //nolint:staticcheck
+	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
 }
 
 // EnumDefinition holds type information for enum
