@@ -1,0 +1,26 @@
+openapi: "3.0.1"
+info:
+  title: "Issue 1262 - form tags for multipart/form-data"
+  version: "1"
+paths:
+  /attachment:
+    post:
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: Summary description of the upload.
+                data:
+                  type: string
+                  format: binary
+                  description: User-provided file.
+              required:
+                - data
+      responses:
+        204:
+          description: "No content"

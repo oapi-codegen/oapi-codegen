@@ -750,7 +750,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
-			if contentType == "application/x-www-form-urlencoded" {
+			if contentType == "application/x-www-form-urlencoded" ||
+				strings.HasPrefix(contentType, "multipart/form-data") {
 				// Apply the appropriate structure tag if the request
 				// schema was defined under the operations' section.
 				for i := range bodySchema.Properties {
