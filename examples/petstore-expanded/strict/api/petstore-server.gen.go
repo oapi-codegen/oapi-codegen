@@ -339,7 +339,7 @@ type AddPetResponseObject interface {
 	VisitAddPetResponse(w http.ResponseWriter) error
 }
 
-type AddPet200JSONResponse Pet
+type AddPet200JSONResponse = Pet
 
 func (response AddPet200JSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
@@ -396,7 +396,7 @@ type FindPetByIDResponseObject interface {
 	VisitFindPetByIDResponse(w http.ResponseWriter) error
 }
 
-type FindPetByID200JSONResponse Pet
+type FindPetByID200JSONResponse = Pet
 
 func (response FindPetByID200JSONResponse) VisitFindPetByIDResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
