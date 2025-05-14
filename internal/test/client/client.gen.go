@@ -46,6 +46,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -141,6 +152,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostBothWithBody")
 	req, err := NewPostBothRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -153,6 +165,7 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 }
 
 func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostBoth")
 	req, err := NewPostBothRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -165,6 +178,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, req
 }
 
 func (c *Client) GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetBoth")
 	req, err := NewGetBothRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -177,6 +191,7 @@ func (c *Client) GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 }
 
 func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostJsonWithBody")
 	req, err := NewPostJsonRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -189,6 +204,7 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 }
 
 func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostJson")
 	req, err := NewPostJsonRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -201,6 +217,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody, req
 }
 
 func (c *Client) GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetJson")
 	req, err := NewGetJsonRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -213,6 +230,7 @@ func (c *Client) GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 }
 
 func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostOtherWithBody")
 	req, err := NewPostOtherRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -225,6 +243,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 }
 
 func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetOther")
 	req, err := NewGetOtherRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -237,6 +256,7 @@ func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*
 }
 
 func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetJsonWithTrailingSlash")
 	req, err := NewGetJsonWithTrailingSlashRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -249,6 +269,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...Req
 }
 
 func (c *Client) PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostVendorJsonWithBody")
 	req, err := NewPostVendorJsonRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -261,6 +282,7 @@ func (c *Client) PostVendorJsonWithBody(ctx context.Context, contentType string,
 }
 
 func (c *Client) PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "PostVendorJsonWithApplicationVndAPIPlusJSONBody")
 	req, err := NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody(c.Server, body)
 	if err != nil {
 		return nil, err
