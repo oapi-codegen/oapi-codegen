@@ -1099,7 +1099,7 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 		return false
 	}
 
-	return *s.AdditionalProperties.Has == false //nolint:gosimple
+	return *s.AdditionalProperties.Has == false //nolint:staticcheck
 }
 
 func sliceContains[E comparable](s []E, v E) bool {

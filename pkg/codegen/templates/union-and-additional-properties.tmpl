@@ -54,12 +54,12 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
         }
     }
 {{range .Schema.Properties}}
-{{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
+{{if .HasOptionalPointer}}if a.{{.GoFieldName}} != nil { {{end}}
     object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
     if err != nil {
         return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
-{{if not .Required}} }{{end}}
+{{if .HasOptionalPointer}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
