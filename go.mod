@@ -1,9 +1,11 @@
 module github.com/oapi-codegen/oapi-codegen/v2
 
-go 1.22
+go 1.22.5
+
+toolchain go1.23.4
 
 require (
-	github.com/getkin/kin-openapi v0.128.0
+	github.com/getkin/kin-openapi v0.132.0
 	github.com/speakeasy-api/openapi-overlay v0.10.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.17.0
