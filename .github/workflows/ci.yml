@@ -9,15 +9,15 @@ jobs:
       # perform matrix testing to give us an earlier insight into issues with different versions of supported major versions of Go
       matrix:
         version:
-        - "1.21"
         - "1.22"
         - "1.23"
+        - "1.24"
     steps:
       - name: Check out source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5
         with:
           go-version: ${{ matrix.version }}
 
@@ -33,7 +33,7 @@ jobs:
   results:
     if: ${{ always() }}
     runs-on: ubuntu-latest
-    name: Check results
+    name: Check build results
     needs: [build]
     steps:
       - run: |

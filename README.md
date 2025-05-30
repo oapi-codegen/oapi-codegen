@@ -42,6 +42,25 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
+## For Go 1.24+
+
+It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
+
+To do this, you run `go get -tool`:
+
+```sh
+$ go get -tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+# this will then modify your `go.mod`
+```
+
+From there, each invocation of `oapi-codegen` would be used like so:
+
+```go
+//go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
+```
+
+## Prior to Go 1.24
+
 It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 This would give you a `tools/tools.go`:
@@ -75,6 +94,8 @@ Which then means you can invoke it like so:
 ```go
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
+
+Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
 
 ### Pinning to commits
 
@@ -1824,10 +1845,13 @@ For a complete example see [`examples/only-models`](examples/only-models).
 When you've got a large OpenAPI specification, you may find it useful to split the contents of the spec across multiple files, using external references, such as:
 
 ```yaml
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
@@ -1869,11 +1893,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+                $ref: '../common/api.yaml#/components/schemas/User'
 ```
 
 This references the common spec:
@@ -1892,7 +1912,75 @@ components:
         - name
 ```
 
-And finally we have our configuration file:
+So how do we get `oapi-codegen` to generate our code?
+
+### Using a single package with multiple OpenAPI specs
+
+<a name=import-mapping-self></a>
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, it is now possible to split large OpenAPI specifications into the same Go package, using the "self" mapping (denoted by a `-`) when using Import Mapping.
+>
+> This is an improvement on the previous model, which would require splitting files across multiple packages.
+
+> [!NOTE]
+> You still need to have multiple `go generate`s, and any other configuration files.
+
+To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
+
+```sh
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
+```
+
+This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  user.yaml: "-"
+```
+
+And then our `cfg-user.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+```
+
+From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+### Using multiple packages, with one OpenAPI spec per package
+
+To get `oapi-codegen`'s multi-package support working, we need to set up our directory structure:
+
+```
+├── admin
+│   ├── cfg.yaml
+│   └── generate.go
+└── common
+    ├── cfg.yaml
+    └── generate.go
+```
+
+We could start with our configuration file for our admin API spec:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -1914,7 +2002,7 @@ If we were to run `oapi-codegen`, this will fail with the following error
 error generating code: error creating operation definitions: error generating response definitions: error generating request body definition: error turning reference (../common/api.yaml#/components/schemas/User) into a Go type: unrecognized external reference '../common/api.yaml'; please provide the known import for this reference using option --import-mapping
 ```
 
-This is because `oapi-codegen` requires:
+This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
 # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
@@ -1945,11 +2033,11 @@ import (
 type User = externalRef0.User
 ```
 
-If you don't want to do this, an alternate option is to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
+If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/) for the full code.
+Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
-## Modifying the input OpenAPI Specification
+## Modifying the input OpenAPI Specification (with OpenAPI Overlay)
 
 Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
 
@@ -2198,6 +2286,11 @@ Do not add a pointer type for optional fields in structs
 </td>
 <td>
 <details>
+
+> [!TIP]
+> If you prefer this behaviour, and prefer to not have to annotate your whole OpenAPI spec for this behaviour, you can use `output-options.prefer-skip-optional-pointer=true` to default this behaviour for all fields.
+>
+> It is then possible to override this on a per-type/per-field basis where necessary.
 
 By default, `oapi-codegen` will generate a pointer for optional fields.
 
@@ -3018,6 +3111,20 @@ Middleware library
 
 </tr>
 
+<tr>
+<td>
+
+Any other server (which conforms to `net/http`)
+
+</td>
+<td>
+
+[nethttp-middleware](https://github.com/oapi-codegen/nethttp-middleware)
+
+</td>
+
+</tr>
+
 </table>
 
 > [!NOTE]
@@ -3100,7 +3207,7 @@ output-options:
     typedef.tmpl: no-prefix.tmpl
 ```
 
-> [!WARN]
+> [!WARNING]
 > We do not interpolate `~` or `$HOME` (or other environment variables) in paths given
 
 ### HTTPS paths
@@ -3743,10 +3850,19 @@ Here are a few we've found around the Web:
 - [Generating Go server code from OpenAPI 3 definitions](https://ldej.nl/post/generating-go-from-openapi-3/)
 - [Go Client Code Generation from Swagger and OpenAPI](https://medium.com/@kyodo-tech/go-client-code-generation-from-swagger-and-openapi-a0576831836c)
 - [Go oapi-codegen + request validation](https://blog.commitsmart.com/go-oapi-codegen-request-validation-285398b37dc8)
+- [Streamlining Go + Chi Development: Generating Code from an OpenAPI Spec](https://i4o.dev/blog/oapi-codegen-with-chi-router)
 
 Got one to add? Please raise a PR!
 
 ## Frequently Asked Questions (FAQs)
+
+### Does `oapi-codegen` support OpenAPI 3.1?
+
+No, we don't currently.
+
+OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
+
+In the meantime, you could follow [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/) to [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" the OpenAPI 3.1 spec to OpenAPI 3.0.
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
@@ -4059,17 +4175,35 @@ This may lead to breakage in your consuming code, and if so, sorry that's happen
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
 
+## Contributors
+
+We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+<a href="https://github.com/oapi-codegen/oapi-codegen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
+</a>
+
 ## Sponsors
 
 For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
-
-We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+We are currently sponsored for 4 hours of work a month by Elastic:
+
+<p align="center">
+	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
+		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>
+
+In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -4082,7 +4216,7 @@ We are currently generously sponsored by the following folks, each of whom provi
 </p>
 
 <p align="center">
-	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
@@ -4092,18 +4226,18 @@ We are currently generously sponsored by the following folks, each of whom provi
 </p>
 
 <p align="center">
-	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
-		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
-		</picture>
+	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
 	</a>
 </p>
 
 <p align="center">
-	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
+		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
+		</picture>
 	</a>
 </p>
 

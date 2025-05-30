@@ -76,21 +76,19 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "./packageA/spec.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "./packageA/spec.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
 		res[rawPath] = rawFunc
 	}
-	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(pathPrefix, "./packageB/spec.yaml")) {
+	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(path.Dir(pathToFile), "./packageB/spec.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
 		res[rawPath] = rawFunc
 	}
-	for rawPath, rawFunc := range externalRef2.PathToRawSpec(path.Join(pathPrefix, "https://petstore3.swagger.io/api/v3/openapi.json")) {
+	for rawPath, rawFunc := range externalRef2.PathToRawSpec(path.Join(path.Dir(pathToFile), "https://petstore3.swagger.io/api/v3/openapi.json")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

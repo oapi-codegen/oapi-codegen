@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -65,29 +66,34 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 
 	err = overlay.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("The Overlay in %#v was not valid: %v", opts.Path, err)
+		return nil, fmt.Errorf("the Overlay in %#v was not valid: %v", opts.Path, err)
 	}
 
 	if opts.Strict {
 		err, vs := overlay.ApplyToStrict(&node)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
+			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
 		}
 	} else {
 		err = overlay.ApplyTo(&node)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
+			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
 		}
 	}
 
 	b, err := yaml.Marshal(&node)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
+		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
-	swagger, err = openapi3.NewLoader().LoadFromData(b)
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+
+	swagger, err = loader.LoadFromDataWithPath(b, &url.URL{
+		Path: filepath.ToSlash(filePath),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
+		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
 	return swagger, nil
