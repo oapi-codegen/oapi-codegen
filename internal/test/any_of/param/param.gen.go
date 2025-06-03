@@ -324,6 +324,8 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetTest")
+
 	return req, nil
 }
 
