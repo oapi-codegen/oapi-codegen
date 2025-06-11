@@ -2774,17 +2774,26 @@ const (
 	EXP ClientType = "EXP"
 )
 
+// Defines values for ClientTypeWithNamesExtension.
+const (
+	ClientTypeWithNamesExtensionActive  ClientTypeWithNamesExtension = "ACT"
+	ClientTypeWithNamesExtensionExpired ClientTypeWithNamesExtension = "EXP"
+)
+
+// Defines values for ClientTypeWithVarNamesExtension.
+const (
+	ClientTypeWithVarNamesExtensionActive  ClientTypeWithVarNamesExtension = "ACT"
+	ClientTypeWithVarNamesExtensionExpired ClientTypeWithVarNamesExtension = "EXP"
+)
+
 // ClientType defines model for ClientType.
 type ClientType string
 
-// Defines values for ClientTypeWithExtension.
-const (
-	Active  ClientTypeWithExtension = "ACT"
-	Expired ClientTypeWithExtension = "EXP"
-)
+// ClientTypeWithNamesExtension defines model for ClientTypeWithNamesExtension.
+type ClientTypeWithNamesExtension string
 
-// ClientTypeWithExtension defines model for ClientTypeWithExtension.
-type ClientTypeWithExtension string
+// ClientTypeWithVarNamesExtension defines model for ClientTypeWithVarNamesExtension.
+type ClientTypeWithVarNamesExtension string
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xenumnames/).
