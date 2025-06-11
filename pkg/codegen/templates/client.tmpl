@@ -148,7 +148,11 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
     {{else if eq .NameTag "Text" -}}
-        bodyReader = strings.NewReader(string(body))
+        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+            bodyReader = strings.NewReader(stringer.String())
+        } else {
+            bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+        }
     {{end -}}
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
