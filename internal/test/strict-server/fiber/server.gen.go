@@ -256,7 +256,7 @@ type JSONExampleResponseObject interface {
 	VisitJSONExampleResponse(ctx *fiber.Ctx) error
 }
 
-type JSONExample200JSONResponse Example
+type JSONExample200JSONResponse = Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
@@ -363,7 +363,7 @@ type MultipleRequestAndResponseTypesResponseObject interface {
 	VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error
 }
 
-type MultipleRequestAndResponseTypes200JSONResponse Example
+type MultipleRequestAndResponseTypes200JSONResponse = Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
@@ -372,7 +372,7 @@ func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequ
 	return ctx.JSON(&response)
 }
 
-type MultipleRequestAndResponseTypes200FormdataResponse Example
+type MultipleRequestAndResponseTypes200FormdataResponse = Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -632,7 +632,7 @@ type URLEncodedExampleResponseObject interface {
 	VisitURLEncodedExampleResponse(ctx *fiber.Ctx) error
 }
 
-type URLEncodedExample200FormdataResponse Example
+type URLEncodedExample200FormdataResponse = Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/x-www-form-urlencoded")
