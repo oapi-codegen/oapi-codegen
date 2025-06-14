@@ -1731,6 +1731,71 @@ func TestClient_canCall() {
 }
 ```
 
+### With Server URLs
+
+An OpenAPI specification makes it possible to denote Servers that a client can interact with, such as:
+
+```yaml
+servers:
+- url: https://development.gigantic-server.com/v1
+  description: Development server
+- url: https://{username}.gigantic-server.com:{port}/{basePath}
+  description: The production API server
+  variables:
+    username:
+      # note! no enum here means it is an open value
+      default: demo
+      description: this value is assigned by the service provider, in this example `gigantic-server.com`
+    port:
+      enum:
+        - '8443'
+        - '443'
+      default: '8443'
+    basePath:
+      # open meaning there is the opportunity to use special base paths as assigned by the provider, default is `v2`
+      default: v2
+```
+
+It is possible to opt-in to the generation of these Server URLs with the following configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: serverurls
+output: gen.go
+generate:
+  # NOTE that this uses default settings - if you want to use initialisms to generate i.e. `ServerURLDevelopmentServer`, you should look up the `output-options.name-normalizer` configuration
+  server-urls: true
+```
+
+This will then generate the following boilerplate:
+
+```go
+// (the below does not include comments that are generated)
+
+const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
+
+type ServerUrlTheProductionAPIServerBasePathVariable string
+const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
+
+type ServerUrlTheProductionAPIServerPortVariable string
+const ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+const ServerUrlTheProductionAPIServerPortVariable443 ServerUrlTheProductionAPIServerPortVariable = "443"
+const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
+
+type ServerUrlTheProductionAPIServerUsernameVariable string
+const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
+
+func ServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+    // ...
+}
+```
+
+Notice that for URLs that are not templated, a simple `const` definition is created.
+
+However, for more complex URLs that defined `variables` in them, we generate the types (and any `enum` values or `default` values), and instead use a function to create the URL.
+
+For a complete example see [`examples/generate/serverurls`](examples/generate/serverurls).
+
 ## Generating API models
 
 If you're looking to only generate the models for interacting with a remote service, for instance if you need to hand-roll the API client for whatever reason, you can do this as-is.
