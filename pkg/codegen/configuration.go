@@ -126,6 +126,8 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
+	ServerURLs bool `yaml:"server-urls,omitempty"`
 }
 
 func (oo GenerateOptions) Validate() map[string]string {

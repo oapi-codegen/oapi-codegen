@@ -202,6 +202,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		MergeImports(xGoTypeImports, imprts)
 	}
 
+	var serverURLsDefinitions string
+	if opts.Generate.ServerURLs {
+		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Server URLs: %w", err)
+		}
+	}
+
 	var irisServerOut string
 	if opts.Generate.IrisServer {
 		irisServerOut, err = GenerateIrisServer(t, ops)
@@ -324,6 +332,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	_, err = w.WriteString(constantDefinitions)
 	if err != nil {
 		return "", fmt.Errorf("error writing constants: %w", err)
+	}
+
+	_, err = w.WriteString(serverURLsDefinitions)
+	if err != nil {
+		return "", fmt.Errorf("error writing Server URLs: %w", err)
 	}
 
 	_, err = w.WriteString(typeDefinitions)
