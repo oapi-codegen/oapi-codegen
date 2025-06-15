@@ -5,7 +5,7 @@ package pkg1
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -339,31 +339,28 @@ func (sh *strictHandler) TestGet(ctx echo.Context) error {
 	return nil
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/3yQMU/DMBCF/4r1YIyStGzemFAHllKJASFknJfGtLEt+1qEqvx35LQUsTCdz3fv7r53",
-	"gg1jDJ5eMvQJiTkGnzkncbddvq0vP89OhjV7JnrLUu2YbXJRXPDQuFc/UhXeP2hFfQ7ODspllYoqsVMS",
-	"VJ/CqIwPMjCpaOzObIlpmio434cydu8sfZ43eDMSGo+rDaYK4mRf0g2zqCemIxMqHJny+YJF3dZtaQyR",
-	"3kQHjbu6rReoEI0MM1EjzFIeW84hRCZTCFbdZfIDBdVfG5ZtW8JtYg+Nm+bXseba1/zjVaHLh3E06Qu6",
-	"bFbliqtfZ/w8A2XolxMOaQ+NQSTqprnQFEndkXE0sTYO0+v0HQAA//9bF49xvAEAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"fJAxT8MwEIX/ivVgjJK0bN6YUAeWUokBIWScl8a0sS37WoSq/HfktBSxMJ3Pd+/uvneCDWMMnl4y9AmJ" +
+	"OQafOSdxt12+rS8/z06GNXsmestS7ZhtclFc8NC4Vz9SFd4/aEV9Ds4OymWViiqxUxJUn8KojA8yMKlo" +
+	"7M5siWmaKjjfhzJ27yx9njd4MxIaj6sNpgriZF/SDbOoJ6YjEyocmfL5gkXd1m1pDJHeRAeNu7qtF6gQ" +
+	"jQwzUSPMUh5bziFEJlMIVt1l8gMF1V8blm1bwm1iD42b5tex5trX/ONVocuHcTTpC7psVuWKq19n/DwD" +
+	"ZeiXEw5pD41BJOqmudAUSd2RcTSxNg7T6/QdAAD//w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
