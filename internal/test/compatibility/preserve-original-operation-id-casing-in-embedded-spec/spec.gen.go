@@ -5,40 +5,36 @@ package preserveoriginaloperationidcasinginembeddedspec
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/7SOwUrFQAxFf0Xuevpe1d3sHuJCBBH8AJnXxjbaZkIThFLm32XGlR9gNjcEcu45wPKR",
-	"EQ84+0KIWPcbUxoQ8E2bcRZE3J76U48SkJUkKSPivp0CNPls9f+s5DVHWsipbllpS85ZnkZE+MzWsXWp",
-	"+6Jrul5kfEgrLe9vL5fnRwRsZJrFqMHu+r7GkMVJGjapLjw03PnTqtUBG2ZaU5PftbqbbywTSpuA6dfo",
-	"r8dE/kr+H4WllJ8AAAD//+CJBDdPAQAA",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"tI7BSsVADEV/Re56+l7V3ewe4kIEEfwAmdfGNtpmQhOEUubfZcaVH2A2NwRy7jnA8pERDzj7QohY9xtT" +
+	"GhDwTZtxFkTcnvpTjxKQlSQpI+K+nQI0+Wz1/6zkNUdayKluWWlLzlmeRkT4zNaxdan7omu6XmR8SCst" +
+	"728vl+dHBGxkmsWowe76vsaQxUkaNqkuPDTc+dOq1QEbZlpTk9+1uptvLBNKm4Dp1+ivx0T+Sv4fhaWU" +
+	"nwAAAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
