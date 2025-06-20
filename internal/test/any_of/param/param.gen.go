@@ -45,8 +45,8 @@ type Test21 = string
 
 // GetTestParams defines parameters for GetTest.
 type GetTestParams struct {
-	Test  *Test    `form:"test,omitempty" json:"test,omitempty"`
-	Test2 *[]Test2 `form:"test2,omitempty" json:"test2,omitempty"`
+	Test  *Test    `form:"test" json:"test,omitempty"`
+	Test2 *[]Test2 `form:"test2" json:"test2,omitempty"`
 }
 
 // AsTest0 returns the union data inside the Test as a Test0

@@ -43,34 +43,34 @@ type Object struct {
 // GetCookieParams defines parameters for GetCookie.
 type GetCookieParams struct {
 	// P primitive
-	P *int32 `form:"p,omitempty" json:"p,omitempty"`
+	P *int32 `form:"p" json:"p,omitempty"`
 
 	// Ep primitive
-	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
+	Ep *int32 `form:"ep" json:"ep,omitempty"`
 
 	// Ea exploded array
-	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
+	Ea *[]int32 `form:"ea" json:"ea,omitempty"`
 
 	// A array
-	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
+	A *[]int32 `form:"a" json:"a,omitempty"`
 
 	// Eo exploded object
-	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
+	Eo *Object `form:"eo" json:"eo,omitempty"`
 
 	// O object
-	O *Object `form:"o,omitempty" json:"o,omitempty"`
+	O *Object `form:"o" json:"o,omitempty"`
 
 	// Co complex object
-	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
+	Co *ComplexObject `form:"co" json:"co,omitempty"`
 
 	// N1s name starting with number
-	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
+	N1s *string `form:"1s" json:"1s,omitempty"`
 }
 
 // EnumParamsParams defines parameters for EnumParams.
 type EnumParamsParams struct {
 	// EnumPathParam Parameter with enum values
-	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam,omitempty" json:"enumPathParam,omitempty"`
+	EnumPathParam *EnumParamsParamsEnumPathParam `form:"enumPathParam" json:"enumPathParam,omitempty"`
 }
 
 // EnumParamsParamsEnumPathParam defines parameters for EnumParams.
@@ -112,31 +112,31 @@ type GetDeepObjectParams struct {
 // GetQueryFormParams defines parameters for GetQueryForm.
 type GetQueryFormParams struct {
 	// Ea exploded array
-	Ea *[]int32 `form:"ea,omitempty" json:"ea,omitempty"`
+	Ea *[]int32 `form:"ea" json:"ea,omitempty"`
 
 	// A array
-	A *[]int32 `form:"a,omitempty" json:"a,omitempty"`
+	A *[]int32 `form:"a" json:"a,omitempty"`
 
 	// Eo exploded object
-	Eo *Object `form:"eo,omitempty" json:"eo,omitempty"`
+	Eo *Object `form:"eo" json:"eo,omitempty"`
 
 	// O object
-	O *Object `form:"o,omitempty" json:"o,omitempty"`
+	O *Object `form:"o" json:"o,omitempty"`
 
 	// Ep exploded primitive
-	Ep *int32 `form:"ep,omitempty" json:"ep,omitempty"`
+	Ep *int32 `form:"ep" json:"ep,omitempty"`
 
 	// P primitive
-	P *int32 `form:"p,omitempty" json:"p,omitempty"`
+	P *int32 `form:"p" json:"p,omitempty"`
 
 	// Ps primitive string
-	Ps *string `form:"ps,omitempty" json:"ps,omitempty"`
+	Ps *string `form:"ps" json:"ps,omitempty"`
 
 	// Co complex object
-	Co *ComplexObject `form:"co,omitempty" json:"co,omitempty"`
+	Co *ComplexObject `form:"co" json:"co,omitempty"`
 
 	// N1s name starting with number
-	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
+	N1s *string `form:"1s" json:"1s,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
