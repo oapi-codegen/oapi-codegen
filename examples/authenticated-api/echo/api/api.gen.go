@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
 )
 
 // Error defines model for Error.
@@ -43,6 +43,9 @@ type ThingWithID struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
+
+// bearerAuthContextKey is the context key for BearerAuth security scheme
+type bearerAuthContextKey string
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
@@ -425,7 +428,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{})
+	ctx.Set(string(BearerAuthScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListThings(ctx)
@@ -436,7 +439,7 @@ func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) AddThing(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{"things:w"})
+	ctx.Set(string(BearerAuthScopes), []string{"things:w"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddThing(ctx)
