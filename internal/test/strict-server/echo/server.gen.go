@@ -249,18 +249,18 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/json", wrapper.JSONExample)
-	router.POST(baseURL+"/multipart", wrapper.MultipartExample)
-	router.POST(baseURL+"/multipart-related", wrapper.MultipartRelatedExample)
-	router.POST(baseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
-	router.GET(baseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
-	router.POST(baseURL+"/reusable-responses", wrapper.ReusableResponses)
-	router.POST(baseURL+"/text", wrapper.TextExample)
-	router.POST(baseURL+"/unknown", wrapper.UnknownExample)
-	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample)
-	router.POST(baseURL+"/with-headers", wrapper.HeadersExample)
-	router.POST(baseURL+"/with-union", wrapper.UnionExample)
+	router.POST(baseURL+"/json", wrapper.JSONExample).Name = "POST /json"
+	router.POST(baseURL+"/multipart", wrapper.MultipartExample).Name = "POST /multipart"
+	router.POST(baseURL+"/multipart-related", wrapper.MultipartRelatedExample).Name = "POST /multipart-related"
+	router.POST(baseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Name = "POST /multiple"
+	router.GET(baseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters).Name = "GET /reserved-go-keyword-parameters/:type"
+	router.POST(baseURL+"/reusable-responses", wrapper.ReusableResponses).Name = "POST /reusable-responses"
+	router.POST(baseURL+"/text", wrapper.TextExample).Name = "POST /text"
+	router.POST(baseURL+"/unknown", wrapper.UnknownExample).Name = "POST /unknown"
+	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Name = "POST /unspecified-content-type"
+	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample).Name = "POST /urlencoded"
+	router.POST(baseURL+"/with-headers", wrapper.HeadersExample).Name = "POST /with-headers"
+	router.POST(baseURL+"/with-union", wrapper.UnionExample).Name = "POST /with-union"
 
 }
 
