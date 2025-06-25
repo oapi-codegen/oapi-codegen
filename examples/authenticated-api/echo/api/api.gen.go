@@ -189,6 +189,8 @@ func NewListThingsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "ListThings")
+
 	return req, nil
 }
 
@@ -227,6 +229,7 @@ func NewAddThingRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "AddThing")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
