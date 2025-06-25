@@ -21,6 +21,14 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// OneOfExample defines model for oneOfExample.
+type OneOfExample struct {
+	union json.RawMessage
+}
+
+// OneOfExample1 defines model for .
+type OneOfExample1 = int
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
@@ -71,6 +79,71 @@ type HeadersExampleJSONRequestBody = Example
 
 // UnionExampleJSONRequestBody defines body for UnionExample for application/json ContentType.
 type UnionExampleJSONRequestBody = Example
+
+// UnionInRefExampleJSONRequestBody defines body for UnionInRefExample for application/json ContentType.
+type UnionInRefExampleJSONRequestBody = Example
+
+// AsExample returns the union data inside the OneOfExample as a Example
+func (t OneOfExample) AsExample() (Example, error) {
+	var body Example
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExample overwrites any union data inside the OneOfExample as the provided Example
+func (t *OneOfExample) FromExample(v Example) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExample performs a merge with any union data inside the OneOfExample, using the provided Example
+func (t *OneOfExample) MergeExample(v Example) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOneOfExample1 returns the union data inside the OneOfExample as a OneOfExample1
+func (t OneOfExample) AsOneOfExample1() (OneOfExample1, error) {
+	var body OneOfExample1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfExample1 overwrites any union data inside the OneOfExample as the provided OneOfExample1
+func (t *OneOfExample) FromOneOfExample1(v OneOfExample1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfExample1 performs a merge with any union data inside the OneOfExample, using the provided OneOfExample1
+func (t *OneOfExample) MergeOneOfExample1(v OneOfExample1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OneOfExample) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OneOfExample) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -198,6 +271,11 @@ type ClientInterface interface {
 	UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// UnionInRefExampleWithBody request with any body
+	UnionInRefExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	UnionInRefExample(ctx context.Context, body UnionInRefExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -442,6 +520,30 @@ func (c *Client) UnionExampleWithBody(ctx context.Context, contentType string, b
 
 func (c *Client) UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnionExampleRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnionInRefExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnionInRefExampleRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) UnionInRefExample(ctx context.Context, body UnionInRefExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewUnionInRefExampleRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -920,6 +1022,46 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 	return req, nil
 }
 
+// NewUnionInRefExampleRequest calls the generic UnionInRefExample builder with application/json body
+func NewUnionInRefExampleRequest(server string, body UnionInRefExampleJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewUnionInRefExampleRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewUnionInRefExampleRequestWithBody generates requests for UnionInRefExample with any type of body
+func NewUnionInRefExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/with-union-in-ref")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -1016,6 +1158,11 @@ type ClientWithResponsesInterface interface {
 	UnionExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
 
 	UnionExampleWithResponse(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
+
+	// UnionInRefExampleWithBodyWithResponse request with any body
+	UnionInRefExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionInRefExampleResponse, error)
+
+	UnionInRefExampleWithResponse(ctx context.Context, body UnionInRefExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionInRefExampleResponse, error)
 }
 
 type JSONExampleResponse struct {
@@ -1279,6 +1426,28 @@ func (r UnionExampleResponse) StatusCode() int {
 	return 0
 }
 
+type UnionInRefExampleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OneOfExample
+}
+
+// Status returns HTTPResponse.Status
+func (r UnionInRefExampleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r UnionInRefExampleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 // JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse
 func (c *ClientWithResponses) JSONExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error) {
 	rsp, err := c.JSONExampleWithBody(ctx, contentType, body, reqEditors...)
@@ -1457,6 +1626,23 @@ func (c *ClientWithResponses) UnionExampleWithResponse(ctx context.Context, body
 		return nil, err
 	}
 	return ParseUnionExampleResponse(rsp)
+}
+
+// UnionInRefExampleWithBodyWithResponse request with arbitrary body returning *UnionInRefExampleResponse
+func (c *ClientWithResponses) UnionInRefExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionInRefExampleResponse, error) {
+	rsp, err := c.UnionInRefExampleWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnionInRefExampleResponse(rsp)
+}
+
+func (c *ClientWithResponses) UnionInRefExampleWithResponse(ctx context.Context, body UnionInRefExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionInRefExampleResponse, error) {
+	rsp, err := c.UnionInRefExample(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseUnionInRefExampleResponse(rsp)
 }
 
 // ParseJSONExampleResponse parses an HTTP response from a JSONExampleWithResponse call
@@ -1703,6 +1889,32 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 		var dest struct {
 			union json.RawMessage
 		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseUnionInRefExampleResponse parses an HTTP response from a UnionInRefExampleWithResponse call
+func ParseUnionInRefExampleResponse(rsp *http.Response) (*UnionInRefExampleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &UnionInRefExampleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OneOfExample
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
