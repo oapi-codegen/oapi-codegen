@@ -159,7 +159,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	return r
 }
 
-type PascalJSONResponse PascalSchema
+type PascalJSONResponse = PascalSchema
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {

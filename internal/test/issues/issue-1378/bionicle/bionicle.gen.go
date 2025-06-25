@@ -197,7 +197,7 @@ type GetBionicleNameResponseObject interface {
 	VisitGetBionicleNameResponse(w http.ResponseWriter) error
 }
 
-type GetBionicleName200JSONResponse Bionicle
+type GetBionicleName200JSONResponse = Bionicle
 
 func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "application/json")
