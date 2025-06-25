@@ -885,7 +885,6 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
-					break
 				}
 			}
 			// Implicit mapping.
@@ -896,7 +895,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < len(elements) {
 		return errors.New("discriminator: not all schemas were mapped")
 	}
 
