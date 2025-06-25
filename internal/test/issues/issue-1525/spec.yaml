@@ -1,0 +1,25 @@
+openapi: 3.0.0
+
+paths:
+  thing:
+    get:
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+
+components:
+  schemas:
+    String:
+      type: string
+    Thing:
+      type: object
+      properties:
+        x:
+          $ref: "#/components/schemas/String"
+          nullable: true
+      required:
+        - x
