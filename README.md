@@ -1796,6 +1796,103 @@ However, for more complex URLs that defined `variables` in them, we generate the
 
 For a complete example see [`examples/generate/serverurls`](examples/generate/serverurls).
 
+### Duplicate types generated for clients's response object types
+
+When generating the types for interacting with the generated client, `oapi-codegen` will use the `operationId` and add on a `Request` or `Response` suffix.
+
+However, this can clash if you have named your component schemas in a similar way.
+
+For instance:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Show that generated client boilerplate can clash if schemas are well named i.e. `*Request` and `*Response`"
+paths:
+  /client:
+    put:
+      operationId: updateClient
+      requestBodies:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateClientResponse'
+components:
+  schemas:
+    UpdateClientRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    UpdateClientResponse:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+```
+
+If you were to generate with this configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: client
+output: client.gen.go
+generate:
+  models: true
+  client: true
+```
+
+This would then result in `go build` failures:
+
+```
+# github.com/oapi-codegen/oapi-codegen/v2/examples/clienttypenameclash
+./client.gen.go:184:6: UpdateClientResponse redeclared in this block
+        ./client.gen.go:17:6: other declaration of UpdateClientResponse
+./client.gen.go:192:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:193:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:200:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:201:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:224:3: unknown field Body in struct literal of type UpdateClientResponse
+./client.gen.go:225:3: unknown field HTTPResponse in struct literal of type UpdateClientResponse
+./client.gen.go:234:12: response.JSON400 undefined (type *UpdateClientResponse has no field or method JSON400)
+```
+
+To fix this, use the `response-type-suffix` Output Option:
+
+```diff
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+ package: client
+ output: client.gen.go
+ generate:
+   models: true
+   client: true
++output-options:
++  response-type-suffix: Resp
+```
+
+This will then rename the generated types from the default to use the new suffix:
+
+```diff
+-type UpdateClientResponse struct {
++type UpdateClientResp struct {
+        Body         []byte
+        HTTPResponse *http.Response
+        JSON400      *UpdateClientResponse
+ }
+```
+
+There is no currently planned work to change this behaviour.
+
 ## Generating API models
 
 If you're looking to only generate the models for interacting with a remote service, for instance if you need to hand-roll the API client for whatever reason, you can do this as-is.
