@@ -2942,8 +2942,6 @@ Whether you like certain fields being ordered before others, or you want to perf
 
 Note that `x-order` is 1-indexed - `x-order: 0` is not a valid value.
 
-When an OpenAPI type is deprecated, a deprecation warning can be added in the GoDoc using `x-deprecated-reason`.
-
 We can see this at play with the following schemas:
 
 ```yaml
