@@ -2462,6 +2462,8 @@ You can see this in more detail in [the example code](examples/extensions/xgotyp
 
 ### `x-go-type-skip-optional-pointer` - do not add a pointer type for optional fields in structs
 
+<a name="ext-x-go-type-skip-optional-pointer"></a>
+
 > [!TIP]
 > If you prefer this behaviour, and prefer to not have to annotate your whole OpenAPI spec for this behaviour, you can use `output-options.prefer-skip-optional-pointer=true` to default this behaviour for all fields.
 >
@@ -3731,6 +3733,88 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 ```
 
 </details>
+
+## Globally skipping the "optional pointer"
+
+One of the key things `oapi-codegen` does is to use an "optional pointer", following idiomatic Go practices, to indicate that a field/type is optional.
+
+This can be tuned on a per-field basis, using the [`x-go-type-skip-optional-pointer` extension](#ext-x-go-type-skip-optional-pointer), but it can be a bit repetitive, or can be more complex when using an OpenAPI Overlay.
+
+As of `oapi-codegen` v2.5.0, this can be tuned in two specific ways, via the following Output Options:
+
+- `prefer-skip-optional-pointer`: a global default that you do _not_ want the "optional pointer" generated. Optional fields will not have an "optional pointer", and will have an `omitempty` JSON tag
+- `prefer-skip-optional-pointer-with-omitzero`: when used in conjunction with `prefer-skip-optional-pointer-with-omitzero`, any optional fields are generated with an `omitzero` JSON tag. **Requires Go 1.24+**
+
+In both cases, there is control on a per-field level to set `x-go-type-skip-optional-pointer: false` or `x-omitzero: false` to undo these to field(s).
+
+For example, when combining both options:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: preferskipoptionalpointerwithomitzero
+output: gen.go
+generate:
+  # ...
+output-options:
+  # ...
+  prefer-skip-optional-pointer: true
+  prefer-skip-optional-pointer-with-omitzero: true
+```
+
+When we have the following spec:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: prefer-skip-optional-pointer-with-omitzero
+components:
+  schemas:
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: This field is required, so will never have an optional pointer, nor `omitzero`.
+          type: string
+        id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+          type: number
+        pointer_id:
+          type: number
+          description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+          # NOTE that this overrides the global preference
+          x-go-type-skip-optional-pointer: false
+        no_omit:
+          type: number
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+          # NOTE that this overrides the global preference
+          x-omitzero: false
+```
+
+We then generate the following Go code:
+
+```go
+// ...
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension struct {
+	// Id This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+	Id float32 `json:"id,omitempty,omitzero"`
+
+	// Name This field is required, so will never have an optional pointer, nor `omitzero`.
+	Name string `json:"name"`
+
+	// NoOmit This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+	NoOmit float32 `json:"no_omit,omitempty"`
+
+	// PointerId This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+	PointerId *float32 `json:"pointer_id,omitempty"`
+}
+```
+
+You can see this in more detail in [the example code for `prefer-skip-optional-pointer`](examples/output-options/preferskipoptionalpointer/) and [example code for `prefer-skip-optional-pointer-with-omitzero`](examples/output-options/preferskipoptionalpointerwithomitzero/)
 
 ## Changing the names of generated types
 
