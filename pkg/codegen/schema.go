@@ -705,8 +705,8 @@ func GenFieldsFromProperties(props []Property) []string {
 			// This comment has to be on its own line for godoc & IDEs to pick up
 			var deprecationReason string
 			if extension, ok := p.Extensions[extDeprecationReason]; ok {
-				if extOmitEmpty, err := extParseDeprecationReason(extension); err == nil {
-					deprecationReason = extOmitEmpty
+				if extDeprecationReason, err := extParseDeprecationReason(extension); err == nil {
+					deprecationReason = extDeprecationReason
 				}
 			}
 
