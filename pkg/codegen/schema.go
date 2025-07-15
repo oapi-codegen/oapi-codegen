@@ -88,6 +88,7 @@ type Property struct {
 	ReadOnly      bool
 	WriteOnly     bool
 	NeedsFormTag  bool
+	NeedsQueryTag bool
 	Extensions    map[string]interface{}
 	Deprecated    bool
 }
@@ -741,6 +742,9 @@ func GenFieldsFromProperties(props []Property) []string {
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName
 			}
+			if p.NeedsQueryTag {
+				fieldTags["query"] = p.JsonFieldName
+			}
 		} else {
 			fieldTags["json"] = p.JsonFieldName + ",omitempty"
 			if globalState.options.OutputOptions.EnableYamlTags {
@@ -748,6 +752,9 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 			if p.NeedsFormTag {
 				fieldTags["form"] = p.JsonFieldName + ",omitempty"
+			}
+			if p.NeedsQueryTag {
+				fieldTags["query"] = p.JsonFieldName + ",omitempty"
 			}
 		}
 
