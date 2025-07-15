@@ -54,6 +54,32 @@ func TestClient(t *testing.T) {
 	})
 }
 
+func TestNestedType(t *testing.T) {
+	t.Run("zero value (empty struct) on Client is not omitted", func(t *testing.T) {
+		nestedType := NestedType{
+			Client: Client{},
+		}
+
+		b, err := json.Marshal(nestedType)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "client"))
+	})
+
+	t.Run("value on Client is not omitted", func(t *testing.T) {
+		nestedType := NestedType{
+			Client: Client{
+				Name: "foo",
+			},
+		}
+
+		b, err := json.Marshal(nestedType)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "client"))
+	})
+}
+
 // jsonContainsKey checks if the given JSON object contains the specified key at the top level.
 func jsonContainsKey(b []byte, key string) bool {
 	var m map[string]any
