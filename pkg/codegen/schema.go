@@ -734,6 +734,11 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		omitZero := false
 
+		// default, but allow turning of
+		if shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero {
+			omitZero = true
+		}
+
 		// Support x-omitempty and x-omitzero
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
 			if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
