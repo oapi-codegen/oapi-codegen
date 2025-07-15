@@ -2685,8 +2685,6 @@ type ClientWithExtension struct {
 }
 ```
 
-Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
-
 You can see this in more detail in [the example code](examples/extensions/xomitempty/).
 
 ### `x-omitzero` - force the presence of the JSON tag `omitzero` on a field
