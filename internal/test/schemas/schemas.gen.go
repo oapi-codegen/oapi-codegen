@@ -52,11 +52,11 @@ type CustomStringType = string
 type DeprecatedProperty struct {
 	// NewProp Use this now!
 	NewProp string `json:"newProp"`
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp1 *string `json:"oldProp1,omitempty"`
 
 	// OldProp2 It used to do this and that
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp2 *string `json:"oldProp2,omitempty"`
 	// Deprecated: Use NewProp instead!
 	OldProp3 *string `json:"oldProp3,omitempty"`

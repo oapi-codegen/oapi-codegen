@@ -26,3 +26,7 @@ components:
           type: number
           # NOTE that this doesn't generate, as no `deprecated: true` is set
           x-deprecated-reason: NOTE you shouldn't see this, as you've not deprecated this field
+        deprecated_without_reason:
+          type: string
+          deprecated: true
+          # no `x-deprecated-reason` is set

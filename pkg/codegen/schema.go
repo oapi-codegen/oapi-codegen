@@ -270,10 +270,11 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType:         refType,
-			Description:    schema.Description,
-			DefineViaAlias: true,
-			OAPISchema:     schema,
+			GoType:              refType,
+			Description:         schema.Description,
+			DefineViaAlias:      true,
+			OAPISchema:          schema,
+			SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
 		}, nil
 	}
 
@@ -674,6 +675,13 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
+func stringOrEmpty(b bool, s string) string {
+	if b {
+		return s
+	}
+	return ""
+}
+
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
@@ -697,8 +705,8 @@ func GenFieldsFromProperties(props []Property) []string {
 			// This comment has to be on its own line for godoc & IDEs to pick up
 			var deprecationReason string
 			if extension, ok := p.Extensions[extDeprecationReason]; ok {
-				if extOmitEmpty, err := extParseDeprecationReason(extension); err == nil {
-					deprecationReason = extOmitEmpty
+				if extDeprecationReason, err := extParseDeprecationReason(extension); err == nil {
+					deprecationReason = extDeprecationReason
 				}
 			}
 
@@ -724,31 +732,37 @@ func GenFieldsFromProperties(props []Property) []string {
 			omitEmpty = shouldOmitEmpty
 		}
 
-		// Support x-omitempty
+		omitZero := false
+
+		// default, but allow turning of
+		if shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero {
+			omitZero = true
+		}
+
+		// Support x-omitempty and x-omitzero
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
-				omitEmpty = extOmitEmpty
+			if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+				omitEmpty = xValue
+			}
+		}
+
+		if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
+			if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
+				omitZero = xValue
 			}
 		}
 
 		fieldTags := make(map[string]string)
 
-		if !omitEmpty {
-			fieldTags["json"] = p.JsonFieldName
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName
-			}
-		} else {
-			fieldTags["json"] = p.JsonFieldName + ",omitempty"
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName + ",omitempty"
-			}
+		fieldTags["json"] = p.JsonFieldName +
+			stringOrEmpty(omitEmpty, ",omitempty") +
+			stringOrEmpty(omitZero, ",omitzero")
+
+		if globalState.options.OutputOptions.EnableYamlTags {
+			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
+		}
+		if p.NeedsFormTag {
+			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
 		}
 
 		// Support x-go-json-ignore

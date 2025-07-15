@@ -881,6 +881,8 @@ func DeprecationComment(reason string) string {
 	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
 		content += fmt.Sprintf(" %s", reason)
+	} else {
+		content += " this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
 	}
 
 	return stringToGoCommentWithPrefix(content, "")

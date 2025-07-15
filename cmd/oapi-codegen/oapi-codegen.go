@@ -319,6 +319,9 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
+		if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+			errExit("error unable to create directory: %s\n", err)
+		}
 		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)

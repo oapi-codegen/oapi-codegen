@@ -126,6 +126,8 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
+	ServerURLs bool `yaml:"server-urls,omitempty"`
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
@@ -289,6 +291,12 @@ type OutputOptions struct {
 	// PreferSkipOptionalPointer allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional.
 	// This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay)
 	PreferSkipOptionalPointer bool `yaml:"prefer-skip-optional-pointer,omitempty"`
+
+	// PreferSkipOptionalPointerWithOmitzero allows generating the `omitzero` JSON tag types that would have had an optional pointer.
+	// This is the same as adding `x-omitzero` to each field (manually, or using an OpenAPI Overlay).
+	// A field can set `x-omitzero: false` to disable the `omitzero` JSON tag.
+	// NOTE that this must be used alongside `prefer-skip-optional-pointer`, otherwise makes no difference.
+	PreferSkipOptionalPointerWithOmitzero bool `yaml:"prefer-skip-optional-pointer-with-omitzero,omitempty"`
 
 	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
