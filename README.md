@@ -3837,10 +3837,10 @@ One of the key things `oapi-codegen` does is to use an "optional pointer", follo
 
 This can be tuned on a per-field basis, using the [`x-go-type-skip-optional-pointer` extension](#ext-x-go-type-skip-optional-pointer), but it can be a bit repetitive, or can be more complex when using an OpenAPI Overlay.
 
-As of `oapi-codegen` v2.5.0, this can be tuned in two specific ways, via the following Output Options:
+As of `oapi-codegen` v2.5.0, this can be tuned in two specific ways, via the following `output-options:`:
 
-- `prefer-skip-optional-pointer`: a global default that you do _not_ want the "optional pointer" generated. Optional fields will not have an "optional pointer", and will have an `omitempty` JSON tag
-- `prefer-skip-optional-pointer-with-omitzero`: when used in conjunction with `prefer-skip-optional-pointer-with-omitzero`, any optional fields are generated with an `omitzero` JSON tag. **Requires Go 1.24+**
+- `prefer-skip-optional-pointer`: a global default that you do _not_ want the "optional pointer" generated. Optional fields will not have an "optional pointer", and will have an `omitempty` JSON tag.
+- `prefer-skip-optional-pointer-with-omitzero`: when used in conjunction with `prefer-skip-optional-pointer`, any optional fields are generated with an `omitzero` JSON tag. **Requires Go 1.24+**
 
 In both cases, there is control on a per-field level to set `x-go-type-skip-optional-pointer: false` or `x-omitzero: false` to undo these to field(s).
 
