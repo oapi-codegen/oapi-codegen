@@ -56,6 +56,10 @@
         "embedded-spec": {
           "type": "boolean",
           "description": "EmbeddedSpec indicates whether to embed the swagger spec in the generated code"
+        },
+        "server-urls": {
+          "type": "boolean",
+          "description": "Generate types for the `Server` definitions' URLs, instead of needing to provide your own values"
         }
       }
     },
@@ -103,6 +107,10 @@
         "allow-unexported-struct-field-names": {
           "type": "boolean",
           "description": "AllowUnexportedStructFieldNames makes it possible to output structs that have fields that are unexported.\nThis is expected to be used in conjunction with an extension such as `x-go-name` to override the output name, and `x-oapi-codegen-extra-tags` to not produce JSON tags for `encoding/json`.\nNOTE that this can be confusing to users of your OpenAPI specification, who may see a field present and therefore be expecting to see it in the response, without understanding the nuance of how `oapi-codegen` generates the code."
+        },
+        "preserve-original-operation-id-casing-in-embedded-spec": {
+          "type": "boolean",
+          "description": "When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.\nHowever, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.\nTo ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this. NOTE that this will not impact generated code.\nNOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct."
         }
       }
     },
@@ -229,6 +237,21 @@
         "client-response-bytes-function": {
           "type": "boolean",
           "description": "Enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`"
+        },
+        "prefer-skip-optional-pointer": {
+          "type": "boolean",
+          "description": "Allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional. This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay). A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
+          "default": false
+        },
+        "prefer-skip-optional-pointer-with-omitzero": {
+          "type": "boolean",
+          "description": "When using `prefer-skip-optional-pointer`, generate the `omitzero` JSON tag for types that would have had an optional pointer. This is the same as adding `x-omitzero` to each field (manually, or using an OpenAPI Overlay). A field can set `x-omitzero: false` to disable the `omitzero` JSON tag.\nNOTE that this requires Go 1.24+.\nNOTE that this must be used alongside `prefer-skip-optional-pointer`, otherwise makes no difference.",
+          "default": false
+        },
+        "prefer-skip-optional-pointer-on-container-types": {
+          "type": "boolean",
+          "description": "Allows disabling the generation of an 'optional pointer' for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check. A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
+          "default": false
         }
       }
     },

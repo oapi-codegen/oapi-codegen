@@ -271,6 +271,15 @@ func main() {
 		errExit("configuration error: %v\n", err)
 	}
 
+	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
+		out := "WARNING: A number of warning(s) were returned when validating the GenerateOptions:"
+		for k, v := range warnings {
+			out += "\n- " + k + ": " + v
+		}
+
+		_, _ = fmt.Fprint(os.Stderr, out)
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)
@@ -297,11 +306,11 @@ func main() {
 	}
 
 	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
-		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
+		fmt.Fprintln(os.Stderr, "WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
 	}
 
 	if len(noVCSVersionOverride) > 0 {
-		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
@@ -310,6 +319,9 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
+		if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+			errExit("error unable to create directory: %s\n", err)
+		}
 		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)

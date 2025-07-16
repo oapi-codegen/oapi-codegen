@@ -128,6 +128,12 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (p Property) HasOptionalPointer() bool {
+	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
+}
+
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
 	// Schema is the scheme of a type which has a list of enum values, eg, the
@@ -267,16 +273,19 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType:         refType,
-			Description:    schema.Description,
-			DefineViaAlias: true,
-			OAPISchema:     schema,
+			GoType:              refType,
+			Description:         schema.Description,
+			DefineViaAlias:      true,
+			OAPISchema:          schema,
+			SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
 		}, nil
 	}
 
 	outSchema := Schema{
 		Description: schema.Description,
 		OAPISchema:  schema,
+		// NOTE that SkipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
+		SkipOptionalPointer: globalState.options.OutputOptions.PreferSkipOptionalPointer,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -292,6 +301,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return mergedSchema, nil
 	}
 
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+		outSchema.SkipOptionalPointer = skipOptionalPointer
+	}
+
 	// Check x-go-type, which will completely override the definition of this
 	// schema with the provided type.
 	if extension, ok := schema.Extensions[extPropGoType]; ok {
@@ -303,16 +322,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		outSchema.DefineViaAlias = true
 
 		return outSchema, nil
-	}
-
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
-	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-		if err != nil {
-			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-		}
-		outSchema.SkipOptionalPointer = skipOptionalPointer
 	}
 
 	// Schema type and format, eg. string / binary
@@ -328,10 +337,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
 				outType = "map[string]interface{}"
+				setSkipOptionalPointerForContainerType(&outSchema)
 			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
 				outType = "interface{}"
+				// this should never have an "optional pointer", as it doesn't make sense to be a `*interface{}`
+				outSchema.SkipOptionalPointer = true
 			}
 			outSchema.GoType = outType
 			outSchema.DefineViaAlias = true
@@ -388,6 +400,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// since we don't need them for a simple map.
 				outSchema.HasAdditionalProperties = false
 				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				setSkipOptionalPointerForContainerType(&outSchema)
 				return outSchema, nil
 			}
 
@@ -583,40 +596,34 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
+		setSkipOptionalPointerForContainerType(outSchema)
 
 	} else if t.Is("integer") {
 		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else {
+		switch f {
+		case "int64",
+			"int32",
+			"int16",
+			"int8",
+			"int",
+			"uint64",
+			"uint32",
+			"uint16",
+			"uint8",
+			"uint":
+			outSchema.GoType = f
+		default:
 			outSchema.GoType = "int"
 		}
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
 		// We default to float for "number"
-		if f == "double" {
+		switch f {
+		case "double":
 			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
+		case "float", "":
 			outSchema.GoType = "float32"
-		} else {
+		default:
 			return fmt.Errorf("invalid number format: %s", f)
 		}
 		outSchema.DefineViaAlias = true
@@ -631,6 +638,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		switch f {
 		case "byte":
 			outSchema.GoType = "[]byte"
+			setSkipOptionalPointerForContainerType(outSchema)
 		case "email":
 			outSchema.GoType = "openapi_types.Email"
 		case "date":
@@ -670,6 +678,13 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
+func stringOrEmpty(b bool, s string) string {
+	if b {
+		return s
+	}
+	return ""
+}
+
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
@@ -693,8 +708,8 @@ func GenFieldsFromProperties(props []Property) []string {
 			// This comment has to be on its own line for godoc & IDEs to pick up
 			var deprecationReason string
 			if extension, ok := p.Extensions[extDeprecationReason]; ok {
-				if extOmitEmpty, err := extParseDeprecationReason(extension); err == nil {
-					deprecationReason = extOmitEmpty
+				if extDeprecationReason, err := extParseDeprecationReason(extension); err == nil {
+					deprecationReason = extDeprecationReason
 				}
 			}
 
@@ -720,31 +735,37 @@ func GenFieldsFromProperties(props []Property) []string {
 			omitEmpty = shouldOmitEmpty
 		}
 
-		// Support x-omitempty
+		omitZero := false
+
+		// default, but allow turning of
+		if shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero {
+			omitZero = true
+		}
+
+		// Support x-omitempty and x-omitzero
 		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
-				omitEmpty = extOmitEmpty
+			if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+				omitEmpty = xValue
+			}
+		}
+
+		if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
+			if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
+				omitZero = xValue
 			}
 		}
 
 		fieldTags := make(map[string]string)
 
-		if !omitEmpty {
-			fieldTags["json"] = p.JsonFieldName
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName
-			}
-		} else {
-			fieldTags["json"] = p.JsonFieldName + ",omitempty"
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName + ",omitempty"
-			}
+		fieldTags["json"] = p.JsonFieldName +
+			stringOrEmpty(omitEmpty, ",omitempty") +
+			stringOrEmpty(omitZero, ",omitzero")
+
+		if globalState.options.OutputOptions.EnableYamlTags {
+			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
+		}
+		if p.NeedsFormTag {
+			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
 		}
 
 		// Support x-go-json-ignore
@@ -916,4 +937,15 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 	}
 
 	return nil
+}
+
+// setSkipOptionalPointerForContainerType ensures that the "optional pointer" is skipped on container types (such as a slice or a map).
+// This is controlled using the `prefer-skip-optional-pointer-on-container-types` Output Option
+// NOTE that it is still possible to override this on a per-field basis with `x-go-type-skip-optional-pointer`
+func setSkipOptionalPointerForContainerType(outSchema *Schema) {
+	if !globalState.options.OutputOptions.PreferSkipOptionalPointerOnContainerTypes {
+		return
+	}
+
+	outSchema.SkipOptionalPointer = true
 }
