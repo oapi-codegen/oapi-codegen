@@ -80,7 +80,10 @@ func (t FilterPredicate) AsFilterValue() (FilterValue, error) {
 func (t *FilterPredicate) FromFilterValue(v FilterValue) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterValue performs a merge with any union data inside the FilterPredicate, using the provided FilterValue
@@ -106,7 +109,10 @@ func (t FilterPredicate) AsFilterPredicate1() (FilterPredicate1, error) {
 func (t *FilterPredicate) FromFilterPredicate1(v FilterPredicate1) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicate1 performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicate1
@@ -132,7 +138,10 @@ func (t FilterPredicate) AsFilterPredicateOp() (FilterPredicateOp, error) {
 func (t *FilterPredicate) FromFilterPredicateOp(v FilterPredicateOp) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicateOp performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicateOp
@@ -158,7 +167,10 @@ func (t FilterPredicate) AsFilterPredicateRangeOp() (FilterPredicateRangeOp, err
 func (t *FilterPredicate) FromFilterPredicateRangeOp(v FilterPredicateRangeOp) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicateRangeOp performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicateRangeOp
@@ -194,7 +206,10 @@ func (t FilterPredicateOp_Any) AsFilterPredicateOpAny0() (FilterPredicateOpAny0,
 func (t *FilterPredicateOp_Any) FromFilterPredicateOpAny0(v FilterPredicateOpAny0) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicateOpAny0 performs a merge with any union data inside the FilterPredicateOp_Any, using the provided FilterPredicateOpAny0
@@ -230,7 +245,10 @@ func (t FilterPredicateOp_None) AsFilterPredicate() (FilterPredicate, error) {
 func (t *FilterPredicateOp_None) FromFilterPredicate(v FilterPredicate) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicate performs a merge with any union data inside the FilterPredicateOp_None, using the provided FilterPredicate
@@ -256,7 +274,10 @@ func (t FilterPredicateOp_None) AsFilterPredicateOpNone1() (FilterPredicateOpNon
 func (t *FilterPredicateOp_None) FromFilterPredicateOpNone1(v FilterPredicateOpNone1) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterPredicateOpNone1 performs a merge with any union data inside the FilterPredicateOp_None, using the provided FilterPredicateOpNone1
@@ -292,7 +313,10 @@ func (t FilterRangeValue) AsFilterRangeValue0() (FilterRangeValue0, error) {
 func (t *FilterRangeValue) FromFilterRangeValue0(v FilterRangeValue0) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterRangeValue0 performs a merge with any union data inside the FilterRangeValue, using the provided FilterRangeValue0
@@ -318,7 +342,10 @@ func (t FilterRangeValue) AsFilterRangeValue1() (FilterRangeValue1, error) {
 func (t *FilterRangeValue) FromFilterRangeValue1(v FilterRangeValue1) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterRangeValue1 performs a merge with any union data inside the FilterRangeValue, using the provided FilterRangeValue1
@@ -354,7 +381,10 @@ func (t FilterValue) AsFilterValue0() (FilterValue0, error) {
 func (t *FilterValue) FromFilterValue0(v FilterValue0) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterValue0 performs a merge with any union data inside the FilterValue, using the provided FilterValue0
@@ -380,7 +410,10 @@ func (t FilterValue) AsFilterValue1() (FilterValue1, error) {
 func (t *FilterValue) FromFilterValue1(v FilterValue1) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterValue1 performs a merge with any union data inside the FilterValue, using the provided FilterValue1
@@ -406,7 +439,10 @@ func (t FilterValue) AsFilterValue2() (FilterValue2, error) {
 func (t *FilterValue) FromFilterValue2(v FilterValue2) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeFilterValue2 performs a merge with any union data inside the FilterValue, using the provided FilterValue2
