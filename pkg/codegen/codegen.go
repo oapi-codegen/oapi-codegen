@@ -762,6 +762,15 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			continue
 		}
 
+		// Allow only valid enum types to pass
+		if tp.Schema.GoType != "string" &&
+			tp.Schema.GoType != "int" ||
+			(tp.Schema.GoType == "array" &&
+				tp.Schema.ArrayType.GoType != "int" &&
+				tp.Schema.ArrayType.GoType != "string") {
+			continue
+		}
+
 		m[tp.TypeName] = true
 
 		if len(tp.Schema.EnumValues) > 0 {
