@@ -37,3 +37,38 @@ components:
         client:
           description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
           $ref: '#/components/schemas/Client'
+
+    ReferencesATypeWithAnExtension:
+      type: object
+      additionalProperties: false
+      required:
+        - description
+      properties:
+        noExtension:
+          # this will not use an optional pointer, as it TODO
+          $ref: '#/components/schemas/ReferencedWithoutExtension'
+        noExtensionMap:
+          # TODO
+          $ref: '#/components/schemas/ReferencedWithoutExtensionMap'
+        withExtension:
+          $ref: '#/components/schemas/ReferencedWithExtension'
+
+    ReferencedWithExtension:
+      type: object
+      additionalProperties: false
+      x-go-type-skip-optional-pointer: false
+      properties:
+        foo:
+          type: string
+
+    ReferencedWithoutExtensionMap:
+      type: object
+      additionalProperties: false
+
+    ReferencedWithoutExtension:
+      type: object
+      additionalProperties: false
+      # TODO
+      properties:
+        foo:
+          type: string

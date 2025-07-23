@@ -80,6 +80,23 @@ func TestNestedType(t *testing.T) {
 	})
 }
 
+func TestReferencesATypeWithAnExtension(t *testing.T) {
+	obj := ReferencesATypeWithAnExtension{
+		NoExtension: ReferencedWithoutExtension{
+			// this is an optional field, hence no pointer
+			Foo: "",
+		},
+		// this is a map
+		NoExtensionMap: map[string]any{},
+		// we're referencing a type, which has `x-go-type-skip-optional-pointer`, so should not have a pointer type
+		WithExtension: ReferencedWithExtension{
+			Foo: "this is set",
+		},
+	}
+
+	assert.NotZero(t, obj)
+}
+
 // jsonContainsKey checks if the given JSON object contains the specified key at the top level.
 func jsonContainsKey(b []byte, key string) bool {
 	var m map[string]any

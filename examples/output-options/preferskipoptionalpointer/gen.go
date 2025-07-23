@@ -28,3 +28,23 @@ type ClientWithExtension struct {
 type NestedType struct {
 	Client Client `json:"client,omitempty"`
 }
+
+// ReferencedWithExtension defines model for ReferencedWithExtension.
+type ReferencedWithExtension struct {
+	Foo string `json:"foo,omitempty"`
+}
+
+// ReferencedWithoutExtension defines model for ReferencedWithoutExtension.
+type ReferencedWithoutExtension struct {
+	Foo string `json:"foo,omitempty"`
+}
+
+// ReferencedWithoutExtensionMap defines model for ReferencedWithoutExtensionMap.
+type ReferencedWithoutExtensionMap = map[string]interface{}
+
+// ReferencesATypeWithAnExtension defines model for ReferencesATypeWithAnExtension.
+type ReferencesATypeWithAnExtension struct {
+	NoExtension    ReferencedWithoutExtension    `json:"noExtension,omitempty"`
+	NoExtensionMap ReferencedWithoutExtensionMap `json:"noExtensionMap,omitempty"`
+	WithExtension  *ReferencedWithExtension      `json:"withExtension,omitempty"`
+}
