@@ -263,8 +263,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Check x-go-type-skip-optional-pointer, which will override if the type
 	// should be a pointer or not when the field is optional.
 	// NOTE skipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
 	skipOptionalPointer := globalState.options.OutputOptions.PreferSkipOptionalPointer
 	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
 		var err error
