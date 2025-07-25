@@ -39,8 +39,8 @@ type ReferencedWithoutExtension struct {
 	Foo string `json:"foo,omitempty"`
 }
 
-// ReferencesATypeWithAnExtension defines model for ReferencesATypeWithAnExtension.
-type ReferencesATypeWithAnExtension struct {
+// ReferencesATypeWithAnExtensionInsideAllOf This type has a field which references - via an `allOf` - a type which should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option, as well as a field without that property.
+type ReferencesATypeWithAnExtensionInsideAllOf struct {
 	NoExtension          ReferencedWithoutExtension `json:"noExtension,omitempty"`
 	WithExtensionPointer *ReferencedWithExtension   `json:"withExtensionPointer,omitempty"`
 }
