@@ -83,6 +83,7 @@ func TestNestedType(t *testing.T) {
 func TestReferencesATypeWithAnExtension(t *testing.T) {
 	t.Run("zero value", func(t *testing.T) {
 		typeWithExt := ReferencesATypeWithAnExtensionInsideAllOf{}
+
 		assert.Zero(t, typeWithExt)
 		assert.Zero(t, typeWithExt.NoExtension)
 		assert.Nil(t, typeWithExt.WithExtensionPointer)
