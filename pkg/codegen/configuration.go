@@ -234,6 +234,14 @@ type CompatibilityOptions struct {
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
 	PreserveOriginalOperationIdCasingInEmbeddedSpec bool `yaml:"preserve-original-operation-id-casing-in-embedded-spec"`
+
+	// EnumServerVariablesConflict controls whether the code generator should handle conflicts
+	// between enum values and server variable names. When set to true, the generator will
+	// apply logic to avoid naming collisions between enum types and server variables in the
+	// generated code.
+	//
+	// Corresponds to the `enum-server-variables-conflict` property in the configuration schema.
+	EnumServerVariablesConflict bool `yaml:"enum-server-variables-conflict,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
