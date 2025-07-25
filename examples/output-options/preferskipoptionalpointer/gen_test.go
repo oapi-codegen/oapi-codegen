@@ -81,20 +81,38 @@ func TestNestedType(t *testing.T) {
 }
 
 func TestReferencesATypeWithAnExtension(t *testing.T) {
-	obj := ReferencesATypeWithAnExtension{
-		NoExtension: ReferencedWithoutExtension{
-			// this is an optional field, hence no pointer
-			Foo: "",
-		},
-		// this is a map
-		NoExtensionMap: map[string]any{},
-		// we're referencing a type, which has `x-go-type-skip-optional-pointer`, so should not have a pointer type
-		WithExtension: ReferencedWithExtension{
-			Foo: "this is set",
-		},
-	}
+	t.Run("zero value", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtension{}
+		assert.Zero(t, typeWithExt)
+		assert.Zero(t, typeWithExt.NoExtension)
+		assert.Nil(t, typeWithExt.WithExtensionPointer)
+	})
 
-	assert.NotZero(t, obj)
+	t.Run("value on noExtension", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtension{
+			NoExtension:          ReferencedWithoutExtension{"value"},
+			WithExtensionPointer: nil,
+		}
+
+		b, err := json.Marshal(typeWithExt)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "noExtension"))
+		assert.False(t, jsonContainsKey(b, "withExtensionPointer"))
+	})
+
+	t.Run("value on noExtension and withExtensionPointer", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtension{
+			NoExtension:          ReferencedWithoutExtension{"value"},
+			WithExtensionPointer: &ReferencedWithExtension{"ptrValue"},
+		}
+
+		b, err := json.Marshal(typeWithExt)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "noExtension"))
+		assert.True(t, jsonContainsKey(b, "withExtensionPointer"))
+	})
 }
 
 // jsonContainsKey checks if the given JSON object contains the specified key at the top level.
