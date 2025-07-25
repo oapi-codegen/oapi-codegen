@@ -49,6 +49,7 @@ components:
           allOf:
             - $ref: '#/components/schemas/ReferencedWithoutExtension'
         withExtensionPointer:
+          # NOTE this will generate pointer type (despite global preference `prefer-skip-optional-pointer: true`) as we have field-level `x-go-type-skip-optional-pointer: false`
           allOf:
             - $ref: '#/components/schemas/ReferencedWithExtension'
     ReferencedWithoutExtension:
