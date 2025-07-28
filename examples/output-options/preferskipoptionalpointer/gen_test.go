@@ -80,6 +80,42 @@ func TestNestedType(t *testing.T) {
 	})
 }
 
+func TestReferencesATypeWithAnExtension(t *testing.T) {
+	t.Run("zero value", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtensionInsideAllOf{}
+
+		assert.Zero(t, typeWithExt)
+		assert.Zero(t, typeWithExt.NoExtension)
+		assert.Nil(t, typeWithExt.WithExtensionPointer)
+	})
+
+	t.Run("value on noExtension", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtensionInsideAllOf{
+			NoExtension:          ReferencedWithoutExtension{"value"},
+			WithExtensionPointer: nil,
+		}
+
+		b, err := json.Marshal(typeWithExt)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "noExtension"))
+		assert.False(t, jsonContainsKey(b, "withExtensionPointer"))
+	})
+
+	t.Run("value on noExtension and withExtensionPointer", func(t *testing.T) {
+		typeWithExt := ReferencesATypeWithAnExtensionInsideAllOf{
+			NoExtension:          ReferencedWithoutExtension{"value"},
+			WithExtensionPointer: &ReferencedWithExtension{"ptrValue"},
+		}
+
+		b, err := json.Marshal(typeWithExt)
+		require.NoError(t, err)
+
+		assert.True(t, jsonContainsKey(b, "noExtension"))
+		assert.True(t, jsonContainsKey(b, "withExtensionPointer"))
+	})
+}
+
 // jsonContainsKey checks if the given JSON object contains the specified key at the top level.
 func jsonContainsKey(b []byte, key string) bool {
 	var m map[string]any
