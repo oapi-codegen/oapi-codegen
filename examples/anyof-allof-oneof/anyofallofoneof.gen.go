@@ -49,16 +49,20 @@ func (t ClientAndMaybeIdentity) AsClient() (Client, error) {
 	return body, err
 }
 
+func (t *ClientAndMaybeIdentity) prepareClient(v Client) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromClient overwrites any union data inside the ClientAndMaybeIdentity as the provided Client
 func (t *ClientAndMaybeIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareClient(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Client
 func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareClient(v)
 	if err != nil {
 		return err
 	}
@@ -75,16 +79,20 @@ func (t ClientAndMaybeIdentity) AsIdentity() (Identity, error) {
 	return body, err
 }
 
+func (t *ClientAndMaybeIdentity) prepareIdentity(v Identity) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromIdentity overwrites any union data inside the ClientAndMaybeIdentity as the provided Identity
 func (t *ClientAndMaybeIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareIdentity(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Identity
 func (t *ClientAndMaybeIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareIdentity(v)
 	if err != nil {
 		return err
 	}
@@ -111,16 +119,20 @@ func (t ClientOrIdentity) AsClient() (Client, error) {
 	return body, err
 }
 
+func (t *ClientOrIdentity) prepareClient(v Client) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromClient overwrites any union data inside the ClientOrIdentity as the provided Client
 func (t *ClientOrIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareClient(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientOrIdentity, using the provided Client
 func (t *ClientOrIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareClient(v)
 	if err != nil {
 		return err
 	}
@@ -137,16 +149,20 @@ func (t ClientOrIdentity) AsIdentity() (Identity, error) {
 	return body, err
 }
 
+func (t *ClientOrIdentity) prepareIdentity(v Identity) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromIdentity overwrites any union data inside the ClientOrIdentity as the provided Identity
 func (t *ClientOrIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareIdentity(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientOrIdentity, using the provided Identity
 func (t *ClientOrIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareIdentity(v)
 	if err != nil {
 		return err
 	}
