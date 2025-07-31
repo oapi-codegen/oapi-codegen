@@ -150,7 +150,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
     {{else if eq .NameTag "Text" -}}
         bodyReader = strings.NewReader(string(body))
     {{end -}}
-    return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+    return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, {{.ContentType | quote}}, bodyReader)
 }
 {{end -}}
 {{end}}
