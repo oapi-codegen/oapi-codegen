@@ -513,6 +513,29 @@ func TestGenPathString(t *testing.T) {
 	}
 }
 
+func Benchmark_concatPath1param(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	pathParam0 := "pathParam0"
+
+	for i := 0; i < b.N; i++ {
+		_ = "/test/" + pathParam0
+	}
+}
+
+func Benchmark_concatPath2param(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	pathParam0 := "pathParam0"
+	pathParam1 := "pathParam1"
+
+	for i := 0; i < b.N; i++ {
+		_ = "/test/" + pathParam0 + "/test2/" + pathParam1
+	}
+}
+
 func TestStringToGoComment(t *testing.T) {
 	testCases := []struct {
 		input    string
