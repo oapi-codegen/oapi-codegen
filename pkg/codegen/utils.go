@@ -877,6 +877,19 @@ func StringWithTypeNameToGoComment(in, typeName string) string {
 	return stringToGoCommentWithPrefix(in, typeName)
 }
 
+// getClientMarshaler return name of the marshaler func
+func getClientMarshaler(format, marshalerType string) string {
+	format = strings.ToLower(format)
+	marshalerType = strings.ToLower(marshalerType)
+	marshalerType = UppercaseFirstCharacter(marshalerType)
+
+	if clientMarshalerEnabled {
+		return format + marshalerType
+	}
+
+	return format + "." + marshalerType
+}
+
 func DeprecationComment(reason string) string {
 	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {

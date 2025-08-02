@@ -1066,6 +1066,11 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
 }
 
+// GenerateClientMarshaler generate a functions to set custom marshal/unmarshal functions for client.
+func GenerateClientMarshaler(t *template.Template) (string, error) {
+	return GenerateTemplates([]string{"client-marshaler.tmpl"}, t, nil)
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
 	var generatedTemplates []string

@@ -300,6 +300,9 @@ type OutputOptions struct {
 
 	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
+
+	// ClientCustomMarshalerFuncs allows setting a custom JSON marshaler/unmarshaler for the client
+	ClientCustomMarshalerFuncs bool `yaml:"client-custom-marshaler-funcs,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
