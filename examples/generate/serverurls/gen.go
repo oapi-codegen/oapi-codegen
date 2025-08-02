@@ -62,6 +62,7 @@ func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServer
 
 	u = strings.ReplaceAll(u, "{basePath}", string(basePath))
 	u = strings.ReplaceAll(u, "{noDefault}", string(noDefault))
+
 	// TODO in the future, this will validate that the value is part of the ServerUrlTheProductionAPIServerPortVariable enum
 	u = strings.ReplaceAll(u, "{port}", string(port))
 	u = strings.ReplaceAll(u, "{username}", string(username))

@@ -131,6 +131,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
+	clientMarshalerEnabled = opts.OutputOptions.ClientCustomMarshalerFuncs
+
 	if globalState.options.OutputOptions.ClientTypeName == "" {
 		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
 	}
@@ -286,19 +288,27 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		strictServerOut = strictServerResponses + strictServerOut
 	}
 
-	var clientOut string
+	var (
+		clientOut              string
+		clientWithResponsesOut string
+		clientMarshalerOut     string
+	)
 	if opts.Generate.Client {
 		clientOut, err = GenerateClient(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating client: %w", err)
 		}
-	}
 
-	var clientWithResponsesOut string
-	if opts.Generate.Client {
 		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating client with responses: %w", err)
+		}
+
+		if opts.OutputOptions.ClientCustomMarshalerFuncs {
+			clientMarshalerOut, err = GenerateClientMarshaler(t)
+			if err != nil {
+				return "", fmt.Errorf("error generating client marshaler: %w", err)
+			}
 		}
 	}
 
@@ -352,6 +362,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(clientWithResponsesOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
+		}
+		if opts.OutputOptions.ClientCustomMarshalerFuncs {
+			_, err = w.WriteString(clientMarshalerOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing client: %w", err)
+			}
 		}
 	}
 

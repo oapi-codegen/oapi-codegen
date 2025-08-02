@@ -40,7 +40,8 @@ var (
 	contentTypesYAML    = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
 	contentTypesXML     = []string{"application/xml", "text/xml", "application/problems+xml"}
 
-	responseTypeSuffix = "Response"
+	responseTypeSuffix     = "Response"
+	clientMarshalerEnabled = false
 
 	titleCaser = cases.Title(language.English)
 )
@@ -167,11 +168,12 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
-						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						"if err := %s(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
 						"response.%s = &dest",
 						typeDefinition.Schema.TypeDecl(),
+						getClientMarshaler("json", "Unmarshal"),
 						typeDefinition.TypeName)
 
 					if jsonCount > 1 {
@@ -187,11 +189,12 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			case StringInArray(contentTypeName, contentTypesYAML):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
-						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						"if err := %s(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
 						"response.%s = &dest",
 						typeDefinition.Schema.TypeDecl(),
+						getClientMarshaler("yaml", "Unmarshal"),
 						typeDefinition.TypeName)
 					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "yaml")
 					handledCaseClauses[caseKey] = caseClause
@@ -201,11 +204,12 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			case StringInArray(contentTypeName, contentTypesXML):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
-						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						"if err := %s(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
 						"response.%s = &dest",
 						typeDefinition.Schema.TypeDecl(),
+						getClientMarshaler("xml", "Unmarshal"),
 						typeDefinition.TypeName)
 					caseKey, caseClause := buildUnmarshalCase(typeDefinition, caseAction, "xml")
 					handledCaseClauses[caseKey] = caseClause
@@ -344,6 +348,7 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"getClientMarshaler":         getClientMarshaler,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 }
