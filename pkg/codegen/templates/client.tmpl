@@ -183,7 +183,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
 
-    operationPath := fmt.Sprintf("{{genParamFmtString .Path}}"{{range $paramIdx, $param := .PathParams}}, pathParam{{$paramIdx}}{{end}})
+    operationPath := {{getPathString .Path "pathParam"}}
     if operationPath[0] == '/' {
         operationPath = "." + operationPath
     }

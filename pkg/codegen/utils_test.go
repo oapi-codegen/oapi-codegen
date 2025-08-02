@@ -464,9 +464,53 @@ func TestOrderedParamsFromUri(t *testing.T) {
 	assert.EqualValues(t, []string{}, result)
 }
 
-func TestReplacePathParamsWithStr(t *testing.T) {
-	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
-	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+func TestGenPathString(t *testing.T) {
+	tests := []struct {
+		uri  string
+		want string
+	}{
+		{
+			uri:  "/test/{param1}/{.param2}/{;param3*}/foo",
+			want: `"/test/" + pathParam0 + "/" + pathParam1 + "/" + pathParam2 + "/foo"`,
+		},
+		{
+			uri:  "/test/{param}",
+			want: `"/test/" + pathParam0`,
+		},
+		{
+			uri:  "/test/{param}/test2/{param2}",
+			want: `"/test/" + pathParam0 + "/test2/" + pathParam1`,
+		},
+		{
+			uri:  "/test/test2",
+			want: `"/test/test2"`,
+		},
+		{
+			uri:  "test",
+			want: `"test"`,
+		},
+		{
+			uri:  "{param}/test",
+			want: `pathParam0 + "/test"`,
+		},
+		{
+			uri:  "/{param}/test/",
+			want: `"/" + pathParam0 + "/test/"`,
+		},
+		{
+			uri:  "/",
+			want: `"/"`,
+		},
+		{
+			uri:  "",
+			want: `""`,
+		},
+	}
+
+	for _, tst := range tests {
+		result := GenPathString(tst.uri, "pathParam")
+		assert.Equal(t, tst.want, result)
+	}
 }
 
 func TestStringToGoComment(t *testing.T) {
