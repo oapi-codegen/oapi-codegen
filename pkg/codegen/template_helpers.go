@@ -40,7 +40,8 @@ var (
 	contentTypesYAML    = []string{"application/yaml", "application/x-yaml", "text/yaml", "text/x-yaml"}
 	contentTypesXML     = []string{"application/xml", "text/xml", "application/problems+xml"}
 
-	responseTypeSuffix = "Response"
+	responseTypeSuffix    = "Response"
+	serverCustomMarshaler = false
 
 	titleCaser = cases.Title(language.English)
 )
@@ -296,6 +297,22 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+func getServerEncoder() string {
+	if serverCustomMarshaler {
+		return "newJSONEncoder"
+	}
+
+	return "json.NewEncoder"
+}
+
+func getServerDecoder() string {
+	if serverCustomMarshaler {
+		return "newJSONDecoder"
+	}
+
+	return "json.NewDecoder"
+}
+
 // genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
 //
 // goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
@@ -344,6 +361,8 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"getServerEncoder":           getServerEncoder,
+	"getServerDecoder":           getServerDecoder,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 }

@@ -1,0 +1,23 @@
+type Encoder interface {
+    Encode(val any) error
+}
+
+type Decoder interface {
+    Decode(val any) error
+}
+
+var newJSONEncoder = func(w io.Writer) Encoder {
+    return json.NewEncoder(w)
+}
+
+func SetJSONEncoder(f func(w io.Writer) Encoder) {
+    newJSONEncoder = f
+}
+
+var newJSONDecoder = func(r io.Reader) Decoder {
+    return json.NewDecoder(r)
+}
+
+func SetJSONDecoder(f func(r io.Reader) Decoder) {
+    newJSONDecoder = f
+}
