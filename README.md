@@ -4505,7 +4505,7 @@ In addition, we are also generously sponsored by the following folks, each of wh
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="100px">
+		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="70px">
 		</picture>
 	</a>
 </p>
