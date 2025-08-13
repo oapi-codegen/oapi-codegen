@@ -280,12 +280,6 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 		}
 		response.JSON500 = &dest
 
-	case rsp.StatusCode == 401:
-	// Content-type (text/plain) unsupported
-
-	case rsp.StatusCode == 403:
-		// Content-type (text/plain) unsupported
-
 	}
 
 	return response, nil
