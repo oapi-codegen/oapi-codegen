@@ -2745,6 +2745,114 @@ type ServerInterface interface {
 	GetStartingWithNumber(ctx echo.Context, n1param string) error
 }
 
+// Unimplemented server implementation that returns HTTP 501 Not Implemented for each endpoint.
+type Unimplemented struct{}
+
+// (GET /contentObject/{param})
+func (_ Unimplemented) GetContentObject(ctx echo.Context, param ComplexObject) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /cookie)
+func (_ Unimplemented) GetCookie(ctx echo.Context, params GetCookieParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /enums)
+func (_ Unimplemented) EnumParams(ctx echo.Context, params EnumParamsParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /header)
+func (_ Unimplemented) GetHeader(ctx echo.Context, params GetHeaderParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /labelExplodeArray/{.param*})
+func (_ Unimplemented) GetLabelExplodeArray(ctx echo.Context, param []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /labelExplodeObject/{.param*})
+func (_ Unimplemented) GetLabelExplodeObject(ctx echo.Context, param Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /labelNoExplodeArray/{.param})
+func (_ Unimplemented) GetLabelNoExplodeArray(ctx echo.Context, param []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /labelNoExplodeObject/{.param})
+func (_ Unimplemented) GetLabelNoExplodeObject(ctx echo.Context, param Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /matrixExplodeArray/{.id*})
+func (_ Unimplemented) GetMatrixExplodeArray(ctx echo.Context, id []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /matrixExplodeObject/{.id*})
+func (_ Unimplemented) GetMatrixExplodeObject(ctx echo.Context, id Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /matrixNoExplodeArray/{.id})
+func (_ Unimplemented) GetMatrixNoExplodeArray(ctx echo.Context, id []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /matrixNoExplodeObject/{.id})
+func (_ Unimplemented) GetMatrixNoExplodeObject(ctx echo.Context, id Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /passThrough/{param})
+func (_ Unimplemented) GetPassThrough(ctx echo.Context, param string) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /queryDeepObject)
+func (_ Unimplemented) GetDeepObject(ctx echo.Context, params GetDeepObjectParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /queryForm)
+func (_ Unimplemented) GetQueryForm(ctx echo.Context, params GetQueryFormParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /simpleExplodeArray/{param*})
+func (_ Unimplemented) GetSimpleExplodeArray(ctx echo.Context, param []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /simpleExplodeObject/{param*})
+func (_ Unimplemented) GetSimpleExplodeObject(ctx echo.Context, param Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /simpleNoExplodeArray/{param})
+func (_ Unimplemented) GetSimpleNoExplodeArray(ctx echo.Context, param []int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /simpleNoExplodeObject/{param})
+func (_ Unimplemented) GetSimpleNoExplodeObject(ctx echo.Context, param Object) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /simplePrimitive/{param})
+func (_ Unimplemented) GetSimplePrimitive(ctx echo.Context, param int32) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// (GET /startingWithNumber/{1param})
+func (_ Unimplemented) GetStartingWithNumber(ctx echo.Context, n1param string) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
