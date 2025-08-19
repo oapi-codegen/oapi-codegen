@@ -56,6 +56,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/nothing", wrapper.GetNothing)
+	router.GET(baseURL+"/nothing", wrapper.GetNothing).Name = "GET /nothing"
 
 }

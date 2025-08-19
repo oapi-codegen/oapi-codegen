@@ -3383,27 +3383,27 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/contentObject/:param", wrapper.GetContentObject)
-	router.GET(baseURL+"/cookie", wrapper.GetCookie)
-	router.GET(baseURL+"/enums", wrapper.EnumParams)
-	router.GET(baseURL+"/header", wrapper.GetHeader)
-	router.GET(baseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
-	router.GET(baseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
-	router.GET(baseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
-	router.GET(baseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
-	router.GET(baseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
-	router.GET(baseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
-	router.GET(baseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
-	router.GET(baseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
-	router.GET(baseURL+"/passThrough/:param", wrapper.GetPassThrough)
-	router.GET(baseURL+"/queryDeepObject", wrapper.GetDeepObject)
-	router.GET(baseURL+"/queryForm", wrapper.GetQueryForm)
-	router.GET(baseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
-	router.GET(baseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
-	router.GET(baseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
-	router.GET(baseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
-	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
-	router.GET(baseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
+	router.GET(baseURL+"/contentObject/:param", wrapper.GetContentObject).Name = "GET /contentObject/:param"
+	router.GET(baseURL+"/cookie", wrapper.GetCookie).Name = "GET /cookie"
+	router.GET(baseURL+"/enums", wrapper.EnumParams).Name = "GET /enums"
+	router.GET(baseURL+"/header", wrapper.GetHeader).Name = "GET /header"
+	router.GET(baseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray).Name = "GET /labelExplodeArray/:param"
+	router.GET(baseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject).Name = "GET /labelExplodeObject/:param"
+	router.GET(baseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray).Name = "GET /labelNoExplodeArray/:param"
+	router.GET(baseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject).Name = "GET /labelNoExplodeObject/:param"
+	router.GET(baseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray).Name = "GET /matrixExplodeArray/:id"
+	router.GET(baseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject).Name = "GET /matrixExplodeObject/:id"
+	router.GET(baseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray).Name = "GET /matrixNoExplodeArray/:id"
+	router.GET(baseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject).Name = "GET /matrixNoExplodeObject/:id"
+	router.GET(baseURL+"/passThrough/:param", wrapper.GetPassThrough).Name = "GET /passThrough/:param"
+	router.GET(baseURL+"/queryDeepObject", wrapper.GetDeepObject).Name = "GET /queryDeepObject"
+	router.GET(baseURL+"/queryForm", wrapper.GetQueryForm).Name = "GET /queryForm"
+	router.GET(baseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray).Name = "GET /simpleExplodeArray/:param"
+	router.GET(baseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject).Name = "GET /simpleExplodeObject/:param"
+	router.GET(baseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray).Name = "GET /simpleNoExplodeArray/:param"
+	router.GET(baseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject).Name = "GET /simpleNoExplodeObject/:param"
+	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive).Name = "GET /simplePrimitive/:param"
+	router.GET(baseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber).Name = "GET /startingWithNumber/:1param"
 
 }
 
