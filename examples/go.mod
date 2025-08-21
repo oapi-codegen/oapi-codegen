@@ -24,6 +24,7 @@ require (
 	github.com/oapi-codegen/testutil v1.0.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -117,6 +118,5 @@ require (
 	golang.org/x/tools v0.25.1 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
