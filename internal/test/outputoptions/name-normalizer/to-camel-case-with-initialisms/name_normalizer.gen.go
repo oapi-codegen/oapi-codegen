@@ -222,7 +222,7 @@ func NewGetHTTPPetRequest(server string, petID string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/pets/%s", pathParam0)
+	operationPath := "/api/pets/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
