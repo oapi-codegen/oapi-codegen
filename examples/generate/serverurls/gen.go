@@ -35,20 +35,32 @@ type ServerUrlTheProductionAPIServerBasePathVariable string
 // ServerUrlTheProductionAPIServerBasePathVariableDefault is the default value for the `basePath` variable for ServerUrlTheProductionAPIServer
 const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
 
+// ServerUrlTheProductionAPIServerConflictingVariable is the `conflicting` variable for ServerUrlTheProductionAPIServer
+type ServerUrlTheProductionAPIServerConflictingVariable string
+
+// ServerUrlTheProductionAPIServerConflictingVariableEnumDefault is one of the accepted values for the `conflicting` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerConflictingVariableEnumDefault ServerUrlTheProductionAPIServerConflictingVariable = "default"
+
+// ServerUrlTheProductionAPIServerConflictingVariableEnum443 is one of the accepted values for the `conflicting` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerConflictingVariableEnum443 ServerUrlTheProductionAPIServerConflictingVariable = "443"
+
+// ServerUrlTheProductionAPIServerConflictingVariableDefault is the default choice, for the accepted values for the `conflicting` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerConflictingVariableDefault ServerUrlTheProductionAPIServerConflictingVariable = ServerUrlTheProductionAPIServerConflictingVariableEnumDefault
+
 // ServerUrlTheProductionAPIServerNoDefaultVariable is the `noDefault` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerNoDefaultVariable string
 
 // ServerUrlTheProductionAPIServerPortVariable is the `port` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerPortVariable string
 
-// ServerUrlTheProductionAPIServerPortVariable8443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+// ServerUrlTheProductionAPIServerPortVariableEnum8443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerPortVariableEnum8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
 
-// ServerUrlTheProductionAPIServerPortVariable443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariable443 ServerUrlTheProductionAPIServerPortVariable = "443"
+// ServerUrlTheProductionAPIServerPortVariableEnum443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerPortVariableEnum443 ServerUrlTheProductionAPIServerPortVariable = "443"
 
 // ServerUrlTheProductionAPIServerPortVariableDefault is the default choice, for the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
+const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariableEnum8443
 
 // ServerUrlTheProductionAPIServerUsernameVariable is the `username` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerUsernameVariable string
@@ -57,10 +69,12 @@ type ServerUrlTheProductionAPIServerUsernameVariable string
 const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
 
 // NewServerUrlTheProductionAPIServer constructs the Server URL for The production API server, with the provided variables.
-func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, noDefault ServerUrlTheProductionAPIServerNoDefaultVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, conflicting ServerUrlTheProductionAPIServerConflictingVariable, noDefault ServerUrlTheProductionAPIServerNoDefaultVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
 	u := "https://{username}.gigantic-server.com:{port}/{basePath}"
 
 	u = strings.ReplaceAll(u, "{basePath}", string(basePath))
+	// TODO in the future, this will validate that the value is part of the ServerUrlTheProductionAPIServerConflictingVariable enum
+	u = strings.ReplaceAll(u, "{conflicting}", string(conflicting))
 	u = strings.ReplaceAll(u, "{noDefault}", string(noDefault))
 	// TODO in the future, this will validate that the value is part of the ServerUrlTheProductionAPIServerPortVariable enum
 	u = strings.ReplaceAll(u, "{port}", string(port))
