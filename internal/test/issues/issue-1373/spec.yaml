@@ -1,0 +1,32 @@
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure that recursive $ref in allOf are handled properly
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/RecursiveObject'
+
+components:
+  schemas:
+    RecursiveObject:
+      allOf:
+        - $ref: "#/components/schemas/NonRecursiveObject"
+        - $ref: "#/components/schemas/RecursiveObject"
+        - properties:
+            FieldInRecursive::
+              type: string
+
+    NonRecursiveObject:
+      properties:
+        FieldInNonRecursive:
+          type: string
