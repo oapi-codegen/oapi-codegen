@@ -87,7 +87,7 @@
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return json.NewEncoder(w).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return {{ getServerEncoder }}(w).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := w.Write([]byte({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err

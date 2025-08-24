@@ -50,7 +50,7 @@ type strictHandler struct {
             {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+                    if err := {{ getServerDecoder }}(r.Body).Decode(&body); err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
                         return
                     }
