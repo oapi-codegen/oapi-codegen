@@ -1,0 +1,22 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test2
+  license:
+    name: MIT
+components:
+  schemas:
+    TestObj2:
+      properties:
+        Field3:
+          type: array
+          items:
+            $ref: "#/components/schemas/TestObj3"
+        Field4:
+          type: string
+    TestObj3:
+      properties:
+        FieldA:
+          type: string
+        FieldB:
+          type: string
