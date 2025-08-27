@@ -4468,6 +4468,14 @@ We're very appreciative of [the many contributors over the years](https://github
   <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
 </a>
 
+## Feedback and contributions
+
+- **Feedback**
+  - Found a bug or have an enhancement request? Please [open an issue](https://github.com/oapi-codegen/oapi-codegen/issues).
+  - Have a question or want to discuss usage? Please use [GitHub Discussions](https://github.com/oapi-codegen/oapi-codegen/discussions).
+- **Contribute**
+  - Please read the [Contributing guide](CONTRIBUTING.md), especially [Before you raise a PR](CONTRIBUTING.md#before-you-raise-a-pr) for contribution guidelines.
+
 ## Sponsors
 
 For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
