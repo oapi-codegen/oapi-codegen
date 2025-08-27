@@ -1,0 +1,39 @@
+name: Bug report
+description: File a bug report
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of the problem
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal reproduction
+      description: Provide the smallest possible OpenAPI spec/cfg and steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: oapi-codegen version
+      description: Output of `oapi-codegen -version` or module version
+    validations:
+      required: true
+  - type: input
+    id: go
+    attributes:
+      label: Go version
+      description: Output of `go version`
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / error output
+      description: Relevant logs or stack traces
+    validations:
+      required: false
