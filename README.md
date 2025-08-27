@@ -4475,6 +4475,7 @@ We're very appreciative of [the many contributors over the years](https://github
   - Have a question or want to discuss usage? Please use [GitHub Discussions](https://github.com/oapi-codegen/oapi-codegen/discussions).
 - **Contribute**
   - Please read the [Contributing guide](CONTRIBUTING.md), especially [Before you raise a PR](CONTRIBUTING.md#before-you-raise-a-pr) for contribution guidelines.
+  - For reporting security issues, see our [Security policy](SECURITY.md).
 
 ## Sponsors
 
