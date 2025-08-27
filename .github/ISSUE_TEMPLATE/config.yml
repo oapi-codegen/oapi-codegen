@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and support
+    url: https://github.com/oapi-codegen/oapi-codegen/discussions
+    about: Please use GitHub Discussions for general questions
+  - name: Security report
+    url: https://github.com/oapi-codegen/oapi-codegen/security/policy
+    about: Please report security issues privately via Security Advisories
+
