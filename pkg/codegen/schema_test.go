@@ -308,7 +308,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 				Required: true,
 				Nullable: true,
 			},
-			want: "nullable.Nullable[int]",
+			want: "nullable.Value[int]",
 		},
 
 		{
@@ -336,7 +336,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 				Required: false,
 				Nullable: true,
 			},
-			want: "nullable.Nullable[int]",
+			want: "nullable.Value[int]",
 		},
 
 		{
@@ -422,7 +422,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 				WriteOnly: true,
 				Nullable:  true,
 			},
-			want: "nullable.Nullable[int]",
+			want: "nullable.Value[int]",
 		},
 
 		{
@@ -436,7 +436,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 				WriteOnly: true,
 				Nullable:  true,
 			},
-			want: "nullable.Nullable[int]",
+			want: "nullable.Value[int]",
 		},
 	}
 	for _, tt := range tests {
