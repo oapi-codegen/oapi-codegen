@@ -123,6 +123,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -222,6 +233,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "EnsureEverythingIsReferenced")
 	req, err := NewEnsureEverythingIsReferencedRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -234,6 +246,7 @@ func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ..
 }
 
 func (c *Client) Issue1051(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue1051")
 	req, err := NewIssue1051Request(c.Server)
 	if err != nil {
 		return nil, err
@@ -246,6 +259,7 @@ func (c *Client) Issue1051(ctx context.Context, reqEditors ...RequestEditorFn) (
 }
 
 func (c *Client) Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue127")
 	req, err := NewIssue127Request(c.Server)
 	if err != nil {
 		return nil, err
@@ -258,6 +272,7 @@ func (c *Client) Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*
 }
 
 func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue185WithBody")
 	req, err := NewIssue185RequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -270,6 +285,7 @@ func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body 
 }
 
 func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue185")
 	req, err := NewIssue185Request(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -282,6 +298,7 @@ func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody, req
 }
 
 func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue209")
 	req, err := NewIssue209Request(c.Server, str)
 	if err != nil {
 		return nil, err
@@ -294,6 +311,7 @@ func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...R
 }
 
 func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue30")
 	req, err := NewIssue30Request(c.Server, pFallthrough)
 	if err != nil {
 		return nil, err
@@ -306,6 +324,7 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ..
 }
 
 func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "GetIssues375")
 	req, err := NewGetIssues375Request(c.Server)
 	if err != nil {
 		return nil, err
@@ -318,6 +337,7 @@ func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn
 }
 
 func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue41")
 	req, err := NewIssue41Request(c.Server, n1param)
 	if err != nil {
 		return nil, err
@@ -330,6 +350,7 @@ func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEdi
 }
 
 func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue9WithBody")
 	req, err := NewIssue9RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
 		return nil, err
@@ -342,6 +363,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 }
 
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue9")
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -354,6 +376,7 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 }
 
 func (c *Client) Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "Issue975")
 	req, err := NewIssue975Request(c.Server)
 	if err != nil {
 		return nil, err
