@@ -14,7 +14,7 @@ func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
 }
 
 func TestRawJSON(t *testing.T) {
-	// Check raw json unmarshaling
+	// Check raw json unmarshalling
 	const buf = `{"name":"bob","value1":{"present":true}}`
 	var dst ObjectWithJsonField
 	err := json.Unmarshal([]byte(buf), &dst)
@@ -52,7 +52,7 @@ func TestAdditionalProperties(t *testing.T) {
 	assert.True(t, found)
 	assert.EqualValues(t, 7, foo)
 
-	// test that additionalProperties that reference a schema work when unmarshaling
+	// test that additionalProperties that reference a schema work when unmarshalling
 	bossSchema := SchemaObject{
 		FirstName: "bob",
 		Role:      "warehouse manager",
