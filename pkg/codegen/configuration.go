@@ -229,7 +229,7 @@ type CompatibilityOptions struct {
 
 	// PreserveOriginalOperationIdCasingInEmbeddedSpec ensures that the `operationId` from the source spec is kept intact in case when embedding it into the Embedded Spec output.
 	// When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.
-	// However, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.
+	// However, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specification.
 	// To ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this.
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
