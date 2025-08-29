@@ -3579,7 +3579,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			var fieldVal interface{}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -3683,7 +3683,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			var fieldVal int
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
@@ -3801,7 +3801,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			}
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+				return fmt.Errorf("error unmarshalling field %s: %w", fieldName, err)
 			}
 			a.AdditionalProperties[fieldName] = fieldVal
 		}
