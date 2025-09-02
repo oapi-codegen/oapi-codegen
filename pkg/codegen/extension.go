@@ -17,6 +17,7 @@ const (
 	// extGoTypeName is used to override a generated typename for something.
 	extGoTypeName        = "x-go-type-name"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
+	extGoEmbedding       = "x-go-embedding"
 	extPropOmitEmpty     = "x-omitempty"
 	extPropOmitZero      = "x-omitzero"
 	extPropExtraTags     = "x-oapi-codegen-extra-tags"
