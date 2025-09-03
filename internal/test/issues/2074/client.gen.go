@@ -158,11 +158,6 @@ func NewGetClientRequest(server string, params *GetClientParams) (*http.Request,
 
 		var headerParam0 string
 
-		// t := reflect.TypeOf(params.ParentTag)
-		// v := reflect.ValueOf(params.ParentTag)
-		// if v == reflect.Zero(t) {
-		// 	fmt.Println("Zero")
-		// }
 		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "parentTag", runtime.ParamLocationHeader, params.ParentTag)
 		if err != nil {
 			return nil, err
