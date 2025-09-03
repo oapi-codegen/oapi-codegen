@@ -136,14 +136,16 @@ func NewGetClientRequest(server string, params *GetClientParams) (*http.Request,
 
 	if params != nil {
 
-		var headerParam0 string
+		if params.ParentTag != nil {
+			var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "parentTag", runtime.ParamLocationHeader, params.ParentTag)
-		if err != nil {
-			return nil, err
+			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "parentTag", runtime.ParamLocationHeader, *params.ParentTag)
+			if err != nil {
+				return nil, err
+			}
+
+			req.Header.Set("parentTag", headerParam0)
 		}
-
-		req.Header.Set("parentTag", headerParam0)
 
 	}
 

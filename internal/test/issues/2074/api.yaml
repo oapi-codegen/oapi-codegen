@@ -17,11 +17,11 @@ paths:
         - name: parentTag
           in: header
           description: Version string of parent model, if any model
-          x-go-type-skip-optional-pointer: false
           required: false
           schema:
             type: string
             example: parentTag
+            x-go-type-skip-optional-pointer: false
       responses:
         200:
           content:
