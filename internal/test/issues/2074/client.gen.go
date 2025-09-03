@@ -15,11 +15,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// ClientType defines model for ClientType.
-type ClientType struct {
-	Name string `json:"name"`
-}
-
 // GetClientParams defines parameters for GetClient.
 type GetClientParams struct {
 	// ParentTag Version string of parent model, if any model
@@ -101,25 +96,10 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// GetClient request
 	GetClient(ctx context.Context, params *GetClientParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// UpdateClient request
-	UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) GetClient(ctx context.Context, params *GetClientParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClientRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *Client) UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewUpdateClientRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -170,33 +150,6 @@ func NewGetClientRequest(server string, params *GetClientParams) (*http.Request,
 	return req, nil
 }
 
-// NewUpdateClientRequest generates requests for UpdateClient
-func NewUpdateClientRequest(server string) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/client")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("PUT", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -242,15 +195,12 @@ func WithBaseURL(baseURL string) ClientOption {
 type ClientWithResponsesInterface interface {
 	// GetClientWithResponse request
 	GetClientWithResponse(ctx context.Context, params *GetClientParams, reqEditors ...RequestEditorFn) (*GetClientResponse, error)
-
-	// UpdateClientWithResponse request
-	UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResponse, error)
 }
 
 type GetClientResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ClientType
+	JSON200      *map[string]interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -269,30 +219,6 @@ func (r GetClientResponse) StatusCode() int {
 	return 0
 }
 
-type UpdateClientResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON400      *struct {
-		Code string `json:"code"`
-	}
-}
-
-// Status returns HTTPResponse.Status
-func (r UpdateClientResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r UpdateClientResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 // GetClientWithResponse request returning *GetClientResponse
 func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, params *GetClientParams, reqEditors ...RequestEditorFn) (*GetClientResponse, error) {
 	rsp, err := c.GetClient(ctx, params, reqEditors...)
@@ -300,15 +226,6 @@ func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, params 
 		return nil, err
 	}
 	return ParseGetClientResponse(rsp)
-}
-
-// UpdateClientWithResponse request returning *UpdateClientResponse
-func (c *ClientWithResponses) UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResponse, error) {
-	rsp, err := c.UpdateClient(ctx, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseUpdateClientResponse(rsp)
 }
 
 // ParseGetClientResponse parses an HTTP response from a GetClientWithResponse call
@@ -326,39 +243,11 @@ func ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ClientType
+		var dest map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseUpdateClientResponse parses an HTTP response from a UpdateClientWithResponse call
-func ParseUpdateClientResponse(rsp *http.Response) (*UpdateClientResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &UpdateClientResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
-		var dest struct {
-			Code string `json:"code"`
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON400 = &dest
 
 	}
 
