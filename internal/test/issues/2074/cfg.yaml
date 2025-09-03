@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue2074
+output: client.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  prefer-skip-optional-pointer: true
+  prefer-skip-optional-pointer-with-omitzero: true
