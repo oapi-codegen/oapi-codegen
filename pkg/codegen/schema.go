@@ -321,7 +321,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		currentPackage := globalState.options.PackageName
 		if globalState.options.OutputOptions.ExcludePackageGoType {
 			parts := strings.Split(typeName, ".")
-			if parts[0] == currentPackage || len(parts) == 1 {
+			if parts[0] == currentPackage {
 				exludeCurrentPackage = true
 			}
 		}
