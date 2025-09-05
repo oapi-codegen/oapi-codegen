@@ -1,0 +1,25 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Tests array pointer composition
+paths:
+  /placeholder:
+    get:
+      operationId: placeholder
+      responses:
+        default:
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.Placeholder"
+components:
+  schemas:
+    response.Placeholder:
+      x-go-embedding: true
+      x-go-type: Test
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
