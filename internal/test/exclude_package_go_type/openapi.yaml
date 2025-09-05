@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   version: 1.0.0
-  title: Tests array pointer composition
+  title: Tests exclude package go type option
 paths:
   /placeholder:
     get:
