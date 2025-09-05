@@ -17,7 +17,7 @@ components:
   schemas:
     response.Placeholder:
       x-go-embedding: true
-      x-go-type: Test
+      x-go-type: Ignored
       type: object
       required: [name]
       properties:
