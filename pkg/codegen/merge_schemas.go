@@ -215,7 +215,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, embedRefs bool) (op
 	for k, v := range s2.Properties {
 		if embedRefs {
 			if _, exists := result.Properties[k]; exists {
-				return openapi3.Schema{}, fmt.Errorf("overlapping fields between sibling entities is not allowed when using %s", extGoAllOfEmbedRefs)
+				return openapi3.Schema{}, fmt.Errorf("overlapping fields (%s) between sibling entities is not allowed when using %s", k, extGoAllOfEmbedRefs)
 			}
 		}
 		result.Properties[k] = v
