@@ -1,0 +1,11 @@
+overlay: 1.0.0
+info:
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.Client
+    update:
+      x-go-type: OverlayClient
+  - target: $.components.schemas.ClientWithId
+    update:
+      x-go-type: OverlayClientWithId
