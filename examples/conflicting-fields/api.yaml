@@ -1,0 +1,35 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: When a path generates a response that's already defined in the schemas
+  description: An example of generating structs with conflicting names
+components:
+  schemas:
+    GetThingResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum:
+            - running
+            - started
+            - killed
+  responses:
+    GetThingResponse:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/GetThingResponse"
+paths:
+  "/thing":
+    get:
+      summary: Get the Status of the thing.
+      description: >
+        Retrieve an id and a status of a thing.
+      responses:
+        "200":
+          $ref: "#/components/responses/GetThingResponse"
