@@ -2,19 +2,7 @@ openapi: "3.0.1"
 info:
   version: 1.0.0
   title: Tests AllOf composition
-paths:
-  /placeholder:
-    get:
-      operationId: placeholder
-      description: |
-        Validators want at least one path, so this makes them happy.
-      responses:
-        default:
-          description: placeholder
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PersonWithID"
+paths: {}
 components:
   schemas:
     PersonProperties:
@@ -30,8 +18,14 @@ components:
         GovernmentIDNumber:
           type: integer
           format: int64
+    FirstName:
+      type: object
+      properties:
+        FirstName:
+          type: string
     Person:
       type: object
+      x-go-allof-embed-refs: true
       description: |
         This is a person, with mandatory first and last name, but optional ID
         number. This would be returned by a `Get` style API. We merge the person
@@ -39,20 +33,10 @@ components:
       allOf:
         - $ref: "#/components/schemas/PersonProperties"
         - required: [ FirstName, LastName ]
-    PersonWithID:
-      type: object
-      description: |
-        This is a person record as returned from a Create endpoint. It contains
-        all the fields of a Person, with an additional resource UUID.
-      allOf:
-        - $ref: "#/components/schemas/Person"
-        - properties:
-            ID:
-              type: integer
-              format: int64
-          required: [ ID ]
+        - $ref: "#/components/schemas/FirstName"
     PersonAllOfSingle:
       type: object
+      x-go-allof-embed-refs: true
       description: |
         This is a person record as returned from a Create endpoint. It contains
         all the fields of a Person, with an additional resource UUID.
