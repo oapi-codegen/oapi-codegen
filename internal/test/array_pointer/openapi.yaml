@@ -1,0 +1,51 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Tests array pointer composition
+paths:
+  /placeholder:
+    get:
+      operationId: placeholder
+      responses:
+        default:
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.Placeholder"
+components:
+  schemas:
+    response.Placeholder:
+      x-go-embedding: true
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            hello:
+              type: string
+            past_7_days_histogram:
+              type: array
+              x-go-type-skip-optional-pointer: true
+              nullable: true
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/DateHistogram'
+
+    DateHistogram:
+      type: object
+      properties:
+        key:
+          type: string
+        key_as_string:
+          type: string
+          nullable: true
+        doc_count:
+          type: integer
+
+    Response:
+      x-go-name: Response
+      type: object
+      properties:
+        status:
+          type: integer
