@@ -1,5 +1,9 @@
 name: Ensure `go mod tidy` has been run
 on: [ push, pull_request ]
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
