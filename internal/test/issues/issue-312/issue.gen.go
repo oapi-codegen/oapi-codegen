@@ -487,8 +487,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/pets/:petId", wrapper.GetPet)
-	router.POST(baseURL+"/pets:validate", wrapper.ValidatePets)
+	router.GET(baseURL+"/pets/:petId", wrapper.GetPet).Name = "GET /pets/:petId"
+	router.POST(baseURL+"/pets:validate", wrapper.ValidatePets).Name = "POST /pets:validate"
 
 }
 
