@@ -10,9 +10,24 @@ import (
 	"encoding/json"
 	"io"
 	"mime/multipart"
+	"net/http"
 )
 
-type StrictServer struct {
+type StrictServer struct{}
+
+type MockServer struct {
+	JSONExampleMock                     func(w http.ResponseWriter, r *http.Request)
+	MultipartExampleMock                func(w http.ResponseWriter, r *http.Request)
+	MultipartRelatedExampleMock         func(w http.ResponseWriter, r *http.Request)
+	MultipleRequestAndResponseTypesMock func(w http.ResponseWriter, r *http.Request)
+	ReservedGoKeywordParametersMock     func(w http.ResponseWriter, r *http.Request, pType string)
+	ReusableResponsesMock               func(w http.ResponseWriter, r *http.Request)
+	TextExampleMock                     func(w http.ResponseWriter, r *http.Request)
+	UnknownExampleMock                  func(w http.ResponseWriter, r *http.Request)
+	UnspecifiedContentTypeMock          func(w http.ResponseWriter, r *http.Request)
+	URLEncodedExampleMock               func(w http.ResponseWriter, r *http.Request)
+	HeadersExampleMock                  func(w http.ResponseWriter, r *http.Request, params HeadersExampleParams)
+	UnionExampleMock                    func(w http.ResponseWriter, r *http.Request)
 }
 
 func (s StrictServer) JSONExample(ctx context.Context, request JSONExampleRequestObject) (JSONExampleResponseObject, error) {
@@ -143,4 +158,76 @@ func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequ
 			union: union,
 		},
 	}, nil
+}
+
+func (m *MockServer) JSONExample(w http.ResponseWriter, r *http.Request) {
+	if m.JSONExampleMock != nil {
+		m.JSONExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) MultipartExample(w http.ResponseWriter, r *http.Request) {
+	if m.MultipartExampleMock != nil {
+		m.MultipartExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
+	if m.MultipartRelatedExampleMock != nil {
+		m.MultipartRelatedExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
+	if m.MultipleRequestAndResponseTypesMock != nil {
+		m.MultipleRequestAndResponseTypesMock(w, r)
+	}
+}
+
+func (m *MockServer) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request, pType string) {
+	if m.ReservedGoKeywordParametersMock != nil {
+		m.ReservedGoKeywordParametersMock(w, r, pType)
+	}
+}
+
+func (m *MockServer) ReusableResponses(w http.ResponseWriter, r *http.Request) {
+	if m.ReusableResponsesMock != nil {
+		m.ReusableResponsesMock(w, r)
+	}
+}
+
+func (m *MockServer) TextExample(w http.ResponseWriter, r *http.Request) {
+	if m.TextExampleMock != nil {
+		m.TextExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) UnknownExample(w http.ResponseWriter, r *http.Request) {
+	if m.UnknownExampleMock != nil {
+		m.UnknownExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	if m.UnspecifiedContentTypeMock != nil {
+		m.UnspecifiedContentTypeMock(w, r)
+	}
+}
+
+func (m *MockServer) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
+	if m.URLEncodedExampleMock != nil {
+		m.URLEncodedExampleMock(w, r)
+	}
+}
+
+func (m *MockServer) HeadersExample(w http.ResponseWriter, r *http.Request, params HeadersExampleParams) {
+	if m.HeadersExampleMock != nil {
+		m.HeadersExampleMock(w, r, params)
+	}
+}
+
+func (m *MockServer) UnionExample(w http.ResponseWriter, r *http.Request) {
+	if m.UnionExampleMock != nil {
+		m.UnionExampleMock(w, r)
+	}
 }
