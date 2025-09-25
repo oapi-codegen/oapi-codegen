@@ -111,9 +111,14 @@ func constructImportMapping(importMapping map[string]string) importMap {
 	return result
 }
 
-// Generate uses the Go templating engine to generate all of our server wrappers from
-// the descriptions we've built up above from the schema objects.
-// opts defines
+// Generate creates all server wrappers and related code using the Go templating engine.
+// It processes the provided OpenAPI schema (spec) and generation options (opts), producing code for
+// clients, servers, models, and other components as specified in opts.
+//
+// Parameters:
+//
+//	spec - the OpenAPI specification describing the API schema
+//	opts - options controlling what code to generate (client, server, etc.)
 func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
@@ -204,7 +209,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var serverURLsDefinitions string
 	if opts.Generate.ServerURLs {
-		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		serverURLsDefinitions, err = GenerateServerURLs(t, spec, globalState.options.Compatibility.EnumServerVariablesConflict)
 		if err != nil {
 			return "", fmt.Errorf("error generating Server URLs: %w", err)
 		}
