@@ -1,0 +1,12 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Specifying `nullable: true` should imply `omitempty`"
+components:
+  schemas:
+    TypeWithNullable:
+      type: object
+      properties:
+        newfield:
+          type: string
+          nullable: true
