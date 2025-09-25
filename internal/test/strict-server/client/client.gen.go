@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -472,7 +471,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/json")
+	operationPath := "/json"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -501,7 +500,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multipart")
+	operationPath := "/multipart"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -530,7 +529,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multipart-related")
+	operationPath := "/multipart-related"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -588,7 +587,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multiple")
+	operationPath := "/multiple"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -624,7 +623,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/reserved-go-keyword-parameters/%s", pathParam0)
+	operationPath := "/reserved-go-keyword-parameters/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -662,7 +661,7 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/reusable-responses")
+	operationPath := "/reusable-responses"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -698,7 +697,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/text")
+	operationPath := "/text"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -727,7 +726,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/unknown")
+	operationPath := "/unknown"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -756,7 +755,7 @@ func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/unspecified-content-type")
+	operationPath := "/unspecified-content-type"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -796,7 +795,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/urlencoded")
+	operationPath := "/urlencoded"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -836,7 +835,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with-headers")
+	operationPath := "/with-headers"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -900,7 +899,7 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with-union")
+	operationPath := "/with-union"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
