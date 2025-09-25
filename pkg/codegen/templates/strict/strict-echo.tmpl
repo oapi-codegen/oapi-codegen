@@ -33,7 +33,7 @@ type strictHandler struct {
             {{if $multipleBodies}}if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
                 {{if .IsJSON -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.Bind(&body); err != nil {
+                    if err := (&DefaultBinder{}).BindBody(ctx, &body); err != nil {
                         return err
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
