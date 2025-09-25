@@ -1,0 +1,5 @@
+package: issue1329
+generate:
+  models: true
+  client: true
+output: issue1329.gen.go
