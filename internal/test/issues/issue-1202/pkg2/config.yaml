@@ -1,0 +1,6 @@
+package: pkg2
+generate:
+  models: true
+output: pkg2.gen.go
+output-options:
+  skip-prune: true
