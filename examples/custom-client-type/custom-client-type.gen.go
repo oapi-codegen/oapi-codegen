@@ -131,6 +131,8 @@ func NewGetClientRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "GetClient")
+
 	return req, nil
 }
 

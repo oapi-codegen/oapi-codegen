@@ -487,6 +487,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "JSONExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -516,6 +517,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "MultipartExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -545,6 +547,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "MultipartRelatedExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -603,6 +606,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "MultipleRequestAndResponseTypes")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -638,6 +642,8 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 	if err != nil {
 		return nil, err
 	}
+
+	req.Header.Add("Operation-Id", "ReservedGoKeywordParameters")
 
 	return req, nil
 }
@@ -677,6 +683,7 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "ReusableResponses")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -713,6 +720,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "TextExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -742,6 +750,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "UnknownExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -771,6 +780,7 @@ func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string,
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "UnspecifiedContentType")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -811,6 +821,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "URLEncodedExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
@@ -851,6 +862,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "HeadersExample")
 	req.Header.Add("Content-Type", contentType)
 
 	if params != nil {
@@ -915,6 +927,7 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
+	req.Header.Add("Operation-Id", "UnionExample")
 	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
