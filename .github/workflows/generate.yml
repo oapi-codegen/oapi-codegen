@@ -1,5 +1,9 @@
 name: Ensure generated files are up-to-date
 on: [ push, pull_request ]
+
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
