@@ -6,6 +6,10 @@ on:
   schedule:
     # Mondays at 0000
     - cron: "0 0 * * 1"
+
+permissions:
+  contents: read
+
 jobs:
   check-for-vulnerabilities:
     name: Check for vulnerabilities using `govulncheck`
