@@ -14,8 +14,10 @@
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
-                {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
+                {{$matched := false -}}
+                {{range $value := $discriminator.SortedMappingKeys -}}
+                    {{$type := index $discriminator.Mapping $value -}}
+                    {{if and (eq $type $element) (not $matched) -}}
                         {{$hasProperty := false -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
@@ -24,6 +26,7 @@
                             {{end -}}
                         {{end -}}
                         {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                        {{$matched = true -}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -35,8 +38,10 @@
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
-                {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
+                {{$matched := false -}}
+                {{range $value := $discriminator.SortedMappingKeys -}}
+                    {{$type := index $discriminator.Mapping $value -}}
+                    {{if and (eq $type $element) (not $matched) -}}
                         {{$hasProperty := false -}}
                         {{range $properties -}}
                             {{if eq .GoFieldName $discriminator.PropertyName -}}
@@ -45,6 +50,7 @@
                             {{end -}}
                         {{end -}}
                         {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
+                        {{$matched = true -}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -75,7 +81,8 @@
                     return nil, err
                 }
                 switch discriminator{
-                    {{range $value, $type := $discriminator.Mapping -}}
+                    {{range $value := $discriminator.SortedMappingKeys -}}
+                        {{$type := index $discriminator.Mapping $value -}}
                         case "{{$value}}":
                             return t.As{{$type}}()
                     {{end -}}

@@ -227,6 +227,12 @@ type OneOfObject13 struct {
 	union                json.RawMessage
 }
 
+// OneOfObject14 oneOf with discriminator where multiple values map to the same schema (tests deterministic generation)
+type OneOfObject14 struct {
+	Category string `json:"category"`
+	union    json.RawMessage
+}
+
 // OneOfObject2 oneOf with inline elements
 type OneOfObject2 struct {
 	union json.RawMessage
@@ -1383,6 +1389,136 @@ func (t OneOfObject13) ValueByDiscriminator() (interface{}, error) {
 	default:
 		return nil, errors.New("unknown discriminator value: " + discriminator)
 	}
+}
+
+// AsOneOfVariant4 returns the union data inside the OneOfObject14 as a OneOfVariant4
+func (t OneOfObject14) AsOneOfVariant4() (OneOfVariant4, error) {
+	var body OneOfVariant4
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant4 overwrites any union data inside the OneOfObject14 as the provided OneOfVariant4
+func (t *OneOfObject14) FromOneOfVariant4(v OneOfVariant4) error {
+	t.Category = "type_a"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant4 performs a merge with any union data inside the OneOfObject14, using the provided OneOfVariant4
+func (t *OneOfObject14) MergeOneOfVariant4(v OneOfVariant4) error {
+	t.Category = "type_a"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOneOfVariant5 returns the union data inside the OneOfObject14 as a OneOfVariant5
+func (t OneOfObject14) AsOneOfVariant5() (OneOfVariant5, error) {
+	var body OneOfVariant5
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOneOfVariant5 overwrites any union data inside the OneOfObject14 as the provided OneOfVariant5
+func (t *OneOfObject14) FromOneOfVariant5(v OneOfVariant5) error {
+	t.Category = "type_x"
+
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOneOfVariant5 performs a merge with any union data inside the OneOfObject14, using the provided OneOfVariant5
+func (t *OneOfObject14) MergeOneOfVariant5(v OneOfVariant5) error {
+	t.Category = "type_x"
+
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OneOfObject14) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"category"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t OneOfObject14) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "type_a":
+		return t.AsOneOfVariant4()
+	case "type_b":
+		return t.AsOneOfVariant4()
+	case "type_x":
+		return t.AsOneOfVariant5()
+	case "type_y":
+		return t.AsOneOfVariant5()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t OneOfObject14) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["category"], err = json.Marshal(t.Category)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'category': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *OneOfObject14) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["category"]; found {
+		err = json.Unmarshal(raw, &t.Category)
+		if err != nil {
+			return fmt.Errorf("error reading 'category': %w", err)
+		}
+	}
+
+	return err
 }
 
 // AsOneOfObject20 returns the union data inside the OneOfObject2 as a OneOfObject20
