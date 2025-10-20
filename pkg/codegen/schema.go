@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -227,6 +228,17 @@ func (d *Discriminator) JSONTag() string {
 
 func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
+}
+
+// SortedMappingKeys returns the discriminator mapping keys in sorted order
+// to ensure deterministic code generation
+func (d *Discriminator) SortedMappingKeys() []string {
+	keys := make([]string, 0, len(d.Mapping))
+	for k := range d.Mapping {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
@@ -895,12 +907,20 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			}
 
 			// Explicit mapping.
+			// Need to process in sorted order for deterministic output
 			var mapped bool
-			for k, v := range discriminator.Mapping {
+			sortedKeys := make([]string, 0, len(discriminator.Mapping))
+			for k := range discriminator.Mapping {
+				sortedKeys = append(sortedKeys, k)
+			}
+			sort.Strings(sortedKeys)
+
+			for _, k := range sortedKeys {
+				v := discriminator.Mapping[k]
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
-					break
+					// Do NOT break - multiple keys can map to the same ref
 				}
 			}
 			// Implicit mapping.
@@ -911,8 +931,19 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
-		return errors.New("discriminator: not all schemas were mapped")
+	// Validate that all union elements have at least one discriminator mapping
+	if outSchema.Discriminator != nil {
+		// Build set of mapped types
+		mappedTypes := make(map[string]bool)
+		for _, goType := range outSchema.Discriminator.Mapping {
+			mappedTypes[goType] = true
+		}
+		// Check all union elements are mapped
+		for _, element := range outSchema.UnionElements {
+			if !mappedTypes[string(element)] {
+				return fmt.Errorf("discriminator: union element %s is not mapped", element)
+			}
+		}
 	}
 
 	return nil
