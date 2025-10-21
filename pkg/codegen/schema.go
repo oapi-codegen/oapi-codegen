@@ -30,6 +30,10 @@ type Schema struct {
 	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
 	Discriminator *Discriminator // Describes which value is stored in a union
 
+	// InheritedDiscriminator indicates that the discriminator was inherited from parent
+	// and should not generate discriminatorRaw field
+	InheritedDiscriminator bool
+
 	// If this is set, the schema will declare a type via alias, eg,
 	// `type Foo = bool`. If this is not set, we will define this type via
 	// type definition `type Foo bool`
@@ -296,12 +300,32 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		SkipOptionalPointer: skipOptionalPointer,
 	}
 
+	// Check if discriminator is inherited from parent
+	if inherited, ok := schema.Extensions[extOapiCodegenInheritedDiscriminator]; ok {
+		if inheritedBool, ok := inherited.(bool); ok && inheritedBool {
+			outSchema.InheritedDiscriminator = true
+		}
+	}
+
 	// AllOf is interesting, and useful. It's the union of a number of other
 	// schemas. A common usage is to create a union of an object with an ID,
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		// Check if discriminator is defined in this schema OR in any of the allOf elements
+		discriminator := schema.Discriminator
+		if discriminator == nil {
+			// Check if any of the allOf elements defines a discriminator
+			// only check inline schemas, not $ref schemas (inherited discriminators)
+			for _, ref := range schema.AllOf {
+				// Skip $ref schemas - they are inherited, not defined here
+				if ref.Ref == "" && ref.Value != nil && ref.Value.Discriminator != nil {
+					discriminator = ref.Value.Discriminator
+					break
+				}
+			}
+		}
+		mergedSchema, err := MergeSchemas(schema.AllOf, path, discriminator)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
@@ -458,6 +482,26 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			if schema.OneOf != nil {
 				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
+				}
+			}
+
+			// Handle discriminator for object types (not oneOf/anyOf)
+			// This is for base types with discriminator that don't use oneOf/anyOf
+			if schema.Discriminator != nil && schema.OneOf == nil && schema.AnyOf == nil {
+				outSchema.Discriminator = &Discriminator{
+					Property: schema.Discriminator.PropertyName,
+					Mapping:  make(map[string]string),
+				}
+				// Convert discriminator mapping refs to Go type names (if mapping exists)
+				if len(schema.Discriminator.Mapping) > 0 {
+					for k, v := range schema.Discriminator.Mapping {
+						// Get the Go type name from the ref path
+						goType, err := RefPathToGoType(v)
+						if err != nil {
+							return Schema{}, fmt.Errorf("error converting ref to Go type for discriminator mapping %s: %w", k, err)
+						}
+						outSchema.Discriminator.Mapping[k] = goType
+					}
 				}
 			}
 
@@ -818,6 +862,11 @@ func GenStructFromSchema(schema Schema) string {
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")
+	}
+	// Add raw JSON storage for discriminator
+	// Only add discriminatorRaw to types that directly define a discriminator, not to types that inherit it from parent (e.g. via allOf)
+	if schema.Discriminator != nil && len(schema.UnionElements) == 0 && !schema.InheritedDiscriminator {
+		objectParts = append(objectParts, "discriminatorRaw json.RawMessage `json:\"-\"`")
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")

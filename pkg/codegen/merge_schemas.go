@@ -10,16 +10,19 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+//
+// discriminator is the discriminator explicitly defined in the original schema (at schema level or inline allOf level),
+// or nil if not defined.
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, discriminator *openapi3.Discriminator) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
 		return mergeSchemasV1(allOf, path)
 	}
-	return mergeSchemas(allOf, path)
+	return mergeSchemas(allOf, path, discriminator)
 }
 
-func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemas(allOf []*openapi3.SchemaRef, path []string, discriminator *openapi3.Discriminator) (Schema, error) {
 	n := len(allOf)
 
 	if n == 1 {
@@ -42,6 +45,21 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
+
+	// If original schema has discriminator, add it to the merged schema
+	if discriminator != nil {
+		schema.Discriminator = discriminator
+	}
+
+	// Mark discriminator as inherited if:
+	// Original schema has no own discriminator && Merged schema has a discriminator (from parent)
+	if discriminator == nil && schema.Discriminator != nil {
+		if schema.Extensions == nil {
+			schema.Extensions = make(map[string]interface{})
+		}
+		schema.Extensions[extOapiCodegenInheritedDiscriminator] = true
+	}
+
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
@@ -225,6 +243,20 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
 	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+
+	// Handle discriminators for allOf merges.
+	if allOf {
+		// For allOf: allow discriminator inheritance from one parent, but disallow multiple discriminators
+		if s1.Discriminator != nil && s2.Discriminator != nil {
+			return openapi3.Schema{}, errors.New("merging two schemas with discriminators in allOf is not supported")
+		}
+		// Inherit discriminator from whichever parent has it
+		if s1.Discriminator != nil {
+			result.Discriminator = s1.Discriminator
+		} else if s2.Discriminator != nil {
+			result.Discriminator = s2.Discriminator
+		}
 	}
 
 	return result, nil
