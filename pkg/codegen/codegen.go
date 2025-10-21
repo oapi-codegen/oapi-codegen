@@ -559,7 +559,13 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
+	allOfDiscriminatorBoilerplate, err := GenerateAllOfDiscriminatorBoilerplate(t, allTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating boilerplate for allOf types with discriminator: %w", err)
+	}
+
+	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate,
+		unionAndAdditionalBoilerplate, allOfDiscriminatorBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -992,6 +998,30 @@ func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, type
 	}
 
 	return GenerateTemplates([]string{"union-and-additional-properties.tmpl"}, t, context)
+}
+
+func GenerateAllOfDiscriminatorBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
+	var filteredTypes []TypeDefinition
+	for _, td := range typeDefs {
+		// Filter types that have discriminator but are not union types (oneOf/anyOf)
+		hasDiscriminator := td.Schema.Discriminator != nil
+		isNotUnion := len(td.Schema.UnionElements) == 0
+		if hasDiscriminator && isNotUnion {
+			filteredTypes = append(filteredTypes, td)
+		}
+	}
+
+	if len(filteredTypes) == 0 {
+		return "", nil
+	}
+
+	context := struct {
+		Types []TypeDefinition
+	}{
+		Types: filteredTypes,
+	}
+
+	return GenerateTemplates([]string{"allof-discriminator.tmpl"}, t, context)
 }
 
 // SanitizeCode runs sanitizers across the generated Go code to ensure the
