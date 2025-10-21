@@ -10,16 +10,19 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+//
+// discriminator is the discriminator explicitly defined in the original schema (at schema level or inline allOf level),
+// or nil if not defined.
+func MergeSchemas(allOf []*openapi3.SchemaRef, path []string, discriminator *openapi3.Discriminator) (Schema, error) {
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
 	if globalState.options.Compatibility.OldMergeSchemas {
 		return mergeSchemasV1(allOf, path)
 	}
-	return mergeSchemas(allOf, path)
+	return mergeSchemas(allOf, path, discriminator)
 }
 
-func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func mergeSchemas(allOf []*openapi3.SchemaRef, path []string, discriminator *openapi3.Discriminator) (Schema, error) {
 	n := len(allOf)
 
 	if n == 1 {
@@ -42,6 +45,12 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
+
+	// If original schema has discriminator, add it to the merged schema
+	if discriminator != nil {
+		schema.Discriminator = discriminator
+	}
+
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
@@ -225,6 +234,12 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
 	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+
+	// Reject same discriminator property names in allOf
+	if allOf && s1.Discriminator != nil && s2.Discriminator != nil && s1.Discriminator.PropertyName == s2.Discriminator.PropertyName {
+		return openapi3.Schema{}, fmt.Errorf("merging two schemas with the same discriminator property name "+
+			"(%q) in allOf is not supported", s1.Discriminator.PropertyName)
 	}
 
 	return result, nil
