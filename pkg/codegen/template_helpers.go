@@ -16,6 +16,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 	"text/template"
@@ -23,6 +24,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/Masterminds/sprig/v3"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
@@ -318,32 +320,41 @@ func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[
 
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
-var TemplateFunctions = template.FuncMap{
-	"genParamArgs":               genParamArgs,
-	"genParamTypes":              genParamTypes,
-	"genParamNames":              genParamNames,
-	"genParamFmtString":          ReplacePathParamsWithStr,
-	"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
-	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
-	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
-	"swaggerUriToChiUri":         SwaggerUriToChiUri,
-	"swaggerUriToGinUri":         SwaggerUriToGinUri,
-	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
-	"swaggerUriToStdHttpUri":     SwaggerUriToStdHttpUri,
-	"lcFirst":                    LowercaseFirstCharacter,
-	"ucFirst":                    UppercaseFirstCharacter,
-	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
-	"camelCase":                  ToCamelCase,
-	"genResponsePayload":         genResponsePayload,
-	"genResponseTypeName":        genResponseTypeName,
-	"genResponseUnmarshal":       genResponseUnmarshal,
-	"getResponseTypeDefinitions": getResponseTypeDefinitions,
-	"toStringArray":              toStringArray,
-	"lower":                      strings.ToLower,
-	"title":                      titleCaser.String,
-	"stripNewLines":              stripNewLines,
-	"sanitizeGoIdentity":         SanitizeGoIdentity,
-	"toGoComment":                StringWithTypeNameToGoComment,
+var templateFunctions template.FuncMap
 
-	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
+func GetTemplateFunctions() template.FuncMap {
+	if templateFunctions == nil {
+		templateFunctions = template.FuncMap{
+			"genParamArgs":               genParamArgs,
+			"genParamTypes":              genParamTypes,
+			"genParamNames":              genParamNames,
+			"genParamFmtString":          ReplacePathParamsWithStr,
+			"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
+			"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
+			"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
+			"swaggerUriToChiUri":         SwaggerUriToChiUri,
+			"swaggerUriToGinUri":         SwaggerUriToGinUri,
+			"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
+			"swaggerUriToStdHttpUri":     SwaggerUriToStdHttpUri,
+			"lcFirst":                    LowercaseFirstCharacter,
+			"ucFirst":                    UppercaseFirstCharacter,
+			"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
+			"camelCase":                  ToCamelCase,
+			"genResponsePayload":         genResponsePayload,
+			"genResponseTypeName":        genResponseTypeName,
+			"genResponseUnmarshal":       genResponseUnmarshal,
+			"getResponseTypeDefinitions": getResponseTypeDefinitions,
+			"toStringArray":              toStringArray,
+			"lower":                      strings.ToLower,
+			"title":                      titleCaser.String,
+			"stripNewLines":              stripNewLines,
+			"sanitizeGoIdentity":         SanitizeGoIdentity,
+			"toGoComment":                StringWithTypeNameToGoComment,
+
+			"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
+		}
+		maps.Copy(templateFunctions, sprig.FuncMap())
+	}
+
+	return templateFunctions
 }

@@ -149,8 +149,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
 
 	// This creates the golang templates text package
-	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
-	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
+	tmplFns := GetTemplateFunctions()
+	tmplFns["opts"] = func() Configuration { return globalState.options }
+	t := template.New("oapi-codegen").Funcs(tmplFns)
 	// This parses all of our own template files into the template object
 	// above
 	err := LoadTemplates(templates, t)
