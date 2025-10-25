@@ -1,0 +1,302 @@
+openapi: 3.0.1
+info:
+  title: Pet Store API with Discriminator
+  version: 1.0.0
+  description: Example API demonstrating discriminator usage with allOf
+
+paths:
+  /pets:
+    get:
+      summary: Get pets
+      operationId: getPets
+      responses:
+        '200':
+          description: List of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+
+  /pets/{petId}/activities:
+    post:
+      summary: Log activity
+      operationId: logActivity
+      description: Test discriminator at schema level with allOf
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetActivity'
+      responses:
+        '201':
+          description: Activity logged
+
+  /pets/{petId}/health-records:
+    post:
+      summary: Add health record
+      operationId: addHealthRecord
+      description: Test discriminator in inline allOf element
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthRecord'
+      responses:
+        '201':
+          description: Record added
+
+  /animals:
+    get:
+      summary: Get all animals
+      operationId: getAllAnimals
+      description: Returns array of animals with discriminator
+      responses:
+        '200':
+          description: List of animals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Animal'
+    post:
+      summary: Register animal
+      operationId: registerAnimal
+      description: Test nested discriminators (multi-level hierarchy)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Animal'
+      responses:
+        '201':
+          description: Animal registered
+
+components:
+  schemas:
+    # Scenario 1: Standard discriminator (inherited from base)
+    Pet:
+      type: object
+      required:
+        - petType
+        - name
+      properties:
+        petType:
+          type: string
+        name:
+          type: string
+      discriminator:
+        propertyName: petType
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
+    
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          properties:
+            meow:
+              type: boolean
+    
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          properties:
+            bark:
+              type: boolean
+
+    # Scenario 2: Discriminator at schema level with allOf
+    # Schema has allOf + discriminator defined at top level (not in base)
+    BaseActivity:
+      type: object
+      required:
+        - duration
+      properties:
+        duration:
+          type: integer
+    
+    PetActivity:
+      allOf:
+        - $ref: '#/components/schemas/BaseActivity'
+        - type: object
+          required:
+            - activityType
+          properties:
+            activityType:
+              type: string
+      discriminator:
+        propertyName: activityType
+        mapping:
+          feeding: '#/components/schemas/FeedingActivity'
+          walking: '#/components/schemas/WalkingActivity'
+    
+    FeedingActivity:
+      allOf:
+        - $ref: '#/components/schemas/PetActivity'
+        - type: object
+          required:
+            - foodType
+          properties:
+            foodType:
+              type: string
+    
+    WalkingActivity:
+      allOf:
+        - $ref: '#/components/schemas/PetActivity'
+        - type: object
+          required:
+            - distance
+          properties:
+            distance:
+              type: number
+
+    # Scenario 3: Discriminator in inline allOf element
+    # Discriminator defined inside an inline (non-$ref) allOf element
+    BaseHealthRecord:
+      type: object
+      required:
+        - date
+      properties:
+        date:
+          type: string
+          format: date
+    
+    HealthRecord:
+      allOf:
+        - $ref: '#/components/schemas/BaseHealthRecord'
+        - type: object
+          required:
+            - recordType
+          properties:
+            recordType:
+              type: string
+          discriminator:
+            propertyName: recordType
+            mapping:
+              vaccination: '#/components/schemas/VaccinationRecord'
+              checkup: '#/components/schemas/CheckupRecord'
+    
+    VaccinationRecord:
+      allOf:
+        - $ref: '#/components/schemas/HealthRecord'
+        - type: object
+          required:
+            - vaccine
+          properties:
+            vaccine:
+              type: string
+    
+    CheckupRecord:
+      allOf:
+        - $ref: '#/components/schemas/HealthRecord'
+        - type: object
+          required:
+            - weight
+          properties:
+            weight:
+              type: number
+
+    # Scenario 4: Nested discriminators (multi-level hierarchy)
+    # Top -> Middle (with discriminator) -> Child
+    Animal:
+      type: object
+      required:
+        - animalType
+        - name
+      properties:
+        animalType:
+          type: string
+        name:
+          type: string
+      discriminator:
+        propertyName: animalType
+        mapping:
+          domestic: '#/components/schemas/DomesticAnimal'
+          wild: '#/components/schemas/WildAnimal'
+    
+    # Middle level with its own discriminator
+    DomesticAnimal:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          required:
+            - domesticType
+          properties:
+            domesticType:
+              type: string
+            owner:
+              type: string
+      discriminator:
+        propertyName: domesticType
+        mapping:
+          housecat: '#/components/schemas/HouseCat'
+          housedog: '#/components/schemas/HouseDog'
+    
+    HouseCat:
+      allOf:
+        - $ref: '#/components/schemas/DomesticAnimal'
+        - type: object
+          properties:
+            indoor:
+              type: boolean
+    
+    HouseDog:
+      allOf:
+        - $ref: '#/components/schemas/DomesticAnimal'
+        - type: object
+          properties:
+            trained:
+              type: boolean
+    
+    # Another middle level with its own discriminator
+    WildAnimal:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          required:
+            - wildType
+          properties:
+            wildType:
+              type: string
+            habitat:
+              type: string
+      discriminator:
+        propertyName: wildType
+        mapping:
+          lion: '#/components/schemas/Lion'
+          tiger: '#/components/schemas/Tiger'
+    
+    Lion:
+      allOf:
+        - $ref: '#/components/schemas/WildAnimal'
+        - type: object
+          required:
+            - maneColor
+          properties:
+            maneColor:
+              type: string
+    
+    Tiger:
+      allOf:
+        - $ref: '#/components/schemas/WildAnimal'
+        - type: object
+          properties:
+            stripeCount:
+              type: integer
+

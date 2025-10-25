@@ -27,6 +27,9 @@ const (
 	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
 	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
 	extOapiCodegenOnlyHonourGoName = "x-oapi-codegen-only-honour-go-name"
+	// extOapiCodegenInheritedDiscriminator is an internal marker set by mergeSchemas
+	// to indicate that discriminator was inherited from parent.
+	extOapiCodegenInheritedDiscriminator = "x-oapi-codegen-inherited-discriminator"
 )
 
 func extString(extPropValue interface{}) (string, error) {
