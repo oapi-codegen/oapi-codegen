@@ -14,45 +14,52 @@ import (
 // Animal defines model for Animal.
 type Animal struct {
 	AnimalType       string          `json:"animalType"`
+	Id               *string         `json:"id,omitempty"`
 	Name             string          `json:"name"`
 	discriminatorRaw json.RawMessage `json:"-"`
 }
 
 // BaseActivity defines model for BaseActivity.
 type BaseActivity struct {
-	Duration int `json:"duration"`
+	Duration int     `json:"duration"`
+	Id       *string `json:"id,omitempty"`
 }
 
 // BaseHealthRecord defines model for BaseHealthRecord.
 type BaseHealthRecord struct {
 	Date openapi_types.Date `json:"date"`
+	Id   *string            `json:"id,omitempty"`
 }
 
 // Cat defines model for Cat.
 type Cat struct {
-	Meow    *bool  `json:"meow,omitempty"`
-	Name    string `json:"name"`
-	PetType string `json:"petType"`
+	Id      *string `json:"id,omitempty"`
+	Meow    *bool   `json:"meow,omitempty"`
+	Name    string  `json:"name"`
+	PetType string  `json:"petType"`
 }
 
 // CheckupRecord defines model for CheckupRecord.
 type CheckupRecord struct {
 	Date       openapi_types.Date `json:"date"`
+	Id         *string            `json:"id,omitempty"`
 	RecordType string             `json:"recordType"`
 	Weight     float32            `json:"weight"`
 }
 
 // Dog defines model for Dog.
 type Dog struct {
-	Bark    *bool  `json:"bark,omitempty"`
-	Name    string `json:"name"`
-	PetType string `json:"petType"`
+	Bark    *bool   `json:"bark,omitempty"`
+	Id      *string `json:"id,omitempty"`
+	Name    string  `json:"name"`
+	PetType string  `json:"petType"`
 }
 
 // DomesticAnimal defines model for DomesticAnimal.
 type DomesticAnimal struct {
 	AnimalType       string          `json:"animalType"`
 	DomesticType     string          `json:"domesticType"`
+	Id               *string         `json:"id,omitempty"`
 	Name             string          `json:"name"`
 	Owner            *string         `json:"owner,omitempty"`
 	discriminatorRaw json.RawMessage `json:"-"`
@@ -60,14 +67,16 @@ type DomesticAnimal struct {
 
 // FeedingActivity defines model for FeedingActivity.
 type FeedingActivity struct {
-	ActivityType string `json:"activityType"`
-	Duration     int    `json:"duration"`
-	FoodType     string `json:"foodType"`
+	ActivityType string  `json:"activityType"`
+	Duration     int     `json:"duration"`
+	FoodType     string  `json:"foodType"`
+	Id           *string `json:"id,omitempty"`
 }
 
 // HealthRecord defines model for HealthRecord.
 type HealthRecord struct {
 	Date             openapi_types.Date `json:"date"`
+	Id               *string            `json:"id,omitempty"`
 	RecordType       string             `json:"recordType"`
 	discriminatorRaw json.RawMessage    `json:"-"`
 }
@@ -76,6 +85,7 @@ type HealthRecord struct {
 type HouseCat struct {
 	AnimalType   string  `json:"animalType"`
 	DomesticType string  `json:"domesticType"`
+	Id           *string `json:"id,omitempty"`
 	Indoor       *bool   `json:"indoor,omitempty"`
 	Name         string  `json:"name"`
 	Owner        *string `json:"owner,omitempty"`
@@ -85,6 +95,7 @@ type HouseCat struct {
 type HouseDog struct {
 	AnimalType   string  `json:"animalType"`
 	DomesticType string  `json:"domesticType"`
+	Id           *string `json:"id,omitempty"`
 	Name         string  `json:"name"`
 	Owner        *string `json:"owner,omitempty"`
 	Trained      *bool   `json:"trained,omitempty"`
@@ -94,6 +105,7 @@ type HouseDog struct {
 type Lion struct {
 	AnimalType string  `json:"animalType"`
 	Habitat    *string `json:"habitat,omitempty"`
+	Id         *string `json:"id,omitempty"`
 	ManeColor  string  `json:"maneColor"`
 	Name       string  `json:"name"`
 	WildType   string  `json:"wildType"`
@@ -101,6 +113,7 @@ type Lion struct {
 
 // Pet defines model for Pet.
 type Pet struct {
+	Id               *string         `json:"id,omitempty"`
 	Name             string          `json:"name"`
 	PetType          string          `json:"petType"`
 	discriminatorRaw json.RawMessage `json:"-"`
@@ -110,6 +123,7 @@ type Pet struct {
 type PetActivity struct {
 	ActivityType     string          `json:"activityType"`
 	Duration         int             `json:"duration"`
+	Id               *string         `json:"id,omitempty"`
 	discriminatorRaw json.RawMessage `json:"-"`
 }
 
@@ -117,6 +131,7 @@ type PetActivity struct {
 type Tiger struct {
 	AnimalType  string  `json:"animalType"`
 	Habitat     *string `json:"habitat,omitempty"`
+	Id          *string `json:"id,omitempty"`
 	Name        string  `json:"name"`
 	StripeCount *int    `json:"stripeCount,omitempty"`
 	WildType    string  `json:"wildType"`
@@ -125,6 +140,7 @@ type Tiger struct {
 // VaccinationRecord defines model for VaccinationRecord.
 type VaccinationRecord struct {
 	Date       openapi_types.Date `json:"date"`
+	Id         *string            `json:"id,omitempty"`
 	RecordType string             `json:"recordType"`
 	Vaccine    string             `json:"vaccine"`
 }
@@ -134,12 +150,14 @@ type WalkingActivity struct {
 	ActivityType string  `json:"activityType"`
 	Distance     float32 `json:"distance"`
 	Duration     int     `json:"duration"`
+	Id           *string `json:"id,omitempty"`
 }
 
 // WildAnimal defines model for WildAnimal.
 type WildAnimal struct {
 	AnimalType       string          `json:"animalType"`
 	Habitat          *string         `json:"habitat,omitempty"`
+	Id               *string         `json:"id,omitempty"`
 	Name             string          `json:"name"`
 	WildType         string          `json:"wildType"`
 	discriminatorRaw json.RawMessage `json:"-"`
@@ -148,16 +166,26 @@ type WildAnimal struct {
 // RegisterAnimalJSONRequestBody defines body for RegisterAnimal for application/json ContentType.
 type RegisterAnimalJSONRequestBody = Animal
 
+// CreatePetJSONRequestBody defines body for CreatePet for application/json ContentType.
+type CreatePetJSONRequestBody = Pet
+
 // LogActivityJSONRequestBody defines body for LogActivity for application/json ContentType.
 type LogActivityJSONRequestBody = PetActivity
 
 // AddHealthRecordJSONRequestBody defines body for AddHealthRecord for application/json ContentType.
 type AddHealthRecordJSONRequestBody = HealthRecord
 
+type AnimalInterface interface {
+	isAnimal() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for Animal
 func (t *Animal) Discriminator() string {
 	return t.AnimalType
 }
+
+// isAnimal implements AnimalInterface for DomesticAnimal
+func (t DomesticAnimal) isAnimal() {}
 
 // IsDomesticAnimal checks if the discriminator value matches DomesticAnimal
 func (t *Animal) IsDomesticAnimal() bool {
@@ -179,6 +207,9 @@ func (t *Animal) AsDomesticAnimal() (*DomesticAnimal, error) {
 	}
 	return &result, nil
 }
+
+// isAnimal implements AnimalInterface for WildAnimal
+func (t WildAnimal) isAnimal() {}
 
 // IsWildAnimal checks if the discriminator value matches WildAnimal
 func (t *Animal) IsWildAnimal() bool {
@@ -233,10 +264,17 @@ func (t *Animal) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type DomesticAnimalInterface interface {
+	isDomesticAnimal() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for DomesticAnimal
 func (t *DomesticAnimal) Discriminator() string {
 	return t.DomesticType
 }
+
+// isDomesticAnimal implements DomesticAnimalInterface for HouseCat
+func (t HouseCat) isDomesticAnimal() {}
 
 // IsHouseCat checks if the discriminator value matches HouseCat
 func (t *DomesticAnimal) IsHouseCat() bool {
@@ -258,6 +296,9 @@ func (t *DomesticAnimal) AsHouseCat() (*HouseCat, error) {
 	}
 	return &result, nil
 }
+
+// isDomesticAnimal implements DomesticAnimalInterface for HouseDog
+func (t HouseDog) isDomesticAnimal() {}
 
 // IsHouseDog checks if the discriminator value matches HouseDog
 func (t *DomesticAnimal) IsHouseDog() bool {
@@ -312,10 +353,17 @@ func (t *DomesticAnimal) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type HealthRecordInterface interface {
+	isHealthRecord() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for HealthRecord
 func (t *HealthRecord) Discriminator() string {
 	return t.RecordType
 }
+
+// isHealthRecord implements HealthRecordInterface for CheckupRecord
+func (t CheckupRecord) isHealthRecord() {}
 
 // IsCheckupRecord checks if the discriminator value matches CheckupRecord
 func (t *HealthRecord) IsCheckupRecord() bool {
@@ -337,6 +385,9 @@ func (t *HealthRecord) AsCheckupRecord() (*CheckupRecord, error) {
 	}
 	return &result, nil
 }
+
+// isHealthRecord implements HealthRecordInterface for VaccinationRecord
+func (t VaccinationRecord) isHealthRecord() {}
 
 // IsVaccinationRecord checks if the discriminator value matches VaccinationRecord
 func (t *HealthRecord) IsVaccinationRecord() bool {
@@ -391,10 +442,17 @@ func (t *HealthRecord) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type PetInterface interface {
+	isPet() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for Pet
 func (t *Pet) Discriminator() string {
 	return t.PetType
 }
+
+// isPet implements PetInterface for Cat
+func (t Cat) isPet() {}
 
 // IsCat checks if the discriminator value matches Cat
 func (t *Pet) IsCat() bool {
@@ -416,6 +474,9 @@ func (t *Pet) AsCat() (*Cat, error) {
 	}
 	return &result, nil
 }
+
+// isPet implements PetInterface for Dog
+func (t Dog) isPet() {}
 
 // IsDog checks if the discriminator value matches Dog
 func (t *Pet) IsDog() bool {
@@ -470,10 +531,17 @@ func (t *Pet) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type PetActivityInterface interface {
+	isPetActivity() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for PetActivity
 func (t *PetActivity) Discriminator() string {
 	return t.ActivityType
 }
+
+// isPetActivity implements PetActivityInterface for FeedingActivity
+func (t FeedingActivity) isPetActivity() {}
 
 // IsFeedingActivity checks if the discriminator value matches FeedingActivity
 func (t *PetActivity) IsFeedingActivity() bool {
@@ -495,6 +563,9 @@ func (t *PetActivity) AsFeedingActivity() (*FeedingActivity, error) {
 	}
 	return &result, nil
 }
+
+// isPetActivity implements PetActivityInterface for WalkingActivity
+func (t WalkingActivity) isPetActivity() {}
 
 // IsWalkingActivity checks if the discriminator value matches WalkingActivity
 func (t *PetActivity) IsWalkingActivity() bool {
@@ -549,10 +620,17 @@ func (t *PetActivity) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type WildAnimalInterface interface {
+	isWildAnimal() // unexported method to seal the interface
+}
+
 // Discriminator returns the discriminator property value for WildAnimal
 func (t *WildAnimal) Discriminator() string {
 	return t.WildType
 }
+
+// isWildAnimal implements WildAnimalInterface for Lion
+func (t Lion) isWildAnimal() {}
 
 // IsLion checks if the discriminator value matches Lion
 func (t *WildAnimal) IsLion() bool {
@@ -574,6 +652,9 @@ func (t *WildAnimal) AsLion() (*Lion, error) {
 	}
 	return &result, nil
 }
+
+// isWildAnimal implements WildAnimalInterface for Tiger
+func (t Tiger) isWildAnimal() {}
 
 // IsTiger checks if the discriminator value matches Tiger
 func (t *WildAnimal) IsTiger() bool {

@@ -12,6 +12,10 @@
             {{end -}}
         {{end}}
 
+        type {{$typeName}}Interface interface {
+            is{{$typeName}}() // unexported method to seal the interface
+        }
+
         // Discriminator returns the discriminator property value for {{$typeName}}
         func (t *{{$typeName}}) Discriminator() {{$discriminatorType}} {
             return t.{{$discriminatorFieldName}}
@@ -20,6 +24,9 @@
         {{if ne 0 (len $discriminator.Mapping)}}
             {{range $value, $type := $discriminator.Mapping -}}
                 {{$methodName := $type -}}
+                // is{{$typeName}} implements {{$typeName}}Interface for {{$type}}
+                func (t {{$type}}) is{{$typeName}}() {}
+
                 // Is{{$methodName}} checks if the discriminator value matches {{$type}}
                 func (t *{{$typeName}}) Is{{$methodName}}() bool {
                     return string(t.{{$discriminatorFieldName}}) == "{{$value}}"

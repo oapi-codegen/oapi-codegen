@@ -5,6 +5,9 @@ import (
 	"fmt"
 )
 
+// Note: This package demonstrates client-side usage of a discriminator with allOf.
+// For strict server examples and tests, see ./strict-server directory
+
 // ExamplePetDiscriminator demonstrates standard one-level inheritance discriminator usage.
 func ExamplePetDiscriminator() {
 	catJSON := `{"petType": "cat", "name": "Fluffy", "meow": true}`
@@ -69,12 +72,12 @@ func ExampleNestedDiscriminators() {
 	// The hierarchy navigation is shown for clarity.
 	if animal.IsDomesticAnimal() {
 		domestic, _ := animal.AsDomesticAnimal()
-		fmt.Printf("  Domestic type: %s, Owner: %s\n", domestic.Discriminator(), *domestic.Owner)
+		fmt.Printf("Domestic type: %s, Owner: %s\n", domestic.Discriminator(), *domestic.Owner)
 
 		// Further navigate to concrete type
 		if domestic.IsHouseCat() {
 			cat, _ := domestic.AsHouseCat()
-			fmt.Printf("    House cat, Indoor: %v\n", *cat.Indoor)
+			fmt.Printf("House cat, Indoor: %v\n", *cat.Indoor)
 		}
 	}
 
@@ -98,7 +101,7 @@ func ExampleNestedDiscriminators() {
 
 		if wild.IsLion() {
 			lion, _ := wild.AsLion()
-			fmt.Printf("  Lion with mane color: %s\n", lion.ManeColor)
+			fmt.Printf("Lion with mane color: %s\n", lion.ManeColor)
 		}
 	}
 }

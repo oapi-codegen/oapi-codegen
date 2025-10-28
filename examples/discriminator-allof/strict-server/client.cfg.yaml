@@ -1,5 +1,4 @@
 package: discriminator
 generate:
   models: true
-output: openapi.gen.go
-
+output: client.gen.go

@@ -5,6 +5,7 @@ info:
   description: Example API demonstrating discriminator usage with allOf
 
 paths:
+  # pets
   /pets:
     get:
       summary: Get pets
@@ -18,12 +19,64 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Pet'
+    post:
+      summary: Create a pet
+      operationId: createPet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: Pet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  
+  /pets/{petId}:
+    get:
+      summary: Get a pet by ID
+      operationId: getPet
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
 
+  # pets activities
   /pets/{petId}/activities:
+    get:
+      summary: Get all activities
+      operationId: getActivities
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetActivity'
     post:
       summary: Log activity
       operationId: logActivity
-      description: Test discriminator at schema level with allOf
       parameters:
         - name: petId
           in: path
@@ -38,12 +91,57 @@ paths:
       responses:
         '201':
           description: Activity logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetActivity'
+  
+  /pets/{petId}/activities/{activityId}:
+    get:
+      summary: Get activity by ID
+      operationId: getActivity
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetActivity'
 
+  # pets health-records
   /pets/{petId}/health-records:
+    get:
+      summary: Get all health records
+      operationId: getHealthRecords
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of health records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HealthRecord'
     post:
       summary: Add health record
       operationId: addHealthRecord
-      description: Test discriminator in inline allOf element
       parameters:
         - name: petId
           in: path
@@ -58,12 +156,39 @@ paths:
       responses:
         '201':
           description: Record added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthRecord'
+  
+  /pets/{petId}/health-records/{recordId}:
+    get:
+      summary: Get health record by ID
+      operationId: getHealthRecord
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health record retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthRecord'
 
+  # animals
   /animals:
     get:
       summary: Get all animals
       operationId: getAllAnimals
-      description: Returns array of animals with discriminator
       responses:
         '200':
           description: List of animals
@@ -76,7 +201,6 @@ paths:
     post:
       summary: Register animal
       operationId: registerAnimal
-      description: Test nested discriminators (multi-level hierarchy)
       requestBody:
         content:
           application/json:
@@ -85,6 +209,28 @@ paths:
       responses:
         '201':
           description: Animal registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+  
+  /animals/{animalId}:
+    get:
+      summary: Get an animal by ID
+      operationId: getAnimal
+      parameters:
+        - name: animalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Animal retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
 
 components:
   schemas:
@@ -95,6 +241,8 @@ components:
         - petType
         - name
       properties:
+        id:
+          type: string
         petType:
           type: string
         name:
@@ -122,12 +270,14 @@ components:
               type: boolean
 
     # Scenario 2: Discriminator at schema level with allOf
-    # Schema has allOf + discriminator defined at top level (not in base)
+    # PetActivity has allOf + discriminator defined at top level (not in base)
     BaseActivity:
       type: object
       required:
         - duration
       properties:
+        id:
+          type: string
         duration:
           type: integer
     
@@ -173,6 +323,8 @@ components:
       required:
         - date
       properties:
+        id:
+          type: string
         date:
           type: string
           format: date
@@ -220,6 +372,8 @@ components:
         - animalType
         - name
       properties:
+        id:
+          type: string
         animalType:
           type: string
         name:
