@@ -1,0 +1,31 @@
+// MCPServer is the interface that an MCP server must implement.
+// *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp satisfies this interface.
+type MCPServer interface {
+	AddTool(t *mcp.Tool, h mcp.ToolHandler)
+}
+
+// RegisterMCPTools registers all tool handlers with the MCP server.
+// The mcpServer parameter should be a *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp.
+// The si parameter implements MCPHandlerInterface with your business logic.
+func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
+	{{ range .Tools -}}
+	// Register {{ .OperationID }}
+	{
+		tool := &mcp.Tool{
+			Name:        "{{ .OperationID }}",
+			Description: "{{ .Description }}",
+			InputSchema: json.RawMessage(`{{ .InputSchema }}`),
+			{{- if .OutputSchema }}
+			OutputSchema: json.RawMessage(`{{ .OutputSchema }}`),
+			{{- end }}
+		}
+
+		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			return si.{{ .OperationID }}(ctx, req)
+		}
+
+		mcpServer.AddTool(tool, handler)
+	}
+	{{ end }}
+	return nil
+}

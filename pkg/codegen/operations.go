@@ -1046,6 +1046,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
+	if opts.Generate.MCPServer {
+		templates = append(templates, "strict/strict-interface.tmpl")
+	}
 
 	return GenerateTemplates(templates, t, operations)
 }

@@ -268,6 +268,27 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var mcpServerOut string
+	if opts.Generate.MCPServer {
+		mcpServerOut, err = GenerateMCPServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating MCP server: %w", err)
+		}
+		// Add MCP SDK import when generating MCP server
+		globalState.importMapping["mcp"] = goImport{
+			Name: "mcp",
+			Path: "github.com/modelcontextprotocol/go-sdk/mcp",
+		}
+	}
+
+	var strictMCPServerOut string
+	if opts.Generate.MCPServer && opts.Generate.Strict {
+		strictMCPServerOut, err = GenerateStrictMCPServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating strict MCP server: %w", err)
+		}
+	}
+
 	var strictServerOut string
 	if opts.Generate.Strict {
 		var responses []ResponseDefinition
@@ -404,6 +425,20 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(stdHTTPServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.MCPServer {
+		_, err = w.WriteString(mcpServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing MCP server: %w", err)
+		}
+
+		if opts.Generate.Strict {
+			_, err = w.WriteString(strictMCPServerOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing strict MCP server: %w", err)
+			}
 		}
 	}
 

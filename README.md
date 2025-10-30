@@ -621,6 +621,34 @@ To implement this, check out [the Go 1.22+ `net/http` docs](#impl-stdhttp).
 </td>
 </tr>
 
+<tr>
+<td>
+
+[MCP (Model Context Protocol)](https://modelcontextprotocol.io)
+
+</td>
+<td>
+<code>mcp-server</code>
+</td>
+
+<td>
+
+To generate an MCP server, you will want a configuration file such as:
+
+```yaml
+# yaml-language-server: ...
+package: api
+generate:
+  mcp-server: true
+  models: true
+output: gen.go
+```
+
+This generates an MCP server interface where each OpenAPI operation becomes an MCP tool. See the [MCP example](examples/mcp-server/) for a complete implementation.
+
+</td>
+</tr>
+
 </table>
 
 ### Go 1.22+ `net/http`

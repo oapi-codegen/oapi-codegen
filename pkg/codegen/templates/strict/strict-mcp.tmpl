@@ -1,0 +1,158 @@
+type StrictMCPHandlerFunc = func(ctx context.Context, request *mcp.CallToolRequest) (*mcp.CallToolResult, error)
+type StrictMCPMiddlewareFunc = func(f StrictMCPHandlerFunc, operationID string) StrictMCPHandlerFunc
+
+type StrictMCPServerOptions struct {
+	RequestErrorHandlerFunc  func(ctx context.Context, err error) *mcp.CallToolResult
+	ResponseErrorHandlerFunc func(ctx context.Context, err error) *mcp.CallToolResult
+}
+
+func NewStrictMCPHandler(ssi StrictServerInterface, middlewares []StrictMCPMiddlewareFunc) MCPHandlerInterface {
+	return &strictMCPHandler{
+		ssi:         ssi,
+		middlewares: middlewares,
+		options: StrictMCPServerOptions{
+			RequestErrorHandlerFunc: func(ctx context.Context, err error) *mcp.CallToolResult {
+				return &mcp.CallToolResult{
+					Content: []mcp.Content{
+						&mcp.TextContent{
+							Text: fmt.Sprintf("Request error: %v", err),
+						},
+					},
+					IsError: true,
+				}
+			},
+			ResponseErrorHandlerFunc: func(ctx context.Context, err error) *mcp.CallToolResult {
+				return &mcp.CallToolResult{
+					Content: []mcp.Content{
+						&mcp.TextContent{
+							Text: fmt.Sprintf("Response error: %v", err),
+						},
+					},
+					IsError: true,
+				}
+			},
+		},
+	}
+}
+
+func NewStrictMCPHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMCPMiddlewareFunc, options StrictMCPServerOptions) MCPHandlerInterface {
+	return &strictMCPHandler{ssi: ssi, middlewares: middlewares, options: options}
+}
+
+type strictMCPHandler struct {
+	ssi         StrictServerInterface
+	middlewares []StrictMCPMiddlewareFunc
+	options     StrictMCPServerOptions
+}
+
+{{range .}}
+{{$opid := .OperationId}}
+// {{$opid}} operation middleware
+func (sh *strictMCPHandler) {{.OperationId}}(ctx context.Context, request *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	var strictRequest {{$opid | ucFirst}}RequestObject
+
+	// Unmarshal MCP request arguments into strict RequestObject
+	// MCP uses nested structure: {"path": {...}, "query": {...}, "body": {...}}
+	// but strict interface uses flat structure with direct path params and Params field
+	if request.Params.Arguments != nil {
+		// Parse the nested MCP structure
+		var mcpArgs struct {
+			{{- if gt (len .PathParams) 0 }}
+			Path map[string]interface{} `json:"path"`
+			{{- end }}
+			{{- if .RequiresParamObject }}
+			Query map[string]interface{} `json:"query,omitempty"`
+			Header map[string]interface{} `json:"header,omitempty"`
+			Cookie map[string]interface{} `json:"cookie,omitempty"`
+			{{- end }}
+			{{- if .HasBody }}
+			Body interface{} `json:"body,omitempty"`
+			{{- end }}
+		}
+		
+		argsBytes, err := json.Marshal(request.Params.Arguments)
+		if err != nil {
+			return sh.options.RequestErrorHandlerFunc(ctx, fmt.Errorf("error marshaling arguments: %w", err)), nil
+		}
+		if err := json.Unmarshal(argsBytes, &mcpArgs); err != nil {
+			return sh.options.RequestErrorHandlerFunc(ctx, fmt.Errorf("error unmarshaling arguments: %w", err)), nil
+		}
+
+		// Map path parameters directly to RequestObject fields
+		{{- range .PathParams }}
+		if val, ok := mcpArgs.Path["{{.ParamName}}"]; ok {
+			{{- if eq .Schema.TypeDecl "string" }}
+			if strVal, ok := val.(string); ok {
+				strictRequest.{{.GoName}} = strVal
+			}
+			{{- else }}
+			// Marshal/unmarshal for type conversion
+			valBytes, _ := json.Marshal(val)
+			json.Unmarshal(valBytes, &strictRequest.{{.GoName}})
+			{{- end }}
+		}
+		{{- end }}
+
+		{{- if .RequiresParamObject }}
+		// Map query/header/cookie parameters to Params struct
+		paramsData := make(map[string]interface{})
+		for k, v := range mcpArgs.Query {
+			paramsData[k] = v
+		}
+		for k, v := range mcpArgs.Header {
+			paramsData[k] = v
+		}
+		for k, v := range mcpArgs.Cookie {
+			paramsData[k] = v
+		}
+		if len(paramsData) > 0 {
+			paramsBytes, _ := json.Marshal(paramsData)
+			json.Unmarshal(paramsBytes, &strictRequest.Params)
+		}
+		{{- end }}
+
+		{{- if .HasBody }}
+		// Map body
+		if mcpArgs.Body != nil {
+			bodyBytes, _ := json.Marshal(mcpArgs.Body)
+			{{- $multipleBodies := gt (len .Bodies) 1 }}
+			{{- range .Bodies }}
+			{{- if eq .NameTag "JSON" }}
+			json.Unmarshal(bodyBytes, &strictRequest.{{if $multipleBodies}}{{.NameTag}}{{end}}Body)
+			{{- else }}
+			// Handle non-JSON body types if needed
+			{{- end }}
+			{{- end }}
+		}
+		{{- end }}
+	}
+
+	handler := func(ctx context.Context, request *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		response, err := sh.ssi.{{.OperationId}}(ctx, strictRequest)
+		if err != nil {
+			return nil, err
+		}
+
+		// Marshal response and wrap in MCP CallToolResult
+		result := &mcp.CallToolResult{}
+		if response != nil {
+			responseBytes, err := json.Marshal(response)
+			if err != nil {
+				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
+			}
+			result.Content = []mcp.Content{
+				&mcp.TextContent{
+					Text: string(responseBytes),
+				},
+			}
+		}
+		return result, nil
+	}
+
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "{{.OperationId}}")
+	}
+
+	return handler(ctx, request)
+}
+{{end}}

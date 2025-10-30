@@ -59,6 +59,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.GinServer {
 		nServers++
 	}
+	if o.Generate.MCPServer {
+		nServers++
+	}
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
@@ -118,6 +121,8 @@ type GenerateOptions struct {
 	GorillaServer bool `yaml:"gorilla-server,omitempty"`
 	// StdHTTPServer specifies whether to generate stdlib http server boilerplate
 	StdHTTPServer bool `yaml:"std-http-server,omitempty"`
+	// MCPServer specifies whether to generate MCP server boilerplate
+	MCPServer bool `yaml:"mcp-server,omitempty"`
 	// Strict specifies whether to generate strict server wrapper
 	Strict bool `yaml:"strict-server,omitempty"`
 	// Client specifies whether to generate client boilerplate

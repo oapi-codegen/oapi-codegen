@@ -1,0 +1,157 @@
+// StrictServerInterface represents all MCP tool handlers.
+// This interface is compatible with strict-server mode.
+type StrictServerInterface interface {
+{{ range .Tools -}}
+{{- if .Operation.SummaryAsComment }}
+{{ .Operation.SummaryAsComment }}
+{{- end }}
+// ({{ .Operation.Method }} {{ .Operation.Path }})
+{{ .OperationID }}(ctx context.Context, request {{ .OperationID }}RequestObject) ({{ .OperationID }}ResponseObject, error)
+{{ end }}
+}
+
+{{ range .Tools }}
+{{- $opID := .OperationID }}
+// {{ .OperationID }}RequestObject contains all the parameters for the {{ .OperationID }} tool
+type {{ .OperationID }}RequestObject struct {
+{{- if gt (len .Operation.PathParams) 0 }}
+	Path {{ .OperationID }}PathParams `json:"path"`
+{{- end }}
+{{- if gt (len .Operation.QueryParams) 0 }}
+	Query {{ .OperationID }}QueryParams `json:"query,omitempty"`
+{{- end }}
+{{- if gt (len .Operation.HeaderParams) 0 }}
+	Header {{ .OperationID }}HeaderParams `json:"header,omitempty"`
+{{- end }}
+{{- if gt (len .Operation.CookieParams) 0 }}
+	Cookie {{ .OperationID }}CookieParams `json:"cookie,omitempty"`
+{{- end }}
+{{- if .Operation.HasBody }}
+	Body {{ .OperationID }}Body `json:"body{{ if not .Operation.BodyRequired }},omitempty{{ end }}"`
+{{- end }}
+}
+
+{{- if gt (len .Operation.PathParams) 0 }}
+
+// {{ .OperationID }}PathParams contains path parameters for {{ .OperationID }}
+type {{ .OperationID }}PathParams struct {
+{{- range .Operation.PathParams }}
+	{{ .GoName }} {{ .TypeDef }} `json:"{{ .ParamName }}"`
+{{- end }}
+}
+{{- end }}
+
+{{- if gt (len .Operation.QueryParams) 0 }}
+
+// {{ .OperationID }}QueryParams contains query parameters for {{ .OperationID }}
+type {{ .OperationID }}QueryParams struct {
+{{- range .Operation.QueryParams }}
+	{{ .GoName }} {{ .TypeDef }} {{ .JsonTag }}
+{{- end }}
+}
+{{- end }}
+
+{{- if gt (len .Operation.HeaderParams) 0 }}
+
+// {{ .OperationID }}HeaderParams contains header parameters for {{ .OperationID }}
+type {{ .OperationID }}HeaderParams struct {
+{{- range .Operation.HeaderParams }}
+	{{ .GoName }} {{ .TypeDef }} {{ .JsonTag }}
+{{- end }}
+}
+{{- end }}
+
+{{- if gt (len .Operation.CookieParams) 0 }}
+
+// {{ .OperationID }}CookieParams contains cookie parameters for {{ .OperationID }}
+type {{ .OperationID }}CookieParams struct {
+{{- range .Operation.CookieParams }}
+	{{ .GoName }} {{ .TypeDef }} {{ .JsonTag }}
+{{- end }}
+}
+{{- end }}
+
+{{- if .Operation.HasBody }}
+{{- range .Operation.Bodies }}
+{{- if eq .NameTag "JSON" }}
+
+// {{ $opID }}Body is the request body for {{ $opID }}
+type {{ $opID }}Body = {{ .Schema.TypeDecl }}
+{{- end }}
+{{- end }}
+{{- end }}
+
+// {{ .OperationID }}ResponseObject is the response type for {{ .OperationID }}
+type {{ .OperationID }}ResponseObject interface{}
+
+{{ end }}
+
+// MCPServer is the interface that an MCP server must implement.
+// *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp satisfies this interface.
+type MCPServer interface {
+	AddTool(t *mcp.Tool, h mcp.ToolHandler)
+}
+
+// RegisterMCPServer registers all tool handlers with the MCP server.
+// The mcpServer parameter should be a *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp.
+// The si parameter implements StrictServerInterface with your business logic.
+func RegisterMCPServer(mcpServer MCPServer, si StrictServerInterface) error {
+	{{ range .Tools -}}
+	// Register {{ .OperationID }}
+	{
+		// Create the tool definition
+		tool := &mcp.Tool{
+			Name:        "{{ .OperationID }}",
+			Description: "{{ .Description }}",
+			InputSchema: json.RawMessage(`{{ .InputSchema }}`),
+			{{- if .OutputSchema }}
+			OutputSchema: json.RawMessage(`{{ .OutputSchema }}`),
+			{{- end }}
+		}
+
+		// Create the handler that bridges from MCP to our strict interface
+		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+			var request {{ .OperationID }}RequestObject
+			
+			// Unmarshal the arguments into our RequestObject
+			if req.Params.Arguments != nil {
+				argsBytes, err := json.Marshal(req.Params.Arguments)
+				if err != nil {
+					return nil, fmt.Errorf("error marshaling arguments: %w", err)
+				}
+				if err := json.Unmarshal(argsBytes, &request); err != nil {
+					return nil, fmt.Errorf("error unmarshaling arguments: %w", err)
+				}
+			}
+
+			// Call the strict server interface
+			response, err := si.{{ .OperationID }}(ctx, request)
+			if err != nil {
+				return nil, err
+			}
+
+			// Create the result
+			result := &mcp.CallToolResult{}
+			
+			if response != nil {
+				// Marshal response to JSON and wrap in TextContent
+				responseBytes, err := json.Marshal(response)
+				if err != nil {
+					return nil, fmt.Errorf("error marshaling response: %w", err)
+				}
+				result.Content = []mcp.Content{
+					&mcp.TextContent{
+						Text: string(responseBytes),
+					},
+				}
+			}
+
+			return result, nil
+		}
+
+		mcpServer.AddTool(tool, handler)
+	}
+	{{ end }}
+	return nil
+}
+
