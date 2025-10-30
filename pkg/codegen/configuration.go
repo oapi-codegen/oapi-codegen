@@ -59,9 +59,7 @@ func (o Configuration) Validate() error {
 	if o.Generate.GinServer {
 		nServers++
 	}
-	if o.Generate.MCPServer {
-		nServers++
-	}
+	// Note: MCPServer is not counted here as it can be used alongside other server types
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
