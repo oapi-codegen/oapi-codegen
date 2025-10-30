@@ -274,11 +274,6 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error generating MCP server: %w", err)
 		}
-		// Add MCP SDK import when generating MCP server
-		globalState.importMapping["mcp"] = goImport{
-			Name: "mcp",
-			Path: "github.com/modelcontextprotocol/go-sdk/mcp",
-		}
 	}
 
 	var strictMCPServerOut string
