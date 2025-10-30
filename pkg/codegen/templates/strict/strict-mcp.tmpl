@@ -1,3 +1,11 @@
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/modelcontextprotocol/go-sdk/mcp"
+)
+
 type StrictMCPHandlerFunc = func(ctx context.Context, request *mcp.CallToolRequest) (*mcp.CallToolResult, error)
 type StrictMCPMiddlewareFunc = func(f StrictMCPHandlerFunc, operationID string) StrictMCPHandlerFunc
 
