@@ -1046,8 +1046,15 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
+	// If MCPServer is enabled but no other server type has generated the interface yet,
+	// we need to generate it. Check if any framework-specific interface was already added.
 	if opts.Generate.MCPServer {
-		templates = append(templates, "strict/strict-interface.tmpl")
+		hasOtherServer := opts.Generate.EchoServer || opts.Generate.ChiServer ||
+			opts.Generate.FiberServer || opts.Generate.GinServer || opts.Generate.IrisServer ||
+			opts.Generate.StdHTTPServer || opts.Generate.GorillaServer
+		if !hasOtherServer {
+			templates = append(templates, "strict/strict-interface.tmpl")
+		}
 	}
 
 	return GenerateTemplates(templates, t, operations)
