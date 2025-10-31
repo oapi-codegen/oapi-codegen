@@ -4,6 +4,13 @@ type MCPServer interface {
 	AddTool(t *mcp.Tool, h mcp.ToolHandler)
 }
 
+{{ range .Tools -}}
+const inputSchema{{ .OperationID }} = "{{ .InputSchema }}"
+{{- if .OutputSchema }}
+const outputSchema{{ .OperationID }} = "{{ .OutputSchema }}"
+{{- end }}
+{{ end }}
+
 // RegisterMCPTools registers all tool handlers with the MCP server.
 // The mcpServer parameter should be a *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp.
 // The si parameter implements MCPHandlerInterface with your business logic.
@@ -14,9 +21,9 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 		tool := &mcp.Tool{
 			Name:        "{{ .OperationID }}",
 			Description: "{{ .Description }}",
-			InputSchema: json.RawMessage(`{{ .InputSchema }}`),
+			InputSchema: json.RawMessage(inputSchema{{ .OperationID }}),
 			{{- if .OutputSchema }}
-			OutputSchema: json.RawMessage(`{{ .OutputSchema }}`),
+			OutputSchema: json.RawMessage(outputSchema{{ .OperationID }}),
 			{{- end }}
 		}
 

@@ -3,6 +3,7 @@ package codegen
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -74,7 +75,8 @@ func operationToMCPTool(op OperationDefinition) (MCPToolDefinition, error) {
 	if err != nil {
 		return tool, fmt.Errorf("error marshaling input schema: %w", err)
 	}
-	tool.InputSchema = string(inputSchemaJSON)
+	// Escape for use in Go string literal (replace backslashes and quotes)
+	tool.InputSchema = strings.ReplaceAll(strings.ReplaceAll(string(inputSchemaJSON), `\`, `\\`), `"`, `\"`)
 
 	// Build output schema
 	outputSchema, err := buildMCPOutputSchema(op)
@@ -86,7 +88,8 @@ func operationToMCPTool(op OperationDefinition) (MCPToolDefinition, error) {
 		if err != nil {
 			return tool, fmt.Errorf("error marshaling output schema: %w", err)
 		}
-		tool.OutputSchema = string(outputSchemaJSON)
+		// Escape for use in Go string literal (replace backslashes and quotes)
+		tool.OutputSchema = strings.ReplaceAll(strings.ReplaceAll(string(outputSchemaJSON), `\`, `\\`), `"`, `\"`)
 	}
 
 	return tool, nil
