@@ -1,0 +1,86 @@
+{{range .Types}}
+    {{$typeName := .TypeName -}}
+    {{$discriminator := .Schema.Discriminator}}
+    {{$properties := .Schema.Properties -}}
+    {{if $discriminator}}
+        {{$discriminatorFieldName := $discriminator.PropertyName -}}
+        {{/* Find the discriminator field type */}}
+        {{$discriminatorType := "string" -}}
+        {{range $properties -}}
+            {{if eq .GoFieldName $discriminatorFieldName -}}
+                {{$discriminatorType = .Schema.TypeDecl -}}
+            {{end -}}
+        {{end}}
+
+        type {{$typeName}}Interface interface {
+            is{{$typeName}}() // unexported method to seal the interface
+        }
+
+        // Discriminator returns the discriminator property value for {{$typeName}}
+        func (t *{{$typeName}}) Discriminator() {{$discriminatorType}} {
+            return t.{{$discriminatorFieldName}}
+        }
+
+        {{if ne 0 (len $discriminator.Mapping)}}
+            {{range $value, $type := $discriminator.Mapping -}}
+                {{$methodName := $type -}}
+                // is{{$typeName}} implements {{$typeName}}Interface for {{$type}}
+                func (t {{$type}}) is{{$typeName}}() {}
+
+                // Is{{$methodName}} checks if the discriminator value matches {{$type}}
+                func (t *{{$typeName}}) Is{{$methodName}}() bool {
+                    return string(t.{{$discriminatorFieldName}}) == "{{$value}}"
+                }
+
+                // As{{$methodName}} attempts to convert {{$typeName}} to {{$type}} based on discriminator
+                func (t *{{$typeName}}) As{{$methodName}}() (*{{$type}}, error) {
+                    if t.discriminatorRaw == nil {
+                        return nil, errors.New("no raw data available for discriminator conversion")
+                    }
+                    {{/* Compare discriminator field value with the mapping key (always as string in JSON) */}}
+                    if string(t.{{$discriminatorFieldName}}) != "{{$value}}" {
+                        return nil, fmt.Errorf("discriminator value mismatch: expected {{$value}}, got %v", t.{{$discriminatorFieldName}})
+                    }
+                    var result {{$type}}
+                    if err := json.Unmarshal(t.discriminatorRaw, &result); err != nil {
+                        return nil, fmt.Errorf("failed to unmarshal as {{$type}}: %w", err)
+                    }
+                    return &result, nil
+                }
+            {{end}}
+
+            // ValueByDiscriminator returns the concrete type based on the discriminator value
+            func (t *{{$typeName}}) ValueByDiscriminator() (interface{}, error) {
+                discriminator := string(t.{{$discriminatorFieldName}})
+                switch discriminator {
+                    {{range $value, $type := $discriminator.Mapping -}}
+                    case "{{$value}}":
+                        return t.As{{$type}}()
+                    {{end -}}
+                    default:
+                        return nil, fmt.Errorf("unknown discriminator value: %v", discriminator)
+                }
+            }
+
+            // UnmarshalJSON implements custom unmarshaling to preserve raw JSON for discriminator
+            func (t *{{$typeName}}) UnmarshalJSON(data []byte) error {
+                // Store raw data for later conversion
+                t.discriminatorRaw = make([]byte, len(data))
+                copy(t.discriminatorRaw, data)
+
+                // Unmarshal into the base type
+                type Alias {{$typeName}}
+                aux := &struct {
+                    *Alias
+                }{
+                    Alias: (*Alias)(t),
+                }
+                if err := json.Unmarshal(data, aux); err != nil {
+                    return err
+                }
+                return nil
+            }
+        {{end}}
+    {{end}}
+{{end}}
+

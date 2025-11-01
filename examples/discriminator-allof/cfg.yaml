@@ -1,0 +1,5 @@
+package: discriminator
+generate:
+  models: true
+output: api.gen.go
+
