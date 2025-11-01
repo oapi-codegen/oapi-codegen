@@ -517,6 +517,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.GorillaServer = true
 		case "std-http", "std-http-server":
 			opts.StdHTTPServer = true
+		case "mcp-server", "mcp":
+			opts.MCPServer = true
 		case "strict-server":
 			opts.Strict = true
 		case "client":

@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: Pet Store MCP API
+  description: A simple pet store API exposed as MCP tools
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /pets:
+    get:
+      operationId: ListPets
+      summary: List all pets
+      description: Returns a list of pets from the store
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of pets to return
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: tag
+          in: query
+          description: Filter pets by tag
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of pets
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - pets
+                properties:
+                  pets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Pet'
+                  nextCursor:
+                    type: string
+    post:
+      operationId: CreatePet
+      summary: Create a pet
+      description: Creates a new pet in the store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewPet'
+      responses:
+        '201':
+          description: Pet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  /pets/{petId}:
+    get:
+      operationId: GetPet
+      summary: Get a pet by ID
+      description: Returns a single pet by ID
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to retrieve
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Pet not found
+    put:
+      operationId: UpdatePet
+      summary: Update a pet
+      description: Updates an existing pet by ID
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to update
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePet'
+      responses:
+        '200':
+          description: Pet updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+        '404':
+          description: Pet not found
+    delete:
+      operationId: DeletePet
+      summary: Delete a pet
+      description: Deletes a pet by ID
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          description: The ID of the pet to delete
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pet deleted successfully
+        '404':
+          description: Pet not found
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the pet
+        name:
+          type: string
+          description: Name of the pet
+        tag:
+          type: string
+          description: Tag for categorizing the pet
+        age:
+          type: integer
+          description: Age of the pet in years
+        breed:
+          type: string
+          description: Breed of the pet
+    NewPet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the pet
+        tag:
+          type: string
+          description: Tag for categorizing the pet
+        age:
+          type: integer
+          description: Age of the pet in years
+        breed:
+          type: string
+          description: Breed of the pet
+    UpdatePet:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the pet
+        tag:
+          type: string
+          description: Tag for categorizing the pet
+        age:
+          type: integer
+          description: Age of the pet in years
+        breed:
+          type: string
+          description: Breed of the pet
+

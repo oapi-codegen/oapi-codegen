@@ -1,0 +1,8 @@
+package: mcp
+generate:
+  mcp-server: true
+  models: true
+  strict-server: true
+output: server.gen.go
+output-options:
+  skip-prune: true

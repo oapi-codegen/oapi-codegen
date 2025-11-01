@@ -59,6 +59,7 @@ func (o Configuration) Validate() error {
 	if o.Generate.GinServer {
 		nServers++
 	}
+	// Note: MCPServer is not counted here as it can be used alongside other server types
 	if nServers > 1 {
 		return errors.New("only one server type is supported at a time")
 	}
@@ -118,6 +119,8 @@ type GenerateOptions struct {
 	GorillaServer bool `yaml:"gorilla-server,omitempty"`
 	// StdHTTPServer specifies whether to generate stdlib http server boilerplate
 	StdHTTPServer bool `yaml:"std-http-server,omitempty"`
+	// MCPServer specifies whether to generate MCP server boilerplate
+	MCPServer bool `yaml:"mcp-server,omitempty"`
 	// Strict specifies whether to generate strict server wrapper
 	Strict bool `yaml:"strict-server,omitempty"`
 	// Client specifies whether to generate client boilerplate
@@ -300,13 +303,26 @@ type OutputOptions struct {
 
 	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
+
+	// MCPInclusionMode determines how the x-mcp extension field on operations affects MCP server generation.
+	// See MCPInclusionMode constants for valid values.
+	// Defaults to MCPInclusionModeInclude if not specified.
+	MCPInclusionMode MCPInclusionMode `yaml:"mcp-inclusion-mode,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
+	problems := make(map[string]string)
+
 	if NameNormalizerFunction(oo.NameNormalizer) != NameNormalizerFunctionToCamelCaseWithInitialisms && len(oo.AdditionalInitialisms) > 0 {
-		return map[string]string{
-			"additional-initialisms": "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration",
-		}
+		problems["additional-initialisms"] = "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration"
+	}
+
+	if oo.MCPInclusionMode != "" && oo.MCPInclusionMode != MCPInclusionModeInclude && oo.MCPInclusionMode != MCPInclusionModeExclude && oo.MCPInclusionMode != MCPInclusionModeExplicit {
+		problems["mcp-inclusion-mode"] = "Invalid value for `mcp-inclusion-mode`. Valid values are: \"include\", \"exclude\", or \"explicit\""
+	}
+
+	if len(problems) > 0 {
+		return problems
 	}
 
 	return nil

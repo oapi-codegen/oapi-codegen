@@ -1,0 +1,7 @@
+// MCPHandlerInterface represents all MCP tool handlers.
+type MCPHandlerInterface interface {
+{{range .}}{{.SummaryAsComment }}
+// ({{.Method}} {{.Path}})
+{{.OperationId}}(ctx context.Context, request *mcp.CallToolRequest) (*mcp.CallToolResult, error)
+{{end}}
+}

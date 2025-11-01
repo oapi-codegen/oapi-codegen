@@ -1,0 +1,6 @@
+package: main
+generate:
+  models: true
+  mcp-server: true
+  strict-server: true
+output: server.gen.go
