@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/getkin/kin-openapi v0.132.0
+	github.com/modelcontextprotocol/go-sdk v1.1.0
 	github.com/speakeasy-api/openapi-overlay v0.10.2
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/mod v0.25.0
@@ -18,7 +19,7 @@ require (
 	github.com/dprotaso/go-yit v0.0.0-20220510233725-9ba8df137936 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
+	github.com/google/jsonschema-go v0.3.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -29,5 +30,7 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
+	golang.org/x/oauth2 v0.30.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 )
