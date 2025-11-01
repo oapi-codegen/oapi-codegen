@@ -134,6 +134,17 @@ func (p Property) HasOptionalPointer() bool {
 	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
 }
 
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (p Property) ZeroValueIsNil() bool {
+	if p.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return p.Schema.OAPISchema.Type.Is("array")
+}
+
 // EnumDefinition holds type information for enum
 type EnumDefinition struct {
 	// Schema is the scheme of a type which has a list of enum values, eg, the
