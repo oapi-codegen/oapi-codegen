@@ -19,7 +19,9 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"errors"
 	"fmt"
+	"go/scanner"
 	"io"
 	"io/fs"
 	"net/http"
@@ -435,9 +437,34 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
+		// if we don't get a line number
+		errLine := -1
+		var scanErr scanner.ErrorList
+		if errors.As(err, &scanErr) && scanErr.Len() > 0 {
+			// for now, only return the first error's information
+			errLine = scanErr[0].Pos.Line
+		}
+		return "", fmt.Errorf("error formatting Go code:\n%s\nerror was: %w", addLineNumbers(goCode, errLine), err)
 	}
 	return string(outBytes), nil
+}
+
+func addLineNumbers(goCode string, lineWithError int) string {
+	var out []string
+	lines := strings.Split(goCode, "\n")
+	for i, line := range lines {
+		// lines for humans start at 1
+		lineNumber := i + 1
+
+		errLine := "  "
+		if lineNumber == lineWithError {
+			errLine = "❗"
+		}
+
+		out = append(out, fmt.Sprintf("%s%5d: %s", errLine, lineNumber, line))
+	}
+
+	return strings.Join(out, "\n")
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
