@@ -14,6 +14,14 @@
 			],
 			"additionalBranchPrefix": "{{#if isGroup }}{{ else }}{{packageFileDir}}/{{/if}}",
 			"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{packageFileDir}}){{/if}}"
+		},
+		{
+			"description": "Don't attempt to bump dependencies if they're only used in example code, but allow manually forcing them via Dependency Dashboard",
+			"matchFileNames": [
+				"internal/test/**/*",
+				"examples/**/*"
+			],
+			"dependencyDashboardApproval": true
 		}
 	]
 }
