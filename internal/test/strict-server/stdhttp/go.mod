@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/stdhttp
 
-go 1.22.5
+go 1.24
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../../
 
@@ -30,7 +30,7 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
+	github.com/speakeasy-api/openapi-overlay v0.10.3 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	golang.org/x/mod v0.21.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
