@@ -105,7 +105,7 @@ func GenerateMCPServer(t *template.Template, ops []OperationDefinition, inclusio
 	}
 
 	// Generate the generic ServerInterface
-	interfaceCode, err := GenerateTemplates([]string{"mcp/mcp-interface.tmpl"}, t, ops)
+	interfaceCode, err := GenerateTemplates([]string{"mcp/mcp-interface.tmpl"}, t, filteredOps)
 	if err != nil {
 		return "", fmt.Errorf("error generating MCP interface: %w", err)
 	}
