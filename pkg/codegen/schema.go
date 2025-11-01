@@ -128,6 +128,12 @@ func (p Property) GoTypeDef() string {
 	return typeDef
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (p Property) RequiresNilCheck() bool {
+	return p.ZeroValueIsNil() || p.HasOptionalPointer()
+}
+
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (p Property) HasOptionalPointer() bool {
