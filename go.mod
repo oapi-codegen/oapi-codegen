@@ -3,7 +3,7 @@ module github.com/oapi-codegen/oapi-codegen/v2
 go 1.22.5
 
 require (
-	github.com/getkin/kin-openapi v0.132.0
+	github.com/getkin/kin-openapi v0.133.0
 	github.com/speakeasy-api/openapi-overlay v0.10.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.21.0
@@ -28,5 +28,6 @@ require (
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
+	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	golang.org/x/sync v0.9.0 // indirect
 )
