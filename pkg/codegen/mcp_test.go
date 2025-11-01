@@ -286,3 +286,208 @@ func TestOpenAPISchemaToJSONSchema(t *testing.T) {
 	}
 }
 
+func TestGetXMCPExtension(t *testing.T) {
+	tests := []struct {
+		name          string
+		op            OperationDefinition
+		wantValue     bool
+		wantHasExtension bool
+	}{
+		{
+			name: "x-mcp true",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]interface{}{
+						"x-mcp": true,
+					},
+				},
+			},
+			wantValue:     true,
+			wantHasExtension: true,
+		},
+		{
+			name: "x-mcp false",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]interface{}{
+						"x-mcp": false,
+					},
+				},
+			},
+			wantValue:     false,
+			wantHasExtension: true,
+		},
+		{
+			name: "no x-mcp extension",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]interface{}{},
+				},
+			},
+			wantValue:     false,
+			wantHasExtension: false,
+		},
+		{
+			name: "nil spec",
+			op: OperationDefinition{
+				Spec: nil,
+			},
+			wantValue:     false,
+			wantHasExtension: false,
+		},
+		{
+			name: "x-mcp with non-boolean value",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]interface{}{
+						"x-mcp": "true",
+					},
+				},
+			},
+			wantValue:     false,
+			wantHasExtension: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			value, hasExtension := getXMCPExtension(tt.op)
+			assert.Equal(t, tt.wantValue, value)
+			assert.Equal(t, tt.wantHasExtension, hasExtension)
+		})
+	}
+}
+
+func TestFilterOperationsForMCP(t *testing.T) {
+	// Create test operations
+	opWithXMCPTrue := OperationDefinition{
+		OperationId: "GetResource",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]interface{}{
+				"x-mcp": true,
+			},
+		},
+	}
+
+	opWithXMCPFalse := OperationDefinition{
+		OperationId: "CreateResource",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]interface{}{
+				"x-mcp": false,
+			},
+		},
+	}
+
+	opWithoutXMCP := OperationDefinition{
+		OperationId: "UpdateResource",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]interface{}{},
+		},
+	}
+
+	tests := []struct {
+		name          string
+		ops           []OperationDefinition
+		inclusionMode string
+		wantOps       []string // operation IDs that should be included
+		wantErr       bool
+	}{
+		{
+			name:          "include mode - includes all by default",
+			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse, opWithoutXMCP},
+			inclusionMode: "include",
+			wantOps:       []string{"GetResource", "UpdateResource"}, // excludes only opWithXMCPFalse
+			wantErr:       false,
+		},
+		{
+			name:          "include mode (default) - empty string",
+			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse, opWithoutXMCP},
+			inclusionMode: "",
+			wantOps:       []string{"GetResource", "UpdateResource"},
+			wantErr:       false,
+		},
+		{
+			name:          "exclude mode - excludes all by default",
+			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse, opWithoutXMCP},
+			inclusionMode: "exclude",
+			wantOps:       []string{"GetResource"}, // includes only opWithXMCPTrue
+			wantErr:       false,
+		},
+		{
+			name:          "explicit mode - requires x-mcp on all operations",
+			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse},
+			inclusionMode: "explicit",
+			wantOps:       []string{"GetResource"}, // includes only opWithXMCPTrue
+			wantErr:       false,
+		},
+		{
+			name:          "explicit mode - error when x-mcp missing",
+			ops:           []OperationDefinition{opWithXMCPTrue, opWithoutXMCP},
+			inclusionMode: "explicit",
+			wantOps:       nil,
+			wantErr:       true, // should error because opWithoutXMCP doesn't have x-mcp
+		},
+		{
+			name:          "invalid mode",
+			ops:           []OperationDefinition{opWithXMCPTrue},
+			inclusionMode: "invalid",
+			wantOps:       nil,
+			wantErr:       true,
+		},
+		{
+			name:          "include mode - only x-mcp true",
+			ops:           []OperationDefinition{opWithXMCPTrue},
+			inclusionMode: "include",
+			wantOps:       []string{"GetResource"},
+			wantErr:       false,
+		},
+		{
+			name:          "include mode - only x-mcp false",
+			ops:           []OperationDefinition{opWithXMCPFalse},
+			inclusionMode: "include",
+			wantOps:       []string{}, // excluded
+			wantErr:       false,
+		},
+		{
+			name:          "exclude mode - only x-mcp false",
+			ops:           []OperationDefinition{opWithXMCPFalse},
+			inclusionMode: "exclude",
+			wantOps:       []string{}, // excluded
+			wantErr:       false,
+		},
+		{
+			name:          "exclude mode - only without x-mcp",
+			ops:           []OperationDefinition{opWithoutXMCP},
+			inclusionMode: "exclude",
+			wantOps:       []string{}, // excluded by default
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			filtered, err := filterOperationsForMCP(tt.ops, tt.inclusionMode)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+
+			// Check that we got the right number of operations
+			assert.Equal(t, len(tt.wantOps), len(filtered), "unexpected number of filtered operations")
+
+			// Check that we got the right operations
+			gotIDs := make([]string, len(filtered))
+			for i, op := range filtered {
+				gotIDs[i] = op.OperationId
+			}
+
+			for _, wantID := range tt.wantOps {
+				assert.Contains(t, gotIDs, wantID, "expected operation %s to be included", wantID)
+			}
+		})
+	}
+}
+
