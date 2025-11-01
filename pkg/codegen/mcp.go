@@ -10,6 +10,37 @@ import (
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
+// MCPInclusionMode determines how the x-mcp extension field on operations affects MCP server generation.
+type MCPInclusionMode string
+
+const (
+	// MCPInclusionModeInclude includes operations by default unless x-mcp is explicitly false.
+	// This is the default mode when mcp-inclusion-mode is not specified.
+	//
+	// Behavior:
+	// - x-mcp: true  => included
+	// - x-mcp: false => excluded
+	// - no x-mcp     => included (default)
+	MCPInclusionModeInclude MCPInclusionMode = "include"
+
+	// MCPInclusionModeExclude excludes operations by default unless x-mcp is explicitly true.
+	//
+	// Behavior:
+	// - x-mcp: true  => included
+	// - x-mcp: false => excluded
+	// - no x-mcp     => excluded (default)
+	MCPInclusionModeExclude MCPInclusionMode = "exclude"
+
+	// MCPInclusionModeExplicit requires an explicit x-mcp field on all operations.
+	// Returns an error if any operation is missing the x-mcp field.
+	//
+	// Behavior:
+	// - x-mcp: true  => included
+	// - x-mcp: false => excluded
+	// - no x-mcp     => error
+	MCPInclusionModeExplicit MCPInclusionMode = "explicit"
+)
+
 // MCPToolDefinition represents an MCP tool generated from an OpenAPI operation
 type MCPToolDefinition struct {
 	OperationID  string // The operation ID used as the tool name
@@ -20,10 +51,10 @@ type MCPToolDefinition struct {
 }
 
 // filterOperationsForMCP filters operations based on the x-mcp extension and inclusion mode
-func filterOperationsForMCP(ops []OperationDefinition, inclusionMode string) ([]OperationDefinition, error) {
+func filterOperationsForMCP(ops []OperationDefinition, inclusionMode MCPInclusionMode) ([]OperationDefinition, error) {
 	// Default mode is "include" if not specified
 	if inclusionMode == "" {
-		inclusionMode = "include"
+		inclusionMode = MCPInclusionModeInclude
 	}
 
 	filtered := make([]OperationDefinition, 0, len(ops))
@@ -33,17 +64,17 @@ func filterOperationsForMCP(ops []OperationDefinition, inclusionMode string) ([]
 		xMCPValue, hasXMCP := getXMCPExtension(op)
 
 		switch inclusionMode {
-		case "include":
+		case MCPInclusionModeInclude:
 			// Include by default unless x-mcp is explicitly false
 			if !hasXMCP || xMCPValue {
 				filtered = append(filtered, op)
 			}
-		case "exclude":
+		case MCPInclusionModeExclude:
 			// Exclude by default unless x-mcp is explicitly true
 			if hasXMCP && xMCPValue {
 				filtered = append(filtered, op)
 			}
-		case "explicit":
+		case MCPInclusionModeExplicit:
 			// Require explicit x-mcp field on all operations
 			if !hasXMCP {
 				return nil, fmt.Errorf("operation %s is missing required x-mcp extension field (mcp-inclusion-mode is set to 'explicit')", op.OperationId)
@@ -81,7 +112,7 @@ func getXMCPExtension(op OperationDefinition) (bool, bool) {
 }
 
 // GenerateMCPServer generates MCP server code from operations
-func GenerateMCPServer(t *template.Template, ops []OperationDefinition, inclusionMode string) (string, error) {
+func GenerateMCPServer(t *template.Template, ops []OperationDefinition, inclusionMode MCPInclusionMode) (string, error) {
 	// Filter operations based on x-mcp extension and inclusion mode
 	filteredOps, err := filterOperationsForMCP(ops, inclusionMode)
 	if err != nil {
@@ -120,7 +151,7 @@ func GenerateMCPServer(t *template.Template, ops []OperationDefinition, inclusio
 }
 
 // GenerateStrictMCPServer generates strict MCP server adapter from operations
-func GenerateStrictMCPServer(t *template.Template, ops []OperationDefinition, inclusionMode string) (string, error) {
+func GenerateStrictMCPServer(t *template.Template, ops []OperationDefinition, inclusionMode MCPInclusionMode) (string, error) {
 	// Filter operations based on x-mcp extension and inclusion mode
 	filteredOps, err := filterOperationsForMCP(ops, inclusionMode)
 	if err != nil {

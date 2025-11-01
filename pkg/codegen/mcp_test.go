@@ -388,14 +388,14 @@ func TestFilterOperationsForMCP(t *testing.T) {
 	tests := []struct {
 		name          string
 		ops           []OperationDefinition
-		inclusionMode string
+		inclusionMode MCPInclusionMode
 		wantOps       []string // operation IDs that should be included
 		wantErr       bool
 	}{
 		{
 			name:          "include mode - includes all by default",
 			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse, opWithoutXMCP},
-			inclusionMode: "include",
+			inclusionMode: MCPInclusionModeInclude,
 			wantOps:       []string{"GetResource", "UpdateResource"}, // excludes only opWithXMCPFalse
 			wantErr:       false,
 		},
@@ -409,21 +409,21 @@ func TestFilterOperationsForMCP(t *testing.T) {
 		{
 			name:          "exclude mode - excludes all by default",
 			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse, opWithoutXMCP},
-			inclusionMode: "exclude",
+			inclusionMode: MCPInclusionModeExclude,
 			wantOps:       []string{"GetResource"}, // includes only opWithXMCPTrue
 			wantErr:       false,
 		},
 		{
 			name:          "explicit mode - requires x-mcp on all operations",
 			ops:           []OperationDefinition{opWithXMCPTrue, opWithXMCPFalse},
-			inclusionMode: "explicit",
+			inclusionMode: MCPInclusionModeExplicit,
 			wantOps:       []string{"GetResource"}, // includes only opWithXMCPTrue
 			wantErr:       false,
 		},
 		{
 			name:          "explicit mode - error when x-mcp missing",
 			ops:           []OperationDefinition{opWithXMCPTrue, opWithoutXMCP},
-			inclusionMode: "explicit",
+			inclusionMode: MCPInclusionModeExplicit,
 			wantOps:       nil,
 			wantErr:       true, // should error because opWithoutXMCP doesn't have x-mcp
 		},
@@ -437,28 +437,28 @@ func TestFilterOperationsForMCP(t *testing.T) {
 		{
 			name:          "include mode - only x-mcp true",
 			ops:           []OperationDefinition{opWithXMCPTrue},
-			inclusionMode: "include",
+			inclusionMode: MCPInclusionModeInclude,
 			wantOps:       []string{"GetResource"},
 			wantErr:       false,
 		},
 		{
 			name:          "include mode - only x-mcp false",
 			ops:           []OperationDefinition{opWithXMCPFalse},
-			inclusionMode: "include",
+			inclusionMode: MCPInclusionModeInclude,
 			wantOps:       []string{}, // excluded
 			wantErr:       false,
 		},
 		{
 			name:          "exclude mode - only x-mcp false",
 			ops:           []OperationDefinition{opWithXMCPFalse},
-			inclusionMode: "exclude",
+			inclusionMode: MCPInclusionModeExclude,
 			wantOps:       []string{}, // excluded
 			wantErr:       false,
 		},
 		{
 			name:          "exclude mode - only without x-mcp",
 			ops:           []OperationDefinition{opWithoutXMCP},
-			inclusionMode: "exclude",
+			inclusionMode: MCPInclusionModeExclude,
 			wantOps:       []string{}, // excluded by default
 			wantErr:       false,
 		},

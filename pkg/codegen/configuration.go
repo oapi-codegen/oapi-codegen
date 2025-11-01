@@ -305,11 +305,9 @@ type OutputOptions struct {
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
 
 	// MCPInclusionMode determines how the x-mcp extension field on operations affects MCP server generation.
-	// Valid values are:
-	//   - "include" (default): Include operations by default unless x-mcp is explicitly false
-	//   - "exclude": Exclude operations by default unless x-mcp is explicitly true
-	//   - "explicit": Require explicit x-mcp field on all operations (error if missing)
-	MCPInclusionMode string `yaml:"mcp-inclusion-mode,omitempty"`
+	// See MCPInclusionMode constants for valid values.
+	// Defaults to MCPInclusionModeInclude if not specified.
+	MCPInclusionMode MCPInclusionMode `yaml:"mcp-inclusion-mode,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
@@ -319,7 +317,7 @@ func (oo OutputOptions) Validate() map[string]string {
 		problems["additional-initialisms"] = "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration"
 	}
 
-	if oo.MCPInclusionMode != "" && oo.MCPInclusionMode != "include" && oo.MCPInclusionMode != "exclude" && oo.MCPInclusionMode != "explicit" {
+	if oo.MCPInclusionMode != "" && oo.MCPInclusionMode != MCPInclusionModeInclude && oo.MCPInclusionMode != MCPInclusionModeExclude && oo.MCPInclusionMode != MCPInclusionModeExplicit {
 		problems["mcp-inclusion-mode"] = "Invalid value for `mcp-inclusion-mode`. Valid values are: \"include\", \"exclude\", or \"explicit\""
 	}
 
