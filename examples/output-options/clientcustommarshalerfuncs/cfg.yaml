@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: clientcustommarshalerfuncs
+output: gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  client-custom-marshaler-funcs: true
