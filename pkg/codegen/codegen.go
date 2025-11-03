@@ -246,7 +246,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var ginServerOut string
 	if opts.Generate.GinServer {
-		ginServerOut, err = GenerateGinServer(t, ops)
+		if opts.OutputOptions.GroupByTag {
+			groupedOps := OperationsGroupedByTags(ops)
+			ginServerOut, err = GenerateGinServerByTags(t, groupedOps)
+		} else {
+			ginServerOut, err = GenerateGinServer(t, ops)
+		}
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -262,7 +267,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var stdHTTPServerOut string
 	if opts.Generate.StdHTTPServer {
-		stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		if opts.OutputOptions.GroupByTag {
+			groupedOps := OperationsGroupedByTags(ops)
+			stdHTTPServerOut, err = GenerateStdHTTPServerByTags(t, groupedOps)
+		} else {
+			stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		}
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
