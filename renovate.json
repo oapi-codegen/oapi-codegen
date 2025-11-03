@@ -39,5 +39,15 @@
 			"matchCurrentVersion": "v0.0.0-00010101000000-000000000000",
 			"enabled": false
 		}
-	]
+	],
+	"postUpgradeTasks": {
+		"commands": [
+			"make tidy"
+		],
+		"fileFilters": [
+			"**/*/go.mod",
+			"**/*/go.sum"
+		],
+		"executionMode": "branch"
+	}
 }
