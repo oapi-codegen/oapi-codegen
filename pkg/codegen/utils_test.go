@@ -233,10 +233,14 @@ components:
 
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -258,6 +262,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
@@ -430,6 +439,7 @@ func TestSwaggerUriToChiUri(t *testing.T) {
 }
 
 func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
+	assert.Equal(t, "/{$}", SwaggerUriToStdHttpUri("/"))
 	assert.Equal(t, "/path", SwaggerUriToStdHttpUri("/path"))
 	assert.Equal(t, "/path/{arg}", SwaggerUriToStdHttpUri("/path/{arg}"))
 	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}"))
@@ -590,10 +600,14 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"@timestamp,":  "Timestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
-		"_foo":         "Foo",
+		"_foo":         "UnderscoreFoo",
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		">=":           "GreaterThanEqual",
+		"<=":           "LessThanEqual",
+		"<":            "LessThan",
+		">":            "GreaterThan",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}

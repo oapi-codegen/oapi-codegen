@@ -59,7 +59,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
         {{end}}
 
         {{if .IsJson}}
@@ -69,7 +69,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
             err = fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
@@ -93,7 +93,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           var {{.GoName}} {{.TypeDef}}
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
 
         {{if .IsJson}}
@@ -110,7 +110,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           }
         {{end}}
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err)
@@ -126,7 +126,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       if cookie = c.Cookies("{{.ParamName}}"); cookie == "" {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie
+        params.{{.GoName}} = {{if .HasOptionalPointer}}}&{{end}}cookie
       {{end}}
 
       {{- if .IsJson}}
@@ -142,7 +142,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
@@ -151,7 +151,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         if err != nil {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
         }
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       }

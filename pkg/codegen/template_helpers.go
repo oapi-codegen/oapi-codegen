@@ -23,6 +23,7 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -225,7 +226,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	}
 
 	// Now build the switch statement in order of most-to-least specific:
-	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
+	// See: https://github.com/oapi-codegen/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
 	for _, caseClauseKey := range SortedMapKeys(handledCaseClauses) {
@@ -295,6 +296,26 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+// genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
+//
+// goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
+// variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
+	keys := SortedMapKeys(variables)
+
+	if len(variables) == 0 {
+		return ""
+	}
+	parts := make([]string, len(variables))
+
+	for i := range keys {
+		k := keys[i]
+		variableDefinitionPrefix := goTypePrefix + UppercaseFirstCharacter(k) + "Variable"
+		parts[i] = k + " " + variableDefinitionPrefix
+	}
+	return strings.Join(parts, ", ")
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -323,4 +344,6 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+
+	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 }

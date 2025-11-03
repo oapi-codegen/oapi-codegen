@@ -1,0 +1,24 @@
+openapi: "3.0.0"
+info:
+  title: "my spec"
+  version: 1.0.0
+paths:
+  /pet:
+    get:
+      operationId: getPet
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: string
+    delete:
+      # Via https://spec.openapis.org/oas/v3.0.3.html
+      # operationId: Unique string used to identify the operation. The id MUST be unique among all operations described in the API. The operationId value is case-sensitive. Tools and libraries MAY use the operationId to uniquely identify an operation, therefore, it is RECOMMENDED to follow common programming naming conventions.
+      operationId: this-is-a-kebabAndCamel_SNAKE
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: string

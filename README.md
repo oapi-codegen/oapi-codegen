@@ -1,5 +1,7 @@
 # `oapi-codegen`
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)
+
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
 Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
@@ -40,6 +42,25 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
+### For Go 1.24+
+
+It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
+
+To do this, you run `go get -tool`:
+
+```sh
+$ go get -tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+# this will then modify your `go.mod`
+```
+
+From there, each invocation of `oapi-codegen` would be used like so:
+
+```go
+//go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
+```
+
+### Prior to Go 1.24
+
 It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 This would give you a `tools/tools.go`:
@@ -74,9 +95,11 @@ Which then means you can invoke it like so:
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
+Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
+
 ### Pinning to commits
 
-While the project does not ([yet](https://github.com/deepmap/oapi-codegen/issues/1519)) have a defined release cadence, there may be cases where you want to pull in yet-unreleased changes to your codebase.
+While the project does not ([yet](https://github.com/oapi-codegen/oapi-codegen/issues/1519)) have a defined release cadence, there may be cases where you want to pull in yet-unreleased changes to your codebase.
 
 Therefore, you may want to pin your dependency on `oapi-codegen` to a given commit hash, rather than a tag.
 
@@ -89,7 +112,7 @@ To do so, you can run:
 ```sh
 # pin to the latest version on the default branch
 $ go get github.com/oapi-codegen/oapi-codegen/v2@main
-# alternatively, to a commit hash i.e. https://github.com/deepmap/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
+# alternatively, to a commit hash i.e. https://github.com/oapi-codegen/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
 $ go get github.com/oapi-codegen/oapi-codegen/v2@71e916c59688a6379b5774dfe5904ec222b9a537
 ```
 
@@ -114,7 +137,7 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 # ...
 ```
@@ -370,7 +393,7 @@ We can see that this provides the best means to focus on the implementation of t
 - Single-file output
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
-  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/deepmap/oapi-codegen/issues/373)
+  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
@@ -650,7 +673,7 @@ type ServerInterface interface {
 	GetPing(w http.ResponseWriter, r *http.Request)
 }
 
-func HandlerFromMux(si ServerInterface, m *http.ServeMux) http.Handler {
+func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{
 		BaseRouter: m,
 	})
@@ -1500,7 +1523,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -1575,7 +1598,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -1708,6 +1731,168 @@ func TestClient_canCall() {
 }
 ```
 
+### With Server URLs
+
+An OpenAPI specification makes it possible to denote Servers that a client can interact with, such as:
+
+```yaml
+servers:
+- url: https://development.gigantic-server.com/v1
+  description: Development server
+- url: https://{username}.gigantic-server.com:{port}/{basePath}
+  description: The production API server
+  variables:
+    username:
+      # note! no enum here means it is an open value
+      default: demo
+      description: this value is assigned by the service provider, in this example `gigantic-server.com`
+    port:
+      enum:
+        - '8443'
+        - '443'
+      default: '8443'
+    basePath:
+      # open meaning there is the opportunity to use special base paths as assigned by the provider, default is `v2`
+      default: v2
+```
+
+It is possible to opt-in to the generation of these Server URLs with the following configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: serverurls
+output: gen.go
+generate:
+  # NOTE that this uses default settings - if you want to use initialisms to generate i.e. `ServerURLDevelopmentServer`, you should look up the `output-options.name-normalizer` configuration
+  server-urls: true
+```
+
+This will then generate the following boilerplate:
+
+```go
+// (the below does not include comments that are generated)
+
+const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
+
+type ServerUrlTheProductionAPIServerBasePathVariable string
+const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
+
+type ServerUrlTheProductionAPIServerPortVariable string
+const ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+const ServerUrlTheProductionAPIServerPortVariable443 ServerUrlTheProductionAPIServerPortVariable = "443"
+const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
+
+type ServerUrlTheProductionAPIServerUsernameVariable string
+const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
+
+func ServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+    // ...
+}
+```
+
+Notice that for URLs that are not templated, a simple `const` definition is created.
+
+However, for more complex URLs that defined `variables` in them, we generate the types (and any `enum` values or `default` values), and instead use a function to create the URL.
+
+For a complete example see [`examples/generate/serverurls`](examples/generate/serverurls).
+
+### Duplicate types generated for clients's response object types
+
+When generating the types for interacting with the generated client, `oapi-codegen` will use the `operationId` and add on a `Request` or `Response` suffix.
+
+However, this can clash if you have named your component schemas in a similar way.
+
+For instance:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Show that generated client boilerplate can clash if schemas are well named i.e. `*Request` and `*Response`"
+paths:
+  /client:
+    put:
+      operationId: updateClient
+      requestBodies:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateClientResponse'
+components:
+  schemas:
+    UpdateClientRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    UpdateClientResponse:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+```
+
+If you were to generate with this configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: client
+output: client.gen.go
+generate:
+  models: true
+  client: true
+```
+
+This would then result in `go build` failures:
+
+```
+# github.com/oapi-codegen/oapi-codegen/v2/examples/clienttypenameclash
+./client.gen.go:184:6: UpdateClientResponse redeclared in this block
+        ./client.gen.go:17:6: other declaration of UpdateClientResponse
+./client.gen.go:192:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:193:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:200:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:201:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:224:3: unknown field Body in struct literal of type UpdateClientResponse
+./client.gen.go:225:3: unknown field HTTPResponse in struct literal of type UpdateClientResponse
+./client.gen.go:234:12: response.JSON400 undefined (type *UpdateClientResponse has no field or method JSON400)
+```
+
+To fix this, use the `response-type-suffix` Output Option:
+
+```diff
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+ package: client
+ output: client.gen.go
+ generate:
+   models: true
+   client: true
++output-options:
++  response-type-suffix: Resp
+```
+
+This will then rename the generated types from the default to use the new suffix:
+
+```diff
+-type UpdateClientResponse struct {
++type UpdateClientResp struct {
+        Body         []byte
+        HTTPResponse *http.Response
+        JSON400      *UpdateClientResponse
+ }
+```
+
+There is no currently planned work to change this behaviour.
+
 ## Generating API models
 
 If you're looking to only generate the models for interacting with a remote service, for instance if you need to hand-roll the API client for whatever reason, you can do this as-is.
@@ -1742,7 +1927,7 @@ paths:
           content:
             application/json:
               # NOTE that this anonymous object is /not/ generated because it's an anonymous, but would be generated if using `generate: client`
-              # See https://github.com/deepmap/oapi-codegen/issues/1512
+              # See https://github.com/oapi-codegen/oapi-codegen/issues/1512
               schema:
                 type: object
                 properties:
@@ -1775,7 +1960,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1804,7 +1989,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1822,10 +2007,13 @@ For a complete example see [`examples/only-models`](examples/only-models).
 When you've got a large OpenAPI specification, you may find it useful to split the contents of the spec across multiple files, using external references, such as:
 
 ```yaml
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
@@ -1867,11 +2055,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+                $ref: '../common/api.yaml#/components/schemas/User'
 ```
 
 This references the common spec:
@@ -1890,10 +2074,78 @@ components:
         - name
 ```
 
-And finally we have our configuration file:
+So how do we get `oapi-codegen` to generate our code?
+
+### Using a single package with multiple OpenAPI specs
+
+<a name=import-mapping-self></a>
+
+> [!TIP]
+> Since `oapi-codegen` v2.4.0, it is now possible to split large OpenAPI specifications into the same Go package, using the "self" mapping (denoted by a `-`) when using Import Mapping.
+>
+> This is an improvement on the previous model, which would require splitting files across multiple packages.
+
+> [!NOTE]
+> You still need to have multiple `go generate`s, and any other configuration files.
+
+To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
+
+```sh
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
+$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
+```
+
+This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  user.yaml: "-"
+```
+
+And then our `cfg-user.yaml`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: samepackage
+output: user.gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+```
+
+From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
+
+Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+### Using multiple packages, with one OpenAPI spec per package
+
+To get `oapi-codegen`'s multi-package support working, we need to set up our directory structure:
+
+```
+├── admin
+│   ├── cfg.yaml
+│   └── generate.go
+└── common
+    ├── cfg.yaml
+    └── generate.go
+```
+
+We could start with our configuration file for our admin API spec:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -1912,10 +2164,10 @@ If we were to run `oapi-codegen`, this will fail with the following error
 error generating code: error creating operation definitions: error generating response definitions: error generating request body definition: error turning reference (../common/api.yaml#/components/schemas/User) into a Go type: unrecognized external reference '../common/api.yaml'; please provide the known import for this reference using option --import-mapping
 ```
 
-This is because `oapi-codegen` requires:
+This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -1943,9 +2195,107 @@ import (
 type User = externalRef0.User
 ```
 
-If you don't want to do this, an alternate option is to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
+If you don't want to do this, an alternate option is to [use a single package, with multiple OpenAPI spec files for that given package](#import-mapping-self) or to [bundle your multiple OpenAPI files](https://www.jvt.me/posts/2022/02/10/bundle-openapi/) into a single spec.
 
-Check out [the import-mapping example](examples/import-mapping/) for the full code.
+Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
+
+## Modifying the input OpenAPI Specification (with OpenAPI Overlay)
+
+Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
+
+In a lot of cases, this OpenAPI specification would be produced by a different team to the consumers (or even a different company) and so asking them to make changes like this were unreasonable.
+
+This would lead to the API consumers needing to vendor the specification from the producer (which is [our recommendation anyway](#https-paths)) and then make any number of local changes to the specification to make it generate code that looks reasonable.
+
+However, in the case that a consumer would update their specification, they would likely end up with a number of merge conflicts.
+
+Now, as of `oapi-codegen` v2.4.0, it is now possible to make changes to the input OpenAPI specification _without needing to modify it directly_.
+
+This takes advantage of the [OpenAPI Overlay specification](https://github.com/OAI/Overlay-Specification), which is a stable specification.
+
+> [!CAUTION]
+> Beware! Here (may) be dragons.
+>
+> The Overlay specification requires the use of JSON Path, which some users may find difficult to write and/or maintain.
+>
+> We still heavily recommend using Overlay functionality, but would like users to be aware of this.
+>
+> There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
+
+For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+paths:
+  /ping:
+    get:
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+    delete:
+      x-internal: true
+      responses:
+        '202':
+          content: {}
+```
+
+If we were to run `oapi-codegen` with out-of-the-box functionality, this would then lead to the DELETE endpoint being generated, which we don't want.
+
+Instead, we can define the following `overlay.yaml`:
+
+
+```yaml
+overlay: 1.0.0
+info:
+  title: Overlay
+  version: 0.0.0
+actions:
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
+- target: $.paths.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+- target: $.paths.*.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+```
+
+And our configuration file for `oapi-codegen`:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: api
+output: ping.gen.go
+generate:
+  models: true
+  gorilla-server: true
+  embedded-spec: true
+output-options:
+  overlay:
+    path: overlay.yaml
+```
+
+This then completely removes the DELETE endpoint _before_ we even start to parse the specification in `oapi-codegen`, so it's as if your specification was provided without that endpoint.
+
+Additionally, we can override other pieces of metadata, such as the description for operations.
+
+Check out [the overlay example](examples/overlay/) for the full code, and some more complex examples.
 
 ## Generating Nullable types
 
@@ -1977,7 +2327,7 @@ However, you lose the ability to understand the three cases, as there's no way t
 - is this field `null`? (Can be checked with `S.Field == nil`)
 - does this field have a value? (`S.Field != nil && *S.Field == "123"`)
 
-As of `oapi-codegen` [v2.1.0](https://github.com/deepmap/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
+As of `oapi-codegen` [v2.1.0](https://github.com/oapi-codegen/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
 
 If you configure your generator's Output Options to opt-in to this behaviour, as so:
 
@@ -1999,6 +2349,8 @@ type S struct {
 
 As well as the core OpenAPI support, we also support the following OpenAPI extensions, as denoted by the [OpenAPI Specification Extensions](https://spec.openapis.org/oas/v3.0.3#specification-extensions).
 
+The following extensions are supported:
+
 <table>
 
 <tr>
@@ -2007,9 +2359,6 @@ Extension
 </th>
 <th>
 Description
-</th>
-<th>
-Example usage
 </th>
 </tr>
 
@@ -2023,8 +2372,133 @@ Example usage
 <td>
 Override the generated type definition (and optionally, add an import from another package)
 </td>
+</tr>
+
+<tr>
 <td>
-<details>
+
+`x-go-type-skip-optional-pointer`
+
+</td>
+<td>
+Do not add a pointer type for optional fields in structs
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-go-name`
+
+</td>
+<td>
+Override the generated name of a field or a type
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-go-type-name`
+
+</td>
+<td>
+Override the generated name of a type
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-omitempty`
+
+</td>
+<td>
+Force the presence of the JSON tag `omitempty` on a field
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-omitzero`
+
+</td>
+<td>
+Force the presence of the JSON tag `omitzero` on a field
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-go-json-ignore`
+
+</td>
+<td>
+When (un)marshaling JSON, ignore field(s)
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-oapi-codegen-extra-tags`
+
+</td>
+<td>
+Generate arbitrary struct tags to fields
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-enum-varnames` / `x-enumNames`
+
+</td>
+<td>
+Override generated variable names for enum constants
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-deprecated-reason`
+
+</td>
+<td>
+Add a GoDoc deprecation warning to a type
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-order`
+
+</td>
+<td>
+Explicitly order struct fields
+</td>
+</tr>
+
+<tr>
+<td>
+
+`x-oapi-codegen-only-honour-go-name`
+
+</td>
+<td>
+Only honour the `x-go-name` when generating field names
+</td>
+</tr>
+
+</table>
+
+
+### `x-go-type` / `x-go-type-import` - override the generated type definition (and optionally, add an import from another package)
 
 Using the `x-go-type` (and optionally, `x-go-type-import` when you need to import another package) allows overriding the type that `oapi-codegen` determined the generated type should be.
 
@@ -2083,21 +2557,14 @@ type ClientWithExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xgotype/).
 
-</details>
-</td>
-</tr>
+### `x-go-type-skip-optional-pointer` - do not add a pointer type for optional fields in structs
 
-<tr>
-<td>
+<a name="ext-x-go-type-skip-optional-pointer"></a>
 
-`x-go-type-skip-optional-pointer`
-
-</td>
-<td>
-Do not add a pointer type for optional fields in structs
-</td>
-<td>
-<details>
+> [!TIP]
+> If you prefer this behaviour, and prefer to not have to annotate your whole OpenAPI spec for this behaviour, you can use `output-options.prefer-skip-optional-pointer=true` to default this behaviour for all fields.
+>
+> It is then possible to override this on a per-type/per-field basis where necessary.
 
 By default, `oapi-codegen` will generate a pointer for optional fields.
 
@@ -2147,21 +2614,7 @@ type ClientWithExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xgotypeskipoptionalpointer/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-name`
-
-</td>
-<td>
-Override the generated name of a field or a type
-</td>
-<td>
-<details>
+### `x-go-name` - override the generated name of a field or a type
 
 By default, `oapi-codegen` will attempt to generate the name of fields and types in as best a way it can.
 
@@ -2218,21 +2671,7 @@ type ClientRenamedByExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xgoname/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-type-name`
-
-</td>
-<td>
-Override the generated name of a type
-</td>
-<td>
-<details>
+### `x-go-type-name` - Override the generated name of a type
 
 > [!NOTE]
 > Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within `struct`s.
@@ -2294,21 +2733,7 @@ type ClientRenamedByExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xgotypename/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-omitempty`
-
-</td>
-<td>
-Force the presence of the JSON tag `omitempty` on a field
-</td>
-<td>
-<details>
+### `x-omitempty` - force the presence of the JSON tag `omitempty` on a field
 
 In a case that you may want to add the JSON struct tag `omitempty` to types that don't have one generated by default - for instance a required field - you can use the `x-omitempty` extension.
 
@@ -2359,25 +2784,64 @@ type ClientWithExtension struct {
 }
 ```
 
-Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
+You can see this in more detail in [the example code](examples/extensions/xomitempty/).
 
-You can see this in more detail in [the example code](examples/extensions/xgojsonignore/).
+### `x-omitzero` - force the presence of the JSON tag `omitzero` on a field
 
-</details>
-</td>
-</tr>
+> [!NOTE]
+> `omitzero` was added in Go 1.24. If you're not using Go 1.24 in your project, this won't work.
 
-<tr>
-<td>
+In a case that you may want to add the JSON struct tag `omitzero` to types, you can use the `x-omitempty` extension.
 
-`x-go-json-ignore`
+We can see this at play with the following schemas:
 
-</td>
-<td>
-When (un)marshaling JSON, ignore field(s)
-</td>
-<td>
-<details>
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-omitempty
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          x-omitzero: true
+```
+
+From here, we now get two different models:
+
+```go
+// Client defines model for Client.
+type Client struct {
+	Id   *float32 `json:"id,omitempty"`
+	Name string   `json:"name"`
+}
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension struct {
+	Id   *float32 `json:"id,omitempty,omitzero"`
+	Name string   `json:"name"`
+}
+```
+
+You can see this in more detail in [the example code](examples/extensions/xomitzero/).
+
+### `x-go-json-ignore` - when (un)marshaling JSON, ignore field(s)
 
 By default, `oapi-codegen` will generate `json:"..."` struct tags for all fields in a struct, so JSON (un)marshaling works.
 
@@ -2451,21 +2915,7 @@ Notice that the `ComplexField` is still generated in full, but the type will the
 
 You can see this in more detail in [the example code](examples/extensions/xgojsonignore/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-oapi-codegen-extra-tags`
-
-</td>
-<td>
-Generate arbitrary struct tags to fields
-</td>
-<td>
-<details>
+### `x-oapi-codegen-extra-tags` - generate arbitrary struct tags to fields
 
 If you're making use of a field's struct tags to i.e. apply validation, decide whether something should be logged, etc, you can use `x-oapi-codegen-extra-tags` to set additional tags for your generated types.
 
@@ -2522,21 +2972,7 @@ type ClientWithExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xoapicodegenextratags/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-enum-varnames` / `x-enumNames`
-
-</td>
-<td>
-Override generated variable names for enum constants
-</td>
-<td>
-<details>
+### `x-enum-varnames` / `x-enumNames` - override generated variable names for enum constants
 
 When consuming an enum value from an external system, the name may not produce a nice variable name. Using the `x-enum-varnames` extension allows overriding the name of the generated variable names.
 
@@ -2581,36 +3017,31 @@ const (
 	EXP ClientType = "EXP"
 )
 
+// Defines values for ClientTypeWithNamesExtension.
+const (
+	ClientTypeWithNamesExtensionActive  ClientTypeWithNamesExtension = "ACT"
+	ClientTypeWithNamesExtensionExpired ClientTypeWithNamesExtension = "EXP"
+)
+
+// Defines values for ClientTypeWithVarNamesExtension.
+const (
+	ClientTypeWithVarNamesExtensionActive  ClientTypeWithVarNamesExtension = "ACT"
+	ClientTypeWithVarNamesExtensionExpired ClientTypeWithVarNamesExtension = "EXP"
+)
+
 // ClientType defines model for ClientType.
 type ClientType string
 
-// Defines values for ClientTypeWithExtension.
-const (
-	Active  ClientTypeWithExtension = "ACT"
-	Expired ClientTypeWithExtension = "EXP"
-)
+// ClientTypeWithNamesExtension defines model for ClientTypeWithNamesExtension.
+type ClientTypeWithNamesExtension string
 
-// ClientTypeWithExtension defines model for ClientTypeWithExtension.
-type ClientTypeWithExtension string
+// ClientTypeWithVarNamesExtension defines model for ClientTypeWithVarNamesExtension.
+type ClientTypeWithVarNamesExtension string
 ```
 
-You can see this in more detail in [the example code](examples/extensions/xenumvarnames/).
+You can see this in more detail in [the example code](examples/extensions/xenumnames/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-deprecated-reason`
-
-</td>
-<td>
-Add a GoDoc deprecation warning to a type
-</td>
-<td>
-<details>
+### `x-deprecated-reason` - add a GoDoc deprecation warning to a type
 
 When an OpenAPI type is deprecated, a deprecation warning can be added in the GoDoc using `x-deprecated-reason`.
 
@@ -2668,27 +3099,11 @@ Notice that because we've not set `deprecated: true` to the `name` field, it doe
 
 You can see this in more detail in [the example code](examples/extensions/xdeprecatedreason/).
 
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-order`
-
-</td>
-<td>
-Explicitly order struct fields
-</td>
-<td>
-<details>
+### `x-order` - explicitly order struct fields
 
 Whether you like certain fields being ordered before others, or you want to perform more efficient packing of your structs, the `x-order` extension is here for you.
 
 Note that `x-order` is 1-indexed - `x-order: 0` is not a valid value.
-
-When an OpenAPI type is deprecated, a deprecation warning can be added in the GoDoc using `x-deprecated-reason`.
 
 We can see this at play with the following schemas:
 
@@ -2739,21 +3154,8 @@ type ClientWithExtension struct {
 
 You can see this in more detail in [the example code](examples/extensions/xorder/).
 
-</details>
-</td>
-</tr>
+### `x-oapi-codegen-only-honour-go-name` - only honour the `x-go-name` when generating field names
 
-<tr>
-<td>
-
-`x-oapi-codegen-only-honour-go-name`
-
-</td>
-<td>
-Only honour the `x-go-name` when generating field names
-</td>
-<td>
-<details>
 
 > [!WARNING]
 > Using this option may lead to cases where `oapi-codegen`'s rewriting of field names to prevent clashes with other types, or to prevent including characters that may not be valid Go field names.
@@ -2796,12 +3198,6 @@ type TypeWithUnexportedField struct {
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xoapicodegenonlyhonourgoname).
-
-</details>
-</td>
-</tr>
-
-</table>
 
 ## Request/response validation middleware
 
@@ -2918,10 +3314,24 @@ Middleware library
 
 </tr>
 
+<tr>
+<td>
+
+Any other server (which conforms to `net/http`)
+
+</td>
+<td>
+
+[nethttp-middleware](https://github.com/oapi-codegen/nethttp-middleware)
+
+</td>
+
+</tr>
+
 </table>
 
 > [!NOTE]
-> It is [not currently possible](https://github.com/deepmap/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
+> It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
 > [!NOTE]
 > We're also [exploring](https://github.com/oapi-codegen/exp/issues/1) the use of [libopenapi-validator](https://github.com/pb33f/libopenapi-validator/) for request/response validation middleware
@@ -2935,9 +3345,9 @@ If you're using a specification with [Security Schemes](https://spec.openapis.or
 > [!NOTE]
 > Out-of-the-box, the server-side code generated by `oapi-codegen` does not provide security validation.
 >
-> To perform authentication, you will need to use the [validation middleware](#request-response-validation-middleware).
+> To perform authentication, you will need to use the [validation middleware](#requestresponse-validation-middleware).
 >
-> In the future, we plan to [implement server-side validation in the generated code](https://github.com/deepmap/oapi-codegen/issues/1524)
+> In the future, we plan to [implement server-side validation in the generated code](https://github.com/oapi-codegen/oapi-codegen/issues/1524)
 
 To see how this can work, check out the [authenticated API example](examples/authenticated-api/echo).
 
@@ -2991,7 +3401,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3000,7 +3410,7 @@ output-options:
     typedef.tmpl: no-prefix.tmpl
 ```
 
-> [!WARN]
+> [!WARNING]
 > We do not interpolate `~` or `$HOME` (or other environment variables) in paths given
 
 ### HTTPS paths
@@ -3012,23 +3422,23 @@ It is also possible to use HTTPS URLs.
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
 >
-> This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/deepmap/oapi-codegen/issues/1564)
+> This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
     # The following are referencing a version of the default client-with-responses.tmpl file, but loaded in through GitHub's raw.githubusercontent.com. The general form to use raw.githubusercontent.com is as follows https://raw.githubusercontent.com/<username>/<project>/<commitish>/path/to/template/template.tmpl
 
     # Alternatively using raw.githubusercontent.com with a hash
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/ad5eada4f3ccc28a88477cef62ea21c17fc8aa01/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/ad5eada4f3ccc28a88477cef62ea21c17fc8aa01/pkg/codegen/templates/client-with-responses.tmpl
     # Alternatively using raw.githubusercontent.com with a tag
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/v2.1.0/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.1.0/pkg/codegen/templates/client-with-responses.tmpl
     # Alternatively using raw.githubusercontent.com with a branch
-    client-with-responses.tmpl: https://raw.githubusercontent.com/deepmap/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
+    client-with-responses.tmpl: https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/master/pkg/codegen/templates/client-with-responses.tmpl
 ```
 
 > [!WARNING]
@@ -3039,7 +3449,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3057,7 +3467,7 @@ output-options:
 
 ### Using the Go package
 
-Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/deepmap/oapi-codegen/issues/1487).
+Alternatively, you are able to use the underlying code generation as a package, which [will be documented in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1487).
 
 ## Additional Properties (`additionalProperties`)
 
@@ -3066,7 +3476,7 @@ Alternatively, you are able to use the underlying code generation as a package, 
 For simplicity, and to remove a fair bit of duplication and boilerplate, `oapi-codegen` decides to ignore the implicit `additionalProperties: true`, and instead requires you to specify the `additionalProperties` key to generate the boilerplate.
 
 > [!NOTE]
-> In the future [this will be possible](https://github.com/deepmap/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
+> In the future [this will be possible](https://github.com/oapi-codegen/oapi-codegen/issues/1514) to disable this functionality, and honour the implicit `additionalProperties: true`
 
 Below you can see some examples of how `additionalProperties` affects the generated code.
 
@@ -3421,6 +3831,88 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 
 </details>
 
+## Globally skipping the "optional pointer"
+
+One of the key things `oapi-codegen` does is to use an "optional pointer", following idiomatic Go practices, to indicate that a field/type is optional.
+
+This can be tuned on a per-field basis, using the [`x-go-type-skip-optional-pointer` extension](#ext-x-go-type-skip-optional-pointer), but it can be a bit repetitive, or can be more complex when using an OpenAPI Overlay.
+
+As of `oapi-codegen` v2.5.0, this can be tuned in two specific ways, via the following `output-options:`:
+
+- `prefer-skip-optional-pointer`: a global default that you do _not_ want the "optional pointer" generated. Optional fields will not have an "optional pointer", and will have an `omitempty` JSON tag
+- `prefer-skip-optional-pointer-with-omitzero`: when used in conjunction with `prefer-skip-optional-pointer`, any optional fields are generated with an `omitzero` JSON tag. **Requires Go 1.24+**
+
+In both cases, there is control on a per-field level to set `x-go-type-skip-optional-pointer: false` or `x-omitzero: false` to undo these to field(s).
+
+For example, when combining both options:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+package: preferskipoptionalpointerwithomitzero
+output: gen.go
+generate:
+  # ...
+output-options:
+  # ...
+  prefer-skip-optional-pointer: true
+  prefer-skip-optional-pointer-with-omitzero: true
+```
+
+When we have the following spec:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: prefer-skip-optional-pointer-with-omitzero
+components:
+  schemas:
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: This field is required, so will never have an optional pointer, nor `omitzero`.
+          type: string
+        id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+          type: number
+        pointer_id:
+          type: number
+          description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+          # NOTE that this overrides the global preference
+          x-go-type-skip-optional-pointer: false
+        no_omit:
+          type: number
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+          # NOTE that this overrides the global preference
+          x-omitzero: false
+```
+
+We then generate the following Go code:
+
+```go
+// ...
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension struct {
+	// Id This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+	Id float32 `json:"id,omitempty,omitzero"`
+
+	// Name This field is required, so will never have an optional pointer, nor `omitzero`.
+	Name string `json:"name"`
+
+	// NoOmit This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+	NoOmit float32 `json:"no_omit,omitempty"`
+
+	// PointerId This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+	PointerId *float32 `json:"pointer_id,omitempty"`
+}
+```
+
+You can see this in more detail in [the example code for `prefer-skip-optional-pointer`](examples/output-options/preferskipoptionalpointer/) and [example code for `prefer-skip-optional-pointer-with-omitzero`](examples/output-options/preferskipoptionalpointerwithomitzero/)
+
 ## Changing the names of generated types
 
 As of `oapi-codegen` v2.2.0, it is now possible to use the `output-options` configuration's `name-normalizer` to define the logic for how to convert an OpenAPI name (i.e. an Operation ID or a Schema name) and construct a Go type name.
@@ -3643,10 +4135,19 @@ Here are a few we've found around the Web:
 - [Generating Go server code from OpenAPI 3 definitions](https://ldej.nl/post/generating-go-from-openapi-3/)
 - [Go Client Code Generation from Swagger and OpenAPI](https://medium.com/@kyodo-tech/go-client-code-generation-from-swagger-and-openapi-a0576831836c)
 - [Go oapi-codegen + request validation](https://blog.commitsmart.com/go-oapi-codegen-request-validation-285398b37dc8)
+- [Streamlining Go + Chi Development: Generating Code from an OpenAPI Spec](https://i4o.dev/blog/oapi-codegen-with-chi-router)
 
 Got one to add? Please raise a PR!
 
 ## Frequently Asked Questions (FAQs)
+
+### Does `oapi-codegen` support OpenAPI 3.1?
+
+No, we don't currently.
+
+OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
+
+In the meantime, you could follow [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/) to [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" the OpenAPI 3.1 spec to OpenAPI 3.0.
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
@@ -3689,7 +4190,7 @@ components:
             - id
 
     # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/deepmap/oapi-codegen/issues/1569
+    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
     IdentityWithDuplicateField:
       allOf:
         # `issuer` will be ignored
@@ -3924,7 +4425,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/deepmap/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []
@@ -3959,17 +4460,23 @@ This may lead to breakage in your consuming code, and if so, sorry that's happen
 
 We'll be aware of the issue, and will work to update both the core `oapi-codegen` and the middlewares accordingly.
 
+## Contributors
+
+We're very appreciative of [the many contributors over the years](https://github.com/oapi-codegen/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+
+<a href="https://github.com/oapi-codegen/oapi-codegen/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=oapi-codegen/oapi-codegen" />
+</a>
+
 ## Sponsors
 
-For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/deepmap/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
-
-We're very appreciative of [the many contributors over the years](https://github.com/deepmap/oapi-codegen/graphs/contributors) and the ongoing use of the project 💜
+For the most part, `oapi-codegen` is maintained in two busy peoples' free time. As noted in [Creating a more sustainable model for `oapi-codegen` in the future](https://github.com/oapi-codegen/oapi-codegen/discussions/1606), we're looking to make this a more sustainable project in the future.
 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-We are currently generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -3982,21 +4489,27 @@ We are currently generously sponsored by the following folks, each of whom provi
 </p>
 
 <p align="center">
-	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
 		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
 		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="100px">
+		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="60px">
 		</picture>
 	</a>
 </p>
 
 <p align="center">
-	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	</a>
+</p>
+
+<p align="center">
+	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
-		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
+		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
 		</picture>
 	</a>
 </p>

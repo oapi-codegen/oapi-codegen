@@ -2,5 +2,52 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
 		"local>oapi-codegen/renovate-config"
-	]
+	],
+	"gomod": {
+		"ignorePaths": []
+	},
+	"packageRules": [
+		{
+			"description": "Ensure that each directory has their own set of dependency updates, split by the parent directory of the package file (`packageFileDir`). Groups will be unaffected.",
+			"matchFileNames": [
+				"**/*"
+			],
+			"additionalBranchPrefix": "{{#if isGroup }}{{ else }}{{#if packageFileDir}}{{packageFileDir}}/{{else}}{{packageFile}}/{{/if}}{{/if}}",
+			"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{#if packageFileDir}}{{packageFileDir}}{{else}}{{packageFile}}{{/if}}){{/if}}"
+		},
+		{
+			"description": "Don't attempt to bump dependencies if they're only used in example code, but allow manually forcing them via Dependency Dashboard",
+			"matchFileNames": [
+				"internal/test/**/*",
+				"examples/**/*"
+			],
+			"dependencyDashboardApproval": true
+		},
+		{
+			"description": "Don't attempt to bump `replace` statements for internal modules",
+			"matchDepNames": [
+				"github.com/oapi-codegen/oapi-codegen/v2"
+			],
+			"matchCurrentVersion": "v2.0.0-00010101000000-000000000000",
+			"enabled": false
+		},
+		{
+			"description": "Don't attempt to bump `replace` statements for internal modules",
+			"matchDepNames": [
+				"github.com/oapi-codegen/oapi-codegen/v2/internal/test"
+			],
+			"matchCurrentVersion": "v0.0.0-00010101000000-000000000000",
+			"enabled": false
+		}
+	],
+	"postUpgradeTasks": {
+		"commands": [
+			"make tidy"
+		],
+		"fileFilters": [
+			"**/*/go.mod",
+			"**/*/go.sum"
+		],
+		"executionMode": "branch"
+	}
 }
