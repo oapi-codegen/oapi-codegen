@@ -1,6 +1,8 @@
 module github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/stdhttp
 
-go 1.22.5
+go 1.24
+
+toolchain go1.24.9
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../
 
@@ -18,7 +20,7 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.0 // indirect
-	github.com/speakeasy-api/openapi-overlay v0.10.2 // indirect
+	github.com/speakeasy-api/openapi-overlay v0.10.3 // indirect
 	github.com/vmware-labs/yaml-jsonpath v0.3.2 // indirect
 	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	golang.org/x/mod v0.21.0 // indirect
