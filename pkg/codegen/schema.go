@@ -116,7 +116,7 @@ func (p Property) GoFieldName() string {
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
 	if globalState.options.OutputOptions.NullableType && p.Nullable {
-		return "nullable.Nullable[" + typeDef + "]"
+		return "nullable.Value[" + typeDef + "]"
 	}
 	if !p.Schema.SkipOptionalPointer &&
 		(!p.Required || p.Nullable ||

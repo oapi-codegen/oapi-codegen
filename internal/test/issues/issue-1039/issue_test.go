@@ -17,16 +17,16 @@ func ptr[T any](v T) *T {
 func TestNullableTypesMarshal(t *testing.T) {
 	// include all fields in patch request
 	patchReq := PatchRequest{
-		ComplexRequiredNullable: nullable.NewNullableWithValue(ComplexRequiredNullable{
+		ComplexRequiredNullable: nullable.NewValue(ComplexRequiredNullable{
 			Name: ptr("test-name"),
 		}),
 		SimpleOptionalNonNullable: ptr(SimpleOptionalNonNullable("bar")),
-		ComplexOptionalNullable: nullable.NewNullableWithValue(ComplexOptionalNullable{
-			AliasName: nullable.NewNullableWithValue("foo-alias"),
+		ComplexOptionalNullable: nullable.NewValue(ComplexOptionalNullable{
+			AliasName: nullable.NewValue("foo-alias"),
 			Name:      ptr("foo"),
 		}),
-		SimpleOptionalNullable: nullable.NewNullableWithValue(10),
-		SimpleRequiredNullable: nullable.NewNullableWithValue(5),
+		SimpleOptionalNullable: nullable.NewValue(10),
+		SimpleRequiredNullable: nullable.NewValue(5),
 	}
 
 	expected := []byte(`{"complex_optional_nullable":{"alias_name":"foo-alias","name":"foo"},"complex_required_nullable":{"name":"test-name"},"simple_optional_non_nullable":"bar","simple_optional_nullable":10,"simple_required_nullable":5}`)
@@ -37,15 +37,15 @@ func TestNullableTypesMarshal(t *testing.T) {
 
 	// omit some fields
 	patchReq = PatchRequest{
-		ComplexRequiredNullable: nullable.NewNullableWithValue(ComplexRequiredNullable{
+		ComplexRequiredNullable: nullable.NewValue(ComplexRequiredNullable{
 			Name: ptr("test-name"),
 		}),
 		// SimpleOptionalNonNullable is omitted
-		ComplexOptionalNullable: nullable.NewNullableWithValue(ComplexOptionalNullable{
-			AliasName: nullable.NewNullableWithValue("test-alias-name"),
+		ComplexOptionalNullable: nullable.NewValue(ComplexOptionalNullable{
+			AliasName: nullable.NewValue("test-alias-name"),
 			Name:      ptr("test-name"),
 		}),
-		SimpleOptionalNullable: nullable.NewNullableWithValue(10),
+		SimpleOptionalNullable: nullable.NewValue(10),
 		// SimpleRequiredNullable is omitted
 	}
 
