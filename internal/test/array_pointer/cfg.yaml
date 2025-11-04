@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: array_pointer
+output: array_pointer.gen.go
+generate:
+  models: true

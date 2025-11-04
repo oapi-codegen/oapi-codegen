@@ -603,8 +603,10 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 			arrayType.RefType = typeName
 		}
+		arrayType.AdditionalPropertiesType = &arrayType
+		arrayType.AdditionalPropertiesType.OAPISchema = schema
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.GoType = "[]" + additionalPropertiesType(arrayType)
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
@@ -812,10 +814,8 @@ func GenFieldsFromProperties(props []Property) []string {
 }
 
 func additionalPropertiesType(schema Schema) string {
-	addPropsType := schema.AdditionalPropertiesType.GoType
-	if schema.AdditionalPropertiesType.RefType != "" {
-		addPropsType = schema.AdditionalPropertiesType.RefType
-	}
+	addPropsType := schema.AdditionalPropertiesType.TypeDecl()
+
 	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
 		addPropsType = "*" + addPropsType
 	}
