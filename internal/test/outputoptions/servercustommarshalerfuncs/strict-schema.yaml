@@ -1,0 +1,51 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Strict server examples
+  description: Contains different content types supported by strict server
+servers:
+  - url: http://strict.swagger.io/api
+paths:
+  /json:
+    post:
+      operationId: JSONExample
+      description: JSON is automatically marshaled into structs.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+components:
+  responses:
+    badrequest:
+      description: BadRequest
+    reusableresponse:
+      description: OK
+      headers:
+        header1:
+          schema:
+            type: string
+        header2:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/example"
+  schemas:
+    example:
+      type: object
+      properties:
+        value:
+          type: string

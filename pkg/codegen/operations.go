@@ -1054,6 +1054,10 @@ func GenerateStrictResponses(t *template.Template, responses []ResponseDefinitio
 	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
 }
 
+func GenerateServerMarshaler(t *template.Template) (string, error) {
+	return GenerateTemplates([]string{"strict/strict-marshaler.tmpl"}, t, nil)
+}
+
 // GenerateClient uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
