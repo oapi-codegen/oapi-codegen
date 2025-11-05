@@ -247,17 +247,20 @@ func (d *Discriminator) PropertyName() string {
 }
 
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
-type UnionElement string
+type UnionElement struct {
+	GoType                   string
+	HasDiscriminatorProperty bool
+}
 
 // String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
 func (u UnionElement) String() string {
-	return string(u)
+	return u.GoType
 }
 
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
 	var method string
-	for _, part := range strings.Split(string(u), `.`) {
+	for _, part := range strings.Split(u.GoType, `.`) {
 		method += UppercaseFirstCharacter(part)
 	}
 	return method
@@ -906,6 +909,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}
 
+		elementHasDiscriminatorProperty := false
 		if discriminator != nil {
 			if len(discriminator.Mapping) != 0 && element.Ref == "" {
 				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
@@ -917,18 +921,36 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
-					break
 				}
 			}
 			// Implicit mapping.
 			if !mapped {
 				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
 			}
+
+			if discriminator.PropertyName != "" {
+				// elementSchema.Properties may not be filled in
+				for _, p := range elementSchema.Properties {
+					if p.JsonFieldName == discriminator.PropertyName {
+						elementHasDiscriminatorProperty = true
+						break
+					}
+				}
+				for name := range elementSchema.OAPISchema.Properties {
+					if name == discriminator.PropertyName {
+						elementHasDiscriminatorProperty = true
+						break
+					}
+				}
+			}
 		}
-		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement{
+			GoType:                   elementSchema.GoType,
+			HasDiscriminatorProperty: elementHasDiscriminatorProperty,
+		})
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < len(elements) {
 		return errors.New("discriminator: not all schemas were mapped")
 	}
 
