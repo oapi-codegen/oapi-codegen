@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	Access_tokenScopes = "access_token.Scopes"
+	Access_tokenScopes access_tokenContextKey = "access_token.Scopes"
 )
 
 // Defines values for EnumInObjInArrayVal.
@@ -98,6 +98,9 @@ type InnerRenamedAnonymousObject struct {
 
 // StringInPath defines model for StringInPath.
 type StringInPath = string
+
+// accessTokenContextKey is the context key for access-token security scheme
+type accessTokenContextKey string
 
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
@@ -1406,7 +1409,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
@@ -1417,7 +1420,7 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue1051(ctx)
@@ -1428,7 +1431,7 @@ func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue127(ctx)
@@ -1439,7 +1442,7 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue185(ctx)
@@ -1457,7 +1460,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue209(ctx, str)
@@ -1475,7 +1478,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
@@ -1486,7 +1489,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetIssues375(ctx)
@@ -1504,7 +1507,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue41(ctx, n1param)
@@ -1515,7 +1518,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
@@ -1535,7 +1538,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue975(ctx)
