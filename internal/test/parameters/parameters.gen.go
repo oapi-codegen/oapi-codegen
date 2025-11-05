@@ -546,7 +546,7 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/contentObject/%s", pathParam0)
+	operationPath := "/contentObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -573,7 +573,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cookie")
+	operationPath := "/cookie"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -724,7 +724,7 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/enums")
+	operationPath := "/enums"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -773,7 +773,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/header")
+	operationPath := "/header"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -901,7 +901,7 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodeArray/%s", pathParam0)
+	operationPath := "/labelExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -935,7 +935,7 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodeObject/%s", pathParam0)
+	operationPath := "/labelExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -969,7 +969,7 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0)
+	operationPath := "/labelNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1003,7 +1003,7 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0)
+	operationPath := "/labelNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1037,7 +1037,7 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodeArray/%s", pathParam0)
+	operationPath := "/matrixExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1071,7 +1071,7 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodeObject/%s", pathParam0)
+	operationPath := "/matrixExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1105,7 +1105,7 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0)
+	operationPath := "/matrixNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1139,7 +1139,7 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0)
+	operationPath := "/matrixNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1170,7 +1170,7 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/passThrough/%s", pathParam0)
+	operationPath := "/passThrough/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1197,7 +1197,7 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryDeepObject")
+	operationPath := "/queryDeepObject"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1242,7 +1242,7 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryForm")
+	operationPath := "/queryForm"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1420,7 +1420,7 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodeArray/%s", pathParam0)
+	operationPath := "/simpleExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1454,7 +1454,7 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodeObject/%s", pathParam0)
+	operationPath := "/simpleExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1488,7 +1488,7 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0)
+	operationPath := "/simpleNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1522,7 +1522,7 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0)
+	operationPath := "/simpleNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1556,7 +1556,7 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simplePrimitive/%s", pathParam0)
+	operationPath := "/simplePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1587,7 +1587,7 @@ func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/startingWithNumber/%s", pathParam0)
+	operationPath := "/startingWithNumber/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
