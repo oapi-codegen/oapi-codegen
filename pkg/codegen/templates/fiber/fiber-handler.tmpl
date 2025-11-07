@@ -23,3 +23,42 @@ for _, m := range options.Middlewares {
 router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.OperationId}})
 {{end}}
 }
+
+// RegisterHandlerVersions - creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlerVersions(
+     router fiber.Router, 
+     si ServerInterface, 
+     version string,
+     apiHandlers map[string]map[string]fiber.Handler) map[string]map[string]fiber.Handler {
+  return RegisterHandlerVersionsWithOptions(router, si, version, FiberServerOptions{}, apiHandlers)
+}
+
+// RegisterHandlerVersionsWithOptions - creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlerVersionsWithOptions(
+  router fiber.Router, 
+  si ServerInterface, 
+  version string, 
+	options FiberServerOptions,
+	apiHandlers map[string]map[string]fiber.Handler) map[string]map[string]fiber.Handler {
+
+    var wrapper = ServerInterfaceWrapper{
+        Handler: si,
+    }
+    for _, m := range options.Middlewares {
+      router.Use(fiber.Handler(m))
+    }
+  
+    if apiHandlers == nil {
+      apiHandlers = make(map[string]map[string]fiber.Handler)
+    }
+    {{range .}}
+    // {{.SummaryAsComment }}
+    apiHandlers[fmt.Sprintf("/%s{{.Path}}", version)] = map[string]fiber.Handler{
+      fmt.Sprintf("/%s{{.Path}}", version): wrapper.{{.OperationId}},
+    }
+    apiHandlers[fmt.Sprintf("/%s{{.Path}}", fibermid.LatestVersion)] = map[string]fiber.Handler{
+      fmt.Sprintf("/%s{{.Path}}", fibermid.LatestVersion): wrapper.{{.OperationId}},
+    }
+    {{end}}
+    return apiHandlers
+}
