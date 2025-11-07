@@ -1,5 +1,17 @@
 # `oapi-codegen`
 
+## Ascend Notes
+This repo was forked from the upstream because the XML support was insufficient for the Payments project, and integration to Workday.  See the commit history for more details.
+
+## Ascend Installation
+To install the Ascend version of oapi-codegen just execute the following command:
+
+`go install github.com/ascendsoftware/oapi-codegen/cmd/oapi-codegen@v1.0.3`
+
+where `v1.0.3` is the Github Tag version to use, so please verify which version is the latest before installation.
+
+---
+
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)
 
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
