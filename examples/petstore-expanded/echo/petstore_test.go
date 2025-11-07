@@ -21,8 +21,8 @@ import (
 
 	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/echo/api"
 	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/echo/api/models"
-	"github.com/ascendsoftware/oapi-codegen/pkg/middleware"
-	"github.com/ascendsoftware/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/nethttp-middleware"
+	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
 	echoMiddleware "github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"

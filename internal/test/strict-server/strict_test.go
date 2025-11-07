@@ -23,8 +23,8 @@ import (
 	echoAPI "github.com/ascendsoftware/oapi-codegen/internal/test/strict-server/echo"
 	fiberAPI "github.com/ascendsoftware/oapi-codegen/internal/test/strict-server/fiber"
 	ginAPI "github.com/ascendsoftware/oapi-codegen/internal/test/strict-server/gin"
-	"github.com/ascendsoftware/oapi-codegen/pkg/runtime"
-	"github.com/ascendsoftware/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/runtime"
+	"github.com/oapi-codegen/testutil"
 )
 
 func TestChiServer(t *testing.T) {

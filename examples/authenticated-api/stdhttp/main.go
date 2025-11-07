@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/stdhttp/api"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/stdhttp/server"
+	"github.com/ascendsoftware/oapi-codegen/examples/authenticated-api/stdhttp/api"
+	"github.com/ascendsoftware/oapi-codegen/examples/authenticated-api/stdhttp/server"
 )
 
 func main() {

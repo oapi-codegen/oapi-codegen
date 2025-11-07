@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/ascendsoftware/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/ascendsoftware/oapi-codegen/pkg/middleware"
+	"github.com/oapi-codegen/nethttp-middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/labstack/echo/v4"
 )

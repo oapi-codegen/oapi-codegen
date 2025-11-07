@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/gin/api"
-	"github.com/ascendsoftware/oapi-codegen/pkg/testutil"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
 )
 

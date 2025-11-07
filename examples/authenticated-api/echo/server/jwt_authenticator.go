@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ascendsoftware/oapi-codegen/pkg/middleware"
+	"github.com/oapi-codegen/nethttp-middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/lestrrat-go/jwx/jwt"
 )

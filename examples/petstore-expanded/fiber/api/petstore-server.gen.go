@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/ascendsoftware/oapi-codegen/pkg/runtime"
+	"github.com/oapi-codegen/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
 )

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/overlay/api"
+	"github.com/ascendsoftware/oapi-codegen/examples/overlay/api"
 )
 
 func main() {

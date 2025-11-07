@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/labstack/echo/v4"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/echo/api"
+	"github.com/ascendsoftware/oapi-codegen/examples/minimal-server/echo/api"
 )
 
 func main() {

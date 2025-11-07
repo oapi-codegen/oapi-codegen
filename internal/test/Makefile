@@ -11,7 +11,7 @@ test:
 	go test -cover ./...
 
 tidy:
-	go mod tidy
+	go mod tidy -e
 
 tidy-ci:
 	tidied -verbose
