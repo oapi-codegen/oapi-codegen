@@ -80,7 +80,7 @@ func (p *PetStore) AddPet(c *fiber.Ctx) error {
 	var newPet NewPet
 
 	if err := c.BodyParser(&newPet); err != nil {
-		return sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
+		return sendPetStoreError(c, http.StatusBadRequest, "invalid format for NewPet")
 	}
 
 	// We now have a pet, let's add it to our "database".

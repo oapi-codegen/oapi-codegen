@@ -86,7 +86,7 @@ func (p *PetStore) AddPet(ctx echo.Context) error {
 	var newPet models.NewPet
 	err := ctx.Bind(&newPet)
 	if err != nil {
-		return sendPetStoreError(ctx, http.StatusBadRequest, "Invalid format for NewPet")
+		return sendPetStoreError(ctx, http.StatusBadRequest, "invalid format for NewPet")
 	}
 	// We now have a pet, let's add it to our "database".
 

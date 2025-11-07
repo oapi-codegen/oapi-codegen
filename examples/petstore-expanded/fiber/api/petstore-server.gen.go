@@ -51,21 +51,21 @@ func (siw *ServerInterfaceWrapper) FindPets(c *fiber.Ctx) error {
 	var query url.Values
 	query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for query string: %w", err).Error())
 	}
 
 	// ------------- Optional query parameter "tags" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", query, &params.Tags)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter tags: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for parameter tags: %w", err).Error())
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", query, &params.Limit)
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter limit: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for parameter limit: %w", err).Error())
 	}
 
 	return siw.Handler.FindPets(c, params)
@@ -87,7 +87,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *fiber.Ctx) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for parameter id: %w", err).Error())
 	}
 
 	return siw.Handler.DeletePet(c, id)
@@ -103,7 +103,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *fiber.Ctx) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for parameter id: %w", err).Error())
 	}
 
 	return siw.Handler.FindPetByID(c, id)

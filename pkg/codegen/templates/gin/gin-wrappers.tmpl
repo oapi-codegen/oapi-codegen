@@ -32,7 +32,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{if .IsStyled}}
   err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
   if err != nil {
-    siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
+    siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
     return
   }
   {{end}}
@@ -77,7 +77,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       {{if .IsStyled}}
       err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
       if err != nil {
-        siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
+        siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
         return
       }
       {{end}}
@@ -110,7 +110,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{if .IsStyled}}
           err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
           if err != nil {
-            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
           }
         {{end}}
@@ -157,7 +157,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         var value {{.TypeDef}}
         err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
         if err != nil {
-            siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
+            siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
         }
         params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value

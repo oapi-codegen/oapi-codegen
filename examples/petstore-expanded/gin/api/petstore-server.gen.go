@@ -55,7 +55,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "tags", c.Request.URL.Query(), &params.Tags)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter tags: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter tags: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (siw *ServerInterfaceWrapper) FindPets(c *gin.Context) {
 
 	err = runtime.BindQueryParameter("form", true, false, "limit", c.Request.URL.Query(), &params.Limit)
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter limit: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c *gin.Context) {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c *gin.Context) {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Param("id"), &id, runtime.BindStyledParameterOptions{Explode: false, Required: true})
 	if err != nil {
-		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter id: %w", err), http.StatusBadRequest)
+		siw.ErrorHandler(c, fmt.Errorf("invalid format for parameter id: %w", err), http.StatusBadRequest)
 		return
 	}
 

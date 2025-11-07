@@ -74,7 +74,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 	// We expect a NewPet object in the request body.
 	var newPet NewPet
 	if err := json.NewDecoder(r.Body).Decode(&newPet); err != nil {
-		sendPetStoreError(w, http.StatusBadRequest, "Invalid format for NewPet")
+		sendPetStoreError(w, http.StatusBadRequest, "invalid format for NewPet")
 		return
 	}
 

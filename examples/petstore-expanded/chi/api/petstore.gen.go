@@ -265,7 +265,7 @@ type InvalidParamFormatError struct {
 }
 
 func (e *InvalidParamFormatError) Error() string {
-	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+	return fmt.Sprintf("invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
 }
 
 func (e *InvalidParamFormatError) Unwrap() error {

@@ -2778,7 +2778,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value int32
 		err = runtime.BindStyledParameterWithOptions("simple", "p", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter p: %s", err))
 		}
 		params.P = &value
 
@@ -2789,7 +2789,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value int32
 		err = runtime.BindStyledParameterWithOptions("simple", "ep", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ep: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter ep: %s", err))
 		}
 		params.Ep = &value
 
@@ -2800,7 +2800,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value []int32
 		err = runtime.BindStyledParameterWithOptions("simple", "ea", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ea: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter ea: %s", err))
 		}
 		params.Ea = &value
 
@@ -2811,7 +2811,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value []int32
 		err = runtime.BindStyledParameterWithOptions("simple", "a", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter a: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter a: %s", err))
 		}
 		params.A = &value
 
@@ -2822,7 +2822,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value Object
 		err = runtime.BindStyledParameterWithOptions("simple", "eo", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter eo: %s", err))
 		}
 		params.Eo = &value
 
@@ -2833,7 +2833,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value Object
 		err = runtime.BindStyledParameterWithOptions("simple", "o", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter o: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter o: %s", err))
 		}
 		params.O = &value
 
@@ -2860,7 +2860,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		var value string
 		err = runtime.BindStyledParameterWithOptions("simple", "1s", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter 1s: %s", err))
 		}
 		params.N1s = &value
 
@@ -2881,7 +2881,7 @@ func (w *ServerInterfaceWrapper) EnumParams(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameter("form", true, false, "enumPathParam", ctx.QueryParams(), &params.EnumPathParam)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter enumPathParam: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter enumPathParam: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -2907,7 +2907,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", valueList[0], &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Primitive: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Primitive: %s", err))
 		}
 
 		params.XPrimitive = &XPrimitive
@@ -2922,7 +2922,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Primitive-Exploded: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Primitive-Exploded: %s", err))
 		}
 
 		params.XPrimitiveExploded = &XPrimitiveExploded
@@ -2937,7 +2937,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", valueList[0], &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Array-Exploded: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Array-Exploded: %s", err))
 		}
 
 		params.XArrayExploded = &XArrayExploded
@@ -2952,7 +2952,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", valueList[0], &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Array: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Array: %s", err))
 		}
 
 		params.XArray = &XArray
@@ -2967,7 +2967,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", valueList[0], &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Object-Exploded: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Object-Exploded: %s", err))
 		}
 
 		params.XObjectExploded = &XObjectExploded
@@ -2982,7 +2982,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", valueList[0], &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter X-Object: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter X-Object: %s", err))
 		}
 
 		params.XObject = &XObject
@@ -3012,7 +3012,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 
 		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", valueList[0], &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1-Starting-With-Number: %s", err))
+			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter 1-Starting-With-Number: %s", err))
 		}
 
 		params.N1StartingWithNumber = &N1StartingWithNumber
@@ -3031,7 +3031,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3047,7 +3047,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3063,7 +3063,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx echo.Context) error 
 
 	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3079,7 +3079,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx echo.Context) error
 
 	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3095,7 +3095,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3111,7 +3111,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx echo.Context) error 
 
 	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3127,7 +3127,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx echo.Context) error
 
 	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3143,7 +3143,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx echo.Context) erro
 
 	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter id: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3174,7 +3174,7 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameter("deepObject", true, true, "deepObj", ctx.QueryParams(), &params.DeepObj)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter deepObj: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3192,49 +3192,49 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameter("form", true, false, "ea", ctx.QueryParams(), &params.Ea)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ea: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter ea: %s", err))
 	}
 
 	// ------------- Optional query parameter "a" -------------
 
 	err = runtime.BindQueryParameter("form", false, false, "a", ctx.QueryParams(), &params.A)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter a: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter a: %s", err))
 	}
 
 	// ------------- Optional query parameter "eo" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "eo", ctx.QueryParams(), &params.Eo)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter eo: %s", err))
 	}
 
 	// ------------- Optional query parameter "o" -------------
 
 	err = runtime.BindQueryParameter("form", false, false, "o", ctx.QueryParams(), &params.O)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter o: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter o: %s", err))
 	}
 
 	// ------------- Optional query parameter "ep" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "ep", ctx.QueryParams(), &params.Ep)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ep: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter ep: %s", err))
 	}
 
 	// ------------- Optional query parameter "p" -------------
 
 	err = runtime.BindQueryParameter("form", false, false, "p", ctx.QueryParams(), &params.P)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter p: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter p: %s", err))
 	}
 
 	// ------------- Optional query parameter "ps" -------------
 
 	err = runtime.BindQueryParameter("form", true, false, "ps", ctx.QueryParams(), &params.Ps)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter ps: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter ps: %s", err))
 	}
 
 	// ------------- Optional query parameter "co" -------------
@@ -3254,7 +3254,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameter("form", true, false, "1s", ctx.QueryParams(), &params.N1s)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1s: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter 1s: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3270,7 +3270,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3286,7 +3286,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx echo.Context) error 
 
 	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3302,7 +3302,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx echo.Context) error
 
 	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3318,7 +3318,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx echo.Context) erro
 
 	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -3334,7 +3334,7 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter param: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments

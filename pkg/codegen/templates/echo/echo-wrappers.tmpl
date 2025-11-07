@@ -20,7 +20,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{if .IsStyled}}
     err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter {{.ParamName}}: %s", err))
     }
 {{end}}
 {{end}}
@@ -39,7 +39,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{if .IsStyled}}
     err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter {{.ParamName}}: %s", err))
     }
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
@@ -81,7 +81,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{if .IsStyled}}
         err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
         if err != nil {
-            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter {{.ParamName}}: %s", err))
         }
 {{end}}
         params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
@@ -113,7 +113,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var value {{.TypeDef}}
     err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("invalid format for parameter {{.ParamName}}: %s", err))
     }
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}

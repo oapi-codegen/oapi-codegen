@@ -84,7 +84,7 @@ func (p *PetStore) AddPet(c *gin.Context) {
 	var newPet NewPet
 	err := c.Bind(&newPet)
 	if err != nil {
-		sendPetStoreError(c, http.StatusBadRequest, "Invalid format for NewPet")
+		sendPetStoreError(c, http.StatusBadRequest, "invalid format for NewPet")
 		return
 	}
 	// We now have a pet, let's add it to our "database".
