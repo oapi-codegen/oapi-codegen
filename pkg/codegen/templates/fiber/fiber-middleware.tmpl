@@ -72,7 +72,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
-            err = fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
+            err = fmt.Errorf("query argument {{.ParamName}} is required, but not found")
             c.Status(fiber.StatusBadRequest).JSON(err)
             return err
         }{{end}}
@@ -157,7 +157,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       }
 
       {{- if .Required}} else {
-        err = fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
+        err = fmt.Errorf("query argument {{.ParamName}} is required, but not found")
         return fiber.NewError(fiber.StatusBadRequest, err.Error())
       }
       {{- end}}

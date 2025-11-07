@@ -243,7 +243,7 @@ type RequiredParamError struct {
 }
 
 func (e *RequiredParamError) Error() string {
-	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+	return fmt.Sprintf("query argument %s is required, but not found", e.ParamName)
 }
 
 type RequiredHeaderError struct {

@@ -132,5 +132,5 @@ func TestErrorHandlerFuncBackwardsCompatible(t *testing.T) {
 	b, _ := io.ReadAll(req.Body)
 	assert.Nil(t, err)
 	assert.Equal(t, "text/plain; charset=utf-8", req.Header.Get("Content-Type"))
-	assert.Equal(t, "Query argument required_argument is required, but not found\n", string(b))
+	assert.Equal(t, "query argument required_argument is required, but not found\n", string(b))
 }

@@ -55,7 +55,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("query argument {{.ParamName}} is required, but not found"))
     }{{end}}
     {{end}}
 {{end}}
@@ -118,7 +118,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("query argument {{.ParamName}} is required, but not found"))
     }{{end}}
 
 {{end}}{{/* .CookieParams */}}
