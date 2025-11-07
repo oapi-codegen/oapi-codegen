@@ -1,0 +1,4 @@
+package: withprops
+generate:
+  models: true
+output: oneof_withprops.gen.go
