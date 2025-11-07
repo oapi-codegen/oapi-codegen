@@ -785,7 +785,6 @@ func GenFieldsFromProperties(props []Property) []string {
 
 		// Added to generate the xml tag to match the JSON field name for Workday
 		// support.
-		fieldTags["xml"] = p.JsonFieldName
 
 		// Support x-go-json-ignore
 		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
@@ -803,6 +802,13 @@ func GenFieldsFromProperties(props []Property) []string {
 				}
 			}
 		}
+
+		// Support x-xml-name
+		if _, ok := p.Extensions[extXMLName]; ok {
+			xmlName := p.Extensions[extXMLName].(string)
+			fieldTags["xml"] = xmlName
+		}
+
 		// Convert the fieldTags map into Go field annotations.
 		keys := SortedMapKeys(fieldTags)
 		tags := make([]string, len(keys))

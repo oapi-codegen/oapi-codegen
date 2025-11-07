@@ -27,6 +27,7 @@ const (
 	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
 	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
 	extOapiCodegenOnlyHonourGoName = "x-oapi-codegen-only-honour-go-name"
+	extXMLName                     = "x-xml-name"
 )
 
 func extString(extPropValue interface{}) (string, error) {
