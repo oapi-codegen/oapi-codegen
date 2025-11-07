@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/oapi-codegen/nethttp-middleware"
+	middleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/getkin/kin-openapi/openapi3filter"
 	"github.com/lestrrat-go/jwx/jwt"
 )
@@ -21,9 +21,9 @@ type JWSValidator interface {
 const JWTClaimsContextKey = "jwt_claims"
 
 var (
-	ErrNoAuthHeader      = errors.New("Authorization header is missing")
-	ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
-	ErrClaimsInvalid     = errors.New("Provided claims do not match expected scopes")
+	ErrNoAuthHeader      = errors.New("authorization header is missing")
+	ErrInvalidAuthHeader = errors.New("authorization header is malformed")
+	ErrClaimsInvalid     = errors.New("provided claims do not match expected scopes")
 )
 
 // GetJWSFromRequest extracts a JWS string from an Authorization: Bearer <jws> header

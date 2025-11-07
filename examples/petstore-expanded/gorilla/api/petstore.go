@@ -34,7 +34,7 @@ func sendPetStoreError(w http.ResponseWriter, code int, message string) {
 		Message: message,
 	}
 	w.WriteHeader(code)
-	json.NewEncoder(w).Encode(petErr)
+	_ = json.NewEncoder(w).Encode(petErr)
 }
 
 // FindPets implements all the handlers in the ServerInterface
@@ -67,7 +67,7 @@ func (p *PetStore) FindPets(w http.ResponseWriter, r *http.Request, params FindP
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	_ = json.NewEncoder(w).Encode(result)
 }
 
 func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func (p *PetStore) AddPet(w http.ResponseWriter, r *http.Request) {
 
 	// Now, we have to return the NewPet
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(pet)
+	_ = json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
@@ -110,7 +110,7 @@ func (p *PetStore) FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(pet)
+	_ = json.NewEncoder(w).Encode(pet)
 }
 
 func (p *PetStore) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {

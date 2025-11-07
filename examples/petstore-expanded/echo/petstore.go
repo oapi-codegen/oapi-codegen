@@ -12,7 +12,7 @@ import (
 	"os"
 
 	"github.com/ascendsoftware/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/oapi-codegen/nethttp-middleware"
+	middleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/labstack/echo/v4"
 	echomiddleware "github.com/labstack/echo/v4/middleware"
 )
