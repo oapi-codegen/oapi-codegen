@@ -72,7 +72,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
-            err = fmt.Errorf("query argument {{.ParamName}} is required, but not found")
+            err = fmt.Errorf("query parameter {{.ParamName}} is required, but not found")
             c.Status(fiber.StatusBadRequest).JSON(err)
             return err
         }{{end}}
@@ -104,7 +104,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", value, &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithLocation("{{.Style}}",{{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, value[0], &{{.GoName}})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("invalid format for parameter {{.ParamName}}: %w", err).Error())
           }
@@ -113,7 +113,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err)
+            err = fmt.Errorf("header parameter '{{.ParamName}}' is required, but not found.")
             return fiber.NewError(fiber.StatusBadRequest, err.Error())
         }{{end}}
 
@@ -157,7 +157,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       }
 
       {{- if .Required}} else {
-        err = fmt.Errorf("query argument {{.ParamName}} is required, but not found")
+        err = fmt.Errorf("query parameter {{.ParamName}} is required, but not found")
         return fiber.NewError(fiber.StatusBadRequest, err.Error())
       }
       {{- end}}
