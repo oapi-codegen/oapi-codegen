@@ -387,7 +387,7 @@ func detectPackageName(cfg *configuration) error {
 			case strings.HasPrefix(outStr, "no Go files in"):
 				// No go files yet, ignore.
 			default:
-				// Unexpected failure report.
+				// unexpected failure report.
 				return fmt.Errorf("detect package name for %q output: %q: %w", dir, string(out), err)
 			}
 		} else {
