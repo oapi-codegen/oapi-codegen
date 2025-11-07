@@ -52,7 +52,7 @@ func RegisterHandlerVersionsWithOptions(
       apiHandlers = make(map[string]map[string]fiber.Handler)
     }
     {{range .}}
-    // {{.SummaryAsComment }}
+    {{.SummaryAsComment }}
     apiHandlers[fmt.Sprintf("/%s{{.Path}}", version)] = map[string]fiber.Handler{
       fmt.Sprintf("/%s{{.Path}}", version): wrapper.{{.OperationId}},
     }
