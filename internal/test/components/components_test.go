@@ -359,3 +359,96 @@ func TestMarshalWhenNoUnionValueSet(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, expected, string(bytes))
 }
+
+func TestOneOfWithDiscriminator_MultipleMappingsToSameSchema(t *testing.T) {
+	// This test ensures deterministic code generation when multiple discriminator
+	// values map to the same schema type (e.g., "type_a" and "type_b" both map to OneOfVariant4).
+	// The bug was that map iteration order in Go is random, causing generated code to vary.
+	// This test verifies:
+	// 1. All discriminator values work correctly in ValueByDiscriminator switch
+	// 2. From* methods consistently use the first alphabetically sorted discriminator value
+	// 3. Generated code is deterministic
+
+	const variant4a = `{"category": "type_a", "discriminator": "type_a", "name": "test_a"}`
+	const variant4b = `{"category": "type_b", "discriminator": "type_b", "name": "test_b"}`
+	const variant5x = `{"category": "type_x", "discriminator": "type_x", "id": 100}`
+	const variant5y = `{"category": "type_y", "discriminator": "type_y", "id": 200}`
+
+	// Test all four discriminator values can be unmarshaled and retrieved
+	testCases := []struct {
+		name             string
+		json             string
+		expectedCategory string
+		expectedVariant  interface{}
+	}{
+		{
+			name:             "type_a maps to OneOfVariant4",
+			json:             variant4a,
+			expectedCategory: "type_a",
+			expectedVariant:  OneOfVariant4{Discriminator: "type_a", Name: "test_a"},
+		},
+		{
+			name:             "type_b also maps to OneOfVariant4",
+			json:             variant4b,
+			expectedCategory: "type_b",
+			expectedVariant:  OneOfVariant4{Discriminator: "type_b", Name: "test_b"},
+		},
+		{
+			name:             "type_x maps to OneOfVariant5",
+			json:             variant5x,
+			expectedCategory: "type_x",
+			expectedVariant:  OneOfVariant5{Discriminator: "type_x", Id: 100},
+		},
+		{
+			name:             "type_y also maps to OneOfVariant5",
+			json:             variant5y,
+			expectedCategory: "type_y",
+			expectedVariant:  OneOfVariant5{Discriminator: "type_y", Id: 200},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var dst OneOfObject14
+			err := json.Unmarshal([]byte(tc.json), &dst)
+			require.NoError(t, err)
+
+			discriminator, err := dst.Discriminator()
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCategory, discriminator)
+
+			value, err := dst.ValueByDiscriminator()
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedVariant, value)
+		})
+	}
+
+	// Test From* methods use the first alphabetically sorted discriminator value
+	// When multiple values map to the same schema, the generated code should consistently
+	// use the first one alphabetically (type_a for OneOfVariant4, type_x for OneOfVariant5)
+	t.Run("FromOneOfVariant4 uses first alphabetical discriminator", func(t *testing.T) {
+		var dst OneOfObject14
+		err := dst.FromOneOfVariant4(OneOfVariant4{Discriminator: "unused", Name: "test"})
+		require.NoError(t, err)
+
+		// Should set category to "type_a" (first alphabetically of [type_a, type_b])
+		assert.Equal(t, "type_a", dst.Category)
+
+		marshaled, err := json.Marshal(dst)
+		require.NoError(t, err)
+		assertJsonEqual(t, []byte(`{"category":"type_a","discriminator":"unused","name":"test"}`), marshaled)
+	})
+
+	t.Run("FromOneOfVariant5 uses first alphabetical discriminator", func(t *testing.T) {
+		var dst OneOfObject14
+		err := dst.FromOneOfVariant5(OneOfVariant5{Discriminator: "unused", Id: 42})
+		require.NoError(t, err)
+
+		// Should set category to "type_x" (first alphabetically of [type_x, type_y])
+		assert.Equal(t, "type_x", dst.Category)
+
+		marshaled, err := json.Marshal(dst)
+		require.NoError(t, err)
+		assertJsonEqual(t, []byte(`{"category":"type_x","discriminator":"unused","id":42}`), marshaled)
+	})
+}
