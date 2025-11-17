@@ -1,0 +1,30 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  # TODO
+  # TODO
+  # TODO
+  title: TODO TODo
+  # TODO
+  # TODO
+  # TODO
+  # TODO
+paths:
+  /client:
+    get:
+      operationId: getClient
+      parameters:
+        - name: parentTag
+          in: header
+          description: Version string of parent model, if any model
+          required: false
+          schema:
+            type: string
+            example: parentTag
+            x-go-type-skip-optional-pointer: false
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
