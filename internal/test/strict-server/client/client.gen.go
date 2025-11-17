@@ -173,6 +173,9 @@ type ClientInterface interface {
 
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// StreamingExample request
+	StreamingExample(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// TextExampleWithBody request with any body
 	TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -322,6 +325,18 @@ func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType stri
 
 func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReusableResponsesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) StreamingExample(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewStreamingExampleRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -682,6 +697,33 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewStreamingExampleRequest generates requests for StreamingExample
+func NewStreamingExampleRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/streaming")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -991,6 +1033,9 @@ type ClientWithResponsesInterface interface {
 
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
+	// StreamingExampleWithResponse request
+	StreamingExampleWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*StreamingExampleResponse, error)
+
 	// TextExampleWithBodyWithResponse request with any body
 	TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
@@ -1141,6 +1186,27 @@ func (r ReusableResponsesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ReusableResponsesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type StreamingExampleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r StreamingExampleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r StreamingExampleResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1373,6 +1439,15 @@ func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context,
 	return ParseReusableResponsesResponse(rsp)
 }
 
+// StreamingExampleWithResponse request returning *StreamingExampleResponse
+func (c *ClientWithResponses) StreamingExampleWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*StreamingExampleResponse, error) {
+	rsp, err := c.StreamingExample(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseStreamingExampleResponse(rsp)
+}
+
 // TextExampleWithBodyWithResponse request with arbitrary body returning *TextExampleResponse
 func (c *ClientWithResponses) TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error) {
 	rsp, err := c.TextExampleWithBody(ctx, contentType, body, reqEditors...)
@@ -1583,6 +1658,22 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 		}
 		response.JSON200 = &dest
 
+	}
+
+	return response, nil
+}
+
+// ParseStreamingExampleResponse parses an HTTP response from a StreamingExampleWithResponse call
+func ParseStreamingExampleResponse(rsp *http.Response) (*StreamingExampleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &StreamingExampleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
