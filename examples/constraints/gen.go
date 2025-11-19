@@ -4,7 +4,11 @@
 package constraints
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -47,6 +51,36 @@ const (
 	UsernameMaxLength uint64 = 20
 )
 
+// Constraint constants for ListUsersLimit.
+const (
+	ListUsersLimitMinimum int = 1
+	ListUsersLimitMaximum int = 100
+	ListUsersLimitDefault int = 20
+)
+
+// Constraint constants for ListUsersOffset.
+const (
+	ListUsersOffsetMinimum int = 0
+)
+
+// Constraint constants for ListUsersSearch.
+const (
+	ListUsersSearchMinLength uint64 = 3
+	ListUsersSearchMaxLength uint64 = 50
+)
+
+// Constraint constants for ListUsersMinScore.
+const (
+	ListUsersMinScoreMinimum float32 = 0
+	ListUsersMinScoreMaximum float32 = 100
+)
+
+// Constraint constants for GetUserUserId.
+const (
+	GetUserUserIdMinLength uint64 = 36
+	GetUserUserIdMaxLength uint64 = 36
+)
+
 // Age User's age in years
 type Age = int
 
@@ -87,19 +121,79 @@ type UserTags = []string
 // Username Username must be between 3 and 20 characters
 type Username = string
 
+// ListUsersParams defines parameters for ListUsers.
+type ListUsersParams struct {
+	// Limit Maximum number of items to return
+	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Number of items to skip
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+
+	// Search Search query string
+	Search *string `form:"search,omitempty" json:"search,omitempty"`
+
+	// MinScore Minimum score filter
+	MinScore *float32 `form:"minScore,omitempty" json:"minScore,omitempty"`
+}
+
 // CreateUserJSONRequestBody defines body for CreateUser for application/json ContentType.
 type CreateUserJSONRequestBody = User
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// List users with pagination and filtering
+	// (GET /users)
+	ListUsers(ctx echo.Context, params ListUsersParams) error
 
 	// (POST /users)
 	CreateUser(ctx echo.Context) error
+	// Get a specific user by ID
+	// (GET /users/{userId})
+	GetUser(ctx echo.Context, userId string) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// ListUsers converts echo context to params.
+func (w *ServerInterfaceWrapper) ListUsers(ctx echo.Context) error {
+	var err error
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListUsersParams
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.QueryParams(), &params.Limit)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", ctx.QueryParams(), &params.Offset)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter offset: %s", err))
+	}
+
+	// ------------- Optional query parameter "search" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "search", ctx.QueryParams(), &params.Search)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter search: %s", err))
+	}
+
+	// ------------- Optional query parameter "minScore" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "minScore", ctx.QueryParams(), &params.MinScore)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter minScore: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ListUsers(ctx, params)
+	return err
 }
 
 // CreateUser converts echo context to params.
@@ -108,6 +202,22 @@ func (w *ServerInterfaceWrapper) CreateUser(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.CreateUser(ctx)
+	return err
+}
+
+// GetUser converts echo context to params.
+func (w *ServerInterfaceWrapper) GetUser(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "userId" -------------
+	var userId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", ctx.Param("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter userId: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetUser(ctx, userId)
 	return err
 }
 
@@ -139,6 +249,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/users", wrapper.ListUsers)
 	router.POST(baseURL+"/users", wrapper.CreateUser)
+	router.GET(baseURL+"/users/:userId", wrapper.GetUser)
 
 }
