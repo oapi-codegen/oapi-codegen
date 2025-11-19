@@ -1,0 +1,92 @@
+openapi: 3.0.0
+info:
+  title: Constraints Demo API
+  version: 1.0.0
+  description: Demo API to showcase constraint constants generation
+
+paths:
+  /users:
+    post:
+      operationId: createUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+components:
+  schemas:
+    # These are defined as standalone types so constraints become constants
+    Username:
+      type: string
+      minLength: 3
+      maxLength: 20
+      default: "guest"
+      description: Username must be between 3 and 20 characters
+
+    Age:
+      type: integer
+      minimum: 0
+      maximum: 150
+      default: 18
+      description: User's age in years
+
+    UserScore:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 100.0
+      default: 50.0
+      description: User score between 0 and 100
+
+    Port:
+      type: integer
+      format: int32
+      minimum: 1024
+      maximum: 65535
+      default: 8080
+      description: Preferred port number
+
+    IsActive:
+      type: boolean
+      default: true
+      description: Whether the account is active
+
+    UserTags:
+      type: array
+      items:
+        type: string
+      minItems: 1
+      maxItems: 10
+      description: User tags (1-10 items)
+
+    User:
+      type: object
+      required:
+        - username
+        - age
+      properties:
+        username:
+          $ref: "#/components/schemas/Username"
+        age:
+          $ref: "#/components/schemas/Age"
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        isActive:
+          $ref: "#/components/schemas/IsActive"
+        score:
+          $ref: "#/components/schemas/UserScore"
+        port:
+          $ref: "#/components/schemas/Port"
+        tags:
+          $ref: "#/components/schemas/UserTags"
