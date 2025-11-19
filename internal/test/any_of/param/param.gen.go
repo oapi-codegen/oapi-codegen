@@ -56,16 +56,20 @@ func (t Test) AsTest0() (Test0, error) {
 	return body, err
 }
 
+func (t *Test) prepareTest0(v Test0) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTest0 overwrites any union data inside the Test as the provided Test0
 func (t *Test) FromTest0(v Test0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest0(v)
 	t.union = b
 	return err
 }
 
 // MergeTest0 performs a merge with any union data inside the Test, using the provided Test0
 func (t *Test) MergeTest0(v Test0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest0(v)
 	if err != nil {
 		return err
 	}
@@ -82,16 +86,20 @@ func (t Test) AsTest1() (Test1, error) {
 	return body, err
 }
 
+func (t *Test) prepareTest1(v Test1) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTest1 overwrites any union data inside the Test as the provided Test1
 func (t *Test) FromTest1(v Test1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest1(v)
 	t.union = b
 	return err
 }
 
 // MergeTest1 performs a merge with any union data inside the Test, using the provided Test1
 func (t *Test) MergeTest1(v Test1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest1(v)
 	if err != nil {
 		return err
 	}
@@ -118,16 +126,20 @@ func (t Test2) AsTest20() (Test20, error) {
 	return body, err
 }
 
+func (t *Test2) prepareTest20(v Test20) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTest20 overwrites any union data inside the Test2 as the provided Test20
 func (t *Test2) FromTest20(v Test20) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest20(v)
 	t.union = b
 	return err
 }
 
 // MergeTest20 performs a merge with any union data inside the Test2, using the provided Test20
 func (t *Test2) MergeTest20(v Test20) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest20(v)
 	if err != nil {
 		return err
 	}
@@ -144,16 +156,20 @@ func (t Test2) AsTest21() (Test21, error) {
 	return body, err
 }
 
+func (t *Test2) prepareTest21(v Test21) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromTest21 overwrites any union data inside the Test2 as the provided Test21
 func (t *Test2) FromTest21(v Test21) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest21(v)
 	t.union = b
 	return err
 }
 
 // MergeTest21 performs a merge with any union data inside the Test2, using the provided Test21
 func (t *Test2) MergeTest21(v Test21) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareTest21(v)
 	if err != nil {
 		return err
 	}

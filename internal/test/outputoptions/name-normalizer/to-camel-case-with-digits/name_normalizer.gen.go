@@ -62,16 +62,20 @@ func (t OneOf2Things) AsOneOf2Things0() (OneOf2Things0, error) {
 	return body, err
 }
 
+func (t *OneOf2Things) prepareOneOf2Things0(v OneOf2Things0) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromOneOf2Things0 overwrites any union data inside the OneOf2Things as the provided OneOf2Things0
 func (t *OneOf2Things) FromOneOf2Things0(v OneOf2Things0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareOneOf2Things0(v)
 	t.union = b
 	return err
 }
 
 // MergeOneOf2Things0 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things0
 func (t *OneOf2Things) MergeOneOf2Things0(v OneOf2Things0) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareOneOf2Things0(v)
 	if err != nil {
 		return err
 	}
@@ -88,16 +92,20 @@ func (t OneOf2Things) AsOneOf2Things1() (OneOf2Things1, error) {
 	return body, err
 }
 
+func (t *OneOf2Things) prepareOneOf2Things1(v OneOf2Things1) ([]byte, error) {
+	return json.Marshal(v)
+}
+
 // FromOneOf2Things1 overwrites any union data inside the OneOf2Things as the provided OneOf2Things1
 func (t *OneOf2Things) FromOneOf2Things1(v OneOf2Things1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareOneOf2Things1(v)
 	t.union = b
 	return err
 }
 
 // MergeOneOf2Things1 performs a merge with any union data inside the OneOf2Things, using the provided OneOf2Things1
 func (t *OneOf2Things) MergeOneOf2Things1(v OneOf2Things1) error {
-	b, err := json.Marshal(v)
+	b, err := t.prepareOneOf2Things1(v)
 	if err != nil {
 		return err
 	}
