@@ -43,6 +43,16 @@ const (
 	FindPetsByStatusParamsStatusSold      FindPetsByStatusParamsStatus = "sold"
 )
 
+// Constraint constants for FindPetsByStatusParamsStatus.
+const (
+	FindPetsByStatusParamsStatusDefault string = "available"
+)
+
+// Constraint constants for FindPetsByStatusStatus.
+const (
+	FindPetsByStatusStatusDefault string = "available"
+)
+
 // Address defines model for Address.
 type Address struct {
 	City   *string `json:"city,omitempty"`
