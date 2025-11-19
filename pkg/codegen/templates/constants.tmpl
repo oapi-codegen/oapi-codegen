@@ -13,3 +13,43 @@ const (
 {{end}}
 )
 {{end}}
+{{range $Constraint := .ConstraintDefinitions}}
+{{- $hasSimpleDefault := false}}
+{{- if $Constraint.Default}}
+{{- if or (eq $Constraint.Schema.GoType "string") (eq $Constraint.Schema.GoType "bool") (eq $Constraint.Schema.GoType "int") (eq $Constraint.Schema.GoType "int32") (eq $Constraint.Schema.GoType "int64") (eq $Constraint.Schema.GoType "uint") (eq $Constraint.Schema.GoType "uint32") (eq $Constraint.Schema.GoType "uint64") (eq $Constraint.Schema.GoType "float32") (eq $Constraint.Schema.GoType "float64")}}
+{{- $hasSimpleDefault = true}}
+{{- end}}
+{{- end}}
+{{- if or $Constraint.Minimum $Constraint.Maximum $hasSimpleDefault $Constraint.MinLength $Constraint.MaxLength $Constraint.MinItems $Constraint.MaxItems}}
+// Constraint constants for {{$Constraint.TypeName}}.
+const (
+{{- if $Constraint.Minimum}}
+    {{$Constraint.TypeName}}Minimum {{$Constraint.Schema.GoType}} = {{$Constraint.Minimum}}
+{{- end}}
+{{- if $Constraint.Maximum}}
+    {{$Constraint.TypeName}}Maximum {{$Constraint.Schema.GoType}} = {{$Constraint.Maximum}}
+{{- end}}
+{{- if and $Constraint.Default $hasSimpleDefault}}
+    {{- if eq $Constraint.Schema.GoType "string"}}
+    {{$Constraint.TypeName}}Default {{$Constraint.Schema.GoType}} = "{{$Constraint.Default}}"
+    {{- else if eq $Constraint.Schema.GoType "bool"}}
+    {{$Constraint.TypeName}}Default {{$Constraint.Schema.GoType}} = {{$Constraint.Default}}
+    {{- else}}
+    {{$Constraint.TypeName}}Default {{$Constraint.Schema.GoType}} = {{$Constraint.Default}}
+    {{- end}}
+{{- end}}
+{{- if $Constraint.MinLength}}
+    {{$Constraint.TypeName}}MinLength uint64 = {{$Constraint.MinLength}}
+{{- end}}
+{{- if $Constraint.MaxLength}}
+    {{$Constraint.TypeName}}MaxLength uint64 = {{$Constraint.MaxLength}}
+{{- end}}
+{{- if $Constraint.MinItems}}
+    {{$Constraint.TypeName}}MinItems uint64 = {{$Constraint.MinItems}}
+{{- end}}
+{{- if $Constraint.MaxItems}}
+    {{$Constraint.TypeName}}MaxItems uint64 = {{$Constraint.MaxItems}}
+{{- end}}
+)
+{{- end}}
+{{end}}
