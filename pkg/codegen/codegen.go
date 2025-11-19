@@ -513,7 +513,24 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
 
-	constraintsOut, err := GenerateConstraints(t, allTypes)
+	// Collect all types for constraint generation, including parameter types from operations
+	constraintTypes := allTypes
+	for _, op := range ops {
+		constraintTypes = append(constraintTypes, op.TypeDefinitions...)
+		// Extract inline parameter schemas with constraints
+		for _, param := range op.AllParams() {
+			if param.Schema.OAPISchema != nil && hasConstraints(param.Schema.OAPISchema) {
+				// Create a type definition for this parameter's schema
+				typeName := op.OperationId + SchemaNameToTypeName(param.ParamName)
+				constraintTypes = append(constraintTypes, TypeDefinition{
+					TypeName: typeName,
+					Schema:   param.Schema,
+				})
+			}
+		}
+	}
+
+	constraintsOut, err := GenerateConstraints(t, constraintTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating code for type constraints: %w", err)
 	}
@@ -863,6 +880,17 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	// Now see if enums conflict with any non-enum typenames
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+}
+
+// hasConstraints checks if a schema has any constraints worth generating constants for
+func hasConstraints(schema *openapi3.Schema) bool {
+	if schema == nil {
+		return false
+	}
+	return schema.Min != nil || schema.Max != nil ||
+		schema.MinLength > 0 || schema.MaxLength != nil ||
+		schema.MinItems > 0 || schema.MaxItems != nil ||
+		schema.Default != nil
 }
 
 // GenerateConstraints generates constants for schema constraints (min, max, default, etc.)

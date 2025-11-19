@@ -277,6 +277,76 @@ components:
 	}
 }
 
+func TestInlineParameterConstraints(t *testing.T) {
+	spec := `
+openapi: 3.0.0
+info:
+  title: Parameter Constraints Test
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      operationId: getUsers
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - in: query
+          name: search
+          schema:
+            type: string
+            minLength: 3
+            maxLength: 50
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+      responses:
+        '200':
+          description: Success
+`
+
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "testparams",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// Test limit parameter constraints
+	assert.Contains(t, code, "GetUsersLimitMinimum")
+	assert.Contains(t, code, "GetUsersLimitMaximum")
+	assert.Contains(t, code, "GetUsersLimitDefault")
+	assert.Contains(t, code, "int = 1")
+	assert.Contains(t, code, "int = 100")
+	assert.Contains(t, code, "int = 20")
+
+	// Test search parameter constraints
+	assert.Contains(t, code, "GetUsersSearchMinLength")
+	assert.Contains(t, code, "GetUsersSearchMaxLength")
+	assert.Contains(t, code, "uint64 = 3")
+	assert.Contains(t, code, "uint64 = 50")
+
+	// Test offset parameter constraints (only minimum)
+	assert.Contains(t, code, "GetUsersOffsetMinimum")
+	assert.Contains(t, code, "int = 0")
+}
+
 // Helper functions
 func ptrFloat64(v float64) *float64 {
 	return &v
