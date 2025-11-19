@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: constraints
+output: gen.go
+generate:
+  models: true
+  echo-server: true
+output-options:
+  skip-prune: true
