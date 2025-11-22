@@ -1,0 +1,111 @@
+openapi: 3.0.0
+info:
+  title: Issue 2016 - Nullable Array Items
+  version: 1.0.0
+paths:
+  /test:
+    post:
+      operationId: testNullableArrayItems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sample:
+                  $ref: "#/components/schemas/Sample"
+                strings:
+                  $ref: "#/components/schemas/StringArrayNullable"
+                booleans:
+                  $ref: "#/components/schemas/BooleanArrayNullable"
+                integers:
+                  $ref: "#/components/schemas/IntegerArrayNullable"
+                objects:
+                  $ref: "#/components/schemas/ObjectArrayNullable"
+                nested:
+                  $ref: "#/components/schemas/NestedArrayNullable"
+                nullableArray:
+                  $ref: "#/components/schemas/NullableArrayWithNullableItems"
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    # Test case from the original issue
+    Sample:
+      type: object
+      required: [metrics]
+      properties:
+        metrics:
+          type: array
+          items:
+            nullable: true
+            type: number
+
+    # Additional test cases for various primitive types
+    StringArrayNullable:
+      type: object
+      properties:
+        values:
+          type: array
+          items:
+            nullable: true
+            type: string
+
+    BooleanArrayNullable:
+      type: object
+      properties:
+        flags:
+          type: array
+          items:
+            nullable: true
+            type: boolean
+
+    IntegerArrayNullable:
+      type: object
+      properties:
+        counts:
+          type: array
+          items:
+            nullable: true
+            type: integer
+            format: int64
+
+    # Test with object items
+    ObjectArrayNullable:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            nullable: true
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+
+    # Test nested array with nullable items
+    NestedArrayNullable:
+      type: object
+      properties:
+        matrix:
+          type: array
+          items:
+            type: array
+            items:
+              nullable: true
+              type: number
+
+    # Test nullable array with nullable items
+    NullableArrayWithNullableItems:
+      type: object
+      properties:
+        data:
+          nullable: true
+          type: array
+          items:
+            nullable: true
+            type: string

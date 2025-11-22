@@ -604,7 +604,14 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			arrayType.RefType = typeName
 		}
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+
+		// Handle nullable array items by adding pointer prefix
+		itemTypeDecl := arrayType.TypeDecl()
+		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+			itemTypeDecl = "*" + itemTypeDecl
+		}
+
+		outSchema.GoType = "[]" + itemTypeDecl
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
