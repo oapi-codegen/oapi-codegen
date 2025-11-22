@@ -1,0 +1,4 @@
+package: issue2016
+generate:
+  models: true
+output: internal/test/issues/issue-2016/types.gen.go
