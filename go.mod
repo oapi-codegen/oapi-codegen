@@ -8,7 +8,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.21.0
 	golang.org/x/text v0.20.0
-	golang.org/x/tools v0.25.1
+	golang.org/x/tools v0.39.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 )
