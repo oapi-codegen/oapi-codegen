@@ -1,0 +1,18 @@
+openapi: "3.0.1"
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        204:
+          headers:
+            header1:
+              schema:
+                type: string
+            header2:
+              schema:
+                type: string
+              required: true
+            header3:
+              schema:
+                type: string
