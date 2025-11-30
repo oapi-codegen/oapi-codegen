@@ -26,6 +26,7 @@ import (
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/jsonpointer"
 )
 
 var (
@@ -446,7 +447,46 @@ func RefPathToGoType(refPath string) (string, error) {
 // refPathToGoType returns the Go typename for refPath given its
 func refPathToGoType(refPath string, local bool) (string, error) {
 	if refPath[0] == '#' {
-		return refPathToGoTypeSelf(refPath, local)
+		pathParts := strings.Split(refPath, "/")
+
+		t, err := jsonLookup(globalState.spec, refPath)
+		if err != nil {
+			fmt.Printf("err: %v\n", err)
+		}
+		// fmt.Printf("t: %v\n", t)
+		// fmt.Printf("t: %#v\n", t)
+
+		schema, ok := t.(*openapi3.Schema)
+		if ok {
+			var s Schema
+			// if schema.Type == "string" {
+			// 	return "string", nil
+			// }
+			fmt.Printf("s: %#v\n", s)
+			fmt.Printf("oapiSchemaToGoType(schema, nil, &s): %v\n", oapiSchemaToGoType(schema, nil, &s))
+			fmt.Printf("s: %v\n", s)
+			if schema.Type.Includes("object") {
+				err = oapiSchemaToGoType(schema, nil, &s)
+				if err != nil {
+					return "", err // TODO
+				}
+				return s.GoType, nil
+			}
+		}
+
+		// Schemas may have been renamed locally, so look up the actual name in
+		// the spec.
+		name, err := findSchemaNameByRefPath(refPath, globalState.spec)
+		if err != nil {
+			return "", fmt.Errorf("error finding ref: %s in spec: %v", refPath, err)
+		}
+		if name != "" {
+			return name, nil
+		}
+		// lastPart now stores the final element of the type path. This is what
+		// we use as the base for a type name.
+		lastPart := pathParts[len(pathParts)-1]
+		return SchemaNameToTypeName(lastPart), nil
 	}
 	pathParts := strings.Split(refPath, "#")
 	if len(pathParts) != 2 {
@@ -1111,4 +1151,32 @@ func sliceContains[E comparable](s []E, v E) bool {
 		}
 	}
 	return false
+}
+
+// jsonLookup allows taking a JSON pointer and looking up the value present at the given OpenAPI specification at that path.
+func jsonLookup(spec *openapi3.T, ref string) (any, error) {
+	parts := strings.Split(ref, "/")
+
+	var pointed any // TODO doc
+	pointed = spec
+
+	// fmt.Println(jsonpointer.GetForToken(spec, parts[1]))
+	for i, v := range parts {
+		if i == 0 {
+			if v != "#" {
+				return nil, fmt.Errorf("TODO: %v", v)
+			}
+
+			continue
+		}
+
+		t, _, err := jsonpointer.GetForToken(pointed, v)
+		if err != nil {
+			return nil, err // TODO
+		}
+
+		pointed = t
+	}
+
+	return pointed, nil
 }
