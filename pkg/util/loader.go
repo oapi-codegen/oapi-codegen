@@ -48,7 +48,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	// parse out the yaml.Node, which is required by the overlay library
-	data, err := yaml.Marshal(spec)
+	data, err := yamlMarshal(spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
 	}
@@ -81,7 +81,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 		}
 	}
 
-	b, err := yaml.Marshal(&node)
+	b, err := yamlMarshal(&node)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
@@ -97,4 +97,17 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	return swagger, nil
+}
+
+// yamlMarshal works the same as yaml.Marshal,
+// but is a workaround for bug https://github.com/go-yaml/yaml/issues/1071
+func yamlMarshal(v any) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	enc := yaml.NewEncoder(buf)
+	enc.SetIndent(1)
+	err := enc.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

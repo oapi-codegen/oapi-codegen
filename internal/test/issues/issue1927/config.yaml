@@ -1,0 +1,9 @@
+package: issue1927
+generate:
+  models: true
+  client: true
+  embedded-spec: true
+output: spec.gen.go
+output-options:
+  overlay:
+    path: overlay.yaml

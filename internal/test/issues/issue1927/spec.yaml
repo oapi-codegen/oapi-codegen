@@ -1,0 +1,16 @@
+openapi: 3.0.1
+info: {}
+paths:
+  /info:
+    get:
+      parameters:
+        - description: |2
+              a
+            b
+          name: filter
+          schema:
+            type: string
+          in: query
+      responses: {}
+
+
