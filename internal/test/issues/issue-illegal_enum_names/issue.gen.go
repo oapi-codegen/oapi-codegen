@@ -306,7 +306,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/foo", wrapper.GetFoo)
+	router.GET(baseURL+"/foo", wrapper.GetFoo).Name = "GET /foo"
 
 }
 

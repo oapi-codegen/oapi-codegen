@@ -61,6 +61,6 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/ping", wrapper.GetPing)
+	router.GET(baseURL+"/ping", wrapper.GetPing).Name = "GET /ping"
 
 }

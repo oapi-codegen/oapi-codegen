@@ -68,7 +68,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/included1", wrapper.IncludedOperation1)
-	router.GET(baseURL+"/included2", wrapper.IncludedOperation2)
+	router.GET(baseURL+"/included1", wrapper.IncludedOperation1).Name = "GET /included1"
+	router.GET(baseURL+"/included2", wrapper.IncludedOperation2).Name = "GET /included2"
 
 }

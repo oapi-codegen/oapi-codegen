@@ -209,29 +209,29 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
-	router.Post(options.BaseURL+"/json", wrapper.JSONExample)
+	router.Post(options.BaseURL+"/json", wrapper.JSONExample).Name("POST /json")
 
-	router.Post(options.BaseURL+"/multipart", wrapper.MultipartExample)
+	router.Post(options.BaseURL+"/multipart", wrapper.MultipartExample).Name("POST /multipart")
 
-	router.Post(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
+	router.Post(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Name("POST /multipart-related")
 
-	router.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Name("POST /multiple")
 
-	router.Get(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
+	router.Get(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters).Name("GET /reserved-go-keyword-parameters/:type")
 
-	router.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Name("POST /reusable-responses")
 
-	router.Post(options.BaseURL+"/text", wrapper.TextExample)
+	router.Post(options.BaseURL+"/text", wrapper.TextExample).Name("POST /text")
 
-	router.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
+	router.Post(options.BaseURL+"/unknown", wrapper.UnknownExample).Name("POST /unknown")
 
-	router.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
+	router.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Name("POST /unspecified-content-type")
 
-	router.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
+	router.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Name("POST /urlencoded")
 
-	router.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
+	router.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample).Name("POST /with-headers")
 
-	router.Post(options.BaseURL+"/with-union", wrapper.UnionExample)
+	router.Post(options.BaseURL+"/with-union", wrapper.UnionExample).Name("POST /with-union")
 
 }
 

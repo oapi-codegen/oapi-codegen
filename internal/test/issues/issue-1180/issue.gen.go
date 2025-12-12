@@ -292,7 +292,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+	router.GET(baseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive).Name = "GET /simplePrimitive/:param"
 
 }
 

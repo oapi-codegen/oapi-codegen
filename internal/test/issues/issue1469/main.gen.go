@@ -48,6 +48,6 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
-	router.Get(options.BaseURL+"/test", wrapper.Test)
+	router.Get(options.BaseURL+"/test", wrapper.Test).Name("GET /test")
 
 }
