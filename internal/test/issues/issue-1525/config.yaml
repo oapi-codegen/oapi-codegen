@@ -1,0 +1,4 @@
+package: issue1525
+generate:
+  models: true
+output: issue1525.gen.go
