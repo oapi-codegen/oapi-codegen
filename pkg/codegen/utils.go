@@ -656,12 +656,18 @@ func ReplacePathParamsWithStr(uri string) string {
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.
 func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
 	pathParams := OrderedParamsFromUri(path)
-	n := len(in)
-	if len(pathParams) != n {
-		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
-			path, len(pathParams), n)
+
+	uniquePathParams := make(map[string]bool, len(pathParams))
+	for _, param := range pathParams {
+		uniquePathParams[param] = true
 	}
-	out := make([]ParameterDefinition, len(in))
+
+	n := len(in)
+	if len(uniquePathParams) != n {
+		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+			path, len(uniquePathParams), n)
+	}
+	out := make([]ParameterDefinition, len(pathParams))
 	for i, name := range pathParams {
 		p := ParameterDefinitions(in).FindByName(name)
 		if p == nil {

@@ -53,10 +53,15 @@ func genParamArgs(params []ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
-	parts := make([]string, len(params))
-	for i, p := range params {
+	seenBefore := make(map[string]bool, len(params))
+	parts := make([]string, len(params))[:0]
+	for _, p := range params {
 		paramName := p.GoVariableName()
-		parts[i] = fmt.Sprintf("%s %s", paramName, p.TypeDef())
+		if seenBefore[paramName] {
+			continue
+		}
+		seenBefore[paramName] = true
+		parts = append(parts, fmt.Sprintf("%s %s", paramName, p.TypeDef()))
 	}
 	return ", " + strings.Join(parts, ", ")
 }
@@ -69,9 +74,15 @@ func genParamTypes(params []ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
-	parts := make([]string, len(params))
-	for i, p := range params {
-		parts[i] = p.TypeDef()
+	seenBefore := make(map[string]bool, len(params))
+	parts := make([]string, len(params))[:0]
+	for _, p := range params {
+		paramName := p.GoVariableName()
+		if seenBefore[paramName] {
+			continue
+		}
+		seenBefore[paramName] = true
+		parts = append(parts, p.TypeDef())
 	}
 	return ", " + strings.Join(parts, ", ")
 }
@@ -83,9 +94,15 @@ func genParamNames(params []ParameterDefinition) string {
 	if len(params) == 0 {
 		return ""
 	}
-	parts := make([]string, len(params))
-	for i, p := range params {
-		parts[i] = p.GoVariableName()
+	seenBefore := make(map[string]bool, len(params))
+	parts := make([]string, len(params))[:0]
+	for _, p := range params {
+		paramName := p.GoVariableName()
+		if seenBefore[paramName] {
+			continue
+		}
+		seenBefore[paramName] = true
+		parts = append(parts, p.GoVariableName())
 	}
 	return ", " + strings.Join(parts, ", ")
 }
