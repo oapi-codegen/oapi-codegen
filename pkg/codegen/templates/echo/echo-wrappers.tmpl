@@ -44,7 +44,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -52,7 +52,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
@@ -70,7 +70,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n))
         }
 {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
 {{end}}
 {{if .IsJson}}
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
@@ -84,7 +84,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
         }
 {{end}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
         } {{if .Required}}else {
             return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Header parameter {{.ParamName}} is required, but not found"))
         }{{end}}
@@ -94,7 +94,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
 {{range .CookieParams}}
     if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}cookie.Value
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -107,7 +107,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
@@ -115,7 +115,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Query argument {{.ParamName}} is required, but not found"))
