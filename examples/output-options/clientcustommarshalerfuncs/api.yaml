@@ -1,0 +1,50 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Generate models
+paths:
+  /client:
+    get:
+      operationId: getClient
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientType"
+  /contentObject/{param}:
+    get:
+      operationId: getContentObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+components:
+  schemas:
+    ClientType:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    ComplexObject:
+      properties:
+        Id:
+          type: integer
+        IsAdmin:
+          type: boolean
+      required:
+        - Id
+        - IsAdmin
+    Unreferenced:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: int

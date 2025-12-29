@@ -719,3 +719,15 @@ func Test_replaceInitialism(t *testing.T) {
 		})
 	}
 }
+
+func Test_getMarshaler(t *testing.T) {
+	clientMarshalerEnabled = true
+
+	actual := getClientMarshaler("json", "Marshal")
+	assert.Equal(t, "jsonMarshal", actual)
+
+	clientMarshalerEnabled = false
+
+	actual = getClientMarshaler("json", "Marshal")
+	assert.Equal(t, "json.Marshal", actual)
+}

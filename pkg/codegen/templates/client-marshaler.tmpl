@@ -1,0 +1,22 @@
+var (
+    jsonMarshal = json.Marshal
+    jsonUnmarshal = json.Unmarshal
+    xmlUnmarshal = xml.Unmarshal
+    yamlUnmarshal = yaml.Unmarshal
+)
+
+func SetJSONMarshal(f func(any) ([]byte, error)) {
+    jsonMarshal = f
+}
+
+func SetJSONUnmarshal(f func([]byte, any) error) {
+    jsonUnmarshal = f
+}
+
+func SetXMLUnmarshal(f func([]byte, any) error) {
+    xmlUnmarshal = f
+}
+
+func SetYAMLUnmarshal(f func([]byte, any) error) {
+    yamlUnmarshal = f
+}
