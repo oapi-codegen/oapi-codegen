@@ -102,12 +102,12 @@
               }
             }
             {{range .Schema.Properties}}
-            {{if .HasOptionalPointer}}if t.{{.GoFieldName}} != nil { {{end}}
+            {{if .RequiresNilCheck}}if t.{{.GoFieldName}} != nil { {{end}}
                 object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
                 if err != nil {
                     return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
                 }
-            {{if .HasOptionalPointer}} }{{end}}
+            {{if .RequiresNilCheck}} }{{end}}
             {{end -}}
             b, err = json.Marshal(object)
         {{end -}}
