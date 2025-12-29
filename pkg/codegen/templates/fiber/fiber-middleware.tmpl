@@ -86,10 +86,10 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   {{end}}
 
     {{if .HeaderParams}}
-      headers := c.GetReqHeaders()
 
       {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
-        if value, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+        header{{.GoName}} := c.Get("{{.ParamName}}")
+        if header{{.GoName}} != "" {
           var {{.GoName}} {{.TypeDef}}
 
         {{if .IsPassThrough}}
@@ -104,7 +104,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", value, &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", header{{.GoName}} , &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
           }
