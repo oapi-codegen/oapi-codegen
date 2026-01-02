@@ -1,0 +1,6 @@
+package: api
+generate:
+  std-http-server: true
+  embedded-spec: true
+  models: true
+output: api.gen.go
