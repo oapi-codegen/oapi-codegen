@@ -26,6 +26,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	sampleservice "github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen/sample_service"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
@@ -47,6 +48,7 @@ var (
 	flagPrintUsage     bool
 	flagGenerate       string
 	flagTemplatesDir   string
+	flagServiceName    string
 
 	// Deprecated: The options below will be removed in a future
 	// release. Please use the new config file format.
@@ -98,6 +100,7 @@ func main() {
 	flag.StringVar(&flagPackageName, "package", "", "The package name for generated code.")
 	flag.BoolVar(&flagPrintUsage, "help", false, "Show this help and exit.")
 	flag.BoolVar(&flagPrintUsage, "h", false, "Same as -help.")
+	flag.StringVar(&flagServiceName, "service", "", "The service name for which code is being generated.")
 
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
@@ -119,6 +122,14 @@ func main() {
 	if flagPrintUsage {
 		flag.Usage()
 		os.Exit(0)
+	}
+
+	if flagServiceName != "" {
+		err := sampleservice.GenerateMinimalService(flagServiceName)
+		if err != nil {
+			errExit("error generating minimal service: %s\n", err)
+		}
+		return
 	}
 
 	if flagPrintVersion {
