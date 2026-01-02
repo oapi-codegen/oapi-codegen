@@ -53,7 +53,10 @@ func GenerateMinimalService(serviceName string) error {
 	if err != nil {
 		return err
 	}
-	os.Chdir(servicePath)
+	err = os.Chdir(servicePath)
+	if err != nil {
+		return fmt.Errorf("failed to change directory: %w", err)
+	}
 	cmd := exec.Command("go", "mod", "init", serviceName)
 	err = cmd.Run()
 	if err != nil {
