@@ -268,8 +268,19 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
-	var strictServerOut string
+	var (
+		strictServerOut          string
+		strictServerMarshalerOut string
+	)
 	if opts.Generate.Strict {
+		serverCustomMarshaler = opts.OutputOptions.ServerCustomMarshalerFuncs
+		if opts.OutputOptions.ServerCustomMarshalerFuncs {
+			strictServerMarshalerOut, err = GenerateServerMarshaler(t)
+			if err != nil {
+				return "", fmt.Errorf("error generating strict server marshaler funcs: %w", err)
+			}
+		}
+
 		var responses []ResponseDefinition
 		if spec.Components != nil {
 			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
@@ -411,6 +422,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(strictServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+
+		if opts.OutputOptions.ServerCustomMarshalerFuncs {
+			_, err = w.WriteString(strictServerMarshalerOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing server path handlers: %w", err)
+			}
 		}
 	}
 
