@@ -42,7 +42,7 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
-## For Go 1.24+
+### For Go 1.24+
 
 It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
@@ -59,7 +59,7 @@ From there, each invocation of `oapi-codegen` would be used like so:
 //go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
 ```
 
-## Prior to Go 1.24
+### Prior to Go 1.24
 
 It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
 
@@ -4475,18 +4475,6 @@ For the most part, `oapi-codegen` is maintained in two busy peoples' free time. 
 Please consider sponsoring us through GitHub Sponsors either [on the organisation](https://github.com/sponsors/oapi-codegen/) or [directly for Jamie](https://github.com/sponsors/jamietanna/), which helps work towards us being able to maintain the project long term.
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
-
-We are currently sponsored for 4 hours of work a month by Elastic:
-
-<p align="center">
-	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
-		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
-		</picture>
-	</a>
-</p>
 
 In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
