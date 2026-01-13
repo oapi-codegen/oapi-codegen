@@ -84,9 +84,7 @@ func TestOperationToMCPTool(t *testing.T) {
 	assert.Equal(t, "GetPet", tool.OperationID)
 	assert.Equal(t, "Get a pet by ID", tool.Description)
 	assert.NotEmpty(t, tool.InputSchema)
-	// OutputSchema is intentionally not generated - when a tool has an OutputSchema,
-	// the MCP protocol requires handlers to return StructuredContent, which is not yet supported
-	assert.Empty(t, tool.OutputSchema)
+	assert.NotEmpty(t, tool.OutputSchema)
 }
 
 func TestBuildMCPInputSchema(t *testing.T) {

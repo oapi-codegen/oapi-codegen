@@ -101,10 +101,14 @@ type MCPServer interface {
 }
 
 const inputSchemaListPets = "{\"properties\":{\"query\":{\"properties\":{\"limit\":{\"description\":\"Maximum number of pets to return\",\"format\":\"int32\",\"maximum\":100,\"minimum\":1,\"type\":\"integer\"},\"tag\":{\"description\":\"Filter pets by tag\",\"type\":\"string\"}},\"type\":\"object\"}},\"type\":\"object\"}"
+const outputSchemaListPets = "{\"properties\":{\"nextCursor\":{\"type\":\"string\"},\"pets\":{\"items\":{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"id\":{\"description\":\"Unique identifier for the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"},\"type\":\"array\"}},\"required\":[\"pets\"],\"type\":\"object\"}"
 const inputSchemaCreatePet = "{\"properties\":{\"body\":{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"required\":[\"name\"],\"type\":\"object\"}},\"required\":[\"body\"],\"type\":\"object\"}"
+const outputSchemaCreatePet = "{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"id\":{\"description\":\"Unique identifier for the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"}"
 const inputSchemaDeletePet = "{\"properties\":{\"path\":{\"properties\":{\"petId\":{\"description\":\"The ID of the pet to delete\",\"type\":\"string\"}},\"required\":[\"petId\"],\"type\":\"object\"}},\"required\":[\"path\"],\"type\":\"object\"}"
 const inputSchemaGetPet = "{\"properties\":{\"path\":{\"properties\":{\"petId\":{\"description\":\"The ID of the pet to retrieve\",\"type\":\"string\"}},\"required\":[\"petId\"],\"type\":\"object\"}},\"required\":[\"path\"],\"type\":\"object\"}"
+const outputSchemaGetPet = "{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"id\":{\"description\":\"Unique identifier for the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"}"
 const inputSchemaUpdatePet = "{\"properties\":{\"body\":{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"type\":\"object\"},\"path\":{\"properties\":{\"petId\":{\"description\":\"The ID of the pet to update\",\"type\":\"string\"}},\"required\":[\"petId\"],\"type\":\"object\"}},\"required\":[\"path\",\"body\"],\"type\":\"object\"}"
+const outputSchemaUpdatePet = "{\"properties\":{\"age\":{\"description\":\"Age of the pet in years\",\"type\":\"integer\"},\"breed\":{\"description\":\"Breed of the pet\",\"type\":\"string\"},\"id\":{\"description\":\"Unique identifier for the pet\",\"type\":\"string\"},\"name\":{\"description\":\"Name of the pet\",\"type\":\"string\"},\"tag\":{\"description\":\"Tag for categorizing the pet\",\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"}"
 
 // RegisterMCPTools registers all tool handlers with the MCP server.
 // The mcpServer parameter should be a *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp.
@@ -113,9 +117,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register ListPets
 	{
 		tool := &mcp.Tool{
-			Name:        "ListPets",
-			Description: "List all pets",
-			InputSchema: json.RawMessage(inputSchemaListPets),
+			Name:         "ListPets",
+			Description:  "List all pets",
+			InputSchema:  json.RawMessage(inputSchemaListPets),
+			OutputSchema: json.RawMessage(outputSchemaListPets),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -127,9 +132,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register CreatePet
 	{
 		tool := &mcp.Tool{
-			Name:        "CreatePet",
-			Description: "Create a pet",
-			InputSchema: json.RawMessage(inputSchemaCreatePet),
+			Name:         "CreatePet",
+			Description:  "Create a pet",
+			InputSchema:  json.RawMessage(inputSchemaCreatePet),
+			OutputSchema: json.RawMessage(outputSchemaCreatePet),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -155,9 +161,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register GetPet
 	{
 		tool := &mcp.Tool{
-			Name:        "GetPet",
-			Description: "Get a pet by ID",
-			InputSchema: json.RawMessage(inputSchemaGetPet),
+			Name:         "GetPet",
+			Description:  "Get a pet by ID",
+			InputSchema:  json.RawMessage(inputSchemaGetPet),
+			OutputSchema: json.RawMessage(outputSchemaGetPet),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -169,9 +176,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register UpdatePet
 	{
 		tool := &mcp.Tool{
-			Name:        "UpdatePet",
-			Description: "Update a pet",
-			InputSchema: json.RawMessage(inputSchemaUpdatePet),
+			Name:         "UpdatePet",
+			Description:  "Update a pet",
+			InputSchema:  json.RawMessage(inputSchemaUpdatePet),
+			OutputSchema: json.RawMessage(outputSchemaUpdatePet),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -278,18 +286,10 @@ func (sh *strictMCPHandler) ListPets(ctx context.Context, request *mcp.CallToolR
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
@@ -336,18 +336,10 @@ func (sh *strictMCPHandler) CreatePet(ctx context.Context, request *mcp.CallTool
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
@@ -394,18 +386,10 @@ func (sh *strictMCPHandler) DeletePet(ctx context.Context, request *mcp.CallTool
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
@@ -452,18 +436,10 @@ func (sh *strictMCPHandler) GetPet(ctx context.Context, request *mcp.CallToolReq
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
@@ -516,18 +492,10 @@ func (sh *strictMCPHandler) UpdatePet(ctx context.Context, request *mcp.CallTool
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}

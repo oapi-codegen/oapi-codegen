@@ -182,11 +182,19 @@ func operationToMCPTool(op OperationDefinition) (MCPToolDefinition, error) {
 	// Escape for use in Go string literal (replace backslashes and quotes)
 	tool.InputSchema = strings.ReplaceAll(strings.ReplaceAll(string(inputSchemaJSON), `\`, `\\`), `"`, `\"`)
 
-	// NOTE: Output schema generation is intentionally disabled.
-	// When a tool has an OutputSchema, the MCP protocol requires the handler to return
-	// structured content via CallToolResult.StructuredContent, not regular Content.
-	// Until typed handlers with StructuredContent are implemented, we skip output schema
-	// generation to avoid the error: "Tool has an output schema but did not return structured content"
+	// Build output schema
+	outputSchema, err := buildMCPOutputSchema(op)
+	if err != nil {
+		return tool, fmt.Errorf("error building output schema: %w", err)
+	}
+	if outputSchema != nil {
+		outputSchemaJSON, err := json.Marshal(outputSchema)
+		if err != nil {
+			return tool, fmt.Errorf("error marshaling output schema: %w", err)
+		}
+		// Escape for use in Go string literal (replace backslashes and quotes)
+		tool.OutputSchema = strings.ReplaceAll(strings.ReplaceAll(string(outputSchemaJSON), `\`, `\\`), `"`, `\"`)
+	}
 
 	return tool, nil
 }

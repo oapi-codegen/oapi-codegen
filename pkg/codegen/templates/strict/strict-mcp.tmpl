@@ -133,18 +133,10 @@ func (sh *strictMCPHandler) {{.OperationId}}(ctx context.Context, request *mcp.C
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}

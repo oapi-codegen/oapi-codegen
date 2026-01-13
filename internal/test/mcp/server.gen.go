@@ -50,7 +50,9 @@ type MCPServer interface {
 }
 
 const inputSchemaGetPet = "{\"properties\":{\"path\":{\"properties\":{\"petId\":{\"type\":\"string\"}},\"required\":[\"petId\"],\"type\":\"object\"},\"query\":{\"properties\":{\"include\":{\"type\":\"string\"}},\"type\":\"object\"}},\"required\":[\"path\"],\"type\":\"object\"}"
+const outputSchemaGetPet = "{\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"tag\":{\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"}"
 const inputSchemaCreatePet = "{\"properties\":{\"body\":{\"properties\":{\"name\":{\"type\":\"string\"},\"tag\":{\"type\":\"string\"}},\"required\":[\"name\"],\"type\":\"object\"},\"path\":{\"properties\":{\"petId\":{\"type\":\"string\"}},\"required\":[\"petId\"],\"type\":\"object\"}},\"required\":[\"path\",\"body\"],\"type\":\"object\"}"
+const outputSchemaCreatePet = "{\"properties\":{\"id\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"tag\":{\"type\":\"string\"}},\"required\":[\"id\",\"name\"],\"type\":\"object\"}"
 
 // RegisterMCPTools registers all tool handlers with the MCP server.
 // The mcpServer parameter should be a *mcp.Server from github.com/modelcontextprotocol/go-sdk/mcp.
@@ -59,9 +61,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register GetPet
 	{
 		tool := &mcp.Tool{
-			Name:        "GetPet",
-			Description: "Get a pet by ID",
-			InputSchema: json.RawMessage(inputSchemaGetPet),
+			Name:         "GetPet",
+			Description:  "Get a pet by ID",
+			InputSchema:  json.RawMessage(inputSchemaGetPet),
+			OutputSchema: json.RawMessage(outputSchemaGetPet),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -73,9 +76,10 @@ func RegisterMCPTools(mcpServer MCPServer, si MCPHandlerInterface) error {
 	// Register CreatePet
 	{
 		tool := &mcp.Tool{
-			Name:        "CreatePet",
-			Description: "Create a new pet",
-			InputSchema: json.RawMessage(inputSchemaCreatePet),
+			Name:         "CreatePet",
+			Description:  "Create a new pet",
+			InputSchema:  json.RawMessage(inputSchemaCreatePet),
+			OutputSchema: json.RawMessage(outputSchemaCreatePet),
 		}
 
 		handler := func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -188,18 +192,10 @@ func (sh *strictMCPHandler) GetPet(ctx context.Context, request *mcp.CallToolReq
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
@@ -252,18 +248,10 @@ func (sh *strictMCPHandler) CreatePet(ctx context.Context, request *mcp.CallTool
 			return nil, err
 		}
 
-		// Marshal response and wrap in MCP CallToolResult
+		// Return response as StructuredContent to comply with MCP output schema requirements
 		result := &mcp.CallToolResult{}
 		if response != nil {
-			responseBytes, err := json.Marshal(response)
-			if err != nil {
-				return sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("error marshaling response: %w", err)), nil
-			}
-			result.Content = []mcp.Content{
-				&mcp.TextContent{
-					Text: string(responseBytes),
-				},
-			}
+			result.StructuredContent = response
 		}
 		return result, nil
 	}
