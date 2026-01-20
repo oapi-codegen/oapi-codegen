@@ -511,6 +511,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":
