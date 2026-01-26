@@ -874,17 +874,19 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 	}
 
 	context := struct {
-		ExternalImports   []string
-		PackageName       string
-		ModuleName        string
-		Version           string
-		AdditionalImports []AdditionalImport
+		ExternalImports      []string
+		PackageName          string
+		ModuleName           string
+		Version              string
+		AdditionalImports    []AdditionalImport
+		CompatibilityOptions CompatibilityOptions
 	}{
-		ExternalImports:   externalImports,
-		PackageName:       packageName,
-		ModuleName:        modulePath,
-		Version:           moduleVersion,
-		AdditionalImports: globalState.options.AdditionalImports,
+		ExternalImports:      externalImports,
+		PackageName:          packageName,
+		ModuleName:           modulePath,
+		Version:              moduleVersion,
+		AdditionalImports:    globalState.options.AdditionalImports,
+		CompatibilityOptions: globalState.options.Compatibility,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)

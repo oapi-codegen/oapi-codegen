@@ -85,6 +85,52 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "Double EnumTestEnumVarnames = 2")
 }
 
+func TestExampleOpenAPICodeGeneration_UseHttprouterInStdHttpServer(t *testing.T) {
+
+	// Input vars for code generation:
+	packageName := "testswagger"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Client:        true,
+			Models:        true,
+			EmbeddedSpec:  true,
+		},
+		Compatibility: CompatibilityOptions{
+			UseHttprouterInStdHttpServer: true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+
+	// Get a spec from the test definition in this file:
+	swagger, err := loader.LoadFromData([]byte(testOpenAPIDefinition))
+	assert.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	// Check that we have a package:
+	assert.Contains(t, code, "package testswagger")
+
+	// Check that httprouter is imported
+	assert.Contains(t, code, `github.com/julienschmidt/httprouter`)
+	// Check that HandlerFunc signature for httprouter is correct
+	assert.Contains(t, code, `HandlerFunc(method, path string, handler http.HandlerFunc)`)
+	// Check that httprouter is used in the server code
+	assert.Contains(t, code, `m = httprouter.New()`)
+	// Check that the route is registered correctly
+	assert.Contains(t, code, `m.HandlerFunc("GET", options.BaseURL+"/test/{name}", wrapper.GetTestByName)`)
+}
+
 func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 	packageName := "api"
 	opts := Configuration{
@@ -158,6 +204,42 @@ func TestGoTypeImport(t *testing.T) {
 		`github.com/jackc/pgtype`,              // direct parameters - path
 		`github.com/mailru/easyjson`,           // direct parameters - query
 		`github.com/subosito/gotenv`,           // direct request body
+	}
+
+	// Check import
+	for _, imp := range imports {
+		assert.Contains(t, code, imp)
+	}
+}
+
+func TestGoTypeImport_UseHttprouterInStdHttpServer(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+			EmbeddedSpec:  true,
+		},
+		Compatibility: CompatibilityOptions{
+			UseHttprouterInStdHttpServer: true,
+		},
+	}
+	spec := "test_specs/x-go-type-import-pet.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	imports := []string{
+		`github.com/julienschmidt/httprouter`, // httprouter for stdhttp server
 	}
 
 	// Check import

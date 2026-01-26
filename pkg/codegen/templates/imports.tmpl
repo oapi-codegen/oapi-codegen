@@ -20,7 +20,11 @@ import (
 	"os"
 	"mime"
 	"mime/multipart"
+	{{- if .CompatibilityOptions.UseHttprouterInStdHttpServer}}
+	"github.com/julienschmidt/httprouter"
+	{{- else}}
 	"net/http"
+	{{- end}}
 	"net/url"
 	"path"
 	"strings"

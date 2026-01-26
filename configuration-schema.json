@@ -111,6 +111,10 @@
         "preserve-original-operation-id-casing-in-embedded-spec": {
           "type": "boolean",
           "description": "When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.\nHowever, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.\nTo ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this. NOTE that this will not impact generated code.\nNOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct."
+        },
+        "use-httprouter-in-std-http-server": {
+          "type": "boolean",
+            "description": "When generating `std-http-server` code, use `httprouter` for routing instead of the default `http.ServeMux`. This allows for better performance and more advanced routing capabilities."
         }
       }
     },
