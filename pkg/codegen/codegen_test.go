@@ -97,7 +97,7 @@ func TestExampleOpenAPICodeGeneration_UseHttprouterInStdHttpServer(t *testing.T)
 			Models:        true,
 			EmbeddedSpec:  true,
 		},
-		Compatibility: CompatibilityOptions{
+		OutputOptions: OutputOptions{
 			UseHttprouterInStdHttpServer: true,
 		},
 	}
@@ -221,7 +221,7 @@ func TestGoTypeImport_UseHttprouterInStdHttpServer(t *testing.T) {
 			Models:        true,
 			EmbeddedSpec:  true,
 		},
-		Compatibility: CompatibilityOptions{
+		OutputOptions: OutputOptions{
 			UseHttprouterInStdHttpServer: true,
 		},
 	}

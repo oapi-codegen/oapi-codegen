@@ -4,5 +4,5 @@ output: ping.gen.go
 generate:
   models: true
   std-http-server: true
-compatibility:
+output-options:
   use-httprouter-in-std-http-server: true

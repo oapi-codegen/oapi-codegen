@@ -234,14 +234,6 @@ type CompatibilityOptions struct {
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
 	PreserveOriginalOperationIdCasingInEmbeddedSpec bool `yaml:"preserve-original-operation-id-casing-in-embedded-spec"`
-
-	// UseHttprouterInStdHttpServer makes the generated std http server use
-	// the httprouter package (github.com/julienschmidt/httprouter) instead of
-	// the default net/http ServeMux. This allows for better performance and
-	// more features like path parameters.
-	// NOTE: This option requires that the httprouter package is available in
-	// your module dependencies.
-	UseHttprouterInStdHttpServer bool `yaml:"use-httprouter-in-std-http-server"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
@@ -308,6 +300,14 @@ type OutputOptions struct {
 
 	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
+
+	// UseHttprouterInStdHttpServer makes the generated std http server use
+	// the httprouter package (github.com/julienschmidt/httprouter) instead of
+	// the default net/http ServeMux. This allows for better performance and
+	// more features like path parameters.
+	// NOTE: This option requires that the httprouter package is available in
+	// your module dependencies.
+	UseHttprouterInStdHttpServer bool `yaml:"use-httprouter-in-std-http-server,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
