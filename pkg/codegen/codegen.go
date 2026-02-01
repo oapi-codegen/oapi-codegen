@@ -26,6 +26,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -88,7 +89,7 @@ func (im importMap) GoImports() []string {
 	return goImports
 }
 
-func constructImportMapping(importMapping map[string]string) importMap {
+func constructImportMapping(importMapping map[string]string, stableRefNames bool) importMap {
 	var (
 		pathToName = map[string]string{}
 		result     = importMap{}
@@ -103,7 +104,13 @@ func constructImportMapping(importMapping map[string]string) importMap {
 
 		for _, packagePath := range packagePaths {
 			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+				if stableRefNames {
+					// get the path basename
+					pathBaseName := filepath.Base(packagePath)
+					pathToName[packagePath] = fmt.Sprintf("externalRef_%s", pathBaseName)
+				} else {
+					pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+				}
 			}
 		}
 	}
@@ -120,7 +127,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
-	globalState.importMapping = constructImportMapping(opts.ImportMapping)
+	globalState.importMapping = constructImportMapping(opts.ImportMapping, opts.Generate.StableExternalRefNames)
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)

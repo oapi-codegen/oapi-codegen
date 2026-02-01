@@ -240,6 +240,8 @@ func TestRefPathToGoType(t *testing.T) {
 			// using the "current package" mapping
 			"dj-current-package.yml": "-",
 		},
+		// pass `false` here to use the default import-mapping behavior; see constructImportMapping for details
+		false,
 	)
 	defer func() { globalState.importMapping = old }()
 
