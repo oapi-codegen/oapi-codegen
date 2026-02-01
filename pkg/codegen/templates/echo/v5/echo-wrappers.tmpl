@@ -9,16 +9,16 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx *echo.Context) error {
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 {{if .IsPassThrough}}
-    {{$varName}} = ctx.PathParam("{{.ParamName}}")
+    {{$varName}} = ctx.Param("{{.ParamName}}")
 {{end}}
 {{if .IsJson}}
-    err = json.Unmarshal([]byte(ctx.PathParam("{{.ParamName}}")), &{{$varName}})
+    err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
 {{end}}
 {{if .IsStyled}}
-    err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", ctx.PathParam("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
+    err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
     }
