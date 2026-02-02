@@ -318,6 +318,92 @@ func TestRefPathToGoType(t *testing.T) {
 	}
 }
 
+func TestNamedExternalRefPathToGoType(t *testing.T) {
+	old := globalState.importMapping
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "local",
+			"http://deepmap.com/doc.json": "remote",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+		true,
+	)
+	defer func() { globalState.importMapping = old }()
+
+	tests := []struct {
+		name   string
+		path   string
+		goType string
+	}{
+		{
+			name:   "local-schemas",
+			path:   "#/components/schemas/Foo",
+			goType: "Foo",
+		},
+		{
+			name:   "local-parameters",
+			path:   "#/components/parameters/foo_bar",
+			goType: "FooBar",
+		},
+		{
+			name:   "local-responses",
+			path:   "#/components/responses/wibble",
+			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
+		},
+		{
+			name:   "remote-root",
+			path:   "doc.json#/foo",
+			goType: "external_ref_local.Foo",
+		},
+		{
+			name:   "remote-pathed",
+			path:   "doc.json#/components/parameters/foo",
+			goType: "external_ref_local.Foo",
+		},
+		{
+			name:   "url-root",
+			path:   "http://deepmap.com/doc.json#/foo_bar",
+			goType: "external_ref_remote.FooBar",
+		},
+		{
+			name:   "url-pathed",
+			path:   "http://deepmap.com/doc.json#/components/parameters/foo_bar",
+			goType: "external_ref_remote.FooBar",
+		},
+		{
+			name: "local-too-deep",
+			path: "#/components/parameters/foo/components/bar",
+		},
+		{
+			name: "remote-too-deep",
+			path: "doc.json#/components/parameters/foo/foo_bar",
+		},
+		{
+			name: "url-too-deep",
+			path: "http://deepmap.com/doc.json#/components/parameters/foo/foo_bar",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			goType, err := RefPathToGoType(tc.path)
+			if tc.goType == "" {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, tc.goType, goType)
+		})
+	}
+}
+
 func TestIsWholeDocumentReference(t *testing.T) {
 	assert.Equal(t, false, IsWholeDocumentReference(""))
 	assert.Equal(t, false, IsWholeDocumentReference("#/components/schemas/Foo"))
