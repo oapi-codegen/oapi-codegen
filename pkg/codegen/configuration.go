@@ -128,8 +128,8 @@ type GenerateOptions struct {
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
 	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
 	ServerURLs bool `yaml:"server-urls,omitempty"`
-	// StableExternalRefNames generates imports for external reference packages as their literal filenames, rather than indexing them
-	StableExternalRefNames bool `yaml:"stable-external-ref-names,omitempty"`
+	// ExternalRefNamedImports generates imports for external references with their package name, rather than using indexed aliases like `externalRef1`, `externalRef2`, etc.
+	ExternalRefNamedImports bool `yaml:"external-ref-named-imports,omitempty"`
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
