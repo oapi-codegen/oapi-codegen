@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: packagea
+generate:
+  models: true
+  embedded-spec: true
+  external-ref-named-imports: true
+output-options:
+  skip-prune: true
+import-mapping:
+  ../packageB/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref_named/packageB
+output: externalref.gen.go

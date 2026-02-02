@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: packageb
+generate:
+  models: true
+  embedded-spec: true
+  external-ref-named-imports: true
+output-options:
+  skip-prune: true
+output: externalref.gen.go
