@@ -107,7 +107,7 @@ func constructImportMapping(importMapping map[string]string, namedExternalImport
 				if namedExternalImports {
 					// get the package path basename
 					packageBaseName := filepath.Base(packagePath)
-					pathToName[packagePath] = fmt.Sprintf("externalRef_%s", packageBaseName)
+					pathToName[packagePath] = fmt.Sprintf("external_ref_%s", packageBaseName)
 				} else {
 					pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
 				}
