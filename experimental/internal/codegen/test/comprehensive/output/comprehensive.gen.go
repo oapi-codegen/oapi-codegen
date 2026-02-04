@@ -447,7 +447,7 @@ func (s *DeepInheritanceSchemaComponent) ApplyDefaults() {
 
 // #/components/schemas/AllOfMultipleRefs
 type AllOfMultipleRefsSchemaComponent struct {
-	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	ID        int        `json:"id" form:"id"`
 	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
 	Name      *string    `json:"name,omitempty" form:"name,omitempty"`
 	Merged    *bool      `json:"merged,omitempty" form:"merged,omitempty"`
@@ -1915,6 +1915,43 @@ type GetInlineResponseJSONResponse = InlineResponseGet200ApplicationJSONContentR
 func (s *InlineResponseGet200ApplicationJSONContentResponsePath) ApplyDefaults() {
 }
 
+const DateFormat = "2006-01-02"
+
+type Date struct {
+	time.Time
+}
+
+func (d Date) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Format(DateFormat))
+}
+
+func (d *Date) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	err := json.Unmarshal(data, &dateStr)
+	if err != nil {
+		return err
+	}
+	parsed, err := time.Parse(DateFormat, dateStr)
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
+func (d Date) String() string {
+	return d.Format(DateFormat)
+}
+
+func (d *Date) UnmarshalText(data []byte) error {
+	parsed, err := time.Parse(DateFormat, string(data))
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
 type UUID = uuid.UUID
 
 const (
@@ -2020,41 +2057,4 @@ func (file File) FileSize() int64 {
 		return file.multipart.Size
 	}
 	return int64(len(file.data))
-}
-
-const DateFormat = "2006-01-02"
-
-type Date struct {
-	time.Time
-}
-
-func (d Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.Format(DateFormat))
-}
-
-func (d *Date) UnmarshalJSON(data []byte) error {
-	var dateStr string
-	err := json.Unmarshal(data, &dateStr)
-	if err != nil {
-		return err
-	}
-	parsed, err := time.Parse(DateFormat, dateStr)
-	if err != nil {
-		return err
-	}
-	d.Time = parsed
-	return nil
-}
-
-func (d Date) String() string {
-	return d.Format(DateFormat)
-}
-
-func (d *Date) UnmarshalText(data []byte) error {
-	parsed, err := time.Parse(DateFormat, string(data))
-	if err != nil {
-		return err
-	}
-	d.Time = parsed
-	return nil
 }

@@ -1,0 +1,27 @@
+# Issue 697: Properties near allOf are ignored
+# https://github.com/oapi-codegen/oapi-codegen/issues/697
+#
+# When a schema has both allOf and properties at the same level,
+# the properties should be included in the generated type.
+# This is similar to issue 2102.
+openapi: 3.0.0
+info:
+  title: Issue 697 Test
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    YBase:
+      type: object
+      properties:
+        baseField:
+          type: string
+    X:
+      allOf:
+        - $ref: '#/components/schemas/YBase'
+      properties:
+        a:
+          type: string
+        b:
+          type: integer
+      type: object

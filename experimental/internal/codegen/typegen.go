@@ -59,7 +59,12 @@ func (g *TypeGenerator) AddImportAlias(path, alias string) {
 	}
 }
 
-// AddJSONImports adds encoding/json and fmt imports (used by marshal/unmarshal code).
+// AddJSONImport adds encoding/json import (used by marshal/unmarshal code).
+func (g *TypeGenerator) AddJSONImport() {
+	g.AddImport("encoding/json")
+}
+
+// AddJSONImports adds encoding/json and fmt imports (used by oneOf marshal/unmarshal code).
 func (g *TypeGenerator) AddJSONImports() {
 	g.AddImport("encoding/json")
 	g.AddImport("fmt")

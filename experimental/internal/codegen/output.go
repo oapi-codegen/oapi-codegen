@@ -345,9 +345,10 @@ func GenerateUnionType(name string, members []UnionMember, isOneOf bool, doc str
 
 // UnionMember represents a member of a union type (anyOf/oneOf).
 type UnionMember struct {
-	FieldName string // Go field name
-	TypeName  string // Go type name
-	Index     int    // Position in anyOf/oneOf array
+	FieldName        string // Go field name
+	TypeName         string // Go type name
+	Index            int    // Position in anyOf/oneOf array
+	HasApplyDefaults bool   // Whether this type has an ApplyDefaults method
 }
 
 // isPrimitiveType returns true if the type is a Go primitive or collection
@@ -368,7 +369,7 @@ func isPrimitiveType(typeName string) bool {
 }
 
 // GenerateUnionApplyDefaults generates ApplyDefaults for a union type.
-// It recurses into non-nil members that are not primitive types.
+// It recurses into non-nil members that have ApplyDefaults.
 func GenerateUnionApplyDefaults(name string, members []UnionMember) string {
 	b := NewCodeBuilder()
 
@@ -377,8 +378,8 @@ func GenerateUnionApplyDefaults(name string, members []UnionMember) string {
 	b.Indent()
 
 	for _, m := range members {
-		// Only recurse into non-primitive types
-		if !isPrimitiveType(m.TypeName) {
+		// Only recurse into types that have ApplyDefaults
+		if m.HasApplyDefaults {
 			b.Line("if u.%s != nil {", m.FieldName)
 			b.Indent()
 			b.Line("u.%s.ApplyDefaults()", m.FieldName)

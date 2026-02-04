@@ -233,6 +233,7 @@ type allOfMemberInfo struct {
 	fields    []StructField // flattened fields from object schemas
 	unionType string        // non-empty if this member is a oneOf/anyOf union
 	unionDesc *SchemaDescriptor
+	required  []string // required fields from this allOf member
 }
 
 // generateAllOfType generates a struct with flattened properties from all allOf members.
@@ -242,6 +243,21 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	schema := desc.Schema
 	if schema == nil {
 		return ""
+	}
+
+	// Merge all fields, checking for conflicts
+	mergedFields := make(map[string]StructField) // keyed by JSONName
+	var fieldOrder []string                       // preserve order
+	var unionFields []StructField
+
+	// First, collect fields from properties defined directly on the schema
+	// (Issue 2102: properties at same level as allOf were being ignored)
+	if schema.Properties != nil && schema.Properties.Len() > 0 {
+		directFields := gen.GenerateStructFields(desc)
+		for _, field := range directFields {
+			mergedFields[field.JSONName] = field
+			fieldOrder = append(fieldOrder, field.JSONName)
+		}
 	}
 
 	// Collect info about each allOf member
@@ -274,14 +290,13 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 			}
 		}
 
+		// Also check for required array in allOf members (may mark fields as required)
+		info.required = memberSchema.Required
+
 		members = append(members, info)
 	}
 
-	// Merge all fields, checking for conflicts
-	mergedFields := make(map[string]StructField) // keyed by JSONName
-	var fieldOrder []string                       // preserve order
-	var unionFields []StructField
-
+	// Merge fields from allOf members
 	for _, member := range members {
 		if member.unionType != "" {
 			// Add union as a special field
@@ -308,6 +323,22 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 			mergedFields[field.JSONName] = field
 			fieldOrder = append(fieldOrder, field.JSONName)
 		}
+
+		// Apply required array from this allOf member to update pointer/omitempty
+		for _, reqName := range member.required {
+			if field, ok := mergedFields[reqName]; ok {
+				if !field.Required {
+					field.Required = true
+					field.OmitEmpty = false
+					// Update pointer status - required non-nullable fields are not pointers
+					if !field.Nullable && !strings.HasPrefix(field.Type, "[]") && !strings.HasPrefix(field.Type, "map[") {
+						field.Type = strings.TrimPrefix(field.Type, "*")
+						field.Pointer = false
+					}
+					mergedFields[reqName] = field
+				}
+			}
+		}
 	}
 
 	// Build final field list in order
@@ -322,7 +353,7 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	var code string
 	if len(unionFields) > 0 {
 		// Has union members - need custom marshal/unmarshal
-		gen.AddJSONImports()
+		gen.AddJSONImport()
 		code = generateAllOfStructWithUnions(desc.StableName, finalFields, unionFields, doc, gen.TagGenerator())
 	} else {
 		// Simple case - just flattened fields
@@ -492,8 +523,8 @@ func generateAnyOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		return ""
 	}
 
-	// Union types need encoding/json and fmt for marshal/unmarshal
-	gen.AddJSONImports()
+	// anyOf types only need encoding/json (not fmt like oneOf)
+	gen.AddJSONImport()
 
 	doc := extractDescription(desc.Schema)
 	structCode := GenerateUnionType(desc.StableName, members, false, doc)
@@ -585,6 +616,39 @@ func loadCustomType(templateName string) (string, map[string]string) {
 	return code, imports
 }
 
+// schemaHasApplyDefaults returns true if the schema will have an ApplyDefaults method generated.
+// This is true for:
+// - Object types with properties
+// - Union types (oneOf/anyOf)
+// - AllOf types (merged structs)
+// This is false for:
+// - Primitive types (string, integer, boolean, number)
+// - Enum types (without object properties)
+// - Arrays
+// - Maps (additionalProperties only)
+func schemaHasApplyDefaults(schema *base.Schema) bool {
+	if schema == nil {
+		return false
+	}
+
+	// Has properties -> object type with ApplyDefaults
+	if schema.Properties != nil && schema.Properties.Len() > 0 {
+		return true
+	}
+
+	// Has oneOf/anyOf -> union type with ApplyDefaults
+	if len(schema.OneOf) > 0 || len(schema.AnyOf) > 0 {
+		return true
+	}
+
+	// Has allOf -> merged struct with ApplyDefaults
+	if len(schema.AllOf) > 0 {
+		return true
+	}
+
+	return false
+}
+
 // collectUnionMembers gathers union member information for anyOf/oneOf.
 func collectUnionMembers(gen *TypeGenerator, parentDesc *SchemaDescriptor, memberDescs []*SchemaDescriptor, memberProxies []*base.SchemaProxy) []UnionMember {
 	var members []UnionMember
@@ -600,12 +664,14 @@ func collectUnionMembers(gen *TypeGenerator, parentDesc *SchemaDescriptor, membe
 	for i, proxy := range memberProxies {
 		var memberType string
 		var fieldName string
+		var hasApplyDefaults bool
 
 		if proxy.IsReference() {
 			ref := proxy.GetReference()
 			if target, ok := gen.schemaIndex[ref]; ok {
 				memberType = target.ShortName
 				fieldName = target.ShortName
+				hasApplyDefaults = schemaHasApplyDefaults(target.Schema)
 			} else {
 				continue
 			}
@@ -629,19 +695,22 @@ func collectUnionMembers(gen *TypeGenerator, parentDesc *SchemaDescriptor, membe
 			if desc, ok := descByPath[memberPath.String()]; ok && desc.ShortName != "" {
 				memberType = desc.ShortName
 				fieldName = desc.ShortName
+				hasApplyDefaults = schemaHasApplyDefaults(desc.Schema)
 			} else {
 				// This is a primitive type that doesn't have a named type
 				goType := gen.goTypeForSchema(schema, nil)
 				memberType = goType
 				// Create a field name based on the type
 				fieldName = gen.converter.ToTypeName(goType) + fmt.Sprintf("%d", i)
+				hasApplyDefaults = false // Primitive types don't have ApplyDefaults
 			}
 		}
 
 		members = append(members, UnionMember{
-			FieldName: fieldName,
-			TypeName:  memberType,
-			Index:     i,
+			FieldName:        fieldName,
+			TypeName:         memberType,
+			Index:            i,
+			HasApplyDefaults: hasApplyDefaults,
 		})
 	}
 

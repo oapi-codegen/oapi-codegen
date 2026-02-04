@@ -1,0 +1,76 @@
+# Issue 1710: field lost in nested allOf oneOf
+# https://github.com/oapi-codegen/oapi-codegen/issues/1710
+#
+# When using nested allOf with oneOf, all fields should be preserved.
+# The 'prompt' field was being lost.
+openapi: 3.0.0
+info:
+  title: Issue 1710 Test
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    BasePrompt:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: integer
+      required:
+        - name
+        - version
+    TextPrompt:
+      type: object
+      properties:
+        prompt:
+          type: string
+      required:
+        - prompt
+      allOf:
+        - $ref: '#/components/schemas/BasePrompt'
+    ChatMessage:
+      type: object
+      properties:
+        role:
+          type: string
+        content:
+          type: string
+      required:
+        - role
+        - content
+    ChatPrompt:
+      type: object
+      properties:
+        prompt:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChatMessage'
+      required:
+        - prompt
+      allOf:
+        - $ref: '#/components/schemas/BasePrompt'
+    Prompt:
+      oneOf:
+        - type: object
+          allOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - chat
+            - $ref: '#/components/schemas/ChatPrompt'
+          required:
+            - type
+        - type: object
+          allOf:
+            - type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - text
+            - $ref: '#/components/schemas/TextPrompt'
+          required:
+            - type
