@@ -1,0 +1,380 @@
+package output
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+// #/components/schemas/ArrayOfAnyOf
+type ArrayOfAnyOfSchemaComponent = []ArrayOfAnyOfItem
+
+type ArrayOfAnyOf = ArrayOfAnyOfSchemaComponent
+
+// #/components/schemas/ArrayOfAnyOf/items
+type ArrayOfAnyOfItemSchemaComponent struct {
+	_String0           *string
+	ArrayOfAnyOfAnyOf1 *ArrayOfAnyOfAnyOf1
+}
+
+func (u ArrayOfAnyOfItemSchemaComponent) MarshalJSON() ([]byte, error) {
+	result := make(map[string]any)
+
+	if u._String0 != nil {
+		return json.Marshal(u._String0)
+	}
+	if u.ArrayOfAnyOfAnyOf1 != nil {
+		data, err := json.Marshal(u.ArrayOfAnyOfAnyOf1)
+		if err != nil {
+			return nil, err
+		}
+		var m map[string]any
+		if err := json.Unmarshal(data, &m); err == nil {
+			for k, v := range m {
+				result[k] = v
+			}
+		}
+	}
+
+	return json.Marshal(result)
+}
+
+func (u *ArrayOfAnyOfItemSchemaComponent) UnmarshalJSON(data []byte) error {
+	var v0 string
+	if err := json.Unmarshal(data, &v0); err == nil {
+		u._String0 = &v0
+	}
+
+	var v1 ArrayOfAnyOfAnyOf1
+	if err := json.Unmarshal(data, &v1); err == nil {
+		u.ArrayOfAnyOfAnyOf1 = &v1
+	}
+
+	return nil
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (u *ArrayOfAnyOfItemSchemaComponent) ApplyDefaults() {
+	if u.ArrayOfAnyOfAnyOf1 != nil {
+		u.ArrayOfAnyOfAnyOf1.ApplyDefaults()
+	}
+}
+
+type ArrayOfAnyOfItem = ArrayOfAnyOfItemSchemaComponent
+
+// #/components/schemas/ArrayOfAnyOf/items/anyOf/1
+type ArrayOfAnyOfN1AnyOfItemSchemaComponent struct {
+	ID *int `json:"id,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ArrayOfAnyOfN1AnyOfItemSchemaComponent) ApplyDefaults() {
+}
+
+type ArrayOfAnyOfAnyOf1 = ArrayOfAnyOfN1AnyOfItemSchemaComponent
+
+// #/components/schemas/ObjectWithAnyOfProperty
+type ObjectWithAnyOfPropertySchemaComponent struct {
+	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ObjectWithAnyOfPropertySchemaComponent) ApplyDefaults() {
+}
+
+type ObjectWithAnyOfProperty = ObjectWithAnyOfPropertySchemaComponent
+
+// #/components/schemas/ObjectWithAnyOfProperty/properties/value
+type ObjectWithAnyOfPropertyValuePropertySchemaComponent struct {
+	_String0 *string
+	_Int1    *int
+}
+
+func (u ObjectWithAnyOfPropertyValuePropertySchemaComponent) MarshalJSON() ([]byte, error) {
+	if u._String0 != nil {
+		return json.Marshal(u._String0)
+	}
+	if u._Int1 != nil {
+		return json.Marshal(u._Int1)
+	}
+	return []byte("null"), nil
+}
+
+func (u *ObjectWithAnyOfPropertyValuePropertySchemaComponent) UnmarshalJSON(data []byte) error {
+	var v0 string
+	if err := json.Unmarshal(data, &v0); err == nil {
+		u._String0 = &v0
+	}
+
+	var v1 int
+	if err := json.Unmarshal(data, &v1); err == nil {
+		u._Int1 = &v1
+	}
+
+	return nil
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (u *ObjectWithAnyOfPropertyValuePropertySchemaComponent) ApplyDefaults() {
+}
+
+type ObjectWithAnyOfPropertyValue = ObjectWithAnyOfPropertyValuePropertySchemaComponent
+
+// #/components/schemas/ObjectWithOneOfProperty
+type ObjectWithOneOfPropertySchemaComponent struct {
+	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ObjectWithOneOfPropertySchemaComponent) ApplyDefaults() {
+}
+
+type ObjectWithOneOfProperty = ObjectWithOneOfPropertySchemaComponent
+
+// #/components/schemas/ObjectWithOneOfProperty/properties/variant
+type ObjectWithOneOfPropertyVariantPropertySchemaComponent struct {
+	ObjectWithOneOfPropertyVariantOneOf0 *ObjectWithOneOfPropertyVariantOneOf0
+	ObjectWithOneOfPropertyVariantOneOf1 *ObjectWithOneOfPropertyVariantOneOf1
+}
+
+func (u ObjectWithOneOfPropertyVariantPropertySchemaComponent) MarshalJSON() ([]byte, error) {
+	var count int
+	var data []byte
+	var err error
+
+	if u.ObjectWithOneOfPropertyVariantOneOf0 != nil {
+		count++
+		data, err = json.Marshal(u.ObjectWithOneOfPropertyVariantOneOf0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if u.ObjectWithOneOfPropertyVariantOneOf1 != nil {
+		count++
+		data, err = json.Marshal(u.ObjectWithOneOfPropertyVariantOneOf1)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if count != 1 {
+		return nil, fmt.Errorf("ObjectWithOneOfPropertyVariantPropertySchemaComponent: exactly one member must be set, got %d", count)
+	}
+
+	return data, nil
+}
+
+func (u *ObjectWithOneOfPropertyVariantPropertySchemaComponent) UnmarshalJSON(data []byte) error {
+	var successCount int
+
+	var v0 ObjectWithOneOfPropertyVariantOneOf0
+	if err := json.Unmarshal(data, &v0); err == nil {
+		u.ObjectWithOneOfPropertyVariantOneOf0 = &v0
+		successCount++
+	}
+
+	var v1 ObjectWithOneOfPropertyVariantOneOf1
+	if err := json.Unmarshal(data, &v1); err == nil {
+		u.ObjectWithOneOfPropertyVariantOneOf1 = &v1
+		successCount++
+	}
+
+	if successCount != 1 {
+		return fmt.Errorf("ObjectWithOneOfPropertyVariantPropertySchemaComponent: expected exactly one type to match, got %d", successCount)
+	}
+
+	return nil
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (u *ObjectWithOneOfPropertyVariantPropertySchemaComponent) ApplyDefaults() {
+	if u.ObjectWithOneOfPropertyVariantOneOf0 != nil {
+		u.ObjectWithOneOfPropertyVariantOneOf0.ApplyDefaults()
+	}
+	if u.ObjectWithOneOfPropertyVariantOneOf1 != nil {
+		u.ObjectWithOneOfPropertyVariantOneOf1.ApplyDefaults()
+	}
+}
+
+type ObjectWithOneOfPropertyVariant = ObjectWithOneOfPropertyVariantPropertySchemaComponent
+
+// #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/0
+type ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent struct {
+	Kind *string `json:"kind,omitempty"`
+	Name *string `json:"name,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent) ApplyDefaults() {
+}
+
+type ObjectWithOneOfPropertyVariantOneOf0 = ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent
+
+// #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/1
+type ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent struct {
+	Kind  *string `json:"kind,omitempty"`
+	Count *int    `json:"count,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent) ApplyDefaults() {
+}
+
+type ObjectWithOneOfPropertyVariantOneOf1 = ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent
+
+// #/components/schemas/AllOfWithOneOf
+type AllOfWithOneOfSchemaComponent struct {
+	Base                 *string               `json:"base,omitempty"`
+	AllOfWithOneOfAllOf1 *AllOfWithOneOfAllOf1 `json:"-"`
+}
+
+func (s AllOfWithOneOfSchemaComponent) MarshalJSON() ([]byte, error) {
+	result := make(map[string]any)
+
+	if s.Base != nil {
+		result["base"] = s.Base
+	}
+
+	if s.AllOfWithOneOfAllOf1 != nil {
+		unionData, err := json.Marshal(s.AllOfWithOneOfAllOf1)
+		if err != nil {
+			return nil, err
+		}
+		var unionMap map[string]any
+		if err := json.Unmarshal(unionData, &unionMap); err == nil {
+			for k, v := range unionMap {
+				result[k] = v
+			}
+		}
+	}
+
+	return json.Marshal(result)
+}
+
+func (s *AllOfWithOneOfSchemaComponent) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	if v, ok := raw["base"]; ok {
+		var val string
+		if err := json.Unmarshal(v, &val); err != nil {
+			return err
+		}
+		s.Base = &val
+	}
+
+	var AllOfWithOneOfAllOf1Val AllOfWithOneOfAllOf1
+	if err := json.Unmarshal(data, &AllOfWithOneOfAllOf1Val); err != nil {
+		return err
+	}
+	s.AllOfWithOneOfAllOf1 = &AllOfWithOneOfAllOf1Val
+
+	return nil
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *AllOfWithOneOfSchemaComponent) ApplyDefaults() {
+}
+
+type AllOfWithOneOf = AllOfWithOneOfSchemaComponent
+
+// #/components/schemas/AllOfWithOneOf/allOf/0
+type AllOfWithOneOfN0AllOfSchemaComponent struct {
+	Base *string `json:"base,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *AllOfWithOneOfN0AllOfSchemaComponent) ApplyDefaults() {
+}
+
+type AllOfWithOneOfAllOf0 = AllOfWithOneOfN0AllOfSchemaComponent
+
+// #/components/schemas/AllOfWithOneOf/allOf/1
+type AllOfWithOneOfN1AllOfSchemaComponent struct {
+	AllOfWithOneOfAllOf1OneOf0 *AllOfWithOneOfAllOf1OneOf0
+	AllOfWithOneOfAllOf1OneOf1 *AllOfWithOneOfAllOf1OneOf1
+}
+
+func (u AllOfWithOneOfN1AllOfSchemaComponent) MarshalJSON() ([]byte, error) {
+	var count int
+	var data []byte
+	var err error
+
+	if u.AllOfWithOneOfAllOf1OneOf0 != nil {
+		count++
+		data, err = json.Marshal(u.AllOfWithOneOfAllOf1OneOf0)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if u.AllOfWithOneOfAllOf1OneOf1 != nil {
+		count++
+		data, err = json.Marshal(u.AllOfWithOneOfAllOf1OneOf1)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if count != 1 {
+		return nil, fmt.Errorf("AllOfWithOneOfN1AllOfSchemaComponent: exactly one member must be set, got %d", count)
+	}
+
+	return data, nil
+}
+
+func (u *AllOfWithOneOfN1AllOfSchemaComponent) UnmarshalJSON(data []byte) error {
+	var successCount int
+
+	var v0 AllOfWithOneOfAllOf1OneOf0
+	if err := json.Unmarshal(data, &v0); err == nil {
+		u.AllOfWithOneOfAllOf1OneOf0 = &v0
+		successCount++
+	}
+
+	var v1 AllOfWithOneOfAllOf1OneOf1
+	if err := json.Unmarshal(data, &v1); err == nil {
+		u.AllOfWithOneOfAllOf1OneOf1 = &v1
+		successCount++
+	}
+
+	if successCount != 1 {
+		return fmt.Errorf("AllOfWithOneOfN1AllOfSchemaComponent: expected exactly one type to match, got %d", successCount)
+	}
+
+	return nil
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (u *AllOfWithOneOfN1AllOfSchemaComponent) ApplyDefaults() {
+	if u.AllOfWithOneOfAllOf1OneOf0 != nil {
+		u.AllOfWithOneOfAllOf1OneOf0.ApplyDefaults()
+	}
+	if u.AllOfWithOneOfAllOf1OneOf1 != nil {
+		u.AllOfWithOneOfAllOf1OneOf1.ApplyDefaults()
+	}
+}
+
+type AllOfWithOneOfAllOf1 = AllOfWithOneOfN1AllOfSchemaComponent
+
+// #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/0
+type AllOfWithOneOfN1N0OneOfAllOfSchemaComponent struct {
+	OptionA *bool `json:"optionA,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *AllOfWithOneOfN1N0OneOfAllOfSchemaComponent) ApplyDefaults() {
+}
+
+type AllOfWithOneOfAllOf1OneOf0 = AllOfWithOneOfN1N0OneOfAllOfSchemaComponent
+
+// #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/1
+type AllOfWithOneOfN1N1OneOfAllOfSchemaComponent struct {
+	OptionB *int `json:"optionB,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *AllOfWithOneOfN1N1OneOfAllOfSchemaComponent) ApplyDefaults() {
+}
+
+type AllOfWithOneOfAllOf1OneOf1 = AllOfWithOneOfN1N1OneOfAllOfSchemaComponent

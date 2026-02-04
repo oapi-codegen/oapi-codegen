@@ -1,0 +1,62 @@
+openapi: "3.1.0"
+info:
+  title: Nested Aggregate Test
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    # Case 1: Array with anyOf items
+    ArrayOfAnyOf:
+      type: array
+      items:
+        anyOf:
+          - type: string
+          - type: object
+            properties:
+              id:
+                type: integer
+
+    # Case 2: Object with anyOf property
+    ObjectWithAnyOfProperty:
+      type: object
+      properties:
+        value:
+          anyOf:
+            - type: string
+            - type: integer
+
+    # Case 3: Object with oneOf property containing inline objects
+    ObjectWithOneOfProperty:
+      type: object
+      properties:
+        variant:
+          oneOf:
+            - type: object
+              properties:
+                kind:
+                  type: string
+                name:
+                  type: string
+            - type: object
+              properties:
+                kind:
+                  type: string
+                count:
+                  type: integer
+
+    # Case 4: allOf containing oneOf
+    AllOfWithOneOf:
+      allOf:
+        - type: object
+          properties:
+            base:
+              type: string
+        - oneOf:
+            - type: object
+              properties:
+                optionA:
+                  type: boolean
+            - type: object
+              properties:
+                optionB:
+                  type: integer

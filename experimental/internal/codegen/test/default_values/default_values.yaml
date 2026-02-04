@@ -1,0 +1,158 @@
+openapi: "3.1.0"
+info:
+  title: Default Values Test
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    # Basic primitives with defaults
+    SimpleDefaults:
+      type: object
+      properties:
+        stringField:
+          type: string
+          default: "hello"
+        intField:
+          type: integer
+          default: 42
+        boolField:
+          type: boolean
+          default: true
+        floatField:
+          type: number
+          default: 3.14
+        int64Field:
+          type: integer
+          format: int64
+          default: 9223372036854775807
+
+    # Nested objects - should recurse ApplyDefaults
+    NestedDefaults:
+      type: object
+      properties:
+        name:
+          type: string
+          default: "parent"
+        child:
+          $ref: '#/components/schemas/SimpleDefaults'
+        inlineChild:
+          type: object
+          properties:
+            label:
+              type: string
+              default: "inline-default"
+            value:
+              type: integer
+              default: 100
+
+    # Object with additionalProperties and defaults
+    MapWithDefaults:
+      type: object
+      properties:
+        prefix:
+          type: string
+          default: "map-"
+      additionalProperties:
+        type: string
+
+    # Array field with defaults
+    ArrayDefaults:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: string
+          default: []
+        count:
+          type: integer
+          default: 0
+
+    # anyOf with defaults in members
+    AnyOfWithDefaults:
+      type: object
+      properties:
+        value:
+          anyOf:
+            - type: object
+              properties:
+                stringVal:
+                  type: string
+                  default: "default-string"
+            - type: object
+              properties:
+                intVal:
+                  type: integer
+                  default: 999
+
+    # oneOf with defaults in members
+    OneOfWithDefaults:
+      type: object
+      properties:
+        variant:
+          oneOf:
+            - type: object
+              properties:
+                optionA:
+                  type: string
+                  default: "option-a-default"
+            - type: object
+              properties:
+                optionB:
+                  type: integer
+                  default: 123
+
+    # allOf with defaults
+    AllOfWithDefaults:
+      allOf:
+        - type: object
+          properties:
+            base:
+              type: string
+              default: "base-value"
+        - type: object
+          properties:
+            extended:
+              type: integer
+              default: 50
+
+    # Deep nesting - multiple levels
+    DeepNesting:
+      type: object
+      properties:
+        level1:
+          type: object
+          properties:
+            name:
+              type: string
+              default: "level1-name"
+            level2:
+              type: object
+              properties:
+                count:
+                  type: integer
+                  default: 2
+                level3:
+                  type: object
+                  properties:
+                    enabled:
+                      type: boolean
+                      default: false
+
+    # Required vs optional with defaults
+    RequiredAndOptional:
+      type: object
+      required:
+        - requiredWithDefault
+        - requiredNoDefault
+      properties:
+        requiredWithDefault:
+          type: string
+          default: "required-default"
+        requiredNoDefault:
+          type: string
+        optionalWithDefault:
+          type: string
+          default: "optional-default"
+        optionalNoDefault:
+          type: string
