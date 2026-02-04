@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 type Configuration struct {
@@ -28,9 +29,21 @@ type Configuration struct {
 	// Only request/response bodies with matching content types will have types generated.
 	// Defaults to common JSON and YAML types if not specified.
 	ContentTypes []string `yaml:"content-types,omitempty"`
+	// ContentTypeShortNames maps content type regex patterns to short names for use in type names.
+	// Example: {"^application/json$": "JSON", "^application/xml$": "XML"}
+	// These are used when generating response/request type names like "FindPetsJSONResponse".
+	ContentTypeShortNames []ContentTypeShortName `yaml:"content-type-short-names,omitempty"`
 	// StructTags configures how struct tags are generated for fields.
 	// By default, only json tags are generated.
 	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
+}
+
+// ContentTypeShortName maps a content type pattern to a short name.
+type ContentTypeShortName struct {
+	// Pattern is a regex pattern to match against content types
+	Pattern string `yaml:"pattern"`
+	// ShortName is the short name to use in generated type names (e.g., "JSON", "XML")
+	ShortName string `yaml:"short-name"`
 }
 
 // GenerationOptions controls which parts of the code are generated.
@@ -51,12 +64,31 @@ func DefaultContentTypes() []string {
 	}
 }
 
+// DefaultContentTypeShortNames returns the default content type to short name mappings.
+func DefaultContentTypeShortNames() []ContentTypeShortName {
+	return []ContentTypeShortName{
+		{Pattern: `^application/json$`, ShortName: "JSON"},
+		{Pattern: `^application/.*\+json$`, ShortName: "JSON"},
+		{Pattern: `^application/xml$`, ShortName: "XML"},
+		{Pattern: `^application/.*\+xml$`, ShortName: "XML"},
+		{Pattern: `^text/xml$`, ShortName: "XML"},
+		{Pattern: `^text/plain$`, ShortName: "Text"},
+		{Pattern: `^text/html$`, ShortName: "HTML"},
+		{Pattern: `^application/octet-stream$`, ShortName: "Binary"},
+		{Pattern: `^multipart/form-data$`, ShortName: "Multipart"},
+		{Pattern: `^application/x-www-form-urlencoded$`, ShortName: "Form"},
+	}
+}
+
 // ApplyDefaults merges user configuration on top of default values.
 func (c *Configuration) ApplyDefaults() {
 	c.TypeMapping = DefaultTypeMapping.Merge(c.TypeMapping)
 	c.NameMangling = DefaultNameMangling().Merge(c.NameMangling)
 	if len(c.ContentTypes) == 0 {
 		c.ContentTypes = DefaultContentTypes()
+	}
+	if len(c.ContentTypeShortNames) == 0 {
+		c.ContentTypeShortNames = DefaultContentTypeShortNames()
 	}
 	c.StructTags = DefaultStructTagsConfig().Merge(c.StructTags)
 }
@@ -88,6 +120,63 @@ func (m *ContentTypeMatcher) Matches(contentType string) bool {
 		}
 	}
 	return false
+}
+
+// ContentTypeShortNamer resolves content types to short names for use in type names.
+type ContentTypeShortNamer struct {
+	patterns   []*regexp.Regexp
+	shortNames []string
+}
+
+// NewContentTypeShortNamer creates a short namer from configuration.
+func NewContentTypeShortNamer(mappings []ContentTypeShortName) *ContentTypeShortNamer {
+	n := &ContentTypeShortNamer{
+		patterns:   make([]*regexp.Regexp, 0, len(mappings)),
+		shortNames: make([]string, 0, len(mappings)),
+	}
+	for _, m := range mappings {
+		if re, err := regexp.Compile(m.Pattern); err == nil {
+			n.patterns = append(n.patterns, re)
+			n.shortNames = append(n.shortNames, m.ShortName)
+		}
+	}
+	return n
+}
+
+// ShortName returns the short name for a content type, or a fallback derived from the content type.
+func (n *ContentTypeShortNamer) ShortName(contentType string) string {
+	for i, re := range n.patterns {
+		if re.MatchString(contentType) {
+			return n.shortNames[i]
+		}
+	}
+	// Fallback: derive from content type (e.g., "application/vnd.api+json" -> "VndApiJson")
+	return deriveContentTypeShortName(contentType)
+}
+
+// deriveContentTypeShortName creates a short name from an unmatched content type.
+func deriveContentTypeShortName(contentType string) string {
+	// Remove "application/", "text/", etc. prefix
+	if idx := strings.Index(contentType, "/"); idx >= 0 {
+		contentType = contentType[idx+1:]
+	}
+	// Replace non-alphanumeric with spaces for word splitting
+	var result strings.Builder
+	capitalizeNext := true
+	for _, r := range contentType {
+		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
+			if capitalizeNext {
+				if r >= 'a' && r <= 'z' {
+					r = r - 'a' + 'A'
+				}
+				capitalizeNext = false
+			}
+			result.WriteRune(r)
+		} else {
+			capitalizeNext = true
+		}
+	}
+	return result.String()
 }
 
 // ExternalImport represents an external package import with its alias.

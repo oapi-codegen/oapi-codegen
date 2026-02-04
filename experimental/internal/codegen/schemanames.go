@@ -27,7 +27,7 @@ const (
 
 // ComputeSchemaNames assigns StableName and ShortName to each schema descriptor.
 // StableName is deterministic from the path; ShortName is a friendly alias.
-func ComputeSchemaNames(schemas []*SchemaDescriptor, converter *NameConverter) {
+func ComputeSchemaNames(schemas []*SchemaDescriptor, converter *NameConverter, contentTypeNamer *ContentTypeShortNamer) {
 	// First: compute stable names from full paths
 	for _, s := range schemas {
 		s.StableName = computeStableName(s.Path, converter)
@@ -36,7 +36,7 @@ func ComputeSchemaNames(schemas []*SchemaDescriptor, converter *NameConverter) {
 	// Second: generate candidate short names
 	candidates := make(map[*SchemaDescriptor]string)
 	for _, s := range schemas {
-		candidates[s] = generateCandidateName(s, converter)
+		candidates[s] = generateCandidateName(s, converter, contentTypeNamer)
 	}
 
 	// Third: detect collisions and resolve them for short names
@@ -78,8 +78,14 @@ func computeStableName(path SchemaPath, converter *NameConverter) string {
 	var result strings.Builder
 
 	// Add name parts
-	for _, name := range nameParts {
-		result.WriteString(converter.ToTypeName(name))
+	// First part uses ToTypeName (adds numeric prefix if needed)
+	// Subsequent parts use ToTypeNamePart (no numeric prefix since they're not at the start)
+	for i, name := range nameParts {
+		if i == 0 {
+			result.WriteString(converter.ToTypeName(name))
+		} else {
+			result.WriteString(converter.ToTypeNamePart(name))
+		}
 	}
 
 	// Add reversed context as suffix (singularized)
@@ -168,7 +174,7 @@ func contextToSuffix(context string) string {
 }
 
 // generateCandidateName creates a candidate short name based on the schema's path.
-func generateCandidateName(s *SchemaDescriptor, converter *NameConverter) string {
+func generateCandidateName(s *SchemaDescriptor, converter *NameConverter, contentTypeNamer *ContentTypeShortNamer) string {
 	path := s.Path
 	if len(path) == 0 {
 		return "Schema"
@@ -187,11 +193,21 @@ func generateCandidateName(s *SchemaDescriptor, converter *NameConverter) string
 		return buildParameterName(parts, converter)
 
 	case ContextRequestBody:
-		// Always suffix with Request
+		// Use operationId if available for nicer names, but only for the direct request body schema
+		// (not nested items, properties, etc.)
+		if s.OperationID != "" && isDirectBodySchema(path) {
+			return buildOperationRequestName(s.OperationID, s.ContentType, converter, contentTypeNamer)
+		}
 		return buildRequestBodyName(parts, converter)
 
 	case ContextResponse:
-		// Always suffix with Response
+		// Use operationId if available for nicer names, but only for the direct response schema
+		// (not nested items, properties, etc.)
+		if s.OperationID != "" && isDirectBodySchema(path) {
+			// Extract status code from path
+			statusCode := extractStatusCode(parts)
+			return buildOperationResponseName(s.OperationID, statusCode, s.ContentType, converter, contentTypeNamer)
+		}
 		return buildResponseName(parts, converter)
 
 	case ContextHeader:
@@ -577,7 +593,8 @@ func disambiguateName(s *SchemaDescriptor, currentName string, index int, conver
 			default:
 				suffix = converter.ToTypeName(strings.ReplaceAll(contentType, "/", "_"))
 			}
-			if !strings.HasSuffix(currentName, suffix) {
+			// Use Contains since the suffix might be embedded before "Response" or "Request"
+			if !strings.Contains(currentName, suffix) {
 				return currentName + suffix
 			}
 		}
@@ -620,4 +637,81 @@ func disambiguateName(s *SchemaDescriptor, currentName string, index int, conver
 
 	// Last resort: use numeric suffix
 	return fmt.Sprintf("%s%d", currentName, index+1)
+}
+
+// buildOperationRequestName builds a name for a request body using the operationId.
+// e.g., operationId="addPet" -> "AddPetJSONRequest"
+func buildOperationRequestName(operationID, contentType string, converter *NameConverter, contentTypeNamer *ContentTypeShortNamer) string {
+	baseName := converter.ToTypeName(operationID)
+
+	// Add content type short name if available
+	if contentType != "" && contentTypeNamer != nil {
+		baseName += contentTypeNamer.ShortName(contentType)
+	}
+
+	return baseName + "Request"
+}
+
+// buildOperationResponseName builds a name for a response using the operationId.
+// e.g., operationId="findPets", statusCode="200" -> "FindPetsJSONResponse"
+// e.g., operationId="findPets", statusCode="404" -> "FindPets404JSONResponse"
+// e.g., operationId="findPets", statusCode="default" -> "FindPetsDefaultJSONResponse"
+func buildOperationResponseName(operationID, statusCode, contentType string, converter *NameConverter, contentTypeNamer *ContentTypeShortNamer) string {
+	baseName := converter.ToTypeName(operationID)
+
+	// Add status code, skipping only for 200 (the common success case)
+	if statusCode != "" && statusCode != "200" {
+		if statusCode == "default" {
+			baseName += "Default"
+		} else {
+			baseName += statusCode
+		}
+	}
+
+	// Add content type short name if available
+	if contentType != "" && contentTypeNamer != nil {
+		baseName += contentTypeNamer.ShortName(contentType)
+	}
+
+	return baseName + "Response"
+}
+
+// extractStatusCode extracts the HTTP status code from path parts.
+// Looks for "responses" followed by the status code.
+func extractStatusCode(parts []string) string {
+	for i, p := range parts {
+		if p == "responses" && i+1 < len(parts) {
+			return parts[i+1]
+		}
+	}
+	return ""
+}
+
+// isDirectBodySchema returns true if the schema path represents the direct
+// schema of a request body or response (i.e., content/{type}/schema),
+// not a nested schema (items, properties, allOf members, etc.).
+func isDirectBodySchema(path SchemaPath) bool {
+	// Find the position of "schema" after "content"
+	schemaIdx := -1
+	for i := len(path) - 1; i >= 0; i-- {
+		if path[i] == "schema" {
+			schemaIdx = i
+			break
+		}
+	}
+	if schemaIdx == -1 {
+		return false
+	}
+
+	// Check that "schema" is directly after a content type (content/{type}/schema)
+	// and there are no structural elements after it
+	if schemaIdx < 2 {
+		return false
+	}
+	if path[schemaIdx-2] != "content" {
+		return false
+	}
+
+	// If schema is at the end of the path, it's a direct body schema
+	return schemaIdx == len(path)-1
 }

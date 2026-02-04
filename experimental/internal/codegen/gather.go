@@ -30,6 +30,9 @@ func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatch
 type gatherer struct {
 	schemas            []*SchemaDescriptor
 	contentTypeMatcher *ContentTypeMatcher
+	// Context for the current operation being gathered (for nicer naming)
+	currentOperationID string
+	currentContentType string
 }
 
 func (g *gatherer) gatherFromDocument(doc *v3.Document) {
@@ -88,6 +91,12 @@ func (g *gatherer) gatherFromOperation(op *v3.Operation, basePath SchemaPath) {
 		return
 	}
 
+	// Set operation context for nicer naming
+	prevOperationID := g.currentOperationID
+	if op.OperationId != "" {
+		g.currentOperationID = op.OperationId
+	}
+
 	// Parameters
 	for i, param := range op.Parameters {
 		g.gatherFromParameter(param, basePath.Append("parameters", fmt.Sprintf("%d", i)))
@@ -115,6 +124,9 @@ func (g *gatherer) gatherFromOperation(op *v3.Operation, basePath SchemaPath) {
 			g.gatherFromCallback(callback, basePath.Append("callbacks", name))
 		}
 	}
+
+	// Restore previous operation context
+	g.currentOperationID = prevOperationID
 }
 
 func (g *gatherer) gatherFromParameter(param *v3.Parameter, basePath SchemaPath) {
@@ -147,8 +159,14 @@ func (g *gatherer) gatherFromRequestBody(rb *v3.RequestBody, basePath SchemaPath
 		if g.contentTypeMatcher != nil && !g.contentTypeMatcher.Matches(contentType) {
 			continue
 		}
+		// Set content type context
+		prevContentType := g.currentContentType
+		g.currentContentType = contentType
+
 		mediaType := pair.Value()
 		g.gatherFromMediaType(mediaType, basePath.Append("content", contentType))
+
+		g.currentContentType = prevContentType
 	}
 }
 
@@ -164,8 +182,14 @@ func (g *gatherer) gatherFromResponse(response *v3.Response, basePath SchemaPath
 			if g.contentTypeMatcher != nil && !g.contentTypeMatcher.Matches(contentType) {
 				continue
 			}
+			// Set content type context
+			prevContentType := g.currentContentType
+			g.currentContentType = contentType
+
 			mediaType := pair.Value()
 			g.gatherFromMediaType(mediaType, basePath.Append("content", contentType))
+
+			g.currentContentType = prevContentType
 		}
 	}
 
@@ -220,10 +244,12 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 	// Simple types (primitives without enum) are skipped
 	if isRef || needsGeneratedType(schema) {
 		desc := &SchemaDescriptor{
-			Path:   path,
-			Parent: parent,
-			Ref:    ref,
-			Schema: schema,
+			Path:        path,
+			Parent:      parent,
+			Ref:         ref,
+			Schema:      schema,
+			OperationID: g.currentOperationID,
+			ContentType: g.currentContentType,
 		}
 		g.schemas = append(g.schemas, desc)
 

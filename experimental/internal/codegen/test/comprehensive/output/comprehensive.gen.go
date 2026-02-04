@@ -643,14 +643,14 @@ func (u *AnyOfMixedSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/AnyOfMixed/anyOf/2
-type AnyOfMixedN2AnyOfSchemaComponent struct {
+type AnyOfMixed2AnyOfSchemaComponent struct {
 	Inline *bool `json:"inline,omitempty" form:"inline,omitempty"`
 }
 
-type AnyOfMixedAnyOf2 = AnyOfMixedN2AnyOfSchemaComponent
+type AnyOfMixedAnyOf2 = AnyOfMixed2AnyOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *AnyOfMixedN2AnyOfSchemaComponent) ApplyDefaults() {
+func (s *AnyOfMixed2AnyOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/AnyOfNullable
@@ -1108,25 +1108,25 @@ func (u *OneOfInlineSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/OneOfInline/oneOf/0
-type OneOfInlineN0OneOfSchemaComponent struct {
+type OneOfInline0OneOfSchemaComponent struct {
 	OptionA *string `json:"optionA,omitempty" form:"optionA,omitempty"`
 }
 
-type OneOfInlineOneOf0 = OneOfInlineN0OneOfSchemaComponent
+type OneOfInlineOneOf0 = OneOfInline0OneOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *OneOfInlineN0OneOfSchemaComponent) ApplyDefaults() {
+func (s *OneOfInline0OneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/OneOfInline/oneOf/1
-type OneOfInlineN1OneOfSchemaComponent struct {
+type OneOfInline1OneOfSchemaComponent struct {
 	OptionB *int `json:"optionB,omitempty" form:"optionB,omitempty"`
 }
 
-type OneOfInlineOneOf1 = OneOfInlineN1OneOfSchemaComponent
+type OneOfInlineOneOf1 = OneOfInline1OneOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *OneOfInlineN1OneOfSchemaComponent) ApplyDefaults() {
+func (s *OneOfInline1OneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/OneOfPrimitives
@@ -1353,14 +1353,14 @@ func (s *AllOfWithOneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/AllOfWithOneOf/allOf/1
-type AllOfWithOneOfN1AllOfSchemaComponent struct {
+type AllOfWithOneOf1AllOfSchemaComponent struct {
 	Cat *Cat
 	Dog *Dog
 }
 
-type AllOfWithOneOfAllOf1 = AllOfWithOneOfN1AllOfSchemaComponent
+type AllOfWithOneOfAllOf1 = AllOfWithOneOf1AllOfSchemaComponent
 
-func (u AllOfWithOneOfN1AllOfSchemaComponent) MarshalJSON() ([]byte, error) {
+func (u AllOfWithOneOf1AllOfSchemaComponent) MarshalJSON() ([]byte, error) {
 	var count int
 	var data []byte
 	var err error
@@ -1381,13 +1381,13 @@ func (u AllOfWithOneOfN1AllOfSchemaComponent) MarshalJSON() ([]byte, error) {
 	}
 
 	if count != 1 {
-		return nil, fmt.Errorf("AllOfWithOneOfN1AllOfSchemaComponent: exactly one member must be set, got %d", count)
+		return nil, fmt.Errorf("AllOfWithOneOf1AllOfSchemaComponent: exactly one member must be set, got %d", count)
 	}
 
 	return data, nil
 }
 
-func (u *AllOfWithOneOfN1AllOfSchemaComponent) UnmarshalJSON(data []byte) error {
+func (u *AllOfWithOneOf1AllOfSchemaComponent) UnmarshalJSON(data []byte) error {
 	var successCount int
 
 	var v0 Cat
@@ -1403,14 +1403,14 @@ func (u *AllOfWithOneOfN1AllOfSchemaComponent) UnmarshalJSON(data []byte) error 
 	}
 
 	if successCount != 1 {
-		return fmt.Errorf("AllOfWithOneOfN1AllOfSchemaComponent: expected exactly one type to match, got %d", successCount)
+		return fmt.Errorf("AllOfWithOneOf1AllOfSchemaComponent: expected exactly one type to match, got %d", successCount)
 	}
 
 	return nil
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *AllOfWithOneOfN1AllOfSchemaComponent) ApplyDefaults() {
+func (u *AllOfWithOneOf1AllOfSchemaComponent) ApplyDefaults() {
 	if u.Cat != nil {
 		u.Cat.ApplyDefaults()
 	}
@@ -1487,29 +1487,29 @@ func (u *OneOfWithAllOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/OneOfWithAllOf/oneOf/0
-type OneOfWithAllOfN0OneOfSchemaComponent struct {
+type OneOfWithAllOf0OneOfSchemaComponent struct {
 	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
 	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
 	Variant   *string    `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
-type OneOfWithAllOfOneOf0 = OneOfWithAllOfN0OneOfSchemaComponent
+type OneOfWithAllOfOneOf0 = OneOfWithAllOf0OneOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *OneOfWithAllOfN0OneOfSchemaComponent) ApplyDefaults() {
+func (s *OneOfWithAllOf0OneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/OneOfWithAllOf/oneOf/1
-type OneOfWithAllOfN1OneOfSchemaComponent struct {
+type OneOfWithAllOf1OneOfSchemaComponent struct {
 	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
 	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
 	Variant   *string    `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
-type OneOfWithAllOfOneOf1 = OneOfWithAllOfN1OneOfSchemaComponent
+type OneOfWithAllOfOneOf1 = OneOfWithAllOf1OneOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *OneOfWithAllOfN1OneOfSchemaComponent) ApplyDefaults() {
+func (s *OneOfWithAllOf1OneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/TreeNode
@@ -1609,14 +1609,14 @@ func (u *RecursiveOneOfSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/RecursiveOneOf/oneOf/1
-type RecursiveOneOfN1OneOfSchemaComponent struct {
+type RecursiveOneOf1OneOfSchemaComponent struct {
 	Nested *RecursiveOneOf `json:"nested,omitempty" form:"nested,omitempty"`
 }
 
-type RecursiveOneOfOneOf1 = RecursiveOneOfN1OneOfSchemaComponent
+type RecursiveOneOfOneOf1 = RecursiveOneOf1OneOfSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *RecursiveOneOfN1OneOfSchemaComponent) ApplyDefaults() {
+func (s *RecursiveOneOf1OneOfSchemaComponent) ApplyDefaults() {
 	if s.Nested != nil {
 		s.Nested.ApplyDefaults()
 	}
@@ -1855,33 +1855,33 @@ func (u *ComplexNestedConfigPropertySchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/ComplexNested/properties/config/oneOf/0
-type ComplexNestedConfigN0OneOfPropertySchemaComponent struct {
+type ComplexNestedConfig0OneOfPropertySchemaComponent struct {
 	Mode  *string `json:"mode,omitempty" form:"mode,omitempty"`
 	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
-type ComplexNestedConfigOneOf0 = ComplexNestedConfigN0OneOfPropertySchemaComponent
+type ComplexNestedConfigOneOf0 = ComplexNestedConfig0OneOfPropertySchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ComplexNestedConfigN0OneOfPropertySchemaComponent) ApplyDefaults() {
+func (s *ComplexNestedConfig0OneOfPropertySchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/ComplexNested/properties/config/oneOf/1
-type ComplexNestedConfigN1OneOfPropertySchemaComponent struct {
+type ComplexNestedConfig1OneOfPropertySchemaComponent struct {
 	Mode    *string           `json:"mode,omitempty" form:"mode,omitempty"`
 	Options map[string]string `json:"options,omitempty" form:"options,omitempty"`
 }
 
-type ComplexNestedConfigOneOf1 = ComplexNestedConfigN1OneOfPropertySchemaComponent
+type ComplexNestedConfigOneOf1 = ComplexNestedConfig1OneOfPropertySchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ComplexNestedConfigN1OneOfPropertySchemaComponent) ApplyDefaults() {
+func (s *ComplexNestedConfig1OneOfPropertySchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/ComplexNested/properties/config/oneOf/1/properties/options
-type ComplexNestedConfigN1OptionsPropertyOneOfPropertySchemaComponent = map[string]string
+type ComplexNestedConfig1OptionsPropertyOneOfPropertySchemaComponent = map[string]string
 
-type ComplexNestedConfigOneOf1Options = ComplexNestedConfigN1OptionsPropertyOneOfPropertySchemaComponent
+type ComplexNestedConfigOneOf1Options = ComplexNestedConfig1OptionsPropertyOneOfPropertySchemaComponent
 
 // #/components/schemas/StringMap
 type StringMapSchemaComponent = map[string]string
@@ -1904,15 +1904,15 @@ type NestedMapValueSchemaComponent = map[string]string
 type NestedMapValue = NestedMapValueSchemaComponent
 
 // #/paths//inline-response/get/responses/200/content/application/json/schema
-type InlineResponseGetN200ApplicationJSONContentResponsePath struct {
+type InlineResponseGet200ApplicationJSONContentResponsePath struct {
 	ID   int    `json:"id" form:"id"`
 	Name string `json:"name" form:"name"`
 }
 
-type GetInlineResponse200Response = InlineResponseGetN200ApplicationJSONContentResponsePath
+type GetInlineResponseJSONResponse = InlineResponseGet200ApplicationJSONContentResponsePath
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *InlineResponseGetN200ApplicationJSONContentResponsePath) ApplyDefaults() {
+func (s *InlineResponseGet200ApplicationJSONContentResponsePath) ApplyDefaults() {
 }
 
 type UUID = uuid.UUID

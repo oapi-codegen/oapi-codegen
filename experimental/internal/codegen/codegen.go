@@ -18,6 +18,9 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	// Create content type matcher for filtering request/response bodies
 	contentTypeMatcher := NewContentTypeMatcher(cfg.ContentTypes)
 
+	// Create content type short namer for friendly type names
+	contentTypeNamer := NewContentTypeShortNamer(cfg.ContentTypeShortNames)
+
 	// Pass 1: Gather all schemas that need types
 	schemas, err := GatherSchemas(doc, contentTypeMatcher)
 	if err != nil {
@@ -26,7 +29,7 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 
 	// Pass 2: Compute names for all schemas
 	converter := NewNameConverter(cfg.NameMangling, cfg.NameSubstitutions)
-	ComputeSchemaNames(schemas, converter)
+	ComputeSchemaNames(schemas, converter, contentTypeNamer)
 
 	// Pass 3: Generate Go code
 	importResolver := NewImportResolver(cfg.ImportMapping)

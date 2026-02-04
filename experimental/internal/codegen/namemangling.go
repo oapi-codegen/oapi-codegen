@@ -187,6 +187,16 @@ func (c *NameConverter) ToTypeName(name string) string {
 	return c.toGoIdentifier(name, true)
 }
 
+// ToTypeNamePart converts a name to a type name component that will be joined with others.
+// Unlike ToTypeName, it doesn't add a numeric prefix since the result won't be the start of an identifier.
+func (c *NameConverter) ToTypeNamePart(name string) string {
+	// Check for direct substitution first
+	if sub, ok := c.substitutions.TypeNames[name]; ok {
+		return sub
+	}
+	return c.toGoIdentifierPart(name)
+}
+
 // ToPropertyName converts an OpenAPI property name to a Go field name.
 func (c *NameConverter) ToPropertyName(name string) string {
 	// Check for direct substitution first
@@ -255,6 +265,67 @@ func (c *NameConverter) toGoIdentifier(name string, exported bool) string {
 	if id == "" {
 		return "Empty"
 	}
+
+	// Apply initialism fixes
+	id = c.applyInitialisms(id)
+
+	return id
+}
+
+// toGoIdentifierPart converts a name to a Go identifier component (for joining with others).
+// It doesn't add a numeric prefix since the result won't necessarily be at the start of an identifier.
+func (c *NameConverter) toGoIdentifierPart(name string) string {
+	if name == "" {
+		return ""
+	}
+
+	// Build the identifier without numeric prefix (but still handle special characters at start)
+	var result strings.Builder
+
+	// Only add prefix for non-digit special characters at the start
+	firstRune := []rune(name)[0]
+	if !unicode.IsLetter(firstRune) && !unicode.IsDigit(firstRune) {
+		firstChar := string(firstRune)
+		if sub, ok := c.mangling.CharacterSubstitutions[firstChar]; ok {
+			result.WriteString(sub)
+		} else {
+			result.WriteString("X")
+		}
+	}
+
+	// Convert the rest using word boundaries (always capitalize since this is a part)
+	capitalizeNext := true
+	prevWasDigit := false
+	for _, r := range name {
+		if c.isWordSeparator(r) {
+			capitalizeNext = true
+			prevWasDigit = false
+			continue
+		}
+
+		if !unicode.IsLetter(r) && !unicode.IsDigit(r) {
+			// Skip invalid characters (already handled by prefix if at start)
+			capitalizeNext = true
+			prevWasDigit = false
+			continue
+		}
+
+		// Capitalize after digits
+		if prevWasDigit && unicode.IsLetter(r) {
+			capitalizeNext = true
+		}
+
+		if capitalizeNext && unicode.IsLetter(r) {
+			result.WriteRune(unicode.ToUpper(r))
+			capitalizeNext = false
+		} else {
+			result.WriteRune(r)
+		}
+
+		prevWasDigit = unicode.IsDigit(r)
+	}
+
+	id := result.String()
 
 	// Apply initialism fixes
 	id = c.applyInitialisms(id)

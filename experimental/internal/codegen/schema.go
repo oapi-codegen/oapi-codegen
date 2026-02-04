@@ -50,6 +50,14 @@ type SchemaDescriptor struct {
 	// Generated as a type alias pointing to StableName.
 	ShortName string
 
+	// OperationID is the operationId from the path operation, if this schema
+	// comes from a path's request body or response. Used for friendlier naming.
+	OperationID string
+
+	// ContentType is the media type (e.g., "application/json") if this schema
+	// comes from a request body or response content. Used for naming.
+	ContentType string
+
 	// Recursive structure:
 	Properties      map[string]*SchemaDescriptor
 	Items           *SchemaDescriptor
