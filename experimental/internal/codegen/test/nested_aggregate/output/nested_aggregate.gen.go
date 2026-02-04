@@ -14,15 +14,17 @@ type ArrayOfAnyOf = ArrayOfAnyOfSchemaComponent
 
 // #/components/schemas/ArrayOfAnyOf/items
 type ArrayOfAnyOfItemSchemaComponent struct {
-	_String0           *string
+	String0            *string
 	ArrayOfAnyOfAnyOf1 *ArrayOfAnyOfAnyOf1
 }
+
+type ArrayOfAnyOfItem = ArrayOfAnyOfItemSchemaComponent
 
 func (u ArrayOfAnyOfItemSchemaComponent) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 
-	if u._String0 != nil {
-		return json.Marshal(u._String0)
+	if u.String0 != nil {
+		return json.Marshal(u.String0)
 	}
 	if u.ArrayOfAnyOfAnyOf1 != nil {
 		data, err := json.Marshal(u.ArrayOfAnyOfAnyOf1)
@@ -43,7 +45,7 @@ func (u ArrayOfAnyOfItemSchemaComponent) MarshalJSON() ([]byte, error) {
 func (u *ArrayOfAnyOfItemSchemaComponent) UnmarshalJSON(data []byte) error {
 	var v0 string
 	if err := json.Unmarshal(data, &v0); err == nil {
-		u._String0 = &v0
+		u.String0 = &v0
 	}
 
 	var v1 ArrayOfAnyOfAnyOf1
@@ -61,42 +63,42 @@ func (u *ArrayOfAnyOfItemSchemaComponent) ApplyDefaults() {
 	}
 }
 
-type ArrayOfAnyOfItem = ArrayOfAnyOfItemSchemaComponent
-
 // #/components/schemas/ArrayOfAnyOf/items/anyOf/1
 type ArrayOfAnyOfN1AnyOfItemSchemaComponent struct {
 	ID *int `json:"id,omitempty" form:"id,omitempty"`
 }
 
+type ArrayOfAnyOfAnyOf1 = ArrayOfAnyOfN1AnyOfItemSchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *ArrayOfAnyOfN1AnyOfItemSchemaComponent) ApplyDefaults() {
 }
-
-type ArrayOfAnyOfAnyOf1 = ArrayOfAnyOfN1AnyOfItemSchemaComponent
 
 // #/components/schemas/ObjectWithAnyOfProperty
 type ObjectWithAnyOfPropertySchemaComponent struct {
 	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty" form:"value,omitempty"`
 }
 
+type ObjectWithAnyOfProperty = ObjectWithAnyOfPropertySchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *ObjectWithAnyOfPropertySchemaComponent) ApplyDefaults() {
 }
 
-type ObjectWithAnyOfProperty = ObjectWithAnyOfPropertySchemaComponent
-
 // #/components/schemas/ObjectWithAnyOfProperty/properties/value
 type ObjectWithAnyOfPropertyValuePropertySchemaComponent struct {
-	_String0 *string
-	_Int1    *int
+	String0 *string
+	Int1    *int
 }
 
+type ObjectWithAnyOfPropertyValue = ObjectWithAnyOfPropertyValuePropertySchemaComponent
+
 func (u ObjectWithAnyOfPropertyValuePropertySchemaComponent) MarshalJSON() ([]byte, error) {
-	if u._String0 != nil {
-		return json.Marshal(u._String0)
+	if u.String0 != nil {
+		return json.Marshal(u.String0)
 	}
-	if u._Int1 != nil {
-		return json.Marshal(u._Int1)
+	if u.Int1 != nil {
+		return json.Marshal(u.Int1)
 	}
 	return []byte("null"), nil
 }
@@ -104,12 +106,12 @@ func (u ObjectWithAnyOfPropertyValuePropertySchemaComponent) MarshalJSON() ([]by
 func (u *ObjectWithAnyOfPropertyValuePropertySchemaComponent) UnmarshalJSON(data []byte) error {
 	var v0 string
 	if err := json.Unmarshal(data, &v0); err == nil {
-		u._String0 = &v0
+		u.String0 = &v0
 	}
 
 	var v1 int
 	if err := json.Unmarshal(data, &v1); err == nil {
-		u._Int1 = &v1
+		u.Int1 = &v1
 	}
 
 	return nil
@@ -119,24 +121,24 @@ func (u *ObjectWithAnyOfPropertyValuePropertySchemaComponent) UnmarshalJSON(data
 func (u *ObjectWithAnyOfPropertyValuePropertySchemaComponent) ApplyDefaults() {
 }
 
-type ObjectWithAnyOfPropertyValue = ObjectWithAnyOfPropertyValuePropertySchemaComponent
-
 // #/components/schemas/ObjectWithOneOfProperty
 type ObjectWithOneOfPropertySchemaComponent struct {
 	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
+type ObjectWithOneOfProperty = ObjectWithOneOfPropertySchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *ObjectWithOneOfPropertySchemaComponent) ApplyDefaults() {
 }
-
-type ObjectWithOneOfProperty = ObjectWithOneOfPropertySchemaComponent
 
 // #/components/schemas/ObjectWithOneOfProperty/properties/variant
 type ObjectWithOneOfPropertyVariantPropertySchemaComponent struct {
 	ObjectWithOneOfPropertyVariantOneOf0 *ObjectWithOneOfPropertyVariantOneOf0
 	ObjectWithOneOfPropertyVariantOneOf1 *ObjectWithOneOfPropertyVariantOneOf1
 }
+
+type ObjectWithOneOfPropertyVariant = ObjectWithOneOfPropertyVariantPropertySchemaComponent
 
 func (u ObjectWithOneOfPropertyVariantPropertySchemaComponent) MarshalJSON() ([]byte, error) {
 	var count int
@@ -197,19 +199,17 @@ func (u *ObjectWithOneOfPropertyVariantPropertySchemaComponent) ApplyDefaults() 
 	}
 }
 
-type ObjectWithOneOfPropertyVariant = ObjectWithOneOfPropertyVariantPropertySchemaComponent
-
 // #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/0
 type ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent struct {
 	Kind *string `json:"kind,omitempty" form:"kind,omitempty"`
 	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
+type ObjectWithOneOfPropertyVariantOneOf0 = ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent) ApplyDefaults() {
 }
-
-type ObjectWithOneOfPropertyVariantOneOf0 = ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent
 
 // #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/1
 type ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent struct {
@@ -217,11 +217,11 @@ type ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent struct {
 	Count *int    `json:"count,omitempty" form:"count,omitempty"`
 }
 
+type ObjectWithOneOfPropertyVariantOneOf1 = ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent) ApplyDefaults() {
 }
-
-type ObjectWithOneOfPropertyVariantOneOf1 = ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent
 
 // #/components/schemas/AllOfWithOneOf
 type AllOfWithOneOfSchemaComponent struct {
@@ -275,28 +275,19 @@ func (s *AllOfWithOneOfSchemaComponent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type AllOfWithOneOf = AllOfWithOneOfSchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *AllOfWithOneOfSchemaComponent) ApplyDefaults() {
 }
-
-type AllOfWithOneOf = AllOfWithOneOfSchemaComponent
-
-// #/components/schemas/AllOfWithOneOf/allOf/0
-type AllOfWithOneOfN0AllOfSchemaComponent struct {
-	Base *string `json:"base,omitempty" form:"base,omitempty"`
-}
-
-// ApplyDefaults sets default values for fields that are nil.
-func (s *AllOfWithOneOfN0AllOfSchemaComponent) ApplyDefaults() {
-}
-
-type AllOfWithOneOfAllOf0 = AllOfWithOneOfN0AllOfSchemaComponent
 
 // #/components/schemas/AllOfWithOneOf/allOf/1
 type AllOfWithOneOfN1AllOfSchemaComponent struct {
 	AllOfWithOneOfAllOf1OneOf0 *AllOfWithOneOfAllOf1OneOf0
 	AllOfWithOneOfAllOf1OneOf1 *AllOfWithOneOfAllOf1OneOf1
 }
+
+type AllOfWithOneOfAllOf1 = AllOfWithOneOfN1AllOfSchemaComponent
 
 func (u AllOfWithOneOfN1AllOfSchemaComponent) MarshalJSON() ([]byte, error) {
 	var count int
@@ -357,26 +348,24 @@ func (u *AllOfWithOneOfN1AllOfSchemaComponent) ApplyDefaults() {
 	}
 }
 
-type AllOfWithOneOfAllOf1 = AllOfWithOneOfN1AllOfSchemaComponent
-
 // #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/0
 type AllOfWithOneOfN1N0OneOfAllOfSchemaComponent struct {
 	OptionA *bool `json:"optionA,omitempty" form:"optionA,omitempty"`
 }
 
+type AllOfWithOneOfAllOf1OneOf0 = AllOfWithOneOfN1N0OneOfAllOfSchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *AllOfWithOneOfN1N0OneOfAllOfSchemaComponent) ApplyDefaults() {
 }
-
-type AllOfWithOneOfAllOf1OneOf0 = AllOfWithOneOfN1N0OneOfAllOfSchemaComponent
 
 // #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/1
 type AllOfWithOneOfN1N1OneOfAllOfSchemaComponent struct {
 	OptionB *int `json:"optionB,omitempty" form:"optionB,omitempty"`
 }
 
+type AllOfWithOneOfAllOf1OneOf1 = AllOfWithOneOfN1N1OneOfAllOfSchemaComponent
+
 // ApplyDefaults sets default values for fields that are nil.
 func (s *AllOfWithOneOfN1N1OneOfAllOfSchemaComponent) ApplyDefaults() {
 }
-
-type AllOfWithOneOfAllOf1OneOf1 = AllOfWithOneOfN1N1OneOfAllOfSchemaComponent

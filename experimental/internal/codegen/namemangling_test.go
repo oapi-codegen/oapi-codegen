@@ -44,17 +44,17 @@ func TestToTypeName(t *testing.T) {
 		{"xmlParser", "XMLParser"},
 		{"getHttpResponse", "GetHTTPResponse"},
 
-		// Go keywords (still PascalCase, just prefixed)
-		{"type", "_Type"},
-		{"interface", "_Interface"},
-		{"map", "_Map"},
-		{"chan", "_Chan"},
+		// Go keywords - PascalCase doesn't conflict with lowercase keywords
+		{"type", "Type"},
+		{"interface", "Interface"},
+		{"map", "Map"},
+		{"chan", "Chan"},
 
-		// Predeclared identifiers (still PascalCase, just prefixed)
-		{"string", "_String"},
-		{"int", "_Int"},
-		{"error", "_Error"},
-		{"nil", "_Nil"},
+		// Predeclared identifiers - PascalCase doesn't conflict with lowercase identifiers
+		{"string", "String"},
+		{"int", "Int"},
+		{"error", "Error"},
+		{"nil", "Nil"},
 
 		// Edge cases
 		{"", "Empty"},

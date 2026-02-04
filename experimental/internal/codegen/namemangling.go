@@ -214,10 +214,6 @@ func (c *NameConverter) toGoIdentifier(name string, exported bool) string {
 		return "Empty"
 	}
 
-	// Check for Go keyword conflicts on the original lowercase name
-	lowerName := strings.ToLower(name)
-	needsKeywordPrefix := c.isReserved(lowerName)
-
 	// Build the identifier with prefix handling
 	var result strings.Builder
 	prefix := c.getPrefix(name)
@@ -262,11 +258,6 @@ func (c *NameConverter) toGoIdentifier(name string, exported bool) string {
 
 	// Apply initialism fixes
 	id = c.applyInitialisms(id)
-
-	// Handle Go keyword conflicts
-	if needsKeywordPrefix {
-		id = c.mangling.KeywordPrefix + id
-	}
 
 	return id
 }

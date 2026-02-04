@@ -245,6 +245,32 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 	return nil
 }
 
+// gatherSchemaDescriptorOnly creates a descriptor for field extraction without adding it
+// to the schemas list (i.e., no type will be generated for it).
+// This is used for inline allOf members whose fields are flattened into the parent.
+func (g *gatherer) gatherSchemaDescriptorOnly(proxy *base.SchemaProxy, path SchemaPath, parent *SchemaDescriptor) *SchemaDescriptor {
+	if proxy == nil {
+		return nil
+	}
+
+	schema := proxy.Schema()
+	if schema == nil {
+		return nil
+	}
+
+	desc := &SchemaDescriptor{
+		Path:   path,
+		Parent: parent,
+		Schema: schema,
+	}
+
+	// Still recurse to gather any nested complex schemas that DO need types
+	// (e.g., nested objects within properties)
+	g.gatherFromSchema(schema, path, desc)
+
+	return desc
+}
+
 // needsGeneratedType returns true if a schema requires a generated Go type.
 // Simple primitive types (string, integer, number, boolean) without enums
 // don't need generated types - they map directly to Go builtins.
@@ -328,10 +354,24 @@ func (g *gatherer) gatherFromSchema(schema *base.Schema, basePath SchemaPath, pa
 		}
 	}
 
-	// AllOf
+	// AllOf - inline object members don't need separate types since fields are flattened into parent
+	// However, inline oneOf/anyOf members DO need union types generated
 	for i, proxy := range schema.AllOf {
 		allOfPath := basePath.Append("allOf", fmt.Sprintf("%d", i))
-		allOfDesc := g.gatherFromSchemaProxy(proxy, allOfPath, parent)
+		var allOfDesc *SchemaDescriptor
+		if proxy.IsReference() {
+			// References still need to be gathered normally
+			allOfDesc = g.gatherFromSchemaProxy(proxy, allOfPath, parent)
+		} else {
+			memberSchema := proxy.Schema()
+			// If the allOf member is itself a oneOf/anyOf, we need to generate a union type
+			if memberSchema != nil && (len(memberSchema.OneOf) > 0 || len(memberSchema.AnyOf) > 0) {
+				allOfDesc = g.gatherFromSchemaProxy(proxy, allOfPath, parent)
+			} else {
+				// Simple inline objects: create descriptor for field extraction but don't generate a type
+				allOfDesc = g.gatherSchemaDescriptorOnly(proxy, allOfPath, parent)
+			}
+		}
 		if parent != nil && allOfDesc != nil {
 			parent.AllOf = append(parent.AllOf, allOfDesc)
 		}

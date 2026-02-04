@@ -37,24 +37,26 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	output := NewOutput(cfg.PackageName)
 	// Note: encoding/json and fmt imports are added by generateType when needed
 
-	// Generate types for each schema
-	for _, desc := range schemas {
-		code := generateType(gen, desc)
-		if code != "" {
-			output.AddType(code)
+	// Generate models (types for schemas)
+	if !cfg.Generation.NoModels {
+		for _, desc := range schemas {
+			code := generateType(gen, desc)
+			if code != "" {
+				output.AddType(code)
+			}
 		}
-	}
 
-	// Add imports collected during generation
-	output.AddImports(gen.Imports())
+		// Add imports collected during generation
+		output.AddImports(gen.Imports())
 
-	// Add custom type templates (Date, Email, UUID, File, etc.)
-	for templateName := range gen.RequiredTemplates() {
-		typeCode, typeImports := loadCustomType(templateName)
-		if typeCode != "" {
-			output.AddType(typeCode)
-			for path, alias := range typeImports {
-				output.AddImport(path, alias)
+		// Add custom type templates (Date, Email, UUID, File, etc.)
+		for templateName := range gen.RequiredTemplates() {
+			typeCode, typeImports := loadCustomType(templateName)
+			if typeCode != "" {
+				output.AddType(typeCode)
+				for path, alias := range typeImports {
+					output.AddImport(path, alias)
+				}
 			}
 		}
 	}
@@ -129,14 +131,14 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 		code := structCode + "\n" + marshalCode + "\n" + unmarshalCode
 
-		// Generate ApplyDefaults method if needed
-		if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
-			code += "\n" + applyDefaults
-		}
-
 		// If there's a short name different from stable name, generate an alias
 		if desc.ShortName != desc.StableName {
 			code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+		}
+
+		// Generate ApplyDefaults method if needed
+		if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
+			code += "\n" + applyDefaults
 		}
 
 		return code
@@ -144,14 +146,14 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 	code := GenerateStruct(desc.StableName, fields, doc, gen.TagGenerator())
 
-	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
-		code += "\n" + applyDefaults
-	}
-
 	// If there's a short name different from stable name, generate an alias
 	if desc.ShortName != desc.StableName {
 		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+	}
+
+	// Generate ApplyDefaults method if needed
+	if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
+		code += "\n" + applyDefaults
 	}
 
 	return code
@@ -324,14 +326,14 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		code = GenerateStruct(desc.StableName, finalFields, doc, gen.TagGenerator())
 	}
 
-	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.StableName, finalFields); applyDefaults != "" {
-		code += "\n" + applyDefaults
-	}
-
 	// If there's a short name different from stable name, generate an alias
 	if desc.ShortName != desc.StableName {
 		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+	}
+
+	// Generate ApplyDefaults method if needed
+	if applyDefaults := GenerateApplyDefaults(desc.StableName, finalFields); applyDefaults != "" {
+		code += "\n" + applyDefaults
 	}
 
 	return code
@@ -492,15 +494,19 @@ func generateAnyOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 	doc := extractDescription(desc.Schema)
 	structCode := GenerateUnionType(desc.StableName, members, false, doc)
+
+	code := structCode
+
+	// If there's a short name different from stable name, generate an alias
+	if desc.ShortName != desc.StableName {
+		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+	}
+
 	marshalCode := GenerateUnionMarshalAnyOf(desc.StableName, members)
 	unmarshalCode := GenerateUnionUnmarshalAnyOf(desc.StableName, members)
 	applyDefaultsCode := GenerateUnionApplyDefaults(desc.StableName, members)
 
-	code := structCode + "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
+	code += "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
 
 	return code
 }
@@ -517,15 +523,19 @@ func generateOneOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 	doc := extractDescription(desc.Schema)
 	structCode := GenerateUnionType(desc.StableName, members, true, doc)
+
+	code := structCode
+
+	// If there's a short name different from stable name, generate an alias
+	if desc.ShortName != desc.StableName {
+		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+	}
+
 	marshalCode := GenerateUnionMarshalOneOf(desc.StableName, members)
 	unmarshalCode := GenerateUnionUnmarshalOneOf(desc.StableName, members)
 	applyDefaultsCode := GenerateUnionApplyDefaults(desc.StableName, members)
 
-	code := structCode + "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
+	code += "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
 
 	return code
 }

@@ -22,10 +22,10 @@ func TestArrayOfAnyOf(t *testing.T) {
 		require.Len(t, arr, 2)
 
 		// String items should populate the string field
-		assert.NotNil(t, arr[0]._String0)
-		assert.Equal(t, "hello", *arr[0]._String0)
-		assert.NotNil(t, arr[1]._String0)
-		assert.Equal(t, "world", *arr[1]._String0)
+		assert.NotNil(t, arr[0].String0)
+		assert.Equal(t, "hello", *arr[0].String0)
+		assert.NotNil(t, arr[1].String0)
+		assert.Equal(t, "world", *arr[1].String0)
 	})
 
 	t.Run("unmarshal object item", func(t *testing.T) {
@@ -48,14 +48,14 @@ func TestArrayOfAnyOf(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, arr, 4)
 
-		assert.NotNil(t, arr[0]._String0)
-		assert.Equal(t, "hello", *arr[0]._String0)
+		assert.NotNil(t, arr[0].String0)
+		assert.Equal(t, "hello", *arr[0].String0)
 
 		assert.NotNil(t, arr[1].ArrayOfAnyOfAnyOf1)
 		assert.Equal(t, 1, *arr[1].ArrayOfAnyOfAnyOf1.ID)
 
-		assert.NotNil(t, arr[2]._String0)
-		assert.Equal(t, "world", *arr[2]._String0)
+		assert.NotNil(t, arr[2].String0)
+		assert.Equal(t, "world", *arr[2].String0)
 
 		assert.NotNil(t, arr[3].ArrayOfAnyOfAnyOf1)
 		assert.Equal(t, 2, *arr[3].ArrayOfAnyOfAnyOf1.ID)
@@ -63,7 +63,7 @@ func TestArrayOfAnyOf(t *testing.T) {
 
 	t.Run("marshal string item", func(t *testing.T) {
 		arr := ArrayOfAnyOf{
-			{_String0: ptr("hello")},
+			{String0: ptr("hello")},
 		}
 		data, err := json.Marshal(arr)
 		require.NoError(t, err)
@@ -81,7 +81,7 @@ func TestArrayOfAnyOf(t *testing.T) {
 
 	t.Run("round trip mixed", func(t *testing.T) {
 		original := ArrayOfAnyOf{
-			{_String0: ptr("test")},
+			{String0: ptr("test")},
 			{ArrayOfAnyOfAnyOf1: &ArrayOfAnyOfAnyOf1{ID: ptr(99)}},
 		}
 
@@ -93,7 +93,7 @@ func TestArrayOfAnyOf(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Len(t, decoded, 2)
-		assert.Equal(t, "test", *decoded[0]._String0)
+		assert.Equal(t, "test", *decoded[0].String0)
 		assert.Equal(t, 99, *decoded[1].ArrayOfAnyOfAnyOf1.ID)
 	})
 }
@@ -107,8 +107,8 @@ func TestObjectWithAnyOfProperty(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, obj.Value)
-		assert.NotNil(t, obj.Value._String0)
-		assert.Equal(t, "hello", *obj.Value._String0)
+		assert.NotNil(t, obj.Value.String0)
+		assert.Equal(t, "hello", *obj.Value.String0)
 	})
 
 	t.Run("unmarshal integer value", func(t *testing.T) {
@@ -118,14 +118,14 @@ func TestObjectWithAnyOfProperty(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, obj.Value)
-		assert.NotNil(t, obj.Value._Int1)
-		assert.Equal(t, 42, *obj.Value._Int1)
+		assert.NotNil(t, obj.Value.Int1)
+		assert.Equal(t, 42, *obj.Value.Int1)
 	})
 
 	t.Run("marshal string value", func(t *testing.T) {
 		obj := ObjectWithAnyOfProperty{
 			Value: &ObjectWithAnyOfPropertyValue{
-				_String0: ptr("hello"),
+				String0: ptr("hello"),
 			},
 		}
 		data, err := json.Marshal(obj)
@@ -136,7 +136,7 @@ func TestObjectWithAnyOfProperty(t *testing.T) {
 	t.Run("marshal integer value", func(t *testing.T) {
 		obj := ObjectWithAnyOfProperty{
 			Value: &ObjectWithAnyOfPropertyValue{
-				_Int1: ptr(42),
+				Int1: ptr(42),
 			},
 		}
 		data, err := json.Marshal(obj)
@@ -146,7 +146,7 @@ func TestObjectWithAnyOfProperty(t *testing.T) {
 
 	t.Run("round trip string", func(t *testing.T) {
 		original := ObjectWithAnyOfProperty{
-			Value: &ObjectWithAnyOfPropertyValue{_String0: ptr("test")},
+			Value: &ObjectWithAnyOfPropertyValue{String0: ptr("test")},
 		}
 
 		data, err := json.Marshal(original)
@@ -157,7 +157,7 @@ func TestObjectWithAnyOfProperty(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NotNil(t, decoded.Value)
-		assert.Equal(t, "test", *decoded.Value._String0)
+		assert.Equal(t, "test", *decoded.Value.String0)
 	})
 }
 
