@@ -167,7 +167,50 @@ name-substitutions:
     foo: MyCustomFoo  # "foo" becomes "MyCustomFoo" instead of "Foo"
   property-names:
     bar: MyCustomBar  # "bar" field becomes "MyCustomBar"
+
+# Import mapping: resolve external $refs to Go packages
+import-mapping:
+  # Map external spec files to their Go package paths
+  ../common/api.yaml: github.com/org/project/common
+  https://example.com/specs/shared.yaml: github.com/org/shared
+  # Use "-" to indicate types should stay in the current package
+  ./local-types.yaml: "-"
 ```
+
+### External References
+
+When your OpenAPI spec references schemas from other files:
+
+```yaml
+# In your spec
+components:
+  schemas:
+    Order:
+      properties:
+        customer:
+          $ref: '../common/api.yaml#/components/schemas/Customer'
+```
+
+Configure import-mapping to tell oapi-codegen where to find those types:
+
+```yaml
+import-mapping:
+  ../common/api.yaml: github.com/org/project/common
+```
+
+The generated code will import the external package and reference types with a hashed alias:
+
+```go
+import (
+    ext_a1b2c3d4 "github.com/org/project/common"
+)
+
+type Order struct {
+    Customer *ext_a1b2c3d4.Customer `json:"customer,omitempty"`
+}
+```
+
+**Important:** You must generate types for the external spec separately. The import-mapping only tells oapi-codegen how to reference types that already exist in another package.
 
 Use with `-config`:
 ```bash
@@ -191,15 +234,34 @@ go run ./cmd/oapi-codegen -config config.yaml openapi.yaml
 | `string` | `email` | `Email` (custom type) |
 | `string` | `binary` | `File` (custom type) |
 
-### Name Override Limitations
+### Preprocessing with OpenAPI Overlays
 
-> **Note:** The current `name-substitutions` system only overrides individual name *parts* during conversion, not full generated type names.
->
-> For example, if you have a schema at `#/components/schemas/Cat`:
-> - Setting `type-names: {Cat: Kitty}` will produce `KittySchemaComponent` (stable) and `Kitty` (short)
-> - You cannot currently override the full stable name `CatSchemaComponent` to something completely different
->
-> Full type name overrides (by schema path or generated name) are not yet implemented.
+For advanced customizations (renaming types, modifying schemas, adding extensions), preprocess your spec using the [OpenAPI Overlay Specification](https://learn.openapis.org/overlay/):
+
+```yaml
+# overlay.yaml
+overlay: 1.0.0
+info:
+  title: My customizations
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.Cat
+    update:
+      x-go-name: Kitty
+  - target: $.components.schemas.Pet.properties.id
+    update:
+      type: string
+      format: uuid
+```
+
+Apply with [speakeasy-api/openapi-overlay](https://github.com/speakeasy-api/openapi-overlay):
+```bash
+go install github.com/speakeasy-api/openapi-overlay@latest
+openapi-overlay apply --overlay=overlay.yaml --spec=openapi.yaml > modified.yaml
+go run ./cmd/oapi-codegen -package myapi modified.yaml
+```
+
+Or use [libopenapi](https://pb33f.io/libopenapi/overlays/) programmatically if you need to integrate into a build pipeline.
 
 ## Development
 

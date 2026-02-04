@@ -64,6 +64,30 @@ func (d *SchemaDescriptor) IsReference() bool {
 	return d.Ref != ""
 }
 
+// IsExternalReference returns true if this is a reference to an external file.
+// External refs have the format: file.yaml#/path/to/schema
+func (d *SchemaDescriptor) IsExternalReference() bool {
+	if d.Ref == "" {
+		return false
+	}
+	// External refs contain # but don't start with it
+	return !strings.HasPrefix(d.Ref, "#") && strings.Contains(d.Ref, "#")
+}
+
+// ParseExternalRef splits an external reference into its file path and internal path.
+// For "common/api.yaml#/components/schemas/Pet", returns ("common/api.yaml", "#/components/schemas/Pet").
+// Returns empty strings if not an external ref.
+func (d *SchemaDescriptor) ParseExternalRef() (filePath, internalPath string) {
+	if !d.IsExternalReference() {
+		return "", ""
+	}
+	parts := strings.SplitN(d.Ref, "#", 2)
+	if len(parts) != 2 {
+		return "", ""
+	}
+	return parts[0], "#" + parts[1]
+}
+
 // IsComponentSchema returns true if this schema is defined in #/components/schemas
 func (d *SchemaDescriptor) IsComponentSchema() bool {
 	return len(d.Path) >= 2 && d.Path[0] == "components" && d.Path[1] == "schemas"

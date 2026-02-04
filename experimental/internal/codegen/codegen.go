@@ -26,12 +26,12 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	ComputeSchemaNames(schemas, converter)
 
 	// Pass 3: Generate Go code
-	gen := NewTypeGenerator(cfg.TypeMapping, converter)
+	importResolver := NewImportResolver(cfg.ImportMapping)
+	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver)
 	gen.IndexSchemas(schemas)
 
 	output := NewOutput(cfg.PackageName)
-	output.AddImport("encoding/json", "")
-	output.AddImport("fmt", "")
+	// Note: encoding/json and fmt imports are added by generateType when needed
 
 	// Generate types for each schema
 	for _, desc := range schemas {
@@ -113,6 +113,9 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 	// Check if we need additionalProperties handling
 	if gen.HasAdditionalProperties(desc) {
+		// Mixed properties need encoding/json and fmt for marshal/unmarshal
+		gen.AddJSONImports()
+
 		addPropsType := gen.AdditionalPropertiesType(desc)
 		structCode := GenerateStructWithAdditionalProps(desc.StableName, fields, addPropsType, doc)
 
@@ -310,6 +313,7 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	var code string
 	if len(unionFields) > 0 {
 		// Has union members - need custom marshal/unmarshal
+		gen.AddJSONImports()
 		code = generateAllOfStructWithUnions(desc.StableName, finalFields, unionFields, doc)
 	} else {
 		// Simple case - just flattened fields
@@ -479,6 +483,9 @@ func generateAnyOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		return ""
 	}
 
+	// Union types need encoding/json and fmt for marshal/unmarshal
+	gen.AddJSONImports()
+
 	doc := extractDescription(desc.Schema)
 	structCode := GenerateUnionType(desc.StableName, members, false, doc)
 	marshalCode := GenerateUnionMarshalAnyOf(desc.StableName, members)
@@ -500,6 +507,9 @@ func generateOneOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	if len(members) == 0 {
 		return ""
 	}
+
+	// Union types need encoding/json and fmt for marshal/unmarshal
+	gen.AddJSONImports()
 
 	doc := extractDescription(desc.Schema)
 	structCode := GenerateUnionType(desc.StableName, members, true, doc)

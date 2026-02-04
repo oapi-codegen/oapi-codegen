@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pb33f/libopenapi"
+	"github.com/pb33f/libopenapi/datamodel"
 	"gopkg.in/yaml.v3"
 
 	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen"
@@ -40,7 +41,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	doc, err := libopenapi.NewDocument(specData)
+	// Get the absolute path of the spec file's directory for resolving external refs
+	absSpecPath, err := filepath.Abs(specPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error getting absolute path: %v\n", err)
+		os.Exit(1)
+	}
+	specDir := filepath.Dir(absSpecPath)
+
+	// Configure libopenapi with BasePath to resolve external references
+	docConfig := datamodel.NewDocumentConfiguration()
+	docConfig.BasePath = specDir
+	docConfig.AllowFileReferences = true
+
+	doc, err := libopenapi.NewDocumentWithConfiguration(specData, docConfig)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error parsing spec: %v\n", err)
 		os.Exit(1)

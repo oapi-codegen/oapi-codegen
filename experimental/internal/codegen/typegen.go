@@ -10,9 +10,10 @@ import (
 // TypeGenerator converts OpenAPI schemas to Go type expressions.
 // It tracks required imports and handles recursive type references.
 type TypeGenerator struct {
-	typeMapping TypeMapping
-	converter   *NameConverter
-	imports     map[string]string // path -> alias (empty string = no alias)
+	typeMapping    TypeMapping
+	converter      *NameConverter
+	importResolver *ImportResolver
+	imports        map[string]string // path -> alias (empty string = no alias)
 
 	// schemaIndex maps JSON pointer refs to their descriptors
 	schemaIndex map[string]*SchemaDescriptor
@@ -22,10 +23,11 @@ type TypeGenerator struct {
 }
 
 // NewTypeGenerator creates a TypeGenerator with the given configuration.
-func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter) *TypeGenerator {
+func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importResolver *ImportResolver) *TypeGenerator {
 	return &TypeGenerator{
 		typeMapping:       typeMapping,
 		converter:         converter,
+		importResolver:    importResolver,
 		imports:           make(map[string]string),
 		schemaIndex:       make(map[string]*SchemaDescriptor),
 		requiredTemplates: make(map[string]bool),
@@ -55,6 +57,12 @@ func (g *TypeGenerator) AddImportAlias(path, alias string) {
 	}
 }
 
+// AddJSONImports adds encoding/json and fmt imports (used by marshal/unmarshal code).
+func (g *TypeGenerator) AddJSONImports() {
+	g.AddImport("encoding/json")
+	g.AddImport("fmt")
+}
+
 // Imports returns the collected imports as a map[path]alias.
 func (g *TypeGenerator) Imports() map[string]string {
 	return g.imports
@@ -78,14 +86,75 @@ func (g *TypeGenerator) addTemplate(templateName string) {
 func (g *TypeGenerator) GoTypeExpr(desc *SchemaDescriptor) string {
 	// Handle $ref - return the referenced type's name
 	if desc.IsReference() {
+		// Check for external reference first
+		if desc.IsExternalReference() {
+			return g.externalRefType(desc)
+		}
+
+		// Internal reference - look up in schema index
 		if target, ok := g.schemaIndex[desc.Ref]; ok {
 			return target.ShortName
 		}
-		// Fallback for unresolved references (external refs, etc.)
+		// Fallback for unresolved references
 		return "any"
 	}
 
 	return g.goTypeForSchema(desc.Schema, desc)
+}
+
+// externalRefType resolves an external reference to a qualified Go type.
+// Returns "any" if the external ref cannot be resolved.
+func (g *TypeGenerator) externalRefType(desc *SchemaDescriptor) string {
+	filePath, internalPath := desc.ParseExternalRef()
+	if filePath == "" {
+		return "any"
+	}
+
+	// Look up import mapping
+	if g.importResolver == nil {
+		// No import resolver configured - can't resolve external refs
+		return "any"
+	}
+
+	imp := g.importResolver.Resolve(filePath)
+	if imp == nil {
+		// External file not in import mapping
+		return "any"
+	}
+
+	// Extract type name from internal path (e.g., #/components/schemas/Pet -> Pet)
+	typeName := extractTypeNameFromRef(internalPath, g.converter)
+	if typeName == "" {
+		return "any"
+	}
+
+	// If alias is empty, it's the current package (marked with "-")
+	if imp.Alias == "" {
+		return typeName
+	}
+
+	// Add the import
+	g.AddImportAlias(imp.Path, imp.Alias)
+
+	// Return qualified type
+	return imp.Alias + "." + typeName
+}
+
+// extractTypeNameFromRef extracts a Go type name from an internal ref path.
+// e.g., "#/components/schemas/Pet" -> "Pet"
+func extractTypeNameFromRef(ref string, converter *NameConverter) string {
+	// Remove leading #/
+	ref = strings.TrimPrefix(ref, "#/")
+	parts := strings.Split(ref, "/")
+
+	if len(parts) < 3 {
+		return ""
+	}
+
+	// For #/components/schemas/TypeName, the type name is the last part
+	// We assume external refs point to component schemas
+	typeName := parts[len(parts)-1]
+	return converter.ToTypeName(typeName)
 }
 
 // goTypeForSchema generates a Go type expression from an OpenAPI schema.
@@ -333,7 +402,13 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 		var propSchema *base.Schema
 		if propProxy.IsReference() {
 			ref := propProxy.GetReference()
-			if target, ok := g.schemaIndex[ref]; ok {
+			// Check if this is an external reference
+			if !strings.HasPrefix(ref, "#") && strings.Contains(ref, "#") {
+				// External reference - use import mapping
+				tempDesc := &SchemaDescriptor{Ref: ref}
+				propType = g.externalRefType(tempDesc)
+				field.IsStruct = true // external references are typically to struct types
+			} else if target, ok := g.schemaIndex[ref]; ok {
 				propType = target.ShortName
 				field.IsStruct = true // references are typically to struct types
 			} else {
