@@ -30,7 +30,8 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 
 	// Pass 3: Generate Go code
 	importResolver := NewImportResolver(cfg.ImportMapping)
-	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver)
+	tagGenerator := NewStructTagGenerator(cfg.StructTags)
+	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver, tagGenerator)
 	gen.IndexSchemas(schemas)
 
 	output := NewOutput(cfg.PackageName)
@@ -120,7 +121,7 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		gen.AddJSONImports()
 
 		addPropsType := gen.AdditionalPropertiesType(desc)
-		structCode := GenerateStructWithAdditionalProps(desc.StableName, fields, addPropsType, doc)
+		structCode := GenerateStructWithAdditionalProps(desc.StableName, fields, addPropsType, doc, gen.TagGenerator())
 
 		// Generate marshal/unmarshal methods
 		marshalCode := GenerateMixedPropertiesMarshal(desc.StableName, fields)
@@ -141,7 +142,7 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		return code
 	}
 
-	code := GenerateStruct(desc.StableName, fields, doc)
+	code := GenerateStruct(desc.StableName, fields, doc, gen.TagGenerator())
 
 	// Generate ApplyDefaults method if needed
 	if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
@@ -317,10 +318,10 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	if len(unionFields) > 0 {
 		// Has union members - need custom marshal/unmarshal
 		gen.AddJSONImports()
-		code = generateAllOfStructWithUnions(desc.StableName, finalFields, unionFields, doc)
+		code = generateAllOfStructWithUnions(desc.StableName, finalFields, unionFields, doc, gen.TagGenerator())
 	} else {
 		// Simple case - just flattened fields
-		code = GenerateStruct(desc.StableName, finalFields, doc)
+		code = GenerateStruct(desc.StableName, finalFields, doc, gen.TagGenerator())
 	}
 
 	// Generate ApplyDefaults method if needed
@@ -337,7 +338,7 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 }
 
 // generateAllOfStructWithUnions generates an allOf struct that contains union fields.
-func generateAllOfStructWithUnions(name string, fields []StructField, unionFields []StructField, doc string) string {
+func generateAllOfStructWithUnions(name string, fields []StructField, unionFields []StructField, doc string, tagGen *StructTagGenerator) string {
 	b := NewCodeBuilder()
 
 	if doc != "" {
@@ -351,7 +352,7 @@ func generateAllOfStructWithUnions(name string, fields []StructField, unionField
 
 	// Regular fields
 	for _, f := range fields {
-		tag := FormatJSONTag(f.JSONName, f.OmitEmpty)
+		tag := generateFieldTag(f, tagGen)
 		b.Line("%s %s %s", f.Name, f.Type, tag)
 	}
 

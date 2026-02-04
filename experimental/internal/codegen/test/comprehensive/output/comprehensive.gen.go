@@ -14,25 +14,25 @@ import (
 
 // #/components/schemas/AllTypesRequired
 type AllTypesRequiredSchemaComponent struct {
-	IntField      int       `json:"intField"`
-	Int32Field    int32     `json:"int32Field"`
-	Int64Field    int64     `json:"int64Field"`
-	FloatField    float32   `json:"floatField"`
-	DoubleField   float64   `json:"doubleField"`
-	NumberField   float32   `json:"numberField"`
-	StringField   string    `json:"stringField"`
-	BoolField     bool      `json:"boolField"`
-	DateField     Date      `json:"dateField"`
-	DateTimeField time.Time `json:"dateTimeField"`
-	UUIDField     UUID      `json:"uuidField"`
-	EmailField    Email     `json:"emailField"`
-	URIField      string    `json:"uriField"`
-	HostnameField string    `json:"hostnameField"`
-	Ipv4Field     string    `json:"ipv4Field"`
-	Ipv6Field     string    `json:"ipv6Field"`
-	ByteField     []byte    `json:"byteField"`
-	BinaryField   File      `json:"binaryField"`
-	PasswordField string    `json:"passwordField"`
+	IntField      int       `json:"intField" form:"intField"`
+	Int32Field    int32     `json:"int32Field" form:"int32Field"`
+	Int64Field    int64     `json:"int64Field" form:"int64Field"`
+	FloatField    float32   `json:"floatField" form:"floatField"`
+	DoubleField   float64   `json:"doubleField" form:"doubleField"`
+	NumberField   float32   `json:"numberField" form:"numberField"`
+	StringField   string    `json:"stringField" form:"stringField"`
+	BoolField     bool      `json:"boolField" form:"boolField"`
+	DateField     Date      `json:"dateField" form:"dateField"`
+	DateTimeField time.Time `json:"dateTimeField" form:"dateTimeField"`
+	UUIDField     UUID      `json:"uuidField" form:"uuidField"`
+	EmailField    Email     `json:"emailField" form:"emailField"`
+	URIField      string    `json:"uriField" form:"uriField"`
+	HostnameField string    `json:"hostnameField" form:"hostnameField"`
+	Ipv4Field     string    `json:"ipv4Field" form:"ipv4Field"`
+	Ipv6Field     string    `json:"ipv6Field" form:"ipv6Field"`
+	ByteField     []byte    `json:"byteField" form:"byteField"`
+	BinaryField   File      `json:"binaryField" form:"binaryField"`
+	PasswordField string    `json:"passwordField" form:"passwordField"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -43,18 +43,18 @@ type AllTypesRequired = AllTypesRequiredSchemaComponent
 
 // #/components/schemas/AllTypesOptional
 type AllTypesOptionalSchemaComponent struct {
-	IntField      *int       `json:"intField,omitempty"`
-	Int32Field    *int32     `json:"int32Field,omitempty"`
-	Int64Field    *int64     `json:"int64Field,omitempty"`
-	FloatField    *float32   `json:"floatField,omitempty"`
-	DoubleField   *float64   `json:"doubleField,omitempty"`
-	NumberField   *float32   `json:"numberField,omitempty"`
-	StringField   *string    `json:"stringField,omitempty"`
-	BoolField     *bool      `json:"boolField,omitempty"`
-	DateField     *Date      `json:"dateField,omitempty"`
-	DateTimeField *time.Time `json:"dateTimeField,omitempty"`
-	UUIDField     *UUID      `json:"uuidField,omitempty"`
-	EmailField    *Email     `json:"emailField,omitempty"`
+	IntField      *int       `json:"intField,omitempty" form:"intField,omitempty"`
+	Int32Field    *int32     `json:"int32Field,omitempty" form:"int32Field,omitempty"`
+	Int64Field    *int64     `json:"int64Field,omitempty" form:"int64Field,omitempty"`
+	FloatField    *float32   `json:"floatField,omitempty" form:"floatField,omitempty"`
+	DoubleField   *float64   `json:"doubleField,omitempty" form:"doubleField,omitempty"`
+	NumberField   *float32   `json:"numberField,omitempty" form:"numberField,omitempty"`
+	StringField   *string    `json:"stringField,omitempty" form:"stringField,omitempty"`
+	BoolField     *bool      `json:"boolField,omitempty" form:"boolField,omitempty"`
+	DateField     *Date      `json:"dateField,omitempty" form:"dateField,omitempty"`
+	DateTimeField *time.Time `json:"dateTimeField,omitempty" form:"dateTimeField,omitempty"`
+	UUIDField     *UUID      `json:"uuidField,omitempty" form:"uuidField,omitempty"`
+	EmailField    *Email     `json:"emailField,omitempty" form:"emailField,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -65,9 +65,9 @@ type AllTypesOptional = AllTypesOptionalSchemaComponent
 
 // #/components/schemas/NullableRequired
 type NullableRequiredSchemaComponent struct {
-	NullableString *string                         `json:"nullableString"`
-	NullableInt    *int                            `json:"nullableInt"`
-	NullableObject *NullableRequiredNullableObject `json:"nullableObject"`
+	NullableString *string                         `json:"nullableString" form:"nullableString"`
+	NullableInt    *int                            `json:"nullableInt" form:"nullableInt"`
+	NullableObject *NullableRequiredNullableObject `json:"nullableObject" form:"nullableObject"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -81,7 +81,7 @@ type NullableRequired = NullableRequiredSchemaComponent
 
 // #/components/schemas/NullableRequired/properties/nullableObject
 type NullableRequiredNullableObjectPropertySchemaComponent struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -92,8 +92,8 @@ type NullableRequiredNullableObject = NullableRequiredNullableObjectPropertySche
 
 // #/components/schemas/NullableOptional
 type NullableOptionalSchemaComponent struct {
-	NullableString *string `json:"nullableString,omitempty"`
-	NullableInt    *int    `json:"nullableInt,omitempty"`
+	NullableString *string `json:"nullableString,omitempty" form:"nullableString,omitempty"`
+	NullableInt    *int    `json:"nullableInt,omitempty" form:"nullableInt,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -104,13 +104,13 @@ type NullableOptional = NullableOptionalSchemaComponent
 
 // #/components/schemas/ArrayTypes
 type ArrayTypesSchemaComponent struct {
-	StringArray          []string                          `json:"stringArray,omitempty"`
-	IntArray             []int                             `json:"intArray,omitempty"`
-	ObjectArray          []SimpleObject                    `json:"objectArray,omitempty"`
-	InlineObjectArray    []ArrayTypesInlineObjectArrayItem `json:"inlineObjectArray,omitempty"`
-	NestedArray          [][]string                        `json:"nestedArray,omitempty"`
-	NullableArray        []string                          `json:"nullableArray,omitempty"`
-	ArrayWithConstraints []string                          `json:"arrayWithConstraints,omitempty"`
+	StringArray          []string                          `json:"stringArray,omitempty" form:"stringArray,omitempty"`
+	IntArray             []int                             `json:"intArray,omitempty" form:"intArray,omitempty"`
+	ObjectArray          []SimpleObject                    `json:"objectArray,omitempty" form:"objectArray,omitempty"`
+	InlineObjectArray    []ArrayTypesInlineObjectArrayItem `json:"inlineObjectArray,omitempty" form:"inlineObjectArray,omitempty"`
+	NestedArray          [][]string                        `json:"nestedArray,omitempty" form:"nestedArray,omitempty"`
+	NullableArray        []string                          `json:"nullableArray,omitempty" form:"nullableArray,omitempty"`
+	ArrayWithConstraints []string                          `json:"arrayWithConstraints,omitempty" form:"arrayWithConstraints,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -131,8 +131,8 @@ type ArrayTypesInlineObjectArray = ArrayTypesInlineObjectArrayPropertySchemaComp
 
 // #/components/schemas/ArrayTypes/properties/inlineObjectArray/items
 type ArrayTypesInlineObjectArrayItemPropertySchemaComponent struct {
-	ID   *int    `json:"id,omitempty"`
-	Name *string `json:"name,omitempty"`
+	ID   *int    `json:"id,omitempty" form:"id,omitempty"`
+	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -143,8 +143,8 @@ type ArrayTypesInlineObjectArrayItem = ArrayTypesInlineObjectArrayItemPropertySc
 
 // #/components/schemas/SimpleObject
 type SimpleObjectSchemaComponent struct {
-	ID   int     `json:"id"`
-	Name *string `json:"name,omitempty"`
+	ID   int     `json:"id" form:"id"`
+	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -155,7 +155,7 @@ type SimpleObject = SimpleObjectSchemaComponent
 
 // #/components/schemas/NestedObject
 type NestedObjectSchemaComponent struct {
-	Outer *NestedObjectOuter `json:"outer,omitempty"`
+	Outer *NestedObjectOuter `json:"outer,omitempty" form:"outer,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -169,7 +169,7 @@ type NestedObject = NestedObjectSchemaComponent
 
 // #/components/schemas/NestedObject/properties/outer
 type NestedObjectOuterPropertySchemaComponent struct {
-	Inner *NestedObjectOuterInner `json:"inner,omitempty"`
+	Inner *NestedObjectOuterInner `json:"inner,omitempty" form:"inner,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -183,7 +183,7 @@ type NestedObjectOuter = NestedObjectOuterPropertySchemaComponent
 
 // #/components/schemas/NestedObject/properties/outer/properties/inner
 type NestedObjectOuterInnerPropertyPropertySchemaComponent struct {
-	Value *string `json:"value,omitempty"`
+	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -199,7 +199,7 @@ type AdditionalPropsAny = AdditionalPropsAnySchemaComponent
 
 // #/components/schemas/AdditionalPropsNone
 type AdditionalPropsNoneSchemaComponent struct {
-	Known                *string        `json:"known,omitempty"`
+	Known                *string        `json:"known,omitempty" form:"known,omitempty"`
 	AdditionalProperties map[string]any `json:"-"`
 }
 
@@ -270,7 +270,7 @@ type AdditionalPropsObject = AdditionalPropsObjectSchemaComponent
 
 // #/components/schemas/AdditionalPropsWithProps
 type AdditionalPropsWithPropsSchemaComponent struct {
-	ID                   *int              `json:"id,omitempty"`
+	ID                   *int              `json:"id,omitempty" form:"id,omitempty"`
 	AdditionalProperties map[string]string `json:"-"`
 }
 
@@ -353,8 +353,8 @@ type IntegerEnum = IntegerEnumSchemaComponent
 
 // #/components/schemas/ObjectWithEnum
 type ObjectWithEnumSchemaComponent struct {
-	Status   *string `json:"status,omitempty"`
-	Priority *int    `json:"priority,omitempty"`
+	Status   *string `json:"status,omitempty" form:"status,omitempty"`
+	Priority *int    `json:"priority,omitempty" form:"priority,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -387,7 +387,7 @@ type ObjectWithEnumPriority = ObjectWithEnumPriorityPropertySchemaComponent
 
 // #/components/schemas/InlineEnumInProperty
 type InlineEnumInPropertySchemaComponent struct {
-	InlineStatus *string `json:"inlineStatus,omitempty"`
+	InlineStatus *string `json:"inlineStatus,omitempty" form:"inlineStatus,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -408,8 +408,8 @@ type InlineEnumInPropertyInlineStatus = InlineEnumInPropertyInlineStatusProperty
 
 // #/components/schemas/BaseProperties
 type BasePropertiesSchemaComponent struct {
-	ID        *int       `json:"id,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -420,10 +420,10 @@ type BaseProperties = BasePropertiesSchemaComponent
 
 // #/components/schemas/ExtendedObject
 type ExtendedObjectSchemaComponent struct {
-	ID          *int       `json:"id,omitempty"`
-	CreatedAt   *time.Time `json:"createdAt,omitempty"`
-	Name        string     `json:"name"`
-	Description *string    `json:"description,omitempty"`
+	ID          *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt   *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Name        string     `json:"name" form:"name"`
+	Description *string    `json:"description,omitempty" form:"description,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -434,8 +434,8 @@ type ExtendedObject = ExtendedObjectSchemaComponent
 
 // #/components/schemas/ExtendedObject/allOf/1
 type ExtendedObjectN1AllOfSchemaComponent struct {
-	Name        string  `json:"name"`
-	Description *string `json:"description,omitempty"`
+	Name        string  `json:"name" form:"name"`
+	Description *string `json:"description,omitempty" form:"description,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -446,7 +446,7 @@ type ExtendedObjectAllOf1 = ExtendedObjectN1AllOfSchemaComponent
 
 // #/components/schemas/DeepInheritance
 type DeepInheritanceSchemaComponent struct {
-	Extra *string `json:"extra,omitempty"`
+	Extra *string `json:"extra,omitempty" form:"extra,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -457,7 +457,7 @@ type DeepInheritance = DeepInheritanceSchemaComponent
 
 // #/components/schemas/DeepInheritance/allOf/1
 type DeepInheritanceN1AllOfSchemaComponent struct {
-	Extra *string `json:"extra,omitempty"`
+	Extra *string `json:"extra,omitempty" form:"extra,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -468,10 +468,10 @@ type DeepInheritanceAllOf1 = DeepInheritanceN1AllOfSchemaComponent
 
 // #/components/schemas/AllOfMultipleRefs
 type AllOfMultipleRefsSchemaComponent struct {
-	ID        *int       `json:"id,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	Name      *string    `json:"name,omitempty"`
-	Merged    *bool      `json:"merged,omitempty"`
+	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Name      *string    `json:"name,omitempty" form:"name,omitempty"`
+	Merged    *bool      `json:"merged,omitempty" form:"merged,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -482,7 +482,7 @@ type AllOfMultipleRefs = AllOfMultipleRefsSchemaComponent
 
 // #/components/schemas/AllOfMultipleRefs/allOf/2
 type AllOfMultipleRefsN2AllOfSchemaComponent struct {
-	Merged *bool `json:"merged,omitempty"`
+	Merged *bool `json:"merged,omitempty" form:"merged,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -493,8 +493,8 @@ type AllOfMultipleRefsAllOf2 = AllOfMultipleRefsN2AllOfSchemaComponent
 
 // #/components/schemas/AllOfInlineOnly
 type AllOfInlineOnlySchemaComponent struct {
-	First  *string `json:"first,omitempty"`
-	Second *int    `json:"second,omitempty"`
+	First  *string `json:"first,omitempty" form:"first,omitempty"`
+	Second *int    `json:"second,omitempty" form:"second,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -505,7 +505,7 @@ type AllOfInlineOnly = AllOfInlineOnlySchemaComponent
 
 // #/components/schemas/AllOfInlineOnly/allOf/0
 type AllOfInlineOnlyN0AllOfSchemaComponent struct {
-	First *string `json:"first,omitempty"`
+	First *string `json:"first,omitempty" form:"first,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -516,7 +516,7 @@ type AllOfInlineOnlyAllOf0 = AllOfInlineOnlyN0AllOfSchemaComponent
 
 // #/components/schemas/AllOfInlineOnly/allOf/1
 type AllOfInlineOnlyN1AllOfSchemaComponent struct {
-	Second *int `json:"second,omitempty"`
+	Second *int `json:"second,omitempty" form:"second,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -698,7 +698,7 @@ type AnyOfMixed = AnyOfMixedSchemaComponent
 
 // #/components/schemas/AnyOfMixed/anyOf/2
 type AnyOfMixedN2AnyOfSchemaComponent struct {
-	Inline *bool `json:"inline,omitempty"`
+	Inline *bool `json:"inline,omitempty" form:"inline,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -745,7 +745,7 @@ type AnyOfNullable = AnyOfNullableSchemaComponent
 
 // #/components/schemas/ObjectWithAnyOfProperty
 type ObjectWithAnyOfPropertySchemaComponent struct {
-	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty"`
+	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty" form:"value,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1070,9 +1070,9 @@ type OneOfWithDiscriminatorMapping = OneOfWithDiscriminatorMappingSchemaComponen
 
 // #/components/schemas/Cat
 type CatSchemaComponent struct {
-	PetType       string   `json:"petType"`
-	Meow          string   `json:"meow"`
-	WhiskerLength *float32 `json:"whiskerLength,omitempty"`
+	PetType       string   `json:"petType" form:"petType"`
+	Meow          string   `json:"meow" form:"meow"`
+	WhiskerLength *float32 `json:"whiskerLength,omitempty" form:"whiskerLength,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1083,9 +1083,9 @@ type Cat = CatSchemaComponent
 
 // #/components/schemas/Dog
 type DogSchemaComponent struct {
-	PetType    string   `json:"petType"`
-	Bark       string   `json:"bark"`
-	TailLength *float32 `json:"tailLength,omitempty"`
+	PetType    string   `json:"petType" form:"petType"`
+	Bark       string   `json:"bark" form:"bark"`
+	TailLength *float32 `json:"tailLength,omitempty" form:"tailLength,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1163,7 +1163,7 @@ type OneOfInline = OneOfInlineSchemaComponent
 
 // #/components/schemas/OneOfInline/oneOf/0
 type OneOfInlineN0OneOfSchemaComponent struct {
-	OptionA *string `json:"optionA,omitempty"`
+	OptionA *string `json:"optionA,omitempty" form:"optionA,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1174,7 +1174,7 @@ type OneOfInlineOneOf0 = OneOfInlineN0OneOfSchemaComponent
 
 // #/components/schemas/OneOfInline/oneOf/1
 type OneOfInlineN1OneOfSchemaComponent struct {
-	OptionB *int `json:"optionB,omitempty"`
+	OptionB *int `json:"optionB,omitempty" form:"optionB,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1260,8 +1260,8 @@ type OneOfPrimitives = OneOfPrimitivesSchemaComponent
 
 // #/components/schemas/ObjectWithOneOfProperty
 type ObjectWithOneOfPropertySchemaComponent struct {
-	ID      *int                            `json:"id,omitempty"`
-	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty"`
+	ID      *int                            `json:"id,omitempty" form:"id,omitempty"`
+	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1339,8 +1339,8 @@ type ObjectWithOneOfPropertyVariant = ObjectWithOneOfPropertyVariantPropertySche
 
 // #/components/schemas/AllOfWithOneOf
 type AllOfWithOneOfSchemaComponent struct {
-	ID                   *int                  `json:"id,omitempty"`
-	CreatedAt            *time.Time            `json:"createdAt,omitempty"`
+	ID                   *int                  `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt            *time.Time            `json:"createdAt,omitempty" form:"createdAt,omitempty"`
 	AllOfWithOneOfAllOf1 *AllOfWithOneOfAllOf1 `json:"-"`
 }
 
@@ -1542,9 +1542,9 @@ type OneOfWithAllOf = OneOfWithAllOfSchemaComponent
 
 // #/components/schemas/OneOfWithAllOf/oneOf/0
 type OneOfWithAllOfN0OneOfSchemaComponent struct {
-	ID        *int       `json:"id,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	Variant   *string    `json:"variant,omitempty"`
+	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Variant   *string    `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1555,7 +1555,7 @@ type OneOfWithAllOfOneOf0 = OneOfWithAllOfN0OneOfSchemaComponent
 
 // #/components/schemas/OneOfWithAllOf/oneOf/0/allOf/1
 type OneOfWithAllOfN0N1AllOfOneOfSchemaComponent struct {
-	Variant *string `json:"variant,omitempty"`
+	Variant *string `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1566,9 +1566,9 @@ type OneOfWithAllOfOneOf0AllOf1 = OneOfWithAllOfN0N1AllOfOneOfSchemaComponent
 
 // #/components/schemas/OneOfWithAllOf/oneOf/1
 type OneOfWithAllOfN1OneOfSchemaComponent struct {
-	ID        *int       `json:"id,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	Variant   *string    `json:"variant,omitempty"`
+	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Variant   *string    `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1579,7 +1579,7 @@ type OneOfWithAllOfOneOf1 = OneOfWithAllOfN1OneOfSchemaComponent
 
 // #/components/schemas/OneOfWithAllOf/oneOf/1/allOf/1
 type OneOfWithAllOfN1N1AllOfOneOfSchemaComponent struct {
-	Variant *string `json:"variant,omitempty"`
+	Variant *string `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1590,8 +1590,8 @@ type OneOfWithAllOfOneOf1AllOf1 = OneOfWithAllOfN1N1AllOfOneOfSchemaComponent
 
 // #/components/schemas/TreeNode
 type TreeNodeSchemaComponent struct {
-	Value    *string    `json:"value,omitempty"`
-	Children []TreeNode `json:"children,omitempty"`
+	Value    *string    `json:"value,omitempty" form:"value,omitempty"`
+	Children []TreeNode `json:"children,omitempty" form:"children,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1607,8 +1607,8 @@ type TreeNodeChildren = TreeNodeChildrenPropertySchemaComponent
 
 // #/components/schemas/LinkedListNode
 type LinkedListNodeSchemaComponent struct {
-	Value *int            `json:"value,omitempty"`
-	Next  *LinkedListNode `json:"next,omitempty"`
+	Value *int            `json:"value,omitempty" form:"value,omitempty"`
+	Next  *LinkedListNode `json:"next,omitempty" form:"next,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1686,7 +1686,7 @@ type RecursiveOneOf = RecursiveOneOfSchemaComponent
 
 // #/components/schemas/RecursiveOneOf/oneOf/1
 type RecursiveOneOfN1OneOfSchemaComponent struct {
-	Nested *RecursiveOneOf `json:"nested,omitempty"`
+	Nested *RecursiveOneOf `json:"nested,omitempty" form:"nested,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1700,9 +1700,9 @@ type RecursiveOneOfOneOf1 = RecursiveOneOfN1OneOfSchemaComponent
 
 // #/components/schemas/ReadWriteOnly
 type ReadWriteOnlySchemaComponent struct {
-	ID       int     `json:"id"`
-	Password string  `json:"password"`
-	Name     *string `json:"name,omitempty"`
+	ID       int     `json:"id" form:"id"`
+	Password string  `json:"password" form:"password"`
+	Name     *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1713,10 +1713,10 @@ type ReadWriteOnly = ReadWriteOnlySchemaComponent
 
 // #/components/schemas/WithDefaults
 type WithDefaultsSchemaComponent struct {
-	StringWithDefault *string  `json:"stringWithDefault,omitempty"`
-	IntWithDefault    *int     `json:"intWithDefault,omitempty"`
-	BoolWithDefault   *bool    `json:"boolWithDefault,omitempty"`
-	ArrayWithDefault  []string `json:"arrayWithDefault,omitempty"`
+	StringWithDefault *string  `json:"stringWithDefault,omitempty" form:"stringWithDefault,omitempty"`
+	IntWithDefault    *int     `json:"intWithDefault,omitempty" form:"intWithDefault,omitempty"`
+	BoolWithDefault   *bool    `json:"boolWithDefault,omitempty" form:"boolWithDefault,omitempty"`
+	ArrayWithDefault  []string `json:"arrayWithDefault,omitempty" form:"arrayWithDefault,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1739,8 +1739,8 @@ type WithDefaults = WithDefaultsSchemaComponent
 
 // #/components/schemas/WithConst
 type WithConstSchemaComponent struct {
-	Version *string `json:"version,omitempty"`
-	_Type   *string `json:"type,omitempty"`
+	Version *string `json:"version,omitempty" form:"version,omitempty"`
+	_Type   *string `json:"type,omitempty" form:"type,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1751,13 +1751,13 @@ type WithConst = WithConstSchemaComponent
 
 // #/components/schemas/WithConstraints
 type WithConstraintsSchemaComponent struct {
-	BoundedInt          *int     `json:"boundedInt,omitempty"`
-	ExclusiveBoundedInt *int     `json:"exclusiveBoundedInt,omitempty"`
-	MultipleOf          *int     `json:"multipleOf,omitempty"`
-	BoundedString       *string  `json:"boundedString,omitempty"`
-	PatternString       *string  `json:"patternString,omitempty"`
-	BoundedArray        []string `json:"boundedArray,omitempty"`
-	UniqueArray         []string `json:"uniqueArray,omitempty"`
+	BoundedInt          *int     `json:"boundedInt,omitempty" form:"boundedInt,omitempty"`
+	ExclusiveBoundedInt *int     `json:"exclusiveBoundedInt,omitempty" form:"exclusiveBoundedInt,omitempty"`
+	MultipleOf          *int     `json:"multipleOf,omitempty" form:"multipleOf,omitempty"`
+	BoundedString       *string  `json:"boundedString,omitempty" form:"boundedString,omitempty"`
+	PatternString       *string  `json:"patternString,omitempty" form:"patternString,omitempty"`
+	BoundedArray        []string `json:"boundedArray,omitempty" form:"boundedArray,omitempty"`
+	UniqueArray         []string `json:"uniqueArray,omitempty" form:"uniqueArray,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1768,7 +1768,7 @@ type WithConstraints = WithConstraintsSchemaComponent
 
 // #/components/schemas/TypeArray31
 type TypeArray31SchemaComponent struct {
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1784,9 +1784,9 @@ type ExplicitAny = ExplicitAnySchemaComponent
 
 // #/components/schemas/ComplexNested
 type ComplexNestedSchemaComponent struct {
-	Metadata map[string]any          `json:"metadata,omitempty"`
-	Items    []ComplexNestedItemItem `json:"items,omitempty"`
-	Config   *ComplexNestedConfig    `json:"config,omitempty"`
+	Metadata map[string]any          `json:"metadata,omitempty" form:"metadata,omitempty"`
+	Items    []ComplexNestedItemItem `json:"items,omitempty" form:"items,omitempty"`
+	Config   *ComplexNestedConfig    `json:"config,omitempty" form:"config,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1852,9 +1852,9 @@ type ComplexNestedItem = ComplexNestedItemPropertySchemaComponent
 
 // #/components/schemas/ComplexNested/properties/items/items
 type ComplexNestedItemItemPropertySchemaComponent struct {
-	ID        *int       `json:"id,omitempty"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	Tags      []string   `json:"tags,omitempty"`
+	ID        *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Tags      []string   `json:"tags,omitempty" form:"tags,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1865,7 +1865,7 @@ type ComplexNestedItemItem = ComplexNestedItemItemPropertySchemaComponent
 
 // #/components/schemas/ComplexNested/properties/items/items/allOf/1
 type ComplexNestedN1AllOfItemItemPropertySchemaComponent struct {
-	Tags []string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty" form:"tags,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1943,8 +1943,8 @@ type ComplexNestedConfig = ComplexNestedConfigPropertySchemaComponent
 
 // #/components/schemas/ComplexNested/properties/config/oneOf/0
 type ComplexNestedConfigN0OneOfPropertySchemaComponent struct {
-	Mode  *string `json:"mode,omitempty"`
-	Value *string `json:"value,omitempty"`
+	Mode  *string `json:"mode,omitempty" form:"mode,omitempty"`
+	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1955,8 +1955,8 @@ type ComplexNestedConfigOneOf0 = ComplexNestedConfigN0OneOfPropertySchemaCompone
 
 // #/components/schemas/ComplexNested/properties/config/oneOf/1
 type ComplexNestedConfigN1OneOfPropertySchemaComponent struct {
-	Mode    *string           `json:"mode,omitempty"`
-	Options map[string]string `json:"options,omitempty"`
+	Mode    *string           `json:"mode,omitempty" form:"mode,omitempty"`
+	Options map[string]string `json:"options,omitempty" form:"options,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -1992,8 +1992,8 @@ type NestedMapValue = NestedMapValueSchemaComponent
 
 // #/paths//inline-response/get/responses/200/content/application/json/schema
 type InlineResponseGetN200ApplicationJSONContentResponsePath struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID   int    `json:"id" form:"id"`
+	Name string `json:"name" form:"name"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -2001,18 +2001,6 @@ func (s *InlineResponseGetN200ApplicationJSONContentResponsePath) ApplyDefaults(
 }
 
 type GetInlineResponse200Response = InlineResponseGetN200ApplicationJSONContentResponsePath
-
-// #/paths//multi-content/post/requestBody/content/multipart/form-data/schema
-type MultiContentPostMultipartFormDataContentRequestPath struct {
-	File     *File   `json:"file,omitempty"`
-	Metadata *string `json:"metadata,omitempty"`
-}
-
-// ApplyDefaults sets default values for fields that are nil.
-func (s *MultiContentPostMultipartFormDataContentRequestPath) ApplyDefaults() {
-}
-
-type PostMultiContentRequestForm2 = MultiContentPostMultipartFormDataContentRequestPath
 
 const DateFormat = "2006-01-02"
 

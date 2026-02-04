@@ -63,7 +63,7 @@ type ArrayOfAnyOfItem = ArrayOfAnyOfItemSchemaComponent
 
 // #/components/schemas/ArrayOfAnyOf/items/anyOf/1
 type ArrayOfAnyOfN1AnyOfItemSchemaComponent struct {
-	ID *int `json:"id,omitempty"`
+	ID *int `json:"id,omitempty" form:"id,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -74,7 +74,7 @@ type ArrayOfAnyOfAnyOf1 = ArrayOfAnyOfN1AnyOfItemSchemaComponent
 
 // #/components/schemas/ObjectWithAnyOfProperty
 type ObjectWithAnyOfPropertySchemaComponent struct {
-	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty"`
+	Value *ObjectWithAnyOfPropertyValue `json:"value,omitempty" form:"value,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -121,7 +121,7 @@ type ObjectWithAnyOfPropertyValue = ObjectWithAnyOfPropertyValuePropertySchemaCo
 
 // #/components/schemas/ObjectWithOneOfProperty
 type ObjectWithOneOfPropertySchemaComponent struct {
-	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty"`
+	Variant *ObjectWithOneOfPropertyVariant `json:"variant,omitempty" form:"variant,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -199,8 +199,8 @@ type ObjectWithOneOfPropertyVariant = ObjectWithOneOfPropertyVariantPropertySche
 
 // #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/0
 type ObjectWithOneOfPropertyVariantN0OneOfPropertySchemaComponent struct {
-	Kind *string `json:"kind,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Kind *string `json:"kind,omitempty" form:"kind,omitempty"`
+	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -211,8 +211,8 @@ type ObjectWithOneOfPropertyVariantOneOf0 = ObjectWithOneOfPropertyVariantN0OneO
 
 // #/components/schemas/ObjectWithOneOfProperty/properties/variant/oneOf/1
 type ObjectWithOneOfPropertyVariantN1OneOfPropertySchemaComponent struct {
-	Kind  *string `json:"kind,omitempty"`
-	Count *int    `json:"count,omitempty"`
+	Kind  *string `json:"kind,omitempty" form:"kind,omitempty"`
+	Count *int    `json:"count,omitempty" form:"count,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -223,7 +223,7 @@ type ObjectWithOneOfPropertyVariantOneOf1 = ObjectWithOneOfPropertyVariantN1OneO
 
 // #/components/schemas/AllOfWithOneOf
 type AllOfWithOneOfSchemaComponent struct {
-	Base                 *string               `json:"base,omitempty"`
+	Base                 *string               `json:"base,omitempty" form:"base,omitempty"`
 	AllOfWithOneOfAllOf1 *AllOfWithOneOfAllOf1 `json:"-"`
 }
 
@@ -281,7 +281,7 @@ type AllOfWithOneOf = AllOfWithOneOfSchemaComponent
 
 // #/components/schemas/AllOfWithOneOf/allOf/0
 type AllOfWithOneOfN0AllOfSchemaComponent struct {
-	Base *string `json:"base,omitempty"`
+	Base *string `json:"base,omitempty" form:"base,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -359,7 +359,7 @@ type AllOfWithOneOfAllOf1 = AllOfWithOneOfN1AllOfSchemaComponent
 
 // #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/0
 type AllOfWithOneOfN1N0OneOfAllOfSchemaComponent struct {
-	OptionA *bool `json:"optionA,omitempty"`
+	OptionA *bool `json:"optionA,omitempty" form:"optionA,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -370,7 +370,7 @@ type AllOfWithOneOfAllOf1OneOf0 = AllOfWithOneOfN1N0OneOfAllOfSchemaComponent
 
 // #/components/schemas/AllOfWithOneOf/allOf/1/oneOf/1
 type AllOfWithOneOfN1N1OneOfAllOfSchemaComponent struct {
-	OptionB *int `json:"optionB,omitempty"`
+	OptionB *int `json:"optionB,omitempty" form:"optionB,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.

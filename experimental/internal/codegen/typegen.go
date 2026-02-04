@@ -13,6 +13,7 @@ type TypeGenerator struct {
 	typeMapping    TypeMapping
 	converter      *NameConverter
 	importResolver *ImportResolver
+	tagGenerator   *StructTagGenerator
 	imports        map[string]string // path -> alias (empty string = no alias)
 
 	// schemaIndex maps JSON pointer refs to their descriptors
@@ -23,11 +24,12 @@ type TypeGenerator struct {
 }
 
 // NewTypeGenerator creates a TypeGenerator with the given configuration.
-func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importResolver *ImportResolver) *TypeGenerator {
+func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importResolver *ImportResolver, tagGenerator *StructTagGenerator) *TypeGenerator {
 	return &TypeGenerator{
 		typeMapping:       typeMapping,
 		converter:         converter,
 		importResolver:    importResolver,
+		tagGenerator:      tagGenerator,
 		imports:           make(map[string]string),
 		schemaIndex:       make(map[string]*SchemaDescriptor),
 		requiredTemplates: make(map[string]bool),
@@ -631,9 +633,32 @@ func GetSchemaKind(desc *SchemaDescriptor) SchemaKind {
 }
 
 // FormatJSONTag generates a JSON struct tag for a field.
+// Deprecated: Use StructTagGenerator instead.
 func FormatJSONTag(jsonName string, omitEmpty bool) string {
 	if omitEmpty {
 		return fmt.Sprintf("`json:\"%s,omitempty\"`", jsonName)
 	}
 	return fmt.Sprintf("`json:\"%s\"`", jsonName)
+}
+
+// GenerateFieldTag generates struct tags for a field using the configured templates.
+func (g *TypeGenerator) GenerateFieldTag(field StructField) string {
+	if g.tagGenerator == nil {
+		// Fallback to legacy behavior
+		return FormatJSONTag(field.JSONName, field.OmitEmpty)
+	}
+
+	info := StructTagInfo{
+		FieldName:   field.JSONName,
+		GoFieldName: field.Name,
+		IsOptional:  !field.Required,
+		IsNullable:  field.Nullable,
+		IsPointer:   field.Pointer,
+	}
+	return g.tagGenerator.GenerateTags(info)
+}
+
+// TagGenerator returns the struct tag generator.
+func (g *TypeGenerator) TagGenerator() *StructTagGenerator {
+	return g.tagGenerator
 }

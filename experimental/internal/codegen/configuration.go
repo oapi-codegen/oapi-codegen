@@ -26,6 +26,9 @@ type Configuration struct {
 	// Only request/response bodies with matching content types will have types generated.
 	// Defaults to common JSON and YAML types if not specified.
 	ContentTypes []string `yaml:"content-types,omitempty"`
+	// StructTags configures how struct tags are generated for fields.
+	// By default, only json tags are generated.
+	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
 }
 
 // DefaultContentTypes returns the default list of content type patterns.
@@ -44,6 +47,7 @@ func (c *Configuration) ApplyDefaults() {
 	if len(c.ContentTypes) == 0 {
 		c.ContentTypes = DefaultContentTypes()
 	}
+	c.StructTags = DefaultStructTagsConfig().Merge(c.StructTags)
 }
 
 // ContentTypeMatcher checks if content types match configured patterns.

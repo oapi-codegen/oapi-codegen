@@ -143,7 +143,7 @@ func (b *CodeBuilder) String() string {
 }
 
 // GenerateStruct generates a struct type definition.
-func GenerateStruct(name string, fields []StructField, doc string) string {
+func GenerateStruct(name string, fields []StructField, doc string, tagGen *StructTagGenerator) string {
 	b := NewCodeBuilder()
 
 	// Type documentation
@@ -157,7 +157,7 @@ func GenerateStruct(name string, fields []StructField, doc string) string {
 	b.Indent()
 
 	for _, f := range fields {
-		tag := FormatJSONTag(f.JSONName, f.OmitEmpty)
+		tag := generateFieldTag(f, tagGen)
 		if f.Doc != "" {
 			// Single line comment for field
 			b.Line("%s %s %s // %s", f.Name, f.Type, tag, f.Doc)
@@ -172,9 +172,24 @@ func GenerateStruct(name string, fields []StructField, doc string) string {
 	return b.String()
 }
 
+// generateFieldTag generates the struct tag for a field.
+func generateFieldTag(f StructField, tagGen *StructTagGenerator) string {
+	if tagGen == nil {
+		return FormatJSONTag(f.JSONName, f.OmitEmpty)
+	}
+	info := StructTagInfo{
+		FieldName:   f.JSONName,
+		GoFieldName: f.Name,
+		IsOptional:  !f.Required,
+		IsNullable:  f.Nullable,
+		IsPointer:   f.Pointer,
+	}
+	return tagGen.GenerateTags(info)
+}
+
 // GenerateStructWithAdditionalProps generates a struct with AdditionalProperties field
 // and custom marshal/unmarshal methods.
-func GenerateStructWithAdditionalProps(name string, fields []StructField, addPropsType string, doc string) string {
+func GenerateStructWithAdditionalProps(name string, fields []StructField, addPropsType string, doc string, tagGen *StructTagGenerator) string {
 	b := NewCodeBuilder()
 
 	// Type documentation
@@ -189,7 +204,7 @@ func GenerateStructWithAdditionalProps(name string, fields []StructField, addPro
 
 	// Regular fields
 	for _, f := range fields {
-		tag := FormatJSONTag(f.JSONName, f.OmitEmpty)
+		tag := generateFieldTag(f, tagGen)
 		b.Line("%s %s %s", f.Name, f.Type, tag)
 	}
 
