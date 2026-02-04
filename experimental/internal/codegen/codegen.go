@@ -15,8 +15,11 @@ import (
 func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	cfg.ApplyDefaults()
 
+	// Create content type matcher for filtering request/response bodies
+	contentTypeMatcher := NewContentTypeMatcher(cfg.ContentTypes)
+
 	// Pass 1: Gather all schemas that need types
-	schemas, err := GatherSchemas(doc)
+	schemas, err := GatherSchemas(doc, contentTypeMatcher)
 	if err != nil {
 		return "", fmt.Errorf("gathering schemas: %w", err)
 	}

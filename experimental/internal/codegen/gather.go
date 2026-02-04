@@ -9,7 +9,7 @@ import (
 )
 
 // GatherSchemas traverses an OpenAPI document and collects all schemas into a list.
-func GatherSchemas(doc libopenapi.Document) ([]*SchemaDescriptor, error) {
+func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) ([]*SchemaDescriptor, error) {
 	model, errs := doc.BuildV3Model()
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("building v3 model: %v", errs[0])
@@ -19,7 +19,8 @@ func GatherSchemas(doc libopenapi.Document) ([]*SchemaDescriptor, error) {
 	}
 
 	g := &gatherer{
-		schemas: make([]*SchemaDescriptor, 0),
+		schemas:            make([]*SchemaDescriptor, 0),
+		contentTypeMatcher: contentTypeMatcher,
 	}
 
 	g.gatherFromDocument(&model.Model)
@@ -27,7 +28,8 @@ func GatherSchemas(doc libopenapi.Document) ([]*SchemaDescriptor, error) {
 }
 
 type gatherer struct {
-	schemas []*SchemaDescriptor
+	schemas            []*SchemaDescriptor
+	contentTypeMatcher *ContentTypeMatcher
 }
 
 func (g *gatherer) gatherFromDocument(doc *v3.Document) {
@@ -141,6 +143,10 @@ func (g *gatherer) gatherFromRequestBody(rb *v3.RequestBody, basePath SchemaPath
 
 	for pair := rb.Content.First(); pair != nil; pair = pair.Next() {
 		contentType := pair.Key()
+		// Skip content types that don't match the configured patterns
+		if g.contentTypeMatcher != nil && !g.contentTypeMatcher.Matches(contentType) {
+			continue
+		}
 		mediaType := pair.Value()
 		g.gatherFromMediaType(mediaType, basePath.Append("content", contentType))
 	}
@@ -154,6 +160,10 @@ func (g *gatherer) gatherFromResponse(response *v3.Response, basePath SchemaPath
 	if response.Content != nil {
 		for pair := response.Content.First(); pair != nil; pair = pair.Next() {
 			contentType := pair.Key()
+			// Skip content types that don't match the configured patterns
+			if g.contentTypeMatcher != nil && !g.contentTypeMatcher.Matches(contentType) {
+				continue
+			}
 			mediaType := pair.Value()
 			g.gatherFromMediaType(mediaType, basePath.Append("content", contentType))
 		}

@@ -175,6 +175,16 @@ import-mapping:
   https://example.com/specs/shared.yaml: github.com/org/shared
   # Use "-" to indicate types should stay in the current package
   ./local-types.yaml: "-"
+
+# Content types: filter which media types generate models (regexp patterns)
+# Only request/response bodies with matching content types will have types generated.
+# Defaults to JSON types if not specified.
+content-types:
+  - "^application/json$"
+  - "^application/.*\\+json$"
+  # Add custom patterns as needed:
+  # - "^application/xml$"
+  # - "^text/plain$"
 ```
 
 ### External References

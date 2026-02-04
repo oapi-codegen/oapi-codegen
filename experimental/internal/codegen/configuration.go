@@ -3,6 +3,7 @@ package codegen
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"regexp"
 	"sort"
 )
 
@@ -21,12 +22,57 @@ type Configuration struct {
 	// Example: {"../common/api.yaml": "github.com/org/project/common"}
 	// Use "-" as the value to indicate types should be in the current package.
 	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
+	// ContentTypes is a list of regexp patterns for media types to generate models for.
+	// Only request/response bodies with matching content types will have types generated.
+	// Defaults to common JSON and YAML types if not specified.
+	ContentTypes []string `yaml:"content-types,omitempty"`
+}
+
+// DefaultContentTypes returns the default list of content type patterns.
+// These match common JSON and YAML media types.
+func DefaultContentTypes() []string {
+	return []string{
+		`^application/json$`,
+		`^application/.*\+json$`,
+	}
 }
 
 // ApplyDefaults merges user configuration on top of default values.
 func (c *Configuration) ApplyDefaults() {
 	c.TypeMapping = DefaultTypeMapping.Merge(c.TypeMapping)
 	c.NameMangling = DefaultNameMangling().Merge(c.NameMangling)
+	if len(c.ContentTypes) == 0 {
+		c.ContentTypes = DefaultContentTypes()
+	}
+}
+
+// ContentTypeMatcher checks if content types match configured patterns.
+type ContentTypeMatcher struct {
+	patterns []*regexp.Regexp
+}
+
+// NewContentTypeMatcher creates a matcher from a list of regexp patterns.
+// Invalid patterns are silently ignored.
+func NewContentTypeMatcher(patterns []string) *ContentTypeMatcher {
+	m := &ContentTypeMatcher{
+		patterns: make([]*regexp.Regexp, 0, len(patterns)),
+	}
+	for _, p := range patterns {
+		if re, err := regexp.Compile(p); err == nil {
+			m.patterns = append(m.patterns, re)
+		}
+	}
+	return m
+}
+
+// Matches returns true if the content type matches any of the configured patterns.
+func (m *ContentTypeMatcher) Matches(contentType string) bool {
+	for _, re := range m.patterns {
+		if re.MatchString(contentType) {
+			return true
+		}
+	}
+	return false
 }
 
 // ExternalImport represents an external package import with its alias.
