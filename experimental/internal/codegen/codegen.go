@@ -122,8 +122,8 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 
 	// Check if we need additionalProperties handling
 	if gen.HasAdditionalProperties(desc) {
-		// Mixed properties need encoding/json and fmt for marshal/unmarshal
-		gen.AddJSONImports()
+		// Mixed properties need encoding/json for marshal/unmarshal (but not fmt)
+		gen.AddJSONImport()
 
 		addPropsType := gen.AdditionalPropertiesType(desc)
 		structCode := GenerateStructWithAdditionalProps(desc.StableName, fields, addPropsType, doc, gen.TagGenerator())

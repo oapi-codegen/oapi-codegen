@@ -417,7 +417,9 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 				field.IsStruct = true // external references are typically to struct types
 			} else if target, ok := g.schemaIndex[ref]; ok {
 				propType = target.ShortName
-				field.IsStruct = true // references are typically to struct types
+				// Only set IsStruct if the referenced schema has ApplyDefaults
+				// This filters out array/map type aliases which don't have ApplyDefaults
+				field.IsStruct = schemaHasApplyDefaults(target.Schema)
 			} else {
 				propType = "any"
 			}
