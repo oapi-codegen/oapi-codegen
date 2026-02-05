@@ -296,6 +296,14 @@ func (g *TypeGenerator) arrayType(schema *base.Schema, desc *SchemaDescriptor) s
 	itemProxy := schema.Items.A
 	if itemProxy.IsReference() {
 		ref := itemProxy.GetReference()
+		// Check for external reference first
+		if !strings.HasPrefix(ref, "#") && strings.Contains(ref, "#") {
+			// External reference - use import mapping
+			tempDesc := &SchemaDescriptor{Ref: ref}
+			itemType := g.externalRefType(tempDesc)
+			return "[]" + itemType
+		}
+		// Internal reference - look up in schema index
 		if target, ok := g.schemaIndex[ref]; ok {
 			return "[]" + target.ShortName
 		}

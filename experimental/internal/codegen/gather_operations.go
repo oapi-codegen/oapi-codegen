@@ -12,9 +12,9 @@ import (
 
 // GatherOperations traverses an OpenAPI document and collects all operations.
 func GatherOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker) ([]*OperationDescriptor, error) {
-	model, errs := doc.BuildV3Model()
-	if len(errs) > 0 {
-		return nil, fmt.Errorf("building v3 model: %v", errs[0])
+	model, err := doc.BuildV3Model()
+	if err != nil {
+		return nil, fmt.Errorf("building v3 model: %w", err)
 	}
 	if model == nil {
 		return nil, fmt.Errorf("failed to build v3 model")
