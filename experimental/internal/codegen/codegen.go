@@ -4,6 +4,7 @@ package codegen
 import (
 	"fmt"
 	"strings"
+	"text/template"
 
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
@@ -30,6 +31,12 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	// Pass 2: Compute names for all schemas
 	converter := NewNameConverter(cfg.NameMangling, cfg.NameSubstitutions)
 	ComputeSchemaNames(schemas, converter, contentTypeNamer)
+
+	// Build schema index for type resolution
+	schemaIndex := make(map[string]*SchemaDescriptor)
+	for _, s := range schemas {
+		schemaIndex[s.Path.String()] = s
+	}
 
 	// Pass 3: Generate Go code
 	importResolver := NewImportResolver(cfg.ImportMapping)
@@ -64,7 +71,84 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 		}
 	}
 
+	// Generate client code if requested
+	if cfg.Generation.Client {
+		// Create param tracker for tracking which param functions are needed
+		paramTracker := NewParamUsageTracker()
+
+		// Gather operations
+		ops, err := GatherOperations(doc, paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("gathering operations: %w", err)
+		}
+
+		// Generate client
+		clientGen, err := NewClientGenerator(schemaIndex, cfg.Generation.SimpleClient)
+		if err != nil {
+			return "", fmt.Errorf("creating client generator: %w", err)
+		}
+
+		clientCode, err := clientGen.GenerateClient(ops)
+		if err != nil {
+			return "", fmt.Errorf("generating client code: %w", err)
+		}
+		output.AddType(clientCode)
+
+		// Add client imports
+		for _, ct := range templates.ClientTemplates {
+			for _, imp := range ct.Imports {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
+
+		// Generate param functions
+		paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("generating param functions: %w", err)
+		}
+		if paramFuncs != "" {
+			output.AddType(paramFuncs)
+		}
+
+		// Add param function imports
+		for _, imp := range paramTracker.GetRequiredImports() {
+			output.AddImport(imp.Path, imp.Alias)
+		}
+	}
+
 	return output.Format()
+}
+
+// generateParamFunctionsFromTracker generates the parameter styling/binding functions based on usage.
+func generateParamFunctionsFromTracker(tracker *ParamUsageTracker) (string, error) {
+	if !tracker.HasAnyUsage() {
+		return "", nil
+	}
+
+	var result strings.Builder
+
+	// Get required templates
+	requiredTemplates := tracker.GetRequiredTemplates()
+
+	for _, tmplInfo := range requiredTemplates {
+		content, err := templates.TemplateFS.ReadFile("files/" + tmplInfo.Template)
+		if err != nil {
+			return "", fmt.Errorf("reading param template %s: %w", tmplInfo.Template, err)
+		}
+
+		// Parse and execute as a Go template
+		tmpl, err := template.New(tmplInfo.Name).Parse(string(content))
+		if err != nil {
+			return "", fmt.Errorf("parsing param template %s: %w", tmplInfo.Template, err)
+		}
+
+		if err := tmpl.Execute(&result, nil); err != nil {
+			return "", fmt.Errorf("executing param template %s: %w", tmplInfo.Template, err)
+		}
+		result.WriteString("\n")
+	}
+
+	return result.String(), nil
 }
 
 // generateType generates Go code for a single schema descriptor.

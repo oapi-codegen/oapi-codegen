@@ -1912,6 +1912,109 @@ type GetInlineResponseJSONResponse = InlineResponseGet200ApplicationJSONContentR
 func (s *InlineResponseGet200ApplicationJSONContentResponsePath) ApplyDefaults() {
 }
 
+// Nullable is a generic type that can distinguish between:
+// - Field not provided (unspecified)
+// - Field explicitly set to null
+// - Field has a value
+//
+// This is implemented as a map[bool]T where:
+// - Empty map: unspecified
+// - map[false]T: explicitly null
+// - map[true]T: has a value
+type Nullable[T any] map[bool]T
+
+// NewNullableWithValue creates a Nullable with the given value.
+func NewNullableWithValue[T any](value T) Nullable[T] {
+	return Nullable[T]{true: value}
+}
+
+// NewNullNullable creates a Nullable that is explicitly null.
+func NewNullNullable[T any]() Nullable[T] {
+	return Nullable[T]{false: *new(T)}
+}
+
+// Get returns the value if set, or an error if null or unspecified.
+func (n Nullable[T]) Get() (T, error) {
+	if v, ok := n[true]; ok {
+		return v, nil
+	}
+	var zero T
+	if n.IsNull() {
+		return zero, ErrNullableIsNull
+	}
+	return zero, ErrNullableNotSpecified
+}
+
+// MustGet returns the value or panics if null or unspecified.
+func (n Nullable[T]) MustGet() T {
+	v, err := n.Get()
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Set assigns a value.
+func (n *Nullable[T]) Set(value T) {
+	*n = Nullable[T]{true: value}
+}
+
+// SetNull marks the field as explicitly null.
+func (n *Nullable[T]) SetNull() {
+	*n = Nullable[T]{false: *new(T)}
+}
+
+// SetUnspecified clears the field (as if it was never set).
+func (n *Nullable[T]) SetUnspecified() {
+	*n = nil
+}
+
+// IsNull returns true if the field is explicitly null.
+func (n Nullable[T]) IsNull() bool {
+	if n == nil {
+		return false
+	}
+	_, ok := n[false]
+	return ok
+}
+
+// IsSpecified returns true if the field was provided (either null or a value).
+func (n Nullable[T]) IsSpecified() bool {
+	return len(n) > 0
+}
+
+// MarshalJSON implements json.Marshaler.
+func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+	if n.IsNull() {
+		return []byte("null"), nil
+	}
+	if v, ok := n[true]; ok {
+		return json.Marshal(v)
+	}
+	// Unspecified - this shouldn't be called if omitempty is used correctly
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		n.SetNull()
+		return nil
+	}
+	var v T
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	n.Set(v)
+	return nil
+}
+
+// ErrNullableIsNull is returned when trying to get a value from a null Nullable.
+var ErrNullableIsNull = errors.New("nullable value is null")
+
+// ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
+var ErrNullableNotSpecified = errors.New("nullable value is not specified")
+
 const DateFormat = "2006-01-02"
 
 type Date struct {
@@ -2055,106 +2158,3 @@ func (file File) FileSize() int64 {
 	}
 	return int64(len(file.data))
 }
-
-// Nullable is a generic type that can distinguish between:
-// - Field not provided (unspecified)
-// - Field explicitly set to null
-// - Field has a value
-//
-// This is implemented as a map[bool]T where:
-// - Empty map: unspecified
-// - map[false]T: explicitly null
-// - map[true]T: has a value
-type Nullable[T any] map[bool]T
-
-// NewNullableWithValue creates a Nullable with the given value.
-func NewNullableWithValue[T any](value T) Nullable[T] {
-	return Nullable[T]{true: value}
-}
-
-// NewNullNullable creates a Nullable that is explicitly null.
-func NewNullNullable[T any]() Nullable[T] {
-	return Nullable[T]{false: *new(T)}
-}
-
-// Get returns the value if set, or an error if null or unspecified.
-func (n Nullable[T]) Get() (T, error) {
-	if v, ok := n[true]; ok {
-		return v, nil
-	}
-	var zero T
-	if n.IsNull() {
-		return zero, ErrNullableIsNull
-	}
-	return zero, ErrNullableNotSpecified
-}
-
-// MustGet returns the value or panics if null or unspecified.
-func (n Nullable[T]) MustGet() T {
-	v, err := n.Get()
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Set assigns a value.
-func (n *Nullable[T]) Set(value T) {
-	*n = Nullable[T]{true: value}
-}
-
-// SetNull marks the field as explicitly null.
-func (n *Nullable[T]) SetNull() {
-	*n = Nullable[T]{false: *new(T)}
-}
-
-// SetUnspecified clears the field (as if it was never set).
-func (n *Nullable[T]) SetUnspecified() {
-	*n = nil
-}
-
-// IsNull returns true if the field is explicitly null.
-func (n Nullable[T]) IsNull() bool {
-	if n == nil {
-		return false
-	}
-	_, ok := n[false]
-	return ok
-}
-
-// IsSpecified returns true if the field was provided (either null or a value).
-func (n Nullable[T]) IsSpecified() bool {
-	return len(n) > 0
-}
-
-// MarshalJSON implements json.Marshaler.
-func (n Nullable[T]) MarshalJSON() ([]byte, error) {
-	if n.IsNull() {
-		return []byte("null"), nil
-	}
-	if v, ok := n[true]; ok {
-		return json.Marshal(v)
-	}
-	// Unspecified - this shouldn't be called if omitempty is used correctly
-	return []byte("null"), nil
-}
-
-// UnmarshalJSON implements json.Unmarshaler.
-func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
-	if string(data) == "null" {
-		n.SetNull()
-		return nil
-	}
-	var v T
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	n.Set(v)
-	return nil
-}
-
-// ErrNullableIsNull is returned when trying to get a value from a null Nullable.
-var ErrNullableIsNull = errors.New("nullable value is null")
-
-// ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
-var ErrNullableNotSpecified = errors.New("nullable value is not specified")

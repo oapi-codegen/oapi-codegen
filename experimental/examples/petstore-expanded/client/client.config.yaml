@@ -1,0 +1,5 @@
+package: client
+output: client.gen.go
+generation:
+  client: true
+  simple-client: true

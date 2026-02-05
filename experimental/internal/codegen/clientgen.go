@@ -245,9 +245,46 @@ func (g *ClientGenerator) GenerateParamTypes(ops []*OperationDescriptor) (string
 	return buf.String(), nil
 }
 
+// GenerateRequestBodyTypes generates type aliases for request bodies.
+func (g *ClientGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor) string {
+	var buf bytes.Buffer
+
+	for _, op := range ops {
+		for _, body := range op.Bodies {
+			if !body.IsJSON {
+				continue
+			}
+			// Get the underlying type for this request body
+			var targetType string
+			if body.Schema != nil {
+				if body.Schema.Ref != "" {
+					// Reference to a component schema
+					if target, ok := g.schemaIndex[body.Schema.Ref]; ok {
+						targetType = target.ShortName
+					}
+				} else if body.Schema.ShortName != "" {
+					targetType = body.Schema.ShortName
+				}
+			}
+			if targetType == "" {
+				targetType = "interface{}"
+			}
+
+			// Generate type alias: type addPetJSONRequestBody = NewPet
+			buf.WriteString(fmt.Sprintf("type %s = %s\n\n", body.GoTypeName, targetType))
+		}
+	}
+
+	return buf.String()
+}
+
 // GenerateClient generates the complete client code.
 func (g *ClientGenerator) GenerateClient(ops []*OperationDescriptor) (string, error) {
 	var buf bytes.Buffer
+
+	// Generate request body type aliases first
+	bodyTypes := g.GenerateRequestBodyTypes(ops)
+	buf.WriteString(bodyTypes)
 
 	// Generate base client
 	base, err := g.GenerateBase()

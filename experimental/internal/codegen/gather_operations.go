@@ -298,11 +298,7 @@ func (g *operationGatherer) gatherRequestBodies(operationID string, bodyRef *v3.
 
 		var schemaDesc *SchemaDescriptor
 		if mediaType.Schema != nil {
-			if schema := mediaType.Schema.Schema(); schema != nil {
-				schemaDesc = &SchemaDescriptor{
-					Schema: schema,
-				}
-			}
+			schemaDesc = schemaProxyToDescriptor(mediaType.Schema)
 		}
 
 		funcSuffix := ""
