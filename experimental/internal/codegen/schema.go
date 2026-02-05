@@ -25,6 +25,17 @@ func (p SchemaPath) Append(elements ...string) SchemaPath {
 	return result
 }
 
+// ContainsProperties returns true if this path contains "properties" anywhere.
+// This indicates it's an inline property schema rather than a component schema.
+func (p SchemaPath) ContainsProperties() bool {
+	for _, element := range p {
+		if element == "properties" {
+			return true
+		}
+	}
+	return false
+}
+
 // SchemaDescriptor represents a schema found during the first pass through the spec.
 type SchemaDescriptor struct {
 	// Path is where this schema appears in the document

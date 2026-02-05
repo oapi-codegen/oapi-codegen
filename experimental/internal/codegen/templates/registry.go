@@ -49,4 +49,12 @@ var TypeTemplates = map[string]TypeTemplate{
 		},
 		Template: "types/file.tmpl",
 	},
+	"Nullable": {
+		Name: "Nullable",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "errors"},
+		},
+		Template: "types/nullable.tmpl",
+	},
 }

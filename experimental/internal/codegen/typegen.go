@@ -70,6 +70,11 @@ func (g *TypeGenerator) AddJSONImports() {
 	g.AddImport("fmt")
 }
 
+// AddNullableTemplate adds the nullable type template to the output.
+func (g *TypeGenerator) AddNullableTemplate() {
+	g.addTemplate("nullable")
+}
+
 // Imports returns the collected imports as a map[path]alias.
 func (g *TypeGenerator) Imports() map[string]string {
 	return g.imports
@@ -186,19 +191,24 @@ func (g *TypeGenerator) goTypeForSchema(schema *base.Schema, desc *SchemaDescrip
 	// OpenAPI 3.1 allows type to be an array like ["string", "null"]
 	primaryType := getPrimaryType(schema)
 
+	// Check if this is a nullable primitive - wrap in Nullable[T]
+	nullable := isNullable(schema)
+	isPrimitive := primaryType == "string" || primaryType == "integer" || primaryType == "number" || primaryType == "boolean"
+
+	var baseType string
 	switch primaryType {
 	case "object":
 		return g.objectType(schema, desc)
 	case "array":
 		return g.arrayType(schema, desc)
 	case "string":
-		return g.stringType(schema)
+		baseType = g.stringType(schema)
 	case "integer":
-		return g.integerType(schema)
+		baseType = g.integerType(schema)
 	case "number":
-		return g.numberType(schema)
+		baseType = g.numberType(schema)
 	case "boolean":
-		return g.booleanType(schema)
+		baseType = g.booleanType(schema)
 	default:
 		// Unknown or empty type - could be a free-form object
 		if schema.Properties != nil && schema.Properties.Len() > 0 {
@@ -206,6 +216,14 @@ func (g *TypeGenerator) goTypeForSchema(schema *base.Schema, desc *SchemaDescrip
 		}
 		return "any"
 	}
+
+	// Wrap nullable primitives in Nullable[T]
+	if nullable && isPrimitive {
+		g.AddNullableTemplate()
+		return "Nullable[" + baseType + "]"
+	}
+
+	return baseType
 }
 
 // getPrimaryType extracts the primary (non-null) type from a schema.
@@ -367,16 +385,17 @@ func (g *TypeGenerator) oneOfType(desc *SchemaDescriptor) string {
 
 // StructField represents a field in a generated Go struct.
 type StructField struct {
-	Name       string // Go field name
-	Type       string // Go type expression
-	JSONName   string // Original JSON property name
-	Required   bool   // Is this field required in the schema
-	Nullable   bool   // Is this field nullable (type includes "null")
-	Pointer    bool   // Should this be a pointer type
-	OmitEmpty  bool   // Include omitempty in json tag
-	Doc        string // Field documentation
-	Default    string // Go literal for default value (empty if no default)
-	IsStruct   bool   // True if this field is a struct type (for recursive ApplyDefaults)
+	Name            string // Go field name
+	Type            string // Go type expression
+	JSONName        string // Original JSON property name
+	Required        bool   // Is this field required in the schema
+	Nullable        bool   // Is this field nullable (type includes "null")
+	Pointer         bool   // Should this be a pointer type
+	OmitEmpty       bool   // Include omitempty in json tag
+	Doc             string // Field documentation
+	Default         string // Go literal for default value (empty if no default)
+	IsStruct        bool   // True if this field is a struct type (for recursive ApplyDefaults)
+	IsNullableAlias bool   // True if type is a type alias to Nullable[T] (don't wrap or pointer)
 }
 
 // GenerateStructFields creates the list of struct fields for an object schema.
@@ -393,6 +412,7 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 	}
 
 	var fields []StructField
+	needsNullableImport := false
 
 	for pair := schema.Properties.First(); pair != nil; pair = pair.Next() {
 		propName := pair.Key()
@@ -420,6 +440,15 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 				// Only set IsStruct if the referenced schema has ApplyDefaults
 				// This filters out array/map type aliases which don't have ApplyDefaults
 				field.IsStruct = schemaHasApplyDefaults(target.Schema)
+				// Check if the referenced schema is nullable
+				// BUT: if it's a nullable primitive, the type alias already wraps Nullable[T],
+				// so we shouldn't double-wrap it or add a pointer (Nullable handles "unspecified")
+				if isNullablePrimitive(target.Schema) {
+					// Already Nullable[T] - use as value type directly
+					field.IsNullableAlias = true
+				} else if isNullable(target.Schema) {
+					field.Nullable = true
+				}
 			} else {
 				propType = "any"
 			}
@@ -445,21 +474,38 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 			}
 		}
 
-		// Determine pointer semantics:
-		// - Required and not nullable: value type
-		// - Optional or nullable: pointer type
-		// - But: slices and maps are never pointers
+		// Determine type semantics:
+		// - Nullable fields: use Nullable[T]
+		// - Optional (not nullable) fields: use *T (pointer)
+		// - Required (not nullable) fields: use T (value type)
+		// - Collections (slices/maps) are never wrapped
+		// - Types already wrapped in Nullable[] are not double-wrapped
+		// - Type aliases to Nullable[T] are used as-is (IsNullableAlias)
 		isCollection := strings.HasPrefix(propType, "[]") || strings.HasPrefix(propType, "map[")
-		field.Pointer = !isCollection && (!field.Required || field.Nullable)
-		field.OmitEmpty = !field.Required
+		alreadyNullable := strings.HasPrefix(propType, "Nullable[") || field.IsNullableAlias
 
-		if field.Pointer {
+		if field.Nullable && !isCollection && !alreadyNullable {
+			// Use Nullable[T] for nullable fields (generated inline from template)
+			field.Type = "Nullable[" + propType + "]"
+			field.Pointer = false
+			needsNullableImport = true
+		} else if !field.Required && !isCollection && !alreadyNullable {
+			// Use pointer for optional non-nullable fields
 			field.Type = "*" + propType
+			field.Pointer = true
 		} else {
+			// Value type for required non-nullable fields, collections, and Nullable aliases
 			field.Type = propType
+			field.Pointer = false
 		}
 
+		field.OmitEmpty = !field.Required
+
 		fields = append(fields, field)
+	}
+
+	if needsNullableImport {
+		g.AddNullableTemplate()
 	}
 
 	return fields
@@ -480,8 +526,11 @@ func isNullable(schema *base.Schema) bool {
 		}
 	}
 
-	// OpenAPI 3.0 style: nullable extension (stored in extensions)
-	// Note: libopenapi may expose this differently; check schema.Nullable if available
+	// OpenAPI 3.0 style: nullable: true
+	if schema.Nullable != nil && *schema.Nullable {
+		return true
+	}
+
 	return false
 }
 

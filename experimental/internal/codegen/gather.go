@@ -242,7 +242,10 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 	// Only gather schemas that need a generated type
 	// References are always gathered (they point to real schemas)
 	// Simple types (primitives without enum) are skipped
-	if isRef || needsGeneratedType(schema) {
+	// Inline nullable primitives (under properties/) don't need types - they use Nullable[T] directly
+	isInlineProperty := path.ContainsProperties()
+	skipInlineNullablePrimitive := isInlineProperty && isNullablePrimitive(schema)
+	if (isRef || needsGeneratedType(schema)) && !skipInlineNullablePrimitive {
 		desc := &SchemaDescriptor{
 			Path:        path,
 			Parent:      parent,
@@ -300,9 +303,15 @@ func (g *gatherer) gatherSchemaDescriptorOnly(proxy *base.SchemaProxy, path Sche
 // needsGeneratedType returns true if a schema requires a generated Go type.
 // Simple primitive types (string, integer, number, boolean) without enums
 // don't need generated types - they map directly to Go builtins.
+// However, nullable primitives DO need generated types (Nullable[T]).
 func needsGeneratedType(schema *base.Schema) bool {
 	if schema == nil {
 		return false
+	}
+
+	// Nullable primitives need a generated type (Nullable[T])
+	if isNullablePrimitive(schema) {
+		return true
 	}
 
 	// Enums always need a generated type
@@ -347,6 +356,57 @@ func needsGeneratedType(schema *base.Schema) bool {
 
 	// Simple primitives (string, integer, number, boolean) without enum
 	// don't need generated types
+	return false
+}
+
+// isNullablePrimitive returns true if the schema is a nullable primitive type.
+// Nullable primitives need Nullable[T] wrapper types.
+func isNullablePrimitive(schema *base.Schema) bool {
+	if schema == nil {
+		return false
+	}
+
+	// Check for nullable
+	isNullable := false
+	// OpenAPI 3.1 style: type array includes "null"
+	for _, t := range schema.Type {
+		if t == "null" {
+			isNullable = true
+			break
+		}
+	}
+	// OpenAPI 3.0 style: nullable: true
+	if schema.Nullable != nil && *schema.Nullable {
+		isNullable = true
+	}
+
+	if !isNullable {
+		return false
+	}
+
+	// Check if it's a primitive type (not object, array, or composition)
+	if schema.Properties != nil && schema.Properties.Len() > 0 {
+		return false // object with properties
+	}
+	if len(schema.AllOf) > 0 || len(schema.AnyOf) > 0 || len(schema.OneOf) > 0 {
+		return false // composition type
+	}
+	if schema.Items != nil {
+		return false // array
+	}
+
+	// Get the primary type
+	for _, t := range schema.Type {
+		switch t {
+		case "string", "integer", "number", "boolean":
+			return true
+		case "object":
+			return false
+		case "array":
+			return false
+		}
+	}
+
 	return false
 }
 

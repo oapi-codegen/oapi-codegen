@@ -24,37 +24,41 @@ func TestAnyOfWithSingleRef(t *testing.T) {
 }
 
 func TestApplicationWithAnyOfProperty(t *testing.T) {
-	// Application.OptionalClaims is an anyOf with a single ref
-	// It should properly wrap OptionalClaims
+	// Application.OptionalClaims is an anyOf with a single ref + nullable: true
+	// It should be Nullable[ApplicationOptionalClaims]
 	app := Application{
 		Name: ptrTo("my-app"),
-		OptionalClaims: &ApplicationOptionalClaims{
+		OptionalClaims: NewNullableWithValue(ApplicationOptionalClaims{
 			OptionalClaims: &OptionalClaims{
 				IDToken: ptrTo("token"),
 			},
-		},
+		}),
 	}
 
 	if *app.Name != "my-app" {
 		t.Errorf("Name = %q, want %q", *app.Name, "my-app")
 	}
-	if app.OptionalClaims == nil || app.OptionalClaims.OptionalClaims == nil {
-		t.Fatal("OptionalClaims should not be nil")
+	if !app.OptionalClaims.IsSpecified() {
+		t.Fatal("OptionalClaims should be specified")
 	}
-	if *app.OptionalClaims.OptionalClaims.IDToken != "token" {
-		t.Errorf("IDToken = %q, want %q", *app.OptionalClaims.OptionalClaims.IDToken, "token")
+	optClaims := app.OptionalClaims.MustGet()
+	if optClaims.OptionalClaims == nil {
+		t.Fatal("OptionalClaims.OptionalClaims should not be nil")
+	}
+	if *optClaims.OptionalClaims.IDToken != "token" {
+		t.Errorf("IDToken = %q, want %q", *optClaims.OptionalClaims.IDToken, "token")
 	}
 }
 
 func TestApplicationJSONRoundTrip(t *testing.T) {
 	original := Application{
 		Name: ptrTo("test-app"),
-		OptionalClaims: &ApplicationOptionalClaims{
+		OptionalClaims: NewNullableWithValue(ApplicationOptionalClaims{
 			OptionalClaims: &OptionalClaims{
 				IDToken:     ptrTo("id"),
 				AccessToken: ptrTo("access"),
 			},
-		},
+		}),
 	}
 
 	data, err := json.Marshal(original)
@@ -70,9 +74,32 @@ func TestApplicationJSONRoundTrip(t *testing.T) {
 	if *decoded.Name != *original.Name {
 		t.Errorf("Name mismatch: got %q, want %q", *decoded.Name, *original.Name)
 	}
-	if decoded.OptionalClaims == nil || decoded.OptionalClaims.OptionalClaims == nil {
-		t.Fatal("OptionalClaims should not be nil after round trip")
+	if !decoded.OptionalClaims.IsSpecified() {
+		t.Fatal("OptionalClaims should be specified after round trip")
 	}
+	optClaims := decoded.OptionalClaims.MustGet()
+	if optClaims.OptionalClaims == nil {
+		t.Fatal("OptionalClaims.OptionalClaims should not be nil after round trip")
+	}
+}
+
+func TestApplicationNullOptionalClaims(t *testing.T) {
+	// Test with explicitly null optional claims
+	app := Application{
+		Name:           ptrTo("null-test-app"),
+		OptionalClaims: NewNullNullable[ApplicationOptionalClaims](),
+	}
+
+	if !app.OptionalClaims.IsNull() {
+		t.Error("OptionalClaims should be null")
+	}
+
+	// Should marshal as null
+	data, err := json.Marshal(app)
+	if err != nil {
+		t.Fatalf("Marshal failed: %v", err)
+	}
+	t.Logf("Marshaled with null optionalClaims: %s", string(data))
 }
 
 func ptrTo[T any](v T) *T {
