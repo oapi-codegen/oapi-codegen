@@ -13,13 +13,13 @@ import (
 // specified x-go-type-name.
 func TestEnumTypeGeneration(t *testing.T) {
 	// Enum constants should exist
-	_ = DocumentStatusPropertySchemaComponent_one
-	_ = DocumentStatusPropertySchemaComponent_two
-	_ = DocumentStatusPropertySchemaComponent_three
-	_ = DocumentStatusPropertySchemaComponent_four
+	_ = Document_Status_one
+	_ = Document_Status_two
+	_ = Document_Status_three
+	_ = Document_Status_four
 
-	if string(DocumentStatusPropertySchemaComponent_one) != "one" {
-		t.Errorf("one = %q, want %q", DocumentStatusPropertySchemaComponent_one, "one")
+	if string(Document_Status_one) != "one" {
+		t.Errorf("one = %q, want %q", Document_Status_one, "one")
 	}
 }
 
@@ -52,7 +52,7 @@ func TestDocumentWithStatus(t *testing.T) {
 func TestDocumentStatusSchema(t *testing.T) {
 	// There's also a DocumentStatus schema (separate from the enum property)
 	value := "test-value"
-	ds := DocumentStatus2{
+	ds := DocumentStatus{
 		Value: &value,
 	}
 

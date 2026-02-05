@@ -19,6 +19,13 @@ type StructTagInfo struct {
 	IsNullable bool
 	// IsPointer is true if the Go type is a pointer
 	IsPointer bool
+	// OmitEmpty is true if the omitempty tag option should be used
+	// (derived from IsOptional but can be overridden via extensions)
+	OmitEmpty bool
+	// OmitZero is true if the omitzero tag option should be used (Go 1.24+)
+	OmitZero bool
+	// JSONIgnore is true if the field should be excluded from JSON (json:"-")
+	JSONIgnore bool
 }
 
 // StructTagTemplate defines a single struct tag with a name and template.
@@ -45,11 +52,11 @@ func DefaultStructTagsConfig() StructTagsConfig {
 		Tags: []StructTagTemplate{
 			{
 				Name:     "json",
-				Template: `{{ .FieldName }}{{if .IsOptional}},omitempty{{end}}`,
+				Template: `{{if .JSONIgnore}}-{{else}}{{ .FieldName }}{{if .OmitEmpty}},omitempty{{end}}{{if .OmitZero}},omitzero{{end}}{{end}}`,
 			},
 			{
 				Name:     "form",
-				Template: `{{ .FieldName }}{{if .IsOptional}},omitempty{{end}}`,
+				Template: `{{if .JSONIgnore}}-{{else}}{{ .FieldName }}{{if .OmitEmpty}},omitempty{{end}}{{end}}`,
 			},
 		},
 	}

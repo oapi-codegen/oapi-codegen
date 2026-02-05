@@ -71,6 +71,12 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 func generateType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	kind := GetSchemaKind(desc)
 
+	// If schema has TypeOverride extension, generate a type alias to the external type
+	// instead of generating the full type definition
+	if desc.Extensions != nil && desc.Extensions.TypeOverride != nil {
+		return generateTypeOverrideAlias(gen, desc)
+	}
+
 	var code string
 	switch kind {
 	case KindReference:
@@ -194,8 +200,15 @@ func generateEnumType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		values = append(values, fmt.Sprintf("%v", v.Value))
 	}
 
+	// Check for custom enum variable names from extensions
+	var customNames []string
+	if desc.Extensions != nil && len(desc.Extensions.EnumVarNames) > 0 {
+		customNames = desc.Extensions.EnumVarNames
+	}
+
 	doc := extractDescription(schema)
-	code := GenerateEnum(desc.StableName, baseType, values, doc)
+	// Use ShortName for const prefix (user-friendly name) but type definition uses StableName
+	code := GenerateEnumWithConstPrefix(desc.StableName, desc.ShortName, baseType, values, customNames, doc)
 
 	if desc.ShortName != desc.StableName {
 		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
@@ -208,6 +221,28 @@ func generateTypeAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	goType := gen.GoTypeExpr(desc)
 	doc := extractDescription(desc.Schema)
 	code := GenerateTypeAlias(desc.StableName, goType, doc)
+
+	if desc.ShortName != desc.StableName {
+		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+	}
+	return code
+}
+
+// generateTypeOverrideAlias generates a type alias to an external type specified via x-oapi-codegen-type-override.
+func generateTypeOverrideAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
+	override := desc.Extensions.TypeOverride
+
+	// Register the import
+	if override.ImportPath != "" {
+		if override.ImportAlias != "" {
+			gen.AddImportAlias(override.ImportPath, override.ImportAlias)
+		} else {
+			gen.AddImport(override.ImportPath)
+		}
+	}
+
+	doc := extractDescription(desc.Schema)
+	code := GenerateTypeAlias(desc.StableName, override.TypeName, doc)
 
 	if desc.ShortName != desc.StableName {
 		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")

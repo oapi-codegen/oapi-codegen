@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/pb33f/libopenapi/datamodel/high/base"
@@ -392,10 +393,13 @@ type StructField struct {
 	Nullable        bool   // Is this field nullable (type includes "null")
 	Pointer         bool   // Should this be a pointer type
 	OmitEmpty       bool   // Include omitempty in json tag
+	OmitZero        bool   // Include omitzero in json tag (Go 1.24+)
+	JSONIgnore      bool   // Use json:"-" tag to exclude from marshaling
 	Doc             string // Field documentation
 	Default         string // Go literal for default value (empty if no default)
 	IsStruct        bool   // True if this field is a struct type (for recursive ApplyDefaults)
 	IsNullableAlias bool   // True if type is a type alias to Nullable[T] (don't wrap or pointer)
+	Order           *int   // Optional field ordering (lower values come first)
 }
 
 // GenerateStructFields creates the list of struct fields for an object schema.
@@ -424,9 +428,12 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 			Required: required[propName],
 		}
 
+		// Parse extensions from the property schema
+		var propExtensions *Extensions
+		var propSchema *base.Schema
+
 		// Resolve the property schema
 		var propType string
-		var propSchema *base.Schema
 		if propProxy.IsReference() {
 			ref := propProxy.GetReference()
 			// Check if this is an external reference
@@ -449,6 +456,8 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 				} else if isNullable(target.Schema) {
 					field.Nullable = true
 				}
+				// Extensions from referenced schema apply to the field
+				propExtensions = target.Extensions
 			} else {
 				propType = "any"
 			}
@@ -456,6 +465,14 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 			propSchema = propProxy.Schema()
 			field.Nullable = isNullable(propSchema)
 			field.Doc = extractDescription(propSchema)
+
+			// Parse extensions from the property schema
+			if propSchema != nil && propSchema.Extensions != nil {
+				ext, err := ParseExtensions(propSchema.Extensions, desc.Path.Append("properties", propName).String())
+				if err == nil {
+					propExtensions = ext
+				}
+			}
 
 			// Generate the Go type for this property
 			// Always use goTypeForSchema to get the correct type expression
@@ -471,6 +488,47 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 				if propSchema.Default != nil {
 					field.Default = formatDefaultValue(propSchema.Default.Value, propType)
 				}
+			}
+		}
+
+		// Apply extensions to the field
+		if propExtensions != nil {
+			// Name override
+			if propExtensions.NameOverride != "" {
+				field.Name = propExtensions.NameOverride
+			}
+
+			// Type override replaces the generated type entirely
+			if propExtensions.TypeOverride != nil {
+				propType = propExtensions.TypeOverride.TypeName
+				if propExtensions.TypeOverride.ImportPath != "" {
+					if propExtensions.TypeOverride.ImportAlias != "" {
+						g.AddImportAlias(propExtensions.TypeOverride.ImportPath, propExtensions.TypeOverride.ImportAlias)
+					} else {
+						g.AddImport(propExtensions.TypeOverride.ImportPath)
+					}
+				}
+				// Type override bypasses nullable wrapping - the user specifies the exact type
+				field.IsNullableAlias = true // Don't wrap or add pointer
+			}
+
+			// JSON ignore
+			if propExtensions.JSONIgnore != nil && *propExtensions.JSONIgnore {
+				field.JSONIgnore = true
+			}
+
+			// Deprecated reason appended to documentation
+			if propExtensions.DeprecatedReason != "" {
+				if field.Doc != "" {
+					field.Doc = field.Doc + "\nDeprecated: " + propExtensions.DeprecatedReason
+				} else {
+					field.Doc = "Deprecated: " + propExtensions.DeprecatedReason
+				}
+			}
+
+			// Order for field sorting
+			if propExtensions.Order != nil {
+				field.Order = propExtensions.Order
 			}
 		}
 
@@ -490,16 +548,39 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 			field.Pointer = false
 			needsNullableImport = true
 		} else if !field.Required && !isCollection && !alreadyNullable {
-			// Use pointer for optional non-nullable fields
-			field.Type = "*" + propType
-			field.Pointer = true
+			// Check for skip optional pointer extension
+			skipPointer := false
+			if propExtensions != nil && propExtensions.SkipOptionalPointer != nil && *propExtensions.SkipOptionalPointer {
+				skipPointer = true
+			}
+
+			if skipPointer {
+				// Use value type even though optional
+				field.Type = propType
+				field.Pointer = false
+			} else {
+				// Use pointer for optional non-nullable fields
+				field.Type = "*" + propType
+				field.Pointer = true
+			}
 		} else {
 			// Value type for required non-nullable fields, collections, and Nullable aliases
 			field.Type = propType
 			field.Pointer = false
 		}
 
+		// Determine omitempty/omitzero behavior
 		field.OmitEmpty = !field.Required
+		if propExtensions != nil {
+			// Explicit omitempty override
+			if propExtensions.OmitEmpty != nil {
+				field.OmitEmpty = *propExtensions.OmitEmpty
+			}
+			// Explicit omitzero
+			if propExtensions.OmitZero != nil && *propExtensions.OmitZero {
+				field.OmitZero = true
+			}
+		}
 
 		fields = append(fields, field)
 	}
@@ -507,6 +588,9 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 	if needsNullableImport {
 		g.AddNullableTemplate()
 	}
+
+	// Sort fields by order if any have explicit ordering
+	sortFieldsByOrder(fields)
 
 	return fields
 }
@@ -701,6 +785,9 @@ func FormatJSONTag(jsonName string, omitEmpty bool) string {
 func (g *TypeGenerator) GenerateFieldTag(field StructField) string {
 	if g.tagGenerator == nil {
 		// Fallback to legacy behavior
+		if field.JSONIgnore {
+			return "`json:\"-\"`"
+		}
 		return FormatJSONTag(field.JSONName, field.OmitEmpty)
 	}
 
@@ -710,6 +797,9 @@ func (g *TypeGenerator) GenerateFieldTag(field StructField) string {
 		IsOptional:  !field.Required,
 		IsNullable:  field.Nullable,
 		IsPointer:   field.Pointer,
+		OmitEmpty:   field.OmitEmpty,
+		OmitZero:    field.OmitZero,
+		JSONIgnore:  field.JSONIgnore,
 	}
 	return g.tagGenerator.GenerateTags(info)
 }
@@ -717,4 +807,37 @@ func (g *TypeGenerator) GenerateFieldTag(field StructField) string {
 // TagGenerator returns the struct tag generator.
 func (g *TypeGenerator) TagGenerator() *StructTagGenerator {
 	return g.tagGenerator
+}
+
+// sortFieldsByOrder sorts fields by their Order value.
+// Fields without an Order value are placed after fields with explicit ordering,
+// maintaining their original relative order (stable sort).
+func sortFieldsByOrder(fields []StructField) {
+	// Check if any fields have explicit ordering
+	hasOrder := false
+	for _, f := range fields {
+		if f.Order != nil {
+			hasOrder = true
+			break
+		}
+	}
+	if !hasOrder {
+		return
+	}
+
+	// Stable sort to preserve relative order of fields without explicit ordering
+	sort.SliceStable(fields, func(i, j int) bool {
+		// Fields with Order come before fields without
+		if fields[i].Order == nil && fields[j].Order == nil {
+			return false // preserve original order
+		}
+		if fields[i].Order == nil {
+			return false // i (no order) comes after j
+		}
+		if fields[j].Order == nil {
+			return true // i (has order) comes before j
+		}
+		// Both have order - sort by value
+		return *fields[i].Order < *fields[j].Order
+	})
 }

@@ -9,11 +9,11 @@ import (
 // Issue 1429: enum type was not being generated when used inside anyOf.
 func TestEnumGenerated(t *testing.T) {
 	// The enum type should exist and have the expected constants
-	_ = Test1FieldAPropertyAnyOfSchemaComponent_foo
-	_ = Test1FieldAPropertyAnyOfSchemaComponent_bar
+	_ = TestAnyOf1FieldA_foo
+	_ = TestAnyOf1FieldA_bar
 
 	// The alias should also exist
-	_ = TestAnyOf1FieldA(Test1FieldAPropertyAnyOfSchemaComponent_foo)
+	_ = TestAnyOf1FieldA(TestAnyOf1FieldA_foo)
 }
 
 // TestAnyOfMarshal verifies that the anyOf type can be marshaled.

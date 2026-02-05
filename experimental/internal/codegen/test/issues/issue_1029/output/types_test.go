@@ -15,7 +15,7 @@ func TestRegistrationStateOneOfEnums(t *testing.T) {
 		enum  RegistrationState0OneOfPropertySchemaComponent
 		value string
 	}{
-		{"undefined", RegistrationState0OneOfPropertySchemaComponent_undefined, "undefined"},
+		{"undefined", RegistrationStateOneOf0_undefined, "undefined"},
 	}
 
 	for _, tt := range tests {
@@ -28,7 +28,7 @@ func TestRegistrationStateOneOfEnums(t *testing.T) {
 func TestRegistrationStateMarshal(t *testing.T) {
 	// Test serialization of oneOf with string enum
 	state := RegistrationState{
-		RegistrationStateOneOf0: ptrTo(RegistrationStateOneOf0(RegistrationState0OneOfPropertySchemaComponent_undefined)),
+		RegistrationStateOneOf0: ptrTo(RegistrationStateOneOf0(RegistrationStateOneOf0_undefined)),
 	}
 
 	reg := Registration{
@@ -67,19 +67,19 @@ func TestRegistrationStateUnmarshalLimitation(t *testing.T) {
 
 func TestAllEnumConstants(t *testing.T) {
 	// Verify all enum constants are defined
-	_ = RegistrationState0OneOfPropertySchemaComponent_undefined
-	_ = RegistrationState1OneOfPropertySchemaComponent_registered
-	_ = RegistrationState2OneOfPropertySchemaComponent_pending
-	_ = RegistrationState3OneOfPropertySchemaComponent_active
+	_ = RegistrationStateOneOf0_undefined
+	_ = RegistrationStateOneOf1_registered
+	_ = RegistrationStateOneOf2_pending
+	_ = RegistrationStateOneOf3_active
 
 	// Test values
-	if string(RegistrationState1OneOfPropertySchemaComponent_registered) != "registered" {
+	if string(RegistrationStateOneOf1_registered) != "registered" {
 		t.Error("registered enum has wrong value")
 	}
-	if string(RegistrationState2OneOfPropertySchemaComponent_pending) != "pending" {
+	if string(RegistrationStateOneOf2_pending) != "pending" {
 		t.Error("pending enum has wrong value")
 	}
-	if string(RegistrationState3OneOfPropertySchemaComponent_active) != "active" {
+	if string(RegistrationStateOneOf3_active) != "active" {
 		t.Error("active enum has wrong value")
 	}
 }

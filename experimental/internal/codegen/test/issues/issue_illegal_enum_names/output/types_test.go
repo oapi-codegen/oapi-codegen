@@ -13,16 +13,16 @@ func TestIllegalEnumNames(t *testing.T) {
 		constant BarSchemaComponent
 		value    string
 	}{
-		{"empty string", BarSchemaComponent_Value, ""},
-		{"Foo", BarSchemaComponent_Foo, "Foo"},
-		{"Bar", BarSchemaComponent_Bar, "Bar"},
-		{"Foo Bar (with space)", BarSchemaComponent_Foo_Bar, "Foo Bar"},
-		{"Foo-Bar (with hyphen)", BarSchemaComponent_Foo_Bar_1, "Foo-Bar"},
-		{"1Foo (leading digit)", BarSchemaComponent_Foo_1, "1Foo"},
-		{" Foo (leading space)", BarSchemaComponent__Foo, " Foo"},
-		{" Foo  (leading and trailing space)", BarSchemaComponent__Foo_, " Foo "},
-		{"_Foo_ (underscores)", BarSchemaComponent__Foo__1, "_Foo_"},
-		{"1 (just digit)", BarSchemaComponent_Value_1, "1"},
+		{"empty string", Bar_Value, ""},
+		{"Foo", Bar_Foo, "Foo"},
+		{"Bar", Bar_Bar, "Bar"},
+		{"Foo Bar (with space)", Bar_Foo_Bar, "Foo Bar"},
+		{"Foo-Bar (with hyphen)", Bar_Foo_Bar_1, "Foo-Bar"},
+		{"1Foo (leading digit)", Bar_Foo_1, "1Foo"},
+		{" Foo (leading space)", Bar__Foo, " Foo"},
+		{" Foo  (leading and trailing space)", Bar__Foo_, " Foo "},
+		{"_Foo_ (underscores)", Bar__Foo__1, "_Foo_"},
+		{"1 (just digit)", Bar_Value_1, "1"},
 	}
 
 	for _, tt := range tests {
@@ -37,9 +37,9 @@ func TestIllegalEnumNames(t *testing.T) {
 func TestBarCanBeUsedInSlice(t *testing.T) {
 	// The response type is []Bar
 	response := GetFooJSONResponse{
-		BarSchemaComponent_Foo,
-		BarSchemaComponent_Bar,
-		BarSchemaComponent_Value, // empty string
+		Bar_Foo,
+		Bar_Bar,
+		Bar_Value, // empty string
 	}
 
 	if len(response) != 3 {

@@ -67,18 +67,15 @@ func (s *AllTypesOptionalSchemaComponent) ApplyDefaults() {
 
 // #/components/schemas/NullableRequired
 type NullableRequiredSchemaComponent struct {
-	NullableString *string                         `json:"nullableString" form:"nullableString"`
-	NullableInt    *int                            `json:"nullableInt" form:"nullableInt"`
-	NullableObject *NullableRequiredNullableObject `json:"nullableObject" form:"nullableObject"`
+	NullableString Nullable[string]                         `json:"nullableString" form:"nullableString"`
+	NullableInt    Nullable[int]                            `json:"nullableInt" form:"nullableInt"`
+	NullableObject Nullable[NullableRequiredNullableObject] `json:"nullableObject" form:"nullableObject"`
 }
 
 type NullableRequired = NullableRequiredSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
 func (s *NullableRequiredSchemaComponent) ApplyDefaults() {
-	if s.NullableObject != nil {
-		s.NullableObject.ApplyDefaults()
-	}
 }
 
 // #/components/schemas/NullableRequired/properties/nullableObject
@@ -94,8 +91,8 @@ func (s *NullableRequiredNullableObjectPropertySchemaComponent) ApplyDefaults() 
 
 // #/components/schemas/NullableOptional
 type NullableOptionalSchemaComponent struct {
-	NullableString *string `json:"nullableString,omitempty" form:"nullableString,omitempty"`
-	NullableInt    *int    `json:"nullableInt,omitempty" form:"nullableInt,omitempty"`
+	NullableString Nullable[string] `json:"nullableString,omitempty" form:"nullableString,omitempty"`
+	NullableInt    Nullable[int]    `json:"nullableInt,omitempty" form:"nullableInt,omitempty"`
 }
 
 type NullableOptional = NullableOptionalSchemaComponent
@@ -335,9 +332,9 @@ func (s *AdditionalPropsWithPropsSchemaComponent) ApplyDefaults() {
 type StringEnumSchemaComponent string
 
 const (
-	StringEnumSchemaComponent_value1 StringEnumSchemaComponent = "value1"
-	StringEnumSchemaComponent_value2 StringEnumSchemaComponent = "value2"
-	StringEnumSchemaComponent_value3 StringEnumSchemaComponent = "value3"
+	StringEnum_value1 StringEnumSchemaComponent = "value1"
+	StringEnum_value2 StringEnumSchemaComponent = "value2"
+	StringEnum_value3 StringEnumSchemaComponent = "value3"
 )
 
 type StringEnum = StringEnumSchemaComponent
@@ -346,9 +343,9 @@ type StringEnum = StringEnumSchemaComponent
 type IntegerEnumSchemaComponent int
 
 const (
-	IntegerEnumSchemaComponent_N1 IntegerEnumSchemaComponent = 1
-	IntegerEnumSchemaComponent_N2 IntegerEnumSchemaComponent = 2
-	IntegerEnumSchemaComponent_N3 IntegerEnumSchemaComponent = 3
+	IntegerEnum_N1 IntegerEnumSchemaComponent = 1
+	IntegerEnum_N2 IntegerEnumSchemaComponent = 2
+	IntegerEnum_N3 IntegerEnumSchemaComponent = 3
 )
 
 type IntegerEnum = IntegerEnumSchemaComponent
@@ -369,9 +366,9 @@ func (s *ObjectWithEnumSchemaComponent) ApplyDefaults() {
 type ObjectWithEnumStatusPropertySchemaComponent string
 
 const (
-	ObjectWithEnumStatusPropertySchemaComponent_pending   ObjectWithEnumStatusPropertySchemaComponent = "pending"
-	ObjectWithEnumStatusPropertySchemaComponent_active    ObjectWithEnumStatusPropertySchemaComponent = "active"
-	ObjectWithEnumStatusPropertySchemaComponent_completed ObjectWithEnumStatusPropertySchemaComponent = "completed"
+	ObjectWithEnumStatus_pending   ObjectWithEnumStatusPropertySchemaComponent = "pending"
+	ObjectWithEnumStatus_active    ObjectWithEnumStatusPropertySchemaComponent = "active"
+	ObjectWithEnumStatus_completed ObjectWithEnumStatusPropertySchemaComponent = "completed"
 )
 
 type ObjectWithEnumStatus = ObjectWithEnumStatusPropertySchemaComponent
@@ -380,9 +377,9 @@ type ObjectWithEnumStatus = ObjectWithEnumStatusPropertySchemaComponent
 type ObjectWithEnumPriorityPropertySchemaComponent int
 
 const (
-	ObjectWithEnumPriorityPropertySchemaComponent_N1 ObjectWithEnumPriorityPropertySchemaComponent = 1
-	ObjectWithEnumPriorityPropertySchemaComponent_N2 ObjectWithEnumPriorityPropertySchemaComponent = 2
-	ObjectWithEnumPriorityPropertySchemaComponent_N3 ObjectWithEnumPriorityPropertySchemaComponent = 3
+	ObjectWithEnumPriority_N1 ObjectWithEnumPriorityPropertySchemaComponent = 1
+	ObjectWithEnumPriority_N2 ObjectWithEnumPriorityPropertySchemaComponent = 2
+	ObjectWithEnumPriority_N3 ObjectWithEnumPriorityPropertySchemaComponent = 3
 )
 
 type ObjectWithEnumPriority = ObjectWithEnumPriorityPropertySchemaComponent
@@ -402,8 +399,8 @@ func (s *InlineEnumInPropertySchemaComponent) ApplyDefaults() {
 type InlineEnumInPropertyInlineStatusPropertySchemaComponent string
 
 const (
-	InlineEnumInPropertyInlineStatusPropertySchemaComponent_on  InlineEnumInPropertyInlineStatusPropertySchemaComponent = "on"
-	InlineEnumInPropertyInlineStatusPropertySchemaComponent_off InlineEnumInPropertyInlineStatusPropertySchemaComponent = "off"
+	InlineEnumInPropertyInlineStatus_on  InlineEnumInPropertyInlineStatusPropertySchemaComponent = "on"
+	InlineEnumInPropertyInlineStatus_off InlineEnumInPropertyInlineStatusPropertySchemaComponent = "off"
 )
 
 type InlineEnumInPropertyInlineStatus = InlineEnumInPropertyInlineStatusPropertySchemaComponent
@@ -1702,7 +1699,7 @@ func (s *TypeArray31SchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/ExplicitAny
-type ExplicitAnySchemaComponent = string
+type ExplicitAnySchemaComponent = Nullable[string]
 
 type ExplicitAny = ExplicitAnySchemaComponent
 
@@ -2058,3 +2055,106 @@ func (file File) FileSize() int64 {
 	}
 	return int64(len(file.data))
 }
+
+// Nullable is a generic type that can distinguish between:
+// - Field not provided (unspecified)
+// - Field explicitly set to null
+// - Field has a value
+//
+// This is implemented as a map[bool]T where:
+// - Empty map: unspecified
+// - map[false]T: explicitly null
+// - map[true]T: has a value
+type Nullable[T any] map[bool]T
+
+// NewNullableWithValue creates a Nullable with the given value.
+func NewNullableWithValue[T any](value T) Nullable[T] {
+	return Nullable[T]{true: value}
+}
+
+// NewNullNullable creates a Nullable that is explicitly null.
+func NewNullNullable[T any]() Nullable[T] {
+	return Nullable[T]{false: *new(T)}
+}
+
+// Get returns the value if set, or an error if null or unspecified.
+func (n Nullable[T]) Get() (T, error) {
+	if v, ok := n[true]; ok {
+		return v, nil
+	}
+	var zero T
+	if n.IsNull() {
+		return zero, ErrNullableIsNull
+	}
+	return zero, ErrNullableNotSpecified
+}
+
+// MustGet returns the value or panics if null or unspecified.
+func (n Nullable[T]) MustGet() T {
+	v, err := n.Get()
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Set assigns a value.
+func (n *Nullable[T]) Set(value T) {
+	*n = Nullable[T]{true: value}
+}
+
+// SetNull marks the field as explicitly null.
+func (n *Nullable[T]) SetNull() {
+	*n = Nullable[T]{false: *new(T)}
+}
+
+// SetUnspecified clears the field (as if it was never set).
+func (n *Nullable[T]) SetUnspecified() {
+	*n = nil
+}
+
+// IsNull returns true if the field is explicitly null.
+func (n Nullable[T]) IsNull() bool {
+	if n == nil {
+		return false
+	}
+	_, ok := n[false]
+	return ok
+}
+
+// IsSpecified returns true if the field was provided (either null or a value).
+func (n Nullable[T]) IsSpecified() bool {
+	return len(n) > 0
+}
+
+// MarshalJSON implements json.Marshaler.
+func (n Nullable[T]) MarshalJSON() ([]byte, error) {
+	if n.IsNull() {
+		return []byte("null"), nil
+	}
+	if v, ok := n[true]; ok {
+		return json.Marshal(v)
+	}
+	// Unspecified - this shouldn't be called if omitempty is used correctly
+	return []byte("null"), nil
+}
+
+// UnmarshalJSON implements json.Unmarshaler.
+func (n *Nullable[T]) UnmarshalJSON(data []byte) error {
+	if string(data) == "null" {
+		n.SetNull()
+		return nil
+	}
+	var v T
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	n.Set(v)
+	return nil
+}
+
+// ErrNullableIsNull is returned when trying to get a value from a null Nullable.
+var ErrNullableIsNull = errors.New("nullable value is null")
+
+// ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
+var ErrNullableNotSpecified = errors.New("nullable value is not specified")

@@ -145,7 +145,7 @@ func (s *Prompt0OneOfSchemaComponent) ApplyDefaults() {
 type Prompt00TypePropertyAllOfOneOfSchemaComponent string
 
 const (
-	Prompt00TypePropertyAllOfOneOfSchemaComponent_chat Prompt00TypePropertyAllOfOneOfSchemaComponent = "chat"
+	PromptOneOf0AllOf0Type_chat Prompt00TypePropertyAllOfOneOfSchemaComponent = "chat"
 )
 
 type PromptOneOf0AllOf0Type = Prompt00TypePropertyAllOfOneOfSchemaComponent
@@ -166,7 +166,7 @@ func (s *Prompt1OneOfSchemaComponent) ApplyDefaults() {
 type Prompt10TypePropertyAllOfOneOfSchemaComponent string
 
 const (
-	Prompt10TypePropertyAllOfOneOfSchemaComponent_text Prompt10TypePropertyAllOfOneOfSchemaComponent = "text"
+	PromptOneOf1AllOf0Type_text Prompt10TypePropertyAllOfOneOfSchemaComponent = "text"
 )
 
 type PromptOneOf1AllOf0Type = Prompt10TypePropertyAllOfOneOfSchemaComponent

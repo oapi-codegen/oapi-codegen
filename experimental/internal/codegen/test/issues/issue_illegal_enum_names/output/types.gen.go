@@ -6,16 +6,16 @@ package output
 type BarSchemaComponent string
 
 const (
-	BarSchemaComponent_Value     BarSchemaComponent = ""
-	BarSchemaComponent_Foo       BarSchemaComponent = "Foo"
-	BarSchemaComponent_Bar       BarSchemaComponent = "Bar"
-	BarSchemaComponent_Foo_Bar   BarSchemaComponent = "Foo Bar"
-	BarSchemaComponent_Foo_Bar_1 BarSchemaComponent = "Foo-Bar"
-	BarSchemaComponent_Foo_1     BarSchemaComponent = "1Foo"
-	BarSchemaComponent__Foo      BarSchemaComponent = " Foo"
-	BarSchemaComponent__Foo_     BarSchemaComponent = " Foo "
-	BarSchemaComponent__Foo__1   BarSchemaComponent = "_Foo_"
-	BarSchemaComponent_Value_1   BarSchemaComponent = "1"
+	Bar_Value     BarSchemaComponent = ""
+	Bar_Foo       BarSchemaComponent = "Foo"
+	Bar_Bar       BarSchemaComponent = "Bar"
+	Bar_Foo_Bar   BarSchemaComponent = "Foo Bar"
+	Bar_Foo_Bar_1 BarSchemaComponent = "Foo-Bar"
+	Bar_Foo_1     BarSchemaComponent = "1Foo"
+	Bar__Foo      BarSchemaComponent = " Foo"
+	Bar__Foo_     BarSchemaComponent = " Foo "
+	Bar__Foo__1   BarSchemaComponent = "_Foo_"
+	Bar_Value_1   BarSchemaComponent = "1"
 )
 
 type Bar = BarSchemaComponent

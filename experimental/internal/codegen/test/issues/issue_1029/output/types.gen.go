@@ -111,7 +111,7 @@ func (u *RegistrationStatePropertySchemaComponent) ApplyDefaults() {
 type RegistrationState0OneOfPropertySchemaComponent string
 
 const (
-	RegistrationState0OneOfPropertySchemaComponent_undefined RegistrationState0OneOfPropertySchemaComponent = "undefined"
+	RegistrationStateOneOf0_undefined RegistrationState0OneOfPropertySchemaComponent = "undefined"
 )
 
 type RegistrationStateOneOf0 = RegistrationState0OneOfPropertySchemaComponent
@@ -120,7 +120,7 @@ type RegistrationStateOneOf0 = RegistrationState0OneOfPropertySchemaComponent
 type RegistrationState1OneOfPropertySchemaComponent string
 
 const (
-	RegistrationState1OneOfPropertySchemaComponent_registered RegistrationState1OneOfPropertySchemaComponent = "registered"
+	RegistrationStateOneOf1_registered RegistrationState1OneOfPropertySchemaComponent = "registered"
 )
 
 type RegistrationStateOneOf1 = RegistrationState1OneOfPropertySchemaComponent
@@ -129,7 +129,7 @@ type RegistrationStateOneOf1 = RegistrationState1OneOfPropertySchemaComponent
 type RegistrationState2OneOfPropertySchemaComponent string
 
 const (
-	RegistrationState2OneOfPropertySchemaComponent_pending RegistrationState2OneOfPropertySchemaComponent = "pending"
+	RegistrationStateOneOf2_pending RegistrationState2OneOfPropertySchemaComponent = "pending"
 )
 
 type RegistrationStateOneOf2 = RegistrationState2OneOfPropertySchemaComponent
@@ -138,7 +138,7 @@ type RegistrationStateOneOf2 = RegistrationState2OneOfPropertySchemaComponent
 type RegistrationState3OneOfPropertySchemaComponent string
 
 const (
-	RegistrationState3OneOfPropertySchemaComponent_active RegistrationState3OneOfPropertySchemaComponent = "active"
+	RegistrationStateOneOf3_active RegistrationState3OneOfPropertySchemaComponent = "active"
 )
 
 type RegistrationStateOneOf3 = RegistrationState3OneOfPropertySchemaComponent

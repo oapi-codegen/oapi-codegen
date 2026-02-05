@@ -69,6 +69,10 @@ type SchemaDescriptor struct {
 	// comes from a request body or response content. Used for naming.
 	ContentType string
 
+	// Extensions holds parsed x- extension values for this schema.
+	// These control code generation behavior (type overrides, field names, etc.)
+	Extensions *Extensions
+
 	// Recursive structure:
 	Properties      map[string]*SchemaDescriptor
 	Items           *SchemaDescriptor

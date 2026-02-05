@@ -95,8 +95,8 @@ func (s *Test1AnyOfSchemaComponent) ApplyDefaults() {
 type Test1FieldAPropertyAnyOfSchemaComponent string
 
 const (
-	Test1FieldAPropertyAnyOfSchemaComponent_foo Test1FieldAPropertyAnyOfSchemaComponent = "foo"
-	Test1FieldAPropertyAnyOfSchemaComponent_bar Test1FieldAPropertyAnyOfSchemaComponent = "bar"
+	TestAnyOf1FieldA_foo Test1FieldAPropertyAnyOfSchemaComponent = "foo"
+	TestAnyOf1FieldA_bar Test1FieldAPropertyAnyOfSchemaComponent = "bar"
 )
 
 type TestAnyOf1FieldA = Test1FieldAPropertyAnyOfSchemaComponent

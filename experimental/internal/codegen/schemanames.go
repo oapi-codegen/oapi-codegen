@@ -27,16 +27,27 @@ const (
 
 // ComputeSchemaNames assigns StableName and ShortName to each schema descriptor.
 // StableName is deterministic from the path; ShortName is a friendly alias.
+// If a schema has a TypeNameOverride extension, that takes precedence over computed names.
 func ComputeSchemaNames(schemas []*SchemaDescriptor, converter *NameConverter, contentTypeNamer *ContentTypeShortNamer) {
 	// First: compute stable names from full paths
 	for _, s := range schemas {
-		s.StableName = computeStableName(s.Path, converter)
+		// Check for TypeNameOverride extension
+		if s.Extensions != nil && s.Extensions.TypeNameOverride != "" {
+			s.StableName = s.Extensions.TypeNameOverride
+		} else {
+			s.StableName = computeStableName(s.Path, converter)
+		}
 	}
 
 	// Second: generate candidate short names
 	candidates := make(map[*SchemaDescriptor]string)
 	for _, s := range schemas {
-		candidates[s] = generateCandidateName(s, converter, contentTypeNamer)
+		// TypeNameOverride also applies to short names
+		if s.Extensions != nil && s.Extensions.TypeNameOverride != "" {
+			candidates[s] = s.Extensions.TypeNameOverride
+		} else {
+			candidates[s] = generateCandidateName(s, converter, contentTypeNamer)
+		}
 	}
 
 	// Third: detect collisions and resolve them for short names

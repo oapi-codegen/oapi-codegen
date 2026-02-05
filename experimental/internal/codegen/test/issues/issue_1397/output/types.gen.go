@@ -3,16 +3,16 @@
 package output
 
 // #/components/schemas/Test
-type TestSchemaComponent struct {
-	Field1 []TestField1Item `json:"field1,omitempty" form:"field1,omitempty"` // A array of enum values
-	Field2 *TestField2      `json:"field2,omitempty" form:"field2,omitempty"` // A nested object with allocated name
-	Field3 *TestField3      `json:"field3,omitempty" form:"field3,omitempty"` // A nested object without allocated name
+type MyTestRequest struct {
+	Field1 []TestField1Item          `json:"field1,omitempty" form:"field1,omitempty"` // A array of enum values
+	Field2 *MyTestRequestNestedField `json:"field2,omitempty" form:"field2,omitempty"` // A nested object with allocated name
+	Field3 *TestField3               `json:"field3,omitempty" form:"field3,omitempty"` // A nested object without allocated name
 }
 
-type Test = TestSchemaComponent
+type MyTestRequest1 = MyTestRequest
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestSchemaComponent) ApplyDefaults() {
+func (s *MyTestRequest) ApplyDefaults() {
 	if s.Field2 != nil {
 		s.Field2.ApplyDefaults()
 	}
@@ -31,23 +31,21 @@ type TestField1 = TestField1PropertySchemaComponent
 type TestField1ItemPropertySchemaComponent string
 
 const (
-	TestField1ItemPropertySchemaComponent_option1 TestField1ItemPropertySchemaComponent = "option1"
-	TestField1ItemPropertySchemaComponent_option2 TestField1ItemPropertySchemaComponent = "option2"
+	TestField1Item_option1 TestField1ItemPropertySchemaComponent = "option1"
+	TestField1Item_option2 TestField1ItemPropertySchemaComponent = "option2"
 )
 
 type TestField1Item = TestField1ItemPropertySchemaComponent
 
 // #/components/schemas/Test/properties/field2
 // A nested object with allocated name
-type TestField2PropertySchemaComponent struct {
+type MyTestRequestNestedField struct {
 	Field1 bool   `json:"field1" form:"field1"`
 	Field2 string `json:"field2" form:"field2"`
 }
 
-type TestField2 = TestField2PropertySchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestField2PropertySchemaComponent) ApplyDefaults() {
+func (s *MyTestRequestNestedField) ApplyDefaults() {
 }
 
 // #/components/schemas/Test/properties/field3

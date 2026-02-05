@@ -178,6 +178,9 @@ func GenerateStruct(name string, fields []StructField, doc string, tagGen *Struc
 // generateFieldTag generates the struct tag for a field.
 func generateFieldTag(f StructField, tagGen *StructTagGenerator) string {
 	if tagGen == nil {
+		if f.JSONIgnore {
+			return "`json:\"-\"`"
+		}
 		return FormatJSONTag(f.JSONName, f.OmitEmpty)
 	}
 	info := StructTagInfo{
@@ -186,6 +189,9 @@ func generateFieldTag(f StructField, tagGen *StructTagGenerator) string {
 		IsOptional:  !f.Required,
 		IsNullable:  f.Nullable,
 		IsPointer:   f.Pointer,
+		OmitEmpty:   f.OmitEmpty,
+		OmitZero:    f.OmitZero,
+		JSONIgnore:  f.JSONIgnore,
 	}
 	return tagGen.GenerateTags(info)
 }
@@ -236,7 +242,16 @@ func GenerateTypeAlias(name, targetType, doc string) string {
 }
 
 // GenerateEnum generates an enum type with const values.
-func GenerateEnum(name, baseType string, values []string, doc string) string {
+// If customNames is provided and has the same length as values, those names will be used
+// as the constant names instead of auto-generated ones.
+func GenerateEnum(name, baseType string, values []string, customNames []string, doc string) string {
+	return GenerateEnumWithConstPrefix(name, name, baseType, values, customNames, doc)
+}
+
+// GenerateEnumWithConstPrefix generates an enum type with const values.
+// typeName is used for the type definition, constPrefix is used for constant names.
+// This allows the type to be defined with a stable name while constants use a friendly name.
+func GenerateEnumWithConstPrefix(typeName, constPrefix, baseType string, values []string, customNames []string, doc string) string {
 	b := NewCodeBuilder()
 
 	if doc != "" {
@@ -245,7 +260,7 @@ func GenerateEnum(name, baseType string, values []string, doc string) string {
 		}
 	}
 
-	b.Line("type %s %s", name, baseType)
+	b.Line("type %s %s", typeName, baseType)
 	b.BlankLine()
 
 	if len(values) > 0 {
@@ -255,22 +270,29 @@ func GenerateEnum(name, baseType string, values []string, doc string) string {
 		// Track used names to handle duplicates
 		usedNames := make(map[string]int)
 
-		for _, v := range values {
-			constSuffix := sanitizeEnumValue(v, baseType)
-			constName := name + "_" + constSuffix
+		for i, v := range values {
+			var constName string
+
+			// Use custom name if provided, otherwise auto-generate
+			if len(customNames) > i && customNames[i] != "" {
+				constName = constPrefix + "_" + customNames[i]
+			} else {
+				constSuffix := sanitizeEnumValue(v, baseType)
+				constName = constPrefix + "_" + constSuffix
+			}
 
 			// Handle duplicate names by adding a numeric suffix
 			if count, exists := usedNames[constName]; exists {
 				constName = fmt.Sprintf("%s_%d", constName, count)
-				usedNames[name+"_"+constSuffix] = count + 1
+				usedNames[constName] = count + 1
 			} else {
 				usedNames[constName] = 1
 			}
 
 			if baseType == "string" {
-				b.Line("%s %s = %q", constName, name, v)
+				b.Line("%s %s = %q", constName, typeName, v)
 			} else {
-				b.Line("%s %s = %s", constName, name, v)
+				b.Line("%s %s = %s", constName, typeName, v)
 			}
 		}
 

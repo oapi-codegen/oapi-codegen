@@ -12,12 +12,12 @@ import (
 // named based on their path in the schema rather than the specified names.
 func TestNestedObjectTypes(t *testing.T) {
 	// Test schema should have array of enums, and two nested objects
-	test := Test{
+	test := MyTestRequest{
 		Field1: []TestField1Item{
-			TestField1ItemPropertySchemaComponent_option1,
-			TestField1ItemPropertySchemaComponent_option2,
+			TestField1Item_option1,
+			TestField1Item_option2,
 		},
-		Field2: &TestField2{
+		Field2: &MyTestRequestNestedField{
 			Field1: true,
 			Field2: "value2",
 		},
@@ -40,8 +40,8 @@ func TestNestedObjectTypes(t *testing.T) {
 
 func TestEnumArrayField(t *testing.T) {
 	// Field1 is an array of enum values
-	_ = TestField1ItemPropertySchemaComponent_option1
-	_ = TestField1ItemPropertySchemaComponent_option2
+	_ = TestField1Item_option1
+	_ = TestField1Item_option2
 
 	items := []TestField1Item{
 		TestField1Item("option1"),
@@ -54,9 +54,9 @@ func TestEnumArrayField(t *testing.T) {
 }
 
 func TestTestJSONRoundTrip(t *testing.T) {
-	original := Test{
-		Field1: []TestField1Item{TestField1ItemPropertySchemaComponent_option1},
-		Field2: &TestField2{Field1: true, Field2: "test"},
+	original := MyTestRequest{
+		Field1: []TestField1Item{TestField1Item_option1},
+		Field2: &MyTestRequestNestedField{Field1: true, Field2: "test"},
 	}
 
 	data, err := json.Marshal(original)
@@ -64,7 +64,7 @@ func TestTestJSONRoundTrip(t *testing.T) {
 		t.Fatalf("Marshal failed: %v", err)
 	}
 
-	var decoded Test
+	var decoded MyTestRequest
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}

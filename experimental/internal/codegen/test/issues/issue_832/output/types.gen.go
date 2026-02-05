@@ -15,23 +15,21 @@ func (s *DocumentSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/Document/properties/status
-type DocumentStatusPropertySchemaComponent string
+type Document_Status string
 
 const (
-	DocumentStatusPropertySchemaComponent_one   DocumentStatusPropertySchemaComponent = "one"
-	DocumentStatusPropertySchemaComponent_two   DocumentStatusPropertySchemaComponent = "two"
-	DocumentStatusPropertySchemaComponent_three DocumentStatusPropertySchemaComponent = "three"
-	DocumentStatusPropertySchemaComponent_four  DocumentStatusPropertySchemaComponent = "four"
+	Document_Status_one   Document_Status = "one"
+	Document_Status_two   Document_Status = "two"
+	Document_Status_three Document_Status = "three"
+	Document_Status_four  Document_Status = "four"
 )
-
-type DocumentStatus1 = DocumentStatusPropertySchemaComponent
 
 // #/components/schemas/DocumentStatus
 type DocumentStatusSchemaComponent struct {
 	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
-type DocumentStatus2 = DocumentStatusSchemaComponent
+type DocumentStatus = DocumentStatusSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
 func (s *DocumentStatusSchemaComponent) ApplyDefaults() {

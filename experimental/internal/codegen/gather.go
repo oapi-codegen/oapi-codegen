@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
@@ -239,13 +240,19 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 	// Get the resolved schema
 	schema := proxy.Schema()
 
+	// Check if schema has extensions that require type generation
+	hasTypeOverride := schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeOverride, legacyExtGoType)
+	hasTypeNameOverride := schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeNameOverride, legacyExtGoTypeName)
+
 	// Only gather schemas that need a generated type
 	// References are always gathered (they point to real schemas)
 	// Simple types (primitives without enum) are skipped
 	// Inline nullable primitives (under properties/) don't need types - they use Nullable[T] directly
+	// Schemas with type-override or type-name-override extensions always need types
 	isInlineProperty := path.ContainsProperties()
 	skipInlineNullablePrimitive := isInlineProperty && isNullablePrimitive(schema)
-	if (isRef || needsGeneratedType(schema)) && !skipInlineNullablePrimitive {
+	needsType := isRef || needsGeneratedType(schema) || hasTypeOverride || hasTypeNameOverride
+	if needsType && !skipInlineNullablePrimitive {
 		desc := &SchemaDescriptor{
 			Path:        path,
 			Parent:      parent,
@@ -254,6 +261,19 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 			OperationID: g.currentOperationID,
 			ContentType: g.currentContentType,
 		}
+
+		// Parse extensions from the schema
+		if schema != nil && schema.Extensions != nil {
+			ext, err := ParseExtensions(schema.Extensions, path.String())
+			if err != nil {
+				slog.Warn("failed to parse extensions",
+					"path", path.String(),
+					"error", err)
+			} else {
+				desc.Extensions = ext
+			}
+		}
+
 		g.schemas = append(g.schemas, desc)
 
 		// Don't recurse into references - they point to schemas we'll gather elsewhere
@@ -291,6 +311,18 @@ func (g *gatherer) gatherSchemaDescriptorOnly(proxy *base.SchemaProxy, path Sche
 		Path:   path,
 		Parent: parent,
 		Schema: schema,
+	}
+
+	// Parse extensions from the schema
+	if schema.Extensions != nil {
+		ext, err := ParseExtensions(schema.Extensions, path.String())
+		if err != nil {
+			slog.Warn("failed to parse extensions",
+				"path", path.String(),
+				"error", err)
+		} else {
+			desc.Extensions = ext
+		}
 	}
 
 	// Still recurse to gather any nested complex schemas that DO need types
