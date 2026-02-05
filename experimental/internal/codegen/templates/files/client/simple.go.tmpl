@@ -1,0 +1,121 @@
+{{/* SimpleClient template - wraps Client with typed responses for simple operations */}}
+
+// ClientHttpError represents an HTTP error response from the server.
+// The type parameter E is the type of the parsed error body.
+type ClientHttpError[E any] struct {
+	StatusCode int
+	Body       E
+	RawBody    []byte
+}
+
+func (e *ClientHttpError[E]) Error() string {
+	return fmt.Sprintf("HTTP %d", e.StatusCode)
+}
+
+// SimpleClient wraps Client with typed responses for operations that have
+// unambiguous response types. Methods return the success type directly,
+// and HTTP errors are returned as *ClientHttpError[E] where E is the error type.
+type SimpleClient struct {
+	*Client
+}
+
+// NewSimpleClient creates a new SimpleClient which wraps a Client.
+func NewSimpleClient(server string, opts ...ClientOption) (*SimpleClient, error) {
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &SimpleClient{Client: client}, nil
+}
+
+{{- range . }}
+{{- $op := . }}
+{{- $opid := .GoOperationID }}
+{{- $hasParams := .HasParams }}
+{{- $pathParams := .PathParams }}
+{{- $paramsTypeName := .ParamsTypeName }}
+
+{{- /* Determine if this operation is "simple" - single success content type, single JSON success response */}}
+{{- $simpleOp := isSimpleOperation . }}
+{{- if $simpleOp }}
+{{- $successResponse := simpleOperationSuccessResponse . }}
+{{- $successContent := index $successResponse.Contents 0 }}
+{{- $successType := goTypeForContent $successContent }}
+{{- $errorResponse := errorResponseForOperation . }}
+
+// {{ $opid }} makes a {{ .Method }} request to {{ .Path }} and returns the parsed response.
+{{ if .Summary }}// {{ .Summary }}{{ end }}
+{{- if $errorResponse }}
+{{- $errorContent := index $errorResponse.Contents 0 }}
+{{- $errorType := goTypeForContent $errorContent }}
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[{{ $errorType }}].
+func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, body {{ (index .Bodies 0).GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
+	var result {{ $successType }}
+{{- if .HasBody }}
+{{- $defaultBody := index .Bodies 0 }}
+	resp, err := c.Client.{{ $opid }}{{ $defaultBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
+{{- else }}
+	resp, err := c.Client.{{ $opid }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, reqEditors...)
+{{- end }}
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return result, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		if err := json.Unmarshal(rawBody, &result); err != nil {
+			return result, err
+		}
+		return result, nil
+	}
+
+	// Parse error response
+	var errBody {{ $errorType }}
+	_ = json.Unmarshal(rawBody, &errBody) // Best effort parse
+	return result, &ClientHttpError[{{ $errorType }}]{
+		StatusCode: resp.StatusCode,
+		Body:       errBody,
+		RawBody:    rawBody,
+	}
+}
+{{- else }}
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[struct{}].
+func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, body {{ (index .Bodies 0).GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
+	var result {{ $successType }}
+{{- if .HasBody }}
+{{- $defaultBody := index .Bodies 0 }}
+	resp, err := c.Client.{{ $opid }}{{ $defaultBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
+{{- else }}
+	resp, err := c.Client.{{ $opid }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, reqEditors...)
+{{- end }}
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return result, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		if err := json.Unmarshal(rawBody, &result); err != nil {
+			return result, err
+		}
+		return result, nil
+	}
+
+	// No typed error response defined
+	return result, &ClientHttpError[struct{}]{
+		StatusCode: resp.StatusCode,
+		RawBody:    rawBody,
+	}
+}
+{{- end }}
+{{- end }}
+{{- end }}

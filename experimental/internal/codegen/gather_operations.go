@@ -583,9 +583,16 @@ func schemaProxyToDescriptor(proxy *base.SchemaProxy) *SchemaDescriptor {
 		return nil
 	}
 
-	return &SchemaDescriptor{
+	desc := &SchemaDescriptor{
 		Schema: schema,
 	}
+
+	// Capture reference if this is a reference schema
+	if proxy.IsReference() {
+		desc.Ref = proxy.GetReference()
+	}
+
+	return desc
 }
 
 // schemaToGoType converts a schema to a Go type string.

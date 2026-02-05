@@ -58,6 +58,16 @@ type GenerationOptions struct {
 	// Supported values: "std-http"
 	// Empty string (default) means no server code is generated.
 	Server string `yaml:"server,omitempty"`
+
+	// Client enables generation of the HTTP client.
+	// When true, generates a base Client that returns *http.Response.
+	Client bool `yaml:"client,omitempty"`
+
+	// SimpleClient enables generation of the SimpleClient wrapper.
+	// SimpleClient wraps the base Client with typed responses for
+	// operations that have unambiguous response types.
+	// Requires Client to also be enabled.
+	SimpleClient bool `yaml:"simple-client,omitempty"`
 }
 
 // ServerType constants for supported server frameworks.

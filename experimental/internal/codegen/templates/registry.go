@@ -453,3 +453,65 @@ var SharedServerTemplates = map[string]ServerTemplate{
 		Template: "server/param_types.go.tmpl",
 	},
 }
+
+// ClientTemplate defines a template for client generation.
+type ClientTemplate struct {
+	Name     string   // Template name (e.g., "base", "interface")
+	Imports  []Import // Required imports for this template
+	Template string   // Template path in embedded FS
+}
+
+// ClientTemplates contains templates for client generation.
+var ClientTemplates = map[string]ClientTemplate{
+	"base": {
+		Name: "base",
+		Imports: []Import{
+			{Path: "context"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "strings"},
+		},
+		Template: "client/base.go.tmpl",
+	},
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "context"},
+			{Path: "io"},
+			{Path: "net/http"},
+		},
+		Template: "client/interface.go.tmpl",
+	},
+	"methods": {
+		Name: "methods",
+		Imports: []Import{
+			{Path: "context"},
+			{Path: "io"},
+			{Path: "net/http"},
+		},
+		Template: "client/methods.go.tmpl",
+	},
+	"request_builders": {
+		Name: "request_builders",
+		Imports: []Import{
+			{Path: "bytes"},
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "io"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+		},
+		Template: "client/request_builders.go.tmpl",
+	},
+	"simple": {
+		Name: "simple",
+		Imports: []Import{
+			{Path: "context"},
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "io"},
+			{Path: "net/http"},
+		},
+		Template: "client/simple.go.tmpl",
+	},
+}
