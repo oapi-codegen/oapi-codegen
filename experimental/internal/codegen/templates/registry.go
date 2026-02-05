@@ -401,3 +401,55 @@ func ParamStyleKey(prefix, style string, explode bool) string {
 	}
 	return key
 }
+
+// ServerTemplate defines a template for server generation.
+type ServerTemplate struct {
+	Name     string   // Template name (e.g., "interface", "handler")
+	Imports  []Import // Required imports for this template
+	Template string   // Template path in embedded FS
+}
+
+// StdHTTPServerTemplates contains templates for StdHTTP server generation.
+var StdHTTPServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+		},
+		Template: "server/stdhttp/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "net/http"},
+		},
+		Template: "server/stdhttp/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "context"},
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+		},
+		Template: "server/stdhttp/wrapper.go.tmpl",
+	},
+}
+
+// SharedServerTemplates contains templates shared across all server implementations.
+var SharedServerTemplates = map[string]ServerTemplate{
+	"errors": {
+		Name: "errors",
+		Imports: []Import{
+			{Path: "fmt"},
+		},
+		Template: "server/errors.go.tmpl",
+	},
+	"param_types": {
+		Name: "param_types",
+		Imports: []Import{},
+		Template: "server/param_types.go.tmpl",
+	},
+}

@@ -16,6 +16,34 @@ type Binder interface {
 	Bind(value string) error
 }
 
+// DateFormat is the format used for date (without time) parameters.
+const DateFormat = "2006-01-02"
+
+// Date represents a date (without time) for OpenAPI date format.
+type Date struct {
+	time.Time
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler for Date.
+func (d *Date) UnmarshalText(data []byte) error {
+	t, err := time.Parse(DateFormat, string(data))
+	if err != nil {
+		return err
+	}
+	d.Time = t
+	return nil
+}
+
+// MarshalText implements encoding.TextMarshaler for Date.
+func (d Date) MarshalText() ([]byte, error) {
+	return []byte(d.Format(DateFormat)), nil
+}
+
+// Format returns the date formatted according to layout.
+func (d Date) Format(layout string) string {
+	return d.Time.Format(layout)
+}
+
 // primitiveToString converts a primitive value to a string representation.
 // It handles basic Go types, time.Time, types.Date, and types that implement
 // json.Marshaler or fmt.Stringer.

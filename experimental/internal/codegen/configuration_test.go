@@ -1,6 +1,10 @@
 package codegen
 
-import "testing"
+import (
+	"testing"
+
+	"gopkg.in/yaml.v3"
+)
 
 func TestContentTypeMatcher(t *testing.T) {
 	tests := []struct {
@@ -63,4 +67,86 @@ func TestDefaultContentTypes(t *testing.T) {
 		t.Errorf("Some default patterns failed to compile: got %d patterns, want %d",
 			len(m.patterns), len(defaults))
 	}
+}
+
+func TestGenerationOptions_ServerYAML(t *testing.T) {
+	t.Run("unmarshal server field", func(t *testing.T) {
+		yamlContent := `
+generation:
+  server: std-http
+`
+		var cfg Configuration
+		err := yaml.Unmarshal([]byte(yamlContent), &cfg)
+		if err != nil {
+			t.Fatalf("yaml.Unmarshal failed: %v", err)
+		}
+		if cfg.Generation.Server != ServerTypeStdHTTP {
+			t.Errorf("Server = %q, want %q", cfg.Generation.Server, ServerTypeStdHTTP)
+		}
+	})
+
+	t.Run("unmarshal empty server field", func(t *testing.T) {
+		yamlContent := `
+generation:
+  no-models: true
+`
+		var cfg Configuration
+		err := yaml.Unmarshal([]byte(yamlContent), &cfg)
+		if err != nil {
+			t.Fatalf("yaml.Unmarshal failed: %v", err)
+		}
+		if cfg.Generation.Server != "" {
+			t.Errorf("Server = %q, want empty string", cfg.Generation.Server)
+		}
+	})
+
+	t.Run("marshal server field", func(t *testing.T) {
+		cfg := Configuration{
+			PackageName: "test",
+			Generation: GenerationOptions{
+				Server: ServerTypeStdHTTP,
+			},
+		}
+		data, err := yaml.Marshal(&cfg)
+		if err != nil {
+			t.Fatalf("yaml.Marshal failed: %v", err)
+		}
+		if got := string(data); !contains(got, "server: std-http") {
+			t.Errorf("Marshaled YAML does not contain 'server: std-http':\n%s", got)
+		}
+	})
+
+	t.Run("omit empty server field", func(t *testing.T) {
+		cfg := Configuration{
+			PackageName: "test",
+			Generation:  GenerationOptions{},
+		}
+		data, err := yaml.Marshal(&cfg)
+		if err != nil {
+			t.Fatalf("yaml.Marshal failed: %v", err)
+		}
+		if got := string(data); contains(got, "server:") {
+			t.Errorf("Marshaled YAML should not contain 'server:' when empty:\n%s", got)
+		}
+	})
+}
+
+func TestServerTypeConstants(t *testing.T) {
+	if ServerTypeStdHTTP != "std-http" {
+		t.Errorf("ServerTypeStdHTTP = %q, want %q", ServerTypeStdHTTP, "std-http")
+	}
+}
+
+// contains is a simple helper for string containment check
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr || len(s) > 0 && containsAt(s, substr))
+}
+
+func containsAt(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+	return false
 }
