@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
 	"io"
 	"net/http"
 	"net/url"
@@ -20,49 +21,7 @@ import (
 	"time"
 )
 
-// #/components/schemas/Pet
-type PetSchemaComponent struct {
-	Name string  `json:"name" form:"name"`                   // Name of the pet
-	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
-	ID   int64   `json:"id" form:"id"`                       // Unique id of the pet
-}
-
-type Pet = PetSchemaComponent
-
-// ApplyDefaults sets default values for fields that are nil.
-func (s *PetSchemaComponent) ApplyDefaults() {
-}
-
-// #/components/schemas/NewPet
-type NewPetSchemaComponent struct {
-	Name string  `json:"name" form:"name"`                   // Name of the pet
-	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
-}
-
-type NewPet = NewPetSchemaComponent
-
-// ApplyDefaults sets default values for fields that are nil.
-func (s *NewPetSchemaComponent) ApplyDefaults() {
-}
-
-// #/components/schemas/Error
-type ErrorSchemaComponent struct {
-	Code    int32  `json:"code" form:"code"`       // Error code
-	Message string `json:"message" form:"message"` // Error message
-}
-
-type Error = ErrorSchemaComponent
-
-// ApplyDefaults sets default values for fields that are nil.
-func (s *ErrorSchemaComponent) ApplyDefaults() {
-}
-
-// #/paths//pets/get/responses/200/content/application/json/schema
-type PetsGet200ApplicationJSONContentResponsePath = []Pet
-
-type FindPetsJSONResponse = PetsGet200ApplicationJSONContentResponsePath
-
-type addPetJSONRequestBody = NewPet
+type addPetJSONRequestBody = petstore.NewPet
 
 // RequestEditorFn is the function signature for the RequestEditor callback function.
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -442,9 +401,9 @@ func NewSimpleClient(server string, opts ...ClientOption) (*SimpleClient, error)
 
 // FindPets makes a GET request to /pets and returns the parsed response.
 // Returns all pets
-// On success, returns the response body. On HTTP error, returns *ClientHttpError[Error].
-func (c *SimpleClient) FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) ([]Pet, error) {
-	var result []Pet
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[petstore.Error].
+func (c *SimpleClient) FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) ([]petstore.Pet, error) {
+	var result []petstore.Pet
 	resp, err := c.Client.FindPets(ctx, params, reqEditors...)
 	if err != nil {
 		return result, err
@@ -464,9 +423,9 @@ func (c *SimpleClient) FindPets(ctx context.Context, params *FindPetsParams, req
 	}
 
 	// Parse error response
-	var errBody Error
+	var errBody petstore.Error
 	_ = json.Unmarshal(rawBody, &errBody) // Best effort parse
-	return result, &ClientHttpError[Error]{
+	return result, &ClientHttpError[petstore.Error]{
 		StatusCode: resp.StatusCode,
 		Body:       errBody,
 		RawBody:    rawBody,
@@ -475,9 +434,9 @@ func (c *SimpleClient) FindPets(ctx context.Context, params *FindPetsParams, req
 
 // AddPet makes a POST request to /pets and returns the parsed response.
 // Creates a new pet
-// On success, returns the response body. On HTTP error, returns *ClientHttpError[Error].
-func (c *SimpleClient) AddPet(ctx context.Context, body addPetJSONRequestBody, reqEditors ...RequestEditorFn) (Pet, error) {
-	var result Pet
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[petstore.Error].
+func (c *SimpleClient) AddPet(ctx context.Context, body addPetJSONRequestBody, reqEditors ...RequestEditorFn) (petstore.Pet, error) {
+	var result petstore.Pet
 	resp, err := c.Client.AddPet(ctx, body, reqEditors...)
 	if err != nil {
 		return result, err
@@ -497,9 +456,9 @@ func (c *SimpleClient) AddPet(ctx context.Context, body addPetJSONRequestBody, r
 	}
 
 	// Parse error response
-	var errBody Error
+	var errBody petstore.Error
 	_ = json.Unmarshal(rawBody, &errBody) // Best effort parse
-	return result, &ClientHttpError[Error]{
+	return result, &ClientHttpError[petstore.Error]{
 		StatusCode: resp.StatusCode,
 		Body:       errBody,
 		RawBody:    rawBody,
@@ -508,9 +467,9 @@ func (c *SimpleClient) AddPet(ctx context.Context, body addPetJSONRequestBody, r
 
 // FindPetByID makes a GET request to /pets/{id} and returns the parsed response.
 // Returns a pet by ID
-// On success, returns the response body. On HTTP error, returns *ClientHttpError[Error].
-func (c *SimpleClient) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (Pet, error) {
-	var result Pet
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[petstore.Error].
+func (c *SimpleClient) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (petstore.Pet, error) {
+	var result petstore.Pet
 	resp, err := c.Client.FindPetByID(ctx, id, reqEditors...)
 	if err != nil {
 		return result, err
@@ -530,9 +489,9 @@ func (c *SimpleClient) FindPetByID(ctx context.Context, id int64, reqEditors ...
 	}
 
 	// Parse error response
-	var errBody Error
+	var errBody petstore.Error
 	_ = json.Unmarshal(rawBody, &errBody) // Best effort parse
-	return result, &ClientHttpError[Error]{
+	return result, &ClientHttpError[petstore.Error]{
 		StatusCode: resp.StatusCode,
 		Body:       errBody,
 		RawBody:    rawBody,

@@ -51,7 +51,7 @@ func TestClientGenerator(t *testing.T) {
 	t.Logf("Operations: %v", operationIDs)
 
 	// Generate client code
-	gen, err := NewClientGenerator(schemaIndex, true)
+	gen, err := NewClientGenerator(schemaIndex, true, nil)
 	require.NoError(t, err, "Failed to create client generator")
 
 	clientCode, err := gen.GenerateClient(ops)

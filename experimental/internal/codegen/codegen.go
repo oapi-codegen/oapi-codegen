@@ -47,8 +47,8 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 	output := NewOutput(cfg.PackageName)
 	// Note: encoding/json and fmt imports are added by generateType when needed
 
-	// Generate models (types for schemas)
-	if !cfg.Generation.NoModels {
+	// Generate models (types for schemas) unless using external models package
+	if cfg.Generation.ModelsPackage == nil {
 		for _, desc := range schemas {
 			code := generateType(gen, desc)
 			if code != "" {
@@ -83,7 +83,7 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 		}
 
 		// Generate client
-		clientGen, err := NewClientGenerator(schemaIndex, cfg.Generation.SimpleClient)
+		clientGen, err := NewClientGenerator(schemaIndex, cfg.Generation.SimpleClient, cfg.Generation.ModelsPackage)
 		if err != nil {
 			return "", fmt.Errorf("creating client generator: %w", err)
 		}
@@ -99,6 +99,11 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 			for _, imp := range ct.Imports {
 				output.AddImport(imp.Path, imp.Alias)
 			}
+		}
+
+		// Add models package import if using external models
+		if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
+			output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
 		}
 
 		// Generate param functions

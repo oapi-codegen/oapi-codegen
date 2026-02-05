@@ -11,14 +11,16 @@ import (
 
 // ClientGenerator generates client code from operation descriptors.
 type ClientGenerator struct {
-	tmpl         *template.Template
-	schemaIndex  map[string]*SchemaDescriptor
+	tmpl           *template.Template
+	schemaIndex    map[string]*SchemaDescriptor
 	generateSimple bool
+	modelsPackage  *ModelsPackage
 }
 
 // NewClientGenerator creates a new client generator.
-func NewClientGenerator(schemaIndex map[string]*SchemaDescriptor, generateSimple bool) (*ClientGenerator, error) {
-	tmpl := template.New("client").Funcs(templates.Funcs()).Funcs(clientFuncs(schemaIndex))
+// modelsPackage can be nil if models are in the same package.
+func NewClientGenerator(schemaIndex map[string]*SchemaDescriptor, generateSimple bool, modelsPackage *ModelsPackage) (*ClientGenerator, error) {
+	tmpl := template.New("client").Funcs(templates.Funcs()).Funcs(clientFuncs(schemaIndex, modelsPackage))
 
 	// Parse client templates
 	for _, ct := range templates.ClientTemplates {
@@ -45,21 +47,25 @@ func NewClientGenerator(schemaIndex map[string]*SchemaDescriptor, generateSimple
 	}
 
 	return &ClientGenerator{
-		tmpl:         tmpl,
-		schemaIndex:  schemaIndex,
+		tmpl:           tmpl,
+		schemaIndex:    schemaIndex,
 		generateSimple: generateSimple,
+		modelsPackage:  modelsPackage,
 	}, nil
 }
 
 // clientFuncs returns template functions specific to client generation.
-func clientFuncs(schemaIndex map[string]*SchemaDescriptor) template.FuncMap {
+func clientFuncs(schemaIndex map[string]*SchemaDescriptor, modelsPackage *ModelsPackage) template.FuncMap {
 	return template.FuncMap{
-		"pathFmt": pathFmt,
-		"isSimpleOperation": isSimpleOperation,
+		"pathFmt":                        pathFmt,
+		"isSimpleOperation":              isSimpleOperation,
 		"simpleOperationSuccessResponse": simpleOperationSuccessResponse,
-		"errorResponseForOperation": errorResponseForOperation,
+		"errorResponseForOperation":      errorResponseForOperation,
 		"goTypeForContent": func(content *ResponseContentDescriptor) string {
-			return goTypeForContent(content, schemaIndex)
+			return goTypeForContent(content, schemaIndex, modelsPackage)
+		},
+		"modelsPkg": func() string {
+			return modelsPackage.Prefix()
 		},
 	}
 }
@@ -150,15 +156,18 @@ func errorResponseForOperation(op *OperationDescriptor) *ResponseDescriptor {
 }
 
 // goTypeForContent returns the Go type for a response content descriptor.
-func goTypeForContent(content *ResponseContentDescriptor, schemaIndex map[string]*SchemaDescriptor) string {
+// If modelsPackage is set, type names are prefixed with the package name.
+func goTypeForContent(content *ResponseContentDescriptor, schemaIndex map[string]*SchemaDescriptor, modelsPackage *ModelsPackage) string {
 	if content == nil || content.Schema == nil {
 		return "interface{}"
 	}
 
+	pkgPrefix := modelsPackage.Prefix()
+
 	// If the schema has a reference, look it up
 	if content.Schema.Ref != "" {
 		if target, ok := schemaIndex[content.Schema.Ref]; ok {
-			return target.ShortName
+			return pkgPrefix + target.ShortName
 		}
 	}
 
@@ -168,19 +177,19 @@ func goTypeForContent(content *ResponseContentDescriptor, schemaIndex map[string
 		if itemProxy != nil && itemProxy.IsReference() {
 			ref := itemProxy.GetReference()
 			if target, ok := schemaIndex[ref]; ok {
-				return "[]" + target.ShortName
+				return "[]" + pkgPrefix + target.ShortName
 			}
 		}
 	}
 
 	// If the schema has a short name, use it
 	if content.Schema.ShortName != "" {
-		return content.Schema.ShortName
+		return pkgPrefix + content.Schema.ShortName
 	}
 
 	// Fall back to the stable name
 	if content.Schema.StableName != "" {
-		return content.Schema.StableName
+		return pkgPrefix + content.Schema.StableName
 	}
 
 	// Try to derive from the schema itself
@@ -248,6 +257,7 @@ func (g *ClientGenerator) GenerateParamTypes(ops []*OperationDescriptor) (string
 // GenerateRequestBodyTypes generates type aliases for request bodies.
 func (g *ClientGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor) string {
 	var buf bytes.Buffer
+	pkgPrefix := g.modelsPackage.Prefix()
 
 	for _, op := range ops {
 		for _, body := range op.Bodies {
@@ -260,17 +270,17 @@ func (g *ClientGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor) s
 				if body.Schema.Ref != "" {
 					// Reference to a component schema
 					if target, ok := g.schemaIndex[body.Schema.Ref]; ok {
-						targetType = target.ShortName
+						targetType = pkgPrefix + target.ShortName
 					}
 				} else if body.Schema.ShortName != "" {
-					targetType = body.Schema.ShortName
+					targetType = pkgPrefix + body.Schema.ShortName
 				}
 			}
 			if targetType == "" {
 				targetType = "interface{}"
 			}
 
-			// Generate type alias: type addPetJSONRequestBody = NewPet
+			// Generate type alias: type addPetJSONRequestBody = models.NewPet
 			buf.WriteString(fmt.Sprintf("type %s = %s\n\n", body.GoTypeName, targetType))
 		}
 	}
