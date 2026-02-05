@@ -9,8 +9,23 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
+// GatherResult contains the results of gathering from an OpenAPI document.
+type GatherResult struct {
+	Schemas      []*SchemaDescriptor
+	ParamTracker *ParamUsageTracker
+}
+
 // GatherSchemas traverses an OpenAPI document and collects all schemas into a list.
 func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) ([]*SchemaDescriptor, error) {
+	result, err := GatherAll(doc, contentTypeMatcher)
+	if err != nil {
+		return nil, err
+	}
+	return result.Schemas, nil
+}
+
+// GatherAll traverses an OpenAPI document and collects all schemas and parameter usage.
+func GatherAll(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) (*GatherResult, error) {
 	model, errs := doc.BuildV3Model()
 	if len(errs) > 0 {
 		return nil, fmt.Errorf("building v3 model: %v", errs[0])
@@ -22,15 +37,20 @@ func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatch
 	g := &gatherer{
 		schemas:            make([]*SchemaDescriptor, 0),
 		contentTypeMatcher: contentTypeMatcher,
+		paramTracker:       NewParamUsageTracker(),
 	}
 
 	g.gatherFromDocument(&model.Model)
-	return g.schemas, nil
+	return &GatherResult{
+		Schemas:      g.schemas,
+		ParamTracker: g.paramTracker,
+	}, nil
 }
 
 type gatherer struct {
 	schemas            []*SchemaDescriptor
 	contentTypeMatcher *ContentTypeMatcher
+	paramTracker       *ParamUsageTracker
 	// Context for the current operation being gathered (for nicer naming)
 	currentOperationID string
 	currentContentType string
@@ -133,6 +153,24 @@ func (g *gatherer) gatherFromOperation(op *v3.Operation, basePath SchemaPath) {
 func (g *gatherer) gatherFromParameter(param *v3.Parameter, basePath SchemaPath) {
 	if param == nil {
 		return
+	}
+
+	// Track parameter styling usage for code generation
+	if g.paramTracker != nil && param.Schema != nil {
+		// Determine style (with defaults based on location)
+		style := param.Style
+		if style == "" {
+			style = DefaultParamStyle(param.In)
+		}
+
+		// Determine explode (with defaults based on location)
+		explode := DefaultParamExplode(param.In)
+		if param.Explode != nil {
+			explode = *param.Explode
+		}
+
+		// Record both style (client) and bind (server) usage
+		g.paramTracker.RecordParam(style, explode)
 	}
 
 	if param.Schema != nil {

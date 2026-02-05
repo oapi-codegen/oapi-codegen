@@ -1,0 +1,130 @@
+{{/* StyleFormExplodeParam - form style with explode */}}
+
+// StyleFormExplodeParam serializes a value using form style (RFC 6570) with exploding.
+// Form style is the default for query and cookie parameters.
+// Primitives: paramName=value
+// Arrays: paramName=a&paramName=b&paramName=c
+// Objects: key1=value1&key2=value2
+func StyleFormExplodeParam(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+	t := reflect.TypeOf(value)
+	v := reflect.ValueOf(value)
+
+	// Dereference pointers
+	if t.Kind() == reflect.Ptr {
+		if v.IsNil() {
+			return "", fmt.Errorf("value is a nil pointer")
+		}
+		v = reflect.Indirect(v)
+		t = v.Type()
+	}
+
+	// Check for TextMarshaler (but not time.Time or Date)
+	if tu, ok := value.(encoding.TextMarshaler); ok {
+		innerT := reflect.Indirect(reflect.ValueOf(value)).Type()
+		if !innerT.ConvertibleTo(reflect.TypeOf(time.Time{})) && !innerT.ConvertibleTo(reflect.TypeOf(Date{})) {
+			b, err := tu.MarshalText()
+			if err != nil {
+				return "", fmt.Errorf("error marshaling '%s' as text: %w", value, err)
+			}
+			return fmt.Sprintf("%s=%s", paramName, escapeParameterString(string(b), paramLocation)), nil
+		}
+	}
+
+	switch t.Kind() {
+	case reflect.Slice:
+		n := v.Len()
+		sliceVal := make([]interface{}, n)
+		for i := 0; i < n; i++ {
+			sliceVal[i] = v.Index(i).Interface()
+		}
+		return styleFormExplodeSlice(paramName, paramLocation, sliceVal)
+	case reflect.Struct:
+		return styleFormExplodeStruct(paramName, paramLocation, value)
+	case reflect.Map:
+		return styleFormExplodeMap(paramName, paramLocation, value)
+	default:
+		return styleFormExplodePrimitive(paramName, paramLocation, value)
+	}
+}
+
+func styleFormExplodePrimitive(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+	strVal, err := primitiveToString(value)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s=%s", paramName, escapeParameterString(strVal, paramLocation)), nil
+}
+
+func styleFormExplodeSlice(paramName string, paramLocation ParamLocation, values []interface{}) (string, error) {
+	// Form with explode: paramName=a&paramName=b&paramName=c
+	prefix := fmt.Sprintf("%s=", paramName)
+	parts := make([]string, len(values))
+	for i, v := range values {
+		part, err := primitiveToString(v)
+		if err != nil {
+			return "", fmt.Errorf("error formatting '%s': %w", paramName, err)
+		}
+		parts[i] = escapeParameterString(part, paramLocation)
+	}
+	return prefix + strings.Join(parts, "&"+prefix), nil
+}
+
+func styleFormExplodeStruct(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+	// Check for known types first
+	if timeVal, ok := marshalKnownTypes(value); ok {
+		return fmt.Sprintf("%s=%s", paramName, escapeParameterString(timeVal, paramLocation)), nil
+	}
+
+	// Check for json.Marshaler
+	if m, ok := value.(json.Marshaler); ok {
+		buf, err := m.MarshalJSON()
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal to JSON: %w", err)
+		}
+		var i2 interface{}
+		e := json.NewDecoder(bytes.NewReader(buf))
+		e.UseNumber()
+		if err = e.Decode(&i2); err != nil {
+			return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+		}
+		return StyleFormExplodeParam(paramName, paramLocation, i2)
+	}
+
+	// Build field dictionary
+	fieldDict, err := structToFieldDict(value)
+	if err != nil {
+		return "", err
+	}
+
+	// Form style with explode: key1=value1&key2=value2
+	var parts []string
+	for _, k := range sortedKeys(fieldDict) {
+		v := escapeParameterString(fieldDict[k], paramLocation)
+		parts = append(parts, k+"="+v)
+	}
+	return strings.Join(parts, "&"), nil
+}
+
+func styleFormExplodeMap(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+	dict, ok := value.(map[string]interface{})
+	if !ok {
+		return "", errors.New("map not of type map[string]interface{}")
+	}
+
+	fieldDict := make(map[string]string)
+	for fieldName, val := range dict {
+		str, err := primitiveToString(val)
+		if err != nil {
+			return "", fmt.Errorf("error formatting '%s': %w", paramName, err)
+		}
+		fieldDict[fieldName] = str
+	}
+
+	// Form style with explode: key1=value1&key2=value2
+	var parts []string
+	for _, k := range sortedKeys(fieldDict) {
+		v := escapeParameterString(fieldDict[k], paramLocation)
+		parts = append(parts, k+"="+v)
+	}
+	return strings.Join(parts, "&"), nil
+}
