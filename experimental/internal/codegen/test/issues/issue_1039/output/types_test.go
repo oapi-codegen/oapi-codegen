@@ -264,7 +264,3 @@ func TestAdditionalPropertiesFalse(t *testing.T) {
 
 	t.Logf("Marshaled: %s", string(data))
 }
-
-func ptrTo[T any](v T) *T {
-	return &v
-}

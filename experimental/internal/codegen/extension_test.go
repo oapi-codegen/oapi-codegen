@@ -76,7 +76,9 @@ func TestParseExtensions(t *testing.T) {
 
 	// Add omitempty extension
 	omitEmptyNode := &yaml.Node{}
-	omitEmptyNode.Encode(true)
+	if err := omitEmptyNode.Encode(true); err != nil {
+		t.Fatalf("Failed to encode omitEmptyNode: %v", err)
+	}
 	extensions.Set(ExtOmitEmpty, omitEmptyNode)
 
 	ext, err := ParseExtensions(extensions, "#/test/path")

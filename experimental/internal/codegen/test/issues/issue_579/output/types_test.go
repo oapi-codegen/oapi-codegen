@@ -26,7 +26,7 @@ func TestDateType(t *testing.T) {
 		t.Fatalf("Unmarshal failed: %v", err)
 	}
 
-	if !decoded.Time.Equal(date.Time) {
+	if !decoded.Equal(date.Time) {
 		t.Errorf("Unmarshal result = %v, want %v", decoded.Time, date.Time)
 	}
 }
