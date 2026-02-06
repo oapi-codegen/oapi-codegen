@@ -13,7 +13,8 @@ import (
 )
 
 // Generate produces Go code from the parsed OpenAPI document.
-func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
+// specData is the raw spec bytes used to embed the spec in the generated code.
+func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (string, error) {
 	cfg.ApplyDefaults()
 
 	// Create content type matcher for filtering request/response bodies
@@ -68,6 +69,21 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 					output.AddImport(path, alias)
 				}
 			}
+		}
+
+		// Embed the raw OpenAPI spec if specData was provided
+		if len(specData) > 0 {
+			embeddedCode, err := generateEmbeddedSpec(specData)
+			if err != nil {
+				return "", fmt.Errorf("generating embedded spec: %w", err)
+			}
+			output.AddType(embeddedCode)
+			output.AddImport("bytes", "")
+			output.AddImport("compress/gzip", "")
+			output.AddImport("encoding/base64", "")
+			output.AddImport("fmt", "")
+			output.AddImport("strings", "")
+			output.AddImport("sync", "")
 		}
 	}
 

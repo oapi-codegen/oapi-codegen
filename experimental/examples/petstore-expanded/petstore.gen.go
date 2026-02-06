@@ -2,6 +2,15 @@
 
 package petstore
 
+import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"sync"
+)
+
 // #/components/schemas/Pet
 type PetSchemaComponent struct {
 	Name string  `json:"name" form:"name"`                   // Name of the pet
@@ -43,3 +52,74 @@ func (s *ErrorSchemaComponent) ApplyDefaults() {
 type PetsGet200ApplicationJSONContentResponsePath = []Pet
 
 type FindPetsJSONResponse = PetsGet200ApplicationJSONContentResponsePath
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var swaggerSpecJSON = []string{
+	"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",
+	"5gbvFMOI4GujHzzt4f8zAAD//6ZcwVZEFgAA",
+}
+
+// decodeSwaggerSpec decodes and decompresses the embedded spec.
+func decodeSwaggerSpec() ([]byte, error) {
+	joined := strings.Join(swaggerSpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
+func decodeSwaggerSpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeSwaggerSpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var swaggerSpec = decodeSwaggerSpecCached()
+
+// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetSwaggerSpecJSON() ([]byte, error) {
+	return swaggerSpec()
+}

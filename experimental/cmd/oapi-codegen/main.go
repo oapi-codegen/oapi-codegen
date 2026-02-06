@@ -95,7 +95,7 @@ func main() {
 	}
 
 	// Generate code
-	code, err := codegen.Generate(doc, cfg)
+	code, err := codegen.Generate(doc, specData, cfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error generating code: %v\n", err)
 		os.Exit(1)

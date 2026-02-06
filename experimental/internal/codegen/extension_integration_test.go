@@ -87,7 +87,7 @@ components:
 		PackageName: "output",
 	}
 
-	code, err := Generate(doc, cfg)
+	code, err := Generate(doc, nil, cfg)
 	if err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
@@ -182,7 +182,7 @@ components:
 		PackageName: "output",
 	}
 
-	code, err := Generate(doc, cfg)
+	code, err := Generate(doc, nil, cfg)
 	if err != nil {
 		t.Fatalf("Generate failed: %v", err)
 	}
