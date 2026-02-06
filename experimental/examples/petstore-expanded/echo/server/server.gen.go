@@ -17,22 +17,50 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/labstack/echo/v4"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
+	FindPets(ctx echo.Context, params FindPetsParams) error
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(w http.ResponseWriter, r *http.Request)
+	AddPet(ctx echo.Context) error
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
+	DeletePet(ctx echo.Context, id int64) error
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
+	FindPetByID(ctx echo.Context, id int64) error
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+type Unimplemented struct{}
+
+// Returns all pets
+// (GET /pets)
+func (_ Unimplemented) FindPets(ctx echo.Context, params FindPetsParams) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// Creates a new pet
+// (POST /pets)
+func (_ Unimplemented) AddPet(ctx echo.Context) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// Deletes a pet by ID
+// (DELETE /pets/{id})
+func (_ Unimplemented) DeletePet(ctx echo.Context, id int64) error {
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+// Returns a pet by ID
+// (GET /pets/{id})
+func (_ Unimplemented) FindPetByID(ctx echo.Context, id int64) error {
+	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // FindPetsParams defines parameters for FindPets.
@@ -43,168 +71,107 @@ type FindPetsParams struct {
 	Limit *int32 `form:"limit" json:"limit"`
 }
 
-// ServerInterfaceWrapper converts HTTP requests to parameters.
+// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
+	Handler ServerInterface
 }
 
-// MiddlewareFunc is a middleware function type.
-type MiddlewareFunc func(http.Handler) http.Handler
-
-// FindPets operation middleware
-func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
+// FindPets converts echo context to params.
+func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 
 	// ------------- Optional query parameter "tags" -------------
-	err = BindFormExplodeParam("tags", false, r.URL.Query(), &params.Tags)
+	err = BindFormExplodeParam("tags", false, ctx.QueryParams(), &params.Tags)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tags", Err: err})
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
 	}
 
 	// ------------- Optional query parameter "limit" -------------
-	err = BindFormExplodeParam("limit", false, r.URL.Query(), &params.Limit)
+	err = BindFormExplodeParam("limit", false, ctx.QueryParams(), &params.Limit)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
 	}
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPets(w, r, params)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.FindPets(ctx, params)
+	return err
 }
 
-// AddPet operation middleware
-func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
+// AddPet converts echo context to params.
+func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
+	var err error
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.AddPet(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.AddPet(ctx)
+	return err
 }
 
-// DeletePet operation middleware
-func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
+// DeletePet converts echo context to params.
+func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = BindSimpleParam("id", ParamLocationPath, r.PathValue("id"), &id)
+	err = BindSimpleParam("id", ParamLocationPath, ctx.Param("id"), &id)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeletePet(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.DeletePet(ctx, id)
+	return err
 }
 
-// FindPetByID operation middleware
-func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Request) {
+// FindPetByID converts echo context to params.
+func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
 	var err error
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = BindSimpleParam("id", ParamLocationPath, r.PathValue("id"), &id)
+	err = BindSimpleParam("id", ParamLocationPath, ctx.Param("id"), &id)
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-		return
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.FindPetByID(w, r, id)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.FindPetByID(ctx, id)
+	return err
 }
 
-// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{})
+// EchoRouter is an interface for echo.Echo and echo.Group.
+type EchoRouter interface {
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// ServeMux is an abstraction of http.ServeMux.
-type ServeMux interface {
-	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
 }
 
-// StdHTTPServerOptions configures the StdHTTP server.
-type StdHTTPServerOptions struct {
-	BaseURL          string
-	BaseRouter       ServeMux
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
-}
-
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{
-		BaseRouter: m,
-	})
-}
-
-// HandlerFromMuxWithBaseURL creates http.Handler with routing and a base URL.
-func HandlerFromMuxWithBaseURL(si ServerInterface, m ServeMux, baseURL string) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{
-		BaseURL:    baseURL,
-		BaseRouter: m,
-	})
-}
-
-// HandlerWithOptions creates http.Handler with additional options.
-func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
-	m := options.BaseRouter
-
-	if m == nil {
-		m = http.NewServeMux()
-	}
-	if options.ErrorHandlerFunc == nil {
-		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-	}
+// RegisterHandlersWithBaseURL adds each server route to the EchoRouter with a base URL prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
 
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+		Handler: si,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
-	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
-	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
-	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
-	return m
+	router.GET(baseURL+"/pets", wrapper.FindPets)
+	router.POST(baseURL+"/pets", wrapper.AddPet)
+	router.DELETE(baseURL+"/pets/:id", wrapper.DeletePet)
+	router.GET(baseURL+"/pets/:id", wrapper.FindPetByID)
 }
 
 // UnescapedCookieParamError is returned when a cookie parameter cannot be unescaped.

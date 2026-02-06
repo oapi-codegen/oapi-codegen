@@ -1,0 +1,6 @@
+package: server
+generation:
+  server: gorilla
+  models-package:
+    path: github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded
+    alias: petstore

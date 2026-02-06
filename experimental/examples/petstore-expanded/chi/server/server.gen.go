@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
@@ -33,6 +34,33 @@ type ServerInterface interface {
 	// Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+type Unimplemented struct{}
+
+// Returns all pets
+// (GET /pets)
+func (_ Unimplemented) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Creates a new pet
+// (POST /pets)
+func (_ Unimplemented) AddPet(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Deletes a pet by ID
+// (DELETE /pets/{id})
+func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Returns a pet by ID
+// (GET /pets/{id})
+func (_ Unimplemented) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
+	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // FindPetsParams defines parameters for FindPets.
@@ -106,7 +134,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = BindSimpleParam("id", ParamLocationPath, r.PathValue("id"), &id)
+	err = BindSimpleParam("id", ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -130,7 +158,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = BindSimpleParam("id", ParamLocationPath, r.PathValue("id"), &id)
+	err = BindSimpleParam("id", ParamLocationPath, chi.URLParam(r, "id"), &id)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -149,44 +177,38 @@ func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Re
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
-// ServeMux is an abstraction of http.ServeMux.
-type ServeMux interface {
-	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
-}
-
-// StdHTTPServerOptions configures the StdHTTP server.
-type StdHTTPServerOptions struct {
+// ChiServerOptions configures the Chi server.
+type ChiServerOptions struct {
 	BaseURL          string
-	BaseRouter       ServeMux
+	BaseRouter       chi.Router
 	Middlewares      []MiddlewareFunc
 	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{
-		BaseRouter: m,
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseRouter: r,
 	})
 }
 
 // HandlerFromMuxWithBaseURL creates http.Handler with routing and a base URL.
-func HandlerFromMuxWithBaseURL(si ServerInterface, m ServeMux, baseURL string) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{
+func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
+	return HandlerWithOptions(si, ChiServerOptions{
 		BaseURL:    baseURL,
-		BaseRouter: m,
+		BaseRouter: r,
 	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options.
-func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
-	m := options.BaseRouter
+func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
+	r := options.BaseRouter
 
-	if m == nil {
-		m = http.NewServeMux()
+	if r == nil {
+		r = chi.NewRouter()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -200,11 +222,19 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
-	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
-	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
-	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
-	return m
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/pets", wrapper.FindPets)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/pets", wrapper.AddPet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+	})
+	return r
 }
 
 // UnescapedCookieParamError is returned when a cookie parameter cannot be unescaped.

@@ -104,7 +104,13 @@ type GenerationOptions struct {
 
 // ServerType constants for supported server frameworks.
 const (
-	ServerTypeStdHTTP = "std-http"
+	ServerTypeStdHTTP  = "std-http"
+	ServerTypeChi      = "chi"
+	ServerTypeEcho     = "echo"
+	ServerTypeGin      = "gin"
+	ServerTypeGorilla  = "gorilla"
+	ServerTypeFiber    = "fiber"
+	ServerTypeIris     = "iris"
 )
 
 // DefaultContentTypes returns the default list of content type patterns.

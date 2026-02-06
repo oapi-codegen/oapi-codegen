@@ -121,6 +121,59 @@ func Generate(doc libopenapi.Document, cfg Configuration) (string, error) {
 		}
 	}
 
+	// Generate server code if requested
+	if cfg.Generation.Server != "" {
+		// Create param tracker for tracking which param functions are needed
+		paramTracker := NewParamUsageTracker()
+
+		// Gather operations
+		ops, err := GatherOperations(doc, paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("gathering operations: %w", err)
+		}
+
+		// Generate server
+		serverGen, err := NewServerGenerator(cfg.Generation.Server)
+		if err != nil {
+			return "", fmt.Errorf("creating server generator: %w", err)
+		}
+
+		serverCode, err := serverGen.GenerateServer(ops)
+		if err != nil {
+			return "", fmt.Errorf("generating server code: %w", err)
+		}
+		output.AddType(serverCode)
+
+		// Add server imports based on server type
+		serverTemplates, err := getServerTemplates(cfg.Generation.Server)
+		if err != nil {
+			return "", fmt.Errorf("getting server templates: %w", err)
+		}
+		for _, st := range serverTemplates {
+			for _, imp := range st.Imports {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
+
+		// Note: Server interfaces don't use external models directly.
+		// Models are used in the hand-written implementation (petstore.go),
+		// not in the generated server interface code.
+
+		// Generate param functions
+		paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("generating param functions: %w", err)
+		}
+		if paramFuncs != "" {
+			output.AddType(paramFuncs)
+		}
+
+		// Add param function imports
+		for _, imp := range paramTracker.GetRequiredImports() {
+			output.AddImport(imp.Path, imp.Alias)
+		}
+	}
+
 	return output.Format()
 }
 

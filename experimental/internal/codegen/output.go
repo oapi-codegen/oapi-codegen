@@ -3,9 +3,10 @@ package codegen
 import (
 	"bytes"
 	"fmt"
-	"go/format"
 	"sort"
 	"strings"
+
+	"golang.org/x/tools/imports"
 )
 
 // Output collects generated Go code and formats it.
@@ -84,10 +85,10 @@ func (o *Output) String() string {
 	return buf.String()
 }
 
-// Format returns the formatted Go source code.
+// Format returns the formatted Go source code with imports organized.
 func (o *Output) Format() (string, error) {
 	src := o.String()
-	formatted, err := format.Source([]byte(src))
+	formatted, err := imports.Process("", []byte(src), nil)
 	if err != nil {
 		return src, fmt.Errorf("formatting output: %w (source:\n%s)", err, src)
 	}

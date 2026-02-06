@@ -93,7 +93,7 @@ func TestServerGenerator(t *testing.T) {
 		},
 	}
 
-	gen, err := NewServerGenerator()
+	gen, err := NewServerGenerator(ServerTypeStdHTTP)
 	require.NoError(t, err)
 
 	t.Run("GenerateInterface", func(t *testing.T) {
@@ -187,7 +187,7 @@ func TestServerGenerator(t *testing.T) {
 	})
 
 	t.Run("GenerateServer_StdHTTP", func(t *testing.T) {
-		result, err := gen.GenerateServer(ServerTypeStdHTTP, ops)
+		result, err := gen.GenerateServer(ops)
 		require.NoError(t, err)
 
 		t.Log("Generated complete server:\n", result)
@@ -204,13 +204,15 @@ func TestServerGenerator(t *testing.T) {
 	})
 
 	t.Run("GenerateServer_Empty", func(t *testing.T) {
-		result, err := gen.GenerateServer("", ops)
+		emptyGen, err := NewServerGenerator("")
+		require.NoError(t, err)
+		result, err := emptyGen.GenerateServer(ops)
 		require.NoError(t, err)
 		assert.Empty(t, result, "Empty server type should produce no output")
 	})
 
 	t.Run("GenerateServer_Unsupported", func(t *testing.T) {
-		_, err := gen.GenerateServer("unsupported-server", ops)
+		_, err := NewServerGenerator("unsupported-server")
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported server type")
 		assert.Contains(t, err.Error(), "unsupported-server")
@@ -218,7 +220,7 @@ func TestServerGenerator(t *testing.T) {
 }
 
 func TestServerGeneratorEmptyOperations(t *testing.T) {
-	gen, err := NewServerGenerator()
+	gen, err := NewServerGenerator(ServerTypeStdHTTP)
 	require.NoError(t, err)
 
 	ops := []*OperationDescriptor{}
@@ -228,4 +230,58 @@ func TestServerGeneratorEmptyOperations(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, iface, "type ServerInterface interface")
 	})
+}
+
+func TestAllServerTypes(t *testing.T) {
+	// Create a simple operation for testing
+	ops := []*OperationDescriptor{
+		{
+			OperationID:   "getUser",
+			GoOperationID: "GetUser",
+			Method:        "GET",
+			Path:          "/users/{userId}",
+			Summary:       "Get a user by ID",
+			PathParams: []*ParameterDescriptor{
+				{
+					Name:      "userId",
+					GoName:    "UserId",
+					Location:  "path",
+					Required:  true,
+					Style:     "simple",
+					Explode:   false,
+					TypeDecl:  "string",
+					IsStyled:  true,
+					StyleFunc: "StyleSimpleParam",
+					BindFunc:  "BindSimpleParam",
+				},
+			},
+			HasParams: false,
+		},
+	}
+
+	serverTypes := []string{
+		ServerTypeStdHTTP,
+		ServerTypeChi,
+		ServerTypeEcho,
+		ServerTypeGin,
+		ServerTypeGorilla,
+		ServerTypeFiber,
+		ServerTypeIris,
+	}
+
+	for _, serverType := range serverTypes {
+		t.Run(serverType, func(t *testing.T) {
+			gen, err := NewServerGenerator(serverType)
+			require.NoError(t, err, "Failed to create generator for %s", serverType)
+
+			result, err := gen.GenerateServer(ops)
+			require.NoError(t, err, "Failed to generate server code for %s", serverType)
+			require.NotEmpty(t, result, "Generated code should not be empty for %s", serverType)
+
+			// All servers should have these common components
+			assert.Contains(t, result, "type ServerInterface interface", "Missing ServerInterface for %s", serverType)
+			assert.Contains(t, result, "GetUser", "Missing GetUser method for %s", serverType)
+			assert.Contains(t, result, "ServerInterfaceWrapper", "Missing wrapper for %s", serverType)
+		})
+	}
 }

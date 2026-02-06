@@ -428,13 +428,191 @@ var StdHTTPServerTemplates = map[string]ServerTemplate{
 	"wrapper": {
 		Name: "wrapper",
 		Imports: []Import{
-			{Path: "context"},
 			{Path: "encoding/json"},
 			{Path: "fmt"},
 			{Path: "net/http"},
 			{Path: "net/url"},
 		},
 		Template: "server/stdhttp/wrapper.go.tmpl",
+	},
+}
+
+// ChiServerTemplates contains templates for Chi server generation.
+var ChiServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+		},
+		Template: "server/chi/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/go-chi/chi/v5"},
+		},
+		Template: "server/chi/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/go-chi/chi/v5"},
+		},
+		Template: "server/chi/wrapper.go.tmpl",
+	},
+}
+
+// EchoServerTemplates contains templates for Echo server generation.
+var EchoServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo/wrapper.go.tmpl",
+	},
+}
+
+// GinServerTemplates contains templates for Gin server generation.
+var GinServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/gin-gonic/gin"},
+		},
+		Template: "server/gin/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "github.com/gin-gonic/gin"},
+		},
+		Template: "server/gin/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/gin-gonic/gin"},
+		},
+		Template: "server/gin/wrapper.go.tmpl",
+	},
+}
+
+// GorillaServerTemplates contains templates for Gorilla server generation.
+var GorillaServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+		},
+		Template: "server/gorilla/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/gorilla/mux"},
+		},
+		Template: "server/gorilla/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/gorilla/mux"},
+		},
+		Template: "server/gorilla/wrapper.go.tmpl",
+	},
+}
+
+// FiberServerTemplates contains templates for Fiber server generation.
+var FiberServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "github.com/gofiber/fiber/v3"},
+		},
+		Template: "server/fiber/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "github.com/gofiber/fiber/v3"},
+		},
+		Template: "server/fiber/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/gofiber/fiber/v3"},
+		},
+		Template: "server/fiber/wrapper.go.tmpl",
+	},
+}
+
+// IrisServerTemplates contains templates for Iris server generation.
+var IrisServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/kataras/iris/v12"},
+		},
+		Template: "server/iris/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "github.com/kataras/iris/v12"},
+		},
+		Template: "server/iris/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/kataras/iris/v12"},
+		},
+		Template: "server/iris/wrapper.go.tmpl",
 	},
 }
 
