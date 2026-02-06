@@ -603,6 +603,73 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 	return fields
 }
 
+// collectFieldsRecursive returns the struct fields for a schema, recursively
+// following allOf chains. For schemas with direct properties (no allOf), this
+// falls through to GenerateStructFields. For allOf-composed schemas, it
+// collects fields from all allOf members recursively, so that nested allOf
+// references (e.g., A: allOf[$ref:B, ...] where B: allOf[$ref:C, ...]) are
+// properly flattened.
+func (g *TypeGenerator) collectFieldsRecursive(desc *SchemaDescriptor) []StructField {
+	schema := desc.Schema
+	if schema == nil {
+		return nil
+	}
+
+	// If this schema has no allOf, use the standard field generation
+	if len(schema.AllOf) == 0 {
+		return g.GenerateStructFields(desc)
+	}
+
+	// Collect fields from direct properties first
+	var fields []StructField
+	if schema.Properties != nil && schema.Properties.Len() > 0 {
+		fields = append(fields, g.GenerateStructFields(desc)...)
+	}
+
+	// Recursively collect fields from each allOf member
+	for i, proxy := range schema.AllOf {
+		memberSchema := proxy.Schema()
+		if memberSchema == nil {
+			continue
+		}
+
+		var memberFields []StructField
+		if proxy.IsReference() {
+			ref := proxy.GetReference()
+			if target, ok := g.schemaIndex[ref]; ok {
+				// Recurse: the target may itself be an allOf composition
+				memberFields = g.collectFieldsRecursive(target)
+			}
+		} else if memberSchema.Properties != nil && memberSchema.Properties.Len() > 0 {
+			if desc.AllOf != nil && i < len(desc.AllOf) {
+				memberFields = g.GenerateStructFields(desc.AllOf[i])
+			}
+		}
+
+		// Apply required array from this allOf member to collected fields
+		if len(memberSchema.Required) > 0 {
+			reqSet := make(map[string]bool)
+			for _, r := range memberSchema.Required {
+				reqSet[r] = true
+			}
+			for j := range memberFields {
+				if reqSet[memberFields[j].JSONName] && !memberFields[j].Required {
+					memberFields[j].Required = true
+					memberFields[j].OmitEmpty = false
+					if !memberFields[j].Nullable && !strings.HasPrefix(memberFields[j].Type, "[]") && !strings.HasPrefix(memberFields[j].Type, "map[") {
+						memberFields[j].Type = strings.TrimPrefix(memberFields[j].Type, "*")
+						memberFields[j].Pointer = false
+					}
+				}
+			}
+		}
+
+		fields = append(fields, memberFields...)
+	}
+
+	return fields
+}
+
 // isNullable checks if a schema allows null values.
 // In OpenAPI 3.1, this is expressed as type: ["string", "null"]
 // In OpenAPI 3.0, this is expressed as nullable: true

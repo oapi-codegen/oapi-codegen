@@ -137,7 +137,13 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		}
 	}
 
-	// Generate server code if requested
+	// Track whether shared error types have been generated to avoid duplication.
+	// Both server and receiver generation emit the same error types.
+	generatedErrors := false
+
+	// Generate server code for path operations if a server framework is set.
+	// Only generate if there are actual path operations — setting server solely
+	// for receiver use should not produce path-operation server code.
 	if cfg.Generation.Server != "" {
 		// Create param tracker for tracking which param functions are needed
 		paramTracker := NewParamUsageTracker()
@@ -148,45 +154,275 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
 
-		// Generate server
-		serverGen, err := NewServerGenerator(cfg.Generation.Server)
-		if err != nil {
-			return "", fmt.Errorf("creating server generator: %w", err)
-		}
+		if len(ops) > 0 {
+			// Generate server
+			serverGen, err := NewServerGenerator(cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("creating server generator: %w", err)
+			}
 
-		serverCode, err := serverGen.GenerateServer(ops)
-		if err != nil {
-			return "", fmt.Errorf("generating server code: %w", err)
-		}
-		output.AddType(serverCode)
+			serverCode, err := serverGen.GenerateServer(ops)
+			if err != nil {
+				return "", fmt.Errorf("generating server code: %w", err)
+			}
+			output.AddType(serverCode)
+			generatedErrors = true
 
-		// Add server imports based on server type
-		serverTemplates, err := getServerTemplates(cfg.Generation.Server)
-		if err != nil {
-			return "", fmt.Errorf("getting server templates: %w", err)
-		}
-		for _, st := range serverTemplates {
-			for _, imp := range st.Imports {
+			// Add server imports based on server type
+			serverTemplates, err := getServerTemplates(cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("getting server templates: %w", err)
+			}
+			for _, st := range serverTemplates {
+				for _, imp := range st.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+
+			// Note: Server interfaces don't use external models directly.
+			// Models are used in the hand-written implementation (petstore.go),
+			// not in the generated server interface code.
+
+			// Generate param functions
+			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+			if err != nil {
+				return "", fmt.Errorf("generating param functions: %w", err)
+			}
+			if paramFuncs != "" {
+				output.AddType(paramFuncs)
+			}
+
+			// Add param function imports
+			for _, imp := range paramTracker.GetRequiredImports() {
 				output.AddImport(imp.Path, imp.Alias)
 			}
 		}
+	}
 
-		// Note: Server interfaces don't use external models directly.
-		// Models are used in the hand-written implementation (petstore.go),
-		// not in the generated server interface code.
+	// Generate webhook initiator code if requested
+	if cfg.Generation.WebhookInitiator {
+		paramTracker := NewParamUsageTracker()
 
-		// Generate param functions
-		paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+		webhookOps, err := GatherWebhookOperations(doc, paramTracker)
 		if err != nil {
-			return "", fmt.Errorf("generating param functions: %w", err)
-		}
-		if paramFuncs != "" {
-			output.AddType(paramFuncs)
+			return "", fmt.Errorf("gathering webhook operations: %w", err)
 		}
 
-		// Add param function imports
-		for _, imp := range paramTracker.GetRequiredImports() {
-			output.AddImport(imp.Path, imp.Alias)
+		if len(webhookOps) > 0 {
+			initiatorGen, err := NewInitiatorGenerator("Webhook", schemaIndex, true, cfg.Generation.ModelsPackage)
+			if err != nil {
+				return "", fmt.Errorf("creating webhook initiator generator: %w", err)
+			}
+
+			initiatorCode, err := initiatorGen.GenerateInitiator(webhookOps)
+			if err != nil {
+				return "", fmt.Errorf("generating webhook initiator code: %w", err)
+			}
+			output.AddType(initiatorCode)
+
+			for _, pt := range templates.InitiatorTemplates {
+				for _, imp := range pt.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+
+			if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
+				output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
+			}
+
+			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+			if err != nil {
+				return "", fmt.Errorf("generating param functions: %w", err)
+			}
+			if paramFuncs != "" {
+				output.AddType(paramFuncs)
+			}
+			for _, imp := range paramTracker.GetRequiredImports() {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
+	}
+
+	// Generate callback initiator code if requested
+	if cfg.Generation.CallbackInitiator {
+		paramTracker := NewParamUsageTracker()
+
+		callbackOps, err := GatherCallbackOperations(doc, paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("gathering callback operations: %w", err)
+		}
+
+		if len(callbackOps) > 0 {
+			initiatorGen, err := NewInitiatorGenerator("Callback", schemaIndex, true, cfg.Generation.ModelsPackage)
+			if err != nil {
+				return "", fmt.Errorf("creating callback initiator generator: %w", err)
+			}
+
+			initiatorCode, err := initiatorGen.GenerateInitiator(callbackOps)
+			if err != nil {
+				return "", fmt.Errorf("generating callback initiator code: %w", err)
+			}
+			output.AddType(initiatorCode)
+
+			for _, pt := range templates.InitiatorTemplates {
+				for _, imp := range pt.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+
+			if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
+				output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
+			}
+
+			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+			if err != nil {
+				return "", fmt.Errorf("generating param functions: %w", err)
+			}
+			if paramFuncs != "" {
+				output.AddType(paramFuncs)
+			}
+			for _, imp := range paramTracker.GetRequiredImports() {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
+	}
+
+	// Generate webhook receiver code if requested
+	if cfg.Generation.WebhookReceiver {
+		if cfg.Generation.Server == "" {
+			return "", fmt.Errorf("webhook-receiver requires server to be set")
+		}
+
+		paramTracker := NewParamUsageTracker()
+
+		webhookOps, err := GatherWebhookOperations(doc, paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("gathering webhook operations: %w", err)
+		}
+
+		if len(webhookOps) > 0 {
+			receiverGen, err := NewReceiverGenerator("Webhook", cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("creating webhook receiver generator: %w", err)
+			}
+
+			receiverCode, err := receiverGen.GenerateReceiver(webhookOps)
+			if err != nil {
+				return "", fmt.Errorf("generating webhook receiver code: %w", err)
+			}
+			output.AddType(receiverCode)
+
+			// Add param types
+			paramTypes, err := receiverGen.GenerateParamTypes(webhookOps)
+			if err != nil {
+				return "", fmt.Errorf("generating webhook receiver param types: %w", err)
+			}
+			output.AddType(paramTypes)
+
+			// Add error types (only if not already generated by server)
+			if !generatedErrors {
+				errors, err := receiverGen.GenerateErrors()
+				if err != nil {
+					return "", fmt.Errorf("generating webhook receiver errors: %w", err)
+				}
+				output.AddType(errors)
+				generatedErrors = true
+			}
+
+			receiverTemplates, err := getReceiverTemplates(cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("getting receiver templates: %w", err)
+			}
+			for _, ct := range receiverTemplates {
+				for _, imp := range ct.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+			for _, st := range templates.SharedServerTemplates {
+				for _, imp := range st.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+
+			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+			if err != nil {
+				return "", fmt.Errorf("generating param functions: %w", err)
+			}
+			if paramFuncs != "" {
+				output.AddType(paramFuncs)
+			}
+			for _, imp := range paramTracker.GetRequiredImports() {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
+	}
+
+	// Generate callback receiver code if requested
+	if cfg.Generation.CallbackReceiver {
+		if cfg.Generation.Server == "" {
+			return "", fmt.Errorf("callback-receiver requires server to be set")
+		}
+
+		paramTracker := NewParamUsageTracker()
+
+		callbackOps, err := GatherCallbackOperations(doc, paramTracker)
+		if err != nil {
+			return "", fmt.Errorf("gathering callback operations: %w", err)
+		}
+
+		if len(callbackOps) > 0 {
+			receiverGen, err := NewReceiverGenerator("Callback", cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("creating callback receiver generator: %w", err)
+			}
+
+			receiverCode, err := receiverGen.GenerateReceiver(callbackOps)
+			if err != nil {
+				return "", fmt.Errorf("generating callback receiver code: %w", err)
+			}
+			output.AddType(receiverCode)
+
+			paramTypes, err := receiverGen.GenerateParamTypes(callbackOps)
+			if err != nil {
+				return "", fmt.Errorf("generating callback receiver param types: %w", err)
+			}
+			output.AddType(paramTypes)
+
+			// Add error types (only if not already generated by server or another receiver)
+			if !generatedErrors {
+				errors, err := receiverGen.GenerateErrors()
+				if err != nil {
+					return "", fmt.Errorf("generating callback receiver errors: %w", err)
+				}
+				output.AddType(errors)
+				generatedErrors = true
+			}
+
+			receiverTemplates, err := getReceiverTemplates(cfg.Generation.Server)
+			if err != nil {
+				return "", fmt.Errorf("getting receiver templates: %w", err)
+			}
+			for _, ct := range receiverTemplates {
+				for _, imp := range ct.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+			for _, st := range templates.SharedServerTemplates {
+				for _, imp := range st.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
+
+			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
+			if err != nil {
+				return "", fmt.Errorf("generating param functions: %w", err)
+			}
+			if paramFuncs != "" {
+				output.AddType(paramFuncs)
+			}
+			for _, imp := range paramTracker.GetRequiredImports() {
+				output.AddImport(imp.Path, imp.Alias)
+			}
 		}
 	}
 
@@ -474,7 +710,7 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 			// Reference to another schema - get its fields
 			ref := proxy.GetReference()
 			if target, ok := gen.schemaIndex[ref]; ok {
-				info.fields = gen.GenerateStructFields(target)
+				info.fields = gen.collectFieldsRecursive(target)
 			}
 		} else if memberSchema.Properties != nil && memberSchema.Properties.Len() > 0 {
 			// Inline object schema - get its fields

@@ -136,8 +136,10 @@ func (u *PromptSchemaComponent) ApplyDefaults() {
 
 // #/components/schemas/Prompt/oneOf/0
 type Prompt0OneOfSchemaComponent struct {
-	Type   *string       `json:"type,omitempty" form:"type,omitempty"`
-	Prompt []ChatMessage `json:"prompt" form:"prompt"`
+	Type    *string       `json:"type,omitempty" form:"type,omitempty"`
+	Prompt  []ChatMessage `json:"prompt" form:"prompt"`
+	Name    string        `json:"name" form:"name"`
+	Version int           `json:"version" form:"version"`
 }
 
 type PromptOneOf0 = Prompt0OneOfSchemaComponent
@@ -157,8 +159,10 @@ type PromptOneOf0AllOf0Type = Prompt00TypePropertyAllOfOneOfSchemaComponent
 
 // #/components/schemas/Prompt/oneOf/1
 type Prompt1OneOfSchemaComponent struct {
-	Type   *string `json:"type,omitempty" form:"type,omitempty"`
-	Prompt string  `json:"prompt" form:"prompt"`
+	Type    *string `json:"type,omitempty" form:"type,omitempty"`
+	Prompt  string  `json:"prompt" form:"prompt"`
+	Name    string  `json:"name" form:"name"`
+	Version int     `json:"version" form:"version"`
 }
 
 type PromptOneOf1 = Prompt1OneOfSchemaComponent

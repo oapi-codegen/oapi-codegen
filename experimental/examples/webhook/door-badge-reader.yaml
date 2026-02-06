@@ -1,0 +1,139 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: Door Badge Reader
+  description: |
+    A door badge reader service that demonstrates OpenAPI 3.1 webhooks.
+    Clients register for enterEvent and exitEvent webhooks. The server
+    randomly generates badge events and notifies all registered listeners.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /api/webhook/{kind}:
+    post:
+      summary: Register a webhook
+      description: |
+        Registers a webhook for the given event kind. The server will POST
+        to the provided URL whenever an event of that kind occurs.
+      operationId: RegisterWebhook
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - enterEvent
+              - exitEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookRegistration'
+      responses:
+        '201':
+          description: Webhook registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookRegistrationResponse'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/webhook/{id}:
+    delete:
+      summary: Deregister a webhook
+      description: Removes a previously registered webhook by its ID.
+      operationId: DeregisterWebhook
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Webhook deregistered
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+webhooks:
+  enterEvent:
+    post:
+      summary: Person entered the building
+      operationId: EnterEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '200':
+          description: Event received
+  exitEvent:
+    post:
+      summary: Person exited the building
+      operationId: ExitEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Person'
+      responses:
+        '200':
+          description: Event received
+components:
+  schemas:
+    WebhookRegistration:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL to receive webhook events
+
+    WebhookRegistrationResponse:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for this webhook registration
+
+    Person:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Name of the person who badged in or out
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message

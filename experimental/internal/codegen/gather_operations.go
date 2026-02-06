@@ -567,6 +567,222 @@ func sortPathParamsByPath(path string, params []*ParameterDescriptor) ([]*Parame
 	return result, nil
 }
 
+// GatherWebhookOperations traverses an OpenAPI document and collects operations from webhooks.
+func GatherWebhookOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker) ([]*OperationDescriptor, error) {
+	model, err := doc.BuildV3Model()
+	if err != nil {
+		return nil, fmt.Errorf("building v3 model: %w", err)
+	}
+	if model == nil {
+		return nil, fmt.Errorf("failed to build v3 model")
+	}
+
+	g := &operationGatherer{
+		paramTracker: paramTracker,
+	}
+
+	return g.gatherWebhooks(&model.Model)
+}
+
+// GatherCallbackOperations traverses an OpenAPI document and collects operations from callbacks.
+func GatherCallbackOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker) ([]*OperationDescriptor, error) {
+	model, err := doc.BuildV3Model()
+	if err != nil {
+		return nil, fmt.Errorf("building v3 model: %w", err)
+	}
+	if model == nil {
+		return nil, fmt.Errorf("failed to build v3 model")
+	}
+
+	g := &operationGatherer{
+		paramTracker: paramTracker,
+	}
+
+	return g.gatherCallbacks(&model.Model)
+}
+
+func (g *operationGatherer) gatherWebhooks(doc *v3.Document) ([]*OperationDescriptor, error) {
+	var operations []*OperationDescriptor
+
+	if doc.Webhooks == nil || doc.Webhooks.Len() == 0 {
+		return operations, nil
+	}
+
+	// Collect webhook names in sorted order for deterministic output
+	var webhookNames []string
+	for pair := doc.Webhooks.First(); pair != nil; pair = pair.Next() {
+		webhookNames = append(webhookNames, pair.Key())
+	}
+	sort.Strings(webhookNames)
+
+	for _, webhookName := range webhookNames {
+		pathItem := doc.Webhooks.GetOrZero(webhookName)
+		if pathItem == nil {
+			continue
+		}
+
+		// Gather path-level parameters
+		globalParams, err := g.gatherParameters(pathItem.Parameters)
+		if err != nil {
+			return nil, fmt.Errorf("error gathering parameters for webhook %s: %w", webhookName, err)
+		}
+
+		ops := pathItem.GetOperations()
+		if ops == nil {
+			continue
+		}
+
+		var methods []string
+		for pair := ops.First(); pair != nil; pair = pair.Next() {
+			methods = append(methods, pair.Key())
+		}
+		sort.Strings(methods)
+
+		for _, method := range methods {
+			op := ops.GetOrZero(method)
+			if op == nil {
+				continue
+			}
+
+			// For webhooks, Path is empty (no URL path in the spec)
+			opDesc, err := g.gatherOperation(method, "", op, globalParams)
+			if err != nil {
+				return nil, fmt.Errorf("error gathering webhook operation %s %s: %w", method, webhookName, err)
+			}
+
+			// Override operation ID if not set - use webhook name + method
+			if op.OperationId == "" {
+				opDesc.OperationID = ToCamelCase(method + "-" + webhookName)
+				opDesc.GoOperationID = ToGoIdentifier(opDesc.OperationID)
+				opDesc.ParamsTypeName = opDesc.GoOperationID + "Params"
+			}
+
+			opDesc.Source = OperationSourceWebhook
+			opDesc.WebhookName = webhookName
+
+			operations = append(operations, opDesc)
+		}
+	}
+
+	return operations, nil
+}
+
+func (g *operationGatherer) gatherCallbacks(doc *v3.Document) ([]*OperationDescriptor, error) {
+	var operations []*OperationDescriptor
+
+	if doc.Paths == nil || doc.Paths.PathItems == nil {
+		return operations, nil
+	}
+
+	// Iterate all paths in sorted order
+	var paths []string
+	for pair := doc.Paths.PathItems.First(); pair != nil; pair = pair.Next() {
+		paths = append(paths, pair.Key())
+	}
+	sort.Strings(paths)
+
+	for _, pathStr := range paths {
+		pathItem := doc.Paths.PathItems.GetOrZero(pathStr)
+		if pathItem == nil {
+			continue
+		}
+
+		pathOps := pathItem.GetOperations()
+		if pathOps == nil {
+			continue
+		}
+
+		var methods []string
+		for pair := pathOps.First(); pair != nil; pair = pair.Next() {
+			methods = append(methods, pair.Key())
+		}
+		sort.Strings(methods)
+
+		for _, method := range methods {
+			parentOp := pathOps.GetOrZero(method)
+			if parentOp == nil || parentOp.Callbacks == nil || parentOp.Callbacks.Len() == 0 {
+				continue
+			}
+
+			parentOpID := parentOp.OperationId
+			if parentOpID == "" {
+				parentOpID = generateOperationID(method, pathStr)
+			}
+
+			// Collect callback names in sorted order
+			var callbackNames []string
+			for pair := parentOp.Callbacks.First(); pair != nil; pair = pair.Next() {
+				callbackNames = append(callbackNames, pair.Key())
+			}
+			sort.Strings(callbackNames)
+
+			for _, callbackName := range callbackNames {
+				callback := parentOp.Callbacks.GetOrZero(callbackName)
+				if callback == nil || callback.Expression == nil || callback.Expression.Len() == 0 {
+					continue
+				}
+
+				// Iterate callback expressions in sorted order
+				var expressions []string
+				for pair := callback.Expression.First(); pair != nil; pair = pair.Next() {
+					expressions = append(expressions, pair.Key())
+				}
+				sort.Strings(expressions)
+
+				for _, expression := range expressions {
+					cbPathItem := callback.Expression.GetOrZero(expression)
+					if cbPathItem == nil {
+						continue
+					}
+
+					cbOps := cbPathItem.GetOperations()
+					if cbOps == nil {
+						continue
+					}
+
+					var cbMethods []string
+					for pair := cbOps.First(); pair != nil; pair = pair.Next() {
+						cbMethods = append(cbMethods, pair.Key())
+					}
+					sort.Strings(cbMethods)
+
+					for _, cbMethod := range cbMethods {
+						cbOp := cbOps.GetOrZero(cbMethod)
+						if cbOp == nil {
+							continue
+						}
+
+						// URL expression is stored as path but params are not extracted
+						// (expressions are runtime-evaluated)
+						opDesc, err := g.gatherOperation(cbMethod, expression, cbOp, nil)
+						if err != nil {
+							return nil, fmt.Errorf("error gathering callback operation %s %s %s: %w", cbMethod, callbackName, expression, err)
+						}
+
+						// Override operation ID if not set
+						if cbOp.OperationId == "" {
+							opDesc.OperationID = ToCamelCase(parentOpID + "-" + callbackName)
+							opDesc.GoOperationID = ToGoIdentifier(opDesc.OperationID)
+							opDesc.ParamsTypeName = opDesc.GoOperationID + "Params"
+						}
+
+						// Clear path params since callback URLs are runtime expressions
+						opDesc.PathParams = nil
+
+						opDesc.Source = OperationSourceCallback
+						opDesc.CallbackName = callbackName
+						opDesc.ParentOpID = parentOpID
+
+						operations = append(operations, opDesc)
+					}
+				}
+			}
+		}
+	}
+
+	return operations, nil
+}
+
 // schemaProxyToDescriptor converts a schema proxy to a basic descriptor.
 // This is a simplified version - for full type resolution, use the schema gatherer.
 func schemaProxyToDescriptor(proxy *base.SchemaProxy) *SchemaDescriptor {

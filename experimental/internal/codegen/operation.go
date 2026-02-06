@@ -6,6 +6,15 @@ import (
 	v3 "github.com/pb33f/libopenapi/datamodel/high/v3"
 )
 
+// OperationSource indicates where an operation was defined in the spec.
+type OperationSource string
+
+const (
+	OperationSourcePath     OperationSource = "path"
+	OperationSourceWebhook  OperationSource = "webhook"
+	OperationSourceCallback OperationSource = "callback"
+)
+
 // OperationDescriptor describes a single API operation from an OpenAPI spec.
 type OperationDescriptor struct {
 	OperationID   string // Normalized operation ID for function names
@@ -14,6 +23,12 @@ type OperationDescriptor struct {
 	Path          string // Original path: /users/{id}
 	Summary       string // For generating comments
 	Description   string // Longer description
+
+	// Source indicates where this operation was defined (path, webhook, or callback)
+	Source       OperationSource
+	WebhookName  string // Webhook name (for Source=webhook)
+	CallbackName string // Callback key (for Source=callback)
+	ParentOpID   string // Parent operation ID (for Source=callback)
 
 	PathParams   []*ParameterDescriptor
 	QueryParams  []*ParameterDescriptor

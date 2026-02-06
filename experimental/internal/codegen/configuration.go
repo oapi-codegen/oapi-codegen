@@ -95,6 +95,22 @@ type GenerationOptions struct {
 	// Requires Client to also be enabled.
 	SimpleClient bool `yaml:"simple-client,omitempty"`
 
+	// WebhookInitiator enables generation of webhook initiator code (sends webhook requests).
+	// Generates a framework-agnostic client that takes the full target URL per-call.
+	WebhookInitiator bool `yaml:"webhook-initiator,omitempty"`
+
+	// WebhookReceiver enables generation of webhook receiver code (receives webhook requests).
+	// Generates framework-specific handler functions. Requires Server to be set.
+	WebhookReceiver bool `yaml:"webhook-receiver,omitempty"`
+
+	// CallbackInitiator enables generation of callback initiator code (sends callback requests).
+	// Generates a framework-agnostic client that takes the full target URL per-call.
+	CallbackInitiator bool `yaml:"callback-initiator,omitempty"`
+
+	// CallbackReceiver enables generation of callback receiver code (receives callback requests).
+	// Generates framework-specific handler functions. Requires Server to be set.
+	CallbackReceiver bool `yaml:"callback-receiver,omitempty"`
+
 	// ModelsPackage specifies an external package containing the model types.
 	// When set, models are NOT generated locally - instead, generated code
 	// imports and references types from this package.

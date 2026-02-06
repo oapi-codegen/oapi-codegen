@@ -438,7 +438,11 @@ func (s *ExtendedObjectSchemaComponent) ApplyDefaults() {
 
 // #/components/schemas/DeepInheritance
 type DeepInheritanceSchemaComponent struct {
-	Extra *string `json:"extra,omitempty" form:"extra,omitempty"`
+	ID          *int       `json:"id,omitempty" form:"id,omitempty"`
+	CreatedAt   *time.Time `json:"createdAt,omitempty" form:"createdAt,omitempty"`
+	Name        string     `json:"name" form:"name"`
+	Description *string    `json:"description,omitempty" form:"description,omitempty"`
+	Extra       *string    `json:"extra,omitempty" form:"extra,omitempty"`
 }
 
 type DeepInheritance = DeepInheritanceSchemaComponent
