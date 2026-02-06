@@ -60,7 +60,7 @@ func TestGenerateEmbeddedSpecRoundTrip(t *testing.T) {
 	// Decompress gzip
 	r, err := gzip.NewReader(bytes.NewReader(raw))
 	require.NoError(t, err)
-	defer r.Close()
+	defer func() { _ = r.Close() }()
 
 	var out bytes.Buffer
 	_, err = out.ReadFrom(r)

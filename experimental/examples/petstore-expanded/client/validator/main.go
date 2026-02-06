@@ -56,11 +56,11 @@ func main() {
 
 	// Step 3: Delete Fido
 	log.Printf("--- Step 3: Deleting Fido (id=%d) ---", fido.ID)
-	resp, err := c.Client.DeletePet(ctx, fido.ID)
+	resp, err := c.DeletePet(ctx, fido.ID)
 	if err != nil {
 		log.Fatalf("Failed to delete Fido: %v", err)
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode == 204 {
 		log.Printf("Deleted Fido successfully (HTTP %d)", resp.StatusCode)
 	} else {

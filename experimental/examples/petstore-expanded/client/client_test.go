@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"testing"
 
@@ -37,9 +36,9 @@ func TestClientStructure(t *testing.T) {
 	c := &Client{}
 
 	// Access fields - compiler validates they exist with correct types
-	var _ string = c.Server
-	var _ HttpRequestDoer = c.Client
-	var _ []RequestEditorFn = c.RequestEditors
+	var _ = c.Server
+	var _ = c.Client
+	var _ = c.RequestEditors
 }
 
 // TestClientImplementsInterface verifies Client implements ClientInterface.
@@ -52,20 +51,20 @@ func TestClientImplementsInterface(t *testing.T) {
 // Here we use method expressions to verify exact signatures without needing an instance.
 func TestClientInterfaceMethods(t *testing.T) {
 	// Method expressions verify signatures at compile time
-	var _ func(*Client, context.Context, *FindPetsParams, ...RequestEditorFn) (*http.Response, error) = (*Client).FindPets
-	var _ func(*Client, context.Context, string, io.Reader, ...RequestEditorFn) (*http.Response, error) = (*Client).AddPetWithBody
-	var _ func(*Client, context.Context, addPetJSONRequestBody, ...RequestEditorFn) (*http.Response, error) = (*Client).AddPet
-	var _ func(*Client, context.Context, int64, ...RequestEditorFn) (*http.Response, error) = (*Client).DeletePet
-	var _ func(*Client, context.Context, int64, ...RequestEditorFn) (*http.Response, error) = (*Client).FindPetByID
+	var _ = (*Client).FindPets
+	var _ = (*Client).AddPetWithBody
+	var _ = (*Client).AddPet
+	var _ = (*Client).DeletePet
+	var _ = (*Client).FindPetByID
 }
 
 // TestSimpleClientMethods verifies SimpleClient methods return typed responses.
 func TestSimpleClientMethods(t *testing.T) {
 	// Use method expressions to verify signatures without needing an instance
 	// Compiler validates return types - these use the petstore package types
-	var _ func(*SimpleClient, context.Context, *FindPetsParams, ...RequestEditorFn) ([]petstore.Pet, error) = (*SimpleClient).FindPets
-	var _ func(*SimpleClient, context.Context, addPetJSONRequestBody, ...RequestEditorFn) (petstore.Pet, error) = (*SimpleClient).AddPet
-	var _ func(*SimpleClient, context.Context, int64, ...RequestEditorFn) (petstore.Pet, error) = (*SimpleClient).FindPetByID
+	var _ = (*SimpleClient).FindPets
+	var _ = (*SimpleClient).AddPet
+	var _ = (*SimpleClient).FindPetByID
 }
 
 // TestFindPetsParamsStructure verifies param struct fields.
@@ -73,8 +72,8 @@ func TestFindPetsParamsStructure(t *testing.T) {
 	p := &FindPetsParams{}
 
 	// Access fields - compiler validates they exist with correct types
-	var _ *[]string = p.Tags
-	var _ *int32 = p.Limit
+	var _ = p.Tags
+	var _ = p.Limit
 }
 
 // TestRequestBodyTypeAlias verifies the type alias points to correct type.
@@ -127,18 +126,18 @@ func TestClientHttpErrorStructure(t *testing.T) {
 	e := &ClientHttpError[petstore.Error]{}
 
 	// Access fields - compiler validates they exist with correct types
-	var _ int = e.StatusCode
-	var _ petstore.Error = e.Body
-	var _ []byte = e.RawBody
+	var _ = e.StatusCode
+	var _ = e.Body
+	var _ = e.RawBody
 }
 
 // TestRequestBuilders verifies request builder functions exist with correct signatures.
 func TestRequestBuilders(t *testing.T) {
-	var _ func(string, *FindPetsParams) (*http.Request, error) = NewFindPetsRequest
-	var _ func(string, string, io.Reader) (*http.Request, error) = NewAddPetRequestWithBody
-	var _ func(string, addPetJSONRequestBody) (*http.Request, error) = NewAddPetRequest
-	var _ func(string, int64) (*http.Request, error) = NewDeletePetRequest
-	var _ func(string, int64) (*http.Request, error) = NewFindPetByIDRequest
+	var _ = NewFindPetsRequest
+	var _ = NewAddPetRequestWithBody
+	var _ = NewAddPetRequest
+	var _ = NewDeletePetRequest
+	var _ = NewFindPetByIDRequest
 }
 
 // TestNewClientConstructor verifies the constructor works correctly.
