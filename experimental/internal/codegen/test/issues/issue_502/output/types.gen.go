@@ -3,8 +3,14 @@
 package output
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
+	"sync"
 )
 
 // #/components/schemas/OptionalClaims
@@ -176,3 +182,53 @@ var ErrNullableIsNull = errors.New("nullable value is null")
 
 // ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
 var ErrNullableNotSpecified = errors.New("nullable value is not specified")
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var swaggerSpecJSON = []string{
+	"H4sIAAAAAAAC/5SRQWvcMBSE7/oVAy7kkqy3KbnoVnrqaS+BnrXys/1a+T0hPbcsIf+92NnueqEQcrNH",
+	"M8ynUYPvtc6Ep/2jR5DToW9DSocef9hGqKQTVAiFetgpEwYSKsGogsWo9CHSy6trMJrl6tt2YBvn4y7q",
+	"1GrI/BC1o4Hk9oeXyto+7R9d4xr8GEneuqEFb/VjqDftVEgi3YMNddQ5dRcS18DGjadbQe8halvGndNM",
+	"EjJ7fNntd3vH0qt3gLEl8tcZ8EzVHPCbSmUVj8+rPQcbq8fLq4s6ZRUSq0u8xpGmsH4Ch2ysEtK3FHg6",
+	"a1h5PPT4k6KdpVw0UzGmiwng7ll/kVyFf8lqhWW4yCFGqvV979ecE8ewEH2QRMJE72Lof++6Ai5PuRWA",
+	"B3wq1HvcNe11vva8XXs7290m2VGNhddjf1kXcfUhqvQ8zGW94iYkc0rhuDyqlZnc3wAAAP//6uhqZ+MC",
+	"AAA=",
+}
+
+// decodeSwaggerSpec decodes and decompresses the embedded spec.
+func decodeSwaggerSpec() ([]byte, error) {
+	joined := strings.Join(swaggerSpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
+func decodeSwaggerSpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeSwaggerSpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var swaggerSpec = decodeSwaggerSpecCached()
+
+// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetSwaggerSpecJSON() ([]byte, error) {
+	return swaggerSpec()
+}

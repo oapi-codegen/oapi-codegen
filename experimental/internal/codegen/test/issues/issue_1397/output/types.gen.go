@@ -2,6 +2,15 @@
 
 package output
 
+import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"sync"
+)
+
 // #/components/schemas/Test
 type MyTestRequest struct {
 	Field1 []TestField1Item          `json:"field1,omitempty" form:"field1,omitempty"` // A array of enum values
@@ -59,4 +68,55 @@ type TestField3 = TestField3PropertySchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
 func (s *TestField3PropertySchemaComponent) ApplyDefaults() {
+}
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var swaggerSpecJSON = []string{
+	"H4sIAAAAAAAC/9xUzZKbMAy+8xSapFdCIO106lv30Jkc2kOnL+AYBbwDltcS283bd2zYAJt0Z3otJ/xZ",
+	"P58+WdrCkXlAKA9fPit40GwNyMUjNOgwaLHk4LeVFl7yhvJ4kzvdY7aFVsSzKorGSjucdob6grS3uaEa",
+	"G3Trg41JuIhZMvLotLcKNofdflduMuvOpDIAsdKhWhCCX8iSATxjYEtOQbnb7/aZod6TQyccvdi02Ov0",
+	"C8lh/INUhgI6PaKRCfKBPAaxyK9GAGeLXV3OZ4Aa2QTrJaX8CjoEfQE6A7qhh2fdDcgLayvY89IdkuEa",
+	"yYFSvPIuWq3QkTdLsK5ZXPT65ZhSwaclat2E7rO3IRLxdZ3VO3U6ZMF6Emxsuu46Mjqiqemz6z0h74s5",
+	"0zkRdajdrX113/5GgYBPgw1YL83zKeUtVN3osXoK8Vu/aQXfL/H9/MSnAVl+JDm+xVBrDQ//pCEN8j/L",
+	"+K6EmdfSptIKuQ5mg9cJjcWnFXOsFcg4668MkeWB6stM0pATdLJkrb3vrEkRikcmtxZgXAxvRfkQ8Kxg",
+	"sy3mLVJMK6SI1DdXDuzJ8bIz1f7jX1vfENXZnwAAAP//PTfE300FAAA=",
+}
+
+// decodeSwaggerSpec decodes and decompresses the embedded spec.
+func decodeSwaggerSpec() ([]byte, error) {
+	joined := strings.Join(swaggerSpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
+func decodeSwaggerSpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeSwaggerSpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var swaggerSpec = decodeSwaggerSpecCached()
+
+// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetSwaggerSpecJSON() ([]byte, error) {
+	return swaggerSpec()
 }

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/pb33f/libopenapi v0.33.4
+	github.com/pb33f/libopenapi v0.33.5
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4 // required by libopenapi for Extensions type
 	gopkg.in/yaml.v3 v3.0.1

@@ -3,7 +3,13 @@
 package output
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
 )
 
 // #/components/schemas/test
@@ -100,3 +106,52 @@ const (
 )
 
 type TestAnyOf1FieldA = Test1FieldAPropertyAnyOfSchemaComponent
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var swaggerSpecJSON = []string{
+	"H4sIAAAAAAAC/6xSsW7cMAzd9RUPcYEsvfMl7VJtHTN1KdBZtmlLwZkURLrF/X0hOwdfrh3DiXqkHt8T",
+	"1eBFdSE8fX3+5kG8zGAxTMRUgtGAP5EYi9YsWUTgy4/RNYhmWX3bTsni0h17mVsJOR16GWgifn9IdYS2",
+	"dYZrXINflTMgF8lU7ILEmgZC4I0eM80dFcSgFauiPsMibfLsksk10CjLeUBHu9ajk0wccvL4cjwdTy7x",
+	"KN4BluxM/sYpfpKaA35T0STs8bT252BR64XWSK0mwERvCVDVBkvCL4O/MtQopFlYSa+NwMPz6fSwH4Fe",
+	"2IjtFgJCzufUr5Ttqwq/rwLaR5rDPQp8KjR6PDZtL3MWJjZtt15dlT+6vVBvv9U2ot0a1rf0kO6V+quZ",
+	"dQP7yMN1S+nWXo0x0Xn4fi9uY1QriaePJdmifoF/H+SAUeQ/aBeK+xsAAP//dJpKJ+ICAAA=",
+}
+
+// decodeSwaggerSpec decodes and decompresses the embedded spec.
+func decodeSwaggerSpec() ([]byte, error) {
+	joined := strings.Join(swaggerSpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
+func decodeSwaggerSpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeSwaggerSpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var swaggerSpec = decodeSwaggerSpecCached()
+
+// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetSwaggerSpecJSON() ([]byte, error) {
+	return swaggerSpec()
+}

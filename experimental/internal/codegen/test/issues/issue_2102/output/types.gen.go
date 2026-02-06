@@ -2,6 +2,15 @@
 
 package output
 
+import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"sync"
+)
+
 // #/components/schemas/Foo
 type FooSchemaComponent struct {
 	Foo string `json:"foo" form:"foo"`
@@ -23,4 +32,55 @@ type Bar = BarSchemaComponent
 
 // ApplyDefaults sets default values for fields that are nil.
 func (s *BarSchemaComponent) ApplyDefaults() {
+}
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var swaggerSpecJSON = []string{
+	"H4sIAAAAAAAC/3xSwY6bMBC98xVPS6VcmpBNbxz3sFJPvVTqNQYP2CvwuJ5hq/x9BSQ16UbLBfzmzXsz",
+	"z5T4LjIRTs/HUw0zDD86/PHqEBNHSupJYBRiRsJA7zRgf1dKBN8HTmSLEk41Sl1VvVc3NYeWx4pN9PuW",
+	"LfUU7g9+9pVqNi7KosQvRwEG0joaDZwRNKwO5+x2hgkW52XI8zyVOtpM9rUoF2QznqXOB7KwPlGrwwUc",
+	"1qbVRBxPg0VDGCn1ZJfNP6p0iccFW+NJ1FGi0JIcCo4UTPQ1vh2Oh2PhQ8d1AajXgepNtPhJogXwTkk8",
+	"hxrPCz8adTI3VI1J8xvoSdcPQKZxNOlSozHpCiWSyEFIbhzg6XQ8PuUjYEna5KMuPrl1floOSkG3bMDE",
+	"OPjWzPzqTTjcV3EN638U+JKoq7Erq5bHyIGCSrVypXoxaVdkfG6+lladV+aboF4i1eDmjVr9t+XvySey",
+	"2XOPjvl6yjeT613Wy5qiyYd+gV9u8T70e6TY5I6Hilj/hu2InwXyyrzbUD9uuOLzdf0NAAD//90rMTaT",
+	"AwAA",
+}
+
+// decodeSwaggerSpec decodes and decompresses the embedded spec.
+func decodeSwaggerSpec() ([]byte, error) {
+	joined := strings.Join(swaggerSpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
+func decodeSwaggerSpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeSwaggerSpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var swaggerSpec = decodeSwaggerSpecCached()
+
+// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetSwaggerSpecJSON() ([]byte, error) {
+	return swaggerSpec()
 }
