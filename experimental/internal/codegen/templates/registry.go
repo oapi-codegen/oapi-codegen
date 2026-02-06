@@ -467,20 +467,20 @@ var ChiServerTemplates = map[string]ServerTemplate{
 	},
 }
 
-// EchoServerTemplates contains templates for Echo server generation.
+// EchoServerTemplates contains templates for Echo v5 server generation.
 var EchoServerTemplates = map[string]ServerTemplate{
 	"interface": {
 		Name: "interface",
 		Imports: []Import{
 			{Path: "net/http"},
-			{Path: "github.com/labstack/echo/v4"},
+			{Path: "github.com/labstack/echo/v5"},
 		},
 		Template: "server/echo/interface.go.tmpl",
 	},
 	"handler": {
 		Name: "handler",
 		Imports: []Import{
-			{Path: "github.com/labstack/echo/v4"},
+			{Path: "github.com/labstack/echo/v5"},
 		},
 		Template: "server/echo/handler.go.tmpl",
 	},
@@ -491,9 +491,39 @@ var EchoServerTemplates = map[string]ServerTemplate{
 			{Path: "fmt"},
 			{Path: "net/http"},
 			{Path: "net/url"},
-			{Path: "github.com/labstack/echo/v4"},
+			{Path: "github.com/labstack/echo/v5"},
 		},
 		Template: "server/echo/wrapper.go.tmpl",
+	},
+}
+
+// EchoV4ServerTemplates contains templates for Echo v4 server generation.
+var EchoV4ServerTemplates = map[string]ServerTemplate{
+	"interface": {
+		Name: "interface",
+		Imports: []Import{
+			{Path: "net/http"},
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo-v4/interface.go.tmpl",
+	},
+	"handler": {
+		Name: "handler",
+		Imports: []Import{
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo-v4/handler.go.tmpl",
+	},
+	"wrapper": {
+		Name: "wrapper",
+		Imports: []Import{
+			{Path: "encoding/json"},
+			{Path: "fmt"},
+			{Path: "net/http"},
+			{Path: "net/url"},
+			{Path: "github.com/labstack/echo/v4"},
+		},
+		Template: "server/echo-v4/wrapper.go.tmpl",
 	},
 }
 

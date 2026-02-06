@@ -17,23 +17,23 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v4"
 )
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 	// Returns all pets
 	// (GET /pets)
-	FindPets(ctx *echo.Context, params FindPetsParams) error
+	FindPets(ctx echo.Context, params FindPetsParams) error
 	// Creates a new pet
 	// (POST /pets)
-	AddPet(ctx *echo.Context) error
+	AddPet(ctx echo.Context) error
 	// Deletes a pet by ID
 	// (DELETE /pets/{id})
-	DeletePet(ctx *echo.Context, id int64) error
+	DeletePet(ctx echo.Context, id int64) error
 	// Returns a pet by ID
 	// (GET /pets/{id})
-	FindPetByID(ctx *echo.Context, id int64) error
+	FindPetByID(ctx echo.Context, id int64) error
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -41,25 +41,25 @@ type Unimplemented struct{}
 
 // Returns all pets
 // (GET /pets)
-func (_ Unimplemented) FindPets(ctx *echo.Context, params FindPetsParams) error {
+func (_ Unimplemented) FindPets(ctx echo.Context, params FindPetsParams) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // Creates a new pet
 // (POST /pets)
-func (_ Unimplemented) AddPet(ctx *echo.Context) error {
+func (_ Unimplemented) AddPet(ctx echo.Context) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // Deletes a pet by ID
 // (DELETE /pets/{id})
-func (_ Unimplemented) DeletePet(ctx *echo.Context, id int64) error {
+func (_ Unimplemented) DeletePet(ctx echo.Context, id int64) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
 // Returns a pet by ID
 // (GET /pets/{id})
-func (_ Unimplemented) FindPetByID(ctx *echo.Context, id int64) error {
+func (_ Unimplemented) FindPetByID(ctx echo.Context, id int64) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 
@@ -77,7 +77,7 @@ type ServerInterfaceWrapper struct {
 }
 
 // FindPets converts echo context to params.
-func (w *ServerInterfaceWrapper) FindPets(ctx *echo.Context) error {
+func (w *ServerInterfaceWrapper) FindPets(ctx echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
@@ -101,7 +101,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx *echo.Context) error {
 }
 
 // AddPet converts echo context to params.
-func (w *ServerInterfaceWrapper) AddPet(ctx *echo.Context) error {
+func (w *ServerInterfaceWrapper) AddPet(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -110,7 +110,7 @@ func (w *ServerInterfaceWrapper) AddPet(ctx *echo.Context) error {
 }
 
 // DeletePet converts echo context to params.
-func (w *ServerInterfaceWrapper) DeletePet(ctx *echo.Context) error {
+func (w *ServerInterfaceWrapper) DeletePet(ctx echo.Context) error {
 	var err error
 
 	// ------------- Path parameter "id" -------------
@@ -127,7 +127,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx *echo.Context) error {
 }
 
 // FindPetByID converts echo context to params.
-func (w *ServerInterfaceWrapper) FindPetByID(ctx *echo.Context) error {
+func (w *ServerInterfaceWrapper) FindPetByID(ctx echo.Context) error {
 	var err error
 
 	// ------------- Path parameter "id" -------------
@@ -145,16 +145,15 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx *echo.Context) error {
 
 // EchoRouter is an interface for echo.Echo and echo.Group.
 type EchoRouter interface {
-	Add(method string, path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.

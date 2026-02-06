@@ -1,6 +1,6 @@
 {{- /*
   This template generates the ServerInterfaceWrapper that extracts parameters
-  from HTTP requests and calls the ServerInterface methods for Echo v5.
+  from HTTP requests and calls the ServerInterface methods for Echo.
   Input: []OperationDescriptor
 */ -}}
 
@@ -11,7 +11,7 @@ type ServerInterfaceWrapper struct {
 
 {{ range . }}
 // {{ .GoOperationID }} converts echo context to params.
-func (w *ServerInterfaceWrapper) {{ .GoOperationID }}(ctx *echo.Context) error {
+func (w *ServerInterfaceWrapper) {{ .GoOperationID }}(ctx echo.Context) error {
 	var err error
 
 {{ range .PathParams }}

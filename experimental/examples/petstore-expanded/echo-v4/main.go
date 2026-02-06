@@ -11,8 +11,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/labstack/echo/v5"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/echo/server"
+	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/echo-v4/server"
 )
 
 func main() {

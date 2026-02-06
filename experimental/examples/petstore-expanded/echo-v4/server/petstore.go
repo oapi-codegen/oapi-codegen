@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/labstack/echo/v5"
+	"github.com/labstack/echo/v4"
 	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
 )
 
@@ -29,7 +29,7 @@ func NewPetStore() *PetStore {
 }
 
 // sendPetStoreError wraps sending of an error in the Error format.
-func sendPetStoreError(ctx *echo.Context, code int, message string) error {
+func sendPetStoreError(ctx echo.Context, code int, message string) error {
 	petErr := petstore.Error{
 		Code:    int32(code),
 		Message: message,
@@ -38,7 +38,7 @@ func sendPetStoreError(ctx *echo.Context, code int, message string) error {
 }
 
 // FindPets returns all pets, optionally filtered by tags and limited.
-func (p *PetStore) FindPets(ctx *echo.Context, params FindPetsParams) error {
+func (p *PetStore) FindPets(ctx echo.Context, params FindPetsParams) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -70,7 +70,7 @@ func (p *PetStore) FindPets(ctx *echo.Context, params FindPetsParams) error {
 }
 
 // AddPet creates a new pet.
-func (p *PetStore) AddPet(ctx *echo.Context) error {
+func (p *PetStore) AddPet(ctx echo.Context) error {
 	// We expect a NewPet object in the request body.
 	var newPet petstore.NewPet
 	if err := ctx.Bind(&newPet); err != nil {
@@ -96,7 +96,7 @@ func (p *PetStore) AddPet(ctx *echo.Context) error {
 }
 
 // FindPetByID returns a pet by ID.
-func (p *PetStore) FindPetByID(ctx *echo.Context, id int64) error {
+func (p *PetStore) FindPetByID(ctx echo.Context, id int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -109,7 +109,7 @@ func (p *PetStore) FindPetByID(ctx *echo.Context, id int64) error {
 }
 
 // DeletePet deletes a pet by ID.
-func (p *PetStore) DeletePet(ctx *echo.Context, id int64) error {
+func (p *PetStore) DeletePet(ctx echo.Context, id int64) error {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 

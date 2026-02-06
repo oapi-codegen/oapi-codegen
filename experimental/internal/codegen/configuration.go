@@ -107,6 +107,7 @@ const (
 	ServerTypeStdHTTP  = "std-http"
 	ServerTypeChi      = "chi"
 	ServerTypeEcho     = "echo"
+	ServerTypeEchoV4   = "echo/v4"
 	ServerTypeGin      = "gin"
 	ServerTypeGorilla  = "gorilla"
 	ServerTypeFiber    = "fiber"

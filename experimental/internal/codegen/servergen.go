@@ -65,6 +65,8 @@ func getServerTemplates(serverType string) (map[string]templates.ServerTemplate,
 		return templates.ChiServerTemplates, nil
 	case ServerTypeEcho:
 		return templates.EchoServerTemplates, nil
+	case ServerTypeEchoV4:
+		return templates.EchoV4ServerTemplates, nil
 	case ServerTypeGin:
 		return templates.GinServerTemplates, nil
 	case ServerTypeGorilla:
@@ -74,9 +76,9 @@ func getServerTemplates(serverType string) (map[string]templates.ServerTemplate,
 	case ServerTypeIris:
 		return templates.IrisServerTemplates, nil
 	default:
-		return nil, fmt.Errorf("unsupported server type: %q (supported: %q, %q, %q, %q, %q, %q, %q)",
+		return nil, fmt.Errorf("unsupported server type: %q (supported: %q, %q, %q, %q, %q, %q, %q, %q)",
 			serverType,
-			ServerTypeStdHTTP, ServerTypeChi, ServerTypeEcho, ServerTypeGin,
+			ServerTypeStdHTTP, ServerTypeChi, ServerTypeEcho, ServerTypeEchoV4, ServerTypeGin,
 			ServerTypeGorilla, ServerTypeFiber, ServerTypeIris)
 	}
 }

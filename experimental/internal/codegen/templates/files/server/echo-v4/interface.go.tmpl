@@ -1,5 +1,5 @@
 {{- /*
-  This template generates the ServerInterface for Echo v5 servers.
+  This template generates the ServerInterface for Echo servers.
   Input: []OperationDescriptor
 */ -}}
 
@@ -8,7 +8,7 @@ type ServerInterface interface {
 {{- range . }}
 {{ .SummaryAsComment }}
 	// ({{ .Method }} {{ .Path }})
-	{{ .GoOperationID }}(ctx *echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error
+	{{ .GoOperationID }}(ctx echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error
 {{- end }}
 }
 
@@ -18,7 +18,7 @@ type Unimplemented struct{}
 {{- range . }}
 {{ .SummaryAsComment }}
 // ({{ .Method }} {{ .Path }})
-func (_ Unimplemented) {{ .GoOperationID }}(ctx *echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error {
+func (_ Unimplemented) {{ .GoOperationID }}(ctx echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error {
 	return ctx.NoContent(http.StatusNotImplemented)
 }
 {{- end }}
