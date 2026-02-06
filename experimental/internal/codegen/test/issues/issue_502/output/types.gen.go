@@ -14,38 +14,32 @@ import (
 )
 
 // #/components/schemas/OptionalClaims
-type OptionalClaimsSchemaComponent struct {
+type OptionalClaims struct {
 	IDToken     *string `json:"idToken,omitempty" form:"idToken,omitempty"`
 	AccessToken *string `json:"accessToken,omitempty" form:"accessToken,omitempty"`
 }
 
-type OptionalClaims = OptionalClaimsSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *OptionalClaimsSchemaComponent) ApplyDefaults() {
+func (s *OptionalClaims) ApplyDefaults() {
 }
 
 // #/components/schemas/Application
-type ApplicationSchemaComponent struct {
+type Application struct {
 	Name           *string                             `json:"name,omitempty" form:"name,omitempty"`
 	OptionalClaims Nullable[ApplicationOptionalClaims] `json:"optionalClaims,omitempty" form:"optionalClaims,omitempty"` // Optional claims configuration
 }
 
-type Application = ApplicationSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ApplicationSchemaComponent) ApplyDefaults() {
+func (s *Application) ApplyDefaults() {
 }
 
 // #/components/schemas/Application/properties/optionalClaims
 // Optional claims configuration
-type ApplicationOptionalClaimsPropertySchemaComponent struct {
+type ApplicationOptionalClaims struct {
 	OptionalClaims *OptionalClaims
 }
 
-type ApplicationOptionalClaims = ApplicationOptionalClaimsPropertySchemaComponent
-
-func (u ApplicationOptionalClaimsPropertySchemaComponent) MarshalJSON() ([]byte, error) {
+func (u ApplicationOptionalClaims) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 
 	if u.OptionalClaims != nil {
@@ -64,7 +58,7 @@ func (u ApplicationOptionalClaimsPropertySchemaComponent) MarshalJSON() ([]byte,
 	return json.Marshal(result)
 }
 
-func (u *ApplicationOptionalClaimsPropertySchemaComponent) UnmarshalJSON(data []byte) error {
+func (u *ApplicationOptionalClaims) UnmarshalJSON(data []byte) error {
 	var v0 OptionalClaims
 	if err := json.Unmarshal(data, &v0); err == nil {
 		u.OptionalClaims = &v0
@@ -74,7 +68,7 @@ func (u *ApplicationOptionalClaimsPropertySchemaComponent) UnmarshalJSON(data []
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *ApplicationOptionalClaimsPropertySchemaComponent) ApplyDefaults() {
+func (u *ApplicationOptionalClaims) ApplyDefaults() {
 	if u.OptionalClaims != nil {
 		u.OptionalClaims.ApplyDefaults()
 	}

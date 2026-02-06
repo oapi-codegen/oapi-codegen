@@ -12,26 +12,22 @@ import (
 )
 
 // #/components/schemas/Foo
-type FooSchemaComponent struct {
+type Foo struct {
 	Foo string `json:"foo" form:"foo"`
 }
 
-type Foo = FooSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *FooSchemaComponent) ApplyDefaults() {
+func (s *Foo) ApplyDefaults() {
 }
 
 // #/components/schemas/Bar
-type BarSchemaComponent struct {
+type Bar struct {
 	Bar string `json:"bar" form:"bar"`
 	Foo string `json:"foo" form:"foo"`
 }
 
-type Bar = BarSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *BarSchemaComponent) ApplyDefaults() {
+func (s *Bar) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

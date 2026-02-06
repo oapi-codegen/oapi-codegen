@@ -10,7 +10,7 @@ func TestIllegalEnumNames(t *testing.T) {
 	// All these enum constants should exist and have valid Go names
 	tests := []struct {
 		name     string
-		constant BarSchemaComponent
+		constant Bar
 		value    string
 	}{
 		{"empty string", Bar_Value, ""},

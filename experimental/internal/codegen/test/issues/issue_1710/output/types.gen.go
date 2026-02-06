@@ -13,69 +13,57 @@ import (
 )
 
 // #/components/schemas/BasePrompt
-type BasePromptSchemaComponent struct {
+type BasePrompt struct {
 	Name    string `json:"name" form:"name"`
 	Version int    `json:"version" form:"version"`
 }
 
-type BasePrompt = BasePromptSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *BasePromptSchemaComponent) ApplyDefaults() {
+func (s *BasePrompt) ApplyDefaults() {
 }
 
 // #/components/schemas/TextPrompt
-type TextPromptSchemaComponent struct {
+type TextPrompt struct {
 	Prompt  string `json:"prompt" form:"prompt"`
 	Name    string `json:"name" form:"name"`
 	Version int    `json:"version" form:"version"`
 }
 
-type TextPrompt = TextPromptSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TextPromptSchemaComponent) ApplyDefaults() {
+func (s *TextPrompt) ApplyDefaults() {
 }
 
 // #/components/schemas/ChatMessage
-type ChatMessageSchemaComponent struct {
+type ChatMessage struct {
 	Role    string `json:"role" form:"role"`
 	Content string `json:"content" form:"content"`
 }
 
-type ChatMessage = ChatMessageSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ChatMessageSchemaComponent) ApplyDefaults() {
+func (s *ChatMessage) ApplyDefaults() {
 }
 
 // #/components/schemas/ChatPrompt
-type ChatPromptSchemaComponent struct {
+type ChatPrompt struct {
 	Prompt  []ChatMessage `json:"prompt" form:"prompt"`
 	Name    string        `json:"name" form:"name"`
 	Version int           `json:"version" form:"version"`
 }
 
-type ChatPrompt = ChatPromptSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ChatPromptSchemaComponent) ApplyDefaults() {
+func (s *ChatPrompt) ApplyDefaults() {
 }
 
 // #/components/schemas/ChatPrompt/properties/prompt
-type ChatPromptPromptPropertySchemaComponent = []ChatMessage
-
-type ChatPromptPrompt = ChatPromptPromptPropertySchemaComponent
+type ChatPromptPrompt = []ChatMessage
 
 // #/components/schemas/Prompt
-type PromptSchemaComponent struct {
+type Prompt struct {
 	PromptOneOf0 *PromptOneOf0
 	PromptOneOf1 *PromptOneOf1
 }
 
-type Prompt = PromptSchemaComponent
-
-func (u PromptSchemaComponent) MarshalJSON() ([]byte, error) {
+func (u Prompt) MarshalJSON() ([]byte, error) {
 	var count int
 	var data []byte
 	var err error
@@ -96,13 +84,13 @@ func (u PromptSchemaComponent) MarshalJSON() ([]byte, error) {
 	}
 
 	if count != 1 {
-		return nil, fmt.Errorf("PromptSchemaComponent: exactly one member must be set, got %d", count)
+		return nil, fmt.Errorf("Prompt: exactly one member must be set, got %d", count)
 	}
 
 	return data, nil
 }
 
-func (u *PromptSchemaComponent) UnmarshalJSON(data []byte) error {
+func (u *Prompt) UnmarshalJSON(data []byte) error {
 	var successCount int
 
 	var v0 PromptOneOf0
@@ -118,14 +106,14 @@ func (u *PromptSchemaComponent) UnmarshalJSON(data []byte) error {
 	}
 
 	if successCount != 1 {
-		return fmt.Errorf("PromptSchemaComponent: expected exactly one type to match, got %d", successCount)
+		return fmt.Errorf("Prompt: expected exactly one type to match, got %d", successCount)
 	}
 
 	return nil
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *PromptSchemaComponent) ApplyDefaults() {
+func (u *Prompt) ApplyDefaults() {
 	if u.PromptOneOf0 != nil {
 		u.PromptOneOf0.ApplyDefaults()
 	}
@@ -135,50 +123,42 @@ func (u *PromptSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/Prompt/oneOf/0
-type Prompt0OneOfSchemaComponent struct {
+type PromptOneOf0 struct {
 	Type    *string       `json:"type,omitempty" form:"type,omitempty"`
 	Prompt  []ChatMessage `json:"prompt" form:"prompt"`
 	Name    string        `json:"name" form:"name"`
 	Version int           `json:"version" form:"version"`
 }
 
-type PromptOneOf0 = Prompt0OneOfSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *Prompt0OneOfSchemaComponent) ApplyDefaults() {
+func (s *PromptOneOf0) ApplyDefaults() {
 }
 
 // #/components/schemas/Prompt/oneOf/0/allOf/0/properties/type
-type Prompt00TypePropertyAllOfOneOfSchemaComponent string
+type PromptOneOf0AllOf0Type string
 
 const (
-	PromptOneOf0AllOf0Type_chat Prompt00TypePropertyAllOfOneOfSchemaComponent = "chat"
+	PromptOneOf0AllOf0Type_chat PromptOneOf0AllOf0Type = "chat"
 )
 
-type PromptOneOf0AllOf0Type = Prompt00TypePropertyAllOfOneOfSchemaComponent
-
 // #/components/schemas/Prompt/oneOf/1
-type Prompt1OneOfSchemaComponent struct {
+type PromptOneOf1 struct {
 	Type    *string `json:"type,omitempty" form:"type,omitempty"`
 	Prompt  string  `json:"prompt" form:"prompt"`
 	Name    string  `json:"name" form:"name"`
 	Version int     `json:"version" form:"version"`
 }
 
-type PromptOneOf1 = Prompt1OneOfSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *Prompt1OneOfSchemaComponent) ApplyDefaults() {
+func (s *PromptOneOf1) ApplyDefaults() {
 }
 
 // #/components/schemas/Prompt/oneOf/1/allOf/0/properties/type
-type Prompt10TypePropertyAllOfOneOfSchemaComponent string
+type PromptOneOf1AllOf0Type string
 
 const (
-	PromptOneOf1AllOf0Type_text Prompt10TypePropertyAllOfOneOfSchemaComponent = "text"
+	PromptOneOf1AllOf0Type_text PromptOneOf1AllOf0Type = "text"
 )
-
-type PromptOneOf1AllOf0Type = Prompt10TypePropertyAllOfOneOfSchemaComponent
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

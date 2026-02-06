@@ -12,16 +12,14 @@ import (
 )
 
 // #/components/schemas/Person
-type PersonSchemaComponent struct {
+type Person struct {
 	Metadata string   `json:"metadata" form:"metadata"`
 	Name     *string  `json:"name,omitempty" form:"name,omitempty"`
 	Age      *float32 `json:"age,omitempty" form:"age,omitempty"`
 }
 
-type Person = PersonSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PersonSchemaComponent) ApplyDefaults() {
+func (s *Person) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

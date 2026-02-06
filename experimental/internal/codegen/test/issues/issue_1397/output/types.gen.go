@@ -18,8 +18,6 @@ type MyTestRequest struct {
 	Field3 *TestField3               `json:"field3,omitempty" form:"field3,omitempty"` // A nested object without allocated name
 }
 
-type MyTestRequest1 = MyTestRequest
-
 // ApplyDefaults sets default values for fields that are nil.
 func (s *MyTestRequest) ApplyDefaults() {
 	if s.Field2 != nil {
@@ -32,19 +30,15 @@ func (s *MyTestRequest) ApplyDefaults() {
 
 // #/components/schemas/Test/properties/field1
 // A array of enum values
-type TestField1PropertySchemaComponent = []TestField1Item
-
-type TestField1 = TestField1PropertySchemaComponent
+type TestField1 = []TestField1Item
 
 // #/components/schemas/Test/properties/field1/items
-type TestField1ItemPropertySchemaComponent string
+type TestField1Item string
 
 const (
-	TestField1Item_option1 TestField1ItemPropertySchemaComponent = "option1"
-	TestField1Item_option2 TestField1ItemPropertySchemaComponent = "option2"
+	TestField1Item_option1 TestField1Item = "option1"
+	TestField1Item_option2 TestField1Item = "option2"
 )
-
-type TestField1Item = TestField1ItemPropertySchemaComponent
 
 // #/components/schemas/Test/properties/field2
 // A nested object with allocated name
@@ -59,15 +53,13 @@ func (s *MyTestRequestNestedField) ApplyDefaults() {
 
 // #/components/schemas/Test/properties/field3
 // A nested object without allocated name
-type TestField3PropertySchemaComponent struct {
+type TestField3 struct {
 	Field1 bool   `json:"field1" form:"field1"`
 	Field2 string `json:"field2" form:"field2"`
 }
 
-type TestField3 = TestField3PropertySchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestField3PropertySchemaComponent) ApplyDefaults() {
+func (s *TestField3) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

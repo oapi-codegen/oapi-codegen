@@ -12,15 +12,13 @@ import (
 )
 
 // #/components/schemas/Document
-type DocumentSchemaComponent struct {
+type Document struct {
 	Name   *string `json:"name,omitempty" form:"name,omitempty"`
 	Status *string `json:"status,omitempty" form:"status,omitempty"`
 }
 
-type Document = DocumentSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *DocumentSchemaComponent) ApplyDefaults() {
+func (s *Document) ApplyDefaults() {
 }
 
 // #/components/schemas/Document/properties/status
@@ -34,14 +32,12 @@ const (
 )
 
 // #/components/schemas/DocumentStatus
-type DocumentStatusSchemaComponent struct {
+type DocumentStatus struct {
 	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
-type DocumentStatus = DocumentStatusSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *DocumentStatusSchemaComponent) ApplyDefaults() {
+func (s *DocumentStatus) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

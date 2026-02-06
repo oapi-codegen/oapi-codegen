@@ -12,46 +12,38 @@ import (
 )
 
 // #/components/schemas/Pet
-type PetSchemaComponent struct {
+type Pet struct {
 	Name string  `json:"name" form:"name"`                   // Name of the pet
 	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
 	ID   int64   `json:"id" form:"id"`                       // Unique id of the pet
 }
 
-type Pet = PetSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PetSchemaComponent) ApplyDefaults() {
+func (s *Pet) ApplyDefaults() {
 }
 
 // #/components/schemas/NewPet
-type NewPetSchemaComponent struct {
+type NewPet struct {
 	Name string  `json:"name" form:"name"`                   // Name of the pet
 	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
 }
 
-type NewPet = NewPetSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *NewPetSchemaComponent) ApplyDefaults() {
+func (s *NewPet) ApplyDefaults() {
 }
 
 // #/components/schemas/Error
-type ErrorSchemaComponent struct {
+type Error struct {
 	Code    int32  `json:"code" form:"code"`       // Error code
 	Message string `json:"message" form:"message"` // Error message
 }
 
-type Error = ErrorSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ErrorSchemaComponent) ApplyDefaults() {
+func (s *Error) ApplyDefaults() {
 }
 
 // #/paths//pets/get/responses/200/content/application/json/schema
-type PetsGet200ApplicationJSONContentResponsePath = []Pet
-
-type FindPetsJSONResponse = PetsGet200ApplicationJSONContentResponsePath
+type FindPetsJSONResponse = []Pet
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

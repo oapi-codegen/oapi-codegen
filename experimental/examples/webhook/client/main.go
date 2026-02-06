@@ -57,7 +57,7 @@ func registerWebhook(client *http.Client, serverAddr, kind, url string) (uuid.UU
 	if err != nil {
 		return uuid.UUID{}, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusCreated {
 		return uuid.UUID{}, fmt.Errorf("unexpected status %d", resp.StatusCode)
@@ -79,7 +79,7 @@ func deregisterWebhook(client *http.Client, serverAddr string, id uuid.UUID) err
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	return nil
 }
 

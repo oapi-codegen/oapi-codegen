@@ -12,7 +12,7 @@ func TestRegistrationStateOneOfEnums(t *testing.T) {
 	// Verify enum constants exist and have correct values
 	tests := []struct {
 		name  string
-		enum  RegistrationState0OneOfPropertySchemaComponent
+		enum  RegistrationStateOneOf0
 		value string
 	}{
 		{"undefined", RegistrationStateOneOf0_undefined, "undefined"},

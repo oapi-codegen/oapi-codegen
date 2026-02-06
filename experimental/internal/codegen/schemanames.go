@@ -530,14 +530,54 @@ func buildFallbackName(path SchemaPath, converter *NameConverter) string {
 	return converter.ToTypeName(strings.Join(parts, "_"))
 }
 
+// schemaContextSuffix maps a SchemaContext to a disambiguation suffix.
+func schemaContextSuffix(ctx SchemaContext) string {
+	switch ctx {
+	case ContextComponentSchema:
+		return "Schema"
+	case ContextParameter:
+		return "Parameter"
+	case ContextRequestBody:
+		return "Request"
+	case ContextResponse:
+		return "Response"
+	case ContextHeader:
+		return "Header"
+	case ContextCallback:
+		return "Callback"
+	case ContextWebhook:
+		return "Webhook"
+	default:
+		return ""
+	}
+}
+
 // resolveCollisions detects name collisions and makes them unique.
+// Reference schemas are excluded from collision detection because they don't
+// generate types — their names are only used for type resolution lookups.
+//
+// Resolution proceeds in phases:
+//  1. Context suffix: append a suffix derived from the schema's location
+//     (e.g. "Request", "Response"). If exactly one collider lives under
+//     components/schemas it keeps the bare name.
+//  2. Existing disambiguateName logic (content type, status code, composition).
+//  3. Numeric fallback as a last resort.
 func resolveCollisions(schemas []*SchemaDescriptor, candidates map[*SchemaDescriptor]string, converter *NameConverter) {
+	// Filter out reference schemas — they don't generate types so their
+	// short names can safely shadow non-ref names without causing a collision.
+	var nonRefSchemas []*SchemaDescriptor
+	for _, s := range schemas {
+		if s.Ref == "" {
+			nonRefSchemas = append(nonRefSchemas, s)
+		}
+	}
+
 	maxIterations := 10 // Prevent infinite loops
 
-	for iteration := 0; iteration < maxIterations; iteration++ {
-		// Group schemas by candidate name
+	for iteration := range maxIterations {
+		// Group non-ref schemas by candidate name
 		byName := make(map[string][]*SchemaDescriptor)
-		for _, s := range schemas {
+		for _, s := range nonRefSchemas {
 			name := candidates[s]
 			byName[name] = append(byName[name], s)
 		}
@@ -569,12 +609,56 @@ func resolveCollisions(schemas []*SchemaDescriptor, candidates map[*SchemaDescri
 				continue
 			}
 
-			// Try to disambiguate by adding more path context
+			// First iteration: try context suffix disambiguation
+			if iteration == 0 {
+				resolveWithContextSuffix(group, candidates)
+				continue
+			}
+
+			// Subsequent iterations: existing disambiguateName logic
 			for i, s := range group {
 				newName := disambiguateName(s, candidates[s], i, converter)
 				candidates[s] = newName
 			}
 		}
+	}
+}
+
+// resolveWithContextSuffix attempts to disambiguate colliding schemas by
+// appending a suffix derived from their path context (e.g. "Request",
+// "Response"). If exactly one member is a component schema, it keeps the
+// bare name and only the others are suffixed.
+func resolveWithContextSuffix(group []*SchemaDescriptor, candidates map[*SchemaDescriptor]string) {
+	// Count how many are from components/schemas
+	var componentSchemaCount int
+	for _, s := range group {
+		ctx, _ := parsePathContext(s.Path)
+		if ctx == ContextComponentSchema {
+			componentSchemaCount++
+		}
+	}
+
+	// If exactly one is from components/schemas, it is "privileged" and keeps
+	// the bare name.
+	privileged := componentSchemaCount == 1
+
+	for _, s := range group {
+		ctx, _ := parsePathContext(s.Path)
+
+		// Privileged component schema keeps the bare name
+		if privileged && ctx == ContextComponentSchema {
+			continue
+		}
+
+		suffix := schemaContextSuffix(ctx)
+		if suffix != "" {
+			name := candidates[s]
+			if !strings.HasSuffix(name, suffix) {
+				candidates[s] = name + suffix
+			}
+		}
+		// If suffix is empty (unknown context), leave unchanged for later
+		// iterations to handle via disambiguateName.
 	}
 }
 

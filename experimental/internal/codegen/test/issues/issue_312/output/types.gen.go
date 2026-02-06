@@ -12,43 +12,35 @@ import (
 )
 
 // #/components/schemas/Pet
-type PetSchemaComponent struct {
+type Pet struct {
 	Name string `json:"name" form:"name"` // The name of the pet.
 }
 
-type Pet = PetSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PetSchemaComponent) ApplyDefaults() {
+func (s *Pet) ApplyDefaults() {
 }
 
 // #/components/schemas/PetNames
-type PetNamesSchemaComponent struct {
+type PetNames struct {
 	Names []string `json:"names" form:"names"` // The names of the pets.
 }
 
-type PetNames = PetNamesSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PetNamesSchemaComponent) ApplyDefaults() {
+func (s *PetNames) ApplyDefaults() {
 }
 
 // #/components/schemas/Error
-type ErrorSchemaComponent struct {
+type Error struct {
 	Code    int32  `json:"code" form:"code"`       // Error code
 	Message string `json:"message" form:"message"` // Error message
 }
 
-type Error = ErrorSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ErrorSchemaComponent) ApplyDefaults() {
+func (s *Error) ApplyDefaults() {
 }
 
 // #/paths//pets:validate/post/responses/200/content/application/json/schema
-type PetsValidatePost200ApplicationJSONContentResponsePath = []Pet
-
-type ValidatePetsJSONResponse = PetsValidatePost200ApplicationJSONContentResponsePath
+type ValidatePetsJSONResponse = []Pet
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

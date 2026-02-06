@@ -149,7 +149,7 @@ func (br *BadgeReader) generateEvents(ctx context.Context) {
 					br.mu.Unlock()
 					continue
 				}
-				resp.Body.Close()
+				_ = resp.Body.Close()
 
 				if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 					log.Printf("Webhook %s returned %d — removing", target.id, resp.StatusCode)

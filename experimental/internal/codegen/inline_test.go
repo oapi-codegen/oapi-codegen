@@ -98,7 +98,7 @@ components:
 	require.NoError(t, err)
 
 	// Should contain the model type
-	assert.Contains(t, code, "type PetSchemaComponent struct")
+	assert.Contains(t, code, "type Pet struct")
 
 	// Should contain the embedded spec
 	assert.Contains(t, code, "GetSwaggerSpecJSON")
@@ -131,7 +131,7 @@ components:
 	require.NoError(t, err)
 
 	// Should contain the model type
-	assert.Contains(t, code, "type PetSchemaComponent struct")
+	assert.Contains(t, code, "type Pet struct")
 
 	// Should NOT contain the embedded spec
 	assert.NotContains(t, code, "GetSwaggerSpecJSON")

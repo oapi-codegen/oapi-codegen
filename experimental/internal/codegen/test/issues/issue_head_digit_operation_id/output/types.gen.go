@@ -12,14 +12,12 @@ import (
 )
 
 // #/paths//3gpp/foo/get/responses/200/content/application/json/schema
-type N3GppFooGet200ApplicationJSONContentResponsePath struct {
+type N3GPPFooJSONResponse struct {
 	Value *string `json:"value,omitempty" form:"value,omitempty"`
 }
 
-type N3GPPFooJSONResponse = N3GppFooGet200ApplicationJSONContentResponsePath
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *N3GppFooGet200ApplicationJSONContentResponsePath) ApplyDefaults() {
+func (s *N3GPPFooJSONResponse) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

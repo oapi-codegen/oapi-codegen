@@ -14,15 +14,13 @@ import (
 )
 
 // #/components/schemas/Pet
-type PetSchemaComponent struct {
+type Pet struct {
 	Born   *any  `json:"born,omitempty" form:"born,omitempty"`
 	BornAt *Date `json:"born_at,omitempty" form:"born_at,omitempty"`
 }
 
-type Pet = PetSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PetSchemaComponent) ApplyDefaults() {
+func (s *Pet) ApplyDefaults() {
 }
 
 const DateFormat = "2006-01-02"

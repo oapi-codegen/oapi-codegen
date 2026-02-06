@@ -13,30 +13,24 @@ import (
 )
 
 // #/paths//something/get/responses/200/content/application/json/schema
-type SomethingGet200ApplicationJSONContentResponsePath struct {
+type GetSomethingJSONResponse struct {
 	Results []GetSomething200ResponseJSON2 `json:"results" form:"results"`
 }
 
-type GetSomethingJSONResponse = SomethingGet200ApplicationJSONContentResponsePath
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *SomethingGet200ApplicationJSONContentResponsePath) ApplyDefaults() {
+func (s *GetSomethingJSONResponse) ApplyDefaults() {
 }
 
 // #/paths//something/get/responses/200/content/application/json/schema/properties/results
-type SomethingGet200ApplicationJSONResultsPropertyContentResponsePath = []GetSomething200ResponseJSON2
-
-type GetSomething200ResponseJSON1 = SomethingGet200ApplicationJSONResultsPropertyContentResponsePath
+type GetSomething200ResponseJSON1 = []GetSomething200ResponseJSON2
 
 // #/paths//something/get/responses/200/content/application/json/schema/properties/results/items
-type SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath struct {
+type GetSomething200ResponseJSON2 struct {
 	GetSomething200ResponseJSONAnyOf0  *GetSomething200ResponseJSONAnyOf0
 	GetSomething200ResponseJSONAnyOf11 *GetSomething200ResponseJSONAnyOf11
 }
 
-type GetSomething200ResponseJSON2 = SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath
-
-func (u SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) MarshalJSON() ([]byte, error) {
+func (u GetSomething200ResponseJSON2) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 
 	if u.GetSomething200ResponseJSONAnyOf0 != nil {
@@ -67,7 +61,7 @@ func (u SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) Ma
 	return json.Marshal(result)
 }
 
-func (u *SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) UnmarshalJSON(data []byte) error {
+func (u *GetSomething200ResponseJSON2) UnmarshalJSON(data []byte) error {
 	var v0 GetSomething200ResponseJSONAnyOf0
 	if err := json.Unmarshal(data, &v0); err == nil {
 		u.GetSomething200ResponseJSONAnyOf0 = &v0
@@ -82,7 +76,7 @@ func (u *SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) U
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) ApplyDefaults() {
+func (u *GetSomething200ResponseJSON2) ApplyDefaults() {
 	if u.GetSomething200ResponseJSONAnyOf0 != nil {
 		u.GetSomething200ResponseJSONAnyOf0.ApplyDefaults()
 	}
@@ -92,40 +86,34 @@ func (u *SomethingGet200ApplicationJSONResultsItemPropertyContentResponsePath) A
 }
 
 // #/paths//something/get/responses/200/content/application/json/schema/properties/results/items/anyOf/0
-type SomethingGet200ApplicationJSONResults0AnyOfItemPropertyContentResponsePath struct {
+type GetSomething200ResponseJSONAnyOf0 struct {
 	Order *string `json:"order,omitempty" form:"order,omitempty"`
 }
 
-type GetSomething200ResponseJSONAnyOf0 = SomethingGet200ApplicationJSONResults0AnyOfItemPropertyContentResponsePath
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *SomethingGet200ApplicationJSONResults0AnyOfItemPropertyContentResponsePath) ApplyDefaults() {
+func (s *GetSomething200ResponseJSONAnyOf0) ApplyDefaults() {
 }
 
 // #/paths//something/get/responses/200/content/application/json/schema/properties/results/items/anyOf/1
-type SomethingGet200ApplicationJSONResults1AnyOfItemPropertyContentResponsePath struct {
+type GetSomething200ResponseJSONAnyOf11 struct {
 	Error *GetSomething200ResponseJSONAnyOf12 `json:"error,omitempty" form:"error,omitempty"`
 }
 
-type GetSomething200ResponseJSONAnyOf11 = SomethingGet200ApplicationJSONResults1AnyOfItemPropertyContentResponsePath
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *SomethingGet200ApplicationJSONResults1AnyOfItemPropertyContentResponsePath) ApplyDefaults() {
+func (s *GetSomething200ResponseJSONAnyOf11) ApplyDefaults() {
 	if s.Error != nil {
 		s.Error.ApplyDefaults()
 	}
 }
 
 // #/paths//something/get/responses/200/content/application/json/schema/properties/results/items/anyOf/1/properties/error
-type SomethingGet200ApplicationJSONResults1ErrorPropertyAnyOfItemPropertyContentResponsePath struct {
+type GetSomething200ResponseJSONAnyOf12 struct {
 	Code    *float32 `json:"code,omitempty" form:"code,omitempty"`
 	Message *string  `json:"message,omitempty" form:"message,omitempty"`
 }
 
-type GetSomething200ResponseJSONAnyOf12 = SomethingGet200ApplicationJSONResults1ErrorPropertyAnyOfItemPropertyContentResponsePath
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *SomethingGet200ApplicationJSONResults1ErrorPropertyAnyOfItemPropertyContentResponsePath) ApplyDefaults() {
+func (s *GetSomething200ResponseJSONAnyOf12) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

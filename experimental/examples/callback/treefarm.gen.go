@@ -20,71 +20,61 @@ import (
 
 // #/components/schemas/Tree
 // A tree to be planted
-type TreeSchemaComponent struct {
+type Tree struct {
 	Location string `json:"location" form:"location"` // Where to plant the tree (e.g. "north meadow")
 	Kind     string `json:"kind" form:"kind"`         // What kind of tree to plant (e.g. "oak")
 }
 
-type Tree = TreeSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TreeSchemaComponent) ApplyDefaults() {
+func (s *Tree) ApplyDefaults() {
 }
 
 // #/components/schemas/TreePlantingRequest
 // A tree planting request, combining the tree details with a callback URL
 // for completion notification.
-type TreePlantingRequestSchemaComponent struct {
+type TreePlantingRequest struct {
 	Location    string `json:"location" form:"location"`       // Where to plant the tree (e.g. "north meadow")
 	Kind        string `json:"kind" form:"kind"`               // What kind of tree to plant (e.g. "oak")
 	CallbackURL string `json:"callbackUrl" form:"callbackUrl"` // URL to receive the planting result callback
 }
 
-type TreePlantingRequest = TreePlantingRequestSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TreePlantingRequestSchemaComponent) ApplyDefaults() {
+func (s *TreePlantingRequest) ApplyDefaults() {
 }
 
 // #/components/schemas/TreeWithId
 // A tree with a server-assigned identifier
-type TreeWithIDSchemaComponent struct {
+type TreeWithID struct {
 	Location string `json:"location" form:"location"` // Where to plant the tree (e.g. "north meadow")
 	Kind     string `json:"kind" form:"kind"`         // What kind of tree to plant (e.g. "oak")
 	ID       UUID   `json:"id" form:"id"`             // Unique identifier for this planting request
 }
 
-type TreeWithID = TreeWithIDSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TreeWithIDSchemaComponent) ApplyDefaults() {
+func (s *TreeWithID) ApplyDefaults() {
 }
 
 // #/components/schemas/TreePlantingResult
 // The result of a tree planting operation, sent via callback
-type TreePlantingResultSchemaComponent struct {
+type TreePlantingResult struct {
 	Location string `json:"location" form:"location"` // Where to plant the tree (e.g. "north meadow")
 	Kind     string `json:"kind" form:"kind"`         // What kind of tree to plant (e.g. "oak")
 	ID       UUID   `json:"id" form:"id"`             // Unique identifier for this planting request
 	Success  bool   `json:"success" form:"success"`   // Whether the tree was successfully planted
 }
 
-type TreePlantingResult = TreePlantingResultSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TreePlantingResultSchemaComponent) ApplyDefaults() {
+func (s *TreePlantingResult) ApplyDefaults() {
 }
 
 // #/components/schemas/Error
-type ErrorSchemaComponent struct {
+type Error struct {
 	Code    int32  `json:"code" form:"code"`       // Error code
 	Message string `json:"message" form:"message"` // Error message
 }
 
-type Error = ErrorSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ErrorSchemaComponent) ApplyDefaults() {
+func (s *Error) ApplyDefaults() {
 }
 
 type UUID = uuid.UUID

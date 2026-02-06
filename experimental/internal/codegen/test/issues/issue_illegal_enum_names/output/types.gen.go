@@ -12,27 +12,23 @@ import (
 )
 
 // #/components/schemas/Bar
-type BarSchemaComponent string
+type Bar string
 
 const (
-	Bar_Value     BarSchemaComponent = ""
-	Bar_Foo       BarSchemaComponent = "Foo"
-	Bar_Bar       BarSchemaComponent = "Bar"
-	Bar_Foo_Bar   BarSchemaComponent = "Foo Bar"
-	Bar_Foo_Bar_1 BarSchemaComponent = "Foo-Bar"
-	Bar_Foo_1     BarSchemaComponent = "1Foo"
-	Bar__Foo      BarSchemaComponent = " Foo"
-	Bar__Foo_     BarSchemaComponent = " Foo "
-	Bar__Foo__1   BarSchemaComponent = "_Foo_"
-	Bar_Value_1   BarSchemaComponent = "1"
+	Bar_Value     Bar = ""
+	Bar_Foo       Bar = "Foo"
+	Bar_Bar       Bar = "Bar"
+	Bar_Foo_Bar   Bar = "Foo Bar"
+	Bar_Foo_Bar_1 Bar = "Foo-Bar"
+	Bar_Foo_1     Bar = "1Foo"
+	Bar__Foo      Bar = " Foo"
+	Bar__Foo_     Bar = " Foo "
+	Bar__Foo__1   Bar = "_Foo_"
+	Bar_Value_1   Bar = "1"
 )
 
-type Bar = BarSchemaComponent
-
 // #/paths//foo/get/responses/200/content/application/json/schema
-type FooGet200ApplicationJSONContentResponsePath = []Bar
-
-type GetFooJSONResponse = FooGet200ApplicationJSONContentResponsePath
+type GetFooJSONResponse = []Bar
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

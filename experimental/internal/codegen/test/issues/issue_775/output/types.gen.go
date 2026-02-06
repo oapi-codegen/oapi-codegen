@@ -12,35 +12,29 @@ import (
 )
 
 // #/components/schemas/TestObject
-type TestObjectSchemaComponent struct {
+type TestObject struct {
 	UUIDProperty *TestObjectUUIDProperty `json:"uuidProperty,omitempty" form:"uuidProperty,omitempty"`
 	DateProperty *TestObjectDateProperty `json:"dateProperty,omitempty" form:"dateProperty,omitempty"`
 }
 
-type TestObject = TestObjectSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestObjectSchemaComponent) ApplyDefaults() {
+func (s *TestObject) ApplyDefaults() {
 }
 
 // #/components/schemas/TestObject/properties/uuidProperty
-type TestObjectUUIDPropertyPropertySchemaComponent struct {
+type TestObjectUUIDProperty struct {
 }
 
-type TestObjectUUIDProperty = TestObjectUUIDPropertyPropertySchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestObjectUUIDPropertyPropertySchemaComponent) ApplyDefaults() {
+func (s *TestObjectUUIDProperty) ApplyDefaults() {
 }
 
 // #/components/schemas/TestObject/properties/dateProperty
-type TestObjectDatePropertyPropertySchemaComponent struct {
+type TestObjectDateProperty struct {
 }
 
-type TestObjectDateProperty = TestObjectDatePropertyPropertySchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *TestObjectDatePropertyPropertySchemaComponent) ApplyDefaults() {
+func (s *TestObjectDateProperty) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

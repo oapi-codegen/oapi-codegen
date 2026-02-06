@@ -89,31 +89,12 @@ func TestRequestBodyTypeAlias(t *testing.T) {
 	_ = newPet
 }
 
-// TestPetstoreTypeAliases verifies that short name aliases match their underlying types.
-func TestPetstoreTypeAliases(t *testing.T) {
-	// Pet alias should be assignable to/from PetSchemaComponent
-	var pet petstore.Pet
-	var petComponent petstore.PetSchemaComponent
-	pet = petComponent
-	petComponent = pet
-	_ = pet
-	_ = petComponent
-
-	// NewPet alias should be assignable to/from NewPetSchemaComponent
-	var newPet petstore.NewPet
-	var newPetComponent petstore.NewPetSchemaComponent
-	newPet = newPetComponent
-	newPetComponent = newPet
-	_ = newPet
-	_ = newPetComponent
-
-	// Error alias should be assignable to/from ErrorSchemaComponent
-	var errType petstore.Error
-	var errComponent petstore.ErrorSchemaComponent
-	errType = errComponent
-	errComponent = errType
-	_ = errType
-	_ = errComponent
+// TestPetstoreTypes verifies that generated types use short names directly.
+func TestPetstoreTypes(t *testing.T) {
+	// Types should be defined directly with short names (no SchemaComponent suffix)
+	var _ petstore.Pet
+	var _ petstore.NewPet
+	var _ petstore.Error
 }
 
 // TestClientHttpErrorImplementsError verifies ClientHttpError implements error interface.

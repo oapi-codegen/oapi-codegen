@@ -395,7 +395,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 					return "", fmt.Errorf("generating callback receiver errors: %w", err)
 				}
 				output.AddType(errors)
-				generatedErrors = true
+				generatedErrors = true //nolint:ineffassign // kept for symmetry with webhook loop below
 			}
 
 			receiverTemplates, err := getReceiverTemplates(cfg.Generation.Server)
@@ -526,36 +526,26 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		gen.AddJSONImport()
 
 		addPropsType := gen.AdditionalPropertiesType(desc)
-		structCode := GenerateStructWithAdditionalProps(desc.StableName, fields, addPropsType, doc, gen.TagGenerator())
+		structCode := GenerateStructWithAdditionalProps(desc.ShortName, fields, addPropsType, doc, gen.TagGenerator())
 
 		// Generate marshal/unmarshal methods
-		marshalCode := GenerateMixedPropertiesMarshal(desc.StableName, fields)
-		unmarshalCode := GenerateMixedPropertiesUnmarshal(desc.StableName, fields, addPropsType)
+		marshalCode := GenerateMixedPropertiesMarshal(desc.ShortName, fields)
+		unmarshalCode := GenerateMixedPropertiesUnmarshal(desc.ShortName, fields, addPropsType)
 
 		code := structCode + "\n" + marshalCode + "\n" + unmarshalCode
 
-		// If there's a short name different from stable name, generate an alias
-		if desc.ShortName != desc.StableName {
-			code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-		}
-
 		// Generate ApplyDefaults method if needed
-		if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
+		if applyDefaults := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
 			code += "\n" + applyDefaults
 		}
 
 		return code
 	}
 
-	code := GenerateStruct(desc.StableName, fields, doc, gen.TagGenerator())
-
-	// If there's a short name different from stable name, generate an alias
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
+	code := GenerateStruct(desc.ShortName, fields, doc, gen.TagGenerator())
 
 	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.StableName, fields); applyDefaults != "" {
+	if applyDefaults := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
 		code += "\n" + applyDefaults
 	}
 
@@ -566,12 +556,7 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 func generateMapAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	mapType := gen.GoTypeExpr(desc)
 	doc := extractDescription(desc.Schema)
-	code := GenerateTypeAlias(desc.StableName, mapType, doc)
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-	return code
+	return GenerateTypeAlias(desc.ShortName, mapType, doc)
 }
 
 // generateEnumType generates an enum type with const values.
@@ -601,25 +586,14 @@ func generateEnumType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	}
 
 	doc := extractDescription(schema)
-	// Use ShortName for const prefix (user-friendly name) but type definition uses StableName
-	code := GenerateEnumWithConstPrefix(desc.StableName, desc.ShortName, baseType, values, customNames, doc)
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-	return code
+	return GenerateEnumWithConstPrefix(desc.ShortName, desc.ShortName, baseType, values, customNames, doc)
 }
 
 // generateTypeAlias generates a simple type alias.
 func generateTypeAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	goType := gen.GoTypeExpr(desc)
 	doc := extractDescription(desc.Schema)
-	code := GenerateTypeAlias(desc.StableName, goType, doc)
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-	return code
+	return GenerateTypeAlias(desc.ShortName, goType, doc)
 }
 
 // generateTypeOverrideAlias generates a type alias to an external type specified via x-oapi-codegen-type-override.
@@ -636,12 +610,7 @@ func generateTypeOverrideAlias(gen *TypeGenerator, desc *SchemaDescriptor) strin
 	}
 
 	doc := extractDescription(desc.Schema)
-	code := GenerateTypeAlias(desc.StableName, override.TypeName, doc)
-
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-	return code
+	return GenerateTypeAlias(desc.ShortName, override.TypeName, doc)
 }
 
 // AllOfMergeError represents a conflict when merging allOf schemas.
@@ -783,19 +752,14 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	if len(unionFields) > 0 {
 		// Has union members - need custom marshal/unmarshal
 		gen.AddJSONImport()
-		code = generateAllOfStructWithUnions(desc.StableName, finalFields, unionFields, doc, gen.TagGenerator())
+		code = generateAllOfStructWithUnions(desc.ShortName, finalFields, unionFields, doc, gen.TagGenerator())
 	} else {
 		// Simple case - just flattened fields
-		code = GenerateStruct(desc.StableName, finalFields, doc, gen.TagGenerator())
-	}
-
-	// If there's a short name different from stable name, generate an alias
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
+		code = GenerateStruct(desc.ShortName, finalFields, doc, gen.TagGenerator())
 	}
 
 	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.StableName, finalFields); applyDefaults != "" {
+	if applyDefaults := GenerateApplyDefaults(desc.ShortName, finalFields); applyDefaults != "" {
 		code += "\n" + applyDefaults
 	}
 
@@ -956,18 +920,11 @@ func generateAnyOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	gen.AddJSONImport()
 
 	doc := extractDescription(desc.Schema)
-	structCode := GenerateUnionType(desc.StableName, members, false, doc)
+	code := GenerateUnionType(desc.ShortName, members, false, doc)
 
-	code := structCode
-
-	// If there's a short name different from stable name, generate an alias
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-
-	marshalCode := GenerateUnionMarshalAnyOf(desc.StableName, members)
-	unmarshalCode := GenerateUnionUnmarshalAnyOf(desc.StableName, members)
-	applyDefaultsCode := GenerateUnionApplyDefaults(desc.StableName, members)
+	marshalCode := GenerateUnionMarshalAnyOf(desc.ShortName, members)
+	unmarshalCode := GenerateUnionUnmarshalAnyOf(desc.ShortName, members)
+	applyDefaultsCode := GenerateUnionApplyDefaults(desc.ShortName, members)
 
 	code += "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
 
@@ -985,18 +942,11 @@ func generateOneOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	gen.AddJSONImports()
 
 	doc := extractDescription(desc.Schema)
-	structCode := GenerateUnionType(desc.StableName, members, true, doc)
+	code := GenerateUnionType(desc.ShortName, members, true, doc)
 
-	code := structCode
-
-	// If there's a short name different from stable name, generate an alias
-	if desc.ShortName != desc.StableName {
-		code += "\n" + GenerateTypeAlias(desc.ShortName, desc.StableName, "")
-	}
-
-	marshalCode := GenerateUnionMarshalOneOf(desc.StableName, members)
-	unmarshalCode := GenerateUnionUnmarshalOneOf(desc.StableName, members)
-	applyDefaultsCode := GenerateUnionApplyDefaults(desc.StableName, members)
+	marshalCode := GenerateUnionMarshalOneOf(desc.ShortName, members)
+	unmarshalCode := GenerateUnionUnmarshalOneOf(desc.ShortName, members)
+	applyDefaultsCode := GenerateUnionApplyDefaults(desc.ShortName, members)
 
 	code += "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
 

@@ -46,5 +46,5 @@ func TestTypeNameIsValid(t *testing.T) {
 	// This test passes if it compiles - the type N3GPPFooJSONResponse
 	// must be a valid Go identifier
 	var _ N3GPPFooJSONResponse
-	var _ N3GppFooGet200ApplicationJSONContentResponsePath
+	var _ N3GPPFooJSONResponse
 }

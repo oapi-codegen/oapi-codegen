@@ -40,7 +40,7 @@ func TestSkipExternalRefResolution(t *testing.T) {
 	require.NoError(t, err)
 
 	// The generated code should contain the Container struct with external type references
-	assert.Contains(t, code, "type ContainerSchemaComponent struct")
+	assert.Contains(t, code, "type Container struct")
 	assert.Contains(t, code, "ObjectA")
 	assert.Contains(t, code, "ObjectB")
 

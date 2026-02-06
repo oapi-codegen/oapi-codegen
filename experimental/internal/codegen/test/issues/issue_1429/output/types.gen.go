@@ -13,14 +13,12 @@ import (
 )
 
 // #/components/schemas/test
-type TestSchemaComponent struct {
+type Test struct {
 	TestAnyOf0 *TestAnyOf0
 	TestAnyOf1 *TestAnyOf1
 }
 
-type Test = TestSchemaComponent
-
-func (u TestSchemaComponent) MarshalJSON() ([]byte, error) {
+func (u Test) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 
 	if u.TestAnyOf0 != nil {
@@ -51,7 +49,7 @@ func (u TestSchemaComponent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(result)
 }
 
-func (u *TestSchemaComponent) UnmarshalJSON(data []byte) error {
+func (u *Test) UnmarshalJSON(data []byte) error {
 	var v0 TestAnyOf0
 	if err := json.Unmarshal(data, &v0); err == nil {
 		u.TestAnyOf0 = &v0
@@ -66,7 +64,7 @@ func (u *TestSchemaComponent) UnmarshalJSON(data []byte) error {
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *TestSchemaComponent) ApplyDefaults() {
+func (u *Test) ApplyDefaults() {
 	if u.TestAnyOf0 != nil {
 		u.TestAnyOf0.ApplyDefaults()
 	}
@@ -76,36 +74,30 @@ func (u *TestSchemaComponent) ApplyDefaults() {
 }
 
 // #/components/schemas/test/anyOf/0
-type Test0AnyOfSchemaComponent struct {
+type TestAnyOf0 struct {
 	FieldA *string `json:"fieldA,omitempty" form:"fieldA,omitempty"`
 }
 
-type TestAnyOf0 = Test0AnyOfSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *Test0AnyOfSchemaComponent) ApplyDefaults() {
+func (s *TestAnyOf0) ApplyDefaults() {
 }
 
 // #/components/schemas/test/anyOf/1
-type Test1AnyOfSchemaComponent struct {
+type TestAnyOf1 struct {
 	FieldA *string `json:"fieldA,omitempty" form:"fieldA,omitempty"`
 }
 
-type TestAnyOf1 = Test1AnyOfSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *Test1AnyOfSchemaComponent) ApplyDefaults() {
+func (s *TestAnyOf1) ApplyDefaults() {
 }
 
 // #/components/schemas/test/anyOf/1/properties/fieldA
-type Test1FieldAPropertyAnyOfSchemaComponent string
+type TestAnyOf1FieldA string
 
 const (
-	TestAnyOf1FieldA_foo Test1FieldAPropertyAnyOfSchemaComponent = "foo"
-	TestAnyOf1FieldA_bar Test1FieldAPropertyAnyOfSchemaComponent = "bar"
+	TestAnyOf1FieldA_foo TestAnyOf1FieldA = "foo"
+	TestAnyOf1FieldA_bar TestAnyOf1FieldA = "bar"
 )
-
-type TestAnyOf1FieldA = Test1FieldAPropertyAnyOfSchemaComponent
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

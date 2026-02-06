@@ -15,7 +15,7 @@ import (
 
 // #/components/schemas/PatchRequest
 // A request to patch an existing user object.
-type PatchRequestSchemaComponent struct {
+type PatchRequest struct {
 	SimpleRequiredNullable    SimpleRequiredNullable            `json:"simple_required_nullable" form:"simple_required_nullable"`
 	SimpleOptionalNullable    SimpleOptionalNullable            `json:"simple_optional_nullable,omitempty" form:"simple_optional_nullable,omitempty"`
 	SimpleOptionalNonNullable *any                              `json:"simple_optional_non_nullable,omitempty" form:"simple_optional_non_nullable,omitempty"`
@@ -24,7 +24,7 @@ type PatchRequestSchemaComponent struct {
 	AdditionalProperties      map[string]any                    `json:"-"`
 }
 
-func (s PatchRequestSchemaComponent) MarshalJSON() ([]byte, error) {
+func (s PatchRequest) MarshalJSON() ([]byte, error) {
 	result := make(map[string]any)
 
 	result["simple_required_nullable"] = s.SimpleRequiredNullable
@@ -43,7 +43,7 @@ func (s PatchRequestSchemaComponent) MarshalJSON() ([]byte, error) {
 	return json.Marshal(result)
 }
 
-func (s *PatchRequestSchemaComponent) UnmarshalJSON(data []byte) error {
+func (s *PatchRequest) UnmarshalJSON(data []byte) error {
 	// Known fields
 	knownFields := map[string]bool{
 		"simple_required_nullable":     true,
@@ -101,47 +101,37 @@ func (s *PatchRequestSchemaComponent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-type PatchRequest = PatchRequestSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PatchRequestSchemaComponent) ApplyDefaults() {
+func (s *PatchRequest) ApplyDefaults() {
 }
 
 // #/components/schemas/simple_required_nullable
 // Simple required and nullable
-type SimpleRequiredNullableSchemaComponent = Nullable[int]
-
-type SimpleRequiredNullable = SimpleRequiredNullableSchemaComponent
+type SimpleRequiredNullable = Nullable[int]
 
 // #/components/schemas/simple_optional_nullable
 // Simple optional and nullable
-type SimpleOptionalNullableSchemaComponent = Nullable[int]
-
-type SimpleOptionalNullable = SimpleOptionalNullableSchemaComponent
+type SimpleOptionalNullable = Nullable[int]
 
 // #/components/schemas/complex_required_nullable
 // Complex required and nullable
-type ComplexRequiredNullableSchemaComponent struct {
+type ComplexRequiredNullable struct {
 	Name *string `json:"name,omitempty" form:"name,omitempty"` // Optional and non nullable
 }
 
-type ComplexRequiredNullable = ComplexRequiredNullableSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ComplexRequiredNullableSchemaComponent) ApplyDefaults() {
+func (s *ComplexRequiredNullable) ApplyDefaults() {
 }
 
 // #/components/schemas/complex_optional_nullable
 // Complex, optional and nullable
-type ComplexOptionalNullableSchemaComponent struct {
+type ComplexOptionalNullable struct {
 	AliasName Nullable[string] `json:"alias_name,omitempty" form:"alias_name,omitempty"` // Optional and nullable
 	Name      *string          `json:"name,omitempty" form:"name,omitempty"`             // Optional and non nullable
 }
 
-type ComplexOptionalNullable = ComplexOptionalNullableSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ComplexOptionalNullableSchemaComponent) ApplyDefaults() {
+func (s *ComplexOptionalNullable) ApplyDefaults() {
 }
 
 // Nullable is a generic type that can distinguish between:

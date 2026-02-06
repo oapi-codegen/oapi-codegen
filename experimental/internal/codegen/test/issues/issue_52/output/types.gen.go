@@ -12,37 +12,29 @@ import (
 )
 
 // #/components/schemas/Document
-type DocumentSchemaComponent struct {
+type Document struct {
 	Fields map[string]any `json:"fields,omitempty" form:"fields,omitempty"`
 }
 
-type Document = DocumentSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *DocumentSchemaComponent) ApplyDefaults() {
+func (s *Document) ApplyDefaults() {
 }
 
 // #/components/schemas/Document/properties/fields
-type DocumentFieldsPropertySchemaComponent = map[string]any
-
-type DocumentFields = DocumentFieldsPropertySchemaComponent
+type DocumentFields = map[string]any
 
 // #/components/schemas/Value
-type ValueSchemaComponent struct {
+type Value struct {
 	StringValue *string     `json:"stringValue,omitempty" form:"stringValue,omitempty"`
 	ArrayValue  *ArrayValue `json:"arrayValue,omitempty" form:"arrayValue,omitempty"`
 }
 
-type Value = ValueSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ValueSchemaComponent) ApplyDefaults() {
+func (s *Value) ApplyDefaults() {
 }
 
 // #/components/schemas/ArrayValue
-type ArrayValueSchemaComponent = []Value
-
-type ArrayValue = ArrayValueSchemaComponent
+type ArrayValue = []Value
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

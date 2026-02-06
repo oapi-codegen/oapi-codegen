@@ -13,27 +13,23 @@ import (
 )
 
 // #/components/schemas/Registration
-type RegistrationSchemaComponent struct {
+type Registration struct {
 	State *RegistrationState `json:"state,omitempty" form:"state,omitempty"`
 }
 
-type Registration = RegistrationSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *RegistrationSchemaComponent) ApplyDefaults() {
+func (s *Registration) ApplyDefaults() {
 }
 
 // #/components/schemas/Registration/properties/state
-type RegistrationStatePropertySchemaComponent struct {
+type RegistrationState struct {
 	RegistrationStateOneOf0 *RegistrationStateOneOf0
 	RegistrationStateOneOf1 *RegistrationStateOneOf1
 	RegistrationStateOneOf2 *RegistrationStateOneOf2
 	RegistrationStateOneOf3 *RegistrationStateOneOf3
 }
 
-type RegistrationState = RegistrationStatePropertySchemaComponent
-
-func (u RegistrationStatePropertySchemaComponent) MarshalJSON() ([]byte, error) {
+func (u RegistrationState) MarshalJSON() ([]byte, error) {
 	var count int
 	var data []byte
 	var err error
@@ -68,13 +64,13 @@ func (u RegistrationStatePropertySchemaComponent) MarshalJSON() ([]byte, error) 
 	}
 
 	if count != 1 {
-		return nil, fmt.Errorf("RegistrationStatePropertySchemaComponent: exactly one member must be set, got %d", count)
+		return nil, fmt.Errorf("RegistrationState: exactly one member must be set, got %d", count)
 	}
 
 	return data, nil
 }
 
-func (u *RegistrationStatePropertySchemaComponent) UnmarshalJSON(data []byte) error {
+func (u *RegistrationState) UnmarshalJSON(data []byte) error {
 	var successCount int
 
 	var v0 RegistrationStateOneOf0
@@ -102,51 +98,43 @@ func (u *RegistrationStatePropertySchemaComponent) UnmarshalJSON(data []byte) er
 	}
 
 	if successCount != 1 {
-		return fmt.Errorf("RegistrationStatePropertySchemaComponent: expected exactly one type to match, got %d", successCount)
+		return fmt.Errorf("RegistrationState: expected exactly one type to match, got %d", successCount)
 	}
 
 	return nil
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (u *RegistrationStatePropertySchemaComponent) ApplyDefaults() {
+func (u *RegistrationState) ApplyDefaults() {
 }
 
 // #/components/schemas/Registration/properties/state/oneOf/0
-type RegistrationState0OneOfPropertySchemaComponent string
+type RegistrationStateOneOf0 string
 
 const (
-	RegistrationStateOneOf0_undefined RegistrationState0OneOfPropertySchemaComponent = "undefined"
+	RegistrationStateOneOf0_undefined RegistrationStateOneOf0 = "undefined"
 )
-
-type RegistrationStateOneOf0 = RegistrationState0OneOfPropertySchemaComponent
 
 // #/components/schemas/Registration/properties/state/oneOf/1
-type RegistrationState1OneOfPropertySchemaComponent string
+type RegistrationStateOneOf1 string
 
 const (
-	RegistrationStateOneOf1_registered RegistrationState1OneOfPropertySchemaComponent = "registered"
+	RegistrationStateOneOf1_registered RegistrationStateOneOf1 = "registered"
 )
-
-type RegistrationStateOneOf1 = RegistrationState1OneOfPropertySchemaComponent
 
 // #/components/schemas/Registration/properties/state/oneOf/2
-type RegistrationState2OneOfPropertySchemaComponent string
+type RegistrationStateOneOf2 string
 
 const (
-	RegistrationStateOneOf2_pending RegistrationState2OneOfPropertySchemaComponent = "pending"
+	RegistrationStateOneOf2_pending RegistrationStateOneOf2 = "pending"
 )
-
-type RegistrationStateOneOf2 = RegistrationState2OneOfPropertySchemaComponent
 
 // #/components/schemas/Registration/properties/state/oneOf/3
-type RegistrationState3OneOfPropertySchemaComponent string
+type RegistrationStateOneOf3 string
 
 const (
-	RegistrationStateOneOf3_active RegistrationState3OneOfPropertySchemaComponent = "active"
+	RegistrationStateOneOf3_active RegistrationStateOneOf3 = "active"
 )
-
-type RegistrationStateOneOf3 = RegistrationState3OneOfPropertySchemaComponent
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var swaggerSpecJSON = []string{

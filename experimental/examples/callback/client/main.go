@@ -125,10 +125,10 @@ func main() {
 
 		var accepted treefarm.TreeWithID
 		if err := json.NewDecoder(resp.Body).Decode(&accepted); err != nil {
-			resp.Body.Close()
+			_ = resp.Body.Close()
 			log.Fatalf("Failed to decode response: %v", err)
 		}
-		resp.Body.Close()
+		_ = resp.Body.Close()
 
 		receiver.Register(accepted.ID.String(), i+1)
 		log.Printf("Planted tree %d/%d: id=%s kind=%q location=%q",

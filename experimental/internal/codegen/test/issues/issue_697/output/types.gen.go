@@ -12,27 +12,23 @@ import (
 )
 
 // #/components/schemas/YBase
-type YBaseSchemaComponent struct {
+type YBase struct {
 	BaseField *string `json:"baseField,omitempty" form:"baseField,omitempty"`
 }
 
-type YBase = YBaseSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *YBaseSchemaComponent) ApplyDefaults() {
+func (s *YBase) ApplyDefaults() {
 }
 
 // #/components/schemas/X
-type XSchemaComponent struct {
+type X struct {
 	A         *string `json:"a,omitempty" form:"a,omitempty"`
 	B         *int    `json:"b,omitempty" form:"b,omitempty"`
 	BaseField *string `json:"baseField,omitempty" form:"baseField,omitempty"`
 }
 
-type X = XSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *XSchemaComponent) ApplyDefaults() {
+func (s *X) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

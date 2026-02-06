@@ -90,7 +90,7 @@ func (tf *TreeFarm) plantAndNotify(id uuid.UUID, req treefarm.TreePlantingReques
 		log.Printf("Callback to %s failed: %v", req.CallbackURL, err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	log.Printf("Callback to %s returned status %d", req.CallbackURL, resp.StatusCode)
 }

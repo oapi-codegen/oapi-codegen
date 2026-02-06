@@ -25,59 +25,49 @@ import (
 )
 
 // #/components/schemas/WebhookRegistration
-type WebhookRegistrationSchemaComponent struct {
+type WebhookRegistration struct {
 	URL string `json:"url" form:"url"` // URL to receive webhook events
 }
 
-type WebhookRegistration = WebhookRegistrationSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *WebhookRegistrationSchemaComponent) ApplyDefaults() {
+func (s *WebhookRegistration) ApplyDefaults() {
 }
 
 // #/components/schemas/WebhookRegistrationResponse
-type WebhookRegistrationResponseSchemaComponent struct {
+type WebhookRegistrationResponse struct {
 	ID UUID `json:"id" form:"id"` // Unique identifier for this webhook registration
 }
 
-type WebhookRegistrationResponse = WebhookRegistrationResponseSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *WebhookRegistrationResponseSchemaComponent) ApplyDefaults() {
+func (s *WebhookRegistrationResponse) ApplyDefaults() {
 }
 
 // #/components/schemas/Person
-type PersonSchemaComponent struct {
+type Person struct {
 	Name string `json:"name" form:"name"` // Name of the person who badged in or out
 }
 
-type Person = PersonSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *PersonSchemaComponent) ApplyDefaults() {
+func (s *Person) ApplyDefaults() {
 }
 
 // #/components/schemas/Error
-type ErrorSchemaComponent struct {
+type Error struct {
 	Code    int32  `json:"code" form:"code"`       // Error code
 	Message string `json:"message" form:"message"` // Error message
 }
 
-type Error = ErrorSchemaComponent
-
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ErrorSchemaComponent) ApplyDefaults() {
+func (s *Error) ApplyDefaults() {
 }
 
 // #/paths//api/webhook/{kind}/post/parameters/0/schema
-type APIWebhookKindPost0ParameterPath string
+type PostAPIWebhookKindParameter string
 
 const (
-	PostAPIWebhookKindParameter_enterEvent APIWebhookKindPost0ParameterPath = "enterEvent"
-	PostAPIWebhookKindParameter_exitEvent  APIWebhookKindPost0ParameterPath = "exitEvent"
+	PostAPIWebhookKindParameter_enterEvent PostAPIWebhookKindParameter = "enterEvent"
+	PostAPIWebhookKindParameter_exitEvent  PostAPIWebhookKindParameter = "exitEvent"
 )
-
-type PostAPIWebhookKindParameter = APIWebhookKindPost0ParameterPath
 
 type UUID = uuid.UUID
 
