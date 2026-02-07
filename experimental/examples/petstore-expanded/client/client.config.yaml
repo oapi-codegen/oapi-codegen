@@ -1,8 +1,0 @@
-package: client
-output: client.gen.go
-generation:
-  client: true
-  simple-client: true
-  models-package:
-    path: github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded
-    alias: petstore
