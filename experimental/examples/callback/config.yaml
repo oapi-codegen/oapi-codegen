@@ -1,0 +1,6 @@
+package: treefarm
+output: treefarm.gen.go
+generation:
+  callback-initiator: true
+  callback-receiver: true
+  server: std-http

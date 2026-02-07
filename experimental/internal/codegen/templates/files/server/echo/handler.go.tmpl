@@ -1,0 +1,35 @@
+{{- /*
+  This template generates the HTTP handler and routing for Echo v5 servers.
+  Input: []OperationDescriptor
+*/ -}}
+
+// EchoRouter is an interface for echo.Echo and echo.Group.
+type EchoRouter interface {
+	Add(method string, path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+}
+
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithBaseURL(router, si, "")
+}
+
+// RegisterHandlersWithBaseURL adds each server route to the EchoRouter with a base URL prefix.
+func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+{{ if . }}
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+{{ end }}
+{{- range . }}
+	router.{{ .Method }}(baseURL+"{{ pathToEchoPattern .Path }}", wrapper.{{ .GoOperationID }})
+{{- end }}
+}

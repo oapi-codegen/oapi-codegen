@@ -1,0 +1,39 @@
+# Issue 2102: allOf with properties at same level - properties are ignored
+# https://github.com/oapi-codegen/oapi-codegen/issues/2102
+#
+# When a schema has both `properties` and `allOf` at the same level,
+# the properties defined directly on the schema should be merged with
+# the properties from the allOf references.
+openapi: 3.0.0
+info:
+  title: Issue 2102 Test
+  version: 1.0.0
+paths:
+  /bar:
+    get:
+      summary: bar
+      responses:
+        "200":
+          description: bar
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bar'
+components:
+  schemas:
+    Foo:
+      type: object
+      required:
+        - foo
+      properties:
+        foo:
+          type: string
+    Bar:
+      type: object
+      properties:
+        bar:
+          type: string
+      allOf:
+        - $ref: '#/components/schemas/Foo'
+        - required:
+            - bar

@@ -19,34 +19,34 @@ lint: tools
 	# run the root module explicitly, to prevent recursive calls by re-invoking `make ...` top-level
 	$(GOBIN)/golangci-lint run ./...
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh lint
 
 lint-ci: tools
 	# for the root module, explicitly run the step, to prevent recursive calls
 	$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint-ci'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh lint-ci
 
 generate:
 	# for the root module, explicitly run the step, to prevent recursive calls
 	go generate ./...
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make generate'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh generate
 
 test:
 	# for the root module, explicitly run the step, to prevent recursive calls
 	go test -cover ./...
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make test'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh test
 
 tidy:
 	# for the root module, explicitly run the step, to prevent recursive calls
 	go mod tidy
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh tidy
 
 tidy-ci:
 	# for the root module, explicitly run the step, to prevent recursive calls
 	tidied -verbose
 	# then, for all child modules, use a module-managed `Makefile`
-	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy-ci'
+	GOBIN=$(GOBIN) ./scripts/foreach-module.sh tidy-ci

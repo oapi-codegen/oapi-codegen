@@ -1,0 +1,145 @@
+{{/* BindFormExplodeParam - form style with explode */}}
+
+// BindFormExplodeParam binds a form-style parameter with explode to a destination.
+// Form style is the default for query and cookie parameters.
+// This handles the exploded case where arrays come as multiple query params.
+// Arrays: ?param=a&param=b -> []string{"a", "b"} (values passed as slice)
+// Objects: ?key1=value1&key2=value2 -> struct{Key1, Key2} (queryParams passed)
+func BindFormExplodeParam(paramName string, required bool, queryParams url.Values, dest interface{}) error {
+	dv := reflect.Indirect(reflect.ValueOf(dest))
+	v := dv
+	var output interface{}
+
+	if required {
+		output = dest
+	} else {
+		// For optional parameters, allocate if nil
+		if v.IsNil() {
+			t := v.Type()
+			newValue := reflect.New(t.Elem())
+			output = newValue.Interface()
+		} else {
+			output = v.Interface()
+		}
+		v = reflect.Indirect(reflect.ValueOf(output))
+	}
+
+	t := v.Type()
+	k := t.Kind()
+
+	values, found := queryParams[paramName]
+
+	switch k {
+	case reflect.Slice:
+		if !found {
+			if required {
+				return fmt.Errorf("query parameter '%s' is required", paramName)
+			}
+			return nil
+		}
+		err := bindSplitPartsToDestinationArray(values, output)
+		if err != nil {
+			return err
+		}
+	case reflect.Struct:
+		// For exploded objects, fields are spread across query params
+		fieldsPresent, err := bindParamsToExplodedObject(paramName, queryParams, output)
+		if err != nil {
+			return err
+		}
+		if !fieldsPresent {
+			return nil
+		}
+	default:
+		// Primitive
+		if len(values) == 0 {
+			if required {
+				return fmt.Errorf("query parameter '%s' is required", paramName)
+			}
+			return nil
+		}
+		if len(values) != 1 {
+			return fmt.Errorf("multiple values for single value parameter '%s'", paramName)
+		}
+		if !found {
+			if required {
+				return fmt.Errorf("query parameter '%s' is required", paramName)
+			}
+			return nil
+		}
+		err := BindStringToObject(values[0], output)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !required {
+		dv.Set(reflect.ValueOf(output))
+	}
+	return nil
+}
+
+// bindParamsToExplodedObject binds query params to struct fields for exploded objects.
+func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) (bool, error) {
+	binder, v, t := indirectBinder(dest)
+	if binder != nil {
+		_, found := values[paramName]
+		if !found {
+			return false, nil
+		}
+		return true, BindStringToObject(values.Get(paramName), dest)
+	}
+	if t.Kind() != reflect.Struct {
+		return false, fmt.Errorf("unmarshaling query arg '%s' into wrong type", paramName)
+	}
+
+	fieldsPresent := false
+	for i := 0; i < t.NumField(); i++ {
+		fieldT := t.Field(i)
+		if !v.Field(i).CanSet() {
+			continue
+		}
+
+		tag := fieldT.Tag.Get("json")
+		fieldName := fieldT.Name
+		if tag != "" {
+			tagParts := strings.Split(tag, ",")
+			if tagParts[0] != "" {
+				fieldName = tagParts[0]
+			}
+		}
+
+		fieldVal, found := values[fieldName]
+		if found {
+			if len(fieldVal) != 1 {
+				return false, fmt.Errorf("field '%s' specified multiple times for param '%s'", fieldName, paramName)
+			}
+			err := BindStringToObject(fieldVal[0], v.Field(i).Addr().Interface())
+			if err != nil {
+				return false, fmt.Errorf("could not bind query arg '%s': %w", paramName, err)
+			}
+			fieldsPresent = true
+		}
+	}
+	return fieldsPresent, nil
+}
+
+// indirectBinder checks if dest implements Binder and returns reflect values.
+func indirectBinder(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
+	v := reflect.ValueOf(dest)
+	if v.Type().NumMethod() > 0 && v.CanInterface() {
+		if u, ok := v.Interface().(Binder); ok {
+			return u, reflect.Value{}, nil
+		}
+	}
+	v = reflect.Indirect(v)
+	t := v.Type()
+	// Handle special types like time.Time and Date
+	if t.ConvertibleTo(reflect.TypeOf(time.Time{})) {
+		return dest, reflect.Value{}, nil
+	}
+	if t.ConvertibleTo(reflect.TypeOf(Date{})) {
+		return dest, reflect.Value{}, nil
+	}
+	return nil, v, t
+}
