@@ -31,6 +31,9 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		return "", fmt.Errorf("gathering schemas: %w", err)
 	}
 
+	// Filter excluded schemas
+	schemas = FilterSchemasByName(schemas, cfg.OutputOptions.ExcludeSchemas)
+
 	// Pass 2: Compute names for all schemas
 	converter := NewNameConverter(cfg.NameMangling, cfg.NameSubstitutions)
 	ComputeSchemaNames(schemas, converter, contentTypeNamer)
@@ -102,6 +105,9 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
 
+		// Apply operation filters
+		ops = FilterOperations(ops, cfg.OutputOptions)
+
 		// Generate client
 		clientGen, err := NewClientGenerator(schemaIndex, cfg.Generation.SimpleClient, cfg.Generation.ModelsPackage)
 		if err != nil {
@@ -157,6 +163,9 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		if err != nil {
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
+
+		// Apply operation filters
+		ops = FilterOperations(ops, cfg.OutputOptions)
 
 		if len(ops) > 0 {
 			// Generate server
