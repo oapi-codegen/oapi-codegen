@@ -1,6 +1,0 @@
-package: server
-generation:
-  server: chi
-  models-package:
-    path: github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded
-    alias: petstore
