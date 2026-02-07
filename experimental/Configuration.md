@@ -37,26 +37,6 @@ generation:
     path: github.com/org/project/models
     alias: models  # optional, defaults to last segment of path
 
-# Output options: control which operations and schemas are included.
-output-options:
-  # Only include operations tagged with one of these tags. Ignored when empty.
-  include-tags:
-    - public
-    - beta
-  # Exclude operations tagged with one of these tags. Ignored when empty.
-  exclude-tags:
-    - internal
-  # Only include operations with one of these operation IDs. Ignored when empty.
-  include-operation-ids:
-    - listPets
-    - createPet
-  # Exclude operations with one of these operation IDs. Ignored when empty.
-  exclude-operation-ids:
-    - deprecatedEndpoint
-  # Exclude schemas with the given names from generation. Ignored when empty.
-  exclude-schemas:
-    - InternalConfig
-
 # Type mappings: OpenAPI type/format to Go type.
 # User values are merged on top of defaults — you only need to specify overrides.
 type-mapping:
