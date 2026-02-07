@@ -4,5 +4,5 @@ generation:
   client: true
   simple-client: true
   models-package:
-    path: github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded
+    path: github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded
     alias: petstore

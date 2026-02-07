@@ -3,13 +3,13 @@
 package packagea
 
 import (
-	ext_a5fddf6c "github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packageb"
+	ext_b892eff9 "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb"
 )
 
 // #/components/schemas/ObjectA
 type ObjectASchemaComponent struct {
 	Name    *string               `json:"name,omitempty" form:"name,omitempty"`
-	ObjectB *ext_a5fddf6c.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
+	ObjectB *ext_b892eff9.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.

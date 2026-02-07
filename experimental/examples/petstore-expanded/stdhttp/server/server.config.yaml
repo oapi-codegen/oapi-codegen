@@ -3,5 +3,5 @@ output: server.gen.go
 generation:
   server: std-http
   models-package:
-    path: github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded
+    path: github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded
     alias: petstore

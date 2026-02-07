@@ -13,7 +13,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/chi/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/chi/server"
 )
 
 func main() {

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	treefarm "github.com/oapi-codegen/oapi-codegen/experimental/examples/callback"
+	treefarm "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/callback"
 )
 
 // trees and cities for our planting requests

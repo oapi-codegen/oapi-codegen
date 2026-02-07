@@ -1,4 +1,4 @@
-//go:generate go run github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen -config config.yaml door-badge-reader.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen-exp/experimental/cmd/oapi-codegen -config config.yaml door-badge-reader.yaml
 
 // Package doorbadge provides an example of OpenAPI 3.1 webhooks.
 // A door badge reader server generates random enter/exit events and

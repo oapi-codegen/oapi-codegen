@@ -156,9 +156,9 @@ runtime helper.
 
 Go 1.24 is required, install like so:
 
-    go get -tool github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen@latest
+    go get -tool github.com/oapi-codegen/oapi-codegen-exp/experimental/cmd/oapi-codegen@latest
 
 You can then run the code generator
 
-    //go:generate go run github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen
+    //go:generate go run github.com/oapi-codegen/oapi-codegen-exp/experimental/cmd/oapi-codegen
 

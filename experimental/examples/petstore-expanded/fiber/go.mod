@@ -1,11 +1,11 @@
-module github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/fiber
+module github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/fiber
 
 go 1.24.0
 
 require (
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/google/uuid v1.6.0
-	github.com/oapi-codegen/oapi-codegen/experimental v0.0.0
+	github.com/oapi-codegen/oapi-codegen-exp/experimental v0.0.0
 )
 
 require (
@@ -28,4 +28,4 @@ require (
 	golang.org/x/text v0.33.0 // indirect
 )
 
-replace github.com/oapi-codegen/oapi-codegen/experimental => ../../../
+replace github.com/oapi-codegen/oapi-codegen-exp/experimental => ../../../

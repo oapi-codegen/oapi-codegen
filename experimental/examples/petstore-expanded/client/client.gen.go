@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
+	petstore "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded"
 	"io"
 	"net/http"
 	"net/url"

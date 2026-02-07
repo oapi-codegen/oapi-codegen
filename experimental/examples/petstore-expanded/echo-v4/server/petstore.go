@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/labstack/echo/v4"
-	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
+	petstore "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded"
 )
 
 // PetStore implements the ServerInterface.

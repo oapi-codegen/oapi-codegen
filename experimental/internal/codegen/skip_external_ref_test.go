@@ -31,8 +31,8 @@ func TestSkipExternalRefResolution(t *testing.T) {
 	cfg := Configuration{
 		PackageName: "externalref",
 		ImportMapping: map[string]string{
-			"./packagea/spec.yaml": "github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packagea",
-			"./packageb/spec.yaml": "github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packageb",
+			"./packagea/spec.yaml": "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packagea",
+			"./packageb/spec.yaml": "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb",
 		},
 	}
 
@@ -45,12 +45,12 @@ func TestSkipExternalRefResolution(t *testing.T) {
 	assert.Contains(t, code, "ObjectB")
 
 	// Should reference the external packages via hashed aliases
-	assert.Contains(t, code, "ext_95d82e90")
-	assert.Contains(t, code, "ext_a5fddf6c")
+	assert.Contains(t, code, "ext_934ff11d")
+	assert.Contains(t, code, "ext_b892eff9")
 
 	// Should contain the import declarations
-	assert.Contains(t, code, `"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packagea"`)
-	assert.Contains(t, code, `"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packageb"`)
+	assert.Contains(t, code, `"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packagea"`)
+	assert.Contains(t, code, `"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb"`)
 
 	// Should NOT contain "any" as a fallback type for the external refs
 	// (which would indicate the refs weren't properly detected)

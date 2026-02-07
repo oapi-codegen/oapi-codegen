@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/templates"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/templates"
 )
 
 // ClientGenerator generates client code from operation descriptors.

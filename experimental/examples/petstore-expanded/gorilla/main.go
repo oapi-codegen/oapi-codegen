@@ -13,7 +13,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/gorilla/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/gorilla/server"
 )
 
 func main() {

@@ -12,7 +12,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/stdhttp/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/stdhttp/server"
 )
 
 func main() {

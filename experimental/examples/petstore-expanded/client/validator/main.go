@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/client"
+	petstore "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/client"
 )
 
 func ptr[T any](v T) *T { return &v }

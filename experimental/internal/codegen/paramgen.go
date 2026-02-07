@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/templates"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/templates"
 )
 
 // ParamUsageTracker tracks which parameter styling and binding functions
