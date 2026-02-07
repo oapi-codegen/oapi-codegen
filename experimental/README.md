@@ -151,6 +151,11 @@ audit requirements. V3 embeds all necessary helper functions and helper types in
 handle arbitrary parameters, but rather very specific functions for each kind of parameter, and we call the correct little helper versus a generic
 runtime helper.
 
+### ClientWithResponses no longer exists.
+
+Client code now has two layers, the regular `Client` which returns `http.Response` and a new `SimpleClient`, which, for API endpoints which have a
+single `Content-Type` in their `responses`. The `SimpleClient` is a subset of the operations in `Client` which meet this restriction. It's really hard
+to come up with a nice representation of multiple possible return values, so we decided to punt the solution to this problem to a future version (if at all).
 
 ## Installation
 
