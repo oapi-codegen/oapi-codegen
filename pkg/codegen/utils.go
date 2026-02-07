@@ -1095,6 +1095,36 @@ func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
 }
 
+// OperationsGroupedByTags for a given slice of operations return the same operations grouped by its tags.
+// The operations without tags are grouped under the "Default" key.
+func OperationsGroupedByTags(ops []OperationDefinition) map[string][]OperationDefinition {
+	opsMap := map[string][]OperationDefinition{}
+	for _, op := range ops {
+		tags := op.Spec.Tags
+		if len(tags) == 0 {
+			eop, ok := opsMap["Default"]
+			if !ok {
+				opsMap["Default"] = []OperationDefinition{op}
+			} else {
+				eop = append(eop, op)
+				opsMap["Default"] = eop
+			}
+		}
+		for _, tag := range tags {
+			normalizedTag := nameNormalizer(tag)
+			eop, ok := opsMap[normalizedTag]
+			// Create new slice
+			if !ok {
+				opsMap[normalizedTag] = []OperationDefinition{op}
+			} else {
+				eop = append(eop, op)
+				opsMap[normalizedTag] = eop
+			}
+		}
+	}
+	return opsMap
+}
+
 // isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
 func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 	if s.AdditionalProperties.Has == nil {

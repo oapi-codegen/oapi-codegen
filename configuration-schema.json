@@ -252,8 +252,11 @@
           "type": "boolean",
           "description": "Allows disabling the generation of an 'optional pointer' for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check. A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
           "default": false
+        },
+        "group-by-tag": {
+          "type": "boolean",
+          "description": "Generate a type with the operations grouped per tag"
         }
-      }
     },
     "import-mapping": {
       "type": "object",

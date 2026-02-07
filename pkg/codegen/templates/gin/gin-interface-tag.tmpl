@@ -1,0 +1,16 @@
+// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{range $tag, $ops := .}}
+{{$tag}}API
+{{end}}
+}
+
+{{range $tag, $ops := .}}
+// {{$tag}}API handlers for tag {{$tag}}
+type {{$tag}}API interface {
+{{range $op := $ops}}{{$op.SummaryAsComment }}
+// ({{$op.Method}} {{$op.Path}})
+{{$op.OperationId}}(c *gin.Context{{genParamArgs $op.PathParams}}{{if $op.RequiresParamObject}}, params {{$op.OperationId}}Params{{end}})
+{{end}}
+}
+{{end}}
