@@ -5,10 +5,10 @@
 // This handles the exploded case where arrays come as multiple query params.
 // Arrays: ?param=a&param=b -> []string{"a", "b"} (values passed as slice)
 // Objects: ?key1=value1&key2=value2 -> struct{Key1, Key2} (queryParams passed)
-func BindFormExplodeParam(paramName string, required bool, queryParams url.Values, dest interface{}) error {
+func BindFormExplodeParam(paramName string, required bool, queryParams url.Values, dest any) error {
 	dv := reflect.Indirect(reflect.ValueOf(dest))
 	v := dv
-	var output interface{}
+	var output any
 
 	if required {
 		output = dest
@@ -80,7 +80,7 @@ func BindFormExplodeParam(paramName string, required bool, queryParams url.Value
 }
 
 // bindParamsToExplodedObject binds query params to struct fields for exploded objects.
-func bindParamsToExplodedObject(paramName string, values url.Values, dest interface{}) (bool, error) {
+func bindParamsToExplodedObject(paramName string, values url.Values, dest any) (bool, error) {
 	binder, v, t := indirectBinder(dest)
 	if binder != nil {
 		_, found := values[paramName]
@@ -125,7 +125,7 @@ func bindParamsToExplodedObject(paramName string, values url.Values, dest interf
 }
 
 // indirectBinder checks if dest implements Binder and returns reflect values.
-func indirectBinder(dest interface{}) (interface{}, reflect.Value, reflect.Type) {
+func indirectBinder(dest any) (any, reflect.Value, reflect.Type) {
 	v := reflect.ValueOf(dest)
 	if v.Type().NumMethod() > 0 && v.CanInterface() {
 		if u, ok := v.Interface().(Binder); ok {

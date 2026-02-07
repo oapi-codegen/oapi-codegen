@@ -811,12 +811,12 @@ func schemaProxyToDescriptor(proxy *base.SchemaProxy) *SchemaDescriptor {
 // This is a simplified version for parameter types.
 func schemaToGoType(schema *base.Schema) string {
 	if schema == nil {
-		return "interface{}"
+		return "any"
 	}
 
 	// Check for array
 	if schema.Items != nil && schema.Items.A != nil {
-		itemType := "interface{}"
+		itemType := "any"
 		if itemSchema := schema.Items.A.Schema(); itemSchema != nil {
 			itemType = schemaToGoType(itemSchema)
 		}
@@ -854,11 +854,11 @@ func schemaToGoType(schema *base.Schema) string {
 			return "bool"
 		case "array":
 			// Handled above
-			return "[]interface{}"
+			return "[]any"
 		case "object":
-			return "map[string]interface{}"
+			return "map[string]any"
 		}
 	}
 
-	return "interface{}"
+	return "any"
 }

@@ -378,7 +378,7 @@ func (d Date) Format(layout string) string {
 // primitiveToString converts a primitive value to a string representation.
 // It handles basic Go types, time.Time, types.Date, and types that implement
 // json.Marshaler or fmt.Stringer.
-func primitiveToString(value interface{}) (string, error) {
+func primitiveToString(value any) (string, error) {
 	// Check for known types first (time, date, uuid)
 	if res, ok := marshalKnownTypes(value); ok {
 		return res, nil
@@ -418,7 +418,7 @@ func primitiveToString(value interface{}) (string, error) {
 			}
 			e := json.NewDecoder(bytes.NewReader(buf))
 			e.UseNumber()
-			var i2 interface{}
+			var i2 any
 			if err = e.Decode(&i2); err != nil {
 				return "", fmt.Errorf("failed to decode JSON: %w", err)
 			}
@@ -434,7 +434,7 @@ func primitiveToString(value interface{}) (string, error) {
 }
 
 // marshalKnownTypes checks for special types (time.Time, Date, UUID) and marshals them.
-func marshalKnownTypes(value interface{}) (string, bool) {
+func marshalKnownTypes(value any) (string, bool) {
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 
@@ -496,7 +496,7 @@ func sortedKeys(m map[string]string) []string {
 
 // BindStringToObject binds a string value to a destination object.
 // It handles primitives, encoding.TextUnmarshaler, and the Binder interface.
-func BindStringToObject(src string, dst interface{}) error {
+func BindStringToObject(src string, dst any) error {
 	// Check for TextUnmarshaler
 	if tu, ok := dst.(encoding.TextUnmarshaler); ok {
 		return tu.UnmarshalText([]byte(src))
@@ -548,7 +548,7 @@ func BindStringToObject(src string, dst interface{}) error {
 }
 
 // bindSplitPartsToDestinationArray binds a slice of string parts to a destination slice.
-func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
+func bindSplitPartsToDestinationArray(parts []string, dest any) error {
 	v := reflect.Indirect(reflect.ValueOf(dest))
 	t := v.Type()
 
@@ -564,7 +564,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 }
 
 // bindSplitPartsToDestinationStruct binds string parts to a destination struct via JSON.
-func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest interface{}) error {
+func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest any) error {
 	var fields []string
 	if explode {
 		fields = make([]string, len(parts))
@@ -594,7 +594,7 @@ func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode
 // Simple style is the default for path and header parameters.
 // Arrays: a,b,c -> []string{"a", "b", "c"}
 // Objects: key1,value1,key2,value2 -> struct{Key1, Key2}
-func BindSimpleParam(paramName string, paramLocation ParamLocation, value string, dest interface{}) error {
+func BindSimpleParam(paramName string, paramLocation ParamLocation, value string, dest any) error {
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}
@@ -631,7 +631,7 @@ func BindSimpleParam(paramName string, paramLocation ParamLocation, value string
 // Simple style is the default for path and header parameters.
 // Arrays are comma-separated: a,b,c
 // Objects are key,value pairs: key1,value1,key2,value2
-func StyleSimpleParam(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func StyleSimpleParam(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
 
@@ -659,7 +659,7 @@ func StyleSimpleParam(paramName string, paramLocation ParamLocation, value inter
 	switch t.Kind() {
 	case reflect.Slice:
 		n := v.Len()
-		sliceVal := make([]interface{}, n)
+		sliceVal := make([]any, n)
 		for i := 0; i < n; i++ {
 			sliceVal[i] = v.Index(i).Interface()
 		}
@@ -673,7 +673,7 @@ func StyleSimpleParam(paramName string, paramLocation ParamLocation, value inter
 	}
 }
 
-func styleSimplePrimitive(paramLocation ParamLocation, value interface{}) (string, error) {
+func styleSimplePrimitive(paramLocation ParamLocation, value any) (string, error) {
 	strVal, err := primitiveToString(value)
 	if err != nil {
 		return "", err
@@ -681,7 +681,7 @@ func styleSimplePrimitive(paramLocation ParamLocation, value interface{}) (strin
 	return escapeParameterString(strVal, paramLocation), nil
 }
 
-func styleSimpleSlice(paramName string, paramLocation ParamLocation, values []interface{}) (string, error) {
+func styleSimpleSlice(paramName string, paramLocation ParamLocation, values []any) (string, error) {
 	parts := make([]string, len(values))
 	for i, v := range values {
 		part, err := primitiveToString(v)
@@ -693,7 +693,7 @@ func styleSimpleSlice(paramName string, paramLocation ParamLocation, values []in
 	return strings.Join(parts, ","), nil
 }
 
-func styleSimpleStruct(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func styleSimpleStruct(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	// Check for known types first
 	if timeVal, ok := marshalKnownTypes(value); ok {
 		return escapeParameterString(timeVal, paramLocation), nil
@@ -705,7 +705,7 @@ func styleSimpleStruct(paramName string, paramLocation ParamLocation, value inte
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal to JSON: %w", err)
 		}
-		var i2 interface{}
+		var i2 any
 		e := json.NewDecoder(bytes.NewReader(buf))
 		e.UseNumber()
 		if err = e.Decode(&i2); err != nil {
@@ -729,10 +729,10 @@ func styleSimpleStruct(paramName string, paramLocation ParamLocation, value inte
 	return strings.Join(parts, ","), nil
 }
 
-func styleSimpleMap(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-	dict, ok := value.(map[string]interface{})
+func styleSimpleMap(paramName string, paramLocation ParamLocation, value any) (string, error) {
+	dict, ok := value.(map[string]any)
 	if !ok {
-		return "", errors.New("map not of type map[string]interface{}")
+		return "", errors.New("map not of type map[string]any")
 	}
 
 	fieldDict := make(map[string]string)
@@ -754,7 +754,7 @@ func styleSimpleMap(paramName string, paramLocation ParamLocation, value interfa
 }
 
 // structToFieldDict converts a struct to a map of field names to string values.
-func structToFieldDict(value interface{}) (map[string]string, error) {
+func structToFieldDict(value any) (map[string]string, error) {
 	v := reflect.ValueOf(value)
 	t := reflect.TypeOf(value)
 	fieldDict := make(map[string]string)

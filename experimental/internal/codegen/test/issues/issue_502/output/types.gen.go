@@ -179,13 +179,12 @@ var ErrNullableNotSpecified = errors.New("nullable value is not specified")
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{
-	"H4sIAAAAAAAC/5SRQWvcMBSE7/oVAy7kkqy3KbnoVnrqaS+BnrXys/1a+T0hPbcsIf+92NnueqEQcrNH",
-	"M8ynUYPvtc6Ep/2jR5DToW9DSocef9hGqKQTVAiFetgpEwYSKsGogsWo9CHSy6trMJrl6tt2YBvn4y7q",
-	"1GrI/BC1o4Hk9oeXyto+7R9d4xr8GEneuqEFb/VjqDftVEgi3YMNddQ5dRcS18DGjadbQe8halvGndNM",
-	"EjJ7fNntd3vH0qt3gLEl8tcZ8EzVHPCbSmUVj8+rPQcbq8fLq4s6ZRUSq0u8xpGmsH4Ch2ysEtK3FHg6",
-	"a1h5PPT4k6KdpVw0UzGmiwng7ll/kVyFf8lqhWW4yCFGqvV979ecE8ewEH2QRMJE72Lof++6Ai5PuRWA",
-	"B3wq1HvcNe11vva8XXs7290m2VGNhddjf1kXcfUhqvQ8zGW94iYkc0rhuDyqlZnc3wAAAP//6uhqZ+MC",
-	"AAA=",
+	"H4sIAAAAAAAC/5RRvYocPRDM9RQF88Eldzv7nblEmXHkaJMDx1pNz6htTbeQemwW43c3M7feHzAczqRS",
+	"laq6usPn1hbCy/7ZI8jpMPYh58OIH2wJKvkEFUKlEXYqhImEajBqK9l1SGal+b6f2NJy3EWdew2Fn6IO",
+	"NJHcX3i1av3L/tl1rsOXRPLmCa14s02h3blSJYn0CDa0pEseLglcB0s3nGEL+AhRWz/dOS0kobDHh91+",
+	"t3cso3oHGFsmfx0br9TMAd+pNlbx+H+jl2Cpefz85aLORYXE2ipvMdEctiNwKMYqIX/Kgeczhi2Hhx6/",
+	"UrQzVKoWqsZ0IQE8vOo3kivwR9msskwXOMRIrb3P/VhK5hjWRP+YRMJM78bQv866BVxXeAsAT/iv0ujx",
+	"0PXX+vpzd/19bQ83yoFarLw9+0u7iBsPUWXkaanbiDciWXIOx3WpVhdyvwMAAP//35X1R9MCAAA=",
 }
 
 // decodeOpenAPISpec decodes and decompresses the embedded spec.

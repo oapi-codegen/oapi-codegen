@@ -4,12 +4,12 @@
 // DeepObject style is only valid for query parameters and must be exploded.
 // Objects: ?paramName[key1]=value1&paramName[key2]=value2 -> struct{Key1, Key2}
 // Nested: ?paramName[outer][inner]=value -> struct{Outer: {Inner: value}}
-func BindDeepObjectParam(paramName string, queryParams url.Values, dest interface{}) error {
+func BindDeepObjectParam(paramName string, queryParams url.Values, dest any) error {
 	return UnmarshalDeepObject(dest, paramName, queryParams)
 }
 
 // UnmarshalDeepObject unmarshals deepObject-style query parameters to a destination.
-func UnmarshalDeepObject(dst interface{}, paramName string, params url.Values) error {
+func UnmarshalDeepObject(dst any, paramName string, params url.Values) error {
 	// Find all params that look like "paramName[..."
 	var fieldNames []string
 	var fieldValues []string
@@ -83,7 +83,7 @@ func getFieldName(f reflect.StructField) string {
 	return n
 }
 
-func fieldIndicesByJsonTag(i interface{}) (map[string]int, error) {
+func fieldIndicesByJsonTag(i any) (map[string]int, error) {
 	t := reflect.TypeOf(i)
 	if t.Kind() != reflect.Struct {
 		return nil, errors.New("expected a struct as input")
@@ -99,7 +99,7 @@ func fieldIndicesByJsonTag(i interface{}) (map[string]int, error) {
 	return fieldMap, nil
 }
 
-func assignPathValues(dst interface{}, pathValues fieldOrValue) error {
+func assignPathValues(dst any, pathValues fieldOrValue) error {
 	v := reflect.ValueOf(dst)
 	iv := reflect.Indirect(v)
 	it := iv.Type()

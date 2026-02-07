@@ -5,7 +5,7 @@
 // Primitives: ;paramName=value
 // Arrays: ;paramName=a;paramName=b;paramName=c
 // Objects: ;key1=value1;key2=value2
-func StyleMatrixExplodeParam(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func StyleMatrixExplodeParam(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
 
@@ -33,7 +33,7 @@ func StyleMatrixExplodeParam(paramName string, paramLocation ParamLocation, valu
 	switch t.Kind() {
 	case reflect.Slice:
 		n := v.Len()
-		sliceVal := make([]interface{}, n)
+		sliceVal := make([]any, n)
 		for i := 0; i < n; i++ {
 			sliceVal[i] = v.Index(i).Interface()
 		}
@@ -47,7 +47,7 @@ func StyleMatrixExplodeParam(paramName string, paramLocation ParamLocation, valu
 	}
 }
 
-func styleMatrixExplodePrimitive(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func styleMatrixExplodePrimitive(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	strVal, err := primitiveToString(value)
 	if err != nil {
 		return "", err
@@ -55,7 +55,7 @@ func styleMatrixExplodePrimitive(paramName string, paramLocation ParamLocation, 
 	return fmt.Sprintf(";%s=%s", paramName, escapeParameterString(strVal, paramLocation)), nil
 }
 
-func styleMatrixExplodeSlice(paramName string, paramLocation ParamLocation, values []interface{}) (string, error) {
+func styleMatrixExplodeSlice(paramName string, paramLocation ParamLocation, values []any) (string, error) {
 	// Matrix with explode: ;paramName=a;paramName=b;paramName=c
 	prefix := fmt.Sprintf(";%s=", paramName)
 	parts := make([]string, len(values))
@@ -69,7 +69,7 @@ func styleMatrixExplodeSlice(paramName string, paramLocation ParamLocation, valu
 	return prefix + strings.Join(parts, prefix), nil
 }
 
-func styleMatrixExplodeStruct(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func styleMatrixExplodeStruct(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	// Check for known types first
 	if timeVal, ok := marshalKnownTypes(value); ok {
 		return fmt.Sprintf(";%s=%s", paramName, escapeParameterString(timeVal, paramLocation)), nil
@@ -81,7 +81,7 @@ func styleMatrixExplodeStruct(paramName string, paramLocation ParamLocation, val
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal to JSON: %w", err)
 		}
-		var i2 interface{}
+		var i2 any
 		e := json.NewDecoder(bytes.NewReader(buf))
 		e.UseNumber()
 		if err = e.Decode(&i2); err != nil {
@@ -105,10 +105,10 @@ func styleMatrixExplodeStruct(paramName string, paramLocation ParamLocation, val
 	return ";" + strings.Join(parts, ";"), nil
 }
 
-func styleMatrixExplodeMap(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-	dict, ok := value.(map[string]interface{})
+func styleMatrixExplodeMap(paramName string, paramLocation ParamLocation, value any) (string, error) {
+	dict, ok := value.(map[string]any)
 	if !ok {
-		return "", errors.New("map not of type map[string]interface{}")
+		return "", errors.New("map not of type map[string]any")
 	}
 
 	fieldDict := make(map[string]string)
