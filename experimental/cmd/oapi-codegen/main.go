@@ -127,7 +127,7 @@ func loadSpecFromURL(specURL string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fetching spec from URL: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("fetching spec from URL: HTTP %d %s", resp.StatusCode, resp.Status)
