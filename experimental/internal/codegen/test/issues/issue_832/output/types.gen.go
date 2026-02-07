@@ -41,7 +41,7 @@ func (s *DocumentStatus) ApplyDefaults() {
 }
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
-var swaggerSpecJSON = []string{
+var openAPISpecJSON = []string{
 	"H4sIAAAAAAAC/9RSPYvbQBDt9Sse54AaW1Lk5tg6EI4UKS5dCGFvPZb2sHaWnZFzgfz4IMkfkiHE7XWa",
 	"maf3wb4VnkR6wuO2NnjbNLzR35E2wXaEPSdQ6DsMK8lWaFWjmLJsvLb9S+G4K9lGv3G8o4bCcvADr5SP",
 	"2zrjSMFGb7AtqqLOfNizyYAjJfEcDPKqqIqPeQao1wMZ0Jvt4oEyYEfiko864v5kAPCNRG+t8pFS8ruZ",
@@ -51,9 +51,9 @@ var swaggerSpecJSON = []string{
 	"7LlPPxaBnhfid8Y62kP/71x/AwAA//+qyWhEFgQAAA==",
 }
 
-// decodeSwaggerSpec decodes and decompresses the embedded spec.
-func decodeSwaggerSpec() ([]byte, error) {
-	joined := strings.Join(swaggerSpecJSON, "")
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
 	raw, err := base64.StdEncoding.DecodeString(joined)
 	if err != nil {
 		return nil, fmt.Errorf("decoding base64: %w", err)
@@ -70,22 +70,22 @@ func decodeSwaggerSpec() ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
-func decodeSwaggerSpecCached() func() ([]byte, error) {
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
 	var cached []byte
 	var cachedErr error
 	var once sync.Once
 	return func() ([]byte, error) {
 		once.Do(func() {
-			cached, cachedErr = decodeSwaggerSpec()
+			cached, cachedErr = decodeOpenAPISpec()
 		})
 		return cached, cachedErr
 	}
 }
 
-var swaggerSpec = decodeSwaggerSpecCached()
+var openAPISpec = decodeOpenAPISpecCached()
 
-// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
-func GetSwaggerSpecJSON() ([]byte, error) {
-	return swaggerSpec()
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
 }

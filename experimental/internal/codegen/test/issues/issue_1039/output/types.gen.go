@@ -238,7 +238,7 @@ var ErrNullableIsNull = errors.New("nullable value is null")
 var ErrNullableNotSpecified = errors.New("nullable value is not specified")
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
-var swaggerSpecJSON = []string{
+var openAPISpecJSON = []string{
 	"H4sIAAAAAAAC/7RUTY/TMBC9+1eMEqReaNNlT+QGnFYIdgXcKzeZJl5S23gmqJX48SjfSZu0ge7eEnvm",
 	"vTdvxuPDA1GOcLe+fx/C1zzL5DZD4KNFggQ1OsnKaOFDymwpDIJEcZpvV5HZB0ZatYxMjAnq4Y8qQCko",
 	"UIUvfPgifyJQ7hA4lQx6yCMdNlwYg3XGosuOwljU0qoQ7lfr1Z1QemdCAfAbHSmjQ1isi/OFAGDFGYaA",
@@ -251,9 +251,9 @@ var swaggerSpecJSON = []string{
 	"wsAUMWu+r+32upa3F5/AWDEyU5I2/1DSlXK649EGvLR7o1R/AwAA///zkywGmQkAAA==",
 }
 
-// decodeSwaggerSpec decodes and decompresses the embedded spec.
-func decodeSwaggerSpec() ([]byte, error) {
-	joined := strings.Join(swaggerSpecJSON, "")
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
 	raw, err := base64.StdEncoding.DecodeString(joined)
 	if err != nil {
 		return nil, fmt.Errorf("decoding base64: %w", err)
@@ -270,22 +270,22 @@ func decodeSwaggerSpec() ([]byte, error) {
 	return out.Bytes(), nil
 }
 
-// decodeSwaggerSpecCached returns a closure that caches the decoded spec.
-func decodeSwaggerSpecCached() func() ([]byte, error) {
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
 	var cached []byte
 	var cachedErr error
 	var once sync.Once
 	return func() ([]byte, error) {
 		once.Do(func() {
-			cached, cachedErr = decodeSwaggerSpec()
+			cached, cachedErr = decodeOpenAPISpec()
 		})
 		return cached, cachedErr
 	}
 }
 
-var swaggerSpec = decodeSwaggerSpecCached()
+var openAPISpec = decodeOpenAPISpecCached()
 
-// GetSwaggerSpecJSON returns the raw OpenAPI spec as JSON bytes.
-func GetSwaggerSpecJSON() ([]byte, error) {
-	return swaggerSpec()
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
 }
