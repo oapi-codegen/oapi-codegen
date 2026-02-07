@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
+	petstore "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

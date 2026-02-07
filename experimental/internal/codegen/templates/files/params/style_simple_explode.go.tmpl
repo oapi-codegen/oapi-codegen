@@ -4,7 +4,7 @@
 // Simple style is the default for path and header parameters.
 // Arrays are comma-separated: a,b,c (same as non-explode)
 // Objects are key=value pairs: key1=value1,key2=value2
-func StyleSimpleExplodeParam(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func StyleSimpleExplodeParam(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	t := reflect.TypeOf(value)
 	v := reflect.ValueOf(value)
 
@@ -32,7 +32,7 @@ func StyleSimpleExplodeParam(paramName string, paramLocation ParamLocation, valu
 	switch t.Kind() {
 	case reflect.Slice:
 		n := v.Len()
-		sliceVal := make([]interface{}, n)
+		sliceVal := make([]any, n)
 		for i := 0; i < n; i++ {
 			sliceVal[i] = v.Index(i).Interface()
 		}
@@ -46,7 +46,7 @@ func StyleSimpleExplodeParam(paramName string, paramLocation ParamLocation, valu
 	}
 }
 
-func styleSimpleExplodePrimitive(paramLocation ParamLocation, value interface{}) (string, error) {
+func styleSimpleExplodePrimitive(paramLocation ParamLocation, value any) (string, error) {
 	strVal, err := primitiveToString(value)
 	if err != nil {
 		return "", err
@@ -54,7 +54,7 @@ func styleSimpleExplodePrimitive(paramLocation ParamLocation, value interface{})
 	return escapeParameterString(strVal, paramLocation), nil
 }
 
-func styleSimpleExplodeSlice(paramName string, paramLocation ParamLocation, values []interface{}) (string, error) {
+func styleSimpleExplodeSlice(paramName string, paramLocation ParamLocation, values []any) (string, error) {
 	// Exploded simple array is same as non-exploded: comma-separated
 	parts := make([]string, len(values))
 	for i, v := range values {
@@ -67,7 +67,7 @@ func styleSimpleExplodeSlice(paramName string, paramLocation ParamLocation, valu
 	return strings.Join(parts, ","), nil
 }
 
-func styleSimpleExplodeStruct(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
+func styleSimpleExplodeStruct(paramName string, paramLocation ParamLocation, value any) (string, error) {
 	// Check for known types first
 	if timeVal, ok := marshalKnownTypes(value); ok {
 		return escapeParameterString(timeVal, paramLocation), nil
@@ -79,7 +79,7 @@ func styleSimpleExplodeStruct(paramName string, paramLocation ParamLocation, val
 		if err != nil {
 			return "", fmt.Errorf("failed to marshal to JSON: %w", err)
 		}
-		var i2 interface{}
+		var i2 any
 		e := json.NewDecoder(bytes.NewReader(buf))
 		e.UseNumber()
 		if err = e.Decode(&i2); err != nil {
@@ -103,10 +103,10 @@ func styleSimpleExplodeStruct(paramName string, paramLocation ParamLocation, val
 	return strings.Join(parts, ","), nil
 }
 
-func styleSimpleExplodeMap(paramName string, paramLocation ParamLocation, value interface{}) (string, error) {
-	dict, ok := value.(map[string]interface{})
+func styleSimpleExplodeMap(paramName string, paramLocation ParamLocation, value any) (string, error) {
+	dict, ok := value.(map[string]any)
 	if !ok {
-		return "", errors.New("map not of type map[string]interface{}")
+		return "", errors.New("map not of type map[string]any")
 	}
 
 	fieldDict := make(map[string]string)

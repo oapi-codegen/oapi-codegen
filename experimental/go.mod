@@ -1,4 +1,4 @@
-module github.com/oapi-codegen/oapi-codegen/experimental
+module github.com/oapi-codegen/oapi-codegen-exp/experimental
 
 go 1.24.0
 

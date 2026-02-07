@@ -15,7 +15,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen"
 )
 
 func main() {

@@ -3,7 +3,7 @@
 // BindPipeDelimitedParam binds a pipeDelimited-style parameter without explode.
 // Pipe-delimited style uses pipe as the separator.
 // Arrays: a|b|c -> []string{"a", "b", "c"}
-func BindPipeDelimitedParam(paramName string, paramLocation ParamLocation, value string, dest interface{}) error {
+func BindPipeDelimitedParam(paramName string, paramLocation ParamLocation, value string, dest any) error {
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/pb33f/libopenapi"
 	"github.com/pb33f/libopenapi/datamodel/high/base"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/templates"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/templates"
 )
 
 // Generate produces Go code from the parsed OpenAPI document.

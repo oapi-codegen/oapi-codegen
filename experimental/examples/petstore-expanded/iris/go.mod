@@ -1,11 +1,11 @@
-module github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/iris
+module github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/iris
 
 go 1.24.0
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/kataras/iris/v12 v12.2.11
-	github.com/oapi-codegen/oapi-codegen/experimental v0.0.0
+	github.com/oapi-codegen/oapi-codegen-exp/experimental v0.0.0
 )
 
 require (
@@ -52,4 +52,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/oapi-codegen/oapi-codegen/experimental => ../../../
+replace github.com/oapi-codegen/oapi-codegen-exp/experimental => ../../../

@@ -12,7 +12,7 @@ import (
 	"net"
 
 	"github.com/kataras/iris/v12"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/iris/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/iris/server"
 )
 
 func main() {

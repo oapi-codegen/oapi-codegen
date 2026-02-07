@@ -3,7 +3,7 @@
 // BindSpaceDelimitedParam binds a spaceDelimited-style parameter without explode.
 // Space-delimited style uses space as the separator.
 // Arrays: a b c -> []string{"a", "b", "c"}
-func BindSpaceDelimitedParam(paramName string, paramLocation ParamLocation, value string, dest interface{}) error {
+func BindSpaceDelimitedParam(paramName string, paramLocation ParamLocation, value string, dest any) error {
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}

@@ -12,7 +12,7 @@ import (
 	"net"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/fiber/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/fiber/server"
 )
 
 func main() {

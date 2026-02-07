@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/templates"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/templates"
 )
 
 // InitiatorTemplateData is passed to initiator templates.
@@ -146,7 +146,7 @@ func (g *InitiatorGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor
 				}
 			}
 			if targetType == "" {
-				targetType = "interface{}"
+				targetType = "any"
 			}
 			buf.WriteString(fmt.Sprintf("type %s = %s\n\n", body.GoTypeName, targetType))
 		}

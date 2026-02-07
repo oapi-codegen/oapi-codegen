@@ -3,14 +3,14 @@
 package externalref
 
 import (
-	ext_95d82e90 "github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packagea"
-	ext_a5fddf6c "github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packageb"
+	ext_934ff11d "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packagea"
+	ext_b892eff9 "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb"
 )
 
 // #/components/schemas/Container
 type ContainerSchemaComponent struct {
-	ObjectA *ext_95d82e90.ObjectA `json:"object_a,omitempty" form:"object_a,omitempty"`
-	ObjectB *ext_a5fddf6c.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
+	ObjectA *ext_934ff11d.ObjectA `json:"object_a,omitempty" form:"object_a,omitempty"`
+	ObjectB *ext_b892eff9.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.

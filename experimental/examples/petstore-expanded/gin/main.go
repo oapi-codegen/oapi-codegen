@@ -13,7 +13,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/gin/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/gin/server"
 )
 
 func main() {

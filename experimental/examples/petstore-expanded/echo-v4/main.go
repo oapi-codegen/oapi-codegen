@@ -12,7 +12,7 @@ import (
 	"net"
 
 	"github.com/labstack/echo/v4"
-	"github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded/echo-v4/server"
+	"github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded/echo-v4/server"
 )
 
 func main() {

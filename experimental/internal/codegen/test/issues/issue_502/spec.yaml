@@ -1,8 +1,8 @@
-# Issue 502: anyOf/allOf with only one ref type generates interface{}
+# Issue 502: anyOf/allOf with only one ref type generates any
 # https://github.com/oapi-codegen/oapi-codegen/issues/502
 #
 # When anyOf or allOf has only one reference, it should generate
-# the referenced type, not interface{}.
+# the referenced type, not any.
 openapi: 3.0.0
 info:
   title: Issue 502 Test

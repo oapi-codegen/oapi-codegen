@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	petstore "github.com/oapi-codegen/oapi-codegen/experimental/examples/petstore-expanded"
+	petstore "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/petstore-expanded"
 )
 
 // PetStore implements the ServerInterface.

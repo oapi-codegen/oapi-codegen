@@ -1,4 +1,4 @@
-//go:generate go run github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen -config config.yaml tree-farm.yaml
+//go:generate go run github.com/oapi-codegen/oapi-codegen-exp/experimental/cmd/oapi-codegen -config config.yaml tree-farm.yaml
 
 // Package treefarm provides an example of how to handle OpenAPI callbacks.
 // We create a server which plants trees. The client asks the server to plant

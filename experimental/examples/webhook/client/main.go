@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 
-	doorbadge "github.com/oapi-codegen/oapi-codegen/experimental/examples/webhook"
+	doorbadge "github.com/oapi-codegen/oapi-codegen-exp/experimental/examples/webhook"
 )
 
 // WebhookReceiver implements doorbadge.WebhookReceiverInterface.
