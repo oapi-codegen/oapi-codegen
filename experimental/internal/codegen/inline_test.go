@@ -19,19 +19,19 @@ func TestGenerateEmbeddedSpec(t *testing.T) {
 	require.NoError(t, err)
 
 	// Should contain the chunked base64 variable
-	assert.Contains(t, code, "var openAPISpecJSON = []string{")
+	assert.Contains(t, code, "var swaggerSpecJSON = []string{")
 
 	// Should contain the decode function
-	assert.Contains(t, code, "func decodeOpenAPISpec() ([]byte, error)")
+	assert.Contains(t, code, "func decodeSwaggerSpec() ([]byte, error)")
 
 	// Should contain the cached decode function
-	assert.Contains(t, code, "func decodeOpenAPISpecCached() func() ([]byte, error)")
+	assert.Contains(t, code, "func decodeSwaggerSpecCached() func() ([]byte, error)")
 
 	// Should contain the public API
-	assert.Contains(t, code, "func GetOpenAPISpecJSON() ([]byte, error)")
+	assert.Contains(t, code, "func GetSwaggerSpecJSON() ([]byte, error)")
 
 	// Should contain the cached var
-	assert.Contains(t, code, "var openAPISpec = decodeOpenAPISpecCached()")
+	assert.Contains(t, code, "var swaggerSpec = decodeSwaggerSpecCached()")
 }
 
 func TestGenerateEmbeddedSpecRoundTrip(t *testing.T) {
@@ -101,8 +101,8 @@ components:
 	assert.Contains(t, code, "type Pet struct")
 
 	// Should contain the embedded spec
-	assert.Contains(t, code, "GetOpenAPISpecJSON")
-	assert.Contains(t, code, "openAPISpecJSON")
+	assert.Contains(t, code, "GetSwaggerSpecJSON")
+	assert.Contains(t, code, "swaggerSpecJSON")
 }
 
 func TestGenerateWithNilSpecData(t *testing.T) {
@@ -134,6 +134,6 @@ components:
 	assert.Contains(t, code, "type Pet struct")
 
 	// Should NOT contain the embedded spec
-	assert.NotContains(t, code, "GetOpenAPISpecJSON")
-	assert.NotContains(t, code, "openAPISpecJSON")
+	assert.NotContains(t, code, "GetSwaggerSpecJSON")
+	assert.NotContains(t, code, "swaggerSpecJSON")
 }
