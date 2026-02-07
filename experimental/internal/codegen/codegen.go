@@ -3,6 +3,8 @@ package codegen
 
 import (
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -61,7 +63,9 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		output.AddImports(gen.Imports())
 
 		// Add custom type templates (Date, Email, UUID, File, etc.)
-		for templateName := range gen.RequiredTemplates() {
+		// Sort template names for deterministic output ordering.
+		templateNames := slices.Sorted(maps.Keys(gen.RequiredTemplates()))
+		for _, templateName := range templateNames {
 			typeCode, typeImports := loadCustomType(templateName)
 			if typeCode != "" {
 				output.AddType(typeCode)
