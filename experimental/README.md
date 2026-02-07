@@ -1,310 +1,164 @@
-# oapi-codegen experimental
+# `oapi-codegen` V3
 
-Ground-up rewrite of oapi-codegen with:
+This is an experimental prototype of a V3 version of oapi-codegen. The generated code and command line options are not yet stable. Use at your
+own risk.
 
-- **OpenAPI 3.1/3.2 support** via [libopenapi](https://github.com/pb33f/libopenapi) (replacing kin-openapi)
-- **Clean separation**: model generation as core, routers as separate layers
-- **No runtime package** - generated code is self-contained
-- **Proper anyOf/oneOf union types** with correct marshal/unmarshal semantics
-- **allOf flattening** - properties merged into single struct, not embedding
-- **Default values** - generated `ApplyDefaults()` methods
+## What is new in Version 3
+This directory contains an experimental version of oapi-codegen's future V3 version, which is based on [libopenapi](https://github.com/pb33f/libopenapi),
+instead of the prior [kin-openapi](https://github.com/getkin/kin-openapi). This change necessitated a nearly complete rewrite, but we strive to be as
+compatible as possible.
 
-## Usage
+What is working:
+  - All model, client and server generation as in earlier versions.
+  - We have added Webhook and Callback support, please see `./examples`, which contains the ubiquitous OpenAPI pet shop implemented in all supported servers
+    and examples of webhooks and callbacks implemented on top of the `http.ServeMux` server, with no additional imports.
+  - Model generation of `allOf`, `anyOf`, `oneOf` is much more robust, since these were a source of many problems in earlier versions.
+  - Echo V5 support has been added (Go 1.25 required)
 
-```bash
-go run ./cmd/oapi-codegen -package myapi -output types.gen.go openapi.yaml
-```
+What is missing:
+  - We have not yet created any runtime code like request validation middleware.
 
-Options:
-- `-package <name>` - Go package name for generated code
-- `-output <file>` - Output file path (default: `<spec-basename>.gen.go`)
-- `-config <file>` - Path to configuration file
+## Differences in V3
 
-## Structure
+V3 is a brand new implementation, and may (will) contain new bugs, but also strives to fix many current, existing bugs. We've run quite a few
+conformance tests against specifications in old Issues, and we're looking pretty good! Please try this out, and if it failes in some way, please
+file Issues.
 
-```
-experimental/
-├── cmd/oapi-codegen/          # CLI tool
-├── internal/codegen/
-│   ├── codegen.go             # Main generation orchestration
-│   ├── gather.go              # Schema discovery from OpenAPI doc
-│   ├── schema.go              # SchemaDescriptor, SchemaPath types
-│   ├── typegen.go             # Go type expression generation
-│   ├── output.go              # Code construction utilities
-│   ├── namemangling.go        # Go identifier conversion
-│   ├── typemapping.go         # OpenAPI → Go type mappings
-│   ├── templates/             # Custom type templates
-│   │   └── types/             # Email, UUID, File types
-│   └── test/                  # Test suites
-│       ├── files/             # Test OpenAPI specs
-│       ├── comprehensive/     # Full feature tests
-│       ├── default_values/    # ApplyDefaults tests
-│       └── nested_aggregate/  # Union nesting tests
-```
+### Aggregate Schemas
 
-## Features
+V3 implements `oneOf`, `anyOf`, `allOf`  differently. Our prior versions had pretty good handling for `allOf`, where we merge all the constituent schemas
+into a schema object that contains all the fields of the originals. It makes sense, since this is composition.
 
-### Type Generation
+`oneOf` and `anyOf` were handled by deferred parsing, where the JSON was captured into `json.RawMessage` and helper functions were created on each
+type to parse the JSON as any constituent type with the user's help.
 
-| OpenAPI | Go |
-|---------|-----|
-| `type: object` with properties | `struct` |
-| `type: object` with only `additionalProperties` | `map[string]T` |
-| `type: object` with both | `struct` with `AdditionalProperties` field |
-| `enum` | `type T string` with `const` block |
-| `allOf` | Flattened `struct` (properties merged) |
-| `anyOf` | Union `struct` with pointer fields + marshal/unmarshal |
-| `oneOf` | Union `struct` with exactly-one enforcement |
-| `$ref` | Resolved to target type name |
-
-### Pointer Semantics
-
-- **Required + non-nullable** → value type
-- **Optional or nullable** → pointer type
-- **Slices and maps** → never pointers (nil is zero value)
-
-### Default Values
-
-All structs get an `ApplyDefaults()` method:
-
-```go
-type Config struct {
-    Name    *string `json:"name,omitempty"`
-    Timeout *int    `json:"timeout,omitempty"`
-}
-
-func (s *Config) ApplyDefaults() {
-    if s.Name == nil {
-        v := "default-name"
-        s.Name = &v
-    }
-    if s.Timeout == nil {
-        v := 30
-        s.Timeout = &v
-    }
-}
-```
-
-Usage pattern:
-```go
-var cfg Config
-json.Unmarshal(data, &cfg)
-cfg.ApplyDefaults()
-```
-
-### Union Types (anyOf/oneOf)
-
-```go
-// Generated for oneOf with two object variants
-type MyUnion struct {
-    VariantA *TypeA
-    VariantB *TypeB
-}
-
-// MarshalJSON enforces exactly one variant set
-// UnmarshalJSON tries each variant, expects exactly one match
-```
-
-## Configuration
-
-Create a YAML configuration file:
+Given the following schemas:
 
 ```yaml
-# config.yaml
-package: myapi
-output: types.gen.go
-
-# Type mappings: OpenAPI type/format → Go type
-type-mapping:
-  integer:
-    default:
-      type: int
-    formats:
-      int64:
-        type: int64
-  number:
-    default:
-      type: float64  # Override default from float32
-  string:
-    formats:
-      date-time:
-        type: time.Time
-        import: time
-      uuid:
-        type: uuid.UUID
-        import: github.com/google/uuid
-      # Custom format mapping
-      money:
-        type: decimal.Decimal
-        import: github.com/shopspring/decimal
-
-# Name mangling: controls how OpenAPI names become Go identifiers
-name-mangling:
-  # Prefix for names starting with digits
-  numeric-prefix: "N"  # default: "N"
-  # Prefix for Go reserved keywords
-  reserved-prefix: ""  # default: "" (uses suffix instead)
-  # Suffix for Go reserved keywords
-  reserved-suffix: "_"  # default: "_"
-  # Known initialisms (keep uppercase)
-  initialisms:
-    - ID
-    - HTTP
-    - URL
-    - API
-    - JSON
-    - XML
-    - UUID
-  # Character substitutions
-  character-substitutions:
-    "+": "Plus"
-    "@": "At"
-
-# Name substitutions: direct overrides for specific names
-name-substitutions:
-  # Override individual schema/property names during conversion
-  type-names:
-    foo: MyCustomFoo  # "foo" becomes "MyCustomFoo" instead of "Foo"
-  property-names:
-    bar: MyCustomBar  # "bar" field becomes "MyCustomBar"
-
-# Import mapping: resolve external $refs to Go packages
-import-mapping:
-  # Map external spec files to their Go package paths
-  ../common/api.yaml: github.com/org/project/common
-  https://example.com/specs/shared.yaml: github.com/org/shared
-  # Use "-" to indicate types should stay in the current package
-  ./local-types.yaml: "-"
-
-# Content types: filter which media types generate models (regexp patterns)
-# Only request/response bodies with matching content types will have types generated.
-# Defaults to JSON types if not specified.
-content-types:
-  - "^application/json$"
-  - "^application/.*\\+json$"
-  # Add custom patterns as needed:
-  # - "^application/xml$"
-  # - "^text/plain$"
-```
-
-### External References
-
-When your OpenAPI spec references schemas from other files:
-
-```yaml
-# In your spec
 components:
   schemas:
-    Order:
+    Cat:
+      type: object
       properties:
-        customer:
-          $ref: '../common/api.yaml#/components/schemas/Customer'
+        name:
+          type: string
+        color:
+          type: string
+    Dog:
+      type: object
+      properties:
+        name:
+          type: string
+        color:
+          type: string
+    Fish:
+      type: object
+      properties:
+        species:
+          type: string
+        isSaltwater:
+          type: boolean
+    NamedPet:
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    SpecificPet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+        - $ref: '#/components/schemas/Fish'
 ```
 
-Configure import-mapping to tell oapi-codegen where to find those types:
+#### V2 output
 
-```yaml
-import-mapping:
-  ../common/api.yaml: github.com/org/project/common
-```
-
-The generated code will import the external package and reference types with a hashed alias:
+V2 generates both `NamedPet` (anyOf) and `SpecificPet` (oneOf) identically as opaque wrappers around `json.RawMessage`:
 
 ```go
-import (
-    ext_a1b2c3d4 "github.com/org/project/common"
-)
+type NamedPet struct {
+	union json.RawMessage
+}
 
-type Order struct {
-    Customer *ext_a1b2c3d4.Customer `json:"customer,omitempty"`
+type SpecificPet struct {
+	union json.RawMessage
 }
 ```
 
-**Important:** You must generate types for the external spec separately. The import-mapping only tells oapi-codegen how to reference types that already exist in another package.
+The actual variant types are invisible at the struct level. To access the underlying data, the user must call generated helper methods:
 
-Use with `-config`:
-```bash
-go run ./cmd/oapi-codegen -config config.yaml openapi.yaml
+```go
+// NamedPet (anyOf) helpers
+func (t NamedPet) AsCat() (Cat, error)
+func (t *NamedPet) FromCat(v Cat) error
+// <snip>
+
+// SpecificPet (oneOf) helpers
+
+func (t SpecificPet) AsFish() (Fish, error)
+func (t *SpecificPet) FromFish(v Fish) error
+func (t *SpecificPet) MergeFish(v Fish) error
+// <snip>
 ```
 
-### Default Type Mappings
+Note that `anyOf` and `oneOf` produce identical types and method signatures; there is no semantic difference in the generated code.
 
-| OpenAPI Type | Format | Go Type |
-|--------------|--------|---------|
-| `integer` | (none) | `int` |
-| `integer` | `int32` | `int32` |
-| `integer` | `int64` | `int64` |
-| `number` | (none) | `float32` |
-| `number` | `double` | `float64` |
-| `boolean` | (none) | `bool` |
-| `string` | (none) | `string` |
-| `string` | `byte` | `[]byte` |
-| `string` | `date-time` | `time.Time` |
-| `string` | `uuid` | `UUID` (custom type) |
-| `string` | `email` | `Email` (custom type) |
-| `string` | `binary` | `File` (custom type) |
+#### V3 output
 
-### Preprocessing with OpenAPI Overlays
+V3 generates structs with exported pointer fields for each variant, making the union members visible at the type level. Crucially, `anyOf` and `oneOf` now have different marshal/unmarshal semantics.
 
-For advanced customizations (renaming types, modifying schemas, adding extensions), preprocess your spec using the [OpenAPI Overlay Specification](https://learn.openapis.org/overlay/):
+**`anyOf` (NamedPet)** — `MarshalJSON` merges all non-nil variants into a single JSON object. `UnmarshalJSON` tries every variant and keeps whichever succeed:
 
-```yaml
-# overlay.yaml
-overlay: 1.0.0
-info:
-  title: My customizations
-  version: 1.0.0
-actions:
-  - target: $.components.schemas.Cat
-    update:
-      x-go-name: Kitty
-  - target: $.components.schemas.Pet.properties.id
-    update:
-      type: string
-      format: uuid
+```go
+type NamedPet struct {
+	Cat *Cat
+	Dog *Dog
+}
+
 ```
 
-Apply with [speakeasy-api/openapi-overlay](https://github.com/speakeasy-api/openapi-overlay):
-```bash
-go install github.com/speakeasy-api/openapi-overlay@latest
-openapi-overlay apply --overlay=overlay.yaml --spec=openapi.yaml > modified.yaml
-go run ./cmd/oapi-codegen -package myapi modified.yaml
+**`oneOf` (SpecificPet)** — `MarshalJSON` returns an error unless exactly one field is non-nil. `UnmarshalJSON` returns an error unless the JSON matches exactly one variant:
+
+```go
+type SpecificPet struct {
+	Cat  *Cat
+	Dog  *Dog
+	Fish *Fish
+}
 ```
 
-Or use [libopenapi](https://pb33f.io/libopenapi/overlays/) programmatically if you need to integrate into a build pipeline.
+### OpenAPI V3.1 Feature Support
 
-## Development
+Thanks to [libopenapi](https://github.com/pb33f/libopenapi), we are able to parse OpenAPI 3.1 and 3.2 specifications. They are functionally similar, you can
+read the differences between `nullable` fields yourself, but they add some new functionality, namely `webhooks` and `callbacks`. We support all of them in
+this prototype. `callbacks` and `webhooks` are basically the inverse of `paths`. Webhooks contain no URL element in their definition, so we can't register handlers
+for you in your http router of choice, you have to do that yourself. Callbacks support complex request URL's which may reference the original request. This is
+something you need to pull out of the request body, and doing it generically is difficult, so we punt this problem, for now, to our users.
 
-Run tests:
-```bash
-go test ./internal/codegen/...
-```
+Please see the [webhook example](examples/webhook/). It creates a little server that pretends to be a door badge reader, and it generates an event stream
+about people coming and going. Any number of clients may subscribe to this event. See the [doc.go](examples/webhook/doc.go) for usage examples.
 
-Regenerate test outputs:
-```bash
-go run ./cmd/oapi-codegen -package output -output internal/codegen/test/comprehensive/output/comprehensive.gen.go internal/codegen/test/files/comprehensive.yaml
-```
+The [callback example](examples/callback), creates a little server that pretends to plant trees. Each tree planting request contains a callback to be notified
+when tree planting is complete. We invoke those in a random order via delays, and the client prints out callbacks as they happen. Please see [doc.go](examples/callback/doc.go) for usage.
 
-## Status
+### Flexible Configuration
 
-**Active development.** Model generation is working for most schema types.
+oapi-codegen V3 tries to make no assumptions about which initialisms, struct tags, or name mangling that is correct for you. A very [flexible configuration file](Configuration.md) allows you to override anything.
 
-Working:
-- [x] Object schemas → structs
-- [x] Enum schemas → const blocks
-- [x] allOf → flattened structs
-- [x] anyOf/oneOf → union types
-- [x] additionalProperties
-- [x] $ref resolution
-- [x] Nested/inline schemas
-- [x] Default values (`ApplyDefaults()`)
-- [x] Custom format types (email, uuid, binary)
 
-Not yet implemented:
-- [ ] Request/response body generation
-- [ ] Operation/handler generation
-- [ ] Router integrations
-- [ ] Validation
-- [ ] Client generation
+### No runtime dependency
 
-See [CONTEXT.md](CONTEXT.md) for detailed design decisions and architecture notes.
+V2 generated code relied on `github.com/oapi-codegen/runtime` for parameter binding and styling. This was a complaint from lots of people due to various
+audit requirements. V3 embeds all necessary helper functions and helper types into the spec. There are no longer generic, parameterized functions that
+handle arbitrary parameters, but rather very specific functions for each kind of parameter, and we call the correct little helper versus a generic
+runtime helper.
+
+
+## Installation
+
+Go 1.24 is required, install like so:
+
+  go get -tool github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen@latest
+
+You can then run the code generator
+
+  //go:generate go run github.com/oapi-codegen/oapi-codegen/experimental/cmd/oapi-codegen
+
