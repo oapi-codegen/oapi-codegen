@@ -1,6 +1,0 @@
-package: doorbadge
-output: doorbadge.gen.go
-generation:
-  webhook-initiator: true
-  webhook-receiver: true
-  server: std-http

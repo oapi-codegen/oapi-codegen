@@ -1,2 +1,0 @@
-package: petstore
-output: petstore.gen.go
