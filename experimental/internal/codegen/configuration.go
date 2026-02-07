@@ -15,8 +15,6 @@ type Configuration struct {
 	Output string `yaml:"output"`
 	// Generation controls which parts of the code are generated
 	Generation GenerationOptions `yaml:"generation,omitempty"`
-	// OutputOptions controls filtering of operations and schemas
-	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
 	// TypeMapping allows customizing OpenAPI type/format to Go type mappings
 	TypeMapping TypeMapping `yaml:"type-mapping,omitempty"`
 	// NameMangling configures how OpenAPI names are converted to Go identifiers
@@ -38,20 +36,6 @@ type Configuration struct {
 	// StructTags configures how struct tags are generated for fields.
 	// By default, only json tags are generated.
 	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
-}
-
-// OutputOptions controls filtering of which operations and schemas are included in generation.
-type OutputOptions struct {
-	// IncludeTags only includes operations tagged with one of these tags. Ignored when empty.
-	IncludeTags []string `yaml:"include-tags,omitempty"`
-	// ExcludeTags excludes operations tagged with one of these tags. Ignored when empty.
-	ExcludeTags []string `yaml:"exclude-tags,omitempty"`
-	// IncludeOperationIDs only includes operations with one of these operation IDs. Ignored when empty.
-	IncludeOperationIDs []string `yaml:"include-operation-ids,omitempty"`
-	// ExcludeOperationIDs excludes operations with one of these operation IDs. Ignored when empty.
-	ExcludeOperationIDs []string `yaml:"exclude-operation-ids,omitempty"`
-	// ExcludeSchemas excludes schemas with the given names from generation. Ignored when empty.
-	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
 }
 
 // ModelsPackage specifies an external package containing the model types.
