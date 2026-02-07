@@ -47,7 +47,7 @@ func (d Date) Format(layout string) string {
 // primitiveToString converts a primitive value to a string representation.
 // It handles basic Go types, time.Time, types.Date, and types that implement
 // json.Marshaler or fmt.Stringer.
-func primitiveToString(value interface{}) (string, error) {
+func primitiveToString(value any) (string, error) {
 	// Check for known types first (time, date, uuid)
 	if res, ok := marshalKnownTypes(value); ok {
 		return res, nil
@@ -87,7 +87,7 @@ func primitiveToString(value interface{}) (string, error) {
 			}
 			e := json.NewDecoder(bytes.NewReader(buf))
 			e.UseNumber()
-			var i2 interface{}
+			var i2 any
 			if err = e.Decode(&i2); err != nil {
 				return "", fmt.Errorf("failed to decode JSON: %w", err)
 			}
@@ -103,7 +103,7 @@ func primitiveToString(value interface{}) (string, error) {
 }
 
 // marshalKnownTypes checks for special types (time.Time, Date, UUID) and marshals them.
-func marshalKnownTypes(value interface{}) (string, bool) {
+func marshalKnownTypes(value any) (string, bool) {
 	v := reflect.Indirect(reflect.ValueOf(value))
 	t := v.Type()
 
@@ -165,7 +165,7 @@ func sortedKeys(m map[string]string) []string {
 
 // BindStringToObject binds a string value to a destination object.
 // It handles primitives, encoding.TextUnmarshaler, and the Binder interface.
-func BindStringToObject(src string, dst interface{}) error {
+func BindStringToObject(src string, dst any) error {
 	// Check for TextUnmarshaler
 	if tu, ok := dst.(encoding.TextUnmarshaler); ok {
 		return tu.UnmarshalText([]byte(src))
@@ -217,7 +217,7 @@ func BindStringToObject(src string, dst interface{}) error {
 }
 
 // bindSplitPartsToDestinationArray binds a slice of string parts to a destination slice.
-func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
+func bindSplitPartsToDestinationArray(parts []string, dest any) error {
 	v := reflect.Indirect(reflect.ValueOf(dest))
 	t := v.Type()
 
@@ -233,7 +233,7 @@ func bindSplitPartsToDestinationArray(parts []string, dest interface{}) error {
 }
 
 // bindSplitPartsToDestinationStruct binds string parts to a destination struct via JSON.
-func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest interface{}) error {
+func bindSplitPartsToDestinationStruct(paramName string, parts []string, explode bool, dest any) error {
 	var fields []string
 	if explode {
 		fields = make([]string, len(parts))

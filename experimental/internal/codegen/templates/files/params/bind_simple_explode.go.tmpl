@@ -4,7 +4,7 @@
 // Simple style is the default for path and header parameters.
 // Arrays: a,b,c -> []string{"a", "b", "c"} (same as non-explode)
 // Objects: key1=value1,key2=value2 -> struct{Key1, Key2}
-func BindSimpleExplodeParam(paramName string, paramLocation ParamLocation, value string, dest interface{}) error {
+func BindSimpleExplodeParam(paramName string, paramLocation ParamLocation, value string, dest any) error {
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}

@@ -159,7 +159,7 @@ func errorResponseForOperation(op *OperationDescriptor) *ResponseDescriptor {
 // If modelsPackage is set, type names are prefixed with the package name.
 func goTypeForContent(content *ResponseContentDescriptor, schemaIndex map[string]*SchemaDescriptor, modelsPackage *ModelsPackage) string {
 	if content == nil || content.Schema == nil {
-		return "interface{}"
+		return "any"
 	}
 
 	pkgPrefix := modelsPackage.Prefix()
@@ -197,7 +197,7 @@ func goTypeForContent(content *ResponseContentDescriptor, schemaIndex map[string
 		return schemaToGoType(content.Schema.Schema)
 	}
 
-	return "interface{}"
+	return "any"
 }
 
 // GenerateBase generates the base client types and helpers.
@@ -277,7 +277,7 @@ func (g *ClientGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor) s
 				}
 			}
 			if targetType == "" {
-				targetType = "interface{}"
+				targetType = "any"
 			}
 
 			// Generate type alias: type addPetJSONRequestBody = models.NewPet

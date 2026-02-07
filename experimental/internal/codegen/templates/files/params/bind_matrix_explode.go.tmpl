@@ -5,7 +5,7 @@
 // Primitives: ;paramName=value -> "value"
 // Arrays: ;paramName=a;paramName=b;paramName=c -> []string{"a", "b", "c"}
 // Objects: ;key1=value1;key2=value2 -> struct{Key1, Key2}
-func BindMatrixExplodeParam(paramName string, paramLocation ParamLocation, value string, dest interface{}) error {
+func BindMatrixExplodeParam(paramName string, paramLocation ParamLocation, value string, dest any) error {
 	if value == "" {
 		return fmt.Errorf("parameter '%s' is empty, can't bind its value", paramName)
 	}

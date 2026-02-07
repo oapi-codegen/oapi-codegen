@@ -146,7 +146,7 @@ func (g *InitiatorGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor
 				}
 			}
 			if targetType == "" {
-				targetType = "interface{}"
+				targetType = "any"
 			}
 			buf.WriteString(fmt.Sprintf("type %s = %s\n\n", body.GoTypeName, targetType))
 		}
