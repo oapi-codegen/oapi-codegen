@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,9 +23,9 @@ func main() {
 	flagPackage := flag.String("package", "", "Go package name for generated code")
 	flagOutput := flag.String("output", "", "output file path (default: <spec-basename>.gen.go)")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [options] <spec-path>\n\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage: %s [options] <spec-path-or-url>\n\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
-		fmt.Fprintf(os.Stderr, "  spec-path    path to OpenAPI spec file\n\n")
+		fmt.Fprintf(os.Stderr, "  spec-path-or-url    path or URL to OpenAPI spec file\n\n")
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		flag.PrintDefaults()
 	}
@@ -35,8 +38,8 @@ func main() {
 
 	specPath := flag.Arg(0)
 
-	// Parse the OpenAPI spec
-	specData, err := os.ReadFile(specPath)
+	// Load the OpenAPI spec from file or URL
+	specData, err := loadSpec(specPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error reading spec: %v\n", err)
 		os.Exit(1)
@@ -78,7 +81,12 @@ func main() {
 
 	// Default output to <spec-basename>.gen.go
 	if cfg.Output == "" {
-		base := filepath.Base(specPath)
+		// For URLs, extract the filename from the URL path
+		baseName := specPath
+		if u, err := url.Parse(specPath); err == nil && u.Scheme != "" && u.Host != "" {
+			baseName = u.Path
+		}
+		base := filepath.Base(baseName)
 		ext := filepath.Ext(base)
 		cfg.Output = strings.TrimSuffix(base, ext) + ".gen.go"
 	}
@@ -102,4 +110,32 @@ func main() {
 	}
 
 	fmt.Printf("Generated %s\n", cfg.Output)
+}
+
+// loadSpec loads an OpenAPI spec from a file path or URL.
+func loadSpec(specPath string) ([]byte, error) {
+	u, err := url.Parse(specPath)
+	if err == nil && u.Scheme != "" && u.Host != "" {
+		return loadSpecFromURL(u.String())
+	}
+	return os.ReadFile(specPath)
+}
+
+// loadSpecFromURL fetches an OpenAPI spec from an HTTP(S) URL.
+func loadSpecFromURL(specURL string) ([]byte, error) {
+	resp, err := http.Get(specURL) //nolint:gosec // URL comes from user-provided spec path
+	if err != nil {
+		return nil, fmt.Errorf("fetching spec from URL: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetching spec from URL: HTTP %d %s", resp.StatusCode, resp.Status)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading spec from URL: %w", err)
+	}
+	return data, nil
 }
