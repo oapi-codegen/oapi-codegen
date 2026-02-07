@@ -1,0 +1,5 @@
+package: externalref
+output: internal/codegen/test/external_ref/spec.gen.go
+import-mapping:
+  ./packagea/spec.yaml: github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packagea
+  ./packageb/spec.yaml: github.com/oapi-codegen/oapi-codegen/experimental/internal/codegen/test/external_ref/packageb

@@ -1,0 +1,29 @@
+# Issue 502: anyOf/allOf with only one ref type generates interface{}
+# https://github.com/oapi-codegen/oapi-codegen/issues/502
+#
+# When anyOf or allOf has only one reference, it should generate
+# the referenced type, not interface{}.
+openapi: 3.0.0
+info:
+  title: Issue 502 Test
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    OptionalClaims:
+      type: object
+      properties:
+        idToken:
+          type: string
+        accessToken:
+          type: string
+    Application:
+      type: object
+      properties:
+        name:
+          type: string
+        optionalClaims:
+          anyOf:
+            - $ref: '#/components/schemas/OptionalClaims'
+          description: Optional claims configuration
+          nullable: true

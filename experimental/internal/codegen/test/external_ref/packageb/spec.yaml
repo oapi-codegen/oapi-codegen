@@ -1,0 +1,12 @@
+openapi: "3.1.0"
+info:
+  title: Package B
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    ObjectB:
+      type: object
+      properties:
+        name:
+          type: string

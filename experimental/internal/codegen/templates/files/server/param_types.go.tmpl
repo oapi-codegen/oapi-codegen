@@ -1,0 +1,24 @@
+{{- /*
+  This template generates parameter struct types for server operations.
+  Input: []OperationDescriptor
+*/ -}}
+
+{{ range . }}
+{{- if .HasParams }}
+// {{ .ParamsTypeName }} defines parameters for {{ .GoOperationID }}.
+type {{ .ParamsTypeName }} struct {
+{{- range .QueryParams }}
+	// {{ .Name }} {{ if .Required }}(required){{ else }}(optional){{ end }}
+	{{ .GoName }} {{ if .HasOptionalPointer }}*{{ end }}{{ .TypeDecl }} `form:"{{ .Name }}" json:"{{ .Name }}"`
+{{- end }}
+{{- range .HeaderParams }}
+	// {{ .Name }} (header{{ if .Required }}, required{{ end }})
+	{{ .GoName }} {{ if .HasOptionalPointer }}*{{ end }}{{ .TypeDecl }}
+{{- end }}
+{{- range .CookieParams }}
+	// {{ .Name }} (cookie{{ if .Required }}, required{{ end }})
+	{{ .GoName }} {{ if .HasOptionalPointer }}*{{ end }}{{ .TypeDecl }}
+{{- end }}
+}
+{{ end }}
+{{ end }}

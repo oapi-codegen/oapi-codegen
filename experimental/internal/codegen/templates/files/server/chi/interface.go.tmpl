@@ -1,0 +1,24 @@
+{{- /*
+  This template generates the ServerInterface for Chi servers.
+  Input: []OperationDescriptor
+*/ -}}
+
+// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{- range . }}
+{{ .SummaryAsComment }}
+	// ({{ .Method }} {{ .Path }})
+	{{ .GoOperationID }}(w http.ResponseWriter, r *http.Request{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }})
+{{- end }}
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+type Unimplemented struct{}
+
+{{- range . }}
+{{ .SummaryAsComment }}
+// ({{ .Method }} {{ .Path }})
+func (_ Unimplemented) {{ .GoOperationID }}(w http.ResponseWriter, r *http.Request{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+{{- end }}

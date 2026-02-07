@@ -1,0 +1,24 @@
+{{- /*
+  This template generates the ServerInterface for Gin servers.
+  Input: []OperationDescriptor
+*/ -}}
+
+// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{- range . }}
+{{ .SummaryAsComment }}
+	// ({{ .Method }} {{ .Path }})
+	{{ .GoOperationID }}(c *gin.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }})
+{{- end }}
+}
+
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+type Unimplemented struct{}
+
+{{- range . }}
+{{ .SummaryAsComment }}
+// ({{ .Method }} {{ .Path }})
+func (_ Unimplemented) {{ .GoOperationID }}(c *gin.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) {
+	c.Status(http.StatusNotImplemented)
+}
+{{- end }}

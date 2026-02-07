@@ -393,7 +393,9 @@ We can see that this provides the best means to focus on the implementation of t
 - Single-file output
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
-  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
+  - OpenAPI 3.1 support is in experimental form, as a complete rewrite using [libopenapi](https://github.com/pb33f/libopenapi). Please look in the
+    `./experimental` directory. This is potentially the future V3 of `oapi-codegen` and is functionally complete, just not deeply tested yet. Many OpenAPI 3.1
+    features are supported, such as webhooks and callbacks.
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))

@@ -1,0 +1,41 @@
+{{/* Initiator methods template - implements InitiatorInterface */}}
+{{/* Input: InitiatorTemplateData */}}
+
+{{- range .Operations }}
+{{- $op := . }}
+{{- $opid := .GoOperationID }}
+{{- $hasParams := .HasParams }}
+{{- $paramsTypeName := .ParamsTypeName }}
+{{- $prefix := $.Prefix }}
+
+// {{ $opid }}{{ if .HasBody }}WithBody{{ end }} sends a {{ .Method }} {{ $.PrefixLower }} request
+{{ if .Summary }}// {{ .Summary }}{{ end }}
+func (p *{{ $prefix }}Initiator) {{ $opid }}{{ if .HasBody }}WithBody{{ end }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := New{{ $opid }}{{ $.Prefix }}Request{{ if .HasBody }}WithBody{{ end }}(targetURL{{ if $hasParams }}, params{{ end }}{{ if .HasBody }}, contentType, body{{ end }})
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+{{- range .Bodies }}
+{{- if .IsJSON }}
+
+// {{ $opid }}{{ .FuncSuffix }} sends a {{ $op.Method }} {{ $.PrefixLower }} request with JSON body
+func (p *{{ $prefix }}Initiator) {{ $opid }}{{ .FuncSuffix }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }}(targetURL{{ if $hasParams }}, params{{ end }}, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,13 @@
+{{- /*
+  This template generates the ServerInterface for StdHTTP servers.
+  Input: []OperationDescriptor
+*/ -}}
+
+// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{- range . }}
+{{ .SummaryAsComment }}
+	// ({{ .Method }} {{ .Path }})
+	{{ .GoOperationID }}(w http.ResponseWriter, r *http.Request{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }})
+{{- end }}
+}
