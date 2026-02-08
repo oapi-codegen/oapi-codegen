@@ -1,0 +1,250 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  description: |
+    Test cases for various issues found over time. Please add a test case for
+    any bug fixed.
+servers:
+  - url: http://openapitest.deepmap.ai
+paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      description: |
+        This endpoint exists so that components can be created in this
+        spec and not be pruned
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  anyType1:
+                    $ref: "#/components/schemas/AnyType1"
+                  anyType2:
+                    $ref: "#/components/schemas/AnyType2"
+                  customStringType:
+                    $ref: "#/components/schemas/CustomStringType"
+  /issues/9:
+    get:
+      operationId: Issue9
+      description: |
+        Client params type incorrectly included for request with body and
+        parameters.
+      parameters:
+        - name: foo
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Optional body
+        required: false
+        content:
+          application/json:
+            schema: { }
+  /issues/30/{fallthrough}:
+    get:
+      operationId: Issue30
+    description: |
+      Reserved keywords should be prefixed in variable names.
+    parameters:
+      - name: fallthrough
+        in: path
+        required: true
+        schema:
+          type: string
+  /issues/41/{1param}:
+    get:
+      operationId: Issue41
+      description: Parameter name starting with number
+      parameters:
+        - name: 1param
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/5StartsWithNumber"
+  /issues/127:
+    get:
+      operationId: Issue127
+      description: |
+        Make sure unsupported context types don't preempt supported types.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/yaml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+            text/markdown:
+              schema:
+                $ref: "#/components/schemas/GenericObject"
+  /issues/185:
+    get:
+      operationId: Issue185
+      description: |
+        Type generation when optional/required properties are nullable.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NullableProperties"
+  /issues/209/${str}:
+    parameters:
+      - $ref: '#/components/parameters/StringInPath'
+    get:
+      operationId: Issue209
+      description: Checks if parameters are declared properly
+  /issues/375:
+    get:
+      description: |
+        Enum declaration was generated twice if the enum was in an object
+        which was inside of an array.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnumInObjInArray"
+  /issues/975:
+    get:
+      operationId: Issue975
+      description: |
+        Deprecated fields should get a proper comment
+      responses:
+        200:
+          description: A struct with deprecated fields with varying level of documentation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeprecatedProperty"
+  /issues/1051:
+    get:
+      operationId: Issue1051
+      description: |
+        Multiple media types contain JSON
+      responses:
+        '200':
+          content:
+            application/vnd.something.v1+json:
+              schema:
+                type: object
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    GenericObject:
+      type: object
+    AnyType1: { }
+    AnyType2:
+      description: |
+        AnyType2 represents any type.
+
+        This should be an interface{}
+    CustomStringType:
+      type: string
+      format: custom
+      x-oapi-codegen-extra-tags:
+        foo: bar
+    NullableProperties:
+      type: object
+      properties:
+        optional:
+          type: string
+          nullable: false
+        optionalAndNullable:
+          type: string
+          nullable: true
+        required:
+          type: string
+          nullable: false
+        requiredAndNullable:
+          type: string
+          nullable: true
+      required: [ required, requiredAndNullable ]
+    5StartsWithNumber:
+      type: object
+      description: This schema name starts with a number
+    EnumInObjInArray:
+      type: array
+      items:
+        type: object
+        properties:
+          val:
+            type: string
+            enum:
+              - first
+              - second
+    DeprecatedProperty:
+      type: object
+      required:
+        - newProp
+        - oldProp
+      properties:
+        newProp:
+          type: string
+          description: Use this now!
+        oldProp1:
+          type: string
+          deprecated: true
+          # description: No description on this one to test generation in that case
+        oldProp2:
+          type: string
+          deprecated: true
+          description: It used to do this and that
+        oldProp3:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+        oldProp4:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Use NewProp instead!
+          description: It used to do this and that
+    OuterTypeWithAnonymousInner:
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          x-go-type-name: InnerRenamedAnonymousObject
+          properties:
+            id:
+              type: integer
+          required: [ id ]
+      required: [ name, inner ]
+  parameters:
+    StringInPath:
+      name: str
+      description: A string path parameter
+      in: path
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    # This security scheme has a - in it, we need to make sure the name gets
+    # remapped to a valid Go id. See bug
+    access-token:
+      type: http
+      scheme: bearer
+      bearerFormat: |
+        JWT-format access token.
+security:
+  - access-token: [ ]

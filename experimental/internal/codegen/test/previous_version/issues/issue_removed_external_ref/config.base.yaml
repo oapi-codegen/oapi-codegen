@@ -1,0 +1,6 @@
+package: spec_base
+output: output/spec_base/types.gen.go
+generate:
+  models: true
+import-mapping:
+  spec-ext.yaml: github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/previous_version/issues/issue_removed_external_ref/output/spec_ext

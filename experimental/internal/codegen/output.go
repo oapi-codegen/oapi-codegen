@@ -163,11 +163,12 @@ func GenerateStruct(name string, fields []StructField, doc string, tagGen *Struc
 	for _, f := range fields {
 		tag := generateFieldTag(f, tagGen)
 		if f.Doc != "" {
-			// Single line comment for field
-			b.Line("%s %s %s // %s", f.Name, f.Type, tag, f.Doc)
-		} else {
-			b.Line("%s %s %s", f.Name, f.Type, tag)
+			for _, line := range strings.Split(f.Doc, "\n") {
+				line = strings.TrimRight(line, " \t")
+				b.Line("// %s", line)
+			}
 		}
+		b.Line("%s %s %s", f.Name, f.Type, tag)
 	}
 
 	b.Dedent()
@@ -242,58 +243,36 @@ func GenerateTypeAlias(name, targetType, doc string) string {
 	return b.String()
 }
 
-// GenerateEnum generates an enum type with const values.
-// If customNames is provided and has the same length as values, those names will be used
-// as the constant names instead of auto-generated ones.
-func GenerateEnum(name, baseType string, values []string, customNames []string, doc string) string {
-	return GenerateEnumWithConstPrefix(name, name, baseType, values, customNames, doc)
-}
-
-// GenerateEnumWithConstPrefix generates an enum type with const values.
-// typeName is used for the type definition, constPrefix is used for constant names.
-// This allows the type to be defined with a stable name while constants use a friendly name.
-func GenerateEnumWithConstPrefix(typeName, constPrefix, baseType string, values []string, customNames []string, doc string) string {
+// GenerateEnumFromInfo generates an enum type with const values using pre-computed EnumInfo.
+// The EnumInfo contains sanitized names and the prefix decision from collision detection.
+func GenerateEnumFromInfo(info *EnumInfo) string {
 	b := NewCodeBuilder()
 
-	if doc != "" {
-		for _, line := range strings.Split(doc, "\n") {
+	if info.Doc != "" {
+		for _, line := range strings.Split(info.Doc, "\n") {
 			b.Line("// %s", line)
 		}
 	}
 
-	b.Line("type %s %s", typeName, baseType)
+	b.Line("type %s %s", info.TypeName, info.BaseType)
 	b.BlankLine()
 
-	if len(values) > 0 {
+	if len(info.Values) > 0 {
 		b.Line("const (")
 		b.Indent()
 
-		// Track used names to handle duplicates
-		usedNames := make(map[string]int)
-
-		for i, v := range values {
+		for i, v := range info.Values {
 			var constName string
-
-			// Use custom name if provided, otherwise auto-generate
-			if len(customNames) > i && customNames[i] != "" {
-				constName = constPrefix + "_" + customNames[i]
+			if info.PrefixTypeName {
+				constName = info.TypeName + info.SanitizedNames[i]
 			} else {
-				constSuffix := sanitizeEnumValue(v, baseType)
-				constName = constPrefix + "_" + constSuffix
+				constName = info.SanitizedNames[i]
 			}
 
-			// Handle duplicate names by adding a numeric suffix
-			if count, exists := usedNames[constName]; exists {
-				constName = fmt.Sprintf("%s_%d", constName, count)
-				usedNames[constName] = count + 1
+			if info.BaseType == "string" {
+				b.Line("%s %s = %q", constName, info.TypeName, v)
 			} else {
-				usedNames[constName] = 1
-			}
-
-			if baseType == "string" {
-				b.Line("%s %s = %q", constName, typeName, v)
-			} else {
-				b.Line("%s %s = %s", constName, typeName, v)
+				b.Line("%s %s = %s", constName, info.TypeName, v)
 			}
 		}
 
@@ -302,44 +281,6 @@ func GenerateEnumWithConstPrefix(typeName, constPrefix, baseType string, values 
 	}
 
 	return b.String()
-}
-
-// sanitizeEnumValue converts an enum value to a valid Go identifier suffix.
-func sanitizeEnumValue(v string, baseType string) string {
-	// For integer enums, prefix with N for readability
-	if baseType == "int" || baseType == "int32" || baseType == "int64" {
-		// Check if it's a numeric value
-		if len(v) > 0 {
-			firstChar := v[0]
-			if firstChar >= '0' && firstChar <= '9' || firstChar == '-' {
-				// Negative numbers
-				if firstChar == '-' {
-					return "Minus" + v[1:]
-				}
-				return "N" + v
-			}
-		}
-	}
-
-	// Replace common special characters
-	v = strings.ReplaceAll(v, "-", "_")
-	v = strings.ReplaceAll(v, " ", "_")
-	v = strings.ReplaceAll(v, ".", "_")
-
-	// Remove any remaining invalid characters
-	var result strings.Builder
-	for i, r := range v {
-		if r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r == '_' {
-			result.WriteRune(r)
-		} else if r >= '0' && r <= '9' && i > 0 {
-			result.WriteRune(r)
-		}
-	}
-
-	if result.Len() == 0 {
-		return "Value"
-	}
-	return result.String()
 }
 
 // GenerateUnionType generates a union struct for anyOf/oneOf with marshal/unmarshal.

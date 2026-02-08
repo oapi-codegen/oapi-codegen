@@ -1,0 +1,6 @@
+package: output
+output: pkg1/output/types.gen.go
+generate:
+  models: true
+import-mapping:
+  pkg2.yaml: github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/previous_version/issues/issue_1182/pkg2/output

@@ -26,7 +26,8 @@ import (
 
 // #/components/schemas/WebhookRegistration
 type WebhookRegistration struct {
-	URL string `json:"url" form:"url"` // URL to receive webhook events
+	// URL to receive webhook events
+	URL string `json:"url" form:"url"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -35,7 +36,8 @@ func (s *WebhookRegistration) ApplyDefaults() {
 
 // #/components/schemas/WebhookRegistrationResponse
 type WebhookRegistrationResponse struct {
-	ID UUID `json:"id" form:"id"` // Unique identifier for this webhook registration
+	// Unique identifier for this webhook registration
+	ID UUID `json:"id" form:"id"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -44,7 +46,8 @@ func (s *WebhookRegistrationResponse) ApplyDefaults() {
 
 // #/components/schemas/Person
 type Person struct {
-	Name string `json:"name" form:"name"` // Name of the person who badged in or out
+	// Name of the person who badged in or out
+	Name string `json:"name" form:"name"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -53,8 +56,10 @@ func (s *Person) ApplyDefaults() {
 
 // #/components/schemas/Error
 type Error struct {
-	Code    int32  `json:"code" form:"code"`       // Error code
-	Message string `json:"message" form:"message"` // Error message
+	// Error code
+	Code int32 `json:"code" form:"code"`
+	// Error message
+	Message string `json:"message" form:"message"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -65,8 +70,8 @@ func (s *Error) ApplyDefaults() {
 type PostAPIWebhookKindParameter string
 
 const (
-	PostAPIWebhookKindParameter_enterEvent PostAPIWebhookKindParameter = "enterEvent"
-	PostAPIWebhookKindParameter_exitEvent  PostAPIWebhookKindParameter = "exitEvent"
+	EnterEvent PostAPIWebhookKindParameter = "enterEvent"
+	ExitEvent  PostAPIWebhookKindParameter = "exitEvent"
 )
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

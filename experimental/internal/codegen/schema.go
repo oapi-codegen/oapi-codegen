@@ -115,3 +115,9 @@ func (d *SchemaDescriptor) ParseExternalRef() (filePath, internalPath string) {
 func (d *SchemaDescriptor) IsComponentSchema() bool {
 	return len(d.Path) >= 2 && d.Path[0] == "components" && d.Path[1] == "schemas"
 }
+
+// IsTopLevelComponentSchema returns true if this schema is a direct child of #/components/schemas
+// (i.e., #/components/schemas/Foo, not #/components/schemas/Foo/properties/bar).
+func (d *SchemaDescriptor) IsTopLevelComponentSchema() bool {
+	return len(d.Path) == 3 && d.Path[0] == "components" && d.Path[1] == "schemas"
+}

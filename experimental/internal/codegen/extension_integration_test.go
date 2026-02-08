@@ -139,15 +139,17 @@ components:
 		t.Error("Expected Deprecated: in documentation")
 	}
 
-	// Verify enum with custom var names
-	if !strings.Contains(code, "Status_Active") {
-		t.Error("Expected Status_Active from custom enum var names")
+	// Verify enum with custom var names (no collision, so no type prefix).
+	// After goimports formatting, columns may be tab-aligned, so check
+	// that the constant name and value appear without a type-name prefix.
+	if !strings.Contains(code, `= "active"`) || strings.Contains(code, "StatusActive") {
+		t.Error("Expected unprefixed Active constant from custom enum var names")
 	}
-	if !strings.Contains(code, "Status_Inactive") {
-		t.Error("Expected Status_Inactive from custom enum var names")
+	if !strings.Contains(code, `= "inactive"`) || strings.Contains(code, "StatusInactive") {
+		t.Error("Expected unprefixed Inactive constant from custom enum var names")
 	}
-	if !strings.Contains(code, "Status_Pending") {
-		t.Error("Expected Status_Pending from custom enum var names")
+	if !strings.Contains(code, `= "pending"`) || strings.Contains(code, "StatusPending") {
+		t.Error("Expected unprefixed Pending constant from custom enum var names")
 	}
 }
 

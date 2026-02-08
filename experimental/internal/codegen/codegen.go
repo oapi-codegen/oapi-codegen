@@ -58,6 +58,9 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver, tagGenerator, ctx)
 	gen.IndexSchemas(schemas)
 
+	// Enum pre-pass: collect EnumInfo for all enum schemas, run collision detection
+	gen.resolveEnumNames(schemas, cfg.OutputOptions.AlwaysPrefixEnumValues)
+
 	output := NewOutput(cfg.PackageName)
 
 	// ── Phase 1: Generate all code sections ──
@@ -438,7 +441,13 @@ func generateType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	var code string
 	switch kind {
 	case KindReference:
-		// References don't generate new types; they use the referenced type's name
+		// Internal references don't generate new types; they use the referenced type's name.
+		// However, component schemas that are $ref to external types need a type alias
+		// so that local types can reference them by their local name.
+		if desc.IsExternalReference() && desc.IsTopLevelComponentSchema() && desc.ShortName != "" {
+			code = generateExternalRefAlias(gen, desc)
+			break
+		}
 		return ""
 
 	case KindStruct:
@@ -530,33 +539,30 @@ func generateMapAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
 }
 
 // generateEnumType generates an enum type with const values.
+// It uses pre-computed EnumInfo from the enum pre-pass for collision-aware naming.
 func generateEnumType(gen *TypeGenerator, desc *SchemaDescriptor) string {
-	schema := desc.Schema
-	if schema == nil {
+	info, ok := gen.enumInfoMap[desc.Path.String()]
+	if !ok {
+		// Fallback: shouldn't happen, but build info on the fly
+		info = gen.buildEnumInfo(desc)
+		if info == nil {
+			return ""
+		}
+		computeEnumConstantNames([]*EnumInfo{info}, gen.converter)
+	}
+
+	return GenerateEnumFromInfo(info)
+}
+
+// generateExternalRefAlias generates a type alias for a component schema that is
+// a $ref to an external type. This ensures the local name exists so other local
+// types can reference it.
+func generateExternalRefAlias(gen *TypeGenerator, desc *SchemaDescriptor) string {
+	goType := gen.externalRefType(desc)
+	if goType == "any" {
 		return ""
 	}
-
-	// Determine base type
-	baseType := "string"
-	primaryType := getPrimaryType(schema)
-	if primaryType == "integer" {
-		baseType = "int"
-	}
-
-	// Extract enum values as strings
-	var values []string
-	for _, v := range schema.Enum {
-		values = append(values, fmt.Sprintf("%v", v.Value))
-	}
-
-	// Check for custom enum variable names from extensions
-	var customNames []string
-	if desc.Extensions != nil && len(desc.Extensions.EnumVarNames) > 0 {
-		customNames = desc.Extensions.EnumVarNames
-	}
-
-	doc := extractDescription(schema)
-	return GenerateEnumWithConstPrefix(desc.ShortName, desc.ShortName, baseType, values, customNames, doc)
+	return GenerateTypeAlias(desc.ShortName, goType, "")
 }
 
 // generateTypeAlias generates a simple type alias.

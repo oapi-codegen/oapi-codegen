@@ -1,0 +1,6 @@
+package: output
+output: output/types.gen.go
+generate:
+  models: true
+output-options:
+  prune-unreferenced-schemas: false

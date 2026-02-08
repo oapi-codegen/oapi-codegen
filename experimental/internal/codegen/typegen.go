@@ -19,6 +19,11 @@ type TypeGenerator struct {
 
 	// schemaIndex maps JSON pointer refs to their descriptors
 	schemaIndex map[string]*SchemaDescriptor
+
+	// enumInfoMap maps schema path strings to pre-computed EnumInfo.
+	// Populated by the enum pre-pass phase so that generateEnumType can
+	// use collision-aware constant names.
+	enumInfoMap map[string]*EnumInfo
 }
 
 // NewTypeGenerator creates a TypeGenerator with the given configuration.
@@ -30,6 +35,7 @@ func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importR
 		tagGenerator:   tagGenerator,
 		ctx:            ctx,
 		schemaIndex:    make(map[string]*SchemaDescriptor),
+		enumInfoMap:    make(map[string]*EnumInfo),
 	}
 }
 
@@ -85,6 +91,67 @@ func (g *TypeGenerator) RequiredTemplates() map[string]bool {
 // addTemplate records that a custom type template is needed.
 func (g *TypeGenerator) addTemplate(templateName string) {
 	g.ctx.NeedCustomType(templateName)
+}
+
+// resolveEnumNames runs the enum pre-pass: collects EnumInfo for all enum schemas,
+// computes constant names via NameConverter, and resolves cross-enum collisions.
+func (g *TypeGenerator) resolveEnumNames(schemas []*SchemaDescriptor, alwaysPrefix bool) {
+	var enumInfos []*EnumInfo
+	allTypeNames := make(map[string]bool) // non-enum type names
+
+	for _, desc := range schemas {
+		kind := GetSchemaKind(desc)
+		if kind == KindEnum {
+			info := g.buildEnumInfo(desc)
+			if info != nil {
+				enumInfos = append(enumInfos, info)
+				g.enumInfoMap[desc.Path.String()] = info
+			}
+		} else if kind != KindReference {
+			// Track non-enum type names for collision detection
+			if desc.ShortName != "" {
+				allTypeNames[desc.ShortName] = true
+			}
+		}
+	}
+
+	if len(enumInfos) > 0 {
+		computeEnumConstantNames(enumInfos, g.converter)
+		resolveEnumCollisions(enumInfos, allTypeNames, alwaysPrefix)
+	}
+}
+
+// buildEnumInfo creates an EnumInfo from a schema descriptor.
+func (g *TypeGenerator) buildEnumInfo(desc *SchemaDescriptor) *EnumInfo {
+	schema := desc.Schema
+	if schema == nil || len(schema.Enum) == 0 {
+		return nil
+	}
+
+	baseType := "string"
+	primaryType := getPrimaryType(schema)
+	if primaryType == "integer" {
+		baseType = "int"
+	}
+
+	var values []string
+	for _, v := range schema.Enum {
+		values = append(values, fmt.Sprintf("%v", v.Value))
+	}
+
+	var customNames []string
+	if desc.Extensions != nil && len(desc.Extensions.EnumVarNames) > 0 {
+		customNames = desc.Extensions.EnumVarNames
+	}
+
+	return &EnumInfo{
+		TypeName:    desc.ShortName,
+		BaseType:    baseType,
+		Values:      values,
+		CustomNames: customNames,
+		Doc:         extractDescription(schema),
+		SchemaPath:  desc.Path.String(),
+	}
 }
 
 // GoTypeExpr returns the Go type expression for a schema descriptor.

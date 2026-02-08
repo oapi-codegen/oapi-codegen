@@ -301,18 +301,18 @@ func (s *AdditionalPropsWithProps) ApplyDefaults() {
 type StringEnum string
 
 const (
-	StringEnum_value1 StringEnum = "value1"
-	StringEnum_value2 StringEnum = "value2"
-	StringEnum_value3 StringEnum = "value3"
+	Value1 StringEnum = "value1"
+	Value2 StringEnum = "value2"
+	Value3 StringEnum = "value3"
 )
 
 // #/components/schemas/IntegerEnum
 type IntegerEnum int
 
 const (
-	IntegerEnum_N1 IntegerEnum = 1
-	IntegerEnum_N2 IntegerEnum = 2
-	IntegerEnum_N3 IntegerEnum = 3
+	IntegerEnumN1 IntegerEnum = 1
+	IntegerEnumN2 IntegerEnum = 2
+	IntegerEnumN3 IntegerEnum = 3
 )
 
 // #/components/schemas/ObjectWithEnum
@@ -329,18 +329,18 @@ func (s *ObjectWithEnum) ApplyDefaults() {
 type ObjectWithEnumStatus string
 
 const (
-	ObjectWithEnumStatus_pending   ObjectWithEnumStatus = "pending"
-	ObjectWithEnumStatus_active    ObjectWithEnumStatus = "active"
-	ObjectWithEnumStatus_completed ObjectWithEnumStatus = "completed"
+	Pending   ObjectWithEnumStatus = "pending"
+	Active    ObjectWithEnumStatus = "active"
+	Completed ObjectWithEnumStatus = "completed"
 )
 
 // #/components/schemas/ObjectWithEnum/properties/priority
 type ObjectWithEnumPriority int
 
 const (
-	ObjectWithEnumPriority_N1 ObjectWithEnumPriority = 1
-	ObjectWithEnumPriority_N2 ObjectWithEnumPriority = 2
-	ObjectWithEnumPriority_N3 ObjectWithEnumPriority = 3
+	ObjectWithEnumPriorityN1 ObjectWithEnumPriority = 1
+	ObjectWithEnumPriorityN2 ObjectWithEnumPriority = 2
+	ObjectWithEnumPriorityN3 ObjectWithEnumPriority = 3
 )
 
 // #/components/schemas/InlineEnumInProperty
@@ -356,8 +356,8 @@ func (s *InlineEnumInProperty) ApplyDefaults() {
 type InlineEnumInPropertyInlineStatus string
 
 const (
-	InlineEnumInPropertyInlineStatus_on  InlineEnumInPropertyInlineStatus = "on"
-	InlineEnumInPropertyInlineStatus_off InlineEnumInPropertyInlineStatus = "off"
+	On  InlineEnumInPropertyInlineStatus = "on"
+	Off InlineEnumInPropertyInlineStatus = "off"
 )
 
 // #/components/schemas/BaseProperties

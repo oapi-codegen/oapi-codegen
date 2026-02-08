@@ -1,0 +1,53 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Tests AllOf composition
+paths:
+  /placeholder:
+    get:
+      operationId: placeholder
+      description: |
+        Validators want at least one path, so this makes them happy.
+      responses:
+        default:
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonWithID"
+components:
+  schemas:
+    PersonProperties:
+      type: object
+      description: |
+        These are fields that specify a person. They are all optional, and
+        would be used by an `Edit` style API endpoint, where each is optional.
+      properties:
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        GovernmentIDNumber:
+          type: integer
+          format: int64
+    Person:
+      type: object
+      description: |
+        This is a person, with mandatory first and last name, but optional ID
+        number. This would be returned by a `Get` style API. We merge the person
+        properties with another Schema which only provides required fields.
+      allOf:
+        - $ref: "#/components/schemas/PersonProperties"
+        - required: [ FirstName, LastName ]
+    PersonWithID:
+      type: object
+      description: |
+        This is a person record as returned from a Create endpoint. It contains
+        all the fields of a Person, with an additional resource UUID.
+      allOf:
+        - $ref: "#/components/schemas/Person"
+        - properties:
+            ID:
+              type: integer
+              format: int64
+          required: [ ID ]
