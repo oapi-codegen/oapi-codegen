@@ -5,12 +5,13 @@ type ClientInterface interface {
 {{- range . }}
 {{- $opid := .GoOperationID }}
 {{- $hasParams := .HasParams }}
+{{- $paramsTypeName := .ParamsTypeName }}
 {{- $pathParams := .PathParams }}
 	// {{ $opid }}{{ if .HasBody }}WithBody{{ end }} makes a {{ .Method }} request to {{ .Path }}
-	{{ $opid }}{{ if .HasBody }}WithBody{{ end }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ .ParamsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	{{ $opid }}{{ if .HasBody }}WithBody{{ end }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}, reqEditors ...RequestEditorFn) (*http.Response, error)
 {{- range .Bodies }}
 {{- if .IsJSON }}
-	{{ $opid }}{{ .FuncSuffix }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $.ParamsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	{{ $opid }}{{ .FuncSuffix }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error)
 {{- end }}
 {{- end }}
 {{- end }}
