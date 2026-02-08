@@ -152,6 +152,7 @@ func DefaultContentTypes() []string {
 	return []string{
 		`^application/json$`,
 		`^application/.*\+json$`,
+		`^application/x-www-form-urlencoded$`,
 	}
 }
 

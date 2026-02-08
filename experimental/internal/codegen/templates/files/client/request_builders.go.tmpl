@@ -10,18 +10,26 @@
 {{- $headerParams := .HeaderParams }}
 {{- $cookieParams := .CookieParams }}
 
-{{- /* Generate typed body request builders for JSON bodies */ -}}
+{{- /* Generate typed body request builders for content types matching config */ -}}
 {{- range .Bodies }}
-{{- if .IsJSON }}
+{{- if .GenerateTyped }}
 
 // New{{ $opid }}Request{{ .FuncSuffix }} creates a {{ $op.Method }} request for {{ $op.Path }} with {{ .ContentType }} body
 func New{{ $opid }}Request{{ .FuncSuffix }}(server string{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}) (*http.Request, error) {
 	var bodyReader io.Reader
+{{- if .IsFormEncoded }}
+	values, err := marshalForm(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(values.Encode())
+{{- else }}
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
+{{- end }}
 	return New{{ $opid }}RequestWithBody(server{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, "{{ .ContentType }}", bodyReader)
 }
 {{- end }}

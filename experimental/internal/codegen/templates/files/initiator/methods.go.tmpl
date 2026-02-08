@@ -23,9 +23,9 @@ func (p *{{ $prefix }}Initiator) {{ $opid }}{{ if .HasBody }}WithBody{{ end }}(c
 	return p.Client.Do(req)
 }
 {{- range .Bodies }}
-{{- if .IsJSON }}
+{{- if .GenerateTyped }}
 
-// {{ $opid }}{{ .FuncSuffix }} sends a {{ $op.Method }} {{ $prefixLower }} request with JSON body
+// {{ $opid }}{{ .FuncSuffix }} sends a {{ $op.Method }} {{ $prefixLower }} request with {{ .ContentType }} body
 func (p *{{ $prefix }}Initiator) {{ $opid }}{{ .FuncSuffix }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }}(targetURL{{ if $hasParams }}, params{{ end }}, body)
 	if err != nil {

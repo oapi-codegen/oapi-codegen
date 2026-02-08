@@ -12,18 +12,26 @@
 {{- $prefix := $.Prefix }}
 {{- $prefixLower := $.PrefixLower }}
 
-{{- /* Generate typed body request builders for JSON bodies */ -}}
+{{- /* Generate typed body request builders for content types matching config */ -}}
 {{- range .Bodies }}
-{{- if .IsJSON }}
+{{- if .GenerateTyped }}
 
 // New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }} creates a {{ $op.Method }} request for the {{ $prefixLower }} with {{ .ContentType }} body
 func New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }}(targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}) (*http.Request, error) {
 	var bodyReader io.Reader
+{{- if .IsFormEncoded }}
+	values, err := marshalForm(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(values.Encode())
+{{- else }}
 	buf, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
+{{- end }}
 	return New{{ $opid }}{{ $prefix }}RequestWithBody(targetURL{{ if $hasParams }}, params{{ end }}, "{{ .ContentType }}", bodyReader)
 }
 {{- end }}
