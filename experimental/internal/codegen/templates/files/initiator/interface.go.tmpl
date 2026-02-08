@@ -6,11 +6,13 @@ type {{ .Prefix }}InitiatorInterface interface {
 {{- range .Operations }}
 {{- $opid := .GoOperationID }}
 {{- $hasParams := .HasParams }}
-	// {{ $opid }}{{ if .HasBody }}WithBody{{ end }} sends a {{ .Method }} {{ $.PrefixLower }} request
-	{{ $opid }}{{ if .HasBody }}WithBody{{ end }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ .ParamsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}, reqEditors ...RequestEditorFn) (*http.Response, error)
+{{- $paramsTypeName := .ParamsTypeName }}
+{{- $prefixLower := $.PrefixLower }}
+	// {{ $opid }}{{ if .HasBody }}WithBody{{ end }} sends a {{ .Method }} {{ $prefixLower }} request
+	{{ $opid }}{{ if .HasBody }}WithBody{{ end }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}, reqEditors ...RequestEditorFn) (*http.Response, error)
 {{- range .Bodies }}
 {{- if .IsJSON }}
-	{{ $opid }}{{ .FuncSuffix }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $.ParamsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	{{ $opid }}{{ .FuncSuffix }}(ctx context.Context, targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}, reqEditors ...RequestEditorFn) (*http.Response, error)
 {{- end }}
 {{- end }}
 {{- end }}

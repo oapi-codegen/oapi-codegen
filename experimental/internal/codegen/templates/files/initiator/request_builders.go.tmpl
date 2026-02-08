@@ -10,12 +10,13 @@
 {{- $headerParams := .HeaderParams }}
 {{- $cookieParams := .CookieParams }}
 {{- $prefix := $.Prefix }}
+{{- $prefixLower := $.PrefixLower }}
 
 {{- /* Generate typed body request builders for JSON bodies */ -}}
 {{- range .Bodies }}
 {{- if .IsJSON }}
 
-// New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }} creates a {{ $op.Method }} request for the {{ $.PrefixLower }} with {{ .ContentType }} body
+// New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }} creates a {{ $op.Method }} request for the {{ $prefixLower }} with {{ .ContentType }} body
 func New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }}(targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}, body {{ .GoTypeName }}) (*http.Request, error) {
 	var bodyReader io.Reader
 	buf, err := json.Marshal(body)
@@ -28,7 +29,7 @@ func New{{ $opid }}{{ $prefix }}Request{{ .FuncSuffix }}(targetURL string{{ if $
 {{- end }}
 {{- end }}
 
-// New{{ $opid }}{{ $prefix }}Request{{ if .HasBody }}WithBody{{ end }} creates a {{ .Method }} request for the {{ $.PrefixLower }}{{ if .HasBody }} with any body{{ end }}
+// New{{ $opid }}{{ $prefix }}Request{{ if .HasBody }}WithBody{{ end }} creates a {{ .Method }} request for the {{ $prefixLower }}{{ if .HasBody }} with any body{{ end }}
 func New{{ $opid }}{{ $prefix }}Request{{ if .HasBody }}WithBody{{ end }}(targetURL string{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, contentType string, body io.Reader{{ end }}) (*http.Request, error) {
 	var err error
 
