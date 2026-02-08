@@ -11,8 +11,8 @@ import (
 
 // GatherResult contains the results of gathering from an OpenAPI document.
 type GatherResult struct {
-	Schemas      []*SchemaDescriptor
-	ParamTracker *ParamUsageTracker
+	Schemas []*SchemaDescriptor
+	Ctx     *CodegenContext
 }
 
 // GatherSchemas traverses an OpenAPI document and collects all schemas into a list.
@@ -37,20 +37,20 @@ func GatherAll(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) 
 	g := &gatherer{
 		schemas:            make([]*SchemaDescriptor, 0),
 		contentTypeMatcher: contentTypeMatcher,
-		paramTracker:       NewParamUsageTracker(),
+		ctx:                NewCodegenContext(),
 	}
 
 	g.gatherFromDocument(&model.Model)
 	return &GatherResult{
-		Schemas:      g.schemas,
-		ParamTracker: g.paramTracker,
+		Schemas: g.schemas,
+		Ctx:     g.ctx,
 	}, nil
 }
 
 type gatherer struct {
 	schemas            []*SchemaDescriptor
 	contentTypeMatcher *ContentTypeMatcher
-	paramTracker       *ParamUsageTracker
+	ctx                *CodegenContext
 	// Context for the current operation being gathered (for nicer naming)
 	currentOperationID string
 	currentContentType string
@@ -156,7 +156,7 @@ func (g *gatherer) gatherFromParameter(param *v3.Parameter, basePath SchemaPath)
 	}
 
 	// Track parameter styling usage for code generation
-	if g.paramTracker != nil && param.Schema != nil {
+	if g.ctx != nil && param.Schema != nil {
 		// Determine style (with defaults based on location)
 		style := param.Style
 		if style == "" {
@@ -170,7 +170,7 @@ func (g *gatherer) gatherFromParameter(param *v3.Parameter, basePath SchemaPath)
 		}
 
 		// Record both style (client) and bind (server) usage
-		g.paramTracker.RecordParam(style, explode)
+		g.ctx.NeedParam(style, explode)
 	}
 
 	if param.Schema != nil {

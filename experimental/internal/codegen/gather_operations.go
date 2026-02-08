@@ -12,7 +12,7 @@ import (
 
 // GatherOperations traverses an OpenAPI document and collects all operations.
 // contentTypeMatcher determines which content types get typed request body methods.
-func GatherOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
+func GatherOperations(doc libopenapi.Document, ctx *CodegenContext, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
 	model, err := doc.BuildV3Model()
 	if err != nil {
 		return nil, fmt.Errorf("building v3 model: %w", err)
@@ -22,7 +22,7 @@ func GatherOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker, 
 	}
 
 	g := &operationGatherer{
-		paramTracker:       paramTracker,
+		ctx:                ctx,
 		contentTypeMatcher: contentTypeMatcher,
 	}
 
@@ -30,7 +30,7 @@ func GatherOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker, 
 }
 
 type operationGatherer struct {
-	paramTracker       *ParamUsageTracker
+	ctx                *CodegenContext
 	contentTypeMatcher *ContentTypeMatcher
 }
 
@@ -193,8 +193,8 @@ func (g *operationGatherer) gatherParameter(param *v3.Parameter) (*ParameterDesc
 	}
 
 	// Record param usage for function generation
-	if g.paramTracker != nil {
-		g.paramTracker.RecordParam(style, explode)
+	if g.ctx != nil {
+		g.ctx.NeedParam(style, explode)
 	}
 
 	// Determine encoding mode
@@ -577,7 +577,7 @@ func sortPathParamsByPath(path string, params []*ParameterDescriptor) ([]*Parame
 }
 
 // GatherWebhookOperations traverses an OpenAPI document and collects operations from webhooks.
-func GatherWebhookOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
+func GatherWebhookOperations(doc libopenapi.Document, ctx *CodegenContext, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
 	model, err := doc.BuildV3Model()
 	if err != nil {
 		return nil, fmt.Errorf("building v3 model: %w", err)
@@ -587,7 +587,7 @@ func GatherWebhookOperations(doc libopenapi.Document, paramTracker *ParamUsageTr
 	}
 
 	g := &operationGatherer{
-		paramTracker:       paramTracker,
+		ctx:                ctx,
 		contentTypeMatcher: contentTypeMatcher,
 	}
 
@@ -595,7 +595,7 @@ func GatherWebhookOperations(doc libopenapi.Document, paramTracker *ParamUsageTr
 }
 
 // GatherCallbackOperations traverses an OpenAPI document and collects operations from callbacks.
-func GatherCallbackOperations(doc libopenapi.Document, paramTracker *ParamUsageTracker, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
+func GatherCallbackOperations(doc libopenapi.Document, ctx *CodegenContext, contentTypeMatcher *ContentTypeMatcher) ([]*OperationDescriptor, error) {
 	model, err := doc.BuildV3Model()
 	if err != nil {
 		return nil, fmt.Errorf("building v3 model: %w", err)
@@ -605,7 +605,7 @@ func GatherCallbackOperations(doc libopenapi.Document, paramTracker *ParamUsageT
 	}
 
 	g := &operationGatherer{
-		paramTracker:       paramTracker,
+		ctx:                ctx,
 		contentTypeMatcher: contentTypeMatcher,
 	}
 

@@ -84,8 +84,8 @@ func gatherTestOps(t *testing.T) []*OperationDescriptor {
 	doc, err := libopenapi.NewDocument([]byte(filterTestSpec))
 	require.NoError(t, err)
 
-	tracker := NewParamUsageTracker()
-	ops, err := GatherOperations(doc, tracker, NewContentTypeMatcher(DefaultContentTypes()))
+	ctx := NewCodegenContext()
+	ops, err := GatherOperations(doc, ctx, NewContentTypeMatcher(DefaultContentTypes()))
 	require.NoError(t, err)
 	return ops
 }

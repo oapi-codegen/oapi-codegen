@@ -7,63 +7,48 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParamUsageTracker(t *testing.T) {
-	t.Run("empty tracker has no usage", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		assert.False(t, tracker.HasAnyUsage())
-		assert.Empty(t, tracker.GetRequiredTemplates())
-		assert.Empty(t, tracker.GetRequiredImports())
+func TestCodegenContext_Params(t *testing.T) {
+	t.Run("empty context has no params", func(t *testing.T) {
+		ctx := NewCodegenContext()
+		assert.False(t, ctx.HasAnyParams())
+		assert.Empty(t, ctx.GetRequiredParamTemplates())
+		assert.Empty(t, ctx.GetRequiredParamImports())
 	})
 
-	t.Run("records style param", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordStyleParam("simple", false)
+	t.Run("records param (style and bind)", func(t *testing.T) {
+		ctx := NewCodegenContext()
+		ctx.NeedParam("simple", false)
 
-		assert.True(t, tracker.HasAnyUsage())
-		keys := tracker.GetUsedStyleKeys()
+		assert.True(t, ctx.HasAnyParams())
+		keys := ctx.RequiredParams()
 		assert.Contains(t, keys, "style_simple")
+		assert.Contains(t, keys, "bind_simple")
 	})
 
-	t.Run("records style param with explode", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordStyleParam("form", true)
+	t.Run("records param with explode", func(t *testing.T) {
+		ctx := NewCodegenContext()
+		ctx.NeedParam("form", true)
 
-		keys := tracker.GetUsedStyleKeys()
+		keys := ctx.RequiredParams()
 		assert.Contains(t, keys, "style_form_explode")
-	})
-
-	t.Run("records bind param", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordBindParam("label", false)
-
-		keys := tracker.GetUsedStyleKeys()
-		assert.Contains(t, keys, "bind_label")
-	})
-
-	t.Run("records both style and bind", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordParam("matrix", true)
-
-		keys := tracker.GetUsedStyleKeys()
-		assert.Contains(t, keys, "style_matrix_explode")
-		assert.Contains(t, keys, "bind_matrix_explode")
+		assert.Contains(t, keys, "bind_form_explode")
 	})
 
 	t.Run("returns helpers template first", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordStyleParam("simple", false)
+		ctx := NewCodegenContext()
+		ctx.NeedParam("simple", false)
 
-		templates := tracker.GetRequiredTemplates()
+		templates := ctx.GetRequiredParamTemplates()
 		require.NotEmpty(t, templates)
 		assert.Equal(t, "helpers", templates[0].Name)
 	})
 
 	t.Run("aggregates imports", func(t *testing.T) {
-		tracker := NewParamUsageTracker()
-		tracker.RecordStyleParam("simple", false)
-		tracker.RecordStyleParam("form", true)
+		ctx := NewCodegenContext()
+		ctx.NeedParam("simple", false)
+		ctx.NeedParam("form", true)
 
-		imports := tracker.GetRequiredImports()
+		imports := ctx.GetRequiredParamImports()
 		assert.NotEmpty(t, imports)
 
 		// Check that common imports are included
