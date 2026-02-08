@@ -95,6 +95,27 @@ func (o *OperationDescriptor) DefaultBody() *RequestBodyDescriptor {
 	return nil
 }
 
+// DefaultTypedBody returns the first request body with GenerateTyped=true,
+// preferring the default body. Returns nil if no typed body exists.
+func (o *OperationDescriptor) DefaultTypedBody() *RequestBodyDescriptor {
+	for _, b := range o.Bodies {
+		if b.GenerateTyped && b.IsDefault {
+			return b
+		}
+	}
+	for _, b := range o.Bodies {
+		if b.GenerateTyped {
+			return b
+		}
+	}
+	return nil
+}
+
+// HasTypedBody returns true if at least one request body has GenerateTyped=true.
+func (o *OperationDescriptor) HasTypedBody() bool {
+	return o.DefaultTypedBody() != nil
+}
+
 // ParameterDescriptor describes a parameter in any location.
 type ParameterDescriptor struct {
 	Name     string // Original name from spec (e.g., "user_id")
@@ -160,8 +181,9 @@ type RequestBodyDescriptor struct {
 	NameTag    string // "JSON", "Formdata", "Multipart", "Text", etc.
 	GoTypeName string // "{OperationID}JSONBody", etc.
 	FuncSuffix string // "", "WithJSONBody", "WithFormBody" (empty for default)
-	IsDefault  bool   // Is this the default body type?
-	IsJSON     bool   // Is this a JSON content type?
+	IsDefault     bool // Is this the default body type?
+	IsFormEncoded bool // Is this application/x-www-form-urlencoded?
+	GenerateTyped bool // Generate typed methods for this body (based on content-types config)
 
 	// Encoding options for form data
 	Encoding map[string]RequestBodyEncoding

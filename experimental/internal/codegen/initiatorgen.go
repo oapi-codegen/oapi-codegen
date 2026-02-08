@@ -132,7 +132,7 @@ func (g *InitiatorGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor
 
 	for _, op := range ops {
 		for _, body := range op.Bodies {
-			if !body.IsJSON {
+			if !body.GenerateTyped {
 				continue
 			}
 			var targetType string

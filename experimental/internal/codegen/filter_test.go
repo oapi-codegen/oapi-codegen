@@ -85,7 +85,7 @@ func gatherTestOps(t *testing.T) []*OperationDescriptor {
 	require.NoError(t, err)
 
 	tracker := NewParamUsageTracker()
-	ops, err := GatherOperations(doc, tracker)
+	ops, err := GatherOperations(doc, tracker, NewContentTypeMatcher(DefaultContentTypes()))
 	require.NoError(t, err)
 	return ops
 }

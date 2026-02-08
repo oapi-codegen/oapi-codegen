@@ -59,6 +59,27 @@ var TypeTemplates = map[string]TypeTemplate{
 	},
 }
 
+// HelperTemplate defines a template for a helper function that is conditionally included.
+type HelperTemplate struct {
+	Name     string   // Template name (e.g., "marshal_form")
+	Imports  []Import // Required imports for this function
+	Template string   // Template path in embedded FS (e.g., "helpers/marshal_form.go.tmpl")
+}
+
+// MarshalFormHelperTemplate is the template for the marshalForm helper function.
+// This is included when any operation has a form-encoded typed request body.
+var MarshalFormHelperTemplate = HelperTemplate{
+	Name: "marshal_form",
+	Imports: []Import{
+		{Path: "errors"},
+		{Path: "fmt"},
+		{Path: "net/url"},
+		{Path: "reflect"},
+		{Path: "strings"},
+	},
+	Template: "helpers/marshal_form.go.tmpl",
+}
+
 // ParamTemplate defines a template for a parameter styling/binding function.
 type ParamTemplate struct {
 	Name     string   // Function name (e.g., "StyleSimpleParam")
@@ -827,9 +848,11 @@ var InitiatorTemplates = map[string]InitiatorTemplate{
 		Imports: []Import{
 			{Path: "bytes"},
 			{Path: "encoding/json"},
+			{Path: "fmt"},
 			{Path: "io"},
 			{Path: "net/http"},
 			{Path: "net/url"},
+			{Path: "strings"},
 		},
 		Template: "initiator/request_builders.go.tmpl",
 	},
@@ -892,6 +915,7 @@ var ClientTemplates = map[string]ClientTemplate{
 			{Path: "io"},
 			{Path: "net/http"},
 			{Path: "net/url"},
+			{Path: "strings"},
 		},
 		Template: "client/request_builders.go.tmpl",
 	},

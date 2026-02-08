@@ -100,7 +100,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		paramTracker := NewParamUsageTracker()
 
 		// Gather operations
-		ops, err := GatherOperations(doc, paramTracker)
+		ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
@@ -145,6 +145,18 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		for _, imp := range paramTracker.GetRequiredImports() {
 			output.AddImport(imp.Path, imp.Alias)
 		}
+
+		// Generate form helper if any operation has form-encoded bodies
+		formHelper, err := generateFormHelper(ops)
+		if err != nil {
+			return "", fmt.Errorf("generating form helper: %w", err)
+		}
+		if formHelper != "" {
+			output.AddType(formHelper)
+			for _, imp := range templates.MarshalFormHelperTemplate.Imports {
+				output.AddImport(imp.Path, imp.Alias)
+			}
+		}
 	}
 
 	// Track whether shared error types have been generated to avoid duplication.
@@ -159,7 +171,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		paramTracker := NewParamUsageTracker()
 
 		// Gather operations
-		ops, err := GatherOperations(doc, paramTracker)
+		ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
@@ -216,7 +228,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	if cfg.Generation.WebhookInitiator {
 		paramTracker := NewParamUsageTracker()
 
-		webhookOps, err := GatherWebhookOperations(doc, paramTracker)
+		webhookOps, err := GatherWebhookOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering webhook operations: %w", err)
 		}
@@ -253,6 +265,18 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			for _, imp := range paramTracker.GetRequiredImports() {
 				output.AddImport(imp.Path, imp.Alias)
 			}
+
+			// Generate form helper if any webhook operation has form-encoded bodies
+			formHelper, err := generateFormHelper(webhookOps)
+			if err != nil {
+				return "", fmt.Errorf("generating form helper: %w", err)
+			}
+			if formHelper != "" {
+				output.AddType(formHelper)
+				for _, imp := range templates.MarshalFormHelperTemplate.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
 		}
 	}
 
@@ -260,7 +284,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	if cfg.Generation.CallbackInitiator {
 		paramTracker := NewParamUsageTracker()
 
-		callbackOps, err := GatherCallbackOperations(doc, paramTracker)
+		callbackOps, err := GatherCallbackOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering callback operations: %w", err)
 		}
@@ -297,6 +321,18 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			for _, imp := range paramTracker.GetRequiredImports() {
 				output.AddImport(imp.Path, imp.Alias)
 			}
+
+			// Generate form helper if any callback operation has form-encoded bodies
+			formHelper, err := generateFormHelper(callbackOps)
+			if err != nil {
+				return "", fmt.Errorf("generating form helper: %w", err)
+			}
+			if formHelper != "" {
+				output.AddType(formHelper)
+				for _, imp := range templates.MarshalFormHelperTemplate.Imports {
+					output.AddImport(imp.Path, imp.Alias)
+				}
+			}
 		}
 	}
 
@@ -308,7 +344,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 
 		paramTracker := NewParamUsageTracker()
 
-		webhookOps, err := GatherWebhookOperations(doc, paramTracker)
+		webhookOps, err := GatherWebhookOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering webhook operations: %w", err)
 		}
@@ -378,7 +414,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 
 		paramTracker := NewParamUsageTracker()
 
-		callbackOps, err := GatherCallbackOperations(doc, paramTracker)
+		callbackOps, err := GatherCallbackOperations(doc, paramTracker, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering callback operations: %w", err)
 		}
@@ -440,6 +476,43 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	}
 
 	return output.Format()
+}
+
+// hasFormEncodedBodies returns true if any operation has a form-encoded typed request body.
+func hasFormEncodedBodies(ops []*OperationDescriptor) bool {
+	for _, op := range ops {
+		for _, body := range op.Bodies {
+			if body.IsFormEncoded && body.GenerateTyped {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// generateFormHelper generates the marshalForm helper function if needed.
+func generateFormHelper(ops []*OperationDescriptor) (string, error) {
+	if !hasFormEncodedBodies(ops) {
+		return "", nil
+	}
+
+	tmplInfo := templates.MarshalFormHelperTemplate
+	content, err := templates.TemplateFS.ReadFile("files/" + tmplInfo.Template)
+	if err != nil {
+		return "", fmt.Errorf("reading form helper template: %w", err)
+	}
+
+	tmpl, err := template.New(tmplInfo.Name).Parse(string(content))
+	if err != nil {
+		return "", fmt.Errorf("parsing form helper template: %w", err)
+	}
+
+	var result strings.Builder
+	if err := tmpl.Execute(&result, nil); err != nil {
+		return "", fmt.Errorf("executing form helper template: %w", err)
+	}
+
+	return result.String(), nil
 }
 
 // generateParamFunctionsFromTracker generates the parameter styling/binding functions based on usage.

@@ -38,7 +38,7 @@ func TestClientGenerator(t *testing.T) {
 	paramTracker := NewParamUsageTracker()
 
 	// Gather operations
-	ops, err := GatherOperations(doc, paramTracker)
+	ops, err := GatherOperations(doc, paramTracker, NewContentTypeMatcher(DefaultContentTypes()))
 	require.NoError(t, err, "Failed to gather operations")
 	require.Len(t, ops, 4, "Expected 4 operations")
 
@@ -78,6 +78,68 @@ func TestClientGenerator(t *testing.T) {
 	// Verify SimpleClient
 	require.Contains(t, clientCode, "type SimpleClient struct")
 	require.Contains(t, clientCode, "NewSimpleClient")
+}
+
+func TestClientGenerator_FormEncoded(t *testing.T) {
+	// Read the comprehensive spec which includes form-encoded bodies
+	specPath := "test/files/comprehensive.yaml"
+	specData, err := os.ReadFile(specPath)
+	require.NoError(t, err, "Failed to read comprehensive spec")
+
+	doc, err := libopenapi.NewDocument(specData)
+	require.NoError(t, err, "Failed to parse comprehensive spec")
+
+	contentTypeMatcher := NewContentTypeMatcher(DefaultContentTypes())
+	schemas, err := GatherSchemas(doc, contentTypeMatcher)
+	require.NoError(t, err, "Failed to gather schemas")
+
+	converter := NewNameConverter(NameMangling{}, NameSubstitutions{})
+	contentTypeNamer := NewContentTypeShortNamer(DefaultContentTypeShortNames())
+	ComputeSchemaNames(schemas, converter, contentTypeNamer)
+
+	schemaIndex := make(map[string]*SchemaDescriptor)
+	for _, s := range schemas {
+		schemaIndex[s.Path.String()] = s
+	}
+
+	paramTracker := NewParamUsageTracker()
+	ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
+	require.NoError(t, err, "Failed to gather operations")
+
+	// Verify we have an operation with a form-encoded body
+	var hasFormBody bool
+	for _, op := range ops {
+		for _, body := range op.Bodies {
+			if body.IsFormEncoded && body.GenerateTyped {
+				hasFormBody = true
+				break
+			}
+		}
+	}
+	require.True(t, hasFormBody, "Expected at least one operation with a form-encoded typed body")
+
+	// Generate client code
+	gen, err := NewClientGenerator(schemaIndex, true, nil)
+	require.NoError(t, err, "Failed to create client generator")
+
+	clientCode, err := gen.GenerateClient(ops)
+	require.NoError(t, err, "Failed to generate client code")
+
+	t.Logf("Generated client code:\n%s", clientCode)
+
+	// Verify form-encoded body methods reference marshalForm
+	require.Contains(t, clientCode, "marshalForm(body)")
+
+	// Verify we generate the form helper when needed
+	formHelper, err := generateFormHelper(ops)
+	require.NoError(t, err, "Failed to generate form helper")
+	require.NotEmpty(t, formHelper, "Form helper should be generated when form-encoded bodies exist")
+	require.Contains(t, formHelper, "func marshalForm(")
+	require.Contains(t, formHelper, "func marshalFormImpl(")
+	require.Contains(t, formHelper, "reflect.Value")
+
+	// Verify it generates WithFormdataBody method
+	require.Contains(t, clientCode, "WithFormdataBody")
 }
 
 func TestIsSimpleOperation(t *testing.T) {

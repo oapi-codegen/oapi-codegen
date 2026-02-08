@@ -61,6 +61,9 @@ func clientFuncs(schemaIndex map[string]*SchemaDescriptor, modelsPackage *Models
 		"isSimpleOperation":              isSimpleOperation,
 		"simpleOperationSuccessResponse": simpleOperationSuccessResponse,
 		"errorResponseForOperation":      errorResponseForOperation,
+		"defaultTypedBody": func(op *OperationDescriptor) *RequestBodyDescriptor {
+			return op.DefaultTypedBody()
+		},
 		"goTypeForContent": func(content *ResponseContentDescriptor) string {
 			return goTypeForContent(content, schemaIndex, modelsPackage)
 		},
@@ -93,6 +96,11 @@ func pathFmt(path string) string {
 func isSimpleOperation(op *OperationDescriptor) bool {
 	// Must have responses
 	if len(op.Responses) == 0 {
+		return false
+	}
+
+	// If the operation has a body, it must have a typed body for the simple client
+	if op.HasBody && !op.HasTypedBody() {
 		return false
 	}
 
@@ -261,7 +269,7 @@ func (g *ClientGenerator) GenerateRequestBodyTypes(ops []*OperationDescriptor) s
 
 	for _, op := range ops {
 		for _, body := range op.Bodies {
-			if !body.IsJSON {
+			if !body.GenerateTyped {
 				continue
 			}
 			// Get the underlying type for this request body

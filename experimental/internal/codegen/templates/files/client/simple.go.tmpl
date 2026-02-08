@@ -49,11 +49,11 @@ func NewSimpleClient(server string, opts ...ClientOption) (*SimpleClient, error)
 {{- $errorContent := index $errorResponse.Contents 0 }}
 {{- $errorType := goTypeForContent $errorContent }}
 // On success, returns the response body. On HTTP error, returns *ClientHttpError[{{ $errorType }}].
-func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, body {{ (index .Bodies 0).GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
+{{- $typedBody := defaultTypedBody $op }}
+func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if $typedBody }}, body {{ $typedBody.GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
 	var result {{ $successType }}
-{{- if .HasBody }}
-{{- $defaultBody := index .Bodies 0 }}
-	resp, err := c.Client.{{ $opid }}{{ $defaultBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
+{{- if $typedBody }}
+	resp, err := c.Client.{{ $opid }}{{ $typedBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
 {{- else }}
 	resp, err := c.Client.{{ $opid }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, reqEditors...)
 {{- end }}
@@ -85,11 +85,11 @@ func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {
 }
 {{- else }}
 // On success, returns the response body. On HTTP error, returns *ClientHttpError[struct{}].
-func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if .HasBody }}, body {{ (index .Bodies 0).GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
+{{- $typedBody := defaultTypedBody $op }}
+func (c *SimpleClient) {{ $opid }}(ctx context.Context{{ range $pathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if $hasParams }}, params *{{ $paramsTypeName }}{{ end }}{{ if $typedBody }}, body {{ $typedBody.GoTypeName }}{{ end }}, reqEditors ...RequestEditorFn) ({{ $successType }}, error) {
 	var result {{ $successType }}
-{{- if .HasBody }}
-{{- $defaultBody := index .Bodies 0 }}
-	resp, err := c.Client.{{ $opid }}{{ $defaultBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
+{{- if $typedBody }}
+	resp, err := c.Client.{{ $opid }}{{ $typedBody.FuncSuffix }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, body, reqEditors...)
 {{- else }}
 	resp, err := c.Client.{{ $opid }}(ctx{{ range $pathParams }}, {{ .GoVariableName }}{{ end }}{{ if $hasParams }}, params{{ end }}, reqEditors...)
 {{- end }}
