@@ -56,6 +56,10 @@ type OutputOptions struct {
 	// gathered schema. When combined with tag/operation filtering, this effectively removes
 	// schemas that are only used by excluded operations.
 	PruneUnreferencedSchemas bool `yaml:"prune-unreferenced-schemas,omitempty"`
+	// AlwaysPrefixEnumValues forces all enum constants to be prefixed with the type name,
+	// regardless of whether cross-enum collisions are detected.
+	// When false (default), enum constants are only prefixed when needed to avoid collisions.
+	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
 }
 
 // ModelsPackage specifies an external package containing the model types.

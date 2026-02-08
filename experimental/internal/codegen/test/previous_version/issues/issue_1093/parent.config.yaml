@@ -1,0 +1,4 @@
+package: parent
+output: output/parent/types.gen.go
+generate:
+  models: true

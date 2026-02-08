@@ -1,0 +1,6 @@
+package: output
+output: output/types.gen.go
+generate:
+  models: true
+import-mapping:
+  ./deps/my-deps.json: github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/previous_version/issues/issue_1087/deps/output

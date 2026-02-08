@@ -1,0 +1,585 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      description: |
+        This endpoint exists so that components can be created in this
+        spec and not be pruned
+      # TODO: figure out why uncommenting this causes failures
+      #   parameters:
+      #     - $ref: "#/components/parameters/ParameterObject"
+      requestBody:
+        $ref: "#/components/requestBodies/RequestBody"
+      responses:
+        200:
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  one:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject1"
+                  two:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject2"
+                  three:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject3"
+                  four:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject4"
+                  five:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject5"
+                  six:
+                    $ref: "#/components/schemas/AdditionalPropertiesObject6"
+                  oneOf1:
+                    $ref: "#/components/schemas/OneOfObject1"
+                  oneOf2:
+                    $ref: "#/components/schemas/OneOfObject2"
+                  oneOf3:
+                    $ref: "#/components/schemas/OneOfObject3"
+                  oneOf4:
+                    $ref: "#/components/schemas/OneOfObject4"
+                  oneOf5:
+                    $ref: "#/components/schemas/OneOfObject5"
+                  oneOf6:
+                    $ref: "#/components/schemas/OneOfObject6"
+                  oneOf7:
+                    $ref: "#/components/schemas/OneOfObject7"
+                  oneOf8:
+                    $ref: "#/components/schemas/OneOfObject8"
+                  oneOf9:
+                    $ref: "#/components/schemas/OneOfObject9"
+                  oneOf10:
+                    $ref: "#/components/schemas/OneOfObject10"
+                  oneOf11:
+                    $ref: "#/components/schemas/OneOfObject11"
+                  oneOf12:
+                    $ref: "#/components/schemas/OneOfObject12"
+                  anyOf1:
+                    $ref: "#/components/schemas/AnyOfObject1"
+                  jsonField:
+                    $ref: "#/components/schemas/ObjectWithJsonField"
+        default:
+          $ref: "#/components/responses/ResponseObject"
+  /params_with_add_props:
+    get:
+      operationId: ParamsWithAddProps
+      description: |
+        A path with parameters and a body which require additional properties
+      parameters:
+        - name: p1
+          description: |
+            This parameter has additional properties
+          in: query
+          required: true
+          style: simple
+          schema:
+            type: object
+            additionalProperties: true
+        - name: p2
+          description: |
+            This parameter has an anonymous inner property which needs to be
+            turned into a proper type for additionalProperties to work
+          in: query
+          required: true
+          schema:
+            properties:
+              inner:
+                type: object
+                additionalProperties:
+                  type: string
+            required: [ inner ]
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      operationId: BodyWithAddProps
+      description: |
+        Has a request body which contains a direct additionalProperties, and
+        an anonymous inner property with additionalProperties
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              properties:
+                name:
+                  type: string
+                inner:
+                  type: object
+                  additionalProperties:
+                    type: integer
+              required: [ name, inner ]
+              additionalProperties: true
+      responses:
+        default:
+          description: placeholder
+          content:
+            text/plain:
+              schema:
+                type: string
+components:
+  schemas:
+    SchemaObject:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+    SchemaObjectNullable:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+      nullable: true
+    AdditionalPropertiesObject1:
+      description: Has additional properties of type int
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+        optional:
+          type: string
+      required: [ name, id ]
+      additionalProperties:
+        type: integer
+    AdditionalPropertiesObject2:
+      description: Does not allow additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+      required: [ name, id ]
+      additionalProperties: false
+    AdditionalPropertiesObject3:
+      description: Allows any additional property
+      type: object
+      properties:
+        name:
+          type: string
+      required: [ name ]
+      additionalProperties: true
+    AdditionalPropertiesObject4:
+      description: Has anonymous field which has additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          properties:
+            name:
+              type: string
+          required: [ name ]
+          additionalProperties: true
+      required: [ inner, name ]
+      additionalProperties: true
+    AdditionalPropertiesObject5:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject6:
+      description: Array of object with additional properties
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject7:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObjectNullable'
+    OneOfObject1:
+      description: oneOf with references and no discriminator
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+        - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject2:
+      description: oneOf with inline elements
+      oneOf:
+        - type: object
+          properties:
+            name:
+              type: string
+        - type: array
+          items:
+            type: number
+        - type: boolean
+    OneOfObject3:
+      description: inline OneOf
+      type: object
+      properties:
+        union:
+          oneOf:
+            - $ref: '#/components/schemas/OneOfVariant1'
+            - $ref: '#/components/schemas/OneOfVariant2'
+            - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject4:
+      description: oneOf plus fixed type - custom marshaling/unmarshaling
+      type: object
+      properties:
+        fixedProperty:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+        - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject5:
+      description: oneOf with discriminator but no mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+    OneOfObject6:
+      description: oneOf with discriminator and mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+          v5: '#/components/schemas/OneOfVariant5'
+    OneOfObject61:
+      description: oneOf with discriminator and partial mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+    OneOfObject62:
+      description: oneOf with snake_case discriminator and partial snake_case mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/one_of_variant51'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          variant_four: '#/components/schemas/OneOfVariant4'
+    OneOfObject7:
+      description: array of oneOf
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/OneOfVariant1'
+          - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject8:
+      description: oneOf with fixed properties
+      type: object
+      properties:
+        fixed:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject9:
+      description: oneOf with fixed discriminator
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+    OneOfObject10:
+      description: fixed properties, variable required - will compile, but not much sense
+      type: object
+      properties:
+        one:
+          type: string
+        two:
+          type: integer
+        three:
+          type: boolean
+      oneOf:
+        - required:
+            - one
+        - required:
+            - two
+            - three
+    OneOfObject11:
+      description: additional properties of oneOf
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: boolean
+          - type: number
+          - type: string
+    OneOfObject12:
+      description: allOf of oneOfs
+      allOf:
+        - oneOf:
+            - type: string
+            - type: number
+        - oneOf:
+            - $ref: '#/components/schemas/OneOfVariant3'
+            - $ref: '#/components/schemas/OneOfVariant4'
+    OneOfObject13:
+      description: oneOf with fixed discriminator and other fields allowed
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+      additionalProperties: true
+    AnyOfObject1:
+      description: simple anyOf case
+      anyOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+    OneOfVariant1:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    OneOfVariant2:
+      type: array
+      items:
+        type: integer
+    OneOfVariant3:
+      type: boolean
+    OneOfVariant4:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        name:
+          type: string
+      required:
+        - discriminator
+        - name
+    OneOfVariant5:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
+    one_of_variant51:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
+    OneOfVariant6:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/OneOfVariant2'
+      required:
+        - values
+    ObjectWithJsonField:
+      type: object
+      properties:
+        name:
+          type: string
+        value1:
+          type: string
+          format: json
+        value2:
+          type: string
+          format: json
+      required: [ name, value1 ]
+    Enum1:
+      description: |
+        Conflicts with Enum2, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [ One, Two, Three ]
+    Enum2:
+      description: |
+        Conflicts with Enum1, enum values need to be prefixed with type
+        name.
+      type: string
+      enum: [ Two, Three, Four ]
+    Enum3:
+      description: |
+        Enum values conflict with Enums above, need to be prefixed
+        with type name.
+      type: string
+      enum: [ Enum1One, Foo, Bar ]
+    Enum4:
+      description: |
+        No conflicts here, should have unmodified enums
+      type: string
+      enum: [ Cat, Dog, Mouse ]
+    Enum5:
+      description: |
+        Numerical enum
+      type: integer
+      enum: [ 5, 6, 7 ]
+    EnumUnion:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+        - $ref: "#/components/schemas/Enum1"
+        - $ref: "#/components/schemas/Enum2"
+    EnumUnion2:
+      description: |
+        Two enums of the same type combined with allOf.
+      allOf:
+        - $ref: "#/components/schemas/Enum1"
+        - enum: [ Seven ]
+    FunnyValues:
+      description: Edge cases for enum names
+      type: string
+      enum:
+        - '*'
+        - '5'
+        - '&'
+        - '%'
+        - ''
+    RenameMe:
+      description: This schema should be renamed via x-go-name when generating
+      x-go-name: NewName
+      type: object
+      properties:
+        prop1:
+          type: string
+        prop2:
+          type: string
+      required: [ prop1, prop2 ]
+    ReferenceToRenameMe:
+      description: When a Schema is renamed, $ref should refer to the new name
+      type: object
+      properties:
+        ToNewName:
+          $ref: "#/components/schemas/RenameMe"
+      required: [ ToNewName ]
+  responses:
+    ResponseObject:
+      x-go-name: RenamedResponseObject
+      description: A simple response object
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+  parameters:
+    ParameterObject:
+      x-go-name: RenamedParameterObject
+      name: ParameterObject
+      description: a parameter
+      in: query
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+    EnumParam1:
+      name: ParamEnum1
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ on, off, both ]
+    EnumParam2:
+      name: ParamEnum2
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ on, off, both ]
+    EnumParam3:
+      name: ParamEnum3
+      description: a parameter
+      in: query
+      schema:
+        type: string
+        enum: [ alice, eve, bob ]
+  requestBodies:
+    RequestBody:
+      x-go-name: RenamedRequestBody
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string

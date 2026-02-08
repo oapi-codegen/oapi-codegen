@@ -13,9 +13,12 @@ import (
 
 // #/components/schemas/Pet
 type Pet struct {
-	Name string  `json:"name" form:"name"`                   // Name of the pet
-	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
-	ID   int64   `json:"id" form:"id"`                       // Unique id of the pet
+	// Name of the pet
+	Name string `json:"name" form:"name"`
+	// Type of the pet
+	Tag *string `json:"tag,omitempty" form:"tag,omitempty"`
+	// Unique id of the pet
+	ID int64 `json:"id" form:"id"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -24,8 +27,10 @@ func (s *Pet) ApplyDefaults() {
 
 // #/components/schemas/NewPet
 type NewPet struct {
-	Name string  `json:"name" form:"name"`                   // Name of the pet
-	Tag  *string `json:"tag,omitempty" form:"tag,omitempty"` // Type of the pet
+	// Name of the pet
+	Name string `json:"name" form:"name"`
+	// Type of the pet
+	Tag *string `json:"tag,omitempty" form:"tag,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
@@ -34,8 +39,10 @@ func (s *NewPet) ApplyDefaults() {
 
 // #/components/schemas/Error
 type Error struct {
-	Code    int32  `json:"code" form:"code"`       // Error code
-	Message string `json:"message" form:"message"` // Error message
+	// Error code
+	Code int32 `json:"code" form:"code"`
+	// Error message
+	Message string `json:"message" form:"message"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.

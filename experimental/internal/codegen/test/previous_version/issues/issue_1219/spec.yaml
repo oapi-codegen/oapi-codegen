@@ -1,0 +1,136 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    WithAnyAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties: true
+    WithAnyAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties: true
+    WithStringAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties:
+        type: string
+    WithStringAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties:
+        type: string
+    WithoutAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties: false
+    WithoutAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties: false
+    DefaultAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+    DefaultAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+
+    MergeWithoutWithout:
+      allOf:
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
+    MergeWithoutWithString:
+      allOf:
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
+    MergeWithoutWithAny:
+      allOf:
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
+    MergeWithoutDefault:
+      allOf:
+        - $ref: '#/components/schemas/WithoutAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
+
+    MergeWithStringWithout:
+      allOf:
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
+    # Cannot merge this
+    # MergeWithStringWithString:
+    #   allOf:
+    #     - $ref: '#/components/schemas/WithStringAdditional1'
+    #     - $ref: '#/components/schemas/WithStringAdditional2'
+    MergeWithStringWithAny:
+      allOf:
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
+    MergeWithStringDefault:
+      allOf:
+        - $ref: '#/components/schemas/WithStringAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
+
+    MergeWithAnyWithout:
+      allOf:
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
+    MergeWithAnyWithString:
+      allOf:
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
+    MergeWithAnyWithAny:
+      allOf:
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
+    MergeWithAnyDefault:
+      allOf:
+        - $ref: '#/components/schemas/WithAnyAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'
+
+    MergeDefaultWithout:
+      allOf:
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithoutAdditional2'
+    MergeDefaultWithString:
+      allOf:
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithStringAdditional2'
+    MergeDefaultWithAny:
+      allOf:
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/WithAnyAdditional2'
+    MergeDefaultDefault:
+      allOf:
+        - $ref: '#/components/schemas/DefaultAdditional1'
+        - $ref: '#/components/schemas/DefaultAdditional2'

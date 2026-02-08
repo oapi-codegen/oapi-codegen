@@ -177,6 +177,40 @@ func (c *NameConverter) ToPropertyName(name string) string {
 	return c.toGoIdentifier(name, true)
 }
 
+// ToEnumValueName converts a raw enum value to a valid Go identifier.
+// For integer enums (baseType is int, int32, int64, etc.), numeric values
+// get the configured NumericPrefix, negative values get "Minus" prefix.
+// For string enums, the value is processed through the full NameConverter pipeline.
+func (c *NameConverter) ToEnumValueName(value string, baseType string) string {
+	if value == "" {
+		return "Empty"
+	}
+
+	// Handle integer enum values
+	if isIntegerType(baseType) && len(value) > 0 {
+		first := value[0]
+		if first >= '0' && first <= '9' {
+			return c.mangling.NumericPrefix + value
+		}
+		if first == '-' && len(value) > 1 {
+			return "Minus" + value[1:]
+		}
+	}
+
+	return c.toGoIdentifier(value, true)
+}
+
+// isIntegerType returns true if the Go type is an integer type.
+func isIntegerType(baseType string) bool {
+	switch baseType {
+	case "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64":
+		return true
+	default:
+		return false
+	}
+}
+
 // ToVariableName converts an OpenAPI name to a Go variable name (unexported).
 func (c *NameConverter) ToVariableName(name string) string {
 	id := c.toGoIdentifier(name, false)

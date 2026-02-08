@@ -1,0 +1,4 @@
+package: spec_ext
+output: output/spec_ext/types.gen.go
+generate:
+  models: true

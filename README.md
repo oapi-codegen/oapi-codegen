@@ -1,4 +1,12 @@
-# `oapi-codegen`
+# `oapi-codegen experiments directory`
+
+This directory contains experimental, breaking changes to `oapi-codegen`, do not
+use this repo for anyhing important.
+
+This repo exists because there's an `experimental/cmd/oapi-codegen` which is capable of
+parsing OpenAPI 3.1 and 3.2 specifications, and supports some 3.1 features. Please see that
+[README](./experimental/README.md)
+
 
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/9450/badge)](https://www.bestpractices.dev/projects/9450)
 

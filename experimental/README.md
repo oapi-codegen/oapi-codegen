@@ -151,6 +151,12 @@ audit requirements. V3 embeds all necessary helper functions and helper types in
 handle arbitrary parameters, but rather very specific functions for each kind of parameter, and we call the correct little helper versus a generic
 runtime helper.
 
+### Models now support default values configured in the spec
+
+Every model which we generate supports an `ApplyDefaults()` function. It recursively applies defaults on
+any unset optional fields. There's a little caveat here, in that some types are external references, so
+we call `ApplyDefaults()` on them via reflection. This might call an `ApplyDefaults()` which is completely
+unrelated to what we're doing. Please let me know if this feature is causing trouble.
 
 ## Installation
 

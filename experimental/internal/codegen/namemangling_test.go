@@ -72,6 +72,60 @@ func TestToTypeName(t *testing.T) {
 	}
 }
 
+func TestToEnumValueName(t *testing.T) {
+	c := NewNameConverter(DefaultNameMangling(), NameSubstitutions{})
+
+	tests := []struct {
+		name     string
+		value    string
+		baseType string
+		expected string
+	}{
+		// String enum: basic conversions (uses toGoIdentifier pipeline)
+		{"camelCase", "fooBar", "string", "FooBar"},
+		{"word separator hyphen", "foo-bar", "string", "FooBar"},
+		{"word separator space", "foo bar", "string", "FooBar"},
+		{"word separator dot", "foo.bar", "string", "FooBar"},
+
+		// String enum: character substitutions at start
+		{"dollar sign", "$ref", "string", "DollarSignRef"},
+		{"underscore prefix", "_foo", "string", "UnderscoreFoo"},
+
+		// String enum: initialisms
+		{"initialism ID", "userId", "string", "UserID"},
+		{"initialism HTTP", "httpUrl", "string", "HTTPURL"},
+
+		// String enum: empty string
+		{"empty string", "", "string", "Empty"},
+
+		// String enum: numeric prefix
+		{"leading digit string", "1foo", "string", "N1Foo"},
+		{"all digits string", "123", "string", "N123"},
+
+		// Integer enum: numeric values
+		{"positive int", "42", "int", "N42"},
+		{"negative int", "-5", "int", "Minus5"},
+		{"large int", "1000", "int64", "N1000"},
+		{"negative int32", "-100", "int32", "Minus100"},
+
+		// Integer enum: zero
+		{"zero", "0", "int", "N0"},
+
+		// String enum: special characters become word boundaries
+		// Leading space has no char substitution → generic "X" prefix
+		{"spaces around", " Foo ", "string", "XFoo"},
+		// Underscore at start gets substitution, trailing underscore is a word separator (skipped)
+		{"underscores around", "_Foo_", "string", "UnderscoreFoo"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := c.ToEnumValueName(tt.value, tt.baseType)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
+
 func TestToPropertyName(t *testing.T) {
 	c := NewNameConverter(DefaultNameMangling(), NameSubstitutions{})
 

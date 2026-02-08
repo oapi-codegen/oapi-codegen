@@ -1,0 +1,533 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+servers:
+  - url: http://openapitest.deepmap.ai
+paths:
+  /simplePrimitive/{param}:
+    get:
+      operationId: getSimplePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /simpleNoExplodeArray/{param}:
+    get:
+      operationId: getSimpleNoExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /simpleExplodeArray/{param*}:
+    get:
+      operationId: getSimpleExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /simpleNoExplodeObject/{param}:
+    get:
+      operationId: getSimpleNoExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /simpleExplodeObject/{param*}:
+    get:
+      operationId: getSimpleExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelNoExplodeArray/{.param}:
+    get:
+      operationId: getLabelNoExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelExplodeArray/{.param*}:
+    get:
+      operationId: getLabelExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelNoExplodeObject/{.param}:
+    get:
+      operationId: getLabelNoExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelExplodeObject/{.param*}:
+    get:
+      operationId: getLabelExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixNoExplodeArray/{.id}:
+    get:
+      operationId: getMatrixNoExplodeArray
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixExplodeArray/{.id*}:
+    get:
+      operationId: getMatrixExplodeArray
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixNoExplodeObject/{.id}:
+    get:
+      operationId: getMatrixNoExplodeObject
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixExplodeObject/{.id*}:
+    get:
+      operationId: getMatrixExplodeObject
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /contentObject/{param}:
+    get:
+      operationId: getContentObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /passThrough/{param}:
+    get:
+      operationId: getPassThrough
+      parameters:
+        - name: param
+          in: path
+          required: true
+          content:
+            text/plain:
+              schema:
+                type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /startingWithNumber/{1param}:
+    get:
+      operationId: getStartingWithNumber
+      parameters:
+        - name: 1param
+          in: path
+          required: true
+          content:
+            text/plain:
+              schema:
+                type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /queryForm:
+    get:
+      operationId: getQueryForm
+      parameters:
+        - name: ea
+          description: exploded array
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: a
+          description: array
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: eo
+          description: exploded object
+          in: query
+          required: false
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: o
+          description: object
+          in: query
+          required: false
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: ep
+          description: exploded primitive
+          in: query
+          required: false
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: p
+          description: primitive
+          in: query
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: ps
+          description: primitive string
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: co
+          description: complex object
+          in: query
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+        - name: 1s
+          description: name starting with number
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /queryDeepObject:
+    get:
+      operationId: getDeepObject
+      parameters:
+        - name: deepObj
+          description: deep object
+          in: query
+          required: true
+          style: deepObject
+          explode: true
+          schema:
+            $ref: "#/components/schemas/ComplexObject"
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+  /header:
+    get:
+      operationId: getHeader
+      parameters:
+        - name: X-Primitive
+          description: primitive
+          in: header
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: X-Primitive-Exploded
+          description: primitive
+          in: header
+          required: false
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: X-Array-Exploded
+          description: exploded array
+          in: header
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: X-Array
+          description: array
+          in: header
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: X-Object-Exploded
+          description: exploded object
+          in: header
+          required: false
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: X-Object
+          description: object
+          in: header
+          required: false
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: X-Complex-Object
+          description: complex object
+          in: header
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+        - name: 1-Starting-With-Number
+          description: name starting with number
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+
+  /cookie:
+    get:
+      operationId: getCookie
+      parameters:
+        - name: p
+          description: primitive
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: ep
+          description: primitive
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: ea
+          description: exploded array
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: a
+          description: array
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: eo
+          description: exploded object
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: o
+          description: object
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: co
+          description: complex object
+          in: cookie
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+        - name: 1s
+          description: name starting with number
+          in: cookie
+          required: false
+          schema:
+            type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+  /enums:
+    get:
+      operationId: enumParams
+      parameters:
+        - name: enumPathParam
+          description: Parameter with enum values
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            enum: [ 100, 200 ]
+      responses:
+        204:
+          description: no content
+components:
+  schemas:
+    Object:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
+    ComplexObject:
+      properties:
+        Object:
+          $ref: "#/components/schemas/Object"
+        Id:
+          type: integer
+        IsAdmin:
+          type: boolean
+      required:
+        - Object
+        - Id
+        - IsAdmin
+  responses:
+    SimpleResponse:
+      description: A simple response object
+      content:
+        text/plain:
+          schema:
+            type: string

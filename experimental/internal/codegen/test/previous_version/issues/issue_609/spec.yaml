@@ -1,0 +1,11 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Referencing an optional field, which has no information about the type it is will generate an `interface{}`, without the 'optional pointer'"
+paths:
+components:
+  schemas:
+    ResponseBody:
+      type: object
+      properties:
+        unknown: {}
