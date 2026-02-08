@@ -52,6 +52,10 @@ type OutputOptions struct {
 	ExcludeOperationIDs []string `yaml:"exclude-operation-ids,omitempty"`
 	// ExcludeSchemas excludes schemas with the given names from generation. Ignored when empty.
 	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
+	// PruneUnreferencedSchemas removes component schemas that are not $ref'd by any other
+	// gathered schema. When combined with tag/operation filtering, this effectively removes
+	// schemas that are only used by excluded operations.
+	PruneUnreferencedSchemas bool `yaml:"prune-unreferenced-schemas,omitempty"`
 }
 
 // ModelsPackage specifies an external package containing the model types.

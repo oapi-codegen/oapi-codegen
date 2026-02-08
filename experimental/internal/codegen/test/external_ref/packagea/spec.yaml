@@ -2,7 +2,61 @@ openapi: "3.1.0"
 info:
   title: Package A
   version: "1.0"
-paths: {}
+paths:
+  /references_local_models_with_external_fields:
+    post:
+      operationId: referencesLocalModelsWithExternalFields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+  /defines_models_with_external_fields:
+    post:
+      operationId: definesModelsWithExternalFields
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - address
+                - occupation
+              properties:
+                name:
+                  $ref: ../packageb/spec.yaml#/components/schemas/Name
+                address:
+                  $ref: ../packageb/spec.yaml#/components/schemas/Address
+                occupation:
+                  $ref: ../packageb/spec.yaml#/components/schemas/Occupation
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - name
+                  - address
+                  - occupation
+                properties:
+                  name:
+                    $ref: ../packageb/spec.yaml#/components/schemas/Name
+                  address:
+                    $ref: ../packageb/spec.yaml#/components/schemas/Address
+                  occupation:
+                    $ref: ../packageb/spec.yaml#/components/schemas/Occupation
 components:
   schemas:
     ObjectA:
@@ -12,3 +66,16 @@ components:
           type: string
         object_b:
           $ref: ../packageb/spec.yaml#/components/schemas/ObjectB
+    Employee:
+      type: object
+      required:
+        - name
+        - address
+        - occupation
+      properties:
+        name:
+          $ref: ../packageb/spec.yaml#/components/schemas/Name
+        address:
+          $ref: ../packageb/spec.yaml#/components/schemas/Address
+        occupation:
+          $ref: ../packageb/spec.yaml#/components/schemas/Occupation

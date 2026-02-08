@@ -629,9 +629,13 @@ func GenerateMixedPropertiesMarshal(name string, fields []StructField) string {
 // GenerateApplyDefaults generates an ApplyDefaults method for a struct.
 // It sets default values for fields that are nil and have defaults defined,
 // and recursively calls ApplyDefaults on nested struct fields.
+// For external types, it uses reflection to check for ApplyDefaults since
+// we cannot know at code generation time whether the external type has the method.
 // Always generates the method (even if empty) so it can be called uniformly.
-func GenerateApplyDefaults(name string, fields []StructField) string {
+// Returns the generated code and whether the reflect package is needed.
+func GenerateApplyDefaults(name string, fields []StructField) (string, bool) {
 	b := NewCodeBuilder()
+	needsReflect := false
 
 	b.Line("// ApplyDefaults sets default values for fields that are nil.")
 	b.Line("func (s *%s) ApplyDefaults() {", name)
@@ -665,12 +669,26 @@ func GenerateApplyDefaults(name string, fields []StructField) string {
 			b.Dedent()
 			b.Line("}")
 		}
+
+		// For external types, use reflection to call ApplyDefaults if it exists
+		if f.IsExternal && f.Pointer {
+			needsReflect = true
+			b.Line("if s.%s != nil {", f.Name)
+			b.Indent()
+			b.Line("if m := reflect.ValueOf(s.%s).MethodByName(\"ApplyDefaults\"); m.IsValid() {", f.Name)
+			b.Indent()
+			b.Line("m.Call(nil)")
+			b.Dedent()
+			b.Line("}")
+			b.Dedent()
+			b.Line("}")
+		}
 	}
 
 	b.Dedent()
 	b.Line("}")
 
-	return b.String()
+	return b.String(), needsReflect
 }
 
 // needsTypeConversion returns true if a numeric type needs an explicit conversion

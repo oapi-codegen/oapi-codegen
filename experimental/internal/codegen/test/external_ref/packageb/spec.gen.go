@@ -2,13 +2,75 @@
 
 package packageb
 
+import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"strings"
+	"sync"
+)
+
 // #/components/schemas/ObjectB
-type ObjectBSchemaComponent struct {
+type ObjectB struct {
 	Name *string `json:"name,omitempty" form:"name,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ObjectBSchemaComponent) ApplyDefaults() {
+func (s *ObjectB) ApplyDefaults() {
 }
 
-type ObjectB = ObjectBSchemaComponent
+// #/components/schemas/Name
+type Name = string
+
+// #/components/schemas/Address
+type Address = string
+
+// #/components/schemas/Occupation
+type Occupation = string
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var openAPISpecJSON = []string{
+	"H4sIAAAAAAAC/3SPQQrCMBBF9znFpwcoirvs7AGsV4jp2EZtMmRGQcS7S6NFQd3Nf//9xSSm6DhYVKt6",
+	"WS8qE+I+WQNo0BNZbJ0/up7QGOBCWUKKFlUx2ekgFre78WnkFCmqTEvxA42unEC7O5DX5hkAvTJZpAJf",
+	"iHNiyhpIZgmIbqR3mmeiOcS+4M2H8FWuuy6TyN++9f7MTqdXfimPAAAA//8OwvBUEwEAAA==",
+}
+
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeOpenAPISpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var openAPISpec = decodeOpenAPISpecCached()
+
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
+}

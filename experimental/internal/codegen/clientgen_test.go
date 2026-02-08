@@ -20,7 +20,7 @@ func TestClientGenerator(t *testing.T) {
 
 	// Gather schemas to build schema index
 	contentTypeMatcher := NewContentTypeMatcher(DefaultContentTypes())
-	schemas, err := GatherSchemas(doc, contentTypeMatcher)
+	schemas, err := GatherSchemas(doc, contentTypeMatcher, OutputOptions{})
 	require.NoError(t, err, "Failed to gather schemas")
 
 	// Compute names for schemas
@@ -90,7 +90,7 @@ func TestClientGenerator_FormEncoded(t *testing.T) {
 	require.NoError(t, err, "Failed to parse comprehensive spec")
 
 	contentTypeMatcher := NewContentTypeMatcher(DefaultContentTypes())
-	schemas, err := GatherSchemas(doc, contentTypeMatcher)
+	schemas, err := GatherSchemas(doc, contentTypeMatcher, OutputOptions{})
 	require.NoError(t, err, "Failed to gather schemas")
 
 	converter := NewNameConverter(NameMangling{}, NameSubstitutions{})
