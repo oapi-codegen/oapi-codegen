@@ -15,13 +15,16 @@ import (
 
 // #/components/schemas/Pet
 type Pet struct {
-	Born   *any  `json:"born,omitempty" form:"born,omitempty"`
-	BornAt *Date `json:"born_at,omitempty" form:"born_at,omitempty"`
+	Born   *AliasedDate `json:"born,omitempty" form:"born,omitempty"`
+	BornAt *Date        `json:"born_at,omitempty" form:"born_at,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
 func (s *Pet) ApplyDefaults() {
 }
+
+// #/components/schemas/AliasedDate
+type AliasedDate = Date
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{

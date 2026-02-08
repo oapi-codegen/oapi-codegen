@@ -10,3 +10,9 @@ components:
       properties:
         name:
           type: string
+    Name:
+      type: string
+    Address:
+      type: string
+    Occupation:
+      type: string

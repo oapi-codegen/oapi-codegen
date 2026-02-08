@@ -26,14 +26,21 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	// Create content type short namer for friendly type names
 	contentTypeNamer := NewContentTypeShortNamer(cfg.ContentTypeShortNames)
 
-	// Pass 1: Gather all schemas that need types
-	schemas, err := GatherSchemas(doc, contentTypeMatcher)
+	// Pass 1: Gather all schemas that need types.
+	// Operation filters (include/exclude tags, operation IDs) are applied during
+	// gathering so that schemas from excluded operations are never collected.
+	schemas, err := GatherSchemas(doc, contentTypeMatcher, cfg.OutputOptions)
 	if err != nil {
 		return "", fmt.Errorf("gathering schemas: %w", err)
 	}
 
-	// Filter excluded schemas
+	// Filter explicitly excluded schemas
 	schemas = FilterSchemasByName(schemas, cfg.OutputOptions.ExcludeSchemas)
+
+	// Optionally prune component schemas that aren't referenced by any other schema
+	if cfg.OutputOptions.PruneUnreferencedSchemas {
+		schemas = PruneUnreferencedSchemas(schemas)
+	}
 
 	// Pass 2: Compute names for all schemas
 	converter := NewNameConverter(cfg.NameMangling, cfg.NameSubstitutions)
@@ -492,8 +499,11 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 		code := structCode + "\n" + marshalCode + "\n" + unmarshalCode
 
 		// Generate ApplyDefaults method if needed
-		if applyDefaults := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
+		if applyDefaults, needsReflect := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
 			code += "\n" + applyDefaults
+			if needsReflect {
+				gen.AddImport("reflect")
+			}
 		}
 
 		return code
@@ -502,8 +512,11 @@ func generateStructType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	code := GenerateStruct(desc.ShortName, fields, doc, gen.TagGenerator())
 
 	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
+	if applyDefaults, needsReflect := GenerateApplyDefaults(desc.ShortName, fields); applyDefaults != "" {
 		code += "\n" + applyDefaults
+		if needsReflect {
+			gen.AddImport("reflect")
+		}
 	}
 
 	return code
@@ -716,8 +729,11 @@ func generateAllOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	}
 
 	// Generate ApplyDefaults method if needed
-	if applyDefaults := GenerateApplyDefaults(desc.ShortName, finalFields); applyDefaults != "" {
+	if applyDefaults, needsReflect := GenerateApplyDefaults(desc.ShortName, finalFields); applyDefaults != "" {
 		code += "\n" + applyDefaults
+		if needsReflect {
+			gen.AddImport("reflect")
+		}
 	}
 
 	return code

@@ -3,24 +3,81 @@
 package externalref
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"reflect"
+	"strings"
+	"sync"
+
 	ext_934ff11d "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packagea"
 	ext_b892eff9 "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb"
 )
 
 // #/components/schemas/Container
-type ContainerSchemaComponent struct {
+type Container struct {
 	ObjectA *ext_934ff11d.ObjectA `json:"object_a,omitempty" form:"object_a,omitempty"`
 	ObjectB *ext_b892eff9.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ContainerSchemaComponent) ApplyDefaults() {
+func (s *Container) ApplyDefaults() {
 	if s.ObjectA != nil {
-		s.ObjectA.ApplyDefaults()
+		if m := reflect.ValueOf(s.ObjectA).MethodByName("ApplyDefaults"); m.IsValid() {
+			m.Call(nil)
+		}
 	}
 	if s.ObjectB != nil {
-		s.ObjectB.ApplyDefaults()
+		if m := reflect.ValueOf(s.ObjectB).MethodByName("ApplyDefaults"); m.IsValid() {
+			m.Call(nil)
+		}
 	}
 }
 
-type Container = ContainerSchemaComponent
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var openAPISpecJSON = []string{
+	"H4sIAAAAAAAC/4zOMUsFMRAE4D6/YjitE8UunYq1IPayF+Z80btkSRbxIf538Tw5sJDXJcPst1uVRTRH",
+	"DFf+0l8MLpepRgdYtpkRd+/GVmTGAyc8spsD3th6riViWCdU7NAjPj5dqovWwmL9W+jpwEXWJ3Bbi0ku",
+	"bD9fwI7KiDq+MNkWaavKZpn9t4St8CR7Apw3ThE+qKRXeaaErkz+KMt8FvYTwrY/3K/E9V9y/IccTyJv",
+	"3FcAAAD//z2joWc+AQAA",
+}
+
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeOpenAPISpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var openAPISpec = decodeOpenAPISpecCached()
+
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
+}

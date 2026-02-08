@@ -3,20 +3,112 @@
 package packagea
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/base64"
+	"fmt"
+	"reflect"
+	"strings"
+	"sync"
+
 	ext_b892eff9 "github.com/oapi-codegen/oapi-codegen-exp/experimental/internal/codegen/test/external_ref/packageb"
 )
 
 // #/components/schemas/ObjectA
-type ObjectASchemaComponent struct {
+type ObjectA struct {
 	Name    *string               `json:"name,omitempty" form:"name,omitempty"`
 	ObjectB *ext_b892eff9.ObjectB `json:"object_b,omitempty" form:"object_b,omitempty"`
 }
 
 // ApplyDefaults sets default values for fields that are nil.
-func (s *ObjectASchemaComponent) ApplyDefaults() {
+func (s *ObjectA) ApplyDefaults() {
 	if s.ObjectB != nil {
-		s.ObjectB.ApplyDefaults()
+		if m := reflect.ValueOf(s.ObjectB).MethodByName("ApplyDefaults"); m.IsValid() {
+			m.Call(nil)
+		}
 	}
 }
 
-type ObjectA = ObjectASchemaComponent
+// #/components/schemas/Employee
+type Employee struct {
+	Name       ext_b892eff9.Name       `json:"name" form:"name"`
+	Address    ext_b892eff9.Address    `json:"address" form:"address"`
+	Occupation ext_b892eff9.Occupation `json:"occupation" form:"occupation"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *Employee) ApplyDefaults() {
+}
+
+// #/paths//defines_models_with_external_fields/post/requestBody/content/application/json/schema
+type DefinesModelsWithExternalFieldsJSONRequest struct {
+	Name       ext_b892eff9.Name       `json:"name" form:"name"`
+	Address    ext_b892eff9.Address    `json:"address" form:"address"`
+	Occupation ext_b892eff9.Occupation `json:"occupation" form:"occupation"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *DefinesModelsWithExternalFieldsJSONRequest) ApplyDefaults() {
+}
+
+// #/paths//defines_models_with_external_fields/post/responses/200/content/application/json/schema
+type DefinesModelsWithExternalFieldsJSONResponse struct {
+	Name       ext_b892eff9.Name       `json:"name" form:"name"`
+	Address    ext_b892eff9.Address    `json:"address" form:"address"`
+	Occupation ext_b892eff9.Occupation `json:"occupation" form:"occupation"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *DefinesModelsWithExternalFieldsJSONResponse) ApplyDefaults() {
+}
+
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var openAPISpecJSON = []string{
+	"H4sIAAAAAAAC/8yUz47TMBDG732KUUDaE0mBW25daZEQf8qNY+Q6k60XxzaeKdC3R3GSJqRudlF6aE/V",
+	"zPibzzM/xzo0wqkckvfp23SdrJSpbL4CYMUac/gm5A/xiLBZAfxCT8qaHJJQ6QTvqSnNPFbo0UikQlsp",
+	"dFHbEjUVvxXvC/zD6I3QRaVQl+EAgLPE7T8A69ALVtZ8LHMYpD43Sl+C0HfF+4dO5kNQ6Y56/HlA4ntb",
+	"Hnu1Nqg8ljmwP+ApLK1hNDzUAQjntJKhd/ZE1oxzACT3WIt/YwCvPVY53L3KpK2dNWiYsraSsofaaXtE",
+	"vDvZI2cNIQ0iybv1OhlrlkjSK8dhsNtPo0zE8HOWL5l+ue2sxEoZpAUr7BRub3V8dJiD3T2h5Enq1Phs",
+	"cG/AiBojYVGWHokiGSvlwQVrk6TzzaBYjYHof02X82i/uDTNXPsSdxk5lOlR1Dq6zK8xt53Xa+hvLlx7",
+	"uPQ1umynI7yhpzSD0RxIF1Gag2kWp3mgLiN1JahmsboeWM+htQiuIdtIdwVtl21Y8KZvGdl6bPrTmbfH",
+	"iL0yj6dwq1LsxoX/fYmgcR8U+g/4jNdzLic0njMYIe8lN17EVoSopRzF6VnAzN8AAAD//6e8s/8zCQAA",
+}
+
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeOpenAPISpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var openAPISpec = decodeOpenAPISpecCached()
+
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
+}

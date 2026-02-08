@@ -16,8 +16,10 @@ type GatherResult struct {
 }
 
 // GatherSchemas traverses an OpenAPI document and collects all schemas into a list.
-func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) ([]*SchemaDescriptor, error) {
-	result, err := GatherAll(doc, contentTypeMatcher)
+// When outputOpts contains operation filters (include/exclude tags or operation IDs),
+// schemas from excluded operations are not gathered.
+func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher, outputOpts OutputOptions) ([]*SchemaDescriptor, error) {
+	result, err := GatherAll(doc, contentTypeMatcher, outputOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +27,8 @@ func GatherSchemas(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatch
 }
 
 // GatherAll traverses an OpenAPI document and collects all schemas and parameter usage.
-func GatherAll(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) (*GatherResult, error) {
+// When outputOpts contains operation filters, schemas from excluded operations are skipped.
+func GatherAll(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher, outputOpts OutputOptions) (*GatherResult, error) {
 	model, err := doc.BuildV3Model()
 	if err != nil {
 		return nil, fmt.Errorf("building v3 model: %w", err)
@@ -38,6 +41,7 @@ func GatherAll(doc libopenapi.Document, contentTypeMatcher *ContentTypeMatcher) 
 		schemas:            make([]*SchemaDescriptor, 0),
 		contentTypeMatcher: contentTypeMatcher,
 		ctx:                NewCodegenContext(),
+		outputOpts:         outputOpts,
 	}
 
 	g.gatherFromDocument(&model.Model)
@@ -51,6 +55,7 @@ type gatherer struct {
 	schemas            []*SchemaDescriptor
 	contentTypeMatcher *ContentTypeMatcher
 	ctx                *CodegenContext
+	outputOpts         OutputOptions
 	// Context for the current operation being gathered (for nicer naming)
 	currentOperationID string
 	currentContentType string
@@ -91,10 +96,9 @@ func (g *gatherer) gatherFromPathItem(pathItem *v3.PathItem, basePath SchemaPath
 		return
 	}
 
-	// Path-level parameters
-	for i, param := range pathItem.Parameters {
-		g.gatherFromParameter(param, basePath.Append("parameters", fmt.Sprintf("%d", i)))
-	}
+	// Path-level parameters are gathered if any operation on this path is included.
+	// We defer gathering them until we know at least one operation passes filters.
+	pathParamsGathered := false
 
 	// Operations
 	ops := pathItem.GetOperations()
@@ -102,9 +106,89 @@ func (g *gatherer) gatherFromPathItem(pathItem *v3.PathItem, basePath SchemaPath
 		for pair := ops.First(); pair != nil; pair = pair.Next() {
 			method := pair.Key()
 			op := pair.Value()
+
+			// Apply operation filters: skip operations excluded by tags or operation IDs
+			if g.shouldSkipOperation(op) {
+				continue
+			}
+
+			// Gather path-level parameters once (shared across all operations on this path)
+			if !pathParamsGathered {
+				for i, param := range pathItem.Parameters {
+					g.gatherFromParameter(param, basePath.Append("parameters", fmt.Sprintf("%d", i)))
+				}
+				pathParamsGathered = true
+			}
+
 			g.gatherFromOperation(op, basePath.Append(method))
 		}
 	}
+}
+
+// shouldSkipOperation returns true if the operation should be excluded based on
+// the configured tag and operation ID filters.
+func (g *gatherer) shouldSkipOperation(op *v3.Operation) bool {
+	if op == nil {
+		return true
+	}
+
+	// Apply exclude tags first
+	if len(g.outputOpts.ExcludeTags) > 0 {
+		for _, tag := range op.Tags {
+			for _, excluded := range g.outputOpts.ExcludeTags {
+				if tag == excluded {
+					return true
+				}
+			}
+		}
+	}
+
+	// Apply include tags (operation must have at least one included tag)
+	if len(g.outputOpts.IncludeTags) > 0 {
+		hasIncludedTag := false
+		for _, tag := range op.Tags {
+			for _, included := range g.outputOpts.IncludeTags {
+				if tag == included {
+					hasIncludedTag = true
+					break
+				}
+			}
+			if hasIncludedTag {
+				break
+			}
+		}
+		if !hasIncludedTag {
+			return true
+		}
+	}
+
+	// Apply exclude operation IDs
+	if len(g.outputOpts.ExcludeOperationIDs) > 0 && op.OperationId != "" {
+		for _, excluded := range g.outputOpts.ExcludeOperationIDs {
+			if op.OperationId == excluded {
+				return true
+			}
+		}
+	}
+
+	// Apply include operation IDs (operation must match one)
+	if len(g.outputOpts.IncludeOperationIDs) > 0 {
+		if op.OperationId == "" {
+			return true
+		}
+		found := false
+		for _, included := range g.outputOpts.IncludeOperationIDs {
+			if op.OperationId == included {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (g *gatherer) gatherFromOperation(op *v3.Operation, basePath SchemaPath) {
@@ -284,12 +368,15 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 
 	// Only gather schemas that need a generated type
 	// References are always gathered (they point to real schemas)
-	// Simple types (primitives without enum) are skipped
+	// Simple types (primitives without enum) are skipped for inline schemas
 	// Inline nullable primitives (under properties/) don't need types - they use Nullable[T] directly
 	// Schemas with type-override or type-name-override extensions always need types
+	// Component schemas (components/schemas/*) always get a type alias, even for primitives,
+	// so that external packages can reference them by name.
+	isComponentSchema := len(path) == 3 && path[0] == "components" && path[1] == "schemas"
 	isInlineProperty := path.ContainsProperties()
 	skipInlineNullablePrimitive := isInlineProperty && isNullablePrimitive(schema)
-	needsType := isRef || needsGeneratedType(schema) || hasTypeOverride || hasTypeNameOverride
+	needsType := isRef || needsGeneratedType(schema) || hasTypeOverride || hasTypeNameOverride || isComponentSchema
 	if needsType && !skipInlineNullablePrimitive {
 		desc := &SchemaDescriptor{
 			Path:        path,

@@ -1577,6 +1577,16 @@ type TypeArray31 struct {
 func (s *TypeArray31) ApplyDefaults() {
 }
 
+// #/components/schemas/PrefixItems31
+type PrefixItems31 = []string
+
+// #/components/schemas/EmptySchema
+type EmptySchema = any
+
+// #/components/schemas/AnyValue
+// Accepts any JSON value
+type AnyValue = any
+
 // #/components/schemas/ExplicitAny
 type ExplicitAny = Nullable[string]
 

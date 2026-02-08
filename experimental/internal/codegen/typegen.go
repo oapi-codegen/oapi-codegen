@@ -400,6 +400,7 @@ type StructField struct {
 	Doc             string // Field documentation
 	Default         string // Go literal for default value (empty if no default)
 	IsStruct        bool   // True if this field is a struct type (for recursive ApplyDefaults)
+	IsExternal      bool   // True if this field references an external type (ApplyDefaults via reflection)
 	IsNullableAlias bool   // True if type is a type alias to Nullable[T] (don't wrap or pointer)
 	Order           *int   // Optional field ordering (lower values come first)
 }
@@ -443,7 +444,7 @@ func (g *TypeGenerator) GenerateStructFields(desc *SchemaDescriptor) []StructFie
 				// External reference - use import mapping
 				tempDesc := &SchemaDescriptor{Ref: ref}
 				propType = g.externalRefType(tempDesc)
-				field.IsStruct = true // external references are typically to struct types
+				field.IsExternal = true // external references need reflection-based ApplyDefaults
 			} else if target, ok := g.schemaIndex[ref]; ok {
 				propType = target.ShortName
 				// Only set IsStruct if the referenced schema has ApplyDefaults

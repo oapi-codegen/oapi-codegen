@@ -18,7 +18,7 @@ import (
 type PatchRequest struct {
 	SimpleRequiredNullable    SimpleRequiredNullable            `json:"simple_required_nullable" form:"simple_required_nullable"`
 	SimpleOptionalNullable    SimpleOptionalNullable            `json:"simple_optional_nullable,omitempty" form:"simple_optional_nullable,omitempty"`
-	SimpleOptionalNonNullable *any                              `json:"simple_optional_non_nullable,omitempty" form:"simple_optional_non_nullable,omitempty"`
+	SimpleOptionalNonNullable *SimpleOptionalNonNullable        `json:"simple_optional_non_nullable,omitempty" form:"simple_optional_non_nullable,omitempty"`
 	ComplexRequiredNullable   Nullable[ComplexRequiredNullable] `json:"complex_required_nullable" form:"complex_required_nullable"`
 	ComplexOptionalNullable   Nullable[ComplexOptionalNullable] `json:"complex_optional_nullable,omitempty" form:"complex_optional_nullable,omitempty"`
 	AdditionalProperties      map[string]any                    `json:"-"`
@@ -69,7 +69,7 @@ func (s *PatchRequest) UnmarshalJSON(data []byte) error {
 		}
 	}
 	if v, ok := raw["simple_optional_non_nullable"]; ok {
-		var val any
+		var val SimpleOptionalNonNullable
 		if err := json.Unmarshal(v, &val); err != nil {
 			return err
 		}
@@ -112,6 +112,10 @@ type SimpleRequiredNullable = Nullable[int]
 // #/components/schemas/simple_optional_nullable
 // Simple optional and nullable
 type SimpleOptionalNullable = Nullable[int]
+
+// #/components/schemas/simple_optional_non_nullable
+// Simple optional and non nullable
+type SimpleOptionalNonNullable = string
 
 // #/components/schemas/complex_required_nullable
 // Complex required and nullable
