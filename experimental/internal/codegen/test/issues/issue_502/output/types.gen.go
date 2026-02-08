@@ -74,6 +74,55 @@ func (u *ApplicationOptionalClaims) ApplyDefaults() {
 	}
 }
 
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var openAPISpecJSON = []string{
+	"H4sIAAAAAAAC/5RRvYocPRDM9RQF88Eldzv7nblEmXHkaJMDx1pNz6htTbeQemwW43c3M7feHzAczqRS",
+	"laq6usPn1hbCy/7ZI8jpMPYh58OIH2wJKvkEFUKlEXYqhImEajBqK9l1SGal+b6f2NJy3EWdew2Fn6IO",
+	"NJHcX3i1av3L/tl1rsOXRPLmCa14s02h3blSJYn0CDa0pEseLglcB0s3nGEL+AhRWz/dOS0kobDHh91+",
+	"t3cso3oHGFsmfx0br9TMAd+pNlbx+H+jl2Cpefz85aLORYXE2ipvMdEctiNwKMYqIX/Kgeczhi2Hhx6/",
+	"UrQzVKoWqsZ0IQE8vOo3kivwR9msskwXOMRIrb3P/VhK5hjWRP+YRMJM78bQv866BVxXeAsAT/iv0ujx",
+	"0PXX+vpzd/19bQ83yoFarLw9+0u7iBsPUWXkaanbiDciWXIOx3WpVhdyvwMAAP//35X1R9MCAAA=",
+}
+
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeOpenAPISpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var openAPISpec = decodeOpenAPISpecCached()
+
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
+}
+
 // Nullable is a generic type that can distinguish between:
 // - Field not provided (unspecified)
 // - Field explicitly set to null
@@ -176,52 +225,3 @@ var ErrNullableIsNull = errors.New("nullable value is null")
 
 // ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
 var ErrNullableNotSpecified = errors.New("nullable value is not specified")
-
-// Base64-encoded, gzip-compressed OpenAPI spec.
-var openAPISpecJSON = []string{
-	"H4sIAAAAAAAC/5RRvYocPRDM9RQF88Eldzv7nblEmXHkaJMDx1pNz6htTbeQemwW43c3M7feHzAczqRS",
-	"laq6usPn1hbCy/7ZI8jpMPYh58OIH2wJKvkEFUKlEXYqhImEajBqK9l1SGal+b6f2NJy3EWdew2Fn6IO",
-	"NJHcX3i1av3L/tl1rsOXRPLmCa14s02h3blSJYn0CDa0pEseLglcB0s3nGEL+AhRWz/dOS0kobDHh91+",
-	"t3cso3oHGFsmfx0br9TMAd+pNlbx+H+jl2Cpefz85aLORYXE2ipvMdEctiNwKMYqIX/Kgeczhi2Hhx6/",
-	"UrQzVKoWqsZ0IQE8vOo3kivwR9msskwXOMRIrb3P/VhK5hjWRP+YRMJM78bQv866BVxXeAsAT/iv0ujx",
-	"0PXX+vpzd/19bQ83yoFarLw9+0u7iBsPUWXkaanbiDciWXIOx3WpVhdyvwMAAP//35X1R9MCAAA=",
-}
-
-// decodeOpenAPISpec decodes and decompresses the embedded spec.
-func decodeOpenAPISpec() ([]byte, error) {
-	joined := strings.Join(openAPISpecJSON, "")
-	raw, err := base64.StdEncoding.DecodeString(joined)
-	if err != nil {
-		return nil, fmt.Errorf("decoding base64: %w", err)
-	}
-	r, err := gzip.NewReader(bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("creating gzip reader: %w", err)
-	}
-	defer r.Close()
-	var out bytes.Buffer
-	if _, err := out.ReadFrom(r); err != nil {
-		return nil, fmt.Errorf("decompressing: %w", err)
-	}
-	return out.Bytes(), nil
-}
-
-// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
-func decodeOpenAPISpecCached() func() ([]byte, error) {
-	var cached []byte
-	var cachedErr error
-	var once sync.Once
-	return func() ([]byte, error) {
-		once.Do(func() {
-			cached, cachedErr = decodeOpenAPISpec()
-		})
-		return cached, cachedErr
-	}
-}
-
-var openAPISpec = decodeOpenAPISpecCached()
-
-// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
-func GetOpenAPISpecJSON() ([]byte, error) {
-	return openAPISpec()
-}

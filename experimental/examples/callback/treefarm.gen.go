@@ -77,8 +77,6 @@ type Error struct {
 func (s *Error) ApplyDefaults() {
 }
 
-type UUID = uuid.UUID
-
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{
 	"H4sIAAAAAAAC/8RXwW7bOBC96ysGaQG3QCO76U23bJEFAhSbIHGQ44IWxxYbilTJUbzG7gL7EfuF+yUL",
@@ -399,7 +397,7 @@ func (p *CallbackInitiator) TreePlantedWithBody(ctx context.Context, targetURL s
 	return p.Client.Do(req)
 }
 
-// TreePlanted sends a POST callback request with JSON body
+// TreePlanted sends a POST callback request with application/json body
 func (p *CallbackInitiator) TreePlanted(ctx context.Context, targetURL string, body TreePlantedJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTreePlantedCallbackRequest(targetURL, body)
 	if err != nil {
@@ -501,3 +499,5 @@ func TreePlantedCallbackHandler(si CallbackReceiverInterface, errHandler func(w 
 		handler.ServeHTTP(w, r)
 	})
 }
+
+type UUID = uuid.UUID
