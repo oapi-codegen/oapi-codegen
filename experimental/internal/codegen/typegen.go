@@ -15,25 +15,21 @@ type TypeGenerator struct {
 	converter      *NameConverter
 	importResolver *ImportResolver
 	tagGenerator   *StructTagGenerator
-	imports        map[string]string // path -> alias (empty string = no alias)
+	ctx            *CodegenContext // centralized import & helper tracking
 
 	// schemaIndex maps JSON pointer refs to their descriptors
 	schemaIndex map[string]*SchemaDescriptor
-
-	// requiredTemplates tracks which custom type templates are needed
-	requiredTemplates map[string]bool
 }
 
 // NewTypeGenerator creates a TypeGenerator with the given configuration.
-func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importResolver *ImportResolver, tagGenerator *StructTagGenerator) *TypeGenerator {
+func NewTypeGenerator(typeMapping TypeMapping, converter *NameConverter, importResolver *ImportResolver, tagGenerator *StructTagGenerator, ctx *CodegenContext) *TypeGenerator {
 	return &TypeGenerator{
-		typeMapping:       typeMapping,
-		converter:         converter,
-		importResolver:    importResolver,
-		tagGenerator:      tagGenerator,
-		imports:           make(map[string]string),
-		schemaIndex:       make(map[string]*SchemaDescriptor),
-		requiredTemplates: make(map[string]bool),
+		typeMapping:    typeMapping,
+		converter:      converter,
+		importResolver: importResolver,
+		tagGenerator:   tagGenerator,
+		ctx:            ctx,
+		schemaIndex:    make(map[string]*SchemaDescriptor),
 	}
 }
 
@@ -48,49 +44,47 @@ func (g *TypeGenerator) IndexSchemas(schemas []*SchemaDescriptor) {
 
 // AddImport records an import path needed by the generated code.
 func (g *TypeGenerator) AddImport(path string) {
-	if path != "" {
-		g.imports[path] = ""
-	}
+	g.ctx.AddImport(path)
 }
 
 // AddImportAlias records an import path with an alias.
 func (g *TypeGenerator) AddImportAlias(path, alias string) {
-	if path != "" {
-		g.imports[path] = alias
-	}
+	g.ctx.AddImportAlias(path, alias)
 }
 
 // AddJSONImport adds encoding/json import (used by marshal/unmarshal code).
 func (g *TypeGenerator) AddJSONImport() {
-	g.AddImport("encoding/json")
+	g.ctx.AddJSONImport()
 }
 
 // AddJSONImports adds encoding/json and fmt imports (used by oneOf marshal/unmarshal code).
 func (g *TypeGenerator) AddJSONImports() {
-	g.AddImport("encoding/json")
-	g.AddImport("fmt")
+	g.ctx.AddJSONImports()
 }
 
 // AddNullableTemplate adds the nullable type template to the output.
 func (g *TypeGenerator) AddNullableTemplate() {
-	g.addTemplate("nullable")
+	g.ctx.NeedCustomType("nullable")
 }
 
 // Imports returns the collected imports as a map[path]alias.
 func (g *TypeGenerator) Imports() map[string]string {
-	return g.imports
+	return g.ctx.Imports()
 }
 
-// RequiredTemplates returns the set of template names needed for custom types.
+// RequiredTemplates returns the set of custom type template names needed.
 func (g *TypeGenerator) RequiredTemplates() map[string]bool {
-	return g.requiredTemplates
+	// Build a map from the context's list for backward compatibility
+	result := make(map[string]bool)
+	for _, name := range g.ctx.RequiredCustomTypes() {
+		result[name] = true
+	}
+	return result
 }
 
 // addTemplate records that a custom type template is needed.
 func (g *TypeGenerator) addTemplate(templateName string) {
-	if templateName != "" {
-		g.requiredTemplates[templateName] = true
-	}
+	g.ctx.NeedCustomType(templateName)
 }
 
 // GoTypeExpr returns the Go type expression for a schema descriptor.

@@ -23,43 +23,6 @@ type Pet struct {
 func (s *Pet) ApplyDefaults() {
 }
 
-const DateFormat = "2006-01-02"
-
-type Date struct {
-	time.Time
-}
-
-func (d Date) MarshalJSON() ([]byte, error) {
-	return json.Marshal(d.Format(DateFormat))
-}
-
-func (d *Date) UnmarshalJSON(data []byte) error {
-	var dateStr string
-	err := json.Unmarshal(data, &dateStr)
-	if err != nil {
-		return err
-	}
-	parsed, err := time.Parse(DateFormat, dateStr)
-	if err != nil {
-		return err
-	}
-	d.Time = parsed
-	return nil
-}
-
-func (d Date) String() string {
-	return d.Format(DateFormat)
-}
-
-func (d *Date) UnmarshalText(data []byte) error {
-	parsed, err := time.Parse(DateFormat, string(data))
-	if err != nil {
-		return err
-	}
-	d.Time = parsed
-	return nil
-}
-
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{
 	"H4sIAAAAAAAC/2SSz86bMBDE7zzFiPTamLaKovhWqZfc8gaVYzbgCryWd9M/b18Z+ET8fZzY0c74N+AD",
@@ -107,4 +70,41 @@ var openAPISpec = decodeOpenAPISpecCached()
 // GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
 func GetOpenAPISpecJSON() ([]byte, error) {
 	return openAPISpec()
+}
+
+const DateFormat = "2006-01-02"
+
+type Date struct {
+	time.Time
+}
+
+func (d Date) MarshalJSON() ([]byte, error) {
+	return json.Marshal(d.Format(DateFormat))
+}
+
+func (d *Date) UnmarshalJSON(data []byte) error {
+	var dateStr string
+	err := json.Unmarshal(data, &dateStr)
+	if err != nil {
+		return err
+	}
+	parsed, err := time.Parse(DateFormat, dateStr)
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
+}
+
+func (d Date) String() string {
+	return d.Format(DateFormat)
+}
+
+func (d *Date) UnmarshalText(data []byte) error {
+	parsed, err := time.Parse(DateFormat, string(data))
+	if err != nil {
+		return err
+	}
+	d.Time = parsed
+	return nil
 }

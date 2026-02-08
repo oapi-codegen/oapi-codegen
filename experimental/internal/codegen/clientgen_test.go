@@ -35,10 +35,10 @@ func TestClientGenerator(t *testing.T) {
 	}
 
 	// Create param tracker
-	paramTracker := NewParamUsageTracker()
+	ctx := NewCodegenContext()
 
 	// Gather operations
-	ops, err := GatherOperations(doc, paramTracker, NewContentTypeMatcher(DefaultContentTypes()))
+	ops, err := GatherOperations(doc, ctx, NewContentTypeMatcher(DefaultContentTypes()))
 	require.NoError(t, err, "Failed to gather operations")
 	require.Len(t, ops, 4, "Expected 4 operations")
 
@@ -102,8 +102,8 @@ func TestClientGenerator_FormEncoded(t *testing.T) {
 		schemaIndex[s.Path.String()] = s
 	}
 
-	paramTracker := NewParamUsageTracker()
-	ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
+	ctx := NewCodegenContext()
+	ops, err := GatherOperations(doc, ctx, contentTypeMatcher)
 	require.NoError(t, err, "Failed to gather operations")
 
 	// Verify we have an operation with a form-encoded body
@@ -131,7 +131,8 @@ func TestClientGenerator_FormEncoded(t *testing.T) {
 	require.Contains(t, clientCode, "marshalForm(body)")
 
 	// Verify we generate the form helper when needed
-	formHelper, err := generateFormHelper(ops)
+	ctx.NeedFormHelper(ops)
+	formHelper, err := generateMarshalFormHelper()
 	require.NoError(t, err, "Failed to generate form helper")
 	require.NotEmpty(t, formHelper, "Form helper should be generated when form-encoded bodies exist")
 	require.Contains(t, formHelper, "func marshalForm(")

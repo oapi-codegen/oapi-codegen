@@ -134,6 +134,59 @@ type ComplexOptionalNullable struct {
 func (s *ComplexOptionalNullable) ApplyDefaults() {
 }
 
+// Base64-encoded, gzip-compressed OpenAPI spec.
+var openAPISpecJSON = []string{
+	"H4sIAAAAAAAC/7RUTY/TMBC9+1eMEqReaNNlT+QGnFYIdgXcKzeZJl5S23gmqJX48SjfSZu0ge7eEnvm",
+	"vTdvxuPDA1GOcLe+fx/C1zzL5DZD4KNFggQ1OsnKaOFDymwpDIJEcZpvV5HZB0ZatYxMjAnq4Y8qQCko",
+	"UIUvfPgifyJQ7hA4lQx6yCMdNlwYg3XGosuOwljU0qoQ7lfr1Z1QemdCAfAbHSmjQ1isi/OFAGDFGYaA",
+	"B7m3GQqAGClyynIZ90cAwP9JsJJTKkiDGjsssazkKK0+AYrQ0qSHuJXwVATU9w5/5Uj80cTHJuVE4I8U",
+	"K0jYmvjYxhSJymEcArsc2+PIaEbNHRaAtDZTUSkieCaj+3cAFKW4l8MzgDcOdyF4fhCZvTUaNVNQRVJQ",
+	"yv9W6fbaMsgaTUgd0OLder3o4w6q8h4/e0J06EVgTVDl9FkalKIbIZjtM0YsRkA/NHYCm9ozqQEPiljp",
+	"BHJCV2evxImLrc4lkCqatGmuNs0w9EIK3RkeJmOqEWHV92MKtm+R3woCqWM4Y77cmCkG71SDKf2S2YSG",
+	"5voGDWcMFzQYPUuH0ctbtfSYvN6LmejlyzVmkuJcxSu2ZpKiUSHjWFVXT938wk5mhELMGeHqfSrNmKCr",
+	"z9qY/p4avNrvJeqEwWLO2N7EO26pmDuqFTexUzqZzWL0CdPVIRxZfdcr/FShXpzdsVWl5R4nN/fjZCVd",
+	"wsAUMWu+r+32upa3F5/AWDEyU5I2/1DSlXK649EGvLR7o1R/AwAA///zkywGmQkAAA==",
+}
+
+// decodeOpenAPISpec decodes and decompresses the embedded spec.
+func decodeOpenAPISpec() ([]byte, error) {
+	joined := strings.Join(openAPISpecJSON, "")
+	raw, err := base64.StdEncoding.DecodeString(joined)
+	if err != nil {
+		return nil, fmt.Errorf("decoding base64: %w", err)
+	}
+	r, err := gzip.NewReader(bytes.NewReader(raw))
+	if err != nil {
+		return nil, fmt.Errorf("creating gzip reader: %w", err)
+	}
+	defer r.Close()
+	var out bytes.Buffer
+	if _, err := out.ReadFrom(r); err != nil {
+		return nil, fmt.Errorf("decompressing: %w", err)
+	}
+	return out.Bytes(), nil
+}
+
+// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
+func decodeOpenAPISpecCached() func() ([]byte, error) {
+	var cached []byte
+	var cachedErr error
+	var once sync.Once
+	return func() ([]byte, error) {
+		once.Do(func() {
+			cached, cachedErr = decodeOpenAPISpec()
+		})
+		return cached, cachedErr
+	}
+}
+
+var openAPISpec = decodeOpenAPISpecCached()
+
+// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
+func GetOpenAPISpecJSON() ([]byte, error) {
+	return openAPISpec()
+}
+
 // Nullable is a generic type that can distinguish between:
 // - Field not provided (unspecified)
 // - Field explicitly set to null
@@ -236,56 +289,3 @@ var ErrNullableIsNull = errors.New("nullable value is null")
 
 // ErrNullableNotSpecified is returned when trying to get a value from an unspecified Nullable.
 var ErrNullableNotSpecified = errors.New("nullable value is not specified")
-
-// Base64-encoded, gzip-compressed OpenAPI spec.
-var openAPISpecJSON = []string{
-	"H4sIAAAAAAAC/7RUTY/TMBC9+1eMEqReaNNlT+QGnFYIdgXcKzeZJl5S23gmqJX48SjfSZu0ge7eEnvm",
-	"vTdvxuPDA1GOcLe+fx/C1zzL5DZD4KNFggQ1OsnKaOFDymwpDIJEcZpvV5HZB0ZatYxMjAnq4Y8qQCko",
-	"UIUvfPgifyJQ7hA4lQx6yCMdNlwYg3XGosuOwljU0qoQ7lfr1Z1QemdCAfAbHSmjQ1isi/OFAGDFGYaA",
-	"B7m3GQqAGClyynIZ90cAwP9JsJJTKkiDGjsssazkKK0+AYrQ0qSHuJXwVATU9w5/5Uj80cTHJuVE4I8U",
-	"K0jYmvjYxhSJymEcArsc2+PIaEbNHRaAtDZTUSkieCaj+3cAFKW4l8MzgDcOdyF4fhCZvTUaNVNQRVJQ",
-	"yv9W6fbaMsgaTUgd0OLder3o4w6q8h4/e0J06EVgTVDl9FkalKIbIZjtM0YsRkA/NHYCm9ozqQEPiljp",
-	"BHJCV2evxImLrc4lkCqatGmuNs0w9EIK3RkeJmOqEWHV92MKtm+R3woCqWM4Y77cmCkG71SDKf2S2YSG",
-	"5voGDWcMFzQYPUuH0ctbtfSYvN6LmejlyzVmkuJcxSu2ZpKiUSHjWFVXT938wk5mhELMGeHqfSrNmKCr",
-	"z9qY/p4avNrvJeqEwWLO2N7EO26pmDuqFTexUzqZzWL0CdPVIRxZfdcr/FShXpzdsVWl5R4nN/fjZCVd",
-	"wsAUMWu+r+32upa3F5/AWDEyU5I2/1DSlXK649EGvLR7o1R/AwAA///zkywGmQkAAA==",
-}
-
-// decodeOpenAPISpec decodes and decompresses the embedded spec.
-func decodeOpenAPISpec() ([]byte, error) {
-	joined := strings.Join(openAPISpecJSON, "")
-	raw, err := base64.StdEncoding.DecodeString(joined)
-	if err != nil {
-		return nil, fmt.Errorf("decoding base64: %w", err)
-	}
-	r, err := gzip.NewReader(bytes.NewReader(raw))
-	if err != nil {
-		return nil, fmt.Errorf("creating gzip reader: %w", err)
-	}
-	defer r.Close()
-	var out bytes.Buffer
-	if _, err := out.ReadFrom(r); err != nil {
-		return nil, fmt.Errorf("decompressing: %w", err)
-	}
-	return out.Bytes(), nil
-}
-
-// decodeOpenAPISpecCached returns a closure that caches the decoded spec.
-func decodeOpenAPISpecCached() func() ([]byte, error) {
-	var cached []byte
-	var cachedErr error
-	var once sync.Once
-	return func() ([]byte, error) {
-		once.Do(func() {
-			cached, cachedErr = decodeOpenAPISpec()
-		})
-		return cached, cachedErr
-	}
-}
-
-var openAPISpec = decodeOpenAPISpecCached()
-
-// GetOpenAPISpecJSON returns the raw OpenAPI spec as JSON bytes.
-func GetOpenAPISpecJSON() ([]byte, error) {
-	return openAPISpec()
-}

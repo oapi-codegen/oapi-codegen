@@ -3,8 +3,6 @@ package codegen
 
 import (
 	"fmt"
-	"maps"
-	"slices"
 	"strings"
 	"text/template"
 
@@ -18,6 +16,9 @@ import (
 // specData is the raw spec bytes used to embed the spec in the generated code.
 func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (string, error) {
 	cfg.ApplyDefaults()
+
+	// Create a single CodegenContext that all generators share.
+	ctx := NewCodegenContext()
 
 	// Create content type matcher for filtering request/response bodies
 	contentTypeMatcher := NewContentTypeMatcher(cfg.ContentTypes)
@@ -47,11 +48,12 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	// Pass 3: Generate Go code
 	importResolver := NewImportResolver(cfg.ImportMapping)
 	tagGenerator := NewStructTagGenerator(cfg.StructTags)
-	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver, tagGenerator)
+	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver, tagGenerator, ctx)
 	gen.IndexSchemas(schemas)
 
 	output := NewOutput(cfg.PackageName)
-	// Note: encoding/json and fmt imports are added by generateType when needed
+
+	// ── Phase 1: Generate all code sections ──
 
 	// Generate models (types for schemas) unless using external models package
 	if cfg.Generation.ModelsPackage == nil {
@@ -62,22 +64,6 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			}
 		}
 
-		// Add imports collected during generation
-		output.AddImports(gen.Imports())
-
-		// Add custom type templates (Date, Email, UUID, File, etc.)
-		// Sort template names for deterministic output ordering.
-		templateNames := slices.Sorted(maps.Keys(gen.RequiredTemplates()))
-		for _, templateName := range templateNames {
-			typeCode, typeImports := loadCustomType(templateName)
-			if typeCode != "" {
-				output.AddType(typeCode)
-				for path, alias := range typeImports {
-					output.AddImport(path, alias)
-				}
-			}
-		}
-
 		// Embed the raw OpenAPI spec if specData was provided
 		if len(specData) > 0 {
 			embeddedCode, err := generateEmbeddedSpec(specData)
@@ -85,30 +71,24 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 				return "", fmt.Errorf("generating embedded spec: %w", err)
 			}
 			output.AddType(embeddedCode)
-			output.AddImport("bytes", "")
-			output.AddImport("compress/gzip", "")
-			output.AddImport("encoding/base64", "")
-			output.AddImport("fmt", "")
-			output.AddImport("strings", "")
-			output.AddImport("sync", "")
+			ctx.AddImport("bytes")
+			ctx.AddImport("compress/gzip")
+			ctx.AddImport("encoding/base64")
+			ctx.AddImport("fmt")
+			ctx.AddImport("strings")
+			ctx.AddImport("sync")
 		}
 	}
 
 	// Generate client code if requested
 	if cfg.Generation.Client {
-		// Create param tracker for tracking which param functions are needed
-		paramTracker := NewParamUsageTracker()
-
-		// Gather operations
-		ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
+		ops, err := GatherOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
 
-		// Apply operation filters
 		ops = FilterOperations(ops, cfg.OutputOptions)
 
-		// Generate client
 		clientGen, err := NewClientGenerator(schemaIndex, cfg.Generation.SimpleClient, cfg.Generation.ModelsPackage)
 		if err != nil {
 			return "", fmt.Errorf("creating client generator: %w", err)
@@ -120,67 +100,33 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 		}
 		output.AddType(clientCode)
 
-		// Add client imports
+		// Add client template imports
 		for _, ct := range templates.ClientTemplates {
-			for _, imp := range ct.Imports {
-				output.AddImport(imp.Path, imp.Alias)
-			}
+			ctx.AddTemplateImports(ct.Imports)
 		}
 
 		// Add models package import if using external models
 		if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
-			output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
+			ctx.AddImportAlias(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
 		}
 
-		// Generate param functions
-		paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-		if err != nil {
-			return "", fmt.Errorf("generating param functions: %w", err)
-		}
-		if paramFuncs != "" {
-			output.AddType(paramFuncs)
-		}
-
-		// Add param function imports
-		for _, imp := range paramTracker.GetRequiredImports() {
-			output.AddImport(imp.Path, imp.Alias)
-		}
-
-		// Generate form helper if any operation has form-encoded bodies
-		formHelper, err := generateFormHelper(ops)
-		if err != nil {
-			return "", fmt.Errorf("generating form helper: %w", err)
-		}
-		if formHelper != "" {
-			output.AddType(formHelper)
-			for _, imp := range templates.MarshalFormHelperTemplate.Imports {
-				output.AddImport(imp.Path, imp.Alias)
-			}
-		}
+		// Register form helper if any operation has form-encoded bodies
+		ctx.NeedFormHelper(ops)
 	}
 
 	// Track whether shared error types have been generated to avoid duplication.
-	// Both server and receiver generation emit the same error types.
 	generatedErrors := false
 
 	// Generate server code for path operations if a server framework is set.
-	// Only generate if there are actual path operations — setting server solely
-	// for receiver use should not produce path-operation server code.
 	if cfg.Generation.Server != "" {
-		// Create param tracker for tracking which param functions are needed
-		paramTracker := NewParamUsageTracker()
-
-		// Gather operations
-		ops, err := GatherOperations(doc, paramTracker, contentTypeMatcher)
+		ops, err := GatherOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering operations: %w", err)
 		}
 
-		// Apply operation filters
 		ops = FilterOperations(ops, cfg.OutputOptions)
 
 		if len(ops) > 0 {
-			// Generate server
 			serverGen, err := NewServerGenerator(cfg.Generation.Server)
 			if err != nil {
 				return "", fmt.Errorf("creating server generator: %w", err)
@@ -193,42 +139,20 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			output.AddType(serverCode)
 			generatedErrors = true
 
-			// Add server imports based on server type
+			// Add server template imports
 			serverTemplates, err := getServerTemplates(cfg.Generation.Server)
 			if err != nil {
 				return "", fmt.Errorf("getting server templates: %w", err)
 			}
 			for _, st := range serverTemplates {
-				for _, imp := range st.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
-			}
-
-			// Note: Server interfaces don't use external models directly.
-			// Models are used in the hand-written implementation (petstore.go),
-			// not in the generated server interface code.
-
-			// Generate param functions
-			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-			if err != nil {
-				return "", fmt.Errorf("generating param functions: %w", err)
-			}
-			if paramFuncs != "" {
-				output.AddType(paramFuncs)
-			}
-
-			// Add param function imports
-			for _, imp := range paramTracker.GetRequiredImports() {
-				output.AddImport(imp.Path, imp.Alias)
+				ctx.AddTemplateImports(st.Imports)
 			}
 		}
 	}
 
 	// Generate webhook initiator code if requested
 	if cfg.Generation.WebhookInitiator {
-		paramTracker := NewParamUsageTracker()
-
-		webhookOps, err := GatherWebhookOperations(doc, paramTracker, contentTypeMatcher)
+		webhookOps, err := GatherWebhookOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering webhook operations: %w", err)
 		}
@@ -246,45 +170,20 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			output.AddType(initiatorCode)
 
 			for _, pt := range templates.InitiatorTemplates {
-				for _, imp := range pt.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
+				ctx.AddTemplateImports(pt.Imports)
 			}
 
 			if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
-				output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
+				ctx.AddImportAlias(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
 			}
 
-			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-			if err != nil {
-				return "", fmt.Errorf("generating param functions: %w", err)
-			}
-			if paramFuncs != "" {
-				output.AddType(paramFuncs)
-			}
-			for _, imp := range paramTracker.GetRequiredImports() {
-				output.AddImport(imp.Path, imp.Alias)
-			}
-
-			// Generate form helper if any webhook operation has form-encoded bodies
-			formHelper, err := generateFormHelper(webhookOps)
-			if err != nil {
-				return "", fmt.Errorf("generating form helper: %w", err)
-			}
-			if formHelper != "" {
-				output.AddType(formHelper)
-				for _, imp := range templates.MarshalFormHelperTemplate.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
-			}
+			ctx.NeedFormHelper(webhookOps)
 		}
 	}
 
 	// Generate callback initiator code if requested
 	if cfg.Generation.CallbackInitiator {
-		paramTracker := NewParamUsageTracker()
-
-		callbackOps, err := GatherCallbackOperations(doc, paramTracker, contentTypeMatcher)
+		callbackOps, err := GatherCallbackOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering callback operations: %w", err)
 		}
@@ -302,37 +201,14 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			output.AddType(initiatorCode)
 
 			for _, pt := range templates.InitiatorTemplates {
-				for _, imp := range pt.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
+				ctx.AddTemplateImports(pt.Imports)
 			}
 
 			if cfg.Generation.ModelsPackage != nil && cfg.Generation.ModelsPackage.Path != "" {
-				output.AddImport(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
+				ctx.AddImportAlias(cfg.Generation.ModelsPackage.Path, cfg.Generation.ModelsPackage.Alias)
 			}
 
-			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-			if err != nil {
-				return "", fmt.Errorf("generating param functions: %w", err)
-			}
-			if paramFuncs != "" {
-				output.AddType(paramFuncs)
-			}
-			for _, imp := range paramTracker.GetRequiredImports() {
-				output.AddImport(imp.Path, imp.Alias)
-			}
-
-			// Generate form helper if any callback operation has form-encoded bodies
-			formHelper, err := generateFormHelper(callbackOps)
-			if err != nil {
-				return "", fmt.Errorf("generating form helper: %w", err)
-			}
-			if formHelper != "" {
-				output.AddType(formHelper)
-				for _, imp := range templates.MarshalFormHelperTemplate.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
-			}
+			ctx.NeedFormHelper(callbackOps)
 		}
 	}
 
@@ -342,9 +218,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			return "", fmt.Errorf("webhook-receiver requires server to be set")
 		}
 
-		paramTracker := NewParamUsageTracker()
-
-		webhookOps, err := GatherWebhookOperations(doc, paramTracker, contentTypeMatcher)
+		webhookOps, err := GatherWebhookOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering webhook operations: %w", err)
 		}
@@ -361,14 +235,12 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			}
 			output.AddType(receiverCode)
 
-			// Add param types
 			paramTypes, err := receiverGen.GenerateParamTypes(webhookOps)
 			if err != nil {
 				return "", fmt.Errorf("generating webhook receiver param types: %w", err)
 			}
 			output.AddType(paramTypes)
 
-			// Add error types (only if not already generated by server)
 			if !generatedErrors {
 				errors, err := receiverGen.GenerateErrors()
 				if err != nil {
@@ -383,25 +255,10 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 				return "", fmt.Errorf("getting receiver templates: %w", err)
 			}
 			for _, ct := range receiverTemplates {
-				for _, imp := range ct.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
+				ctx.AddTemplateImports(ct.Imports)
 			}
 			for _, st := range templates.SharedServerTemplates {
-				for _, imp := range st.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
-			}
-
-			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-			if err != nil {
-				return "", fmt.Errorf("generating param functions: %w", err)
-			}
-			if paramFuncs != "" {
-				output.AddType(paramFuncs)
-			}
-			for _, imp := range paramTracker.GetRequiredImports() {
-				output.AddImport(imp.Path, imp.Alias)
+				ctx.AddTemplateImports(st.Imports)
 			}
 		}
 	}
@@ -412,9 +269,7 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			return "", fmt.Errorf("callback-receiver requires server to be set")
 		}
 
-		paramTracker := NewParamUsageTracker()
-
-		callbackOps, err := GatherCallbackOperations(doc, paramTracker, contentTypeMatcher)
+		callbackOps, err := GatherCallbackOperations(doc, ctx, contentTypeMatcher)
 		if err != nil {
 			return "", fmt.Errorf("gathering callback operations: %w", err)
 		}
@@ -437,14 +292,13 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 			}
 			output.AddType(paramTypes)
 
-			// Add error types (only if not already generated by server or another receiver)
 			if !generatedErrors {
 				errors, err := receiverGen.GenerateErrors()
 				if err != nil {
 					return "", fmt.Errorf("generating callback receiver errors: %w", err)
 				}
 				output.AddType(errors)
-				generatedErrors = true //nolint:ineffassign // kept for symmetry with webhook loop below
+				generatedErrors = true //nolint:ineffassign // kept for symmetry with webhook loop
 			}
 
 			receiverTemplates, err := getReceiverTemplates(cfg.Generation.Server)
@@ -452,50 +306,64 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 				return "", fmt.Errorf("getting receiver templates: %w", err)
 			}
 			for _, ct := range receiverTemplates {
-				for _, imp := range ct.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
+				ctx.AddTemplateImports(ct.Imports)
 			}
 			for _, st := range templates.SharedServerTemplates {
-				for _, imp := range st.Imports {
-					output.AddImport(imp.Path, imp.Alias)
-				}
-			}
-
-			paramFuncs, err := generateParamFunctionsFromTracker(paramTracker)
-			if err != nil {
-				return "", fmt.Errorf("generating param functions: %w", err)
-			}
-			if paramFuncs != "" {
-				output.AddType(paramFuncs)
-			}
-			for _, imp := range paramTracker.GetRequiredImports() {
-				output.AddImport(imp.Path, imp.Alias)
+				ctx.AddTemplateImports(st.Imports)
 			}
 		}
 	}
+
+	// ── Phase 2: Render helpers ──
+
+	// Emit custom type templates (Date, Email, UUID, File, Nullable, etc.)
+	for _, templateName := range ctx.RequiredCustomTypes() {
+		typeCode := ctx.loadAndRegisterCustomType(templateName)
+		if typeCode != "" {
+			output.AddType(typeCode)
+		}
+	}
+
+	// Emit param functions
+	paramFuncs, err := generateParamFunctionsFromContext(ctx)
+	if err != nil {
+		return "", fmt.Errorf("generating param functions: %w", err)
+	}
+	if paramFuncs != "" {
+		output.AddType(paramFuncs)
+	}
+
+	// Emit helper templates (e.g., marshal_form)
+	for _, helperName := range ctx.RequiredHelpers() {
+		helperCode, err := generateHelper(helperName, ctx)
+		if err != nil {
+			return "", fmt.Errorf("generating helper %s: %w", helperName, err)
+		}
+		if helperCode != "" {
+			output.AddType(helperCode)
+		}
+	}
+
+	// ── Phase 3: Assemble output ──
+	// Transfer all imports from ctx to output
+	output.AddImports(ctx.Imports())
 
 	return output.Format()
 }
 
-// hasFormEncodedBodies returns true if any operation has a form-encoded typed request body.
-func hasFormEncodedBodies(ops []*OperationDescriptor) bool {
-	for _, op := range ops {
-		for _, body := range op.Bodies {
-			if body.IsFormEncoded && body.GenerateTyped {
-				return true
-			}
-		}
+// generateHelper generates a helper template by name and registers its imports on the context.
+func generateHelper(name string, ctx *CodegenContext) (string, error) {
+	switch name {
+	case "marshal_form":
+		ctx.AddTemplateImports(templates.MarshalFormHelperTemplate.Imports)
+		return generateMarshalFormHelper()
+	default:
+		return "", fmt.Errorf("unknown helper: %s", name)
 	}
-	return false
 }
 
-// generateFormHelper generates the marshalForm helper function if needed.
-func generateFormHelper(ops []*OperationDescriptor) (string, error) {
-	if !hasFormEncodedBodies(ops) {
-		return "", nil
-	}
-
+// generateMarshalFormHelper generates the marshalForm helper function.
+func generateMarshalFormHelper() (string, error) {
 	tmplInfo := templates.MarshalFormHelperTemplate
 	content, err := templates.TemplateFS.ReadFile("files/" + tmplInfo.Template)
 	if err != nil {
@@ -515,16 +383,15 @@ func generateFormHelper(ops []*OperationDescriptor) (string, error) {
 	return result.String(), nil
 }
 
-// generateParamFunctionsFromTracker generates the parameter styling/binding functions based on usage.
-func generateParamFunctionsFromTracker(tracker *ParamUsageTracker) (string, error) {
-	if !tracker.HasAnyUsage() {
+// generateParamFunctionsFromContext generates the parameter styling/binding functions based on CodegenContext usage.
+func generateParamFunctionsFromContext(ctx *CodegenContext) (string, error) {
+	if !ctx.HasAnyParams() {
 		return "", nil
 	}
 
 	var result strings.Builder
 
-	// Get required templates
-	requiredTemplates := tracker.GetRequiredTemplates()
+	requiredTemplates := ctx.GetRequiredParamTemplates()
 
 	for _, tmplInfo := range requiredTemplates {
 		content, err := templates.TemplateFS.ReadFile("files/" + tmplInfo.Template)
@@ -532,7 +399,6 @@ func generateParamFunctionsFromTracker(tracker *ParamUsageTracker) (string, erro
 			return "", fmt.Errorf("reading param template %s: %w", tmplInfo.Template, err)
 		}
 
-		// Parse and execute as a Go template
 		tmpl, err := template.New(tmplInfo.Name).Parse(string(content))
 		if err != nil {
 			return "", fmt.Errorf("parsing param template %s: %w", tmplInfo.Template, err)
@@ -542,6 +408,11 @@ func generateParamFunctionsFromTracker(tracker *ParamUsageTracker) (string, erro
 			return "", fmt.Errorf("executing param template %s: %w", tmplInfo.Template, err)
 		}
 		result.WriteString("\n")
+	}
+
+	// Register param imports on the context
+	for _, imp := range ctx.GetRequiredParamImports() {
+		ctx.AddImportAlias(imp.Path, imp.Alias)
 	}
 
 	return result.String(), nil
@@ -1037,48 +908,6 @@ func generateOneOfType(gen *TypeGenerator, desc *SchemaDescriptor) string {
 	code += "\n" + marshalCode + "\n" + unmarshalCode + "\n" + applyDefaultsCode
 
 	return code
-}
-
-// loadCustomType loads a custom type template and returns its code and imports.
-func loadCustomType(templateName string) (string, map[string]string) {
-	// Lookup the type definition
-	typeName := strings.TrimSuffix(templateName, ".tmpl")
-
-	// Map template name to type info from registry
-	var typeDef templates.TypeTemplate
-	var found bool
-
-	for name, def := range templates.TypeTemplates {
-		if def.Template == "types/"+templateName || strings.ToLower(name) == typeName {
-			typeDef = def
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		return "", nil
-	}
-
-	// Read the template file
-	content, err := templates.TemplateFS.ReadFile("files/" + typeDef.Template)
-	if err != nil {
-		return "", nil
-	}
-
-	// Remove the template comment header
-	code := string(content)
-	if idx := strings.Index(code, "}}"); idx != -1 {
-		code = strings.TrimLeft(code[idx+2:], "\n")
-	}
-
-	// Build imports map
-	imports := make(map[string]string)
-	for _, imp := range typeDef.Imports {
-		imports[imp.Path] = imp.Alias
-	}
-
-	return code, imports
 }
 
 // schemaHasApplyDefaults returns true if the schema will have an ApplyDefaults method generated.

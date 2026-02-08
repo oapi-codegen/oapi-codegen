@@ -69,8 +69,6 @@ const (
 	PostAPIWebhookKindParameter_exitEvent  PostAPIWebhookKindParameter = "exitEvent"
 )
 
-type UUID = uuid.UUID
-
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{
 	"H4sIAAAAAAAC/9RWTY/bNhC961cM0gI+RfLu9qTbJuvDAkGycFL0TItjaxKJZIaUvEbb/16Q1GdX3l0D",
@@ -330,6 +328,292 @@ type TooManyValuesForParamError struct {
 func (e *TooManyValuesForParamError) Error() string {
 	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
+
+type EnterEventJSONRequestBody = Person
+
+type ExitEventJSONRequestBody = Person
+
+// RequestEditorFn is the function signature for the RequestEditor callback function.
+// It may already be defined if client code is also generated; this is a compatible redeclaration.
+type RequestEditorFn func(ctx context.Context, req *http.Request) error
+
+// HttpRequestDoer performs HTTP requests.
+// The standard http.Client implements this interface.
+type HttpRequestDoer interface {
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// WebhookInitiator sends webhook requests to target URLs.
+// Unlike Client, it has no stored base URL — the full target URL is provided per-call.
+type WebhookInitiator struct {
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// WebhookInitiatorOption allows setting custom parameters during construction.
+type WebhookInitiatorOption func(*WebhookInitiator) error
+
+// NewWebhookInitiator creates a new WebhookInitiator with reasonable defaults.
+func NewWebhookInitiator(opts ...WebhookInitiatorOption) (*WebhookInitiator, error) {
+	initiator := WebhookInitiator{}
+	for _, o := range opts {
+		if err := o(&initiator); err != nil {
+			return nil, err
+		}
+	}
+	if initiator.Client == nil {
+		initiator.Client = &http.Client{}
+	}
+	return &initiator, nil
+}
+
+// WithWebhookHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithWebhookHTTPClient(doer HttpRequestDoer) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.Client = doer
+		return nil
+	}
+}
+
+// WithWebhookRequestEditorFn allows setting up a callback function, which will be
+// called right before sending the request. This can be used to mutate the request.
+func WithWebhookRequestEditorFn(fn RequestEditorFn) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.RequestEditors = append(p.RequestEditors, fn)
+		return nil
+	}
+}
+
+func (p *WebhookInitiator) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range p.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WebhookInitiatorInterface is the interface specification for the webhook initiator.
+type WebhookInitiatorInterface interface {
+	// EnterEventWithBody sends a POST webhook request
+	EnterEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	EnterEvent(ctx context.Context, targetURL string, body EnterEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ExitEventWithBody sends a POST webhook request
+	ExitEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+	ExitEvent(ctx context.Context, targetURL string, body ExitEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// EnterEventWithBody sends a POST webhook request
+// Person entered the building
+func (p *WebhookInitiator) EnterEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnterEventWebhookRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// EnterEvent sends a POST webhook request with application/json body
+func (p *WebhookInitiator) EnterEvent(ctx context.Context, targetURL string, body EnterEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewEnterEventWebhookRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// ExitEventWithBody sends a POST webhook request
+// Person exited the building
+func (p *WebhookInitiator) ExitEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExitEventWebhookRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// ExitEvent sends a POST webhook request with application/json body
+func (p *WebhookInitiator) ExitEvent(ctx context.Context, targetURL string, body ExitEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewExitEventWebhookRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// NewEnterEventWebhookRequest creates a POST request for the webhook with application/json body
+func NewEnterEventWebhookRequest(targetURL string, body EnterEventJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewEnterEventWebhookRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewEnterEventWebhookRequestWithBody creates a POST request for the webhook with any body
+func NewEnterEventWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	parsedURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", parsedURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewExitEventWebhookRequest creates a POST request for the webhook with application/json body
+func NewExitEventWebhookRequest(targetURL string, body ExitEventJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewExitEventWebhookRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewExitEventWebhookRequestWithBody creates a POST request for the webhook with any body
+func NewExitEventWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	parsedURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", parsedURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// WebhookHttpError represents an HTTP error response.
+// The type parameter E is the type of the parsed error body.
+type WebhookHttpError[E any] struct {
+	StatusCode int
+	Body       E
+	RawBody    []byte
+}
+
+func (e *WebhookHttpError[E]) Error() string {
+	return fmt.Sprintf("HTTP %d", e.StatusCode)
+}
+
+// SimpleWebhookInitiator wraps WebhookInitiator with typed responses for operations that have
+// unambiguous response types. Methods return the success type directly,
+// and HTTP errors are returned as *WebhookHttpError[E] where E is the error type.
+type SimpleWebhookInitiator struct {
+	*WebhookInitiator
+}
+
+// NewSimpleWebhookInitiator creates a new SimpleWebhookInitiator which wraps a WebhookInitiator.
+func NewSimpleWebhookInitiator(opts ...WebhookInitiatorOption) (*SimpleWebhookInitiator, error) {
+	initiator, err := NewWebhookInitiator(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &SimpleWebhookInitiator{WebhookInitiator: initiator}, nil
+}
+
+// WebhookReceiverInterface represents handlers for receiving webhook requests.
+type WebhookReceiverInterface interface {
+	// Person entered the building
+	// HandleEnterEventWebhook handles the POST webhook request.
+	HandleEnterEventWebhook(w http.ResponseWriter, r *http.Request)
+	// Person exited the building
+	// HandleExitEventWebhook handles the POST webhook request.
+	HandleExitEventWebhook(w http.ResponseWriter, r *http.Request)
+}
+
+// WebhookReceiverMiddlewareFunc is a middleware function for webhook receiver handlers.
+type WebhookReceiverMiddlewareFunc func(http.Handler) http.Handler
+
+// EnterEventWebhookHandler returns an http.Handler for the EnterEvent webhook.
+// The caller is responsible for registering this handler at the appropriate path.
+func EnterEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+	if errHandler == nil {
+		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			si.HandleEnterEventWebhook(w, r)
+		}))
+
+		for _, middleware := range middlewares {
+			handler = middleware(handler)
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+// ExitEventWebhookHandler returns an http.Handler for the ExitEvent webhook.
+// The caller is responsible for registering this handler at the appropriate path.
+func ExitEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+	if errHandler == nil {
+		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			si.HandleExitEventWebhook(w, r)
+		}))
+
+		for _, middleware := range middlewares {
+			handler = middleware(handler)
+		}
+
+		handler.ServeHTTP(w, r)
+	})
+}
+
+type UUID = uuid.UUID
 
 // ParamLocation indicates where a parameter is located in an HTTP request.
 type ParamLocation int
@@ -782,288 +1066,4 @@ func structToFieldDict(value any) (map[string]string, error) {
 		fieldDict[fieldName] = str
 	}
 	return fieldDict, nil
-}
-
-type EnterEventJSONRequestBody = Person
-
-type ExitEventJSONRequestBody = Person
-
-// RequestEditorFn is the function signature for the RequestEditor callback function.
-// It may already be defined if client code is also generated; this is a compatible redeclaration.
-type RequestEditorFn func(ctx context.Context, req *http.Request) error
-
-// HttpRequestDoer performs HTTP requests.
-// The standard http.Client implements this interface.
-type HttpRequestDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-// WebhookInitiator sends webhook requests to target URLs.
-// Unlike Client, it has no stored base URL — the full target URL is provided per-call.
-type WebhookInitiator struct {
-	// Doer for performing requests, typically a *http.Client with any
-	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
-
-	// A list of callbacks for modifying requests which are generated before sending over
-	// the network.
-	RequestEditors []RequestEditorFn
-}
-
-// WebhookInitiatorOption allows setting custom parameters during construction.
-type WebhookInitiatorOption func(*WebhookInitiator) error
-
-// NewWebhookInitiator creates a new WebhookInitiator with reasonable defaults.
-func NewWebhookInitiator(opts ...WebhookInitiatorOption) (*WebhookInitiator, error) {
-	initiator := WebhookInitiator{}
-	for _, o := range opts {
-		if err := o(&initiator); err != nil {
-			return nil, err
-		}
-	}
-	if initiator.Client == nil {
-		initiator.Client = &http.Client{}
-	}
-	return &initiator, nil
-}
-
-// WithWebhookHTTPClient allows overriding the default Doer, which is
-// automatically created using http.Client. This is useful for tests.
-func WithWebhookHTTPClient(doer HttpRequestDoer) WebhookInitiatorOption {
-	return func(p *WebhookInitiator) error {
-		p.Client = doer
-		return nil
-	}
-}
-
-// WithWebhookRequestEditorFn allows setting up a callback function, which will be
-// called right before sending the request. This can be used to mutate the request.
-func WithWebhookRequestEditorFn(fn RequestEditorFn) WebhookInitiatorOption {
-	return func(p *WebhookInitiator) error {
-		p.RequestEditors = append(p.RequestEditors, fn)
-		return nil
-	}
-}
-
-func (p *WebhookInitiator) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-	for _, r := range p.RequestEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	for _, r := range additionalEditors {
-		if err := r(ctx, req); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// WebhookInitiatorInterface is the interface specification for the webhook initiator.
-type WebhookInitiatorInterface interface {
-	// EnterEventWithBody sends a POST webhook request
-	EnterEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-	EnterEvent(ctx context.Context, targetURL string, body EnterEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-	// ExitEventWithBody sends a POST webhook request
-	ExitEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
-	ExitEvent(ctx context.Context, targetURL string, body ExitEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
-}
-
-// EnterEventWithBody sends a POST webhook request
-// Person entered the building
-func (p *WebhookInitiator) EnterEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewEnterEventWebhookRequestWithBody(targetURL, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return p.Client.Do(req)
-}
-
-// EnterEvent sends a POST webhook request with JSON body
-func (p *WebhookInitiator) EnterEvent(ctx context.Context, targetURL string, body EnterEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewEnterEventWebhookRequest(targetURL, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return p.Client.Do(req)
-}
-
-// ExitEventWithBody sends a POST webhook request
-// Person exited the building
-func (p *WebhookInitiator) ExitEventWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExitEventWebhookRequestWithBody(targetURL, contentType, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return p.Client.Do(req)
-}
-
-// ExitEvent sends a POST webhook request with JSON body
-func (p *WebhookInitiator) ExitEvent(ctx context.Context, targetURL string, body ExitEventJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewExitEventWebhookRequest(targetURL, body)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := p.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return p.Client.Do(req)
-}
-
-// NewEnterEventWebhookRequest creates a POST request for the webhook with application/json body
-func NewEnterEventWebhookRequest(targetURL string, body EnterEventJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewEnterEventWebhookRequestWithBody(targetURL, "application/json", bodyReader)
-}
-
-// NewEnterEventWebhookRequestWithBody creates a POST request for the webhook with any body
-func NewEnterEventWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	parsedURL, err := url.Parse(targetURL)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", parsedURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// NewExitEventWebhookRequest creates a POST request for the webhook with application/json body
-func NewExitEventWebhookRequest(targetURL string, body ExitEventJSONRequestBody) (*http.Request, error) {
-	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
-	}
-	bodyReader = bytes.NewReader(buf)
-	return NewExitEventWebhookRequestWithBody(targetURL, "application/json", bodyReader)
-}
-
-// NewExitEventWebhookRequestWithBody creates a POST request for the webhook with any body
-func NewExitEventWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
-	var err error
-
-	parsedURL, err := url.Parse(targetURL)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", parsedURL.String(), body)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	return req, nil
-}
-
-// WebhookHttpError represents an HTTP error response.
-// The type parameter E is the type of the parsed error body.
-type WebhookHttpError[E any] struct {
-	StatusCode int
-	Body       E
-	RawBody    []byte
-}
-
-func (e *WebhookHttpError[E]) Error() string {
-	return fmt.Sprintf("HTTP %d", e.StatusCode)
-}
-
-// SimpleWebhookInitiator wraps WebhookInitiator with typed responses for operations that have
-// unambiguous response types. Methods return the success type directly,
-// and HTTP errors are returned as *WebhookHttpError[E] where E is the error type.
-type SimpleWebhookInitiator struct {
-	*WebhookInitiator
-}
-
-// NewSimpleWebhookInitiator creates a new SimpleWebhookInitiator which wraps a WebhookInitiator.
-func NewSimpleWebhookInitiator(opts ...WebhookInitiatorOption) (*SimpleWebhookInitiator, error) {
-	initiator, err := NewWebhookInitiator(opts...)
-	if err != nil {
-		return nil, err
-	}
-	return &SimpleWebhookInitiator{WebhookInitiator: initiator}, nil
-}
-
-// WebhookReceiverInterface represents handlers for receiving webhook requests.
-type WebhookReceiverInterface interface {
-	// Person entered the building
-	// HandleEnterEventWebhook handles the POST webhook request.
-	HandleEnterEventWebhook(w http.ResponseWriter, r *http.Request)
-	// Person exited the building
-	// HandleExitEventWebhook handles the POST webhook request.
-	HandleExitEventWebhook(w http.ResponseWriter, r *http.Request)
-}
-
-// WebhookReceiverMiddlewareFunc is a middleware function for webhook receiver handlers.
-type WebhookReceiverMiddlewareFunc func(http.Handler) http.Handler
-
-// EnterEventWebhookHandler returns an http.Handler for the EnterEvent webhook.
-// The caller is responsible for registering this handler at the appropriate path.
-func EnterEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
-	if errHandler == nil {
-		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			si.HandleEnterEventWebhook(w, r)
-		}))
-
-		for _, middleware := range middlewares {
-			handler = middleware(handler)
-		}
-
-		handler.ServeHTTP(w, r)
-	})
-}
-
-// ExitEventWebhookHandler returns an http.Handler for the ExitEvent webhook.
-// The caller is responsible for registering this handler at the appropriate path.
-func ExitEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
-	if errHandler == nil {
-		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		}
-	}
-
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			si.HandleExitEventWebhook(w, r)
-		}))
-
-		for _, middleware := range middlewares {
-			handler = middleware(handler)
-		}
-
-		handler.ServeHTTP(w, r)
-	})
 }
