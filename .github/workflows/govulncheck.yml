@@ -1,0 +1,39 @@
+name: Determine known CVEs through `govulncheck`
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # Mondays at 0000
+    - cron: "0 0 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  check-for-vulnerabilities:
+    name: Check for vulnerabilities using `govulncheck`
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+    steps:
+      - uses: golang/govulncheck-action@b625fbe08f3bccbe446d94fbf87fcc875a4f50ee # v1.0.4
+        with:
+          # to be explicit, we're only checking the top-level `oapi-codegen` package
+          # we are intentionally NOT intending to keep on top of security updates in `internal/test` or `examples`, or any submodules thereof
+          go-package: ./...
+          # NOTE that we want to produce the SARIF-formatted report, which can then be consumed by other tools ...
+          output-format: sarif
+          output-file: govulncheck.sarif
+
+      # ... such as the Code Scanning tab (https://github.com/oapi-codegen/oapi-codegen/security/code-scanning?query=is%3Aopen+branch%3Amain+tool%3Agovulncheck)
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@0499de31b99561a6d14a36a5f662c2a54f91beee # v4.31.2
+        with:
+          sarif_file: govulncheck.sarif
+          category: govulncheck
+
+      - name: Print code scanning results URL
+        run: |
+          echo "Results: https://github.com/${{ github.repository }}/security/code-scanning?query=is%3Aopen+branch%3Amain+tool%3Agovulncheck"

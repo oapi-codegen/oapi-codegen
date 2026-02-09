@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: samepackage
+output: server.gen.go
+generate:
+  models: true
+  chi-server: true
+  strict-server: true
+output-options:
+  # to make sure that all types are generated
+  skip-prune: true
+import-mapping:
+  ../common/api.yaml: "-"
