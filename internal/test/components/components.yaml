@@ -321,7 +321,7 @@ components:
         - $ref: '#/components/schemas/OneOfVariant1'
         - $ref: '#/components/schemas/OneOfVariant2'
     OneOfObject9:
-      description: oneOf with fixed descriminator
+      description: oneOf with fixed discriminator
       type: object
       properties:
         type:
