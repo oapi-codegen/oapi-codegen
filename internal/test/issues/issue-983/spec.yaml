@@ -1,0 +1,33 @@
+openapi: "3.0.1"
+info:
+  title: PR 983 - nested enum TypeName collisions
+  version: "1.0"
+servers:
+  - url: /openapi/
+    description: Default Server URL
+paths:
+  /get/the/foo:
+    get:
+      operationId: getTheFoo
+      parameters: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Foo"
+components:
+  schemas:
+    Foo:
+      type: object
+      properties:
+        _field:
+          type: string
+          enum:
+            - whatever
+        field:
+          type: string
+          enum:
+            - whateverElse
+          x-go-name: FieldRename
