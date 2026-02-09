@@ -439,6 +439,7 @@ func TestSwaggerUriToChiUri(t *testing.T) {
 }
 
 func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
+	assert.Equal(t, "/{$}", SwaggerUriToStdHttpUri("/"))
 	assert.Equal(t, "/path", SwaggerUriToStdHttpUri("/path"))
 	assert.Equal(t, "/path/{arg}", SwaggerUriToStdHttpUri("/path/{arg}"))
 	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}"))

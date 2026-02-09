@@ -4,7 +4,7 @@ YELLOW := \e[0;33m
 RESET := \e[0;0m
 
 GOVER := $(shell go env GOVERSION)
-GOMINOR := $(shell bash -c "cut -f2 -d. <<< $(GOVER)")
+GOMINOR := $(shell bash -c "cut -f1 -d' ' <<< \"$(GOVER)\" | cut -f2 -d.")
 
 define execute-if-go-122
 @{ \
@@ -21,7 +21,7 @@ lint:
 
 lint-ci:
 
-	$(call execute-if-go-122,$(GOBIN)/golangci-lint run ./... --out-format=colored-line-number --timeout=5m)
+	$(call execute-if-go-122,$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m)
 
 generate:
 	$(call execute-if-go-122,go generate ./...)

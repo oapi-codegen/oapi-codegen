@@ -18,6 +18,7 @@ const (
 	extGoTypeName        = "x-go-type-name"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
 	extPropOmitEmpty     = "x-omitempty"
+	extPropOmitZero      = "x-omitzero"
 	extPropExtraTags     = "x-oapi-codegen-extra-tags"
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
@@ -58,6 +59,14 @@ func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
 	return omitEmpty, nil
+}
+
+func extParseOmitZero(extPropValue interface{}) (bool, error) {
+	omitZero, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return omitZero, nil
 }
 
 func extExtraTags(extPropValue interface{}) (map[string]string, error) {
