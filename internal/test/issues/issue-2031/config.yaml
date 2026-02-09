@@ -1,0 +1,4 @@
+package: issue2031
+generate:
+  models: true
+output: issue2031.gen.go

@@ -1,45 +1,33 @@
-name: Build project
-on: [ push, pull_request ]
+name: CI
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}
+permissions:
+  contents: read
 jobs:
   build:
-    name: Build
+    uses: oapi-codegen/actions/.github/workflows/ci.yml@b9f2c274c1c631e648931dbbcc1942c2b2027837 # v0.4.0
+
+  build-binaries:
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
-      # perform matrix testing to give us an earlier insight into issues with different versions of supported major versions of Go
+      fail-fast: true
       matrix:
         version:
-        - "1.21"
-        - "1.22"
-        - "1.23"
+          - "stable"
+          - "oldstable"
     steps:
       - name: Check out source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
           go-version: ${{ matrix.version }}
 
-      - name: Test
-        run: make test
+      - name: Build
+        run: go build ./cmd/oapi-codegen
         env:
           # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
           GOTOOLCHAIN: local
-
-      - name: Build
-        run: go build ./cmd/oapi-codegen
-
-  results:
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    name: Check build results
-    needs: [build]
-    steps:
-      - run: |
-          result="${{ needs.build.result }}"
-          if [[ $result == "success" || $result == "skipped" ]]; then
-            exit 0
-          else
-            exit 1
-          fi

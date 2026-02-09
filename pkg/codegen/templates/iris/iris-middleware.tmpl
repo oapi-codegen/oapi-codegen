@@ -55,7 +55,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -65,7 +65,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
         return
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         ctx.StatusCode(http.StatusBadRequest)
@@ -87,7 +87,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
             return
         }
 {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
 {{end}}
 {{if .IsJson}}
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
@@ -105,7 +105,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
             return
         }
 {{end}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
         } {{if .Required}}else {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.WriteString("Header {{.ParamName}} is required, but not found")
@@ -117,7 +117,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{range .CookieParams}}
     if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if not .Required}}&{{end}}cookie.Value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}cookie.Value
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
@@ -134,7 +134,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
         return
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
@@ -144,7 +144,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)
         return
     }
-    params.{{.GoName}} = {{if not .Required}}&{{end}}value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
     }{{if .Required}} else {
         ctx.StatusCode(http.StatusBadRequest)

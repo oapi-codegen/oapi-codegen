@@ -3,7 +3,9 @@ package codegen
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProperty_GoTypeDef(t *testing.T) {
@@ -451,6 +453,69 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 				WriteOnly: tt.fields.WriteOnly,
 			}
 			assert.Equal(t, tt.want, p.GoTypeDef())
+		})
+	}
+}
+
+func TestProperty_ZeroValueIsNil(t *testing.T) {
+	newType := func(typ string) *openapi3.Types {
+		return &openapi3.Types{typ}
+	}
+
+	tests := []struct {
+		name        string
+		oapiSchema  *openapi3.Schema
+		expectIsNil bool
+	}{
+		{
+			name:        "when an array, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("array")},
+			expectIsNil: true,
+		},
+		{
+			name:        "when an object, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when a string, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("string")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when an integer, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("integer")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when a number, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("number")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is nil, returns false",
+			oapiSchema:  nil,
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is zero value, returns false",
+			oapiSchema:  &openapi3.Schema{},
+			expectIsNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prop := Property{
+				Schema: Schema{
+					OAPISchema: tt.oapiSchema,
+				},
+			}
+			if tt.expectIsNil {
+				require.True(t, prop.ZeroValueIsNil())
+			} else {
+				require.False(t, prop.ZeroValueIsNil())
+			}
 		})
 	}
 }
