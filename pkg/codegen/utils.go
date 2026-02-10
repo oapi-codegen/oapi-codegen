@@ -1163,11 +1163,11 @@ func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefiniti
 			case ComponentTypeSchema:
 				d.TypeName += "Schema"
 			case ComponentTypeParameter:
-				d.TypeName += "Param"
+				d.TypeName += "Parameter"
 			case ComponentTypeRequestBody:
-				d.TypeName += "ReqBody"
+				d.TypeName += "RequestBody"
 			case ComponentTypeResponse:
-				d.TypeName += "Resp"
+				d.TypeName += "Response"
 			case ComponentTypeHeader:
 				d.TypeName += "Header"
 			}
