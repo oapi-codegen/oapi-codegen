@@ -924,7 +924,7 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
+		return sh.ssi.JSONExample(ctx.Request.Context(), request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "JSONExample")
@@ -956,7 +956,7 @@ func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipartExample(ctx, request.(MultipartExampleRequestObject))
+		return sh.ssi.MultipartExample(ctx.Request.Context(), request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartExample")
@@ -991,7 +991,7 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *gin.Context) {
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipartRelatedExample(ctx, request.(MultipartRelatedExampleRequestObject))
+		return sh.ssi.MultipartRelatedExample(ctx.Request.Context(), request.(MultipartRelatedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipartRelatedExample")
@@ -1059,7 +1059,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.MultipleRequestAndResponseTypes(ctx, request.(MultipleRequestAndResponseTypesRequestObject))
+		return sh.ssi.MultipleRequestAndResponseTypes(ctx.Request.Context(), request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "MultipleRequestAndResponseTypes")
@@ -1086,7 +1086,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *gin.Context, pType str
 	request.Type = pType
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ReservedGoKeywordParameters(ctx, request.(ReservedGoKeywordParametersRequestObject))
+		return sh.ssi.ReservedGoKeywordParameters(ctx.Request.Context(), request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReservedGoKeywordParameters")
@@ -1119,7 +1119,7 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
+		return sh.ssi.ReusableResponses(ctx.Request.Context(), request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "ReusableResponses")
@@ -1152,7 +1152,7 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
+		return sh.ssi.TextExample(ctx.Request.Context(), request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "TextExample")
@@ -1179,7 +1179,7 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 	request.Body = ctx.Request.Body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnknownExample(ctx, request.(UnknownExampleRequestObject))
+		return sh.ssi.UnknownExample(ctx.Request.Context(), request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnknownExample")
@@ -1208,7 +1208,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *gin.Context) {
 	request.Body = ctx.Request.Body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnspecifiedContentType(ctx, request.(UnspecifiedContentTypeRequestObject))
+		return sh.ssi.UnspecifiedContentType(ctx.Request.Context(), request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnspecifiedContentType")
@@ -1244,7 +1244,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.URLEncodedExample(ctx, request.(URLEncodedExampleRequestObject))
+		return sh.ssi.URLEncodedExample(ctx.Request.Context(), request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "URLEncodedExample")
@@ -1279,7 +1279,7 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
+		return sh.ssi.HeadersExample(ctx.Request.Context(), request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "HeadersExample")
@@ -1312,7 +1312,7 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
+		return sh.ssi.UnionExample(ctx.Request.Context(), request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "UnionExample")
