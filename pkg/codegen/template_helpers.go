@@ -23,7 +23,8 @@ import (
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 const (
@@ -143,15 +144,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		}
 
 		// If we made it this far then we need to handle unmarshaling for each content-type:
-		sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
-		for _, contentTypeName := range sortedContentKeys {
+		for _, contentTypeName := range SortedMapKeys {
 			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
 
-		for _, contentTypeName := range sortedContentKeys {
+		for _, contentTypeName := range SortedMapKeys {
 
 			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
 			if typeDefinition.TypeName == "interface{}" {
@@ -225,14 +226,14 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	}
 
 	// Now build the switch statement in order of most-to-least specific:
-	// See: https://github.com/deepmap/oapi-codegen/issues/127 for why we handle this in two separate
+	// See: https://github.com/oapi-codegen/oapi-codegen/issues/127 for why we handle this in two separate
 	// groups.
 	fmt.Fprintf(buffer, "switch {\n")
-	for _, caseClauseKey := range SortedStringKeys(handledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(handledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", handledCaseClauses[caseClauseKey])
 	}
-	for _, caseClauseKey := range SortedStringKeys(unhandledCaseClauses) {
+	for _, caseClauseKey := range SortedMapKeys(unhandledCaseClauses) {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
@@ -295,6 +296,26 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+// genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
+//
+// goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
+// variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
+	keys := SortedMapKeys(variables)
+
+	if len(variables) == 0 {
+		return ""
+	}
+	parts := make([]string, len(variables))
+
+	for i := range keys {
+		k := keys[i]
+		variableDefinitionPrefix := goTypePrefix + UppercaseFirstCharacter(k) + "Variable"
+		parts[i] = k + " " + variableDefinitionPrefix
+	}
+	return strings.Join(parts, ", ")
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -308,6 +329,7 @@ var TemplateFunctions = template.FuncMap{
 	"swaggerUriToChiUri":         SwaggerUriToChiUri,
 	"swaggerUriToGinUri":         SwaggerUriToGinUri,
 	"swaggerUriToGorillaUri":     SwaggerUriToGorillaUri,
+	"swaggerUriToStdHttpUri":     SwaggerUriToStdHttpUri,
 	"lcFirst":                    LowercaseFirstCharacter,
 	"ucFirst":                    UppercaseFirstCharacter,
 	"ucFirstWithPkgName":         UppercaseFirstCharacterWithPkgName,
@@ -322,4 +344,6 @@ var TemplateFunctions = template.FuncMap{
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
 	"toGoComment":                StringWithTypeNameToGoComment,
+
+	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 }

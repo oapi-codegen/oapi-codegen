@@ -18,10 +18,15 @@ const (
 	extGoTypeName        = "x-go-type-name"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
 	extPropOmitEmpty     = "x-omitempty"
+	extPropOmitZero      = "x-omitzero"
 	extPropExtraTags     = "x-oapi-codegen-extra-tags"
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
+	extOrder             = "x-order"
+	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
+	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
+	extOapiCodegenOnlyHonourGoName = "x-oapi-codegen-only-honour-go-name"
 )
 
 func extString(extPropValue interface{}) (string, error) {
@@ -54,6 +59,14 @@ func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
 	return omitEmpty, nil
+}
+
+func extParseOmitZero(extPropValue interface{}) (bool, error) {
+	omitZero, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return omitZero, nil
 }
 
 func extExtraTags(extPropValue interface{}) (map[string]string, error) {
@@ -98,4 +111,12 @@ func extParseEnumVarNames(extPropValue interface{}) ([]string, error) {
 
 func extParseDeprecationReason(extPropValue interface{}) (string, error) {
 	return extString(extPropValue)
+}
+
+func extParseOapiCodegenOnlyHonourGoName(extPropValue interface{}) (bool, error) {
+	onlyHonourGoName, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return onlyHonourGoName, nil
 }
