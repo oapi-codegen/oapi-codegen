@@ -39,7 +39,21 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
+
+	DefinedComp ComponentType // Indicates which component section defined this type
 }
+
+// ComponentType is used to keep track of where a given schema came from, in order
+// to perform type name collision resolution.
+type ComponentType int
+
+const (
+	ComponentTypeSchema = iota
+	ComponentTypeParameter
+	ComponentTypeRequestBody
+	ComponentTypeResponse
+	ComponentTypeHeader
+)
 
 func (s Schema) IsRef() bool {
 	return s.RefType != ""
@@ -311,6 +325,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		Description:         schema.Description,
 		OAPISchema:          schema,
 		SkipOptionalPointer: skipOptionalPointer,
+		DefinedComp:         ComponentTypeSchema,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -849,7 +864,9 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// We can process the schema through the generic schema processor
 	if param.Schema != nil {
-		return GenerateGoSchema(param.Schema, path)
+		schema, err := GenerateGoSchema(param.Schema, path)
+		schema.DefinedComp = ComponentTypeParameter
+		return schema, err
 	}
 
 	// At this point, we have a content type. We know how to deal with
@@ -859,6 +876,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		return Schema{
 			GoType:      "string",
 			Description: StringToGoComment(param.Description),
+			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
 
@@ -869,11 +887,14 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		return Schema{
 			GoType:      "string",
 			Description: StringToGoComment(param.Description),
+			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
 
 	// For json, we go through the standard schema mechanism
-	return GenerateGoSchema(mt.Schema, path)
+	schema, err := GenerateGoSchema(mt.Schema, path)
+	schema.DefinedComp = ComponentTypeParameter
+	return schema, err
 }
 
 func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
