@@ -223,16 +223,20 @@ content-types:
   # - "^application/xml$"
   # - "^text/plain$"
 
-# Content type short names: maps content type patterns to short names
-# used in generated type names (e.g., "FindPetsJSONResponse").
+# Content type short names: maps short names to lists of content type regexp patterns.
+# Used in generated type names (e.g., "FindPetsJSONResponse").
+# Default: matches the content-types patterns above.
 content-type-short-names:
-  - pattern: "^application/json$"
-    short-name: JSON
-  - pattern: "^application/xml$"
-    short-name: XML
-  - pattern: "^text/plain$"
-    short-name: Text
-  # ... defaults cover JSON, XML, Text, HTML, Binary, Multipart, Form
+  JSON:
+    - "^application/json$"
+    - "^application/.*\\+json$"
+  Form:
+    - "^application/x-www-form-urlencoded$"
+  # Add custom short names as needed:
+  # XML:
+  #   - "^application/xml$"
+  #   - "^application/.*\\+xml$"
+  #   - "^text/xml$"
 
 # Struct tags: controls which struct tags are generated and their format.
 # Uses Go text/template syntax. If specified, completely replaces the defaults.
