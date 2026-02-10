@@ -31,10 +31,10 @@ type Configuration struct {
 	// Only request/response bodies with matching content types will have types generated.
 	// Defaults to common JSON and YAML types if not specified.
 	ContentTypes []string `yaml:"content-types,omitempty"`
-	// ContentTypeShortNames maps content type regex patterns to short names for use in type names.
-	// Example: {"^application/json$": "JSON", "^application/xml$": "XML"}
+	// ContentTypeShortNames maps short names to lists of content type regex patterns.
+	// Example: {"JSON": ["^application/json$", "^application/.*\\+json$"]}
 	// These are used when generating response/request type names like "FindPetsJSONResponse".
-	ContentTypeShortNames []ContentTypeShortName `yaml:"content-type-short-names,omitempty"`
+	ContentTypeShortNames map[string][]string `yaml:"content-type-short-names,omitempty"`
 	// StructTags configures how struct tags are generated for fields.
 	// By default, only json tags are generated.
 	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
@@ -92,14 +92,6 @@ func (m *ModelsPackage) Prefix() string {
 		return ""
 	}
 	return name + "."
-}
-
-// ContentTypeShortName maps a content type pattern to a short name.
-type ContentTypeShortName struct {
-	// Pattern is a regex pattern to match against content types
-	Pattern string `yaml:"pattern"`
-	// ShortName is the short name to use in generated type names (e.g., "JSON", "XML")
-	ShortName string `yaml:"short-name"`
 }
 
 // GenerationOptions controls which parts of the code are generated.
@@ -165,18 +157,11 @@ func DefaultContentTypes() []string {
 }
 
 // DefaultContentTypeShortNames returns the default content type to short name mappings.
-func DefaultContentTypeShortNames() []ContentTypeShortName {
-	return []ContentTypeShortName{
-		{Pattern: `^application/json$`, ShortName: "JSON"},
-		{Pattern: `^application/.*\+json$`, ShortName: "JSON"},
-		{Pattern: `^application/xml$`, ShortName: "XML"},
-		{Pattern: `^application/.*\+xml$`, ShortName: "XML"},
-		{Pattern: `^text/xml$`, ShortName: "XML"},
-		{Pattern: `^text/plain$`, ShortName: "Text"},
-		{Pattern: `^text/html$`, ShortName: "HTML"},
-		{Pattern: `^application/octet-stream$`, ShortName: "Binary"},
-		{Pattern: `^multipart/form-data$`, ShortName: "Multipart"},
-		{Pattern: `^application/x-www-form-urlencoded$`, ShortName: "Form"},
+// The defaults match the patterns in DefaultContentTypes().
+func DefaultContentTypeShortNames() map[string][]string {
+	return map[string][]string{
+		"JSON": {`^application/json$`, `^application/.*\+json$`},
+		"Form": {`^application/x-www-form-urlencoded$`},
 	}
 }
 
@@ -187,7 +172,7 @@ func (c *Configuration) ApplyDefaults() {
 	if len(c.ContentTypes) == 0 {
 		c.ContentTypes = DefaultContentTypes()
 	}
-	if len(c.ContentTypeShortNames) == 0 {
+	if c.ContentTypeShortNames == nil {
 		c.ContentTypeShortNames = DefaultContentTypeShortNames()
 	}
 	c.StructTags = DefaultStructTagsConfig().Merge(c.StructTags)
@@ -229,15 +214,23 @@ type ContentTypeShortNamer struct {
 }
 
 // NewContentTypeShortNamer creates a short namer from configuration.
-func NewContentTypeShortNamer(mappings []ContentTypeShortName) *ContentTypeShortNamer {
-	n := &ContentTypeShortNamer{
-		patterns:   make([]*regexp.Regexp, 0, len(mappings)),
-		shortNames: make([]string, 0, len(mappings)),
+// The mappings map short names (e.g., "JSON") to lists of regexp patterns.
+func NewContentTypeShortNamer(mappings map[string][]string) *ContentTypeShortNamer {
+	n := &ContentTypeShortNamer{}
+
+	// Sort keys for deterministic matching order
+	keys := make([]string, 0, len(mappings))
+	for k := range mappings {
+		keys = append(keys, k)
 	}
-	for _, m := range mappings {
-		if re, err := regexp.Compile(m.Pattern); err == nil {
-			n.patterns = append(n.patterns, re)
-			n.shortNames = append(n.shortNames, m.ShortName)
+	sort.Strings(keys)
+
+	for _, shortName := range keys {
+		for _, pattern := range mappings[shortName] {
+			if re, err := regexp.Compile(pattern); err == nil {
+				n.patterns = append(n.patterns, re)
+				n.shortNames = append(n.shortNames, shortName)
+			}
 		}
 	}
 	return n
