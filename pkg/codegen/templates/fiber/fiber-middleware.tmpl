@@ -97,7 +97,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
          }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
