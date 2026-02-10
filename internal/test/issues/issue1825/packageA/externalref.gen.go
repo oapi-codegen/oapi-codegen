@@ -5,12 +5,11 @@ package packagea
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -20,28 +19,25 @@ type ObjectA struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/yTJwQ0CMQxE0V7mnApyowJqCNHAGm1sKzYHtNreUZa5zJfegW7DTakZqAeibxztyvvj",
-	"zZ63lT7NOVN4gbbB9fl1oiJyir5wrhWIPg1VP/teYE5tLqhAgbfc4i/nLwAA//+kHCeTdgAAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"JMnBDQIxDETRXuacCnKjAmoI0cAabWwrNge02t5RlrnMl96BbsNNqRmoB6JvHO3K++PNnreVPs05U3iB" +
+	"tsH1+XWiInKKvnCuFYg+DVU/+15gTm0uqECBt9ziL+cvAAD//w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
