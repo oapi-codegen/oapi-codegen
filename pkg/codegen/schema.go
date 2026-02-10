@@ -43,21 +43,16 @@ type Schema struct {
 	DefinedComp ComponentType // Indicates which component section defined this type
 }
 
-// ComponentType ...
+// ComponentType is used to keep track of where a given schema came from, in order
+// to perform type name collision resolution.
 type ComponentType int
 
-//
 const (
-	ComponentTypeUnknown ComponentType = iota
-	ComponentTypeSchema
+	ComponentTypeSchema = iota
 	ComponentTypeParameter
-	ComponentTypeSecurityScheme
 	ComponentTypeRequestBody
 	ComponentTypeResponse
 	ComponentTypeHeader
-	ComponentTypeExample
-	ComponentTypeLink
-	ComponentTypeCallback
 )
 
 func (s Schema) IsRef() bool {

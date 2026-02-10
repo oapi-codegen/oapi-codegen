@@ -754,7 +754,9 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
-	types = FixDuplicateTypeNames(types)
+	if globalState.options.OutputOptions.ResolveTypeNameCollisions {
+		types = FixDuplicateTypeNames(types)
+	}
 
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
