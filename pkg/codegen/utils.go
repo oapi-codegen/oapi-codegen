@@ -474,6 +474,20 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
 	}
 
+	// When multi-pass name resolution is active, the resolved name takes
+	// precedence over the spec-given name. For a $ref like
+	// #/components/schemas/Thing, we pass the section ("schemas") and
+	// name ("Thing") to resolvedNameForComponent, which looks up the
+	// final Go type name assigned by the collision resolver.
+	// Note: the resolver prioritizes component schemas — if a schema and
+	// a response both claim "Thing", the component schema keeps the original
+	// name and the response becomes "ThingResponse".
+	if depth == 4 && pathParts[0] == "#" && pathParts[1] == "components" {
+		if resolved := resolvedNameForComponent(pathParts[2], pathParts[3]); resolved != "" {
+			return resolved, nil
+		}
+	}
+
 	// Schemas may have been renamed locally, so look up the actual name in
 	// the spec.
 	name, err := findSchemaNameByRefPath(refPath, globalState.spec)
@@ -1123,87 +1137,4 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 
 func sliceContains[E comparable](s []E, v E) bool {
 	return slices.Contains(s, v)
-}
-
-// FixDuplicateTypeNames renames duplicate type names.
-func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	// try to fix duplicate type names with their definition section
-	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	const maxIter = 100
-	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
-		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
-	}
-
-	if hasDuplicatedTypeNames(typeDefs) {
-		panic("too much duplicate type names")
-	}
-
-	return typeDefs
-}
-
-func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
-	dupCheck := make(map[string]int, len(typeDefs))
-
-	for _, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			return true
-		}
-	}
-
-	return false
-}
-
-func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			switch d.Schema.DefinedComp {
-			case ComponentTypeSchema:
-				d.TypeName += "Schema"
-			case ComponentTypeParameter:
-				d.TypeName += "Parameter"
-			case ComponentTypeRequestBody:
-				d.TypeName += "RequestBody"
-			case ComponentTypeResponse:
-				d.TypeName += "Response"
-			case ComponentTypeHeader:
-				d.TypeName += "Header"
-			}
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
-}
-
-func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
 }

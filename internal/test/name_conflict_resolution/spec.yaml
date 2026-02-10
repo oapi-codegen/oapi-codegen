@@ -1,0 +1,282 @@
+openapi: 3.0.1
+
+info:
+  title: "Comprehensive name collision resolution test"
+  description: |
+    Exercises all documented name collision patterns across issues and PRs:
+    #200, #254, #255, #292, #407, #899, #1357, #1450, #1474, #1713, #1881, #2097
+  version: 0.0.0
+
+paths:
+  # Pattern A: Cross-section collision (issues #200, #254, #407, #1881, PR #292)
+  # "Bar" appears in schemas, parameters, requestBodies, responses, and headers.
+  /foo:
+    post:
+      operationId: postFoo
+      parameters:
+        - $ref: '#/components/parameters/Bar'
+      requestBody:
+        $ref: '#/components/requestBodies/Bar'
+      responses:
+        200:
+          $ref: '#/components/responses/Bar'
+
+  # Pattern B: Schema vs client wrapper (issues #1474, #1713, #1450)
+  # Schema "CreateItemResponse" collides with createItem wrapper.
+  /items:
+    post:
+      operationId: createItem
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateItemResponse'
+
+    # Pattern C: Schema alias vs client wrapper (issue #1357)
+    # Schema "ListItemsResponse" (string alias) collides with listItems wrapper.
+    get:
+      operationId: listItems
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+
+  # Pattern D: Operation name = schema response name (issue #255)
+  # Schema "QueryResponse" collides with query wrapper.
+  /query:
+    post:
+      operationId: query
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                q:
+                  type: string
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueryResponse'
+
+  # Pattern E: Schema matches op+Response (issues #2097, #899)
+  # Schema "GetStatusResponse" collides with getStatus wrapper.
+  /status:
+    get:
+      operationId: getStatus
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetStatusResponse'
+
+  # Pattern F: x-go-type-name extension + cross-section collision
+  # Schema "Qux" has x-go-type-name and collides with response "Qux".
+  /qux:
+    get:
+      operationId: getQux
+      responses:
+        '200':
+          $ref: '#/components/responses/Qux'
+    post:
+      operationId: postQux
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Qux'
+      responses:
+        '200':
+          description: OK
+
+  # Pattern G: x-go-type extension + cross-section collision
+  # Schema "Zap" has x-go-type and collides with response "Zap".
+  /zap:
+    get:
+      operationId: getZap
+      responses:
+        '200':
+          $ref: '#/components/responses/Zap'
+    post:
+      operationId: postZap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Zap'
+      responses:
+        '200':
+          description: OK
+
+  # Cross-section: requestBody vs schema (issues #254, #407)
+  # "Pet" appears in both schemas and requestBodies.
+  /pets:
+    post:
+      operationId: createPet
+      requestBody:
+        $ref: '#/components/requestBodies/Pet'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+
+components:
+  schemas:
+    Bar:
+      type: object
+      properties:
+        value:
+          type: string
+
+    Bar2:
+      type: object
+      properties:
+        value:
+          type: number
+
+    CreateItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+
+    ListItemsResponse:
+      type: string
+
+    QueryResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: string
+
+    GetStatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: string
+
+    Pet:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+
+    # Pattern F: x-go-type-name extension + cross-section collision
+    # Schema "Qux" has x-go-type-name: CustomQux and collides with response "Qux".
+    Qux:
+      type: object
+      x-go-type-name: CustomQux
+      properties:
+        label:
+          type: string
+
+    # Pattern G: x-go-type extension + cross-section collision
+    # Schema "Zap" has x-go-type: string and collides with response "Zap".
+    Zap:
+      type: object
+      x-go-type: string
+      properties:
+        unused:
+          type: string
+
+  parameters:
+    Bar:
+      name: bar
+      in: query
+      schema:
+        type: string
+
+  requestBodies:
+    Bar:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: integer
+
+    Pet:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              species:
+                type: string
+
+  headers:
+    Bar:
+      schema:
+        type: boolean
+
+  responses:
+    Bar:
+      description: Bar response
+      headers:
+        X-Bar:
+          $ref: '#/components/headers/Bar'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value1:
+                $ref: '#/components/schemas/Bar'
+              value2:
+                $ref: '#/components/schemas/Bar2'
+
+    Qux:
+      description: A Qux response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+
+    Zap:
+      description: A Zap response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
