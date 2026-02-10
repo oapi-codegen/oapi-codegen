@@ -3,6 +3,7 @@ package codegen
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"regexp"
 	"sort"
 	"strings"
@@ -24,7 +25,10 @@ type Configuration struct {
 	// NameSubstitutions allows direct overrides of generated names
 	NameSubstitutions NameSubstitutions `yaml:"name-substitutions,omitempty"`
 	// ImportMapping maps external spec file paths to Go package import paths.
-	// Example: {"../common/api.yaml": "github.com/org/project/common"}
+	// The value is either a bare import path or "alias importpath".
+	// Examples:
+	//   "../common/api.yaml": "github.com/org/project/common"         # alias auto-generated via hash
+	//   "../common/api.yaml": "common github.com/org/project/common"  # explicit alias "common"
 	// Use "-" as the value to indicate types should be in the current package.
 	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
 	// ContentTypes is a list of regexp patterns for media types to generate models for.
@@ -284,24 +288,40 @@ type ImportResolver struct {
 }
 
 // NewImportResolver creates an ImportResolver from the configuration's import mapping.
-func NewImportResolver(importMapping map[string]string) *ImportResolver {
+// Each mapping value is either a bare import path (alias is auto-generated via hash)
+// or "alias importpath" (explicit alias). The special value "-" means current package.
+func NewImportResolver(importMapping map[string]string) (*ImportResolver, error) {
 	resolver := &ImportResolver{
 		mapping: make(map[string]ExternalImport),
 	}
 
-	for specPath, pkgPath := range importMapping {
-		if pkgPath == "-" {
+	for specPath, value := range importMapping {
+		if value == "-" {
 			// "-" means current package, no import needed
 			resolver.mapping[specPath] = ExternalImport{Alias: "", Path: ""}
-		} else {
+			continue
+		}
+
+		parts := strings.Fields(value)
+		switch len(parts) {
+		case 1:
+			// Bare import path — auto-generate alias via hash
 			resolver.mapping[specPath] = ExternalImport{
-				Alias: hashImportAlias(pkgPath),
-				Path:  pkgPath,
+				Alias: hashImportAlias(parts[0]),
+				Path:  parts[0],
 			}
+		case 2:
+			// "alias importpath"
+			resolver.mapping[specPath] = ExternalImport{
+				Alias: parts[0],
+				Path:  parts[1],
+			}
+		default:
+			return nil, fmt.Errorf("invalid import-mapping value for %q: expected \"importpath\" or \"alias importpath\", got %q", specPath, value)
 		}
 	}
 
-	return resolver
+	return resolver, nil
 }
 
 // Resolve looks up an external spec file path and returns its import info.
