@@ -90,7 +90,7 @@ func (im importMap) GoImports() []string {
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
-		pathToImport = map[string]goImport{}
+		pathToImport = importMap{}
 		result       = importMap{}
 	)
 
