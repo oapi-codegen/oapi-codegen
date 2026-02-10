@@ -90,7 +90,7 @@ func (im importMap) GoImports() []string {
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
-		pathToName = map[string]string{}
+		pathToName = importMap{}
 		result     = importMap{}
 	)
 
@@ -103,12 +103,25 @@ func constructImportMapping(importMapping map[string]string) importMap {
 
 		for _, packagePath := range packagePaths {
 			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+				split := strings.Split(packagePath, " ")
+				if len(split) == 2 {
+					// if we have 2 parts, we assume both the package name and path are provided, and we use them as is
+					pathToName[packagePath] = goImport{
+						Name: split[0],
+						Path: split[1],
+					}
+				} else {
+					// otherwise, we auto-generate a package name based on the order of the imports, to ensure deterministic output
+					pathToName[packagePath] = goImport{
+						Name: fmt.Sprintf("externalRef%d", len(pathToName)),
+						Path: packagePath,
+					}
+				}
 			}
 		}
 	}
 	for specPath, packagePath := range importMapping {
-		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
+		result[specPath] = pathToName[packagePath]
 	}
 	return result
 }
