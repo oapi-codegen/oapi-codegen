@@ -1,0 +1,43 @@
+openapi: 3.0.2
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure that recursive types are handled properly
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/Document'
+  /example2:
+    get:
+      operationId: exampleGet2
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/DocumentStatus'
+components:
+  schemas:
+    Document:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          x-go-type-name: Document_Status
+          type: string
+          enum: [one, two, three, four]
+    DocumentStatus:
+      type: object
+      properties:
+        value:
+          type: string

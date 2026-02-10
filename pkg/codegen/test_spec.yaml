@@ -1,0 +1,207 @@
+openapi: 3.0.1
+
+info:
+  title: OpenAPI-CodeGen Test
+  description: 'This is a test OpenAPI Spec'
+  version: 1.0.0
+
+servers:
+  - url: https://test.oapi-codegen.com/v2
+  - url: http://test.oapi-codegen.com/v2
+
+paths:
+  /test/{name}:
+    get:
+      tags:
+        - test
+      summary: Get test
+      operationId: getTestByName
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: $top
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Success
+          content:
+            application/xml:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+        422:
+          description: InvalidArray
+          content:
+            application/xml:
+              schema:
+                type: array
+            application/json:
+              schema:
+                type: array
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /cat:
+    get:
+      tags:
+        - cat
+      summary: Get cat status
+      operationId: getCatStatus
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/CatAlive'
+                  - $ref: '#/components/schemas/CatDead'
+            application/xml:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/CatAlive'
+                  - $ref: '#/components/schemas/CatDead'
+            application/yaml:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/CatAlive'
+                  - $ref: '#/components/schemas/CatDead'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /enum:
+    get:
+      tags:
+        - enum
+      summary: References enum
+      operationId: getEnum
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnumTest'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /user:
+    get:
+      tags:
+        - mergeAllOf
+      summary: Merges allOf ref-ing a JSON schema
+      operationId: getUser
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+
+    Test:
+      properties:
+        name:
+          type: string
+        cases:
+          type: array
+          items:
+            $ref: '#/components/schemas/TestCase'
+
+    TestCase:
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+
+    Error:
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+
+    CatAlive:
+      properties:
+        name:
+          type: string
+        alive_since:
+          type: string
+          format: date-time
+
+    CatDead:
+      properties:
+        name:
+          type: string
+        dead_since:
+          type: string
+          format: date-time
+          x-oapi-codegen-extra-tags:
+            tag1: value1
+            tag2: value2
+        cause:
+          type: string
+          enum: [ car, dog, oldage ]
+
+    EnumTest:
+      properties:
+        numerics:
+          type: integer
+          enum: [0, 1, 2]
+        enumNames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enumNames:
+            - zero
+            - one
+            - two
+        enumVarnames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enum-varnames:
+            - na
+            - single
+            - double
+    User:
+      allOf:
+        - $ref: ./test_schema.json
+        - type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              description: User name

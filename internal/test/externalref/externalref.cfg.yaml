@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: externalref
+generate:
+  models: true
+  embedded-spec: true
+import-mapping:
+  ./packageA/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageA
+  ./packageB/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB
+  https://petstore3.swagger.io/api/v3/openapi.json: github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/petstore
+output: externalref.gen.go
+output-options:
+  skip-prune: true

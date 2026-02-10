@@ -1,0 +1,321 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Strict server examples
+  description: Contains different content types supported by strict server
+servers:
+  - url: http://strict.swagger.io/api
+paths:
+  /json:
+    post:
+      operationId: JSONExample
+      description: JSON is automatically marshaled into structs.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /urlencoded:
+    post:
+      operationId: URLEncodedExample
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /multipart:
+    post:
+      operationId: MultipartExample
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            multipart/form-data:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /multipart-related:
+    post:
+      operationId: MultipartRelatedExample
+      requestBody:
+        content:
+          multipart/related:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            multipart/related:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /text:
+    post:
+      operationId: TextExample
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /unknown:
+    post:
+      operationId: UnknownExample
+      requestBody:
+        content:
+          image/png:
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: OK
+          content:
+            video/mp4:
+              schema:
+                type: string
+                format: byte
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /multiple:
+    post:
+      operationId: MultipleRequestAndResponseTypes
+      description: Shows how to deal with multiple content types in a single request
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/example"
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/example"
+          text/plain:
+            schema:
+              type: string
+          image/png:
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+            application/x-www-form-urlencoded:
+              schema:
+                $ref: "#/components/schemas/example"
+            multipart/form-data:
+              schema:
+                $ref: "#/components/schemas/example"
+            text/plain:
+              schema:
+                type: string
+            image/png:
+              schema:
+                type: string
+                format: byte
+        400:
+          $ref: "#/components/responses/badrequest"
+  /with-headers:
+    post:
+      operationId: HeadersExample
+      description: Headers can be received and returned via structs
+      parameters:
+        - name: header1
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: header2
+          in: header
+          required: false
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          headers:
+            header1:
+              schema:
+                type: string
+            header2:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /reusable-responses:
+    post:
+      operationId: ReusableResponses
+      description: Responses can be refs to components/responses
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          $ref: "#/components/responses/reusableresponse"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /unspecified-content-type:
+    post:
+      operationId: UnspecifiedContentType
+      description: Concrete content type is not specified by the schema, so we must pass it to client code
+      requestBody:
+        content:
+          image/*:
+            schema:
+              type: string
+              format: byte
+      responses:
+        200:
+          description: OK
+          content:
+            video/*:
+              schema:
+                type: string
+                format: byte
+        400:
+          $ref: "#/components/responses/badrequest"
+        401:
+          $ref: "#/components/responses/badrequest"
+        403:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /reserved-go-keyword-parameters/{type}:
+    get:
+        operationId: ReservedGoKeywordParameters
+        description: Parameters can be named after Go keywords
+        parameters:
+          - name: type
+            in: path
+            required: true
+            schema:
+                type: string
+        responses:
+          200:
+            description: OK
+            content:
+              text/plain:
+                schema:
+                  type: string
+  /with-union:
+    post:
+      operationId: UnionExample
+      description: Union type
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          headers:
+            header1:
+              schema:
+                type: string
+            header2:
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: string
+                - $ref: "#/components/schemas/example"
+            application/alternative+json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+components:
+  responses:
+    badrequest:
+      description: BadRequest
+    reusableresponse:
+      description: OK
+      headers:
+        header1:
+          schema:
+            type: string
+        header2:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/example"
+  schemas:
+    example:
+      type: object
+      properties:
+        value:
+          type: string

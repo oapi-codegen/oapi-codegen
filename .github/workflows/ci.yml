@@ -1,0 +1,33 @@
+name: CI
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  build:
+    uses: oapi-codegen/actions/.github/workflows/ci.yml@b9f2c274c1c631e648931dbbcc1942c2b2027837 # v0.4.0
+
+  build-binaries:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        version:
+          - "stable"
+          - "oldstable"
+    steps:
+      - name: Check out source code
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set up Go
+        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version: ${{ matrix.version }}
+
+      - name: Build
+        run: go build ./cmd/oapi-codegen
+        env:
+          # A combination of our GitHub Actions setup, with the Go toolchain, leads to inconsistencies in calling `go env`, in particular with Go 1.21, where having (the default) `GOTOOLCHAIN=auto` results in build failures
+          GOTOOLCHAIN: local

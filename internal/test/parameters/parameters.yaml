@@ -23,25 +23,23 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeArray/{param}:
     get:
-      summary:
       operationId: getSimpleNoExplodeArray
       parameters:
-      - name: param
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: array
-          items:
-            type: integer
-            format: int32
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeArray/{param*}:
     get:
-      summary:
       operationId: getSimpleExplodeArray
       parameters:
         - name: param
@@ -59,7 +57,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeObject/{param}:
     get:
-      summary:
       operationId: getSimpleNoExplodeObject
       parameters:
         - name: param
@@ -74,7 +71,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /simpleExplodeObject/{param*}:
     get:
-      summary:
       operationId: getSimpleExplodeObject
       parameters:
         - name: param
@@ -89,7 +85,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeArray/{.param}:
     get:
-      summary:
       operationId: getLabelNoExplodeArray
       parameters:
         - name: param
@@ -107,7 +102,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeArray/{.param*}:
     get:
-      summary:
       operationId: getLabelExplodeArray
       parameters:
         - name: param
@@ -125,7 +119,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelNoExplodeObject/{.param}:
     get:
-      summary:
       operationId: getLabelNoExplodeObject
       parameters:
         - name: param
@@ -140,7 +133,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /labelExplodeObject/{.param*}:
     get:
-      summary:
       operationId: getLabelExplodeObject
       parameters:
         - name: param
@@ -155,7 +147,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeArray/{.id}:
     get:
-      summary:
       operationId: getMatrixNoExplodeArray
       parameters:
         - name: id
@@ -173,7 +164,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeArray/{.id*}:
     get:
-      summary:
       operationId: getMatrixExplodeArray
       parameters:
         - name: id
@@ -191,7 +181,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixNoExplodeObject/{.id}:
     get:
-      summary:
       operationId: getMatrixNoExplodeObject
       parameters:
         - name: id
@@ -206,7 +195,6 @@ paths:
           $ref: "#/components/responses/SimpleResponse"
   /matrixExplodeObject/{.id*}:
     get:
-      summary:
       operationId: getMatrixExplodeObject
       parameters:
         - name: id
@@ -238,6 +226,20 @@ paths:
       operationId: getPassThrough
       parameters:
         - name: param
+          in: path
+          required: true
+          content:
+            text/plain:
+              schema:
+                type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /startingWithNumber/{1param}:
+    get:
+      operationId: getStartingWithNumber
+      parameters:
+        - name: 1param
           in: path
           required: true
           content:
@@ -303,6 +305,12 @@ paths:
           schema:
             type: integer
             format: int32
+        - name: ps
+          description: primitive string
+          in: query
+          required: false
+          schema:
+            type: string
         - name: co
           description: complex object
           in: query
@@ -311,6 +319,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
+        - name: 1s
+          description: name starting with number
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
@@ -326,6 +340,9 @@ paths:
           explode: true
           schema:
             $ref: "#/components/schemas/ComplexObject"
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
   /header:
     get:
       operationId: getHeader
@@ -388,6 +405,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
+        - name: 1-Starting-With-Number
+          description: name starting with number
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+
   /cookie:
     get:
       operationId: getCookie
@@ -450,6 +477,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
+        - name: 1s
+          description: name starting with number
+          in: cookie
+          required: false
+          schema:
+            type: string
+      responses:
+        default:
+          $ref: "#/components/responses/SimpleResponse"
+  /enums:
+    get:
+      operationId: enumParams
+      parameters:
+        - name: enumPathParam
+          description: Parameter with enum values
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            enum: [ 100, 200 ]
+      responses:
+        204:
+          description: no content
 components:
   schemas:
     Object:

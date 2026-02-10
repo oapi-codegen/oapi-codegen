@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: v1
+generate:
+  models: true
+  embedded-spec: true
+compatibility:
+  old-merge-schemas: true
+output-options:
+  skip-prune: true
+output: v1/openapi.gen.go

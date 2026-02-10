@@ -1,17 +1,20 @@
 package codegen
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
 )
 
-// This describes a Schema, a type definition.
+// Schema describes an OpenAPI schema, with lots of helper fields to use in the
+// templating engine.
 type Schema struct {
 	GoType  string // The Go type needed to represent the schema
 	RefType string // If the type has a type name, this is set
+
+	ArrayType *Schema // The schema of array element
 
 	EnumValues map[string]string // Enum values
 
@@ -22,7 +25,22 @@ type Schema struct {
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
-	DefinedComp ComponentType // Indicates where was defined
+	Description string // The description of the element
+
+	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
+	Discriminator *Discriminator // Describes which value is stored in a union
+
+	// If this is set, the schema will declare a type via alias, eg,
+	// `type Foo = bool`. If this is not set, we will define this type via
+	// type definition `type Foo bool`
+	//
+	// Can be overriden by the OutputOptions#DisableTypeAliasesForType field
+	DefineViaAlias bool
+
+	// The original OpenAPIv3 Schema.
+	OAPISchema *openapi3.Schema
+
+	DefinedComp ComponentType // Indicates which component section defined this type
 }
 
 // ComponentType ...
@@ -46,6 +64,13 @@ func (s Schema) IsRef() bool {
 	return s.RefType != ""
 }
 
+func (s Schema) IsExternalRef() bool {
+	if !s.IsRef() {
+		return false
+	}
+	return strings.Contains(s.RefType, ".")
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
@@ -53,11 +78,16 @@ func (s Schema) TypeDecl() string {
 	return s.GoType
 }
 
-func (s *Schema) MergeProperty(p Property) error {
+// AddProperty adds a new property to the current Schema, and returns an error
+// if it collides. Two identical fields will not collide, but two properties by
+// the same name, but different definition, will collide. It's safe to merge the
+// fields of two schemas with overlapping properties if those properties are
+// identical.
+func (s *Schema) AddProperty(p Property) error {
 	// Scan all existing properties for a conflict
 	for _, e := range s.Properties {
 		if e.JsonFieldName == p.JsonFieldName && !PropertiesEqual(e, p) {
-			return errors.New(fmt.Sprintf("property '%s' already exists with a different type", e.JsonFieldName))
+			return fmt.Errorf("property '%s' already exists with a different type", e.JsonFieldName)
 		}
 	}
 	s.Properties = append(s.Properties, p)
@@ -65,12 +95,7 @@ func (s *Schema) MergeProperty(p Property) error {
 }
 
 func (s Schema) GetAdditionalTypeDefs() []TypeDefinition {
-	var result []TypeDefinition
-	for _, p := range s.Properties {
-		result = append(result, p.Schema.GetAdditionalTypeDefs()...)
-	}
-	result = append(result, s.AdditionalTypes...)
-	return result
+	return s.AdditionalTypes
 }
 
 type Property struct {
@@ -79,25 +104,182 @@ type Property struct {
 	Schema        Schema
 	Required      bool
 	Nullable      bool
+	ReadOnly      bool
+	WriteOnly     bool
+	NeedsFormTag  bool
+	Extensions    map[string]interface{}
+	Deprecated    bool
 }
 
 func (p Property) GoFieldName() string {
-	return SchemaNameToTypeName(p.JsonFieldName)
+	goFieldName := p.JsonFieldName
+	if extension, ok := p.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
+			goFieldName = extGoFieldName
+		}
+	}
+
+	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
+		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
+			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
+				if extOapiCodegenOnlyHonourGoName {
+					return goFieldName
+				}
+			}
+		}
+	}
+
+	return SchemaNameToTypeName(goFieldName)
 }
 
 func (p Property) GoTypeDef() string {
 	typeDef := p.Schema.TypeDecl()
-	if !p.Schema.SkipOptionalPointer && (!p.Required || p.Nullable) {
+	if globalState.options.OutputOptions.NullableType && p.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
+	if !p.Schema.SkipOptionalPointer &&
+		(!p.Required || p.Nullable ||
+			(p.ReadOnly && (!p.Required || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)) ||
+			p.WriteOnly) {
+
 		typeDef = "*" + typeDef
 	}
 	return typeDef
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (p Property) RequiresNilCheck() bool {
+	return p.ZeroValueIsNil() || p.HasOptionalPointer()
+}
+
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (p Property) HasOptionalPointer() bool {
+	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (p Property) ZeroValueIsNil() bool {
+	if p.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return p.Schema.OAPISchema.Type.Is("array")
+}
+
+// EnumDefinition holds type information for enum
+type EnumDefinition struct {
+	// Schema is the scheme of a type which has a list of enum values, eg, the
+	// "container" of the enum.
+	Schema Schema
+	// TypeName is the name of the enum's type, usually aliased from something.
+	TypeName string
+	// ValueWrapper wraps the value. It's used to conditionally apply quotes
+	// around strings.
+	ValueWrapper string
+	// PrefixTypeName determines if the enum value is prefixed with its TypeName.
+	// This is set to true when this enum conflicts with another in terms of
+	// TypeNames or when explicitly requested via the
+	// `compatibility.always-prefix-enum-values` option.
+	PrefixTypeName bool
+}
+
+// GetValues generates enum names in a way to minimize global conflicts
+func (e *EnumDefinition) GetValues() map[string]string {
+	// in case there are no conflicts, it's safe to use the values as-is
+	if !e.PrefixTypeName {
+		return e.Schema.EnumValues
+	}
+	// If we do have conflicts, we will prefix the enum's typename to the values.
+	newValues := make(map[string]string, len(e.Schema.EnumValues))
+	for k, v := range e.Schema.EnumValues {
+		newName := e.TypeName + UppercaseFirstCharacter(k)
+		newValues[newName] = v
+	}
+	return newValues
+}
+
+type Constants struct {
+	// SecuritySchemeProviderNames holds all provider names for security schemes.
+	SecuritySchemeProviderNames []string
+	// EnumDefinitions holds type and value information for all enums
+	EnumDefinitions []EnumDefinition
+}
+
+// TypeDefinition describes a Go type definition in generated code.
+//
+// Let's use this example schema:
+// components:
+//
+//	schemas:
+//	  Person:
+//	    type: object
+//	    properties:
+//	    name:
+//	      type: string
 type TypeDefinition struct {
-	TypeName     string
-	JsonName     string
+	// The name of the type, eg, type <...> Person
+	TypeName string
+
+	// The name of the corresponding JSON description, as it will sometimes
+	// differ due to invalid characters.
+	JsonName string
+
+	// This is the Schema wrapper is used to populate the type description
+	Schema Schema
+}
+
+// ResponseTypeDefinition is an extension of TypeDefinition, specifically for
+// response unmarshaling in ClientWithResponses.
+type ResponseTypeDefinition struct {
+	TypeDefinition
+	// The content type name where this is used, eg, application/json
+	ContentTypeName string
+
+	// The type name of a response model.
 	ResponseName string
-	Schema       Schema
+
+	AdditionalTypeDefinitions []TypeDefinition
+}
+
+func (t *TypeDefinition) IsAlias() bool {
+	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
+}
+
+type Discriminator struct {
+	// maps discriminator value to go type
+	Mapping map[string]string
+
+	// JSON property name that holds the discriminator
+	Property string
+}
+
+func (d *Discriminator) JSONTag() string {
+	return fmt.Sprintf("`json:\"%s\"`", d.Property)
+}
+
+func (d *Discriminator) PropertyName() string {
+	return SchemaNameToTypeName(d.Property)
+}
+
+// UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
+type UnionElement string
+
+// String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
+func (u UnionElement) String() string {
+	return string(u)
+}
+
+// Method generate union method name for template functions `As/From/Merge`.
+func (u UnionElement) Method() string {
+	var method string
+	for _, part := range strings.Split(string(u), `.`) {
+		method += UppercaseFirstCharacter(part)
+	}
+	return method
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -105,39 +287,50 @@ func PropertiesEqual(a, b Property) bool {
 }
 
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
-	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
-	// another type. We're not de-referencing, so simply use the referenced type.
-	var refType string
-
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
-	// no items defined. Therefore we have at least valid Go-Code.
+	// no items defined. Therefore, we have at least valid Go-Code.
 	if sref == nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
+		return Schema{GoType: "interface{}"}, nil
 	}
 
 	schema := sref.Value
 
-	if sref.Ref != "" {
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	// NOTE skipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
+	skipOptionalPointer := globalState.options.OutputOptions.PreferSkipOptionalPointer
+	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
 		var err error
+		skipOptionalPointer, err = extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return Schema{}, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+	}
+
+	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
+	// another type. We're not de-referencing, so simply use the referenced type.
+	if IsGoTypeReference(sref.Ref) {
 		// Convert the reference path to Go type
-		refType, err = RefPathToGoType(sref.Ref)
+		refType, err := RefPathToGoType(sref.Ref)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
 		return Schema{
-			GoType: refType,
+			GoType:              refType,
+			Description:         schema.Description,
+			DefineViaAlias:      true,
+			OAPISchema:          schema,
+			SkipOptionalPointer: skipOptionalPointer,
 		}, nil
 	}
 
-	// We can't support this in any meaningful way
-	if schema.AnyOf != nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
-	}
-	// We can't support this in any meaningful way
-	if schema.OneOf != nil {
-		return Schema{GoType: "interface{}", RefType: refType}, nil
+	outSchema := Schema{
+		Description:         schema.Description,
+		OAPISchema:          schema,
+		SkipOptionalPointer: skipOptionalPointer,
+		DefinedComp:         ComponentTypeSchema,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -147,50 +340,118 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	if schema.AllOf != nil {
 		mergedSchema, err := MergeSchemas(schema.AllOf, path)
 		if err != nil {
-			return Schema{}, errors.Wrap(err, "error merging schemas")
+			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
-		mergedSchema.RefType = refType
+		mergedSchema.OAPISchema = schema
 		return mergedSchema, nil
+	}
+
+	// Check x-go-type, which will completely override the definition of this
+	// schema with the provided type.
+	if extension, ok := schema.Extensions[extPropGoType]; ok {
+		typeName, err := extTypeName(extension)
+		if err != nil {
+			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
+		}
+		outSchema.GoType = typeName
+		outSchema.DefineViaAlias = true
+
+		return outSchema, nil
 	}
 
 	// Schema type and format, eg. string / binary
 	t := schema.Type
-
-	outSchema := Schema{
-		RefType:     refType,
-		DefinedComp: ComponentTypeSchema,
-	}
 	// Handle objects and empty schemas first as a special case
-	if t == "" || t == "object" {
+	if t.Slice() == nil || t.Is("object") {
 		var outType string
 
-		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) {
+		if len(schema.Properties) == 0 && !SchemaHasAdditionalProperties(schema) && schema.AnyOf == nil && schema.OneOf == nil {
 			// If the object has no properties or additional properties, we
 			// have some special cases for its type.
-			if t == "object" {
+			if t.Is("object") {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
 				outType = "map[string]interface{}"
+				setSkipOptionalPointerForContainerType(&outSchema)
 			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
 				outType = "interface{}"
+				// this should never have an "optional pointer", as it doesn't make sense to be a `*interface{}`
+				outSchema.SkipOptionalPointer = true
 			}
 			outSchema.GoType = outType
+			outSchema.DefineViaAlias = true
 		} else {
+			// When we define an object, we want it to be a type definition,
+			// not a type alias, eg, "type Foo struct {...}"
+			outSchema.DefineViaAlias = false
+
+			// If the schema has additional properties, we need to special case
+			// a lot of behaviors.
+			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
+
+			// Until we have a concrete additional properties type, we default to
+			// any schema.
+			outSchema.AdditionalPropertiesType = &Schema{
+				GoType: "interface{}",
+			}
+
+			// If additional properties are defined, we will override the default
+			// above with the specific definition.
+			if schema.AdditionalProperties.Schema != nil {
+				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
+				if err != nil {
+					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
+				}
+				if additionalSchema.HasAdditionalProperties || len(additionalSchema.UnionElements) != 0 {
+					// If we have fields present which have additional properties or union values,
+					// but are not a pre-defined type, we need to define a type
+					// for them, which will be based on the field names we followed
+					// to get to the type.
+					typeName := PathToTypeName(append(path, "AdditionalProperties"))
+
+					typeDef := TypeDefinition{
+						TypeName: typeName,
+						JsonName: strings.Join(append(path, "AdditionalProperties"), "."),
+						Schema:   additionalSchema,
+					}
+					additionalSchema.RefType = typeName
+					additionalSchema.AdditionalTypes = append(additionalSchema.AdditionalTypes, typeDef)
+				}
+				outSchema.AdditionalPropertiesType = &additionalSchema
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, additionalSchema.AdditionalTypes...)
+			}
+
+			// If the schema has no properties, and only additional properties, we will
+			// early-out here and generate a map[string]<schema> instead of an object
+			// that contains this map. We skip over anyOf/oneOf here because they can
+			// introduce properties. allOf was handled above.
+			if !globalState.options.Compatibility.DisableFlattenAdditionalProperties &&
+				len(schema.Properties) == 0 && schema.AnyOf == nil && schema.OneOf == nil {
+				// We have a dictionary here. Returns the goType to be just a map from
+				// string to the property type. HasAdditionalProperties=false means
+				// that we won't generate custom json.Marshaler and json.Unmarshaler functions,
+				// since we don't need them for a simple map.
+				outSchema.HasAdditionalProperties = false
+				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				setSkipOptionalPointerForContainerType(&outSchema)
+				return outSchema, nil
+			}
+
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
 				propertyPath := append(path, pName)
 				pSchema, err := GenerateGoSchema(p, propertyPath)
 				if err != nil {
-					return Schema{}, errors.Wrap(err, fmt.Sprintf("error generating Go schema for property '%s'", pName))
+					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
 
 				required := StringInArray(pName, schema.Required)
 
-				if pSchema.HasAdditionalProperties && pSchema.RefType == "" {
-					// If we have fields present which have additional properties,
+				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
+					// If we have fields present which have additional properties or union values,
 					// but are not a pre-defined type, we need to define a type
 					// for them, which will be based on the field names we followed
 					// to get to the type.
@@ -215,96 +476,229 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Required:      required,
 					Description:   description,
 					Nullable:      p.Value.Nullable,
+					ReadOnly:      p.Value.ReadOnly,
+					WriteOnly:     p.Value.WriteOnly,
+					Extensions:    p.Value.Extensions,
+					Deprecated:    p.Value.Deprecated,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
+				if len(pSchema.AdditionalTypes) > 0 {
+					outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, pSchema.AdditionalTypes...)
+				}
 			}
 
-			outSchema.HasAdditionalProperties = SchemaHasAdditionalProperties(schema)
-			outSchema.AdditionalPropertiesType = &Schema{
-				GoType: "interface{}",
-			}
-			if schema.AdditionalProperties != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties, path)
-				if err != nil {
-					return Schema{}, errors.Wrap(err, "error generating type for additional properties")
+			if schema.AnyOf != nil {
+				if err := generateUnion(&outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
+					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
 				}
-				outSchema.AdditionalPropertiesType = &additionalSchema
+			}
+			if schema.OneOf != nil {
+				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
+					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
+				}
 			}
 
 			outSchema.GoType = GenStructFromSchema(outSchema)
 		}
-		return outSchema, nil
-	} else {
-		f := schema.Format
 
-		switch t {
-		case "array":
-			// For arrays, we'll get the type of the Items and throw a
-			// [] in front of it.
-			arrayType, err := GenerateGoSchema(schema.Items, path)
+		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
+		// create a type definition for the named type, and use the named type in place
+		// of this schema.
+		if extension, ok := schema.Extensions[extGoTypeName]; ok {
+			typeName, err := extTypeName(extension)
 			if err != nil {
-				return Schema{}, errors.Wrap(err, "error generating type for array")
-			}
-			outSchema.GoType = "[]" + arrayType.TypeDecl()
-			outSchema.Properties = arrayType.Properties
-		case "integer":
-			// We default to int if format doesn't ask for something else.
-			if f == "int64" {
-				outSchema.GoType = "int64"
-			} else if f == "int32" {
-				outSchema.GoType = "int32"
-			} else if f == "" {
-				outSchema.GoType = "int"
-			} else {
-				return Schema{}, fmt.Errorf("invalid integer format: %s", f)
-			}
-		case "number":
-			// We default to float for "number"
-			if f == "double" {
-				outSchema.GoType = "float64"
-			} else if f == "float" || f == "" {
-				outSchema.GoType = "float32"
-			} else {
-				return Schema{}, fmt.Errorf("invalid number format: %s", f)
-			}
-		case "boolean":
-			if f != "" {
-				return Schema{}, fmt.Errorf("invalid format (%s) for boolean", f)
-			}
-			outSchema.GoType = "bool"
-		case "string":
-			enumValues := make([]string, len(schema.Enum))
-			for i, enumValue := range schema.Enum {
-				enumValues[i] = enumValue.(string)
+				return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
 			}
 
-			outSchema.EnumValues = SanitizeEnumNames(enumValues)
-
-			// Special case string formats here.
-			switch f {
-			case "byte":
-				outSchema.GoType = "[]byte"
-			case "email":
-				outSchema.GoType = "openapi_types.Email"
-			case "date":
-				outSchema.GoType = "openapi_types.Date"
-			case "date-time":
-				outSchema.GoType = "time.Time"
-			case "json":
-				outSchema.GoType = "json.RawMessage"
-				outSchema.SkipOptionalPointer = true
-			default:
-				// All unrecognized formats are simply a regular string.
-				outSchema.GoType = "string"
+			newTypeDef := TypeDefinition{
+				TypeName: typeName,
+				Schema:   outSchema,
 			}
-		default:
-			return Schema{}, fmt.Errorf("unhandled Schema type: %s", t)
+			outSchema = Schema{
+				Description:     newTypeDef.Schema.Description,
+				GoType:          typeName,
+				DefineViaAlias:  true,
+				AdditionalTypes: append(outSchema.AdditionalTypes, newTypeDef),
+			}
+		}
+
+		return outSchema, nil
+	} else if len(schema.Enum) > 0 {
+		err := oapiSchemaToGoType(schema, path, &outSchema)
+		// Enums need to be typed, so that the values aren't interchangeable,
+		// so no matter what schema conversion thinks, we need to define a
+		// new type.
+		outSchema.DefineViaAlias = false
+
+		if err != nil {
+			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
+		}
+		enumValues := make([]string, len(schema.Enum))
+		for i, enumValue := range schema.Enum {
+			enumValues[i] = fmt.Sprintf("%v", enumValue)
+		}
+
+		enumNames := enumValues
+		for _, key := range []string{extEnumVarNames, extEnumNames} {
+			if extension, ok := schema.Extensions[key]; ok {
+				if extEnumNames, err := extParseEnumVarNames(extension); err == nil {
+					enumNames = extEnumNames
+					break
+				}
+			}
+		}
+
+		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
+		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
+
+		for k, v := range sanitizedValues {
+			var enumName string
+			if v == "" {
+				enumName = "Empty"
+			} else {
+				enumName = k
+			}
+			if globalState.options.Compatibility.OldEnumConflicts {
+				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
+			} else {
+				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+			}
+		}
+		if len(path) > 1 { // handle additional type only on non-toplevel types
+			// Allow overriding autogenerated enum type names, since these may
+			// cause conflicts - see https://github.com/oapi-codegen/oapi-codegen/issues/832
+			var typeName string
+			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+				typeName, err = extString(extension)
+				if err != nil {
+					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+				}
+			} else {
+				typeName = SchemaNameToTypeName(PathToTypeName(path))
+			}
+
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   outSchema,
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
+			outSchema.RefType = typeName
+		}
+	} else {
+		err := oapiSchemaToGoType(schema, path, &outSchema)
+		if err != nil {
+			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
 	}
 	return outSchema, nil
 }
 
-// This describes a Schema, a type definition.
+// oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
+// all non-object types.
+func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+	f := schema.Format
+	t := schema.Type
+
+	if t.Is("array") {
+		// For arrays, we'll get the type of the Items and throw a
+		// [] in front of it.
+		arrayType, err := GenerateGoSchema(schema.Items, path)
+		if err != nil {
+			return fmt.Errorf("error generating type for array: %w", err)
+		}
+		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
+			// If we have items which have additional properties or union values,
+			// but are not a pre-defined type, we need to define a type
+			// for them, which will be based on the field names we followed
+			// to get to the type.
+			typeName := PathToTypeName(append(path, "Item"))
+
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(append(path, "Item"), "."),
+				Schema:   arrayType,
+			}
+			arrayType.AdditionalTypes = append(arrayType.AdditionalTypes, typeDef)
+
+			arrayType.RefType = typeName
+		}
+		outSchema.ArrayType = &arrayType
+		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.AdditionalTypes = arrayType.AdditionalTypes
+		outSchema.Properties = arrayType.Properties
+		outSchema.DefineViaAlias = true
+		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+			outSchema.DefineViaAlias = false
+		}
+		setSkipOptionalPointerForContainerType(outSchema)
+
+	} else if t.Is("integer") {
+		// We default to int if format doesn't ask for something else.
+		switch f {
+		case "int64",
+			"int32",
+			"int16",
+			"int8",
+			"int",
+			"uint64",
+			"uint32",
+			"uint16",
+			"uint8",
+			"uint":
+			outSchema.GoType = f
+		default:
+			outSchema.GoType = "int"
+		}
+		outSchema.DefineViaAlias = true
+	} else if t.Is("number") {
+		// We default to float for "number"
+		switch f {
+		case "double":
+			outSchema.GoType = "float64"
+		case "float", "":
+			outSchema.GoType = "float32"
+		default:
+			return fmt.Errorf("invalid number format: %s", f)
+		}
+		outSchema.DefineViaAlias = true
+	} else if t.Is("boolean") {
+		if f != "" {
+			return fmt.Errorf("invalid format (%s) for boolean", f)
+		}
+		outSchema.GoType = "bool"
+		outSchema.DefineViaAlias = true
+	} else if t.Is("string") {
+		// Special case string formats here.
+		switch f {
+		case "byte":
+			outSchema.GoType = "[]byte"
+			setSkipOptionalPointerForContainerType(outSchema)
+		case "email":
+			outSchema.GoType = "openapi_types.Email"
+		case "date":
+			outSchema.GoType = "openapi_types.Date"
+		case "date-time":
+			outSchema.GoType = "time.Time"
+		case "json":
+			outSchema.GoType = "json.RawMessage"
+			outSchema.SkipOptionalPointer = true
+		case "uuid":
+			outSchema.GoType = "openapi_types.UUID"
+		case "binary":
+			outSchema.GoType = "openapi_types.File"
+		default:
+			// All unrecognized formats are simply a regular string.
+			outSchema.GoType = "string"
+		}
+		outSchema.DefineViaAlias = true
+	} else {
+		return fmt.Errorf("unhandled Schema type: %v", t)
+	}
+	return nil
+}
+
+// SchemaDescriptor describes a Schema, a type definition.
 type SchemaDescriptor struct {
 	Fields                   []FieldDescriptor
 	HasAdditionalProperties  bool
@@ -319,27 +713,133 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
-// Given a list of schema descriptors, produce corresponding field names with
-// JSON annotations
+func stringOrEmpty(b bool, s string) string {
+	if b {
+		return s
+	}
+	return ""
+}
+
+// GenFieldsFromProperties produce corresponding field names with JSON annotations,
+// given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
 	var fields []string
-	for _, p := range props {
+	for i, p := range props {
 		field := ""
+
+		goFieldName := p.GoFieldName()
+
 		// Add a comment to a field in case we have one, otherwise skip.
 		if p.Description != "" {
 			// Separate the comment from a previous-defined, unrelated field.
 			// Make sure the actual field is separated by a newline.
-			field += fmt.Sprintf("\n%s\n", StringToGoComment(p.Description))
+			if i != 0 {
+				field += "\n"
+			}
+			field += fmt.Sprintf("%s\n", StringWithTypeNameToGoComment(p.Description, p.GoFieldName()))
 		}
-		field += fmt.Sprintf("    %s %s", p.GoFieldName(), p.GoTypeDef())
-		if p.Required || p.Nullable {
-			field += fmt.Sprintf(" `json:\"%s\"`", p.JsonFieldName)
-		} else {
-			field += fmt.Sprintf(" `json:\"%s,omitempty\"`", p.JsonFieldName)
+
+		if p.Deprecated {
+			// This comment has to be on its own line for godoc & IDEs to pick up
+			var deprecationReason string
+			if extension, ok := p.Extensions[extDeprecationReason]; ok {
+				if extDeprecationReason, err := extParseDeprecationReason(extension); err == nil {
+					deprecationReason = extDeprecationReason
+				}
+			}
+
+			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
+
+		// Check x-go-type-skip-optional-pointer, which will override if the type
+		// should be a pointer or not when the field is optional.
+		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				p.Schema.SkipOptionalPointer = skipOptionalPointer
+			}
+		}
+
+		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
+
+		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
+			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
+
+		omitZero := false
+
+		// default, but allow turning of
+		if shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero {
+			omitZero = true
+		}
+
+		// Support x-omitempty and x-omitzero
+		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
+			if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+				omitEmpty = xValue
+			}
+		}
+
+		if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
+			if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
+				omitZero = xValue
+			}
+		}
+
+		fieldTags := make(map[string]string)
+
+		fieldTags["json"] = p.JsonFieldName +
+			stringOrEmpty(omitEmpty, ",omitempty") +
+			stringOrEmpty(omitZero, ",omitzero")
+
+		if globalState.options.OutputOptions.EnableYamlTags {
+			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
+		}
+		if p.NeedsFormTag {
+			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
+		}
+
+		// Support x-go-json-ignore
+		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+			if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
+				fieldTags["json"] = "-"
+			}
+		}
+
+		// Support x-oapi-codegen-extra-tags
+		if extension, ok := p.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				keys := SortedMapKeys(tags)
+				for _, k := range keys {
+					fieldTags[k] = tags[k]
+				}
+			}
+		}
+		// Convert the fieldTags map into Go field annotations.
+		keys := SortedMapKeys(fieldTags)
+		tags := make([]string, len(keys))
+		for i, k := range keys {
+			tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+		}
+		field += "`" + strings.Join(tags, " ") + "`"
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+func additionalPropertiesType(schema Schema) string {
+	addPropsType := schema.AdditionalPropertiesType.GoType
+	if schema.AdditionalPropertiesType.RefType != "" {
+		addPropsType = schema.AdditionalPropertiesType.RefType
+	}
+	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+		addPropsType = "*" + addPropsType
+	}
+	return addPropsType
 }
 
 func GenStructFromSchema(schema Schema) string {
@@ -349,108 +849,15 @@ func GenStructFromSchema(schema Schema) string {
 	objectParts = append(objectParts, GenFieldsFromProperties(schema.Properties)...)
 	// Close the struct
 	if schema.HasAdditionalProperties {
-		addPropsType := schema.AdditionalPropertiesType.GoType
-		if schema.AdditionalPropertiesType.RefType != "" {
-			addPropsType = schema.AdditionalPropertiesType.RefType
-		}
-
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType))
+			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
+				additionalPropertiesType(schema)))
+	}
+	if len(schema.UnionElements) != 0 {
+		objectParts = append(objectParts, "union json.RawMessage")
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")
-}
-
-// Merge all the fields in the schemas supplied into one giant schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-	var outSchema Schema
-	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
-
-		var refType string
-		var err error
-		if ref != "" {
-			refType, err = RefPathToGoType(ref)
-			if err != nil {
-				return Schema{}, errors.Wrap(err, "error converting reference path to a go type")
-			}
-		}
-
-		schema, err := GenerateGoSchema(schemaOrRef, path)
-		if err != nil {
-			return Schema{}, errors.Wrap(err, "error generating Go schema in allOf")
-		}
-		schema.RefType = refType
-
-		for _, p := range schema.Properties {
-			err = outSchema.MergeProperty(p)
-			if err != nil {
-				return Schema{}, errors.Wrap(err, "error merging properties")
-			}
-		}
-
-		if schema.HasAdditionalProperties {
-			if outSchema.HasAdditionalProperties {
-				// Both this schema, and the aggregate schema have additional
-				// properties, they must match.
-				if schema.AdditionalPropertiesType.TypeDecl() != outSchema.AdditionalPropertiesType.TypeDecl() {
-					return Schema{}, errors.New("additional properties in allOf have incompatible types")
-				}
-			} else {
-				// We're switching from having no additional properties to having
-				// them
-				outSchema.HasAdditionalProperties = true
-				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
-			}
-		}
-	}
-
-	// Now, we generate the struct which merges together all the fields.
-	var err error
-	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
-	if err != nil {
-		return Schema{}, errors.Wrap(err, "unable to generate aggregate type for AllOf")
-	}
-	return outSchema, nil
-}
-
-// This function generates an object that is the union of the objects in the
-// input array. In the case of Ref objects, we use an embedded struct, otherwise,
-// we inline the fields.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
-	// Start out with struct {
-	objectParts := []string{"struct {"}
-	for _, schemaOrRef := range allOf {
-		ref := schemaOrRef.Ref
-		if ref != "" {
-			// We have a referenced type, we will generate an inlined struct
-			// member.
-			// struct {
-			//   InlinedMember
-			//   ...
-			// }
-			goType, err := RefPathToGoType(ref)
-			if err != nil {
-				return "", err
-			}
-			objectParts = append(objectParts,
-				fmt.Sprintf("   // Embedded struct due to allOf(%s)", ref))
-			objectParts = append(objectParts,
-				fmt.Sprintf("   %s", goType))
-		} else {
-			// Inline all the fields from the schema into the output struct,
-			// just like in the simple case of generating an object.
-			goSchema, err := GenerateGoSchema(schemaOrRef, path)
-			if err != nil {
-				return "", err
-			}
-			objectParts = append(objectParts, "   // Embedded fields due to inline allOf schema")
-			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
-
-		}
-	}
-	objectParts = append(objectParts, "}")
-	return strings.Join(objectParts, "\n"), nil
 }
 
 // This constructs a Go type for a parameter, looking at either the schema or
@@ -473,6 +880,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	if len(param.Content) > 1 {
 		return Schema{
 			GoType:      "string",
+			Description: StringToGoComment(param.Description),
 			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
@@ -483,6 +891,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		// If we don't have json, it's a string
 		return Schema{
 			GoType:      "string",
+			Description: StringToGoComment(param.Description),
 			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
@@ -491,4 +900,74 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	schema, err := GenerateGoSchema(mt.Schema, path)
 	schema.DefinedComp = ComponentTypeParameter
 	return schema, err
+}
+
+func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+	if discriminator != nil {
+		outSchema.Discriminator = &Discriminator{
+			Property: discriminator.PropertyName,
+			Mapping:  make(map[string]string),
+		}
+	}
+
+	refToGoTypeMap := make(map[string]string)
+	for i, element := range elements {
+		elementPath := append(path, fmt.Sprint(i))
+		elementSchema, err := GenerateGoSchema(element, elementPath)
+		if err != nil {
+			return err
+		}
+
+		if element.Ref == "" {
+			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
+			if elementSchema.TypeDecl() == elementName {
+				elementSchema.GoType = elementName
+			} else {
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+				elementSchema.GoType = td.TypeName
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
+		} else {
+			refToGoTypeMap[element.Ref] = elementSchema.GoType
+		}
+
+		if discriminator != nil {
+			if len(discriminator.Mapping) != 0 && element.Ref == "" {
+				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
+			}
+
+			// Explicit mapping.
+			var mapped bool
+			for k, v := range discriminator.Mapping {
+				if v == element.Ref {
+					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
+					mapped = true
+					break
+				}
+			}
+			// Implicit mapping.
+			if !mapped {
+				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
+			}
+		}
+		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+	}
+
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+		return errors.New("discriminator: not all schemas were mapped")
+	}
+
+	return nil
+}
+
+// setSkipOptionalPointerForContainerType ensures that the "optional pointer" is skipped on container types (such as a slice or a map).
+// This is controlled using the `prefer-skip-optional-pointer-on-container-types` Output Option
+// NOTE that it is still possible to override this on a per-field basis with `x-go-type-skip-optional-pointer`
+func setSkipOptionalPointerForContainerType(outSchema *Schema) {
+	if !globalState.options.OutputOptions.PreferSkipOptionalPointerOnContainerTypes {
+		return
+	}
+
+	outSchema.SkipOptionalPointer = true
 }

@@ -17,12 +17,15 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
+	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/pkg/errors"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
 type ParameterDefinition struct {
@@ -33,7 +36,7 @@ type ParameterDefinition struct {
 	Schema    Schema
 }
 
-// This function is here as an adapter after a large refactoring so that I don't
+// TypeDef is here as an adapter after a large refactoring so that I don't
 // have to update all the templates. It returns the type definition for a parameter,
 // without the leading '*' for optional ones.
 func (pd ParameterDefinition) TypeDef() string {
@@ -41,7 +44,7 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
-// Generate the JSON annotation to map GoType to json type name. If Parameter
+// JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
 func (pd *ParameterDefinition) JsonTag() string {
@@ -55,8 +58,11 @@ func (pd *ParameterDefinition) JsonTag() string {
 func (pd *ParameterDefinition) IsJson() bool {
 	p := pd.Spec
 	if len(p.Content) == 1 {
-		_, found := p.Content["application/json"]
-		return found
+		for k := range p.Content {
+			if util.IsMediaTypeJson(k) {
+				return true
+			}
+		}
 	}
 	return false
 }
@@ -109,7 +115,7 @@ func (pd *ParameterDefinition) Explode() bool {
 }
 
 func (pd ParameterDefinition) GoVariableName() string {
-	name := LowercaseFirstCharacter(pd.GoName())
+	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
 		name = "p" + UppercaseFirstCharacter(name)
 	}
@@ -120,11 +126,24 @@ func (pd ParameterDefinition) GoVariableName() string {
 }
 
 func (pd ParameterDefinition) GoName() string {
-	return ToCamelCase(pd.ParamName)
+	goName := pd.ParamName
+	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
+		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
+			goName = extGoFieldName
+		}
+	}
+	return SchemaNameToTypeName(goName)
 }
 
+// Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.
 func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
+}
+
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (pd ParameterDefinition) HasOptionalPointer() bool {
+	return pd.Required == false && pd.Schema.SkipOptionalPointer == false //nolint:staticcheck
 }
 
 type ParameterDefinitions []ParameterDefinition
@@ -138,7 +157,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 	return nil
 }
 
-// This function walks the given parameters dictionary, and generates the above
+// DescribeParameters walks the given parameters dictionary, and generates the above
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
@@ -163,7 +182,7 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// If this is a reference to a predefined type, simply use the reference
 		// name as the type. $ref: "#/components/schemas/custom_type" becomes
 		// "CustomType".
-		if paramOrRef.Ref != "" {
+		if IsGoTypeReference(paramOrRef.Ref) {
 			goType, err := RefPathToGoType(paramOrRef.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
@@ -185,7 +204,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	outDefs := make([]SecurityDefinition, 0)
 
 	for _, sr := range securityRequirements {
-		for k, v := range sr {
+		for _, k := range SortedMapKeys(sr) {
+			v := sr[k]
 			outDefs = append(outDefs, SecurityDefinition{ProviderName: k, Scopes: v})
 		}
 	}
@@ -193,9 +213,10 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 	return outDefs
 }
 
-// This structure describes an Operation
+// OperationDefinition describes an Operation
 type OperationDefinition struct {
-	OperationId string // The operation_id description from Swagger, used to generate function names
+	// OperationId is the `operationId` field from the OpenAPI Specification, after going through a `nameNormalizer`, and will be used to generate function names
+	OperationId string
 
 	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
 	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
@@ -205,13 +226,14 @@ type OperationDefinition struct {
 	SecurityDefinitions []SecurityDefinition  // These are the security providers
 	BodyRequired        bool
 	Bodies              []RequestBodyDefinition // The list of bodies for which to generate handlers.
+	Responses           []ResponseDefinition    // The list of responses that can be accepted by handlers.
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
 }
 
-// Returns the list of all parameters except Path parameters. Path parameters
+// Params returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
@@ -219,7 +241,7 @@ func (o *OperationDefinition) Params() []ParameterDefinition {
 	return result
 }
 
-// Returns all parameters
+// AllParams returns all parameters
 func (o *OperationDefinition) AllParams() []ParameterDefinition {
 	result := append(o.QueryParams, o.HeaderParams...)
 	result = append(result, o.CookieParams...)
@@ -234,14 +256,14 @@ func (o *OperationDefinition) RequiresParamObject() bool {
 	return len(o.Params()) > 0
 }
 
-// This is called by the template engine to determine whether to generate body
-// marshaling code on the client. This is true for all body types, whether or
-// not we generate types for them.
+// HasBody is called by the template engine to determine whether to generate body
+// marshaling code on the client. This is true for all body types, whether
+// we generate types for them.
 func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// This returns the Operations summary as a multi line comment
+// SummaryAsComment returns the Operations summary as a multi line comment
 func (o *OperationDefinition) SummaryAsComment() string {
 	if o.Summary == "" {
 		return ""
@@ -254,53 +276,80 @@ func (o *OperationDefinition) SummaryAsComment() string {
 	return strings.Join(parts, "\n")
 }
 
-// Produces a list of type definitions for a given Operation for the response
+// GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
 // Client code. See "client-with-responses.tmpl".
-func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, error) {
-	var tds []TypeDefinition
+func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefinition, error) {
+	var tds []ResponseTypeDefinition
 
-	responses := o.Spec.Responses
-	sortedResponsesKeys := SortedResponsesKeys(responses)
+	if o.Spec == nil || o.Spec.Responses == nil {
+		return tds, nil
+	}
+
+	sortedResponsesKeys := SortedMapKeys(o.Spec.Responses.Map())
 	for _, responseName := range sortedResponsesKeys {
-		responseRef := responses[responseName]
+		responseRef := o.Spec.Responses.Value(responseName)
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
-			sortedContentKeys := SortedContentKeys(responseRef.Value.Content)
+			jsonCount := 0
+			for mediaType := range responseRef.Value.Content {
+				if util.IsMediaTypeJson(mediaType) {
+					jsonCount++
+				}
+			}
+
+			sortedContentKeys := SortedMapKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{responseName})
+					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
 					if err != nil {
-						return nil, errors.Wrap(err, fmt.Sprintf("Unable to determine Go type for %s.%s", o.OperationId, contentTypeName))
+						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
 
 					var typeName string
 					switch {
-					case StringInArray(contentTypeName, contentTypesJSON):
-						typeName = fmt.Sprintf("JSON%s", ToCamelCase(responseName))
+
+					// HAL+JSON:
+					case StringInArray(contentTypeName, contentTypesHalJSON):
+						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
+					case contentTypeName == "application/json":
+						// if it's the standard application/json
+						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
+					// Vendored JSON
+					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
+
+						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
 					case StringInArray(contentTypeName, contentTypesYAML):
-						typeName = fmt.Sprintf("YAML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
 					case StringInArray(contentTypeName, contentTypesXML):
-						typeName = fmt.Sprintf("XML%s", ToCamelCase(responseName))
+						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
 					}
 
-					td := TypeDefinition{
-						TypeName:     typeName,
-						Schema:       responseSchema,
-						ResponseName: responseName,
+					td := ResponseTypeDefinition{
+						TypeDefinition: TypeDefinition{
+							TypeName: typeName,
+							Schema:   responseSchema,
+						},
+						ResponseName:              responseName,
+						ContentTypeName:           contentTypeName,
+						AdditionalTypeDefinitions: responseSchema.GetAdditionalTypeDefs(),
 					}
-					if contentType.Schema.Ref != "" {
-						refType, err := RefPathToGoType(contentType.Schema.Ref)
+					if IsGoTypeReference(responseRef.Ref) {
+						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
-							return nil, errors.Wrap(err, "error dereferencing response Ref")
+							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
+						}
+						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
+							refType += mediaTypeToCamelCase(contentTypeName)
 						}
 						td.Schema.RefType = refType
 					}
@@ -312,7 +361,16 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]TypeDefinition, er
 	return tds, nil
 }
 
-// This describes a request body
+func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
+	for _, body := range o.Bodies {
+		if !body.IsFixedContentType() {
+			return true
+		}
+	}
+	return false
+}
+
+// RequestBodyDefinition describes a request body
 type RequestBodyDefinition struct {
 	// Is this body required, or optional?
 	Required bool
@@ -330,14 +388,20 @@ type RequestBodyDefinition struct {
 	// Whether this is the default body type. For an operation named OpFoo, we
 	// will not add suffixes like OpFooJSONBody for this one.
 	Default bool
+
+	// Contains encoding options for formdata
+	Encoding map[string]RequestBodyEncoding
 }
 
-// Returns the Go type definition for a request body
-func (r RequestBodyDefinition) TypeDef() string {
-	return r.Schema.TypeDecl()
+// TypeDef returns the Go type definition for a request body
+func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:   r.Schema,
+	}
 }
 
-// Returns whether the body is a custom inline type, or pre-defined. This is
+// CustomType returns whether the body is a custom inline type, or pre-defined. This is
 // poorly named, but it's here for compatibility reasons post-refactoring
 // TODO: clean up the templates code, it can be simpler.
 func (r RequestBodyDefinition) CustomType() bool {
@@ -355,7 +419,114 @@ func (r RequestBodyDefinition) Suffix() string {
 	return "With" + r.NameTag + "Body"
 }
 
-// This function returns the subset of the specified parameters which are of the
+// IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
+func (r RequestBodyDefinition) IsSupportedByClient() bool {
+	return r.IsJSON() || r.NameTag == "Formdata" || r.NameTag == "Text"
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r RequestBodyDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
+}
+
+// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
+func (r RequestBodyDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r RequestBodyDefinition) IsFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
+}
+
+type RequestBodyEncoding struct {
+	ContentType string
+	Style       string
+	Explode     *bool
+}
+
+type ResponseDefinition struct {
+	StatusCode  string
+	Description string
+	Contents    []ResponseContentDefinition
+	Headers     []ResponseHeaderDefinition
+	Ref         string
+}
+
+func (r ResponseDefinition) HasFixedStatusCode() bool {
+	_, err := strconv.Atoi(r.StatusCode)
+	return err == nil
+}
+
+func (r ResponseDefinition) GoName() string {
+	return SchemaNameToTypeName(r.StatusCode)
+}
+
+func (r ResponseDefinition) IsRef() bool {
+	return r.Ref != ""
+}
+
+func (r ResponseDefinition) IsExternalRef() bool {
+	if !r.IsRef() {
+		return false
+	}
+	return strings.Contains(r.Ref, ".")
+}
+
+type ResponseContentDefinition struct {
+	// This is the schema describing this content
+	Schema Schema
+
+	// This is the content type corresponding to the body, eg, application/json
+	ContentType string
+
+	// When we generate type names, we need a Tag for it, such as JSON, in
+	// which case we will produce "Response200JSONContent".
+	NameTag string
+}
+
+// TypeDef returns the Go type definition for a request body
+func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDefinition {
+	return &TypeDefinition{
+		TypeName: fmt.Sprintf("%s%v%sResponse", opID, statusCode, r.NameTagOrContentType()),
+		Schema:   r.Schema,
+	}
+}
+
+func (r ResponseContentDefinition) IsSupported() bool {
+	return r.NameTag != ""
+}
+
+// HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
+func (r ResponseContentDefinition) HasFixedContentType() bool {
+	return !strings.Contains(r.ContentType, "*")
+}
+
+func (r ResponseContentDefinition) NameTagOrContentType() string {
+	if r.NameTag != "" {
+		return r.NameTag
+	}
+	return SchemaNameToTypeName(r.ContentType)
+}
+
+// IsJSON returns whether this is a JSON media type, for instance:
+// - application/json
+// - application/vnd.api+json
+// - application/*+json
+func (r ResponseContentDefinition) IsJSON() bool {
+	return util.IsMediaTypeJson(r.ContentType)
+}
+
+type ResponseHeaderDefinition struct {
+	Name   string
+	GoName string
+	Schema Schema
+}
+
+// FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {
 	var out []ParameterDefinition
@@ -368,11 +539,22 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
-	for _, requestPath := range SortedPathsKeys(swagger.Paths) {
-		pathItem := swagger.Paths[requestPath]
+	var toCamelCaseFunc func(string) string
+	if initialismOverrides {
+		toCamelCaseFunc = ToCamelCaseWithInitialism
+	} else {
+		toCamelCaseFunc = ToCamelCase
+	}
+
+	if swagger == nil || swagger.Paths == nil {
+		return operations, nil
+	}
+
+	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
@@ -383,30 +565,47 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
-		for _, opName := range SortedOperationsKeys(pathOps) {
+		for _, opName := range SortedMapKeys(pathOps) {
+			// NOTE that this is a reference to the existing copy of the Operation, so any modifications will modify our shared copy of the spec
 			op := pathOps[opName]
+
+			if pathItem.Servers != nil {
+				op.Servers = &pathItem.Servers
+			}
+			// take a copy of operationId, so we don't modify the underlying spec
+			operationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
-			if op.OperationID == "" {
-				op.OperationID, err = generateDefaultOperationID(opName, requestPath)
+			if operationId == "" {
+				operationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
 				}
-				op.OperationID = op.OperationID
 			} else {
-				op.OperationID = ToCamelCase(op.OperationID)
+				operationId = nameNormalizer(operationId)
+			}
+			operationId = typeNamePrefix(operationId) + operationId
+
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+				op.OperationID = operationId
 			}
 
 			// These are parameters defined for the specific path method that
 			// we're iterating over.
-			localParams, err := DescribeParameters(op.Parameters, []string{op.OperationID + "Params"})
+			localParams, err := DescribeParameters(op.Parameters, []string{operationId + "Params"})
 			if err != nil {
 				return nil, fmt.Errorf("error describing global parameters for %s/%s: %s",
 					opName, requestPath, err)
 			}
 			// All the parameters required by a handler are the union of the
 			// global parameters and the local parameters.
-			allParams := append(globalParams, localParams...)
+			allParams, err := CombineOperationParameters(globalParams, localParams)
+			if err != nil {
+				return nil, err
+			}
+
+			ensureExternalRefsInParameterDefinitions(&allParams, pathItem.Ref)
 
 			// Order the path parameters to match the order as specified in
 			// the path, not in the swagger spec, and validate that the parameter
@@ -417,23 +616,33 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(op.OperationID, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
 			if err != nil {
-				return nil, errors.Wrap(err, "error generating body definitions")
+				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
+
+			ensureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
+
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+			if err != nil {
+				return nil, fmt.Errorf("error generating response definitions: %w", err)
+			}
+
+			ensureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
 
 			opDef := OperationDefinition{
 				PathParams:   pathParams,
 				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
 				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
 				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  ToCamelCase(op.OperationID),
+				OperationId:  nameNormalizer(operationId),
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
 				Path:            requestPath,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
+				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
 			}
 
@@ -464,8 +673,8 @@ func OperationDefinitions(swagger *openapi3.Swagger) ([]OperationDefinition, err
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string) (string, error) {
-	var operationId string = strings.ToLower(opName)
+func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
+	var operationId = strings.ToLower(opName)
 
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -481,10 +690,10 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 		}
 	}
 
-	return ToCamelCase(operationId), nil
+	return nameNormalizer(operationId), nil
 }
 
-// This function turns the Swagger body definitions into a list of our body
+// GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
 func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
@@ -495,30 +704,44 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	var bodyDefinitions []RequestBodyDefinition
 	var typeDefinitions []TypeDefinition
 
-	for contentType, content := range body.Content {
+	for _, contentType := range SortedMapKeys(body.Content) {
+		content := body.Content[contentType]
 		var tag string
 		var defaultBody bool
 
-		switch contentType {
-		case "application/json":
+		switch {
+		case contentType == "application/json":
 			tag = "JSON"
 			defaultBody = true
+		case util.IsMediaTypeJson(contentType):
+			tag = mediaTypeToCamelCase(contentType)
+		case strings.HasPrefix(contentType, "multipart/"):
+			tag = "Multipart"
+		case contentType == "application/x-www-form-urlencoded":
+			tag = "Formdata"
+		case contentType == "text/plain":
+			tag = "Text"
 		default:
+			bd := RequestBodyDefinition{
+				Required:    body.Required,
+				ContentType: contentType,
+			}
+			bodyDefinitions = append(bodyDefinitions, bd)
 			continue
 		}
 
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "error generating request body definition")
+			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
 		}
 
 		// If the body is a pre-defined type
-		if bodyOrRef.Ref != "" {
+		if content.Schema != nil && IsGoTypeReference(content.Schema.Ref) {
 			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(bodyOrRef.Ref)
+			refType, err := RefPathToGoType(content.Schema.Ref)
 			if err != nil {
-				return nil, nil, errors.Wrap(err, fmt.Sprintf("error turning reference (%s) into a Go type", bodyOrRef.Ref))
+				return nil, nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", content.Schema.Ref, err)
 			}
 			bodySchema.RefType = refType
 		}
@@ -527,6 +750,17 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
+			if contentType == "application/x-www-form-urlencoded" {
+				// Apply the appropriate structure tag if the request
+				// schema was defined under the operations' section.
+				for i := range bodySchema.Properties {
+					bodySchema.Properties[i].NeedsFormTag = true
+				}
+
+				// Regenerate the Golang struct adding the new form tag.
+				bodySchema.GoType = GenStructFromSchema(bodySchema)
+			}
+
 			td := TypeDefinition{
 				TypeName: bodyTypeName,
 				Schema:   bodySchema,
@@ -543,9 +777,111 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			ContentType: contentType,
 			Default:     defaultBody,
 		}
+
+		if len(content.Encoding) != 0 {
+			bd.Encoding = make(map[string]RequestBodyEncoding)
+			for k, v := range content.Encoding {
+				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
+				bd.Encoding[k] = encoding
+			}
+		}
+
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
+	sort.Slice(bodyDefinitions, func(i, j int) bool {
+		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	})
 	return bodyDefinitions, typeDefinitions, nil
+}
+
+func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef) ([]ResponseDefinition, error) {
+	var responseDefinitions []ResponseDefinition
+	// do not let multiple status codes ref to same response, it will break the type switch
+	refSet := make(map[string]struct{})
+
+	for _, statusCode := range SortedMapKeys(responses) {
+		responseOrRef := responses[statusCode]
+		if responseOrRef == nil {
+			continue
+		}
+		response := responseOrRef.Value
+
+		var responseContentDefinitions []ResponseContentDefinition
+
+		for _, contentType := range SortedMapKeys(response.Content) {
+			content := response.Content[contentType]
+			var tag string
+			switch {
+			case contentType == "application/json":
+				tag = "JSON"
+			case util.IsMediaTypeJson(contentType):
+				tag = mediaTypeToCamelCase(contentType)
+			case contentType == "application/x-www-form-urlencoded":
+				tag = "Formdata"
+			case strings.HasPrefix(contentType, "multipart/"):
+				tag = "Multipart"
+			case contentType == "text/plain":
+				tag = "Text"
+			default:
+				rcd := ResponseContentDefinition{
+					ContentType: contentType,
+				}
+				responseContentDefinitions = append(responseContentDefinitions, rcd)
+				continue
+			}
+
+			responseTypeName := operationID + statusCode + tag + "Response"
+			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
+			if err != nil {
+				return nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			rcd := ResponseContentDefinition{
+				ContentType: contentType,
+				NameTag:     tag,
+				Schema:      contentSchema,
+			}
+
+			responseContentDefinitions = append(responseContentDefinitions, rcd)
+		}
+
+		var responseHeaderDefinitions []ResponseHeaderDefinition
+		for _, headerName := range SortedMapKeys(response.Headers) {
+			header := response.Headers[headerName]
+			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
+			if err != nil {
+				return nil, fmt.Errorf("error generating response header definition: %w", err)
+			}
+			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
+			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
+		}
+
+		rd := ResponseDefinition{
+			StatusCode: statusCode,
+			Contents:   responseContentDefinitions,
+			Headers:    responseHeaderDefinitions,
+		}
+		if response.Description != nil {
+			rd.Description = *response.Description
+		}
+		if IsGoTypeReference(responseOrRef.Ref) {
+			// Convert the reference path to Go type
+			refType, err := RefPathToGoType(responseOrRef.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+			}
+			// Check if this ref is already used by another response definition. If not use the ref
+			// If we let multiple response definitions alias to same response it will break the type switch
+			// so only the first response will use the ref, other will generate new structs
+			if _, ok := refSet[refType]; !ok {
+				rd.Ref = refType
+				refSet[refType] = struct{}{}
+			}
+		}
+		responseDefinitions = append(responseDefinitions, rd)
+	}
+
+	return responseDefinitions, nil
 }
 
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
@@ -557,17 +893,17 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 
 	// Now, go through all the additional types we need to declare.
 	for _, param := range op.AllParams() {
-		typeDefs = append(typeDefs, param.Schema.GetAdditionalTypeDefs()...)
+		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
 	for _, body := range op.Bodies {
-		typeDefs = append(typeDefs, body.Schema.GetAdditionalTypeDefs()...)
+		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
 	}
 	return typeDefs
 }
 
-// This defines the schema for a parameters definition object which encapsulates
-// all the query, header and cookie parameters for an operation.
+// GenerateParamsTypes defines the schema for a parameters definition object
+// which encapsulates all the query, header and cookie parameters for an operation.
 func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 
@@ -580,6 +916,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	s := Schema{}
 	for _, param := range objectParams {
 		pSchema := param.Schema
+		param.Style()
 		if pSchema.HasAdditionalProperties {
 			propRefName := strings.Join([]string{typeName, param.GoName()}, "_")
 			pSchema.RefType = propRefName
@@ -593,10 +930,13 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
+			NeedsFormTag:  param.Style() == "form",
+			Extensions:    param.Spec.Extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
 
+	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{
@@ -606,19 +946,17 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 	return append(typeDefs, td)
 }
 
-// Generates code for all types produced
+// GenerateTypesForOperations generates code for all types produced within operations
 func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
-	err := t.ExecuteTemplate(w, "param-types.tmpl", ops)
+	addTypes, err := GenerateTemplates([]string{"param-types.tmpl", "request-bodies.tmpl"}, t, ops)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating types for params objects")
+		return "", fmt.Errorf("error generating type boilerplate for operations: %w", err)
 	}
-
-	err = t.ExecuteTemplate(w, "request-bodies.tmpl", ops)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating request bodies for operations")
+	if _, err := w.WriteString(addTypes); err != nil {
+		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
 	}
 
 	// Generate boiler plate for all additional types.
@@ -629,162 +967,150 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 
 	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
 	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	_, err = w.WriteString("\n")
-	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+	if _, err := w.WriteString("\n"); err != nil {
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	_, err = w.WriteString(addProps)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating additional properties boilerplate for operations")
+	if _, err := w.WriteString(addProps); err != nil {
+		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server interface")
+	if err = w.Flush(); err != nil {
+		return "", fmt.Errorf("error flushing output buffer for server interface: %w", err)
 	}
 
 	return buf.String(), nil
 }
 
-// GenerateChiServer This function generates all the go code for the ServerInterface as well as
+// GenerateIrisServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl", "iris/iris-handler.tmpl"}, t, operations)
+}
+
+// GenerateChiServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "chi-interface.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server interface")
-	}
-
-	err = t.ExecuteTemplate(w, "chi-middleware.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server middleware")
-	}
-
-	err = t.ExecuteTemplate(w, "chi-handler.tmpl", operations)
-	if err != nil {
-		return "", errors.Wrap(err, "error generating server http handler")
-	}
-
-	err = w.Flush()
-	if err != nil {
-		return "", errors.Wrap(err, "error flushing output buffer for server")
-	}
-
-	return buf.String(), nil
+	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
 }
 
-// GenerateEchoServer This function generates all the go code for the ServerInterface as well as
+// GenerateFiberServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+}
+
+// GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	si, err := GenerateServerInterface(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating server types and interface: %s", err)
-	}
-
-	wrappers, err := GenerateWrappers(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating handler wrappers: %s", err)
-	}
-
-	register, err := GenerateRegistration(t, operations)
-	if err != nil {
-		return "", fmt.Errorf("Error generating handler registration: %s", err)
-	}
-	return strings.Join([]string{si, wrappers, register}, "\n"), nil
+	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
-// Uses the template engine to generate the server interface
-func GenerateServerInterface(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "server-interface.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating server interface: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
-	}
-	return buf.String(), nil
+// GenerateGinServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
 }
 
-// Uses the template engine to generate all the wrappers which wrap our simple
-// interface functions and perform marshallin/unmarshalling from HTTP
-// request objects.
-func GenerateWrappers(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "wrappers.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating server interface: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for server interface: %s", err)
-	}
-	return buf.String(), nil
+// GenerateGorillaServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
 }
 
-// Uses the template engine to generate the function which registers our wrappers
-// as Echo path handlers.
-func GenerateRegistration(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "register.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating route registration: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for route registration: %s", err)
-	}
-	return buf.String(), nil
+// GenerateStdHTTPServer generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
 }
 
-// Uses the template engine to generate the function which registers our wrappers
+func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+
+	var templates []string
+
+	if opts.Generate.ChiServer || opts.Generate.GorillaServer || opts.Generate.StdHTTPServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
+	}
+	if opts.Generate.EchoServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl")
+	}
+	if opts.Generate.GinServer {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl")
+	}
+	if opts.Generate.FiberServer {
+		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
+	}
+	if opts.Generate.IrisServer {
+		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
+	}
+
+	return GenerateTemplates(templates, t, operations)
+}
+
+func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
+	return GenerateTemplates([]string{"strict/strict-responses.tmpl"}, t, responses)
+}
+
+// GenerateClient uses the template engine to generate the function which registers our wrappers
 // as Echo path handlers.
 func GenerateClient(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
-
-	err := t.ExecuteTemplate(w, "client.tmpl", ops)
-
-	if err != nil {
-		return "", fmt.Errorf("error generating client bindings: %s", err)
-	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
-	}
-	return buf.String(), nil
+	return GenerateTemplates([]string{"client.tmpl"}, t, ops)
 }
 
-// This generates a client which extends the basic client which does response
+// GenerateClientWithResponses generates a client which extends the basic client which does response
 // unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
-	var buf bytes.Buffer
-	w := bufio.NewWriter(&buf)
+	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
+}
 
-	err := t.ExecuteTemplate(w, "client-with-responses.tmpl", ops)
+// GenerateTemplates used to generate templates
+func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
+	var generatedTemplates []string
+	for _, tmpl := range templates {
+		var buf bytes.Buffer
+		w := bufio.NewWriter(&buf)
 
-	if err != nil {
-		return "", fmt.Errorf("error generating client bindings: %s", err)
+		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
+			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
+		}
+		if err := w.Flush(); err != nil {
+			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
+		}
+		generatedTemplates = append(generatedTemplates, buf.String())
 	}
-	err = w.Flush()
-	if err != nil {
-		return "", fmt.Errorf("error flushing output buffer for client: %s", err)
+
+	return strings.Join(generatedTemplates, "\n"), nil
+}
+
+// CombineOperationParameters combines the Parameters defined at a global level (Parameters defined for all methods on a given path) with the Parameters defined at a local level (Parameters defined for a specific path), preferring the locally defined parameter over the global one
+func CombineOperationParameters(globalParams []ParameterDefinition, localParams []ParameterDefinition) ([]ParameterDefinition, error) {
+	allParams := make([]ParameterDefinition, 0, len(globalParams)+len(localParams))
+	dupCheck := make(map[string]map[string]string)
+	for _, p := range localParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if _, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "local"
+			allParams = append(allParams, p)
+		} else {
+			return nil, fmt.Errorf("duplicate local parameter %s/%s", p.In, p.ParamName)
+		}
 	}
-	return buf.String(), nil
+	for _, p := range globalParams {
+		if dupCheck[p.In] == nil {
+			dupCheck[p.In] = make(map[string]string)
+		}
+		if t, exist := dupCheck[p.In][p.ParamName]; !exist {
+			dupCheck[p.In][p.ParamName] = "global"
+			allParams = append(allParams, p)
+		} else if t == "global" {
+			return nil, fmt.Errorf("duplicate global parameter %s/%s", p.In, p.ParamName)
+		}
+	}
+
+	return allParams, nil
 }

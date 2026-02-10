@@ -1,32 +1,45 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
+	middleware "github.com/oapi-codegen/nethttp-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/chi/api"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/chi/api"
+	"github.com/stretchr/testify/require"
 )
 
-func DoJson(handler http.Handler, method string, url string, body interface{}) *httptest.ResponseRecorder {
-	rr := httptest.NewRecorder()
-	b, _ := json.Marshal(body)
-	req, _ := http.NewRequest(method, url, bytes.NewBuffer(b))
-	handler.ServeHTTP(rr, req)
-
-	return rr
+func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
+	response := testutil.NewRequest().Get(url).WithAcceptJson().GoWithHTTPHandler(t, mux)
+	return response.Recorder
 }
 
 func TestPetStore(t *testing.T) {
 	var err error
 
+	// Get the swagger description of our API
+	swagger, err := api.GetSwagger()
+	require.NoError(t, err)
+
+	// Clear out the servers array in the swagger spec, that skips validating
+	// that server names match. We don't know how this thing will be run.
+	swagger.Servers = nil
+
+	// This is how you set up a basic chi router
+	r := chi.NewRouter()
+
+	// Use our validation middleware to check all requests against the
+	// OpenAPI schema.
+	r.Use(middleware.OapiRequestValidator(swagger))
+
 	store := api.NewPetStore()
-	h := api.Handler(store)
+	api.HandlerFromMux(store, r)
 
 	t.Run("Add pet", func(t *testing.T) {
 		tag := "TagOfSpot"
@@ -35,7 +48,7 @@ func TestPetStore(t *testing.T) {
 			Tag:  &tag,
 		}
 
-		rr := DoJson(h, "POST", "/pets", newPet)
+		rr := testutil.NewRequest().Post("/pets").WithJsonBody(newPet).GoWithHTTPHandler(t, r).Recorder
 		assert.Equal(t, http.StatusCreated, rr.Code)
 
 		var resultPet api.Pet
@@ -51,7 +64,7 @@ func TestPetStore(t *testing.T) {
 		}
 
 		store.Pets[pet.Id] = pet
-		rr := DoJson(h, "GET", fmt.Sprintf("/pets/%d", pet.Id), nil)
+		rr := doGet(t, r, fmt.Sprintf("/pets/%d", pet.Id))
 
 		var resultPet api.Pet
 		err = json.NewDecoder(rr.Body).Decode(&resultPet)
@@ -60,7 +73,7 @@ func TestPetStore(t *testing.T) {
 	})
 
 	t.Run("Pet not found", func(t *testing.T) {
-		rr := DoJson(h, "GET", "/pets/27179095781", nil)
+		rr := doGet(t, r, "/pets/27179095781")
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
@@ -71,12 +84,12 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("List all pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Now, list all pets, we should have two
-		rr := DoJson(h, "GET", "/pets", nil)
+		rr := doGet(t, r, "/pets")
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -89,16 +102,14 @@ func TestPetStore(t *testing.T) {
 		tag := "TagOfFido"
 
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{
-				NewPet: api.NewPet{
-					Tag: &tag,
-				},
+			1: {
+				Tag: &tag,
 			},
-			2: api.Pet{},
+			2: {},
 		}
 
 		// Filter pets by tag, we should have 1
-		rr := DoJson(h, "GET", "/pets?tags=TagOfFido", nil)
+		rr := doGet(t, r, "/pets?tags=TagOfFido")
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -109,12 +120,12 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Filter pets by tag", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
-		// Filter pets by non existent tag, we should have 0
-		rr := DoJson(h, "GET", "/pets?tags=NotExists", nil)
+		// Filter pets by non-existent tag, we should have 0
+		rr := doGet(t, r, "/pets?tags=NotExists")
 		assert.Equal(t, http.StatusOK, rr.Code)
 
 		var petList []api.Pet
@@ -125,12 +136,12 @@ func TestPetStore(t *testing.T) {
 
 	t.Run("Delete pets", func(t *testing.T) {
 		store.Pets = map[int64]api.Pet{
-			1: api.Pet{},
-			2: api.Pet{},
+			1: {},
+			2: {},
 		}
 
 		// Let's delete non-existent pet
-		rr := DoJson(h, "DELETE", "/pets/7", nil)
+		rr := testutil.NewRequest().Delete("/pets/7").GoWithHTTPHandler(t, r).Recorder
 		assert.Equal(t, http.StatusNotFound, rr.Code)
 
 		var petError api.Error
@@ -139,15 +150,15 @@ func TestPetStore(t *testing.T) {
 		assert.Equal(t, int32(http.StatusNotFound), petError.Code)
 
 		// Now, delete both real pets
-		rr = DoJson(h, "DELETE", "/pets/1", nil)
+		rr = testutil.NewRequest().Delete("/pets/1").GoWithHTTPHandler(t, r).Recorder
 		assert.Equal(t, http.StatusNoContent, rr.Code)
 
-		rr = DoJson(h, "DELETE", "/pets/2", nil)
+		rr = testutil.NewRequest().Delete("/pets/2").GoWithHTTPHandler(t, r).Recorder
 		assert.Equal(t, http.StatusNoContent, rr.Code)
 
 		// Should have no pets left.
 		var petList []api.Pet
-		rr = DoJson(h, "GET", "/pets", nil)
+		rr = doGet(t, r, "/pets")
 		assert.Equal(t, http.StatusOK, rr.Code)
 		err = json.NewDecoder(rr.Body).Decode(&petList)
 		assert.NoError(t, err, "error getting response", err)

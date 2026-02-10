@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: deps
+output:
+  deps.gen.go
+output-options:
+  skip-prune: true
+generate:
+  models: true
+  embedded-spec: true

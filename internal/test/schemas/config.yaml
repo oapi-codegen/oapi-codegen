@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: schemas
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: schemas.gen.go
+output-options:
+  skip-prune: true

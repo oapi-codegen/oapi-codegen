@@ -1,0 +1,41 @@
+eopenapi: 3.0.2
+info:
+  version: "0.0.1"
+paths:
+  /noTrouble:
+    post:
+      responses:
+        200:
+          description: ...
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  directFoo:
+                    $ref: "spec-ext.yaml#/components/schemas/Foo"
+                  directBar:
+                    $ref: "#/components/schemas/DirectBar"
+                  indirectFoo:
+                    $ref: "#/components/schemas/PackedBar"
+                  name:
+                    type: string
+  /invalidExtRefTrouble:
+    post:
+      responses:
+        300:
+          $ref: "spec-ext.yaml#/components/responses/pascal"
+
+components:
+  schemas:
+    DirectBar:
+      $ref: "spec-ext.yaml#/components/schemas/Foo"
+    PackedBar:
+      type: object
+      properties:
+        id:
+          type: string
+        core:
+          $ref: "spec-ext.yaml#/components/schemas/Foo"
+        directd:
+          $ref: "#/components/schemas/DirectBar"
