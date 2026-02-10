@@ -7,7 +7,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 	golang.org/x/text v0.14.0
-	golang.org/x/tools v0.12.0
+	golang.org/x/tools v0.24.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -22,7 +22,7 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
-	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/mod v0.20.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
