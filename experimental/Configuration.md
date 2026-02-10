@@ -207,9 +207,13 @@ name-substitutions:
 
 # Import mapping: resolve external $ref targets to Go packages.
 # Required when your spec references schemas from other files.
+# Values can be a bare import path (alias auto-generated via hash)
+# or "alias importpath" to specify an explicit import alias.
 import-mapping:
   ../common/api.yaml: github.com/org/project/common
   https://example.com/specs/shared.yaml: github.com/org/shared
+  # With an explicit alias:
+  ../other/api.yaml: other github.com/org/project/other
   # Use "-" to indicate types should stay in the current package
   ./local-types.yaml: "-"
 

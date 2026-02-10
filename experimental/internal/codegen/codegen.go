@@ -53,7 +53,10 @@ func Generate(doc libopenapi.Document, specData []byte, cfg Configuration) (stri
 	}
 
 	// Pass 3: Generate Go code
-	importResolver := NewImportResolver(cfg.ImportMapping)
+	importResolver, err := NewImportResolver(cfg.ImportMapping)
+	if err != nil {
+		return "", fmt.Errorf("parsing import-mapping: %w", err)
+	}
 	tagGenerator := NewStructTagGenerator(cfg.StructTags)
 	gen := NewTypeGenerator(cfg.TypeMapping, converter, importResolver, tagGenerator, ctx)
 	gen.IndexSchemas(schemas)
