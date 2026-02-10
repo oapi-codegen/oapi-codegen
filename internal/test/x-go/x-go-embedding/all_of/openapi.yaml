@@ -1,0 +1,33 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Tests x-go-embeding AllOf composition
+paths:
+  /placeholder:
+    get:
+      operationId: placeholder
+      responses:
+        default:
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/response.Placeholder"
+components:
+  schemas:
+    response.Placeholder:
+      x-go-embedding: true
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            hello:
+              type: string
+
+    Response:
+      x-go-name: Response
+      type: object
+      properties:
+        status:
+          type: integer

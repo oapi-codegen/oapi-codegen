@@ -10,10 +10,12 @@ import (
 
 // MergeSchemas merges all the fields in the schemas supplied into one giant schema.
 // The idea is that we merge all fields together into one schema.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+func MergeSchemas(schema *openapi3.Schema, path []string) (Schema, error) {
+	allOf := schema.AllOf
+
 	// If someone asked for the old way, for backward compatibility, return the
 	// old style result.
-	if globalState.options.Compatibility.OldMergeSchemas {
+	if globalState.options.Compatibility.OldMergeSchemas || schema.Extensions[extGoEmbedding] == true {
 		return mergeSchemasV1(allOf, path)
 	}
 	return mergeSchemas(allOf, path)
