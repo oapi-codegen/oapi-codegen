@@ -402,6 +402,8 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
   - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
+    However, we do have an experimental version using a different OpenAPI parser which does support 3.1 and 3.2, which
+    you can play around with in our [experimental repo](https://github.com/oapi-codegen/oapi-codegen-exp/tree/main/experimental)
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
