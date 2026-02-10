@@ -52,6 +52,12 @@ var globalState struct {
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
 	initialismsMap map[string]string
+	// resolvedNames maps schema path strings (e.g. "components/schemas/Pet")
+	// to their resolved Go type names, assigned by the multi-pass name resolver.
+	resolvedNames map[string]string
+	// resolvedClientWrapperNames maps operationID to the resolved Go type name
+	// for client response wrapper types (e.g., "createChatCompletion" -> "CreateChatCompletionResponseWrapper").
+	resolvedClientWrapperNames map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -168,6 +174,28 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
+
+	// Multi-pass name resolution: gather all schemas, then resolve names globally.
+	// Only enabled when resolve-type-name-collisions is set.
+	if opts.OutputOptions.ResolveTypeNameCollisions {
+		gathered := GatherSchemas(spec, opts)
+		globalState.resolvedNames = ResolveNames(gathered)
+		// Build a separate operationID -> wrapper name lookup for genResponseTypeName.
+		// Keys must use the normalized operationID (via nameNormalizer) because
+		// OperationDefinition.OperationId is normalized before templates run.
+		globalState.resolvedClientWrapperNames = make(map[string]string)
+		for _, gs := range gathered {
+			if gs.Context == ContextClientResponseWrapper && gs.OperationID != "" {
+				if name, ok := globalState.resolvedNames[gs.Path.String()]; ok {
+					normalizedOpID := nameNormalizer(gs.OperationID)
+					globalState.resolvedClientWrapperNames[normalizedOpID] = name
+				}
+			}
+		}
+	} else {
+		globalState.resolvedNames = nil
+		globalState.resolvedClientWrapperNames = nil
+	}
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
@@ -607,6 +635,10 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", schemaName, err)
 		}
 
+		if resolved := resolvedNameForComponent("schemas", schemaName); resolved != "" {
+			goTypeName = resolved
+		}
+
 		types = append(types, TypeDefinition{
 			JsonName: schemaName,
 			TypeName: goTypeName,
@@ -633,6 +665,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		goTypeName, err := renameParameter(paramName, paramOrRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/parameters/%s: %w", paramName, err)
+		}
+
+		if resolved := resolvedNameForComponent("parameters", paramName); resolved != "" {
+			goTypeName = resolved
 		}
 
 		typeDef := TypeDefinition{
@@ -692,7 +728,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
 			}
 
-			goType.DefinedComp = ComponentTypeResponse
+			if resolved := resolvedNameForComponent("responses", responseName); resolved != "" {
+				goTypeName = resolved
+			}
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
@@ -746,7 +784,9 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
 			}
 
-			goType.DefinedComp = ComponentTypeRequestBody
+			if resolved := resolvedNameForComponent("requestBodies", requestBodyName); resolved != "" {
+				goTypeName = resolved
+			}
 
 			typeDef := TypeDefinition{
 				JsonName: requestBodyName,
@@ -775,15 +815,11 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
-	if globalState.options.OutputOptions.ResolveTypeNameCollisions {
-		types = FixDuplicateTypeNames(types)
-	}
-
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
-			// If type names collide after auto-rename, we need to see if they
-			// refer to the same exact type definition, in which case, we can
-			// de-dupe. If they don't match, we error out.
+			// If type names collide, we need to see if they refer to the same
+			// exact type definition, in which case, we can de-dupe. If they
+			// don't match, we error out.
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
@@ -803,6 +839,32 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	return GenerateTemplates([]string{"typedef.tmpl"}, t, context)
+}
+
+// resolvedNameForComponent looks up the resolved Go type name for a component
+// identified by its section (e.g., "schemas", "parameters") and name.
+// Returns empty string if no resolved name is available.
+func resolvedNameForComponent(section, name string) string {
+	if len(globalState.resolvedNames) == 0 {
+		return ""
+	}
+
+	// Direct key match for schemas, parameters, headers
+	key := "components/" + section + "/" + name
+	if resolved, ok := globalState.resolvedNames[key]; ok {
+		return resolved
+	}
+
+	// For responses and requestBodies, the path includes content type info,
+	// so we need a prefix match.
+	prefix := key + "/"
+	for k, resolved := range globalState.resolvedNames {
+		if strings.HasPrefix(k, prefix) {
+			return resolved
+		}
+	}
+
+	return ""
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {

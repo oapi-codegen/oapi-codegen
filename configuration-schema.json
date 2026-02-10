@@ -255,7 +255,7 @@
         },
         "resolve-type-name-collisions": {
           "type": "boolean",
-          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section (e.g., 'Parameter', 'Response', 'RequestBody'). Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
+          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
           "default": false
         }
       }

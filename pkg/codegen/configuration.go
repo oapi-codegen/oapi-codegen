@@ -305,8 +305,10 @@ type OutputOptions struct {
 	// types that collide across different OpenAPI component sections
 	// (schemas, parameters, requestBodies, responses, headers) by appending
 	// a suffix based on the component section (e.g., "Parameter", "Response",
-	// "RequestBody"). Without this, the codegen will error on duplicate type
-	// names, requiring manual resolution via x-go-name.
+	// "RequestBody"). It also detects collisions between component types and
+	// client response wrapper types (e.g., issue #1474). Without this, the
+	// codegen will error on duplicate type names, requiring manual resolution
+	// via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
 }
 
