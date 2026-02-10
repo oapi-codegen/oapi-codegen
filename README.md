@@ -394,6 +394,8 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
   - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
+    However, we do have an experimental version using a different OpenAPI parser which does support 3.1 and 3.2, which
+    you can play around with in our [experimental repo](https://github.com/oapi-codegen/oapi-codegen-exp/tree/main/experimental)
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
@@ -4476,7 +4478,7 @@ Please consider sponsoring us through GitHub Sponsors either [on the organisatio
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+We are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -4489,28 +4491,8 @@ In addition, we are also generously sponsored by the following folks, each of wh
 </p>
 
 <p align="center">
-	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="60px">
-		</picture>
-	</a>
-</p>
-
-<p align="center">
 	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
-	</a>
-</p>
-
-<p align="center">
-	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
-		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
-		</picture>
 	</a>
 </p>
 
