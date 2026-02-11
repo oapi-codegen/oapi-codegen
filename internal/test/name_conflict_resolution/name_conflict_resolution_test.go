@@ -199,7 +199,7 @@ func TestExtGoTypeNameWithCollisionResolver(t *testing.T) {
 	assert.Equal(t, "hello", *custom.Label)
 
 	// Qux is a type alias for CustomQux (schema keeps bare name)
-	var qux Qux = custom
+	var qux Qux = custom //nolint:staticcheck // explicit type needed to prove Qux aliases CustomQux
 	assert.Equal(t, "hello", *qux.Label)
 
 	// QuxResponse is the response type (response gets suffixed)
