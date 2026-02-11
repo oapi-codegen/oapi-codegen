@@ -161,10 +161,7 @@ func strategyContextSuffix(group []*ResolvedName) bool {
 
 // strategyPerSchemaDisambiguate tries several per-schema disambiguation strategies.
 func strategyPerSchemaDisambiguate(group []*ResolvedName) bool {
-	progress := false
-	if tryContentTypeSuffix(group) {
-		progress = true
-	}
+	progress := tryContentTypeSuffix(group)
 	if !progress && tryStatusCodeSuffix(group) {
 		progress = true
 	}

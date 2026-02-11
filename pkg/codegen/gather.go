@@ -285,14 +285,6 @@ func gatherClientResponseWrappers(spec *openapi3.T) []*GatheredSchema {
 	return result
 }
 
-// gatherOperationID returns a normalized operation ID for naming purposes.
-func gatherOperationID(op *openapi3.Operation) string {
-	if op == nil || op.OperationID == "" {
-		return ""
-	}
-	return op.OperationID
-}
-
 // FormatPath returns a human-readable representation of the path for debugging.
 func (gs *GatheredSchema) FormatPath() string {
 	return fmt.Sprintf("#/%s", strings.Join(gs.Path, "/"))
