@@ -93,11 +93,6 @@ type BarRequestBody struct {
 	Value *int `json:"value,omitempty"`
 }
 
-// OrderRequestBodyJSON3 defines model for Order.
-type OrderRequestBodyJSON3 struct {
-	Product *string `json:"product,omitempty"`
-}
-
 // OrderRequestBodyJSON defines model for Order.
 type OrderRequestBodyJSON struct {
 	Id      *string `json:"id,omitempty"`
@@ -109,6 +104,11 @@ type OrderRequestBodyJSON2 = []struct {
 	Op    *string `json:"op,omitempty"`
 	Path  *string `json:"path,omitempty"`
 	Value *string `json:"value,omitempty"`
+}
+
+// OrderRequestBodyJSON3 defines model for Order.
+type OrderRequestBodyJSON3 struct {
+	Product *string `json:"product,omitempty"`
 }
 
 // PetRequestBody defines model for Pet.
