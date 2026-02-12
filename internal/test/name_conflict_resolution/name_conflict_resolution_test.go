@@ -291,6 +291,28 @@ func TestExtGoTypeWithCollisionResolver(t *testing.T) {
 	assert.Equal(t, "response-result", *wrapper.JSON200.Result)
 }
 
+// TestInlineResponseWithRefProperties verifies Pattern I (oapi-codegen-exp#14):
+// when a response has an inline object whose properties contain $refs to component
+// schemas with x-go-type, the property-level refs must NOT produce duplicate type
+// declarations. The component schemas keep their type aliases (Widget = string,
+// Metadata = string), and the inline response object gets its own struct type.
+//
+// Covers: oapi-codegen-exp#14
+func TestInlineResponseWithRefProperties(t *testing.T) {
+	// Component schemas with x-go-type: string produce type aliases
+	var widget Widget = "widget-value"
+	assert.Equal(t, "widget-value", string(widget))
+
+	var metadata Metadata = "metadata-value"
+	assert.Equal(t, "metadata-value", string(metadata))
+
+	// The inline response object should have fields typed by the component aliases.
+	// The client wrapper for listEntities should exist and have a JSON200 field
+	// pointing to the inline response type.
+	var wrapper ListEntitiesResponse
+	assert.Nil(t, wrapper.JSON200)
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }
