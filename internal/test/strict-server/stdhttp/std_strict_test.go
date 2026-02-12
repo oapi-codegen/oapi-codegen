@@ -5,27 +5,49 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/client"
+	"github.com/oapi-codegen/runtime"
+	"github.com/oapi-codegen/testutil"
+	"github.com/stretchr/testify/assert"
 	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/client"
-	"github.com/oapi-codegen/runtime"
-	"github.com/oapi-codegen/testutil"
+	"time"
 )
 
 func TestStdHTTPServer(t *testing.T) {
 	server := StrictServer{}
 	strictHandler := NewStrictHandler(server, nil)
 	m := http.NewServeMux()
-	HandlerFromMux(strictHandler, m)
+	_ = HandlerFromMux(strictHandler, m)
 	testImpl(t, m)
+}
+
+func TestStreaming(t *testing.T) {
+	server := StrictServer{}
+	strictHandler := NewStrictHandler(server, nil)
+	m := http.NewServeMux()
+	handler := HandlerFromMux(strictHandler, m)
+
+	// create a request with a context that will be canceled after 3 second
+	req := httptest.NewRequest(http.MethodGet, "/streaming", nil)
+	rr := newStreamResponseWriter()
+	handler.ServeHTTP(rr, req)
+	assert.Equal(t, http.StatusOK, rr.Code)
+	assert.Equal(t, "text/event-stream", rr.Header().Get("Content-Type"))
+	assert.Equal(t, 3, len(rr.ops))
+	for i := 1; i < len(rr.ops); i++ { // make sure there is at least 10 ms between the writes
+		assert.True(t, rr.ops[i].ts-rr.ops[i-1].ts >= 10*time.Millisecond)
+	}
+	assert.Equal(t, "first write\n", string(rr.ops[0].bytes))
+	assert.Equal(t, "second write\n", string(rr.ops[1].bytes))
+	assert.Equal(t, "third write\n", string(rr.ops[2].bytes))
 }
 
 func testImpl(t *testing.T, handler http.Handler) {
@@ -225,5 +247,12 @@ func testImpl(t *testing.T, handler http.Handler) {
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
+	})
+	t.Run("StreamingResponse", func(t *testing.T) {
+		// the /streaming endpoint will issue two writes with 100ms between them.
+		rr := testutil.NewRequest().Get("/streaming").GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "text/event-stream", rr.Header().Get("Content-Type"))
+		fmt.Println("body length", len(rr.Body.String()))
 	})
 }

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"io"
 	"mime/multipart"
+	"time"
 )
 
 type StrictServer struct {
@@ -116,5 +117,31 @@ func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequ
 		Body: struct{ union json.RawMessage }{
 			union: union,
 		},
+	}, nil
+}
+
+func (s StrictServer) StreamingExample(ctx context.Context, _ StreamingExampleRequestObject) (StreamingExampleResponseObject, error) {
+	r, w := io.Pipe()
+	go func() {
+		defer w.Close()
+		_, err := w.Write([]byte("first write\n"))
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Millisecond * 10)
+		_, err = w.Write([]byte("second write\n"))
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Millisecond * 10)
+		_, err = w.Write([]byte("third write\n"))
+		if err != nil {
+			panic(err)
+		}
+
+	}()
+	return StreamingExample200TexteventStreamResponse{
+		ContentLength: 0,
+		Body:          r,
 	}, nil
 }

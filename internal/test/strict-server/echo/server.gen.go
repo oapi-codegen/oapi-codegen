@@ -45,6 +45,9 @@ type ServerInterface interface {
 	// (POST /reusable-responses)
 	ReusableResponses(ctx echo.Context) error
 
+	// (GET /streaming)
+	StreamingExample(ctx echo.Context) error
+
 	// (POST /text)
 	TextExample(ctx echo.Context) error
 
@@ -127,6 +130,15 @@ func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ReusableResponses(ctx)
+	return err
+}
+
+// StreamingExample converts echo context to params.
+func (w *ServerInterfaceWrapper) StreamingExample(ctx echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.StreamingExample(ctx)
 	return err
 }
 
@@ -255,6 +267,7 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 	router.POST(baseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
 	router.GET(baseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
 	router.POST(baseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.GET(baseURL+"/streaming", wrapper.StreamingExample)
 	router.POST(baseURL+"/text", wrapper.TextExample)
 	router.POST(baseURL+"/unknown", wrapper.UnknownExample)
 	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
@@ -430,8 +443,10 @@ func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultiple
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.Writer) error
@@ -515,6 +530,57 @@ func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(
 	return nil
 }
 
+type StreamingExampleRequestObject struct {
+}
+
+type StreamingExampleResponseObject interface {
+	VisitStreamingExampleResponse(w http.ResponseWriter) error
+}
+
+type StreamingExample200TexteventStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response StreamingExample200TexteventStreamResponse) VisitStreamingExampleResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/event-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		// If w doesn't support flushing, might as well use io.Copy
+		_, err := io.Copy(w, response.Body)
+		return err
+	}
+
+	// Use a buffer for efficient copying and flushing
+	buf := make([]byte, 4096) // text/event-stream are usually very small messages
+	for {
+		n, err := response.Body.Read(buf)
+		if n > 0 {
+			_, writeErr := w.Write(buf[:n])
+			if writeErr != nil {
+				return writeErr
+			}
+			flusher.Flush() // Flush after each write
+		}
+		if err != nil {
+			if err == io.EOF {
+				return nil // End of file, no error
+			}
+			return err
+		}
+	}
+
+}
+
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
 }
@@ -572,8 +638,10 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type UnknownExample400Response = BadrequestResponse
@@ -617,8 +685,10 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
+
 	_, err := io.Copy(w, response.Body)
 	return err
+
 }
 
 type UnspecifiedContentType400Response = BadrequestResponse
@@ -814,6 +884,9 @@ type StrictServerInterface interface {
 
 	// (POST /reusable-responses)
 	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
+
+	// (GET /streaming)
+	StreamingExample(ctx context.Context, request StreamingExampleRequestObject) (StreamingExampleResponseObject, error)
 
 	// (POST /text)
 	TextExample(ctx context.Context, request TextExampleRequestObject) (TextExampleResponseObject, error)
@@ -1049,6 +1122,29 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 	return nil
 }
 
+// StreamingExample operation middleware
+func (sh *strictHandler) StreamingExample(ctx echo.Context) error {
+	var request StreamingExampleRequestObject
+
+	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.StreamingExample(ctx.Request().Context(), request.(StreamingExampleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StreamingExample")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(StreamingExampleResponseObject); ok {
+		return validResponse.VisitStreamingExampleResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // TextExample operation middleware
 func (sh *strictHandler) TextExample(ctx echo.Context) error {
 	var request TextExampleRequestObject
@@ -1227,24 +1323,24 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYS3PbNhD+Kxi0p5QUZccn3hpPJm3T1h3ZPnV8gIilhIQE0MVStEaj/94BQb0sWpUS",
-	"PTqZ3PhY7C6+b3ex2BnPTGmNBk2OpzOO4KzRDpqXoZAI/1TgyL9JcBkqS8ponvJ3Qg7af/OII1RODAtY",
-	"LPfymdEEulkqrC1UJvzS5JPz62fcZWMohX/6ESHnKf8hWbmShL8ugWdR2gL4fD6PXnhw95FHfAxCAjbe",
-	"hserTd00tcBT7giVHnGvJIhdd4opTTAC9Na8aOuEF1j4kc64RWMBSQWMJqKooNtS+8UMP0FGYQdK52Yb",
-	"y1ujSSjtmFR5DgiaWAse8zocc5W1BgkkG06Zt5ARc4ATQB5xUuQd4/fr31nrsOMRnwC6YOiq1+/1PV/G",
-	"ghZW8ZS/bT5F3AoaNxtaEmRNF++/3d/9yZRjoiJTClKZKIopKwW6sShAMqXJeBerjFyPN5awIf5X2a5+",
-	"30Lpo6YJoHdGTk8RME1croXzdb9/pricR/wmGOvSsXQqWUuwRk0uqqID80f9WZtaM0A02O4sKauClBVI",
-	"61xtov3HQmQfyJf6ktxgGUtB4kSoH8vSpYGPEQpBIPcgYBAkD+NhTf1JWfgaOxfloK3HnXXqfmxqx8am",
-	"ZmSYBFGwWtGYLRa+KLBKM8Gc0qMC2MKpqJPMAtpj72ctB+1eHryOk9ezaEPLc1zXddwkUIUF6MzIL6Mw",
-	"4qoUI0isHm0u97oF8ZQPp+RDdvuAO1IiR5zgmRJbCKV3n95nKunfkT5aYod0RWi6EhmPTPwZprVBGVuB",
-	"ogQCdMnMW597xSPoSOW/lpIsE5oNgWlRgmQiJ0D2wbBWpdtK2UFr94P5GERWqpqWZ/mS/j3jHpKmDeIR",
-	"9wZ4GlAJea3Qk05YQbQDtqf/jM+vImCBZmi24w1T3WVwUaKW0CHkzpfELuY68AuWBmsSl2nadkfc1vXj",
-	"HGeQZ/L1o/8Bnvdqu45Y+s6d24cCVoWPr2PWrtoHti+spHugOFESTFLamwM1XwxUZyFTuQIZt7uIg2+v",
-	"lYRbozME2myB/JVOG2JLZf6mSWNgAYGIOcNqYGXliFnhHFPUVJFChduqhK3i8bjy7DZYeliV012svjkR",
-	"p28uxehN/+rwJW9PHDcbrcwr+Tj4/X2QOfTOfrSe6cCO73h2L5TO/pISrw21ulP4lyCwOtMzUBPfEWnJ",
-	"EKhCDZJNlFgMYrZys1WworWrFwpurLqhxYDtkIYo2qnrmke7hnBP3/CI6JSjy3PFaaXVrlHho//N2h76",
-	"5dmgjP6fDgJFQYBakJrAT8e5QW5rMRru8ibTXrAc7Wnh6duLqnnEw+w6lKAKC18niGyaJGHm3XO1GI0A",
-	"e8okwiqPwr8BAAD//4h9qqfAGAAA",
+	"H4sIAAAAAAAC/+xYS3PbNhD+Kxi0p5Q0bccn3hpPJm3T1h3ZPnV8gIilhIQE0MVStEaj/94BQeph0YqU",
+	"6NHJ9MbHYnfxfbuLxc54ZkprNGhyPJ1xBGeNdtC8DIVE+KcCR/5NgstQWVJG85S/E3LQ/ptHHKFyYlhA",
+	"t9zLZ0YT6GapsLZQmfBLk0/Or59xl42hFP7pR4Scp/yHZOlKEv66BJ5FaQvg8/k8euHB3Uce8TEICdh4",
+	"Gx6v1nXT1AJPuSNUesS9kiB23SumNMEI0Fvzoq0TXqDzI51xi8YCkgoYTURRQb+l9osZfoKMwg6Uzs0m",
+	"lrdGk1DaManyHBA0sRY85nU45iprDRJINpwybyEj5gAngDzipMg7xu9Xv7PWYccjPgF0wdDVxeXFpefL",
+	"WNDCKp7yt82niFtB42ZDC4Ks6eP9t/u7P5lyTFRkSkEqE0UxZaVANxYFSKY0Ge9ilZG74I0lbIj/Vbar",
+	"37dQ+qhpAuidkdNjBEwTlyvhfH15eaK4nEf8Jhjr07FwKllJsEZNLqqiB/NH/VmbWjNANNjuLCmrgpQV",
+	"SKtcraP9RyeyC+QLfUlusIylIHEk1A9l6dzAxwiFIJA7EDAIkvvxsKL+qCx8i52zctDW4946dT82tWNj",
+	"UzMyTIIoWK1ozLqFLwqs0kwwp/SoANY5FfWSWUB77P2s5aDdy4PXcfR6Fq1peY7ruo6bBKqwAJ0Z+XUU",
+	"RlyVYgSJ1aP15V63IJ7y4ZR8yG4ecAdK5IgTPFNiC6H09tP7RCX9f6QPltghXRGarkTGIxN/hmltUMZW",
+	"oCiBAF0y89bnXvEIelL5r4Uky4RmQ2BalCCZyAmQfTCsVek2UnbQ2v1gPgaRpaqm5Vm8pH/PuIekaYN4",
+	"xL0BngZUQl4r9KQTVhBtge3pi/H5TQR0aIZmO14z1V8GuxK1gA4hd74k9jHXg1+wNFiROE/Ttj3iNq4f",
+	"pziDHCGIUoVk7g3c+06CLRx7ifBCZLU1+HIAwQQ0xcGD/WrJlrjyml/vZR7geac+8oC1/NTFat8IqMLH",
+	"1zFrV+0C21ceDTugOFESTFLamwMEyklAdRYylSuQcbuLOPj2Wo27NTpDoPWezt9RtSG2UOavzjQGFhCI",
+	"mDOsBlZWjpgVzjFFTVksVLh+y81cfVx6dhssPSzPh22svjkSp2/OxejN5dX+S94eOW7WerNX8nHw+/sg",
+	"s+8Q4mBN4J4t7OHsnimd/a0rXpnS9afwL0Fg2aRkoCa+xdOSIVCFGiSbKNFNljZys1WwpLWvuQtuLNu7",
+	"bmK4T4cXbdV1zaNtU8Wn73jmdcxZ7KnitNJq2+zz0f9m7aXg5dmgjP6PTjZFQYBakJrAT4e5Em9qMRru",
+	"8ibTXrAc7Wjh6fuLqnnEwzA+lKAKC18niGyaJGGIf+FqMRoBXiiTCKs8Cv8GAAD//7RwfACRGQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
