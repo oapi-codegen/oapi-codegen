@@ -7,7 +7,9 @@ permissions:
   contents: read
 jobs:
   build:
-    uses: oapi-codegen/actions/.github/workflows/ci.yml@b9f2c274c1c631e648931dbbcc1942c2b2027837 # v0.4.0
+    uses: oapi-codegen/actions/.github/workflows/ci.yml@75566d848d25021f137594c947f26171094fb511 # v0.5.0
+    with:
+      lint_versions: '["1.25"]'
 
   build-binaries:
     runs-on: ubuntu-latest
