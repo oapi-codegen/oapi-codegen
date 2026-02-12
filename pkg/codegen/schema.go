@@ -197,11 +197,39 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	return newValues
 }
 
+// ConstraintDefinition holds type information for a schema with constraints
+type ConstraintDefinition struct {
+	// TypeName is the name of the type that has constraints
+	TypeName string
+	// Schema is the underlying schema
+	Schema Schema
+	// Minimum value for numbers
+	Minimum *float64
+	// Maximum value for numbers
+	Maximum *float64
+	// ExclusiveMinimum indicates if minimum is exclusive
+	ExclusiveMinimum bool
+	// ExclusiveMaximum indicates if maximum is exclusive
+	ExclusiveMaximum bool
+	// Default value
+	Default interface{}
+	// MinLength for strings
+	MinLength *uint64
+	// MaxLength for strings
+	MaxLength *uint64
+	// MinItems for arrays
+	MinItems *uint64
+	// MaxItems for arrays
+	MaxItems *uint64
+}
+
 type Constants struct {
 	// SecuritySchemeProviderNames holds all provider names for security schemes.
 	SecuritySchemeProviderNames []string
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
+	// ConstraintDefinitions holds constraint information for types
+	ConstraintDefinitions []ConstraintDefinition
 }
 
 // TypeDefinition describes a Go type definition in generated code.

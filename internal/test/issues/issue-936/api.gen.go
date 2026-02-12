@@ -9,6 +9,11 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Constraint constants for FilterPredicate1.
+const (
+	FilterPredicate1MinLength uint64 = 1
+)
+
 // FilterPredicate defines model for FilterPredicate.
 type FilterPredicate struct {
 	union json.RawMessage
