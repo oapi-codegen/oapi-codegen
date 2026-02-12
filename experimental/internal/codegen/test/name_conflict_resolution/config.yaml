@@ -1,0 +1,11 @@
+package: output
+output: output/types.gen.go
+
+generation:
+  client: true
+  simple-client: true
+
+content-types:
+  - "^application/json$"
+  - "^application/.*\\+json$"
+  - "^application/x-www-form-urlencoded$"
