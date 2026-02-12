@@ -41,6 +41,12 @@ type GetStatusResponse struct {
 // ListItemsResponse defines model for ListItemsResponse.
 type ListItemsResponse = string
 
+// Order defines model for Order.
+type Order struct {
+	Id      *string `json:"id,omitempty"`
+	Product *string `json:"product,omitempty"`
+}
+
 // Pet defines model for Pet.
 type Pet struct {
 	Id   *int    `json:"id,omitempty"`
@@ -87,6 +93,24 @@ type BarRequestBody struct {
 	Value *int `json:"value,omitempty"`
 }
 
+// OrderRequestBodyJSON3 defines model for Order.
+type OrderRequestBodyJSON3 struct {
+	Product *string `json:"product,omitempty"`
+}
+
+// OrderRequestBodyJSON defines model for Order.
+type OrderRequestBodyJSON struct {
+	Id      *string `json:"id,omitempty"`
+	Product *string `json:"product,omitempty"`
+}
+
+// OrderRequestBodyJSON2 defines model for Order.
+type OrderRequestBodyJSON2 = []struct {
+	Op    *string `json:"op,omitempty"`
+	Path  *string `json:"path,omitempty"`
+	Value *string `json:"value,omitempty"`
+}
+
 // PetRequestBody defines model for Pet.
 type PetRequestBody struct {
 	Name    *string `json:"name,omitempty"`
@@ -108,6 +132,24 @@ type CreateItemJSONBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// CreateOrderJSONBody defines parameters for CreateOrder.
+type CreateOrderJSONBody struct {
+	Id      *string `json:"id,omitempty"`
+	Product *string `json:"product,omitempty"`
+}
+
+// CreateOrderApplicationJSONPatchPlusJSONBody defines parameters for CreateOrder.
+type CreateOrderApplicationJSONPatchPlusJSONBody = []struct {
+	Op    *string `json:"op,omitempty"`
+	Path  *string `json:"path,omitempty"`
+	Value *string `json:"value,omitempty"`
+}
+
+// CreateOrderApplicationMergePatchPlusJSONBody defines parameters for CreateOrder.
+type CreateOrderApplicationMergePatchPlusJSONBody struct {
+	Product *string `json:"product,omitempty"`
+}
+
 // CreatePetJSONBody defines parameters for CreatePet.
 type CreatePetJSONBody struct {
 	Name    *string `json:"name,omitempty"`
@@ -124,6 +166,15 @@ type PostFooJSONRequestBody PostFooJSONBody
 
 // CreateItemJSONRequestBody defines body for CreateItem for application/json ContentType.
 type CreateItemJSONRequestBody CreateItemJSONBody
+
+// CreateOrderJSONRequestBody defines body for CreateOrder for application/json ContentType.
+type CreateOrderJSONRequestBody CreateOrderJSONBody
+
+// CreateOrderApplicationJSONPatchPlusJSONRequestBody defines body for CreateOrder for application/json-patch+json ContentType.
+type CreateOrderApplicationJSONPatchPlusJSONRequestBody = CreateOrderApplicationJSONPatchPlusJSONBody
+
+// CreateOrderApplicationMergePatchPlusJSONRequestBody defines body for CreateOrder for application/merge-patch+json ContentType.
+type CreateOrderApplicationMergePatchPlusJSONRequestBody CreateOrderApplicationMergePatchPlusJSONBody
 
 // CreatePetJSONRequestBody defines body for CreatePet for application/json ContentType.
 type CreatePetJSONRequestBody CreatePetJSONBody
@@ -223,6 +274,15 @@ type ClientInterface interface {
 
 	CreateItem(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateOrderWithBody request with any body
+	CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreatePetWithBody request with any body
 	CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -303,6 +363,54 @@ func (c *Client) CreateItemWithBody(ctx context.Context, contentType string, bod
 
 func (c *Client) CreateItem(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateItemRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -555,6 +663,68 @@ func NewCreateItemRequestWithBody(server string, contentType string, body io.Rea
 	}
 
 	operationPath := fmt.Sprintf("/items")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCreateOrderRequest calls the generic CreateOrder builder with application/json body
+func NewCreateOrderRequest(server string, body CreateOrderJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrderRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody calls the generic CreateOrder builder with application/json-patch+json body
+func NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody(server string, body CreateOrderApplicationJSONPatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrderRequestWithBody(server, "application/json-patch+json", bodyReader)
+}
+
+// NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody calls the generic CreateOrder builder with application/merge-patch+json body
+func NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(server string, body CreateOrderApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateOrderRequestWithBody(server, "application/merge-patch+json", bodyReader)
+}
+
+// NewCreateOrderRequestWithBody generates requests for CreateOrder with any type of body
+func NewCreateOrderRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/orders")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -871,6 +1041,15 @@ type ClientWithResponsesInterface interface {
 
 	CreateItemWithResponse(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateItemResponse2, error)
 
+	// CreateOrderWithBodyWithResponse request with any body
+	CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
+
+	CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
+
+	CreateOrderWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
+
+	CreateOrderWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
+
 	// CreatePetWithBodyWithResponse request with any body
 	CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error)
 
@@ -961,6 +1140,28 @@ func (r CreateItemResponse2) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r CreateItemResponse2) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CreateOrderResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Order
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateOrderResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateOrderResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1162,6 +1363,39 @@ func (c *ClientWithResponses) CreateItemWithResponse(ctx context.Context, body C
 	return ParseCreateItemResponse2(rsp)
 }
 
+// CreateOrderWithBodyWithResponse request with arbitrary body returning *CreateOrderResponse
+func (c *ClientWithResponses) CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrderWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrderResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrder(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrderResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateOrderWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrderResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateOrderWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
+	rsp, err := c.CreateOrderWithApplicationMergePatchPlusJSONBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateOrderResponse(rsp)
+}
+
 // CreatePetWithBodyWithResponse request with arbitrary body returning *CreatePetResponse
 func (c *ClientWithResponses) CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error) {
 	rsp, err := c.CreatePetWithBody(ctx, contentType, body, reqEditors...)
@@ -1325,6 +1559,32 @@ func ParseCreateItemResponse2(rsp *http.Response) (*CreateItemResponse2, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest CreateItemResponse
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCreateOrderResponse parses an HTTP response from a CreateOrderWithResponse call
+func ParseCreateOrderResponse(rsp *http.Response) (*CreateOrderResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateOrderResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Order
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

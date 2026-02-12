@@ -185,6 +185,66 @@ func TestResolveNames_NumericFallback(t *testing.T) {
 	assert.Len(t, names, 2, "should have two unique names")
 }
 
+func TestResolveNames_MultipleJsonContentTypes(t *testing.T) {
+	// "Order" appears in schemas and requestBodies. The requestBody has
+	// 3 content types that all contain "json" and map to the same "JSON"
+	// suffix. The global phase approach should prevent oscillation between
+	// context suffix and content type suffix, letting numeric fallback resolve.
+	schemas := []*GatheredSchema{
+		{
+			Path:          SchemaPath{"components", "schemas", "Order"},
+			Context:       ContextComponentSchema,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Order",
+		},
+		{
+			Path:          SchemaPath{"components", "requestBodies", "Order", "content", "application/json"},
+			Context:       ContextComponentRequestBody,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Order",
+			ContentType:   "application/json",
+		},
+		{
+			Path:          SchemaPath{"components", "requestBodies", "Order", "content", "application/merge-patch+json"},
+			Context:       ContextComponentRequestBody,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Order",
+			ContentType:   "application/merge-patch+json",
+		},
+		{
+			Path:          SchemaPath{"components", "requestBodies", "Order", "content", "application/json-patch+json"},
+			Context:       ContextComponentRequestBody,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Order",
+			ContentType:   "application/json-patch+json",
+		},
+	}
+
+	result := ResolveNames(schemas)
+
+	// Component schema keeps bare name
+	assert.Equal(t, "Order", result["components/schemas/Order"])
+
+	// All 3 requestBody types must have unique names
+	names := make(map[string]bool)
+	for _, name := range result {
+		names[name] = true
+	}
+	assert.Len(t, names, 4, "all 4 types should have unique names")
+
+	// The first requestBody should get RequestBody+JSON suffixes
+	assert.Equal(t, "OrderRequestBodyJSON",
+		result["components/requestBodies/Order/content/application/json"])
+
+	// The remaining two collide on OrderRequestBodyJSON and get numeric fallback
+	jsonPatchName := result["components/requestBodies/Order/content/application/json-patch+json"]
+	mergePatchName := result["components/requestBodies/Order/content/application/merge-patch+json"]
+	assert.NotEqual(t, jsonPatchName, mergePatchName,
+		"json-patch and merge-patch types must have different names")
+	assert.Contains(t, jsonPatchName, "OrderRequestBodyJSON")
+	assert.Contains(t, mergePatchName, "OrderRequestBodyJSON")
+}
+
 func TestContentTypeSuffix(t *testing.T) {
 	tests := []struct {
 		input    string

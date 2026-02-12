@@ -136,6 +136,61 @@ func TestSchemaMatchesOpResponse(t *testing.T) {
 	assert.Equal(t, "healthy", *wrapper.JSON200.Status)
 }
 
+// TestMultipleJsonContentTypes verifies Pattern H: schema "Order" collides with
+// requestBody "Order" which has 3 content types that all contain "json":
+//   - application/json
+//   - application/merge-patch+json
+//   - application/json-patch+json
+//
+// All three map to the same "JSON" short name via contentTypeSuffix(), which
+// would trigger an infinite oscillation between context suffix ("RequestBody")
+// and content type suffix ("JSON") strategies if applied per-group. The global
+// phase approach lets numeric fallback break the cycle.
+//
+// Expected types:
+//   - Order struct                    (schema keeps bare name)
+//   - OrderRequestBodyJSON struct     (application/json requestBody)
+//   - OrderRequestBodyJSON2 []struct  (application/json-patch+json, numeric fallback)
+//   - OrderRequestBodyJSON3 struct    (application/merge-patch+json, numeric fallback)
+//
+// Covers: PR #2213 (TMF622 scenario)
+func TestMultipleJsonContentTypes(t *testing.T) {
+	// Schema type keeps bare name "Order"
+	order := Order{
+		Id:      ptr("order-1"),
+		Product: ptr("Widget"),
+	}
+	assert.Equal(t, "order-1", *order.Id)
+	assert.Equal(t, "Widget", *order.Product)
+
+	// The 3 requestBody content types should each get a unique name.
+	// They all collide on "OrderRequestBodyJSON", so numeric fallback kicks in.
+	// The type names below are compile-time assertions that all 3 exist and are distinct.
+
+	// application/json requestBody
+	jsonBody := OrderRequestBodyJSON{
+		Id:      ptr("order-2"),
+		Product: ptr("Gadget"),
+	}
+	assert.Equal(t, "order-2", *jsonBody.Id)
+
+	// application/json-patch+json requestBody (numeric fallback, array type alias)
+	var jsonPatch OrderRequestBodyJSON2
+	assert.Nil(t, jsonPatch)
+
+	// application/merge-patch+json requestBody (numeric fallback)
+	mergePatch := OrderRequestBodyJSON3{
+		Product: ptr("Gadget-patched"),
+	}
+	assert.Equal(t, "Gadget-patched", *mergePatch.Product)
+
+	// CreateOrder wrapper should not collide
+	var wrapper CreateOrderResponse
+	assert.Nil(t, wrapper.JSON200)
+	wrapper.JSON200 = &order
+	assert.Equal(t, "order-1", *wrapper.JSON200.Id)
+}
+
 // TestRequestBodyVsSchema verifies that "Pet" in schemas and requestBodies
 // resolves correctly: the schema keeps bare name "Pet", the requestBody
 // gets "PetRequestBody".
