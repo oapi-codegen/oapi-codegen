@@ -41,6 +41,9 @@ type GetStatusResponse struct {
 // ListItemsResponse defines model for ListItemsResponse.
 type ListItemsResponse = string
 
+// Metadata defines model for Metadata.
+type Metadata = string
+
 // Order defines model for Order.
 type Order struct {
 	Id      *string `json:"id,omitempty"`
@@ -65,6 +68,9 @@ type Qux = CustomQux
 type CustomQux struct {
 	Label *string `json:"label,omitempty"`
 }
+
+// Widget defines model for Widget.
+type Widget = string
 
 // Zap defines model for Zap.
 type Zap = string
@@ -261,6 +267,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// ListEntities request
+	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PostFooWithBody request with any body
 	PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -311,6 +320,18 @@ type ClientInterface interface {
 	PostZapWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEntitiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *Client) PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -551,6 +572,33 @@ func (c *Client) PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEd
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewListEntitiesRequest generates requests for ListEntities
+func NewListEntitiesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/entities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewPostFooRequest calls the generic PostFoo builder with application/json body
@@ -1028,6 +1076,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// ListEntitiesWithResponse request
+	ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error)
+
 	// PostFooWithBodyWithResponse request with any body
 	PostFooWithBodyWithResponse(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostFooResponse, error)
 
@@ -1078,6 +1129,31 @@ type ClientWithResponsesInterface interface {
 	PostZapWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostZapResponse, error)
 
 	PostZapWithResponse(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*PostZapResponse, error)
+}
+
+type ListEntitiesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *struct {
+		Data     *[]Widget `json:"data,omitempty"`
+		Metadata *Metadata `json:"metadata,omitempty"`
+	}
+}
+
+// Status returns HTTPResponse.Status
+func (r ListEntitiesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListEntitiesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PostFooResponse struct {
@@ -1320,6 +1396,15 @@ func (r PostZapResponse) StatusCode() int {
 	return 0
 }
 
+// ListEntitiesWithResponse request returning *ListEntitiesResponse
+func (c *ClientWithResponses) ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error) {
+	rsp, err := c.ListEntities(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListEntitiesResponse(rsp)
+}
+
 // PostFooWithBodyWithResponse request with arbitrary body returning *PostFooResponse
 func (c *ClientWithResponses) PostFooWithBodyWithResponse(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostFooResponse, error) {
 	rsp, err := c.PostFooWithBody(ctx, params, contentType, body, reqEditors...)
@@ -1489,6 +1574,35 @@ func (c *ClientWithResponses) PostZapWithResponse(ctx context.Context, body Post
 		return nil, err
 	}
 	return ParsePostZapResponse(rsp)
+}
+
+// ParseListEntitiesResponse parses an HTTP response from a ListEntitiesWithResponse call
+func ParseListEntitiesResponse(rsp *http.Response) (*ListEntitiesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListEntitiesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Data     *[]Widget `json:"data,omitempty"`
+			Metadata *Metadata `json:"metadata,omitempty"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParsePostFooResponse parses an HTTP response from a PostFooWithResponse call
