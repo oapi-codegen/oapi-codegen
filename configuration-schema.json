@@ -252,6 +252,11 @@
           "type": "boolean",
           "description": "Allows disabling the generation of an 'optional pointer' for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check. A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
           "default": false
+        },
+        "resolve-type-name-collisions": {
+          "type": "boolean",
+          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section (e.g., 'Parameter', 'Response', 'RequestBody'). Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
+          "default": false
         }
       }
     },

@@ -1,0 +1,80 @@
+openapi: 3.0.1
+
+info:
+  title: "Duplicate type names test"
+  version: 0.0.0
+
+paths:
+  /foo:
+    post:
+      operationId: postFoo
+      parameters:
+        - $ref: '#/components/parameters/Bar'
+      requestBody:
+        $ref: '#/components/requestBodies/Bar'
+      responses:
+        200:
+          $ref: '#/components/responses/Bar'
+
+components:
+  schemas:
+    Bar:
+      type: object
+      properties:
+        value:
+          type: string
+    Bar2:
+      type: object
+      properties:
+        value:
+          type: number
+    BarParam:
+      type: array
+      items:
+        type: integer
+    BarParam2:
+      type: array
+      items:
+        type: integer
+
+  headers:
+    Bar:
+      schema:
+        type: boolean
+
+  parameters:
+    Bar:
+      name: Bar
+      in: query
+      schema:
+        type: string
+
+  requestBodies:
+    Bar:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value:
+                type: integer
+
+  responses:
+    Bar:
+      description: Bar response
+      headers:
+        X-Bar:
+          $ref: '#/components/headers/Bar'
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              value1:
+                $ref: '#/components/schemas/Bar'
+              value2:
+                $ref: '#/components/schemas/Bar2'
+              value3:
+                $ref: '#/components/schemas/BarParam'
+              value4:
+                $ref: '#/components/schemas/BarParam2'

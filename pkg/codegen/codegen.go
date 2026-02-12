@@ -673,6 +673,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
 			}
 
+			goType.DefinedComp = ComponentTypeResponse
+
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
@@ -724,6 +726,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
 			}
 
+			goType.DefinedComp = ComponentTypeRequestBody
+
 			typeDef := TypeDefinition{
 				JsonName: requestBodyName,
 				Schema:   goType,
@@ -750,15 +754,18 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
+	if globalState.options.OutputOptions.ResolveTypeNameCollisions {
+		types = FixDuplicateTypeNames(types)
+	}
+
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
-			// If type names collide, we need to see if they refer to the same
-			// exact type definition, in which case, we can de-dupe. If they don't
-			// match, we error out.
+			// If type names collide after auto-rename, we need to see if they
+			// refer to the same exact type definition, in which case, we can
+			// de-dupe. If they don't match, we error out.
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
-			// We want to create an error when we try to define the same type twice.
 			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
 				"please use x-go-name to specify your own name for one of them", typ.TypeName)
 		}
