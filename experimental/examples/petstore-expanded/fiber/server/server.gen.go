@@ -35,33 +35,6 @@ type ServerInterface interface {
 	FindPetByID(c fiber.Ctx, id int64) error
 }
 
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-// Returns all pets
-// (GET /pets)
-func (_ Unimplemented) FindPets(c fiber.Ctx, params FindPetsParams) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
-}
-
-// Creates a new pet
-// (POST /pets)
-func (_ Unimplemented) AddPet(c fiber.Ctx) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
-}
-
-// Deletes a pet by ID
-// (DELETE /pets/{id})
-func (_ Unimplemented) DeletePet(c fiber.Ctx, id int64) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
-}
-
-// Returns a pet by ID
-// (GET /pets/{id})
-func (_ Unimplemented) FindPetByID(c fiber.Ctx, id int64) error {
-	return c.SendStatus(fiber.StatusNotImplemented)
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags (optional)

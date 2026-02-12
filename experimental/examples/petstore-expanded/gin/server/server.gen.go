@@ -36,33 +36,6 @@ type ServerInterface interface {
 	FindPetByID(c *gin.Context, id int64)
 }
 
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-// Returns all pets
-// (GET /pets)
-func (_ Unimplemented) FindPets(c *gin.Context, params FindPetsParams) {
-	c.Status(http.StatusNotImplemented)
-}
-
-// Creates a new pet
-// (POST /pets)
-func (_ Unimplemented) AddPet(c *gin.Context) {
-	c.Status(http.StatusNotImplemented)
-}
-
-// Deletes a pet by ID
-// (DELETE /pets/{id})
-func (_ Unimplemented) DeletePet(c *gin.Context, id int64) {
-	c.Status(http.StatusNotImplemented)
-}
-
-// Returns a pet by ID
-// (GET /pets/{id})
-func (_ Unimplemented) FindPetByID(c *gin.Context, id int64) {
-	c.Status(http.StatusNotImplemented)
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags (optional)

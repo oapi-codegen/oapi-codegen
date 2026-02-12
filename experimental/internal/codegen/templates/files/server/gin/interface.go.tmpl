@@ -11,14 +11,3 @@ type ServerInterface interface {
 	{{ .GoOperationID }}(c *gin.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }})
 {{- end }}
 }
-
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-{{- range . }}
-{{ .SummaryAsComment }}
-// ({{ .Method }} {{ .Path }})
-func (_ Unimplemented) {{ .GoOperationID }}(c *gin.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) {
-	c.Status(http.StatusNotImplemented)
-}
-{{- end }}

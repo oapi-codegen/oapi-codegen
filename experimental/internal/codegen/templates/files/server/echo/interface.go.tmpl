@@ -11,14 +11,3 @@ type ServerInterface interface {
 	{{ .GoOperationID }}(ctx *echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error
 {{- end }}
 }
-
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-{{- range . }}
-{{ .SummaryAsComment }}
-// ({{ .Method }} {{ .Path }})
-func (_ Unimplemented) {{ .GoOperationID }}(ctx *echo.Context{{ range .PathParams }}, {{ .GoVariableName }} {{ .TypeDecl }}{{ end }}{{ if .HasParams }}, params {{ .ParamsTypeName }}{{ end }}) error {
-	return ctx.NoContent(http.StatusNotImplemented)
-}
-{{- end }}

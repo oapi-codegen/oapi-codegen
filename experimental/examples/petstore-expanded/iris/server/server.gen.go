@@ -36,33 +36,6 @@ type ServerInterface interface {
 	FindPetByID(ctx iris.Context, id int64)
 }
 
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-// Returns all pets
-// (GET /pets)
-func (_ Unimplemented) FindPets(ctx iris.Context, params FindPetsParams) {
-	ctx.StatusCode(http.StatusNotImplemented)
-}
-
-// Creates a new pet
-// (POST /pets)
-func (_ Unimplemented) AddPet(ctx iris.Context) {
-	ctx.StatusCode(http.StatusNotImplemented)
-}
-
-// Deletes a pet by ID
-// (DELETE /pets/{id})
-func (_ Unimplemented) DeletePet(ctx iris.Context, id int64) {
-	ctx.StatusCode(http.StatusNotImplemented)
-}
-
-// Returns a pet by ID
-// (GET /pets/{id})
-func (_ Unimplemented) FindPetByID(ctx iris.Context, id int64) {
-	ctx.StatusCode(http.StatusNotImplemented)
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags (optional)

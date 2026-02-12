@@ -36,33 +36,6 @@ type ServerInterface interface {
 	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 }
 
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-type Unimplemented struct{}
-
-// Returns all pets
-// (GET /pets)
-func (_ Unimplemented) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Creates a new pet
-// (POST /pets)
-func (_ Unimplemented) AddPet(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Deletes a pet by ID
-// (DELETE /pets/{id})
-func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// Returns a pet by ID
-// (GET /pets/{id})
-func (_ Unimplemented) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
 // FindPetsParams defines parameters for FindPets.
 type FindPetsParams struct {
 	// tags (optional)
