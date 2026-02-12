@@ -4,7 +4,7 @@ info:
   title: "Comprehensive name collision resolution test"
   description: |
     Exercises all documented name collision patterns across issues and PRs:
-    #200, #254, #255, #292, #407, #899, #1357, #1450, #1474, #1713, #1881, #2097
+    #200, #254, #255, #292, #407, #899, #1357, #1450, #1474, #1713, #1881, #2097, #2213
   version: 0.0.0
 
 paths:
@@ -130,6 +130,25 @@ paths:
         '200':
           description: OK
 
+  # Pattern H: Multiple JSON content types in requestBody (TMF622 scenario, PR #2213)
+  # "Order" appears in schemas and requestBodies. The requestBody has 3 content
+  # types that all contain "json" and collapse to the same "JSON" short name:
+  #   application/json, application/merge-patch+json, application/json-patch+json
+  # This triggers an infinite oscillation between context suffix and content type
+  # suffix strategies unless the numeric fallback can break the cycle.
+  /orders:
+    post:
+      operationId: createOrder
+      requestBody:
+        $ref: '#/components/requestBodies/Order'
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
   # Cross-section: requestBody vs schema (issues #254, #407)
   # "Pet" appears in both schemas and requestBodies.
   /pets:
@@ -186,6 +205,16 @@ components:
         timestamp:
           type: string
 
+    # Pattern H: Schema "Order" collides with requestBody "Order" which has
+    # 3 content types that all map to the "JSON" short name.
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+        product:
+          type: string
+
     Pet:
       type: object
       properties:
@@ -228,6 +257,37 @@ components:
             properties:
               value:
                 type: integer
+
+    # Pattern H: requestBody "Order" with 3 content types that all contain "json"
+    # and collapse to the same "JSON" suffix via contentTypeSuffix().
+    Order:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+              product:
+                type: string
+        application/merge-patch+json:
+          schema:
+            type: object
+            properties:
+              product:
+                type: string
+        application/json-patch+json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                op:
+                  type: string
+                path:
+                  type: string
+                value:
+                  type: string
 
     Pet:
       content:

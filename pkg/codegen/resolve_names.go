@@ -88,28 +88,44 @@ func generateCandidateName(s *GatheredSchema) string {
 }
 
 // resolveCollisions detects and resolves naming collisions among the resolved names.
-// It applies strategies in order of increasing aggressiveness:
+// It applies strategies in global phases of increasing aggressiveness:
 // 1. Context suffix (Schema, Parameter, Response, etc.)
 // 2. Per-schema disambiguation (content type, status code, etc.)
 // 3. Numeric fallback
+//
+// Each strategy is applied to ALL colliding groups, then collisions are
+// re-checked globally before moving to the next strategy. This prevents
+// oscillation between strategies (e.g., context suffix and content type
+// suffix repeatedly appending to the same names without resolution).
 func resolveCollisions(names []*ResolvedName) {
-	const maxIterations = 10
-	for iter := 0; iter < maxIterations; iter++ {
-		groups := groupByName(names)
-		anyCollision := false
-		for _, group := range groups {
-			if len(group) <= 1 {
-				continue
-			}
-			anyCollision = true
-			if !strategyContextSuffix(group) {
-				if !strategyPerSchemaDisambiguate(group) {
-					strategyNumericFallback(group)
+	strategies := []func([]*ResolvedName) bool{
+		strategyContextSuffix,
+		strategyPerSchemaDisambiguate,
+		strategyNumericFallback,
+	}
+
+	const maxIterations = 20
+
+	for _, strategy := range strategies {
+		for iter := 0; iter < maxIterations; iter++ {
+			groups := groupByName(names)
+			anyCollision := false
+			anyProgress := false
+			for _, group := range groups {
+				if len(group) <= 1 {
+					continue
+				}
+				anyCollision = true
+				if strategy(group) {
+					anyProgress = true
 				}
 			}
-		}
-		if !anyCollision {
-			return
+			if !anyCollision {
+				return
+			}
+			if !anyProgress {
+				break // This strategy can't help; try the next one
+			}
 		}
 	}
 }
@@ -127,6 +143,7 @@ func groupByName(names []*ResolvedName) map[string][]*ResolvedName {
 // derived from the schema's context (Schema, Parameter, Response, etc.).
 // Component schemas are "privileged" — if exactly one member is a component
 // schema, it keeps the bare name and only the others get suffixed.
+// Returns true if any name was modified, false if no progress was made.
 func strategyContextSuffix(group []*ResolvedName) bool {
 	// Count how many are component schemas (privileged)
 	var componentSchemaCount int
@@ -160,6 +177,7 @@ func strategyContextSuffix(group []*ResolvedName) bool {
 }
 
 // strategyPerSchemaDisambiguate tries several per-schema disambiguation strategies.
+// Returns true if any name was modified, false if no progress was made.
 func strategyPerSchemaDisambiguate(group []*ResolvedName) bool {
 	progress := tryContentTypeSuffix(group)
 	if !progress && tryStatusCodeSuffix(group) {
@@ -173,6 +191,7 @@ func strategyPerSchemaDisambiguate(group []*ResolvedName) bool {
 
 // tryContentTypeSuffix appends a content type discriminator when schemas
 // differ by media type (e.g., JSON vs XML).
+// Returns true if any name was modified, false if no progress was made.
 func tryContentTypeSuffix(group []*ResolvedName) bool {
 	// Check if any members have different content types
 	contentTypes := make(map[string]bool)
@@ -200,6 +219,7 @@ func tryContentTypeSuffix(group []*ResolvedName) bool {
 }
 
 // tryStatusCodeSuffix appends the HTTP status code when schemas differ by status.
+// Returns true if any name was modified, false if no progress was made.
 func tryStatusCodeSuffix(group []*ResolvedName) bool {
 	statusCodes := make(map[string]bool)
 	for _, n := range group {
@@ -222,6 +242,7 @@ func tryStatusCodeSuffix(group []*ResolvedName) bool {
 }
 
 // tryParamIndexSuffix appends a parameter index when schemas differ by position.
+// Returns true if any name was modified, false if no progress was made.
 func tryParamIndexSuffix(group []*ResolvedName) bool {
 	hasMultipleParams := false
 	for i := 0; i < len(group); i++ {
@@ -251,7 +272,8 @@ func tryParamIndexSuffix(group []*ResolvedName) bool {
 }
 
 // strategyNumericFallback is the last resort: append increasing numbers.
-func strategyNumericFallback(group []*ResolvedName) {
+// Returns true if any name was modified (always true when group has 2+ members).
+func strategyNumericFallback(group []*ResolvedName) bool {
 	// Sort for determinism: component schemas first, then by path
 	sort.Slice(group, func(i, j int) bool {
 		if group[i].Schema.IsComponentSchema() != group[j].Schema.IsComponentSchema() {
@@ -264,6 +286,7 @@ func strategyNumericFallback(group []*ResolvedName) {
 	for i := 1; i < len(group); i++ {
 		group[i].GoName = group[i].GoName + strconv.Itoa(i+1)
 	}
+	return len(group) > 1
 }
 
 // contentTypeSuffix returns a short suffix for a media type.
