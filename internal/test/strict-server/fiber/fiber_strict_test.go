@@ -1,4 +1,4 @@
-package strictserver
+package api
 
 import (
 	"bytes"
@@ -11,53 +11,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gin-gonic/gin"
-	"github.com/go-chi/chi/v5"
-	"github.com/kataras/iris/v12"
-	"github.com/labstack/echo/v4"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/stretchr/testify/assert"
 
-	chiAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/chi"
 	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/client"
-	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/echo"
-	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/gin"
-	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/strict-server/iris"
-
 	"github.com/oapi-codegen/runtime"
 	"github.com/oapi-codegen/testutil"
 )
 
-func TestIrisServer(t *testing.T) {
-	server := irisAPI.StrictServer{}
-	strictHandler := irisAPI.NewStrictHandler(server, nil)
-	i := iris.New()
-	irisAPI.RegisterHandlers(i, strictHandler)
-	testImpl(t, i)
-}
-
-func TestChiServer(t *testing.T) {
-	server := chiAPI.StrictServer{}
-	strictHandler := chiAPI.NewStrictHandler(server, nil)
-	r := chi.NewRouter()
-	handler := chiAPI.HandlerFromMux(strictHandler, r)
-	testImpl(t, handler)
-}
-
-func TestEchoServer(t *testing.T) {
-	server := echoAPI.StrictServer{}
-	strictHandler := echoAPI.NewStrictHandler(server, nil)
-	e := echo.New()
-	echoAPI.RegisterHandlers(e, strictHandler)
-	testImpl(t, e)
-}
-
-func TestGinServer(t *testing.T) {
-	server := ginAPI.StrictServer{}
-	strictHandler := ginAPI.NewStrictHandler(server, nil)
-	gin.SetMode(gin.ReleaseMode)
-	r := gin.New()
-	ginAPI.RegisterHandlers(r, strictHandler)
-	testImpl(t, r)
+func TestFiberServer(t *testing.T) {
+	server := StrictServer{}
+	strictHandler := NewStrictHandler(server, nil)
+	r := fiber.New()
+	RegisterHandlers(r, strictHandler)
+	testImpl(t, adaptor.FiberApp(r))
 }
 
 func testImpl(t *testing.T, handler http.Handler) {
