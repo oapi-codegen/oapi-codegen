@@ -215,6 +215,34 @@ func TestExtGoTypeWithCollisionResolver(t *testing.T) {
 	assertEqual(t, "response-result", *zapResp.Result)
 }
 
+// TestInlineResponseWithRefProperties verifies Pattern I (oapi-codegen-exp#14):
+// when a response has an inline object whose properties contain $refs to component
+// schemas with x-go-type, the property-level refs must NOT produce duplicate type
+// declarations. The component schemas keep their type aliases (Widget = string,
+// Metadata = string), and the inline response object gets its own struct type
+// (ListEntitiesJSONResponse).
+//
+// Covers: oapi-codegen-exp#14
+func TestInlineResponseWithRefProperties(t *testing.T) {
+	// Component schemas with x-go-type: string produce type aliases
+	var widget Widget = "widget-value"
+	assertEqual(t, "widget-value", widget)
+
+	var metadata Metadata = "metadata-value"
+	assertEqual(t, "metadata-value", metadata)
+
+	// Inline response object has struct fields typed by the component aliases
+	resp := ListEntitiesJSONResponse{
+		Data:     []Widget{"w1", "w2"},
+		Metadata: "meta",
+	}
+	if len(resp.Data) != 2 {
+		t.Errorf("expected 2 data items, got %d", len(resp.Data))
+	}
+	assertEqual(t, Widget("w1"), resp.Data[0])
+	assertEqual(t, "meta", resp.Metadata)
+}
+
 // TestJSONRoundTrip verifies that the generated types marshal/unmarshal correctly.
 func TestJSONRoundTrip(t *testing.T) {
 	// Bar

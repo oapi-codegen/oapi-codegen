@@ -86,6 +86,10 @@ type Pet struct {
 func (s *Pet) ApplyDefaults() {
 }
 
+type Widget = string
+
+type Metadata = string
+
 // #/components/schemas/Qux
 type CustomQux struct {
 	Label *string `json:"label,omitempty" form:"label,omitempty"`
@@ -158,8 +162,6 @@ type GetZapJSONResponse struct {
 func (s *GetZapJSONResponse) ApplyDefaults() {
 }
 
-type PostZapJSONRequest = string
-
 // #/paths//orders/post/requestBody/content/application/json/schema
 type CreateOrderJSONRequest1 struct {
 	ID      *string `json:"id,omitempty" form:"id,omitempty"`
@@ -193,6 +195,19 @@ type PostOrdersRequest struct {
 func (s *PostOrdersRequest) ApplyDefaults() {
 }
 
+// #/paths//entities/get/responses/200/content/application/json/schema
+type ListEntitiesJSONResponse struct {
+	Data     []Widget `json:"data,omitempty" form:"data,omitempty"`
+	Metadata string   `json:"metadata,omitempty" form:"metadata,omitempty"`
+}
+
+// ApplyDefaults sets default values for fields that are nil.
+func (s *ListEntitiesJSONResponse) ApplyDefaults() {
+}
+
+// #/paths//entities/get/responses/200/content/application/json/schema/properties/data
+type GetEntities200Response = []Widget
+
 // #/paths//pets/post/requestBody/content/application/json/schema
 type CreatePetJSONRequest struct {
 	Name    *string `json:"name,omitempty" form:"name,omitempty"`
@@ -205,32 +220,37 @@ func (s *CreatePetJSONRequest) ApplyDefaults() {
 
 // Base64-encoded, gzip-compressed OpenAPI spec.
 var openAPISpecJSON = []string{
-	"H4sIAAAAAAAC/9xZS3PbthO/61PsSP8Z2RPLpmjrn5gzPcRukqZtaiXOoeMbTK5FZEgCAUBF7vTDdwA+",
-	"wZekxKnj6qAHgF3s47cvinFMCKcenB47x/PRiCZ3zBsBKKoi9GB8yWIuMMRE0jVCQmIEn0URlZQlIFCy",
-	"KFX6q0KpxiOAAKUvKNdrHvw9AgB4tUHhU4kSSBRBwPw0xkRh0OTGiVIoEgnEF0xKoFKmmigJYPlBeobX",
-	"xHWcI5i4izPzvtDv5+4RTM6c50cweXF+fgST+elC/5ifLRzz8Vwfnj+fn+qPFy/mmsg510dcd346Alij",
-	"kEZg59g5dkYjTlRoLpzAMhMKXnpwqaWaSfSNwpXcB7mglmyZPNltyw9GykPDcHxBxBgI50iEBJqA9EOM",
-	"iTwCTgSJUaGQRyDwc4pSXbCAovkpOUuk/qrNESIJUMjjEcDJHWOZaTiTKvsGwDgKosV8G3hm4zVj+VbF",
-	"+b44DfA/gXceTCcnPos5SzBR8sQS4eSCiGnJIRemoncdp/rRxy6nylhZxr3w4NpYAdYS/IhiouCL0DYS",
-	"lXUbfjxbOJlBc8rxpUCi8K3C+EN+1ThzUoASvlAVgl+eKLgbC1KFsdxiw4p0yIx6kQoMPFAixXLZZ4nC",
-	"RNUtRDiPqG/Yn3ySLKnvQQ4Jew1A3XP0gN1+Ql81trjQ0ipa90nx0lHWXi3YSSVostrZs1Z4X/1W2+lQ",
-	"cpuafYp2AyiPk5O2nw2a6ni6LPFEIkpkL6qyVHGYUxdA+p1KpdnLCkcHmZkydocNWEXF+TqqAFbYDaXy",
-	"+FMyessmjQj+2YOrQsksr/+U31Pqly0XhncXCzt836co7vsi97PetILWrGwJWnPmycXr5/9SsFpebWDm",
-	"VRmlMVF+iBIYf1acrVfV87y024B5g+paEZXKPtCsigMWcKRZ8gZDtKR8SqZu2aNh7tcebGaMcDrzWYAr",
-	"TGYaVDMdlTO2RiFogIAbpVs9lsAz8Lv7nUbUbsYQEmkAmkV4yUt3KrZHylRg6PI43mz1xft00++Iqes4",
-	"092bj/fpZrq9Xarf+K/njeF42kz3sEUTlhYg3mhArJiBwd6OvyE8c3zFYsjf+rjx91+Eb/X3DeEP5u8b",
-	"wnfwd/3GH8rfpfgP4O9fPHiXRoryCOHX66s/CvlN7JpRpKY8HHx89/r/rgvSx4QIyvIxxp2f5nPMlQiw",
-	"c5IxQLCmh2P4GKLFXSPntBDA8MuEUCFRZkzUW4QmMNZWHJfYIlwiKAYqRJA624y1JmOQIROqbHUnHZ44",
-	"slZiFCuccV13nrV39UptU+OWaW13mxKMYb5t2jIspk+p+uQSG+Nbg7Jn+X0ti7awqu/FvJzjaonKQtUt",
-	"U+EAtLRzOKrdXLNE9W2OWaJ6Um4x8o6qDU2d72WMLogoOHb0q1196ppEqTVQWr1pwdR9GK5JGt+iyLi2",
-	"B78976BBr9h9w3Jbt9YkZAtRP2o1v3vKKlCmkZJtWYgQ5L62Wnt60S90qzfcU5p60zxgPUVjlIrEfNiE",
-	"VkkqGoq8nDQbiCp1FCe+hNQPdQHJeZ026lhZQmLCi1LRqhLZiG44PjyIuGBB6qthIyyr/ucbbqaJwlVZ",
-	"bXbB73cZCDTWNwPqbL3Hg8tUKhZXjXeXBSJyi9Gu6n1Fezvc4BYX7dToAtwQPmiRBtcBtdMklRgM6V09",
-	"Om5ldYMIuCUFRmhiPxhpVpUma6v+tbi3CtlQEesqYL0PSfofkbRKRVdAtBNNZy7RzutNIHYPmnPc2omm",
-	"d3d0A2tKCrYf7zlem9WDw4688xgmtFPJQCrrTWgDNEN99nfQ5euFa7T5u8nWrL+dFfirH/4xvuPTvxo7",
-	"osK9iXpiaEuhegyodv99MaCc5Oh32rapWv4vWiundWfEW8YiJEmWEq3Ov0ZqdfwXRJRH833rSv36c1aj",
-	"7mvmc6r6f3CPlnfn+80fNZEtNu7ebNzpqNloWNZ+qXea9n4MMwVEke3gs/qDhiI3hP8IimQjyBZV/gkA",
-	"AP//w/EIckAgAAA=",
+	"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",
+	"CwAA//+Vvjq1LyUAAA==",
 }
 
 // decodeOpenAPISpec decodes and decompresses the embedded spec.
@@ -386,6 +406,8 @@ func (c *Client) applyEditors(ctx context.Context, req *http.Request, additional
 
 // ClientInterface is the interface specification for the client.
 type ClientInterface interface {
+	// ListEntities makes a GET request to /entities
+	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 	// PostFooWithBody makes a POST request to /foo
 	PostFooWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 	PostFoo(ctx context.Context, body postFooJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -417,6 +439,20 @@ type ClientInterface interface {
 	// PostZapWithBody makes a POST request to /zap
 	PostZapWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 	PostZap(ctx context.Context, body postZapJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// ListEntities makes a GET request to /entities
+
+func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListEntitiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 // PostFooWithBody makes a POST request to /foo
@@ -688,6 +724,33 @@ func (c *Client) PostZap(ctx context.Context, body postZapJSONRequestBody, reqEd
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewListEntitiesRequest creates a GET request for /entities
+func NewListEntitiesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/entities")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewPostFooRequest creates a POST request for /foo with application/json body
@@ -1126,6 +1189,36 @@ func NewSimpleClient(server string, opts ...ClientOption) (*SimpleClient, error)
 		return nil, err
 	}
 	return &SimpleClient{Client: client}, nil
+}
+
+// ListEntities makes a GET request to /entities and returns the parsed response.
+
+// On success, returns the response body. On HTTP error, returns *ClientHttpError[struct{}].
+func (c *SimpleClient) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (map[string]any, error) {
+	var result map[string]any
+	resp, err := c.Client.ListEntities(ctx, reqEditors...)
+	if err != nil {
+		return result, err
+	}
+	defer resp.Body.Close()
+
+	rawBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return result, err
+	}
+
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		if err := json.Unmarshal(rawBody, &result); err != nil {
+			return result, err
+		}
+		return result, nil
+	}
+
+	// No typed error response defined
+	return result, &ClientHttpError[struct{}]{
+		StatusCode: resp.StatusCode,
+		RawBody:    rawBody,
+	}
 }
 
 // PostFoo makes a POST request to /foo and returns the parsed response.

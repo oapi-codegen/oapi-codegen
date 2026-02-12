@@ -362,9 +362,15 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 	// Get the resolved schema
 	schema := proxy.Schema()
 
-	// Check if schema has extensions that require type generation
-	hasTypeOverride := schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeOverride, legacyExtGoType)
-	hasTypeNameOverride := schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeNameOverride, legacyExtGoTypeName)
+	// Check if schema has extensions that require type generation.
+	// Skip extension checks for references — libopenapi copies extensions from the
+	// resolved target, but those extensions belong to the component schema, not to
+	// each reference site. Without this guard, a property like
+	//   pagination: { $ref: '#/components/schemas/Pagination' }
+	// would inherit Pagination's x-go-type and be gathered as a separate type,
+	// producing duplicate declarations. (See oapi-codegen-exp#14.)
+	hasTypeOverride := !isRef && schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeOverride, legacyExtGoType)
+	hasTypeNameOverride := !isRef && schema != nil && schema.Extensions != nil && hasExtension(schema.Extensions, ExtTypeNameOverride, legacyExtGoTypeName)
 
 	// Only gather schemas that need a generated type
 	// References are always gathered (they point to real schemas)
@@ -387,8 +393,11 @@ func (g *gatherer) gatherFromSchemaProxy(proxy *base.SchemaProxy, path SchemaPat
 			ContentType: g.currentContentType,
 		}
 
-		// Parse extensions from the schema
-		if schema != nil && schema.Extensions != nil {
+		// Parse extensions from the schema — but not for references.
+		// When libopenapi resolves a $ref, the resolved schema carries extensions
+		// from the target (e.g., x-go-type on a component schema). Those extensions
+		// belong to the component schema descriptor, not to every reference site.
+		if !isRef && schema != nil && schema.Extensions != nil {
 			ext, err := ParseExtensions(schema.Extensions, path.String())
 			if err != nil {
 				slog.Warn("failed to parse extensions",

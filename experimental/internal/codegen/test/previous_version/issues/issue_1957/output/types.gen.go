@@ -46,8 +46,6 @@ type TypeWithAllOfID struct {
 func (s *TypeWithAllOfID) ApplyDefaults() {
 }
 
-type TypeWithAllOfIDAllOf0 = googleuuid.UUID
-
 type GetRootParameter = googleuuid.UUID
 
 // Base64-encoded, gzip-compressed OpenAPI spec.

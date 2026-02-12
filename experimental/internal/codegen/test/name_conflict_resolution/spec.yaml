@@ -5,6 +5,7 @@ info:
   description: |
     Exercises all documented name collision patterns across issues and PRs:
     #200, #254, #255, #292, #407, #899, #1357, #1450, #1474, #1713, #1881, #2097, #2213
+    Also covers oapi-codegen-exp#14 (inline response object with $ref properties).
   version: 0.0.0
 
 paths:
@@ -145,6 +146,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/Order'
 
+  # Pattern I: Inline response object with $ref properties to x-go-type schemas
+  # (oapi-codegen-exp#14). The response has an inline object with properties that
+  # $ref component schemas carrying x-go-type. libopenapi resolves the $refs and
+  # copies extensions, which previously caused each property ref to be gathered as
+  # a separate type-generating schema with the same operationId-based name.
+  /entities:
+    get:
+      operationId: listEntities
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Widget' }
+                  metadata: { $ref: '#/components/schemas/Metadata' }
+
   # Cross-section: requestBody vs schema (issues #254, #407)
   # "Pet" appears in both schemas and requestBodies.
   /pets:
@@ -218,6 +240,22 @@ components:
           type: integer
         name:
           type: string
+
+    # Pattern I: schemas with x-go-type used as $ref targets in inline response properties.
+    # (oapi-codegen-exp#14)
+    Widget:
+      type: object
+      x-go-type: string
+      properties:
+        id:
+          type: string
+
+    Metadata:
+      type: object
+      x-go-type: string
+      properties:
+        total:
+          type: integer
 
     # Pattern F: x-oapi-codegen-type-name-override extension + cross-section collision
     Qux:
